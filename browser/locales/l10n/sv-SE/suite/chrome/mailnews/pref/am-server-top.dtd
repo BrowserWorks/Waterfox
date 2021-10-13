@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -44,7 +44,6 @@
 <!ENTITY deleteOnServer2.accesskey "j">
 <!ENTITY downloadOnBiff.label "Hämta ny e-post automatiskt">
 <!ENTITY downloadOnBiff.accesskey "y">
-<!ENTITY username.label "Ditt inloggningsnamn">
 <!ENTITY deleteMessagePrefix.label "När jag tar bort ett meddelande:">
 <!ENTITY modelMoveToTrash.label "Flytta det till papperskorgen">
 <!ENTITY modelMoveToTrash.accesskey "F">
@@ -70,17 +69,17 @@
 <!ENTITY alwaysAuthenticate.label "Begär alltid autentisering vid anslutning till denna server">
 <!ENTITY alwaysAuthenticate.accesskey "B">
 <!ENTITY newsrcFilePath.label "Filen newsrc:">
-<!ENTITY localPath.label "Lokal sökväg:">
+<!ENTITY newsrcPicker.label "Välj filen newsrc">
 <!ENTITY abbreviate.label "Visa namn på diskussionsgrupper i mappanelen som:">
 <!ENTITY abbreviateOn.label "Hela namnet (t.ex. 'netscape.public.mozilla.mail-news')">
 <!ENTITY abbreviateOff.label "Förkortat namn (t.ex. 'n.p.m.mail-news')">
 <!ENTITY advancedButton.label "Avancerat…">
 <!ENTITY serverDefaultCharset2.label "Förinställd teckenkodning:">
 <!ENTITY advancedButton.accesskey "c">
+<!ENTITY localPath.label "Lokal sökväg:">
 <!ENTITY localFolderPicker.label "Välj lokal mapp">
 <!ENTITY browseFolder.label "Välj…">
 <!ENTITY browseFolder.accesskey "V">
-<!ENTITY newsrcPicker.label "Välj filen newsrc">
 <!ENTITY browseNewsrc.label "Välj…">
 <!ENTITY browseNewsrc.accesskey "ä">
 

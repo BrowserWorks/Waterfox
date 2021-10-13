@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -29,14 +29,15 @@
 <!ENTITY maxZoom.label                          "eddig:">
 <!ENTITY maxZoom.accesskey                      "e">
 <!ENTITY percent.label                          "&#37;">
-
 <!ENTITY defaultZoom.label                      "Alapértelmezett nagyítás">
 <!ENTITY defaultZoom.accesskey                  "A">
 
-<!ENTITY siteSpecific.label                     "Minden webhely egyedi nagyításának megjegyzése">
-<!ENTITY siteSpecific.accesskey                 "M">
 <!ENTITY textZoomOnly.label                     "Csak a szöveg nagyítása a teljes oldal helyett">
 <!ENTITY textZoomOnly.accesskey                 "C">
+<!ENTITY siteSpecific.label                     "Minden webhely egyedi nagyításának megjegyzése">
+<!ENTITY siteSpecific.accesskey                 "M">
+<!ENTITY showZoomStatusPanel.label              "Nagyítási vezérlőelemek megjelenítése az állapotsorban">
+<!ENTITY showZoomStatusPanel.accesskey          "v">
 <!ENTITY enableAutomaticImageResizing.label     "Nagy képek átméretezése, hogy elférjen a böngésző ablakban">
 <!ENTITY enableAutomaticImageResizing.accesskey "N">
 
@@ -45,4 +46,3 @@
 <!ENTITY blockAutoRefresh.label                 "Figyelmeztetés, ha a webhely átirányítja vagy frissíti az oldalt">
 <!ENTITY blockAutoRefresh.accesskey             "F">
 
-<!ENTITY showZoomStatusPanel.label              "Nagyítási vezérlőelemek megjelenítése az állapotsorban">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -24,11 +24,13 @@
 <!ENTITY signMessage.label "Apponi una firma digitale ai messaggi">
 <!ENTITY signMessage.accesskey "f">
 <!ENTITY signingCert.message "Utilizza il seguente certificato per aggiungere la firma digitale ai messaggi inviati:">
+
 <!ENTITY certificates.label "Certificati">
 <!ENTITY manageCerts2.label "Gestione certificati…">
 <!ENTITY manageCerts2.accesskey "G">
 <!ENTITY manageDevices.label "Gestione dispositivi di sicurezza…">
 <!ENTITY manageDevices.accesskey "d">
+
 <!ENTITY certPicker.title "Seleziona certificato">
 <!ENTITY certPicker.info "Certificato:">
 <!ENTITY certPicker.detailsLabel "Dettagli del certificato selezionato:">

@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-title = 日历
 calendar-title-reminder = 提醒
+calendar-title-notification = 通知
 calendar-title-category = 分类
 dateformat-label =
     .value = 日期格式：
@@ -106,6 +107,9 @@ todaypane-legend = 今日窗格
 soon-label =
     .value = “即将到来”区块将显示：
     .accesskey = U
+agenda-days =
+    .value = 议程显示：
+    .accesskey = g
 event-task-legend = 事件和任务
 default-length-label =
     .value = 默认事件和任务长度:
@@ -133,6 +137,9 @@ task-due-label =
 edit-intab-label =
     .label = 在标签页而非对话框窗口中编辑事件和任务。
     .accesskey = t
+prompt-delete-label =
+    .label = 删除事件和任务前提示。
+    .accesskey = V
 accessibility-legend = 可用性
 accessibility-colors-label =
     .label = 为无障碍使用优化颜色
@@ -179,6 +186,7 @@ event-alarm-time-label =
 task-alarm-time-label =
     .value = 在任务触发前默认的提醒时间：
     .accesskey = o
+calendar-notifications-customize-label = 可到日历的属性窗口自定义各日历的通知设置。
 category-new-label = 新建分类
 category-edit-label = 编辑类别
 category-overwrite-title = 警告： 重复的名称

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,12 +8,6 @@ by NSS/PSM via netError.xhtml. -->
 
 <!ENTITY certerror.pagetitle  "Otillförlitlig anslutning">
 <!ENTITY certerror.longpagetitle "Den här anslutningen är inte tillförlitlig">
-
-<!-- Localization note (certerror.introPara1) - The string "#1" will
-be replaced at runtime with the name of the server to which the user
-was trying to connect. -->
-<!ENTITY certerror.introPara1 "Du har instruerat &brandShortName; att ansluta
-till <b>#1</b> på ett säkert sätt, men det går inte att bekräfta att anslutningen verkligen är säker.">
 
 <!-- Localization note (certerror.introPara1a) - The text content of the span
 tag will be replaced at runtime with the name of the server to which the user

@@ -1,14 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-### Firefox Home / New Tab strings for about:home / about:newtab.
+### Waterfox Home / New Tab strings for about:home / about:newtab.
 
 newtab-page-title = Neuer Tab
 newtab-settings-button =
     .title = Einstellungen für neue Tabs anpassen
-newtab-personalize-button-label = Anpassen
+newtab-personalize-icon-label =
     .title = Neuen Tab anpassen
     .aria-label = Neuen Tab anpassen
 newtab-personalize-dialog-label =
@@ -20,7 +20,6 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = Suchen
     .aria-label = Suchen
-newtab-search-box-search-the-web-text = Das Web durchsuchen
 # Variables
 #  $engine (String): the name of the user's default search engine
 newtab-search-box-handoff-text = Mit { $engine } suchen oder Adresse eingeben
@@ -170,6 +169,11 @@ newtab-label-sponsored = { $sponsorOrSource } · Gesponsert
 # Variables:
 #  $sponsor (String): This is the name of a sponsor
 newtab-label-sponsored-by = Gesponsert von { $sponsor }
+# This string is used under the image of story cards to indicate source and time to read
+# Variables:
+#  $source (String): This is the name of a company or their domain
+#  $timeToRead (Number): This is the estimated number of minutes to read this story
+newtab-label-source-read-time = { $source } · { $timeToRead } min
 
 ## Section Menu: These strings are displayed in the section context menu and are
 ## meant as a call to action for the given section.
@@ -222,10 +226,25 @@ newtab-discovery-empty-section-topstories-timed-out = Leider ist ein Fehler beim
 
 # This is shown at the bottom of the trending stories section and precedes a list of links to popular topics.
 newtab-pocket-read-more = Beliebte Themen:
+newtab-pocket-new-topics-title = Sie wollen noch mehr Artikel? Sehen Sie sich diese beliebte Themen von { -pocket-brand-name } an
 newtab-pocket-more-recommendations = Mehr Empfehlungen
 newtab-pocket-learn-more = Weitere Informationen
 newtab-pocket-cta-button = { -pocket-brand-name } holen
 newtab-pocket-cta-text = Speichern Sie Ihre Lieblingstexte in { -pocket-brand-name } und gewinnen Sie gedankenreiche Einblicke durch faszinierende Texte.
+newtab-pocket-pocket-firefox-family = { -pocket-brand-name } ist Teil der { -brand-product-name }-Familie
+# A save to Pocket button that shows over the card thumbnail on hover.
+newtab-pocket-save-to-pocket = Bei { -pocket-brand-name } speichern
+newtab-pocket-saved-to-pocket = Bei { -pocket-brand-name } gespeichert
+# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
+newtab-pocket-load-more-stories-button = Mehr Artikel laden
+
+## Pocket Final Card Section.
+## This is for the final card in the Pocket grid.
+
+newtab-pocket-last-card-title = Alle Artikel gelesen
+newtab-pocket-last-card-desc = Öffnen Sie diese Seite später ein weiteres Mal, um mehr angezeigt zu bekommen.
+newtab-pocket-last-card-image =
+    .alt = Alle Artikel gelesen
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -249,10 +268,4 @@ newtab-custom-pocket-sponsored = Gesponserte Inhalte
 newtab-custom-recent-title = Neueste Aktivität
 newtab-custom-recent-subtitle = Eine Auswahl kürzlich besuchter Websites und Inhalte
 newtab-custom-close-button = Schließen
-# For the "Snippets" feature traditionally on about:home.
-# Alternative translation options: "Small Note" or something that
-# expresses the idea of "a small message, shortened from something else,
-# and non-essential but also not entirely trivial and useless.
-newtab-custom-snippets-title = Kurzinformationen
-newtab-custom-snippets-subtitle = Tipps und Neuigkeiten von { -vendor-short-name } und { -brand-product-name }
 newtab-custom-settings = Weitere Einstellungen verwalten

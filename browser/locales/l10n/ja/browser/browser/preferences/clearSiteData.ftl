@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -42,12 +42,6 @@ clear-site-data-cache-empty =
     .label = ウェブコンテンツのキャッシュ
     .accesskey = W
 clear-site-data-cache-info = ウェブサイトの画像とデータの再読み込みが必要になります
-clear-site-data-cancel =
-    .label = キャンセル
-    .accesskey = C
-clear-site-data-clear =
-    .label = 消去
-    .accesskey = l
 clear-site-data-dialog =
     .buttonlabelaccept = 消去
     .buttonaccesskeyaccept = l

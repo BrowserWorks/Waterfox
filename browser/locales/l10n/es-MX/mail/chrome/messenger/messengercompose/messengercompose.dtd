@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "Nuevo">
 <!ENTITY newMenu.accesskey "N">
 <!ENTITY newMessage.label "Mensaje">
-<!ENTITY newMessage.key "M">
 <!ENTITY newMessageCmd2.key "N">
-<!ENTITY newMessage.accesskey "M">
 <!ENTITY newContact.label "Libreta de direcciones…">
 <!ENTITY newContact.accesskey "C">
 <!ENTITY attachMenu.label "Adjuntar">
 <!ENTITY attachMenu.accesskey "h">
-<!ENTITY attachFileCmd.label "Archivo(s)…">
-<!ENTITY attachFileCmd.accesskey "F">
-<!ENTITY attachFileCmd.key "A">
 <!ENTITY attachCloudCmd.label "Filelink">
 <!ENTITY attachCloudCmd.accesskey "i">
 <!ENTITY attachPageCmd.label "Página web…">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "Enviar más tarde">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "L">
-<!ENTITY printSetupCmd.label "Configurar página…">
-<!ENTITY printSetupCmd.accesskey "u">
-<!ENTITY printPreviewCmd.label "Vista previa de impresión">
-<!ENTITY printPreviewCmd.accesskey "v">
 <!ENTITY printCmd.label "Imprimir…">
 <!ENTITY printCmd.key "P">
 <!ENTITY printCmd.accesskey "P">
@@ -82,8 +73,6 @@
 <!ENTITY reorderAttachmentsCmd.label "Reordenar los archivos adjuntos…">
 <!ENTITY reorderAttachmentsCmd.accesskey "s">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "Panel del archivo adjunto">
-<!ENTITY toggleAttachmentPaneCmd.accesskey "m">
 <!ENTITY selectAllCmd.accesskey "a">
 <!ENTITY findBarCmd.label "Buscar…">
 <!ENTITY findBarCmd.accesskey "F">
@@ -102,11 +91,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "Reordenar archivos adjuntos">
-<!ENTITY moveAttachmentTopPanelBtn.label "Mover hasta arriba">
-<!ENTITY moveAttachmentUpPanelBtn.label "Mover hacia arriba">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label "Mover juntos">
-<!ENTITY moveAttachmentDownPanelBtn.label "Mover hacia abajo">
-<!ENTITY moveAttachmentBottomPanelBtn.label "Mover hasta abajo">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -204,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "Ajustes de la cuenta">
 <!ENTITY accountManagerCmd2.accesskey "S">
 <!ENTITY accountManagerCmdUnix2.accesskey "S">
-<!ENTITY preferencesCmd2.label "Opciones">
-<!ENTITY preferencesCmd2.accesskey "O">
-<!ENTITY preferencesCmdUnix.label "Preferencias">
-<!ENTITY preferencesCmdUnix.accesskey "n">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "m">
@@ -220,7 +201,6 @@
 <!ENTITY sendButton.label "Enviar">
 <!ENTITY quoteButton.label "Citar">
 <!ENTITY addressButton.label "Contactos">
-<!ENTITY attachButton.label "Adjuntar">
 <!ENTITY spellingButton.label "Ortografía">
 <!ENTITY saveButton.label "Guardar">
 <!ENTITY printButton.label "Imprimir">
@@ -230,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "Enviar este mensaje después">
 <!ENTITY quoteButton.tooltip "Citar el mensaje anterior">
 <!ENTITY addressButton.tooltip "Seleccione a un destinatario de una libreta de direcciones">
-<!ENTITY attachButton.tooltip2 "Agregar un adjuntos">
 <!ENTITY spellingButton.tooltip "Revisar ortografía de selección o mensaje entero">
 <!ENTITY saveButton.tooltip "Guardar este mensaje">
 <!ENTITY cutButton.tooltip              "Cortar">
@@ -245,9 +224,6 @@
 <!ENTITY extraRecipients.tooltip "Otros tipos de campos de direcciones">
 <!ENTITY fromAddr2.label "De">
 <!ENTITY fromAddr.accesskey "r">
-<!ENTITY toAddr2.label "Para">
-<!ENTITY ccAddr2.label "Cc">
-<!ENTITY bccAddr2.label "Cco">
 <!ENTITY replyAddr2.label "Responder a">
 <!ENTITY newsgroupsAddr2.label "Grupo de noticias">
 <!ENTITY followupAddr2.label "Seguimiento a">
@@ -306,8 +282,6 @@
 <!ENTITY removeAllAttachments.accesskey "v">
 <!ENTITY selectAll.label "Seleccionar todo">
 <!ENTITY selectAll.accesskey "A">
-<!ENTITY attachFile.label "Adjuntar archivo(s)…">
-<!ENTITY attachFile.accesskey "F">
 <!ENTITY attachCloud.label "FileLink...">
 <!ENTITY attachCloud.accesskey "i">
 <!ENTITY convertCloud.label "Convertir a…">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -87,9 +87,6 @@ default-font-serif =
     .label = 明朝体 (Serif)
 default-font-sans-serif =
     .label = ゴシック体 (Sans-serif)
-font-size-label =
-    .value = サイズ:
-    .accesskey = e
 font-size-proportional-label =
     .value = サイズ:
     .accesskey = e

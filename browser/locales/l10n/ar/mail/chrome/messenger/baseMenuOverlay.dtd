@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -10,11 +10,6 @@
 <!ENTITY helpMenuWin.label "مساعدة">
 <!ENTITY helpMenuWin.accesskey "ة">
 <!ENTITY aboutProduct2.label "عن &brandShorterName;">
-<!ENTITY helpTroubleshootingInfo.label     "معلومات معالجة الأعطال">
-<!ENTITY helpTroubleshootingInfo.accesskey "ط">
-<!ENTITY helpSafeMode.label     "أعِد التشغيل مع تعطيل الإضافات…">
-<!ENTITY helpSafeMode.accesskey "ض">
-<!ENTITY helpSafeMode.stop.label     "أعِد التشغيل مع تفعيل الإضافات">
 <!ENTITY productHelpMac.modifiers "accel">
 
 <!ENTITY helpKeyboardShortcuts.label "اختصارات لوحة المفاتيح">

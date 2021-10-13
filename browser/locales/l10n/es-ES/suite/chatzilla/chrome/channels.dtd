@@ -1,23 +1,32 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY window.title "Entrar al canal">
+
 <!ENTITY network.label "Red:">
 <!ENTITY network.accesskey "R">
+
 <!ENTITY channel.label "Canal:">
 <!ENTITY channel.accesskey "C">
+
 <!ENTITY topics.label "Buscar títulos y nombres de canales">
 <!ENTITY topics.accesskey "t">
+
 <!ENTITY join.label "Entrar">
 <!ENTITY join.accesskey "E">
+
 <!ENTITY minusers.label "Mín. usuarios:">
 <!ENTITY minusers.accesskey "M">
+
 <!ENTITY maxusers.label "Máx. usuarios:">
 <!ENTITY maxusers.accesskey "x">
-<!ENTITY refresh.label "Refrescar ahora">
-<!ENTITY refresh.accesskey "">
+
+<!ENTITY refreshNow.label "Refrescar ahora">
+<!ENTITY refreshNow.accesskey "R">
+
 <!ENTITY network.hint.label "Escriba un nombre de red o servidor (puede incluir un puerto) y un canal al que unirse.">
+
 <!ENTITY col.network "Red">
 <!ENTITY col.name "Nombre">
 <!ENTITY col.users "Usuarios">

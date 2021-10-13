@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,3 +13,5 @@
 <!ENTITY  resetpassword.text                     "Se remover a senha mestra, todas as suas senhas de sites e email, dados de formulários, certificados pessoais e chaves privadas serão perdidas.">
 <!ENTITY  resetpassword.button                   "Excluir…">
 <!ENTITY  resetpassword.accesskey                "x">
+<!ENTITY  resetpassword2.button                  "Redefinir senha">
+<!ENTITY  resetpassword2.accesskey               "s">

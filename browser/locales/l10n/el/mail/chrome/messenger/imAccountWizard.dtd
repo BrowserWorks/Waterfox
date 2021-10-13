@@ -1,18 +1,18 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY windowTitle.label            "Βοηθός λογαριασμών συνομιλίας">
+<!ENTITY windowTitle.label            "Βοηθός λογαριασμών συνομιλιών">
 
 <!ENTITY accountProtocolTitle.label   "Δίκτυο συνομιλιών">
-<!ENTITY accountProtocolInfo.label    "Παρακαλώ επιλέξτε το δίκτυο του λογαριασμού συνομιλίας σας.">
+<!ENTITY accountProtocolInfo.label    "Παρακαλώ επιλέξτε το δίκτυο του λογαριασμού συνομιλιών σας.">
 <!ENTITY accountProtocolField.label   "Δίκτυο:">
 <!ENTITY accountProtocolGetMore.label "Περισσότερα…">
 
 <!ENTITY accountUsernameTitle.label   "Όνομα χρήστη">
 <!ENTITY accountUsernameDuplicate.label "Αυτός ο λογαριασμός έχει ήδη ρυθμιστεί!">
 
-<!ENTITY accountPasswordTitle.label   "Κωδικός">
+<!ENTITY accountPasswordTitle.label   "Κωδικός πρόσβασης">
 <!ENTITY accountPasswordInfo.label    "Παρακαλώ εισαγάγετε τον κωδικό πρόσβασής σας στο παρακάτω πλαίσιο.">
 <!ENTITY accountPasswordField.label   "Κωδικός πρόσβασης:">
 <!ENTITY accountPasswordManager.label "Ο καταχωρημένος κωδικός πρόσβασης θα αποθηκευτεί στη Διαχείριση κωδικών πρόσβασης. Αφήστε αυτό το πλαίσιο κενό αν θέλετε να εισάγετε τον κωδικό πρόσβασης σας κάθε φορά που θα συνδέεστε σε αυτόν τον λογαριασμό.">

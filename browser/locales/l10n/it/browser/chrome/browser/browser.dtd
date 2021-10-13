@@ -1,17 +1,13 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
 <!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
 
-<!ENTITY appmenu.tooltip "Apri menu">
 <!ENTITY navbarOverflow.label "Altri strumenti…">
 
 <!-- Tab context menu -->
-
-<!ENTITY pinTab.label "Appunta scheda">
-<!ENTITY unpinTab.label "Rilascia scheda">
 
 <!ENTITY listAllTabs.label "Elenco di tutte le schede">
 
@@ -19,50 +15,19 @@
 <!ENTITY openFileCmd.label "Apri file…">
 <!ENTITY printCmd.label "Stampa…">
 
-<!ENTITY taskManagerCmd.label "Gestione attività">
-
 <!ENTITY menubarCmd.label "Barra dei menu">
 <!ENTITY menubarCmd.accesskey "m">
 <!ENTITY navbar.accessibleLabel "Navigazione">
-<!ENTITY personalbarCmd.label "Barra dei segnalibri">
-<!ENTITY personalbarCmd.accesskey "s">
-<!ENTITY personalbar.accessibleLabel "Segnalibri">
-<!ENTITY bookmarksToolbarItem.label "Elementi della barra dei segnalibri">
 
 <!ENTITY fullScreenCmd.label "Schermo intero">
 
 <!ENTITY pictureInPictureHideToggle.label "Nascondi selettore Picture-in-Picture">
 <!ENTITY pictureInPictureHideToggle.accesskey "N">
 
-<!ENTITY fxa.menu.syncSettings2.label "Impostazioni di &syncBrand.shortName.label;">
-<!ENTITY fxa.menu.connectAnotherDevice2.label "Connetti un altro dispositivo…">
-<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
 <!ENTITY fxa.menu.signin.label "Accedi a &brandProductName;">
-<!ENTITY fxa.menu.turnOnSync.label "Attiva &syncBrand.shortName.label;">
-<!ENTITY fxa.menu.firefoxServices.label "Servizi di &brandProductName;">
-<!ENTITY fxa.menu.account.label "Account">
-<!ENTITY fxa.menu.settings.label "Impostazioni">
-<!ENTITY fxa.menu.accountSettings.label "Impostazioni account">
-<!ENTITY fxa.menu.manageAccount2.label "Gestisci account">
-<!ENTITY fxa.menu.signOut.label "Disconnetti…">
-<!ENTITY fxa.menu.setupSync.label "Configura &syncBrand.shortName.label;…">
 
 <!ENTITY fxa.service.sendTab.description "Invia immediatamente una scheda a qualsiasi dispositivo connesso al tuo account.">
-
-<!ENTITY fullscreenWarning.beforeDomain.label "">
-<!ENTITY fullscreenWarning.afterDomain.label "è ora visualizzato a schermo intero">
-<!ENTITY fullscreenWarning.generic.label "Questo documento è ora visualizzato a schermo intero">
-
-<!ENTITY exitDOMFullscreen.button "Esci da schermo intero (Esc)">
-<!ENTITY exitDOMFullscreenMac.button "Esci da schermo intero (esc)">
-
-<!ENTITY pointerlockWarning.beforeDomain.label "">
-<!ENTITY pointerlockWarning.afterDomain.label "sta controllando il puntatore del mouse. Premere Esc per riprenderne il controllo.">
-<!ENTITY pointerlockWarning.generic.label "Questo documento sta controllando il puntatore del mouse. Premere Esc per riprenderne il controllo.">
-
-<!ENTITY showAllBookmarks2.label "Visualizza tutti i segnalibri">
-<!ENTITY recentBookmarks.label "Aggiunti di recente">
-<!ENTITY bookmarksToolbarChevron.tooltip "Visualizza altri segnalibri">
 
 <!ENTITY printButton.label "Stampa">
 <!ENTITY printButton.tooltip "Stampa questa pagina">
@@ -72,26 +37,10 @@
 <!ENTITY homeButton.label "Pagina iniziale">
 <!ENTITY homeButton.defaultPage.tooltip "Pagina iniziale di &brandShortName;">
 
-<!ENTITY bookmarksButton.label "Segnalibri">
-
-<!ENTITY bookmarksSubview.label "Segnalibri">
-<!ENTITY bookmarksMenuButton2.label "Menu segnalibri">
-<!ENTITY bookmarksMenuButton.other.label "Altri segnalibri">
-<!ENTITY bookmarksMenuButton.mobile.label "Segnalibri da dispositivi mobile">
-<!ENTITY viewBookmarksSidebar2.label "Visualizza la barra laterale dei segnalibri">
-<!ENTITY hideBookmarksSidebar.label "Nascondi la barra laterale dei segnalibri">
-<!ENTITY viewBookmarksToolbar.label "Visualizza la barra dei segnalibri">
-<!ENTITY hideBookmarksToolbar.label "Nascondi la barra dei segnalibri">
-<!ENTITY searchBookmarks.label "Cerca nei segnalibri">
-<!ENTITY bookmarkingTools.label "Strumenti per i segnalibri">
-<!ENTITY addBookmarksMenu.label "Aggiungi Segnalibri alla barra degli strumenti">
-<!ENTITY removeBookmarksMenu.label "Rimuovi Segnalibri dalla barra degli strumenti">
-
 <!ENTITY historyButton.label "Cronologia">
 
 <!ENTITY downloads.label "Download">
 <!ENTITY libraryDownloads.label "Download">
-<!ENTITY addons.label "Componenti aggiuntivi">
 
 <!ENTITY webDeveloperMenu.label "Sviluppo web">
 
@@ -107,20 +56,10 @@
 <!ENTITY overflowCustomizeToolbar.accesskey "z">
 
 <!ENTITY historyMenu.label "Cronologia">
-<!ENTITY historyUndoMenu.label "Schede chiuse di recente">
-<!ENTITY historyUndoWindowMenu.label "Finestre chiuse di recente">
 
-<!ENTITY appMenuHistory.showAll.label "Visualizza la cronologia">
-<!ENTITY appMenuHistory.clearRecent.label "Cancella la cronologia recente…">
-<!ENTITY appMenuHistory.restoreSession.label "Ripristina la sessione precedente">
-<!ENTITY appMenuHistory.viewSidebar.label "Visualizza barra laterale cronologia">
-<!ENTITY appMenuHistory.hideSidebar.label "Nascondi barra laterale cronologia">
-<!ENTITY appMenuHistory.recentHistory.label "Cronologia recente">
 <!ENTITY appMenuHelp.label "Aiuto">
 
-<!ENTITY appMenuRemoteTabs.label "Schede sincronizzate">
 <!ENTITY appMenuRemoteTabs.notabs.label "Nessuna scheda aperta">
-<!ENTITY appMenuRemoteTabs.showMore.label "Visualizza altre">
 <!ENTITY appMenuRemoteTabs.showMore.tooltip "Visualizza altre schede da questo dispositivo">
 <!ENTITY appMenuRemoteTabs.showAll.label "Visualizza tutte">
 <!ENTITY appMenuRemoteTabs.showAll.tooltip "Visualizza tutte le schede da questo dispositivo">
@@ -129,14 +68,7 @@
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Apri preferenze Sync">
 <!ENTITY appMenuRemoteTabs.welcome.label "Visualizza un elenco delle schede aperte in altri dispositivi.">
 <!ENTITY appMenuRemoteTabs.unverified.label "L’account non è ancora stato verificato.">
-<!ENTITY appMenuRemoteTabs.signintosync.label "Accedi a &syncBrand.shortName.label;…">
-<!ENTITY appMenuRemoteTabs.turnonsync.label "Attiva &syncBrand.shortName.label;…">
-<!ENTITY appMenuRemoteTabs.managedevices.label "Gestione dispositivi…">
-<!ENTITY appMenuRemoteTabs.sidebar.label "Visualizza barra laterale Schede sincronizzate">
-<!ENTITY appMenuRemoteTabs.hidesidebar.label "Nascondi barra laterale Schede sincronizzate">
 <!ENTITY appMenuRemoteTabs.connectdevice.label "Connetti un altro dispositivo">
-
-<!ENTITY appMenuRecentHighlights.label "Elementi recenti in evidenza">
 
 <!ENTITY customizeMenu.addToToolbar.label "Aggiungi alla barra degli strumenti">
 <!ENTITY customizeMenu.addToToolbar.accesskey "A">
@@ -144,8 +76,6 @@
 <!ENTITY customizeMenu.addToOverflowMenu.accesskey "x">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.label "Rimuovi dal menu extra">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "x">
-<!ENTITY customizeMenu.removeFromToolbar.label "Rimuovi dalla barra degli strumenti">
-<!ENTITY customizeMenu.removeFromToolbar.accesskey "b">
 <!ENTITY customizeMenu.addMoreItems.label "Aggiungi altri elementi…">
 <!ENTITY customizeMenu.addMoreItems.accesskey "A">
 
@@ -158,23 +88,9 @@
 
 <!ENTITY openLinkCmdInTab.accesskey "s">
 
-<!ENTITY pageAction.copyLink.label "Copia link">
-
-<!ENTITY saveToPocketCmd.label "Salva pagina in Pocket">
-<!ENTITY pocketMenuitem.label "Visualizza elenco Pocket">
-
-<!ENTITY emailPageCmd.label "Invia link per email…">
-
 <!ENTITY fullZoom.label "Zoom">
 
 <!ENTITY sidebarCloseButton.tooltip "Chiudi la barra laterale">
-
-<!ENTITY quitApplicationCmdWin2.label "Esci">
-<!ENTITY quitApplicationCmdWin2.accesskey "E">
-<!ENTITY quitApplicationCmdWin2.tooltip "Chiudi &brandShorterName;">
-<!ENTITY quitApplicationCmd.label "Esci">
-<!ENTITY quitApplicationCmd.accesskey "E">
-<!ENTITY quitApplicationCmdMac2.label "Esci da &brandShorterName;">
 
 <!ENTITY allowPopups.accesskey "P">
 <!ENTITY editPopupSettingsUnix.label "Modifica le preferenze per le finestre pop-up…">
@@ -189,10 +105,6 @@
 
 <!ENTITY tabsToolbar.label "Schede del browser">
 
-<!ENTITY syncBrand.shortName.label "Sync">
-
-<!ENTITY customizeMode.autoHideDownloadsButton.label "Nascondi automaticamente">
-
 
 <!ENTITY uiTour.infoPanel.close "Chiudi">
 
@@ -200,15 +112,7 @@
 <!ENTITY panicButton.thankyou.msg2 "Buona navigazione.">
 <!ENTITY panicButton.thankyou.buttonlabel "Grazie">
 
-<!ENTITY updateAvailable.panelUI.label "Scarica l’aggiornamento di &brandShorterName;">
-<!ENTITY updateManual.panelUI.label "Scarica un’altra copia di &brandShorterName;">
-<!ENTITY updateUnsupported.panelUI.label "Non è possibile installare ulteriori aggiornamenti">
-<!ENTITY updateRestart.panelUI.label2 "Riavvia per aggiornare &brandShorterName;">
-
 <!ENTITY sendToDevice.syncNotReady.label "Sincronizzazione dispositivi…">
-
-<!ENTITY pageAction.shareUrl.label "Condividi">
-<!ENTITY pageAction.shareMore.label "Altro…">
 
 <!ENTITY libraryButton.tooltip "Visualizza cronologia, password salvate e altro ancora">
 

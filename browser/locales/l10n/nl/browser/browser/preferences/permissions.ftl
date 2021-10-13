@@ -1,69 +1,81 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 permissions-window =
     .title = Uitzonderingen
     .style = width: 45em
+
 permissions-close-key =
     .key = w
+
 permissions-address = Adres van website
     .accesskey = d
+
 permissions-block =
     .label = Blokkeren
     .accesskey = B
+
 permissions-session =
     .label = Toestaan voor sessie
     .accesskey = o
+
 permissions-allow =
     .label = Toestaan
     .accesskey = T
+
 permissions-button-off =
     .label = Uitschakelen
     .accesskey = U
+
 permissions-button-off-temporarily =
     .label = Tijdelijk uitschakelen
     .accesskey = T
+
 permissions-site-name =
     .label = Website
+
 permissions-status =
     .label = Status
+
 permissions-remove =
     .label = Website verwijderen
     .accesskey = v
+
 permissions-remove-all =
     .label = Alle websites verwijderen
     .accesskey = A
-permissions-button-cancel =
-    .label = Annuleren
-    .accesskey = n
-permissions-button-ok =
-    .label = Wijzigingen opslaan
-    .accesskey = s
+
 permission-dialog =
     .buttonlabelaccept = Wijzigingen opslaan
     .buttonaccesskeyaccept = s
+
 permissions-autoplay-menu = Standaard voor alle websites:
+
 permissions-searchbox =
     .placeholder = Website doorzoeken
+
 permissions-capabilities-autoplay-allow =
     .label = Audio en video toestaan
 permissions-capabilities-autoplay-block =
     .label = Audio blokkeren
 permissions-capabilities-autoplay-blockall =
     .label = Audio en video blokkeren
+
 permissions-capabilities-allow =
     .label = Toestaan
 permissions-capabilities-block =
     .label = Blokkeren
 permissions-capabilities-prompt =
     .label = Altijd vragen
+
 permissions-capabilities-listitem-allow =
     .value = Toestaan
 permissions-capabilities-listitem-block =
     .value = Blokkeren
 permissions-capabilities-listitem-allow-session =
     .value = Toestaan voor sessie
+
 permissions-capabilities-listitem-off =
     .value = Uit
 permissions-capabilities-listitem-off-temporarily =

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,25 +12,30 @@ appmenuitem-update-banner3 =
     .label-update-unsupported = ไม่สามารถอัปเดต — เข้ากันกับระบบไม่ได้
     .label-update-restart = มีการอัปเดต — เริ่มใหม่ทันที
 appmenuitem-protection-dashboard-title = แดชบอร์ดการป้องกัน
-appmenuitem-customize-mode =
-    .label = ปรับแต่ง…
-
-## Zoom Controls
-
 appmenuitem-new-tab =
     .label = แท็บใหม่
 appmenuitem-new-window =
     .label = หน้าต่างใหม่
 appmenuitem-new-private-window =
     .label = หน้าต่างส่วนตัวใหม่
+appmenuitem-history =
+    .label = ประวัติ
+appmenuitem-downloads =
+    .label = การดาวน์โหลด
 appmenuitem-passwords =
     .label = รหัสผ่าน
 appmenuitem-addons-and-themes =
     .label = ส่วนเสริมและชุดตกแต่ง
+appmenuitem-print =
+    .label = พิมพ์…
 appmenuitem-find-in-page =
     .label = ค้นหาในหน้า…
+appmenuitem-zoom =
+    .value = ซูม
 appmenuitem-more-tools =
     .label = เครื่องมือเพิ่มเติม
+appmenuitem-help =
+    .label = ช่วยเหลือ
 appmenuitem-exit2 =
     .label =
         { PLATFORM() ->
@@ -57,15 +62,31 @@ appmenuitem-zoom-reduce =
 appmenuitem-fullscreen =
     .label = เต็มหน้าจอ
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
-fxa-toolbar-sync-now =
-    .label = ซิงค์ตอนนี้
 appmenu-remote-tabs-sign-into-sync =
     .label = ลงชื่อเข้า Sync…
 appmenu-remote-tabs-turn-on-sync =
     .label = เปิด Sync…
+# This is shown after the tabs list if we can display more tabs by clicking on the button
+appmenu-remote-tabs-showmore =
+    .label = แสดงแท็บเพิ่มเติม
+    .tooltiptext = แสดงแท็บเพิ่มเติมจากอุปกรณ์นี้
+# This is shown beneath the name of a device when that device has no open tabs
+appmenu-remote-tabs-notabs = ไม่มีแท็บที่เปิดอยู่
+# This is shown when Sync is configured but syncing tabs is disabled.
+appmenu-remote-tabs-tabsnotsyncing = เปิดการซิงค์แท็บเพื่อดูรายการแท็บจากอุปกรณ์อื่น ๆ ของคุณ
+appmenu-remote-tabs-opensettings =
+    .label = การตั้งค่า
+# This is shown when Sync is configured but this appears to be the only device attached to
+# the account. We also show links to download Waterfox for android/ios.
+appmenu-remote-tabs-noclients = ต้องการเห็นแท็บของคุณจากอุปกรณ์อื่น ๆ ที่นี่?
+appmenu-remote-tabs-connectdevice =
+    .label = เชื่อมต่ออุปกรณ์อื่น
+appmenu-remote-tabs-welcome = ดูรายการแท็บจากอุปกรณ์อื่น ๆ ของคุณ
+appmenu-remote-tabs-unverified = บัญชีของคุณจำเป็นต้องได้รับการยืนยัน
 appmenuitem-fxa-toolbar-sync-now2 = ซิงค์ตอนนี้
+appmenuitem-fxa-sign-in = ลงชื่อเข้า { -brand-product-name }
 appmenuitem-fxa-manage-account = จัดการบัญชี
 appmenu-fxa-header2 = { -fxaccount-brand-name }
 # Variables
@@ -90,10 +111,13 @@ whatsnew-panel-footer-checkbox =
     .label = แจ้งเตือนเกี่ยวกับคุณลักษณะใหม่
     .accesskey = จ
 
-## The Firefox Profiler – The popup is the UI to turn on the profiler, and record
+## The Waterfox Profiler – The popup is the UI to turn on the profiler, and record
 ## performance profiles. To enable it go to profiler.firefox.com and click
 ## "Enable Profiler Menu Button".
 
+profiler-popup-button-idle =
+    .label = ตัวสร้างโปรไฟล์
+    .tooltiptext = บันทึกโปรไฟล์ประสิทธิภาพ
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -102,10 +126,15 @@ profiler-popup-description-title =
     .value = บันทึก วิเคราะห์ แบ่งปัน
 profiler-popup-description = ทำงานร่วมกันในปัญหาด้านประสิทธิภาพโดยการเผยแพร่โปรไฟล์เพื่อแบ่งปันกับทีมของคุณ
 profiler-popup-learn-more = เรียนรู้เพิ่มเติม
+profiler-popup-learn-more-button =
+    .label = เรียนรู้เพิ่มเติม
 profiler-popup-settings =
     .value = การตั้งค่า
 # This link takes the user to about:profiling, and is only visible with the Custom preset.
 profiler-popup-edit-settings = แก้ไขการตั้งค่า
+# This link takes the user to about:profiling, and is only visible with the Custom preset.
+profiler-popup-edit-settings-button =
+    .label = แก้ไขการตั้งค่า
 profiler-popup-disabled = ขณะนี้ตัวสร้างโปรไฟล์ถูกปิดใช้งาน ซึ่งส่วนใหญ่เกิดจากหน้าต่างการเรียกดูแบบส่วนตัวกำลังถูกเปิด
 profiler-popup-recording-screen = กำลังบันทึก…
 # The profiler presets list is generated elsewhere, but the custom preset is defined
@@ -128,6 +157,15 @@ profiler-popup-capture-shortcut =
         [macos] ⌃⇧2
        *[other] Ctrl+Shift+2
     }
+
+## Profiler presets
+## They are shown in the popup's select box.
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
 
 ## History panel
 

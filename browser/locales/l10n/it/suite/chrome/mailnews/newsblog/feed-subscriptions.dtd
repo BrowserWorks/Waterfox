@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,7 +11,6 @@
 
 <!ENTITY feedLocation.label          "Indirizzo feed:">
 <!ENTITY feedLocation.accesskey      "f">
-<!ENTITY feedLocation.placeholder    "Inserire un indirizzo feed valido da aggiungere.">
 <!ENTITY feedLocation2.placeholder   "Scrivere un indirizzo di feed valido">
 <!ENTITY locationValidate.label      "Convalida">
 <!ENTITY validateText.label          "Controllare la validazione e recuperare un indirizzo valido.">

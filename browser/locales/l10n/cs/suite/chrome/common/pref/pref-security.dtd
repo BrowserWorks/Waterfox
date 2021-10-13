@@ -1,12 +1,12 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
-<!ENTITY pref.security.title "Soukromí a zabezpečení">
+<!ENTITY pref.security.title              "Soukromí a zabezpečení">
 
-<!ENTITY tracking.label "Sledování uživatelů">
-<!ENTITY trackingIntro.label "Webové servery mohou sledovat, jak je používáte, což ovlivňuje vaše soukromí.">
+<!ENTITY tracking.label                   "Sledování uživatelů">
+<!ENTITY trackingIntro.label              "Webové servery mohou sledovat, jak je používáte, což ovlivňuje vaše soukromí.">
 
 <!ENTITY doNotTrack.label                 "Informovat servery, že nechci být sledován">
 <!ENTITY doNotTrack.accesskey             "n">
@@ -29,11 +29,14 @@
   to a combination of both, so it's important that these strings convey the
   meaning "reported" (and not something like "known").
 -->
-<!ENTITY safeBrowsing.label "Bezpečné prohlížení">
-<!ENTITY safeBrowsingIntro.label "&brandShortName; může blokovat stránky, jejichž obsah byl nahlášen jako škodlivý.">
+<!ENTITY safeBrowsing.label               "Bezpečné prohlížení">
+<!ENTITY safeBrowsingIntro.label          "&brandShortName; může blokovat stránky, jejichž obsah byl nahlášen jako škodlivý.">
 
-<!ENTITY blockAttackSites.label "Blokovat nahlášené útočné stránky">
-<!ENTITY blockAttackSites.accesskey "B">
+<!ENTITY blockAttackSites.label           "Blokovat nahlášené útočné stránky">
+<!ENTITY blockAttackSites.accesskey       "B">
 
-<!ENTITY blockWebForgeries.label "Blokovat nahlášené podvodné stránky">
-<!ENTITY blockWebForgeries.accesskey "o">
+<!ENTITY blockWebForgeries.label          "Blokovat nahlášené podvodné stránky">
+<!ENTITY blockWebForgeries.accesskey      "o">
+
+<!ENTITY blockAutoRefresh.label           "Varovat, pokud se stránka pokouší o přesměrování nebo obnovení">
+<!ENTITY blockAutoRefresh.accesskey       "a">

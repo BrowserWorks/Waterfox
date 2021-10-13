@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -112,5 +112,5 @@
 
 <!-- New & Existing Account: Setup Complete -->
 <!ENTITY setup.successPage.title "Η ρύθμιση ολοκληρώθηκε">
-<!ENTITY changeOptions.label "Μπορείτε να αλλάξετε αυτή την προτίμηση από τις επιλογές συγχρονισμού παρακάτω.">
+<!ENTITY changeOptions.label "Μπορείτε να αλλάξετε αυτήν την προτίμηση από τις επιλογές συγχρονισμού παρακάτω.">
 <!ENTITY continueUsing.label "Μπορείτε να συνεχίσετε τη χρήση του &brandShortName;.">

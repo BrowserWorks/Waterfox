@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,7 +8,7 @@
 
 <!ENTITY initialpage.description    "Το ημερολόγιό σας μπορεί να αποθηκευτεί στον υπολογιστή σας ή σε κάποιο διακομιστή ώστε να έχετε πρόσβαση σε αυτό από μακριά ή να το μοιράζεστε με τους φίλους σας και τους συνεργάτες σας." >
 <!ENTITY initialpage.computer.label  "Στον υπολογιστή μου">
-<!ENTITY initialpage.network.label  "Στο διαδίκτυο">
+<!ENTITY initialpage.network.label  "Στο δίκτυο">
 
 <!ENTITY locationpage.description         "Συμπληρώστε τα στοιχεία που χρειάζονται για πρόσβαση στο απομακρυσμένο ημερολόγιό σας" >
 <!ENTITY locationpage.login.description   "Προαιρετικά: εισαγάγετε όνομα χρήστη και κωδικό πρόσβασης" >
@@ -40,12 +40,12 @@
 
 <!ENTITY calendartype.label "Τύπος ημερολογίου:">
 <!ENTITY location.label "Τοποθεσία:">
-<!ENTITY location.placeholder "Διεύθυνση URL ή όνομα διακομιστή του διακομιστή ημερολογίου">
+<!ENTITY location.placeholder "URL ή όνομα κεντρικού υπολογιστή του διακομιστή ημερολογίου">
 
 <!ENTITY network.nocredentials.label "Αυτή η τοποθεσία δεν απαιτεί διαπιστευτήρια">
 <!ENTITY network.loading.description "Παρακαλώ περιμένετε για την ανίχνευση των ημερολογίων σας.">
-<!ENTITY network.notfound.description "Δεν ήταν δυνατή η εύρεση ημερολογίων σε αυτή την τοποθεσία. Παρακαλώ ελέγξτε τις ρυθμίσεις σας.">
+<!ENTITY network.notfound.description "Δεν ήταν δυνατή η εύρεση ημερολογίων σε αυτήν την τοποθεσία. Παρακαλώ ελέγξτε τις ρυθμίσεις σας.">
 <!ENTITY network.authfail.description "Τα διαπιστευτήρια που εισαγάγατε δεν έγιναν αποδεκτά. Παρακαλώ ελέγξτε τις ρυθμίσεις σας.">
 
 <!ENTITY network.subscribe.single.description "Παρακαλώ επιλέξτε τα ημερολόγια στα οποία θέλετε να εγγραφείτε.">
-<!ENTITY network.subscribe.multiple.description "Πολλαπλοί τύποι ημερολογίων είναι διαθέσιμοι σε αυτή την τοποθεσία. Παρακαλώ επιλέξτε τον τύπο ημερολογίου και στη συνέχεια επιλέξτε τα ημερολόγια που θέλετε να εγγραφείτε.">
+<!ENTITY network.subscribe.multiple.description "Διατίθενται πολλαπλοί τύποι ημερολογίων σε αυτήν την τοποθεσία. Παρακαλώ επιλέξτε τον τύπο ημερολογίου και έπειτα, επιλέξτε τα ημερολόγια που θέλετε να εγγραφείτε.">

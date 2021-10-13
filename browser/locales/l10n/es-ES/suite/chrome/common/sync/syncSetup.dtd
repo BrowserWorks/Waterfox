@@ -1,15 +1,20 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY accountSetupTitle.label "Configuración de &syncBrand.fullName.label;">
+
+<!-- First page of the wizard -->
+
 <!ENTITY setup.pickSetupType.description "Bienvenido. Si nunca ha usado &syncBrand.fullName.label; antes, necesita crear ahora una nueva cuenta.">
 <!ENTITY button.createNewAccount.label "Crear una nueva cuenta">
 <!ENTITY setup.haveAccount.label "Ya tengo una cuenta &syncBrand.fullName.label;.">
 <!ENTITY button.connect.label "Conectar">
+
 <!ENTITY setup.choicePage.title.label "¿Ha usado &syncBrand.fullName.label; antes?">
 <!ENTITY setup.choicePage.new.label "No he usado nunca &syncBrand.shortName.label; antes">
 <!ENTITY setup.choicePage.existing.label "Ya estoy usando &syncBrand.shortName.label; en otro dispositivo">
+
 <!ENTITY server.label "Servidor">
 <!ENTITY server.accesskey "S">
 <!ENTITY serverType.main.label "Servidor de &syncBrand.fullName.label;">
@@ -20,6 +25,7 @@
 <!ENTITY signIn.password.accesskey "C">
 <!ENTITY signIn.recoveryKey.label "Clave de recuperación">
 <!ENTITY signIn.recoveryKey.accesskey "d">
+
 <!ENTITY setup.newAccountDetailsPage.title.label "Detalles de la cuenta">
 <!ENTITY setup.confirmPassword.label "Confirmar contraseña">
 <!ENTITY setup.confirmPassword.accesskey "m">
@@ -32,17 +38,21 @@
 <!ENTITY setup.ppLink.label "Política de privacidad">
 <!ENTITY setup.tosAgree3.label "">
 <!ENTITY setup.tosAgree2.accesskey "">
+
 <!ENTITY setup.newRecoveryKeyPage.title.label "&brandShortName; cuida de su privacidad">
 <!ENTITY setup.newRecoveryKeyPage.description.label "Para asegurar su total privacidad, todos sus datos son cifrados antes de ser enviados al servidor. La clave de recuperación que es necesaria para descifrar sus datos no se transmite.">
 <!ENTITY recoveryKeyEntry.label "Su clave de recuperación">
 <!ENTITY recoveryKeyEntry.accesskey "S">
 <!ENTITY recoveryGenerateNewKey.label "Generar una clave nueva">
 <!ENTITY recoveryKeyBackup.description "Su clave de recuperación es necesaria para acceder a &syncBrand.fullName.label; en otras máquinas. Cree una copia de respaldo. No podemos ayudarle a recuperar su clave de recuperación.">
+
 <!ENTITY button.syncKeyBackup.print.label "Imprimir…">
 <!ENTITY button.syncKeyBackup.print.accesskey "p">
 <!ENTITY button.syncKeyBackup.save.label "Guardar…">
 <!ENTITY button.syncKeyBackup.save.accesskey "r">
+
 <!ENTITY setup.captchaPage2.title.label "Por favor, confirme que no es un robot">
+
 <!ENTITY addDevice.title.label "Añadir un dispositivo">
 <!ENTITY addDevice.showMeHow.label "Mostrarme cómo.">
 <!ENTITY addDevice.dontHaveDevice.label "No tengo el dispositivo conmigo">
@@ -54,14 +64,17 @@
 <!ENTITY addDevice.dialog.successful.label "El dispositivo ha sido añadido con éxito. La sincronización inicial puede llevar varios minutos y terminará en segundo plano.">
 <!ENTITY addDevice.dialog.recoveryKey.label "Para activar su dispositivo tendrá que escribir su clave de recuperación. Imprima o guarde esta clave y llévela con usted.">
 <!ENTITY addDevice.dialog.connected.label "Dispositivo conectado">
+
 <!ENTITY setup.signInPage.title.label "Iniciar sesión">
 <!ENTITY existingRecoveryKey.description 'Puede obtener una copia de su clave de recuperación yendo a las preferencias/opciones de &syncBrand.shortName.label; en su otro dispositivo y seleccionando "Mi clave de recuperación" bajo "Administrar cuenta".'>
 <!ENTITY verifying.label "Verificando…">
 <!ENTITY resetPassword.label "Restablecer contraseña">
 <!ENTITY resetSyncKey.label "He perdido mi otro dispositivo.">
+
 <!ENTITY setup.optionsPage.title "Opciones de Sync">
 <!ENTITY syncComputerName.label "Nombre del equipo:">
 <!ENTITY syncComputerName.accesskey "N">
+
 <!ENTITY syncMy.label "Sincronizar">
 <!ENTITY engine.addons.label "Complementos">
 <!ENTITY engine.addons.accesskey "e">
@@ -75,15 +88,18 @@
 <!ENTITY engine.passwords.accesskey "C">
 <!ENTITY engine.prefs.label "Preferencias">
 <!ENTITY engine.prefs.accesskey "S">
+
 <!ENTITY choice2.merge.main.label "Unir los datos de este equipo con mis datos de &syncBrand.shortName.label;">
 <!ENTITY choice2.merge.recommended.label "(recomendado)">
 <!ENTITY choice2.client.main.label "Reemplazar todos los datos de este equipo con mis datos de &syncBrand.shortName.label;">
 <!ENTITY choice2.server.main.label "Reemplazar los demás dispositivos con los datos de este equipo">
+
 <!ENTITY setup.optionsConfirmPage.title "Confirmar">
 <!ENTITY confirm.merge.label "&syncBrand.fullName.label; ahora unirá los datos del navegador de este equipo con los datos de su cuenta de Sync.">
 <!ENTITY confirm.client2.label "Advertencia: se borrarán los siguientes datos de &brandShortName; en este equipo:">
 <!ENTITY confirm.client.moreinfo.label "&brandShortName; copiará sus datos de &syncBrand.fullName.label; a este equipo.">
 <!ENTITY confirm.server2.label "Advertencia: los siguientes dispositivos serán sobrescritos con sus datos locales:">
+
 <!ENTITY setup.successPage.title "Instalación completada">
 <!ENTITY changeOptions.label "Puede cambiar esta preferencia seleccionando las opciones de Sync más abajo.">
 <!ENTITY continueUsing.label "Puede continuar usando &brandShortName;.">

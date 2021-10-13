@@ -1,9 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -53,18 +53,16 @@ policy-DisableDeveloperTools = 開発ツールへのアクセスをブロック�
 
 policy-DisableFeedbackCommands = ヘルプメニューのフィードバックの送信 (フィードバックと詐欺サイトの報告の送信) を無効にします。
 
-policy-DisableFirefoxAccounts = Sync を含む { -fxaccount-brand-name } を利用したサービスを無効にします。
+policy-DisableWaterfoxAccounts = Sync を含む { -fxaccount-brand-name } を利用したサービスを無効にします。
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Waterfox Screenshots 機能を無効にします。
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableWaterfoxScreenshots = Waterfox Screenshots 機能を無効にします。
 
-policy-DisableFirefoxStudies = Shield 調査の実行を禁止します。
+policy-DisableWaterfoxStudies = Shield 調査の実行を禁止します。
 
 policy-DisableForgetButton = [忘れる]ボタンへのアクセスを禁止します。
 
 policy-DisableFormHistory = 検索とフォームの履歴を記憶しないようにします。
-
-policy-DisableMasterPasswordCreation = true にすると、マスターパスワードを作成できないようにします。
 
 policy-DisablePrimaryPasswordCreation = true にすると、マスターパスワードを作成できないようにします。
 
@@ -113,7 +111,7 @@ policy-ExtensionSettings = 拡張機能のインストール全般を管理し�
 
 policy-ExtensionUpdate = 拡張機能の自動更新を有効または無効にします。
 
-policy-FirefoxHome = Waterfox Home の設定を行います。
+policy-WaterfoxHome = Waterfox Home の設定を行います。
 
 policy-FlashPlugin = Flash プラグインの実行を許可、または拒否します。
 
@@ -139,8 +137,6 @@ policy-LegacySameSiteCookieBehaviorEnabledForDomainList = 特定のサイトで�
 policy-LocalFileLinks = 特定のウェブサイトにローカルファイルへのリンクを許可します。
 
 policy-ManagedBookmarks = システム管理者により管理されたブックマークのリストを設定します。ユーザーはこのブックマークを変更できません。
-
-policy-MasterPassword = マスターパスワードの使用を要求または抑止します。
 
 policy-ManualAppUpdateOnly = 更新を手動のみにし、更新の通知をユーザーには通知しないようにします。
 
@@ -187,7 +183,7 @@ policy-SearchEngines = 検索エンジンの設定を指示します。このポ
 
 policy-SearchSuggestEnabled = 検索候補の表示機能を有効または無効にします。
 
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = PKCS #11 モジュールをインストールします。
 
 policy-ShowHomeButton = ホームボタンをツールバーに表示します。
@@ -202,3 +198,5 @@ policy-UserMessaging = 特定のメッセージをユーザーに表示させな
 
 # “format” refers to the format used for the value of this policy.
 policy-WebsiteFilter = ウェブサイトを訪問済みにしません。書式の詳細はドキュメントをご覧ください。
+
+policy-Windows10SSO = Microsoft アカウント、職場または学校アカウントで Windows のシングルサインオンを許可します。

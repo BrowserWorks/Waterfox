@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,13 +13,13 @@
 <!ENTITY caseSensitiveCheckbox.accesskey "Σ">
 <!ENTITY wrapCheckbox.label "Αναδίπλωση γύρω">
 <!ENTITY wrapCheckbox.accesskey "δ">
-<!ENTITY backwardsCheckbox.label "Αναζήτηση  προς τα πίσω">
+<!ENTITY backwardsCheckbox.label "Αναζήτηση προς τα πίσω">
 <!ENTITY backwardsCheckbox.accesskey "π">
 <!ENTITY findNextButton.label "Εύρεση επόμενου">
 <!ENTITY findNextButton.accesskey "π">
 <!ENTITY replaceButton.label "Αντικατάσταση">
 <!ENTITY replaceButton.accesskey "Α">
-<!ENTITY replaceAndFindButton.label "Εύρεση και αντικατάσταση">
+<!ENTITY replaceAndFindButton.label "Αντικατάσταση και εύρεση">
 <!ENTITY replaceAndFindButton.accesskey "κ">
 <!ENTITY replaceAllButton.label "Αντικατάσταση όλων">
 <!ENTITY replaceAllButton.accesskey "λ">

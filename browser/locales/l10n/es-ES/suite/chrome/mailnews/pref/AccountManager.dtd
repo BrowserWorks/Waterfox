@@ -1,13 +1,19 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- extracted from AccountManager.xul -->
+
 <!ENTITY accountManagerTitle.label "Configuración de las cuentas de correo y noticias">
+
 <!ENTITY addAccountButton.label "Añadir cuenta…">
 <!ENTITY addAccountButton.accesskey "A">
 <!ENTITY setDefaultButton.label "Definir como predet.">
 <!ENTITY setDefaultButton.accesskey "f">
 <!ENTITY removeButton.label "Eliminar cuenta">
 <!ENTITY removeButton.accesskey "R">
+
+<!-- AccountManager.xul -->
+<!-- AccountManager.xul -->
 <!ENTITY accountManager.size "width: 122ch; height: 56em;">
 <!ENTITY accountTree.width "width: 32ch;">

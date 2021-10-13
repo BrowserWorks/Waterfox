@@ -1,7 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
 <!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
 <!ENTITY rights.locale-direction "ltr">
 <!ENTITY rights.pagetitle       "about:rights">
@@ -17,8 +17,8 @@
      Also note the leading/trailing whitespace in strings here, which is
      deliberate for formatting around the embedded links. -->
 <!ENTITY rights.intro-point1a "&brandShortName; は ">
-<!ENTITY rights.intro-point1b "Mozilla Public License">
-<!ENTITY rights.intro-point1c " の条項下で提供されます。これにより、あなたは &brandShortName; を使用、複製、配布することができます。あなたはまた、&brandShortName; のソースコードを必要に応じて修正することもできます。Mozilla Public License では、あなたが修正したバージョンを配布することも認めています。">
+<!ENTITY rights.intro-point1b "Waterfox Public License">
+<!ENTITY rights.intro-point1c " の条項下で提供されます。これにより、あなたは &brandShortName; を使用、複製、配布することができます。あなたはまた、&brandShortName; のソースコードを必要に応じて修正することもできます。Waterfox Public License では、あなたが修正したバージョンを配布することも認めています。">
 
 <!ENTITY rights.intro-point2aa "&vendorShortName; は、&quot;&brandFullName;&quot; の商標およびロゴについては、何らの権利もあなたに与えるものではありません。商標について詳しくは ">
 <!ENTITY rights.intro-point2b "SeaMonkey 商標ポリシー">
@@ -29,7 +29,7 @@
 
 <!-- point 3 text for official branded builds -->
 <!ENTITY rights.intro-point3a "&vendorShortName; の製品における個人情報の取り扱いについては ">
-<!ENTITY rights.intro-point3b "Mozilla プライバシーポリシー">
+<!ENTITY rights.intro-point3b "Waterfox プライバシーポリシー">
 <!ENTITY rights.intro-point3c " をご確認ください。">
 
 <!-- point 4 text for official branded builds -->

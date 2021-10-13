@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-title = 行事曆
 calendar-title-reminder = 提醒
+calendar-title-notification = 通知
 calendar-title-category = 分類
 dateformat-label =
     .value = 日期文字格式:
@@ -106,6 +107,9 @@ todaypane-legend = 今日窗格
 soon-label =
     .value = 「即將到來」區塊將顯示:
     .accesskey = U
+agenda-days =
+    .value = 議程顯示:
+    .accesskey = g
 event-task-legend = 事件與工作
 default-length-label =
     .value = 預設事件與工作長度:
@@ -133,6 +137,9 @@ task-due-label =
 edit-intab-label =
     .label = 在分頁，而非對話窗中編輯事件與工作。
     .accesskey = t
+prompt-delete-label =
+    .label = 刪除事件與工作前提示。
+    .accesskey = V
 accessibility-legend = 輔助功能
 accessibility-colors-label =
     .label = 使用較具親和力的色彩
@@ -179,6 +186,7 @@ event-alarm-time-label =
 task-alarm-time-label =
     .value = 提醒預設於工作前多久停止:
     .accesskey = o
+calendar-notifications-customize-label = 可以到每份行事曆的屬性視窗自訂各行事曆的通知設定。
 category-new-label = 新增分類
 category-edit-label = 編輯類別
 category-overwrite-title = 警告: 重複的名稱

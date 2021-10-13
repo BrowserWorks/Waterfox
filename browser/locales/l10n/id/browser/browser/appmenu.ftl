@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,25 +12,30 @@ appmenuitem-update-banner3 =
     .label-update-unsupported = Pembaruan tersedia — sistem tidak kompatibel
     .label-update-restart = Pembaruan tersedia — mulai ulang sekarang
 appmenuitem-protection-dashboard-title = Dasbor Perlindungan
-appmenuitem-customize-mode =
-    .label = Ubahsuai…
-
-## Zoom Controls
-
 appmenuitem-new-tab =
     .label = Tab Baru
 appmenuitem-new-window =
     .label = Jendela Baru
 appmenuitem-new-private-window =
     .label = Jendela Mode Pribadi Baru
+appmenuitem-history =
+    .label = Riwayat
+appmenuitem-downloads =
+    .label = Unduhan
 appmenuitem-passwords =
     .label = Kata Sandi
 appmenuitem-addons-and-themes =
     .label = Pengaya dan Tema
+appmenuitem-print =
+    .label = Cetak…
 appmenuitem-find-in-page =
     .label = Temukan di Halaman…
+appmenuitem-zoom =
+    .value = Perbesaran
 appmenuitem-more-tools =
     .label = Alat Lainnya
+appmenuitem-help =
+    .label = Bantuan
 appmenuitem-exit2 =
     .label =
         { PLATFORM() ->
@@ -57,15 +62,29 @@ appmenuitem-zoom-reduce =
 appmenuitem-fullscreen =
     .label = Layar Penuh
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
-fxa-toolbar-sync-now =
-    .label = Sinkronkan Sekarang
 appmenu-remote-tabs-sign-into-sync =
     .label = Masuk ke Sinkronisasi…
 appmenu-remote-tabs-turn-on-sync =
     .label = Aktifkan Sinkronisasi…
+# This is shown after the tabs list if we can display more tabs by clicking on the button
+appmenu-remote-tabs-showmore =
+    .label = Tampilkan Tab Lainnya
+    .tooltiptext = Tampilkan lebih banyak dari perangkat ini
+# This is shown beneath the name of a device when that device has no open tabs
+appmenu-remote-tabs-notabs = Tak ada tab terbuka
+# This is shown when Sync is configured but syncing tabs is disabled.
+appmenu-remote-tabs-tabsnotsyncing = Aktifkan sinkronisasi tab untuk melihat daftar tab dari perangkat Anda lainnya.
+# This is shown when Sync is configured but this appears to be the only device attached to
+# the account. We also show links to download Waterfox for android/ios.
+appmenu-remote-tabs-noclients = Ingin melihat tab dari perangkat Anda yang lain di sini?
+appmenu-remote-tabs-connectdevice =
+    .label = Sambungkan Perangkat Lainnya
+appmenu-remote-tabs-welcome = Lihat daftar tab dari perangkat Anda lainnya.
+appmenu-remote-tabs-unverified = Akun Anda perlu diverifikasi.
 appmenuitem-fxa-toolbar-sync-now2 = Sinkronkan Sekarang
+appmenuitem-fxa-sign-in = Masuk ke { -brand-product-name }
 appmenuitem-fxa-manage-account = Kelola Akun
 appmenu-fxa-header2 = { -fxaccount-brand-name }
 # Variables
@@ -90,10 +109,13 @@ whatsnew-panel-footer-checkbox =
     .label = Beri tahu tentang fitur baru
     .accesskey = f
 
-## The Firefox Profiler – The popup is the UI to turn on the profiler, and record
+## The Waterfox Profiler – The popup is the UI to turn on the profiler, and record
 ## performance profiles. To enable it go to profiler.firefox.com and click
 ## "Enable Profiler Menu Button".
 
+profiler-popup-button-idle =
+    .label = Profiler
+    .tooltiptext = Rekam profil kinerja
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -102,10 +124,15 @@ profiler-popup-description-title =
     .value = Rekam, analisis, bagikan
 profiler-popup-description = Berkolaborasi dalam masalah kinerja dengan mempublikasikan profil untuk dibagikan dengan tim Anda.
 profiler-popup-learn-more = Pelajari lebih lanjut
+profiler-popup-learn-more-button =
+    .label = Pelajari lebih lanjut
 profiler-popup-settings =
     .value = Pengaturan
 # This link takes the user to about:profiling, and is only visible with the Custom preset.
 profiler-popup-edit-settings = Edit Pengaturan…
+# This link takes the user to about:profiling, and is only visible with the Custom preset.
+profiler-popup-edit-settings-button =
+    .label = Edit Pengaturan…
 profiler-popup-disabled = Profiler saat ini dimatikan, kemungkinan besar karena jendela Penjelajahan Pribadi terbuka.
 profiler-popup-recording-screen = Merekam…
 # The profiler presets list is generated elsewhere, but the custom preset is defined
@@ -128,6 +155,15 @@ profiler-popup-capture-shortcut =
         [macos] ⌃⇧2
        *[other] Ctrl+Shift+2
     }
+
+## Profiler presets
+## They are shown in the popup's select box.
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
 
 ## History panel
 

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,12 +17,6 @@
 <!ENTITY lightning.menupopup.new.task.accesskey "O">
 <!ENTITY lightning.menupopup.new.calendar.label "Kalender…">
 <!ENTITY lightning.menupopup.new.calendar.accesskey "K">
-
-<!-- Open menu popup in File menu -->
-<!ENTITY lightning.menupopup.open.label               "Opna">
-<!ENTITY lightning.menupopup.open.accesskey           "O">
-<!ENTITY lightning.menupopup.open.message.label       "Lagra melding…">
-<!ENTITY lightning.menupopup.open.message.accesskey   "L">
 
 <!-- Open menu popup in File menu -->
 <!ENTITY lightning.menupopup.open.calendar.label      "Kalenderfil…">
@@ -51,6 +45,10 @@
      - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Denne innstillinga kan for tida berre endrast, viss du har oppretta ein kalender, der det er kalenderserveren som handterar utsending av e-post.">
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Denne innstillinga kan berre endrast, viss det er kalenderserveren som handterer utsending av e-post. Vel du å aktivere innstillinga, har kalenderen moglegheit for sjølv å sende ut e-post i staden for å overlate det til serveren.">
+
+<!-- The notifications settings in the properties dialog -->
+<!ENTITY lightning.calendarproperties.notifications.label                   "Varsel">
+<!ENTITY lightning.calendarproperties.globalNotifications.label             "Globale varselinnstillingar…">
 
 <!-- iMIP Bar (meeting support) -->
 <!ENTITY lightning.imipbar.btnAccept.label                                  "Godta">

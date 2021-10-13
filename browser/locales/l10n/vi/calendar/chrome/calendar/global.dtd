@@ -1,54 +1,25 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY time.midnight "Nửa đêm" >
-<!ENTITY time.noon "Trưa" >
-
-<!-- Day Names -->
-<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
-     only used in Preferences > Views > Workweek groupbox -->
-<!ENTITY day.1.Ddd "ChN" >
-<!ENTITY day.1.Ddd.accesskey "C">
-<!ENTITY day.2.Ddd "Th2" >
-<!ENTITY day.2.Ddd.accesskey "2">
-<!ENTITY day.3.Ddd "Th3" >
-<!ENTITY day.3.Ddd.accesskey "3">
-<!ENTITY day.4.Ddd "Th4" >
-<!ENTITY day.4.Ddd.accesskey "4">
-<!ENTITY day.5.Ddd "Th5" >
-<!ENTITY day.5.Ddd.accesskey "5">
-<!ENTITY day.6.Ddd "Th6" >
-<!ENTITY day.6.Ddd.accesskey "6">
-<!ENTITY day.7.Ddd "Th7" >
-<!ENTITY day.7.Ddd.accesskey "7">
-
-<!ENTITY day.1.name "Chủ nhật" >
-<!ENTITY day.2.name "Thứ Hai" >
-<!ENTITY day.3.name "Thứ Ba" >
-<!ENTITY day.4.name "Thứ Tư" >
-<!ENTITY day.5.name "Thứ Năm" >
-<!ENTITY day.6.name "Thứ Sáu" >
-<!ENTITY day.7.name "Thứ Bảy" >
-
-<!ENTITY month.1.name "Tháng Một" >
-<!ENTITY month.2.name "Tháng Hai" >
-<!ENTITY month.3.name "Tháng Ba" >
-<!ENTITY month.4.name "Tháng Tư" >
-<!ENTITY month.5.name "Tháng Năm" >
-<!ENTITY month.6.name "Tháng Sáu" >
-<!ENTITY month.7.name "Tháng Bảy" >
-<!ENTITY month.8.name "Tháng Tám" >
-<!ENTITY month.9.name "Tháng Chín" >
-<!ENTITY month.10.name "Tháng Mười" >
-<!ENTITY month.11.name "Tháng Mười Một" >
-<!ENTITY month.12.name "Tháng Mười Hai" >
+<!ENTITY month.1.name "Tháng một" >
+<!ENTITY month.2.name "Tháng hai" >
+<!ENTITY month.3.name "Tháng ba" >
+<!ENTITY month.4.name "Tháng tư" >
+<!ENTITY month.5.name "Tháng năm" >
+<!ENTITY month.6.name "Tháng sáu" >
+<!ENTITY month.7.name "Tháng bảy" >
+<!ENTITY month.8.name "Tháng tám" >
+<!ENTITY month.9.name "Tháng chín" >
+<!ENTITY month.10.name "Tháng mười" >
+<!ENTITY month.11.name "Tháng mười một" >
+<!ENTITY month.12.name "Tháng mười hai" >
 
 <!ENTITY onemonthbackward.tooltip "Lùi một tháng" >
-<!ENTITY onemonthforward.tooltip "Tiến Một Tháng" >
+<!ENTITY onemonthforward.tooltip "Tiến một tháng" >
 <!ENTITY oneyearbackward.tooltip "Một năm trước" >
 <!ENTITY oneyearforward.tooltip "Một năm tiếp" >
-<!ENTITY showToday.tooltip "Nhảy tới Hôm nay">
-<!ENTITY onedayforward.tooltip "Tiến Một Ngày">
+<!ENTITY showToday.tooltip "Đi đến hôm nay">
+<!ENTITY onedayforward.tooltip "Tiến một ngày">
 <!ENTITY onedaybackward.tooltip "Lùi một ngày">
 <!ENTITY showselectedday.tooltip "Hiện các sự kiện của ngày đã chọn">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Drucken…">
 <!ENTITY printCmd.accesskey "d">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Druckvorschau">
-<!ENTITY printPreviewCmd.accesskey "v">
-<!ENTITY printSetupCmd.label "Seite einrichten…">
-<!ENTITY printSetupCmd.accesskey "e">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Löschen">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "L">
 <!ENTITY compactVersion.label "Kompakte Ansicht">
 <!ENTITY compactVersion.accesskey "K">
-<!ENTITY folderPaneBar.label "Konten-/Ordneransicht">
-<!ENTITY folderPaneBar.accesskey "K">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Sortieren nach">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Adressbuch">
 <!ENTITY addressBookCmd.accesskey "b">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Add-ons">
-<!ENTITY addons.accesskey "A">
-<!ENTITY addonPrefs.label "Add-on-Einstellungen">
-<!ENTITY addonPrefs.accesskey "g">
-<!ENTITY addonPrefsUnix.label "Add-on-Einstellungen">
-<!ENTITY addonPrefsUnix.accesskey "g">
 <!ENTITY addonNoPrefs.label "Keine Add-on-Einstellungen gefunden">
 <!ENTITY activitymanager.label "Aktivitäten">
 <!ENTITY activitymanager.accesskey "v">
@@ -493,7 +481,7 @@
 <!ENTITY filtersApply.label "Filter auf Ordner anwenden">
 <!ENTITY filtersApply.accesskey "O">
 <!ENTITY filtersApplyToSelection.label "Filter auf gewählte Nachrichten anwenden">
-<!ENTITY filtersApplyToSelection.accesskey "g">
+<!ENTITY filtersApplyToSelection.accesskey "N">
 <!ENTITY filtersApplyToMessage.label "Filter auf Nachricht anwenden">
 <!ENTITY filtersApplyToMessage.accesskey "N">
 <!ENTITY runJunkControls.label "Junk-Filter auf Ordner anwenden">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "u">
 <!ENTITY importCmd.label "Importieren…">
 <!ENTITY importCmd.accesskey "m">
+<!ENTITY exportCmd.label "Exportieren…">
+<!ENTITY exportCmd.accesskey "x">
 <!ENTITY clearRecentHistory.label "Neueste Chronik löschen…">
 <!ENTITY clearRecentHistory.accesskey "r">
 <!ENTITY accountManagerCmd2.label "Konten-Einstellungen">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Add-ons debuggen">
 <!ENTITY debugAddonsCmd.accesskey "A">
-<!ENTITY tabsDebugCmd.label "Inhaltsframe-Debugger">
-<!ENTITY tabsDebugCmd.accesskey "n">
 <!ENTITY errorConsoleCmd.label "Fehlerkonsole">
 <!ENTITY errorConsoleCmd.accesskey "F">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Zurück">
 <!ENTITY goForwardButton1.label "Vor">
 <!ENTITY deleteItem.title "Löschen">
-<!ENTITY deleteButton.label "Löschen">
-<!ENTITY undeleteButton.label "Wiederherstellen">
 <!ENTITY markButton.label "Markieren">
 <!ENTITY printButton.label "Drucken">
 <!ENTITY stopButton.label "Stopp">
 <!ENTITY throbberItem.title "Aktivitätsindikator">
 <!ENTITY junkItem.title "Junk">
-<!ENTITY junkButton.label "Junk">
-<!ENTITY notJunkButton.label "Kein Junk">
 <!ENTITY addressBookButton.label "Adressbuch">
 <!ENTITY chatButton.label "Chat">
 <!ENTITY glodaSearch.title "Globale Suche">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Gehe zur vorherigen Nachricht">
 <!ENTITY goForwardButton.tooltip "Eine Nachricht vorwärts in der Chronik der angesehenen Nachrichten">
 <!ENTITY goBackButton.tooltip "Eine Nachricht zurück in der Chronik der angesehenen Nachrichten">
-<!ENTITY deleteButton.tooltip "Gewählte Nachricht(en) oder Ordner löschen">
-<!ENTITY undeleteButton.tooltip "Gewählte Nachricht(en) nicht löschen">
 <!ENTITY markButton.tooltip "Gewählte Nachricht(en) markieren">
 <!ENTITY printButton.tooltip "Gewählte Nachricht(en) drucken">
 <!ENTITY stopButton.tooltip "Aktuelle Übertragung stoppen">
-<!ENTITY junkButton.tooltip "Gewählte Nachricht(en) als Junk einstufen">
-<!ENTITY notJunkButton.tooltip "Gewählte Nachricht(en) als &quot;Kein Junk&quot; einstufen">
 <!ENTITY addressBookButton.tooltip "Adressbuch öffnen">
 <!ENTITY chatButton.tooltip "Chat-Tab öffnen">
 <!ENTITY tagButton.tooltip "Bei gewählten Nachrichten Schlagwörter hinzufügen/entfernen">
 <!ENTITY compactButton.tooltip "Gelöschte Nachrichten endgültig aus dem gewählten Ordner entfernen">
 <!ENTITY appmenuButton1.tooltip "Anwendungsmenü von &brandShortName; anzeigen">
-<!ENTITY addonsButton.tooltip "Add-ons verwalten">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Als eingebundenen Text">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,6 +8,7 @@
 
 # The text "WebRTC" is a proper noun and should not be translated.
 about-webrtc-document-title = Données internes de WebRTC
+
 # "about:webrtc" is a internal browser URL and should not be
 # translated. This string is used as a title for a file save dialog box.
 about-webrtc-save-page-dialog-title = enregistrer about:webrtc sous
@@ -75,10 +76,12 @@ about-webrtc-type-remote = Distant
 # This adjective is used to label a table column. Cells in this column contain
 # the localized javascript string representation of "true" or are left blank.
 about-webrtc-nominated = Nommé
+
 # This adjective is used to label a table column. Cells in this column contain
 # the localized javascript string representation of "true" or are left blank.
 # This represents an attribute of an ICE candidate.
 about-webrtc-selected = Sélectionné
+
 about-webrtc-save-page-label = Enregistrer la page
 about-webrtc-debug-mode-msg-label = Mode débogage 
 about-webrtc-debug-mode-off-state-label = Démarrer le mode débogage
@@ -144,26 +147,36 @@ about-webrtc-remote-send-ssrc = SSRC d’envoi à distance
 # An option whose value will not be displayed but instead noted as having been
 # provided
 about-webrtc-configuration-element-provided = Fourni
+
 # An option whose value will not be displayed but instead noted as having not
 # been provided
 about-webrtc-configuration-element-not-provided = Non fourni
+
 # The options set by the user in about:config that could impact a WebRTC call
 about-webrtc-custom-webrtc-configuration-heading = Préférences WebRTC définies par l’utilisateur ou l’utilisatrice
+
 # Section header for estimated bandwidths of WebRTC media flows
 about-webrtc-bandwidth-stats-heading = Bande passante estimée
+
 # The ID of the MediaStreamTrack
 about-webrtc-track-identifier = Numéro de piste
+
 # The estimated bandwidth available for sending WebRTC media in bytes per second
 about-webrtc-send-bandwidth-bytes-sec = Débit montant (octets/s)
+
 # The estimated bandwidth available for receiving WebRTC media in bytes per second
 about-webrtc-receive-bandwidth-bytes-sec = Débit descendant (octets/s)
+
 # Maximum number of bytes per second that will be padding zeros at the ends of packets
 about-webrtc-max-padding-bytes-sec = Bourrage maximal (octets/s)
+
 # The amount of time inserted between packets to keep them spaced out
 about-webrtc-pacer-delay-ms = Délai d’espacement (ms)
+
 # The amount of time it takes for a packet to travel from the local machine to the remote machine,
 # and then have a packet return
 about-webrtc-round-trip-time-ms = RTT ms
+
 # This is a section heading for video frame statistics for a MediaStreamTrack.
 # see https://developer.mozilla.org/en-US/docs/Web/API/MediaStreamTrack.
 # Variables:
@@ -190,6 +203,7 @@ about-webrtc-received-label =
         [one] Un paquet reçu
        *[other] { $packets } paquets reçus
     }
+
 # This is the total number of packets lost by the PeerConnection.
 # Variables:
 #  $packets (Number) - The number of packets lost.
@@ -198,6 +212,7 @@ about-webrtc-lost-label =
         [one] Un paquet perdu
        *[other] { $packets } paquets perdus
     }
+
 # This is the total number of packets sent by the PeerConnection.
 # Variables:
 #  $packets (Number) - The number of packets sent.
@@ -206,11 +221,13 @@ about-webrtc-sent-label =
         [one] Un paquet envoyé
        *[other] { $packets } paquets envoyés
     }
+
 # Jitter is the variance in the arrival time of packets.
 # See: https://w3c.github.io/webrtc-stats/#dom-rtcreceivedrtpstreamstats-jitter
 # Variables:
 #   $jitter (Number) - The jitter.
 about-webrtc-jitter-label = Gigue { $jitter }
+
 # ICE candidates arriving after the remote answer arrives are considered trickled
 # (an attribute of an ICE candidate). These are highlighted in the ICE stats
 # table with light blue background.
@@ -223,10 +240,12 @@ about-webrtc-trickle-caption-msg = Les candidats lents (arrivant après la répo
 # Variables:
 #  $timestamp (Number) - The Unix Epoch time at which the SDP was set.
 about-webrtc-sdp-set-at-timestamp-local = Définir SDP local à l’horodatage { NUMBER($timestamp, useGrouping: "false") }
+
 # This is used as a header for remote SDP.
 # Variables:
 #  $timestamp (Number) - The Unix Epoch time at which the SDP was set.
 about-webrtc-sdp-set-at-timestamp-remote = Définir SDP distant à l’horodatage { NUMBER($timestamp, useGrouping: "false") }
+
 # This is used as a header for an SDP section contained in two columns allowing for side-by-side comparisons.
 # Variables:
 #  $timestamp (Number) - The Unix Epoch time at which the SDP was set.

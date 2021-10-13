@@ -1,14 +1,16 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 migration-wizard =
     .title = Importguiden
+
 import-from =
     { PLATFORM() ->
         [windows] Importera inställningar, bokmärken, historik, lösenord och annan data från:
        *[other] Importera inställningar, bokmärken, historik, lösenord och annan data från:
     }
+
 import-from-bookmarks = Importera bokmärken från:
 import-from-ie =
     .label = Microsoft Internet Explorer
@@ -49,25 +51,39 @@ import-from-firefox =
 import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
+
 no-migration-sources = Hittade inget program som innehåller bokmärken, historik eller lösenord.
+
 import-source-page-title = Importera inställningar och data
 import-items-page-title = Objekt som ska importeras
+
 import-items-description = Välj poster att importera:
+
 import-permissions-page-title = Ge { -brand-short-name } behörigheter
+
 # Do not translate "Bookmarks.plist"; the file name is the same everywhere.
 import-permissions-description = macOS kräver att du uttryckligen tillåter { -brand-short-name } att komma åt Safaris bokmärken. Klicka på "Fortsätt" och välj filen "Bookmarks.plist" i panelen öppna fil som visas.
+
 import-migrating-page-title = Importerar…
+
 import-migrating-description = Följande poster importeras för närvarande…
+
 import-select-profile-page-title = Välj profil
+
 import-select-profile-description = Följande profiler är tillgängliga att importera från:
+
 import-done-page-title = Import slutförd
+
 import-done-description = Följande poster har importerats:
+
 import-close-source-browser = Kontrollera att den valda webbläsaren är stängd innan du fortsätter.
+
 # Displays which browser the bookmarks are being imported from
 #
 # Variables:
 #   $source (String): The browser the user has chosen to import bookmarks from.
 imported-bookmarks-source = Från { $source }
+
 source-name-ie = Internet Explorer
 source-name-edge = Microsoft Edge
 source-name-edge-beta = Microsoft Edge Beta
@@ -77,8 +93,9 @@ source-name-chrome = Google Chrome
 source-name-chrome-beta = Google Chrome Beta
 source-name-chrome-dev = Google Chrome Dev
 source-name-chromium = Chromium
-source-name-firefox = Waterfox
+source-name-firefox = Waterfox Waterfox
 source-name-360se = 360 Secure Browser
+
 imported-safari-reading-list = Läslista (från Safari)
 imported-edge-reading-list = Läslista (från Edge)
 
@@ -100,6 +117,7 @@ browser-data-cookies-checkbox =
     .label = Kakor
 browser-data-cookies-label =
     .value = Kakor
+
 browser-data-history-checkbox =
     .label =
         { $browser ->
@@ -112,10 +130,12 @@ browser-data-history-label =
             [firefox] Webbhistorik och bokmärken
            *[other] Webbhistorik
         }
+
 browser-data-formdata-checkbox =
     .label = Sparad formulärdata
 browser-data-formdata-label =
     .value = Sparad formulärdata
+
 # This string should use the same phrase for "logins and passwords" as the
 # label in the main hamburger menu that opens about:logins.
 browser-data-passwords-checkbox =
@@ -124,6 +144,7 @@ browser-data-passwords-checkbox =
 # label in the main hamburger menu that opens about:logins.
 browser-data-passwords-label =
     .value = Sparade inloggningar och lösenord
+
 browser-data-bookmarks-checkbox =
     .label =
         { $browser ->
@@ -138,10 +159,12 @@ browser-data-bookmarks-label =
             [edge] Favoriter
            *[other] Bokmärken
         }
+
 browser-data-otherdata-checkbox =
     .label = Annan data
 browser-data-otherdata-label =
     .label = Annan data
+
 browser-data-session-checkbox =
     .label = Fönster och flikar
 browser-data-session-label =

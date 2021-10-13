@@ -1,30 +1,41 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ## App Menu
 
+appmenuitem-update-banner3 =
+    .label-update-downloading = ينزّل تحديث { -brand-shorter-name }
+    .label-update-available = يتوفّر تحديث — نزّله الآن
+    .label-update-manual = يتوفّر تحديث — نزّله الآن
+    .label-update-unsupported = تعذّر التحديث — النظام غير متطابق
+    .label-update-restart = يتوفّر تحديث — أعِد التشغيل
 appmenuitem-protection-dashboard-title = لوحة الحمايات
-appmenuitem-customize-mode =
-    .label = خصّص…
-
-## Zoom Controls
-
 appmenuitem-new-tab =
     .label = لسان جديد
 appmenuitem-new-window =
     .label = نافذة جديدة
 appmenuitem-new-private-window =
     .label = نافذة خاصة جديدة
+appmenuitem-history =
+    .label = التأريخ
+appmenuitem-downloads =
+    .label = التنزيلات
 appmenuitem-passwords =
     .label = كلمات السر
 appmenuitem-addons-and-themes =
     .label = الإضافات والسمات
+appmenuitem-print =
+    .label = اطبع…
 appmenuitem-find-in-page =
     .label = ابحث في الصفحة…
+appmenuitem-zoom =
+    .value = قرّب
 appmenuitem-more-tools =
     .label = أدوات أكثر
+appmenuitem-help =
+    .label = مساعدة
 appmenuitem-exit2 =
     .label =
         { PLATFORM() ->
@@ -51,15 +62,29 @@ appmenuitem-zoom-reduce =
 appmenuitem-fullscreen =
     .label = ملء الشاشة
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
-fxa-toolbar-sync-now =
-    .label = زامِن الآن
 appmenu-remote-tabs-sign-into-sync =
     .label = لِج كي تبدأ المزامنة…
 appmenu-remote-tabs-turn-on-sync =
     .label = فعّل المزامنة…
+# This is shown after the tabs list if we can display more tabs by clicking on the button
+appmenu-remote-tabs-showmore =
+    .label = أظهِر ألسنة أكثر
+    .tooltiptext = اعرض المزيد من الألسنة من هذا الجهاز
+# This is shown beneath the name of a device when that device has no open tabs
+appmenu-remote-tabs-notabs = لا ألسنة مفتوحة
+# This is shown when Sync is configured but syncing tabs is disabled.
+appmenu-remote-tabs-tabsnotsyncing = فعّل مزامنة الألسنة لعرض قائمة بالألسنة من أجهزتك الأخرى.
+# This is shown when Sync is configured but this appears to be the only device attached to
+# the account. We also show links to download Waterfox for android/ios.
+appmenu-remote-tabs-noclients = أتريد رؤية ألسنتك من الأجهزة الأخرى هنا؟
+appmenu-remote-tabs-connectdevice =
+    .label = صِلْ جهازا آخر
+appmenu-remote-tabs-welcome = اعرض قائمة بالألسنة من أجهزتك الأخرى.
+appmenu-remote-tabs-unverified = يجب تأكيد حسابك.
 appmenuitem-fxa-toolbar-sync-now2 = زامِن الآن
+appmenuitem-fxa-sign-in = لِج إلى { -brand-product-name }
 appmenuitem-fxa-manage-account = أدِر الحساب
 appmenu-fxa-header2 = { -fxaccount-brand-name }
 # Variables
@@ -84,7 +109,7 @@ whatsnew-panel-footer-checkbox =
     .label = أعلِمني بالميزات الجديدة
     .accesskey = ع
 
-## The Firefox Profiler – The popup is the UI to turn on the profiler, and record
+## The Waterfox Profiler – The popup is the UI to turn on the profiler, and record
 ## performance profiles. To enable it go to profiler.firefox.com and click
 ## "Enable Profiler Menu Button".
 
@@ -96,10 +121,15 @@ profiler-popup-description-title =
     .value = سجّل ثمّ حلّل ثمّ شارِك
 profiler-popup-description = تعاوَن على حلّ مشاكل الأداء بنشر تحليلات الأداء ومشاركتها مع فريقك.
 profiler-popup-learn-more = اطّلع على المزيد
+profiler-popup-learn-more-button =
+    .label = اطّلع على المزيد
 profiler-popup-settings =
     .value = الإعدادات
 # This link takes the user to about:profiling, and is only visible with the Custom preset.
 profiler-popup-edit-settings = عدّل الإعدادات…
+# This link takes the user to about:profiling, and is only visible with the Custom preset.
+profiler-popup-edit-settings-button =
+    .label = عدّل الإعدادات…
 profiler-popup-disabled = مُحلّل الأداء معطّل حاليًا، أغلب الظن أنّ هناك نافذة تصفّح خاص مفتوحة.
 profiler-popup-recording-screen = يسجّل…
 # The profiler presets list is generated elsewhere, but the custom preset is defined
@@ -122,6 +152,15 @@ profiler-popup-capture-shortcut =
         [macos] ⌃⇧2
        *[other] Ctrl+Shift+2
     }
+
+## Profiler presets
+## They are shown in the popup's select box.
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
 
 ## History panel
 

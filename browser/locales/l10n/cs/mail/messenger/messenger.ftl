@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,9 +23,6 @@ content-tab-security-broken-icon =
 
 ## Toolbar
 
-addons-and-themes-button =
-    .label = Doplňky a vzhledy
-    .tooltip = Otevře správce doplňků
 addons-and-themes-toolbarbutton =
     .label = Doplňky a vzhledy
     .tooltiptext = Správa doplňků
@@ -39,10 +36,10 @@ redirect-msg-button =
 ## Folder Pane
 
 folder-pane-toolbar =
-    .toolbarname = Nástroje panelů složek
+    .toolbarname = Nástroje podokna složek
     .accesskey = a
 folder-pane-toolbar-options-button =
-    .tooltiptext = Nastavení panelu složek
+    .tooltiptext = Nastavení podokna složek
 folder-pane-header-label = Složky
 
 ## Folder Toolbar Header Popup
@@ -137,3 +134,9 @@ caret-browsing-prompt-check-text = Příště se už neptat.
 repair-text-encoding-button =
     .label = Opravit znakovou sadu textu
     .tooltiptext = Na základě obsahu zprávy odhadne správnou znakovou sadu textu
+
+## no-reply handling
+
+no-reply-title = Adrese pro odpověď není podporovaná
+no-reply-message = Adresa pro odpověď ({ $email }) není sledovanou adresou. Zprávy odeslané na tuto adresu si nejspíše nikdo nepřečte.
+no-reply-reply-anyway-button = Přesto odpověď odeslat

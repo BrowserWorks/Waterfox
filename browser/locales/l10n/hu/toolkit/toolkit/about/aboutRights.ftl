@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = Az Ön jogai
 rights-intro = A { -brand-full-name } ingyenes és nyílt forrású szoftver, amelyet világszerte több ezer ember fejleszt. Néhány dologról tudnia kell:
-rights-intro-point-1 = A { -brand-short-name } a <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a> feltételei szerint lett közreadva. Ez azt jelenti, hogy a  { -brand-short-name } használható, másolható és terjeszthető. A { -brand-short-name } forráskódjának igény szerinti módosítása szintén megengedett. A Mozilla Public License megadja a jogot a módosított verziók terjesztésére is.
-rights-intro-point-2 = Ön nem kapott jogot vagy felhatalmazást a védjegyek használatára sem a Mozilla Foundationtől, sem mástól, beleértve – de nem csak erre korlátozva – a Firefox nevet és logót. A védjegyekről további információ <a data-l10n-name="mozilla-trademarks-link">itt</a> olvasható.
+rights-intro-point-1 = A { -brand-short-name } a <a data-l10n-name="mozilla-public-license-link">Waterfox Public License</a> feltételei szerint lett közreadva. Ez azt jelenti, hogy a  { -brand-short-name } használható, másolható és terjeszthető. A { -brand-short-name } forráskódjának igény szerinti módosítása szintén megengedett. A Waterfox Public License megadja a jogot a módosított verziók terjesztésére is.
+rights-intro-point-2 = Ön nem kapott jogot vagy felhatalmazást a védjegyek használatára sem a Waterfox Foundationtől, sem mástól, beleértve – de nem csak erre korlátozva – a Waterfox nevet és logót. A védjegyekről további információ <a data-l10n-name="mozilla-trademarks-link">itt</a> olvasható.
 rights-intro-point-3 = A { -brand-short-name } egyes funkciói, például a Hibajelentő, lehetőséget ad a visszajelzésre a { -vendor-short-name } felé. A visszajelzés elküldésével Ön engedélyt ad a { -vendor-short-name } részére, hogy a visszajelzést a termékei fejlesztésére használja fel, a visszajelzést közzétegye a webhelyein, valamint a visszajelzést terjessze.
 rights-intro-point-4 = A { -vendor-short-name } részére a { -brand-short-name } által beküldött személyes adatokat és visszajelzéseket a <a data-l10n-name="mozilla-privacy-policy-link">{ -brand-short-name } Adatvédelmi Irányelvek</a> szerint kezeljük.
 rights-intro-point-4-unbranded = Itt kell felsorolni a termékben alkalmazott adatvédelmi irányelveket.

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -27,5 +27,5 @@ panic-button-day =
 
 panic-button-action-desc = При этом будут:
 panic-button-delete-cookies = Удалены последние <strong>Куки</strong>
-panic-button-delete-history = Удалена недавняя <strong>История</strong>
+panic-button-delete-history = Удалена недавняя <strong>история</strong>
 panic-button-delete-tabs-and-windows = Закрыты все <strong>Вкладки</strong> и <strong>Окна</strong>

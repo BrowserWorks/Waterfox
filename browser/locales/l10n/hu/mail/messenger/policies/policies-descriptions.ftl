@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,6 +18,8 @@ policy-AppUpdateURL = Egyéni alkalmazásfrissítési URL beállítása.
 
 policy-Authentication = Az integrált hitelesítés beállítása az azt támogató webhelyek számára.
 
+policy-BackgroundAppUpdate2 = Engedélyezze vagy tiltsa le a háttérfrissítőt.
+
 policy-BlockAboutAddons = Hozzáférés blokkolása a kiegészítőkezelőhöz (about:addons).
 
 policy-BlockAboutConfig = Hozzáférés blokkolása az about:config oldalhoz.
@@ -31,6 +33,8 @@ policy-CaptivePortal = Beléptető portál engedélyezése vagy letiltása.
 policy-CertificatesDescription = Tanúsítványok hozzáadása vagy a beépített tanúsítványok használata.
 
 policy-Cookies = Engedélyezés vagy letiltás, hogy a weboldalak sütiket állítsanak be.
+
+policy-DisableBuiltinPDFViewer = A PDF.js-nek, a { -brand-short-name } beépített PDF-megjelenítőjének letiltása.
 
 policy-DisabledCiphers = Titkosítási módok letiltása.
 
@@ -85,6 +89,8 @@ policy-ExtensionSettings = Kezelje a kiegészítőtelepítés összes aspektusá
 
 policy-ExtensionUpdate = Az automatikus kiegészítőfrissítések engedélyezése vagy letiltása.
 
+policy-Handlers = Alapértelmezett alkalmazáskezelők beállítása
+
 policy-HardwareAcceleration = Ha hamis, akkor kikapcsolja a hardveres gyorsítást.
 
 policy-InstallAddonsPermission = Engedélyezi, hogy bizonyos weboldalak kiegészítőket telepítsenek.
@@ -100,6 +106,8 @@ policy-LegacySameSiteCookieBehaviorEnabledForDomainList = A sütik örökölt Sa
 ##
 
 policy-LocalFileLinks = Engedélyezi, hogy bizonyos weboldalak helyi fájlokra hivatkozzanak.
+
+policy-ManualAppUpdateOnly = Csak a kézi frissítések engedélyezése, és ne értesítse a felhasználót a frissítésekről.
 
 policy-NetworkPrediction = A hálózati előrejelzés engedélyezése vagy letiltása (előzetes DNS lekérdezés).
 
@@ -120,6 +128,8 @@ policy-Permissions2 = A kamera, mikrofon, helyadatok, értesítések és automat
 
 policy-Preferences = A beállítások egy részének megadása és zárolása.
 
+policy-PrimaryPassword = Elsődleges jelszó használatának előírása vagy megakadályozása.
+
 policy-PromptForDownloadLocation = Kérdezze meg, hogy hová mentse le a fájlokat letöltéskor.
 
 policy-Proxy = Proxy beállítások konfigurálása.
@@ -132,7 +142,7 @@ policy-SearchEngines = Keresőszolgáltatások beállításainak konfigurálása
 
 policy-SearchSuggestEnabled = A keresési javaslatok engedélyezése vagy letiltása.
 
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = PKCS #11 modulok telepítése.
 
 policy-SSLVersionMax = A maximális SSL-verzió megadása.

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/. --
 
@@ -122,11 +122,14 @@ help-button =
 ## Variables:
 ##   $value (number) - Amount of data being stored
 ##   $unit (string) - The unit of data being stored (Usually KB)
+
 security-site-data-cookies = Ja, cookies og { $value } { $unit } websteds-data
 security-site-data-only = Ja, { $value } { $unit } websteds-data
 
 security-site-data-cookies-only = Ja, cookies
 security-site-data-no = Nej
+
+##
 
 image-size-unknown = Ukendt
 page-info-not-specified =

@@ -1,10 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY fieldMapImport.title "주소록 가져오기">
 <!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
-<!ENTITY fieldMapImport.recordNumber "가져온 데이터:">
 <!ENTITY fieldMapImport.next.label "다음">
 <!ENTITY fieldMapImport.next.accesskey "N">
 <!ENTITY fieldMapImport.previous.label "이전">

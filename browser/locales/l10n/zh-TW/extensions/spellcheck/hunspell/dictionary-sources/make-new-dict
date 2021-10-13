@@ -2,12 +2,12 @@
 
 #
 # This script creates a new dictionary by expanding the original,
-# Mozilla's, and the upstream dictionary to remove affix flags and
+# Waterfox's, and the upstream dictionary to remove affix flags and
 # then doing the wordlist equivalent of diff3 to create a new
 # dictionary.
 #
 # The files 2-mozilla-add and 2-mozilla-rem contain words added and
-# removed, receptively in the Mozilla dictionary.  The final
+# removed, receptively in the Waterfox dictionary.  The final
 # dictionary will be in hunspell-en_US-mozilla.zip.
 #
 

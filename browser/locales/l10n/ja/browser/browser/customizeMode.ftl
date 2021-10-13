@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,8 +23,6 @@ customize-mode-uidensity-menu-touch =
     .tooltiptext = タッチに適した大きさです
 customize-mode-uidensity-auto-touch-mode-checkbox =
     .label = タブレットモードではタッチにする
-customize-mode-extra-drag-space =
-    .label = ドラッグ領域
 customize-mode-lwthemes =
     .label = テーマ
 customize-mode-overflow-list-description = ここにアイテムをドラッグアンドドロップすると、ツールバー外の手の届くところに置いておけます...
@@ -32,10 +30,6 @@ customize-mode-uidensity-menu-normal =
     .label = 通常
     .accesskey = N
     .tooltiptext = 通常の大きさです
-customize-mode-uidensity-menu-compact =
-    .label = コンパクト
-    .accesskey = C
-    .tooltiptext = 小さくまとめます
 customize-mode-uidensity-menu-compact-unsupported =
     .label = コンパクト (未サポート)
     .accesskey = C

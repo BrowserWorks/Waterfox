@@ -1,20 +1,24 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 fonts-window-close =
     .key = w
+
 # Variables:
 #   $name {string, "Arial"} - Name of the default font
 fonts-label-default =
     .label = Mặc định ({ $name })
 fonts-label-default-unnamed =
     .label = Mặc định
+
 fonts-encoding-dialog-title =
     .title = Phông chữ & bảng mã
+
 fonts-language-legend =
     .value = Phông chữ cho:
     .accesskey = t
+
 fonts-proportional-label =
     .value = Tỷ lệ:
     .accesskey = P
@@ -85,38 +89,45 @@ font-language-group-tibetan =
 
 default-font-serif =
     .label = Serif
+
 default-font-sans-serif =
     .label = Sans Serif
-font-size-label =
-    .value = Kích cỡ:
-    .accesskey = e
+
 font-size-proportional-label =
     .value = Kích cỡ:
     .accesskey = e
+
 font-size-monospace-label =
     .value = Kích cỡ:
     .accesskey = i
+
 font-serif-label =
     .value = Serif:
     .accesskey = S
+
 font-sans-serif-label =
     .value = Sans-serif:
     .accesskey = n
+
 font-monospace-label =
     .value = Monospace:
     .accesskey = M
+
 font-min-size-label =
     .value = Cỡ phông tối thiểu:
     .accesskey = z
+
 min-size-none =
     .label = Không
 
 ## Fonts in message
 
 font-control-legend = Điều chỉnh phông chữ
+
 use-document-fonts-checkbox =
     .label = Cho phép thư sử dụng phông chữ khác
     .accesskey = o
+
 use-fixed-width-plain-checkbox =
     .label = Sử dụng phông chữ có chiều rộng cố định cho thư văn bản thuần túy
     .accesskey = x
@@ -124,13 +135,17 @@ use-fixed-width-plain-checkbox =
 ## Language settings
 
 text-encoding-legend = Bảng mã văn bản
+
 text-encoding-description = Đặt mã hóa văn bản mặc định để gửi và nhận thư
+
 font-outgoing-email-label =
     .value = Thư gửi đi:
     .accesskey = u
+
 font-incoming-email-label =
     .value = Thư đến:
     .accesskey = I
+
 default-font-reply-checkbox =
     .label = Khi có thể, sử dụng mã hóa văn bản mặc định trong trả lời
     .accesskey = h

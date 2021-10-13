@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -21,8 +21,8 @@ protections-popup-footer-protection-label-standard = 标准
 # The text a screen reader speaks when focused on the info button.
 protections-panel-etp-more-info =
     .aria-label = 关于增强型跟踪保护功能的更多信息
-protections-panel-etp-on-header = 对此网站已开启增强型跟踪保护
-protections-panel-etp-off-header = 对此网站已关闭增强型跟踪保护
+protections-panel-etp-on-header = 此网站已开启增强型跟踪保护
+protections-panel-etp-off-header = 此网站已关闭增强型跟踪保护
 # The link to be clicked to open the sub-panel view
 protections-panel-site-not-working = 网站不正常？
 # The heading/title of the sub-panel view
@@ -57,7 +57,6 @@ protections-panel-not-found-label = 未检测到
 ##
 
 protections-panel-settings-label = 保护设置
-# This should match the "appmenuitem-protection-dashboard-title" string in browser/appmenu.ftl.
 protections-panel-protectionsdashboard-label = 保护信息面板
 
 ## In the Site Not Working? view, we suggest turning off protections if
@@ -89,7 +88,7 @@ protections-panel-content-blocking-manage-settings =
     .accesskey = M
 protections-panel-content-blocking-breakage-report-view =
     .title = 反馈网站问题
-protections-panel-content-blocking-breakage-report-view-description = 拦截某些跟踪器可能导致部分网站出现问题。在您反馈故障时，您得以帮助 { -brand-short-name } 为所有人提供更好的体验。发送反馈将会向 Mozilla 发送网页的地址及浏览器的有关信息。 <label data-l10n-name="learn-more">详细了解</label>
+protections-panel-content-blocking-breakage-report-view-description = 拦截某些跟踪器可能导致部分网站出现问题。在您反馈故障时，您得以帮助 { -brand-short-name } 为所有人提供更好的体验。发送反馈将会向 Waterfox 发送网页的地址及浏览器的有关信息。 <label data-l10n-name="learn-more">详细了解</label>
 protections-panel-content-blocking-breakage-report-view-collection-url = 网址
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = 网址

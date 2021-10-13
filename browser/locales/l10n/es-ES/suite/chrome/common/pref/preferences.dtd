@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,8 +9,6 @@
 <!ENTITY preferencesCloseButton.accesskey "C">
 <!ENTITY prefWindow.title "Preferencias">
 <!ENTITY prefWindow.size "width: 116ch; height: 44em;">
-<!ENTITY prefWindowMac.size "width: 65em; height: 41em;">
-<!ENTITY prefWindowWin.size "width: 137ch; height: 43em;">
 <!ENTITY prefWindowMac2.size "width: 72em; height: 41em;">
 <!ENTITY prefWindowWin2.size "width: 137ch; height: 44em;">
 <!ENTITY categoryHeader "Categoría">

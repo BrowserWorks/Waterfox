@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -21,11 +21,11 @@
 <!ENTITY digitalSign.certificate_clear.button "Limpar">
 <!ENTITY digitalSign.certificate_clear.accesskey "L">
 <!ENTITY encryption.certificate.button "Selecionar…">
-<!ENTITY encryption.certificate.accesskey "t">
+<!ENTITY encryption.certificate.accesskey "c">
 <!ENTITY encryption.certificate_clear.button "Limpar">
 <!ENTITY encryption.certificate_clear.accesskey "m">
 <!ENTITY signingGroupTitle.label "Assinatura digital">
-<!ENTITY signMessage2.label "Adicionar minha assinatura digital por padrão">
+<!ENTITY signMessage2.label "Adicionar por padrão minha assinatura digital">
 <!ENTITY signMessage.accesskey "D">
 <!ENTITY signingCert2.message "Certificado pessoal de assinatura digital:">
 

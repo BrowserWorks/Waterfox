@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -87,10 +87,6 @@
 <!ENTITY printCmd.label "اطبع…">
 <!ENTITY printCmd.accesskey "ط">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "عاين الطباعة">
-<!ENTITY printPreviewCmd.accesskey "ع">
-<!ENTITY printSetupCmd.label "إعداد الصفحة…">
-<!ENTITY printSetupCmd.accesskey "ع">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "احذف الرسالة">
@@ -170,8 +166,6 @@
 <!ENTITY recentFolders.accesskey "ح">
 <!ENTITY compactVersion.label "منظور متضام">
 <!ENTITY compactVersion.accesskey "م">
-<!ENTITY folderPaneBar.label "شريط أدوات لوحة المجلد">
-<!ENTITY folderPaneBar.accesskey "م">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "رتّب حسب">
@@ -462,12 +456,6 @@
 <!ENTITY addressBookCmd.label "دفتر العناوين">
 <!ENTITY addressBookCmd.accesskey "د">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "إضافات">
-<!ENTITY addons.accesskey "ض">
-<!ENTITY addonPrefs.label "خيارات الإضافة">
-<!ENTITY addonPrefs.accesskey "ض">
-<!ENTITY addonPrefsUnix.label "تفضيلات الإضافة">
-<!ENTITY addonPrefsUnix.accesskey "ت">
 <!ENTITY addonNoPrefs.label "لم يعثر على أي إعدادات إضافات.">
 <!ENTITY activitymanager.label "مدير النشاطات">
 <!ENTITY activitymanager.accesskey "ش">
@@ -514,8 +502,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "نقّح الإضافات">
 <!ENTITY debugAddonsCmd.accesskey "ن">
-<!ENTITY tabsDebugCmd.label "منقح إطار المحتوى">
-<!ENTITY tabsDebugCmd.accesskey "ط">
 <!ENTITY errorConsoleCmd.label "مرقاب الأعطال">
 <!ENTITY errorConsoleCmd.accesskey "ط">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -539,15 +525,11 @@
 <!ENTITY backButton1.label "إلى الخلف">
 <!ENTITY goForwardButton1.label "إلى الأمام">
 <!ENTITY deleteItem.title "حذف">
-<!ENTITY deleteButton.label "احذف">
-<!ENTITY undeleteButton.label "ألغِ الحذف">
 <!ENTITY markButton.label "أشِّر">
 <!ENTITY printButton.label "اطبع">
 <!ENTITY stopButton.label "قف">
 <!ENTITY throbberItem.title "مبيّن النشاط">
 <!ENTITY junkItem.title "سخام">
-<!ENTITY junkButton.label "سخام">
-<!ENTITY notJunkButton.label "ليست سخامًا">
 <!ENTITY addressBookButton.label "دفتر العناوين">
 <!ENTITY chatButton.label "الدردشة">
 <!ENTITY glodaSearch.title "بحث عمومي">
@@ -579,19 +561,14 @@
 <!ENTITY previousMsgButton.tooltip "انتقل للرسالة السابقة">
 <!ENTITY goForwardButton.tooltip "تقدم رسالة واحدة">
 <!ENTITY goBackButton.tooltip "ارجع رسالة واحدة">
-<!ENTITY deleteButton.tooltip "احذف الرسالة أو المجلد المختار">
-<!ENTITY undeleteButton.tooltip "ألغِ حذف الرسالة المختارة">
 <!ENTITY markButton.tooltip "أشِّر الرسائل">
 <!ENTITY printButton.tooltip "اطبع هذه الرسالة">
 <!ENTITY stopButton.tooltip "أوقف النقل الحالي">
-<!ENTITY junkButton.tooltip "أشر الرسائل المختارة على أنها سخام">
-<!ENTITY notJunkButton.tooltip "أشر الرسائل المختارة على أنها ليست سخاما">
 <!ENTITY addressBookButton.tooltip "دفتر العناوين">
 <!ENTITY chatButton.tooltip "أظهر لسان الدردشة">
 <!ENTITY tagButton.tooltip "سِمْ الرسائل">
 <!ENTITY compactButton.tooltip "أزِل الرسائل المحذوفة من المجلد المحدد">
 <!ENTITY appmenuButton1.tooltip "اعرض قائمة &brandShortName;">
-<!ENTITY addonsButton.tooltip "أدِر إضافاتك">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "مرِّر ضمن المتن">

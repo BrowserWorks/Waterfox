@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -30,6 +30,12 @@
 <!ENTITY restoreTabsAtATime.label       "вкладок за раз">
 <!ENTITY restoreDeferred.label          "Восстанавливать вкладки только когда мне нужно">
 <!ENTITY restoreDeferred.accesskey      "а">
+
+<!ENTITY siteIcons.label                "Значки веб-сайтов">
+<!ENTITY useSiteIcons.label             "Показывать значки веб-сайтов">
+<!ENTITY useSiteIcons.accesskey         "з">
+<!ENTITY useFavIcons.label              "Пытаться использовать значки серверов, если они не указаны страницей">
+<!ENTITY useFavIcons.accesskey          "ы">
 
 <!ENTITY homePageIntro.label            "При нажатии кнопки «Домашняя страница» загрузится следующая группа страниц:">
 <!ENTITY useCurrent.label               "Текущая страница">

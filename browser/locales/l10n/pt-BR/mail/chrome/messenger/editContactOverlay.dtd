@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -14,7 +14,7 @@
 <!ENTITY editContactAddressBook.label "Catálogo de endereços:">
 <!ENTITY editContactAddressBook.accesskey "t">
 
-<!ENTITY editContactPanelDone.label "Concluído">
+<!ENTITY editContactPanelDone.label "Pronto">
 <!ENTITY editContactPanelDone.accesskey "C">
 
 <!ENTITY contactMoveDisabledWarning.description "Você não pode alterar o catálogo de endereços porque o contato está em uma lista de emails.">

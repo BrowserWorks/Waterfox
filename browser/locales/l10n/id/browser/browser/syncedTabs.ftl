@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = Ingin melihat tab dari perangkat Anda y
 synced-tabs-sidebar-intro = Lihat daftar tab dari perangkat Anda lainnya.
 synced-tabs-sidebar-unverified = Akun Anda perlu diverifikasi.
 synced-tabs-sidebar-notabs = Tidak ada tab terbuka
-synced-tabs-sidebar-openprefs = Buka preferensi { -sync-brand-short-name }
 synced-tabs-sidebar-open-settings = Buka pengaturan Sinkronisasi
 synced-tabs-sidebar-tabsnotsyncing = Aktifkan sinkronisasi tab untuk melihat daftar tab dari perangkat lainnya.
 synced-tabs-sidebar-connect-another-device = Sambungkan Peranti Lain
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = Sinkronkan Sekarang
     .accesskey = S
-fxa-sign-in = Masuk ke { -sync-brand-short-name }
-turn-on-sync = Aktifkan { -sync-brand-short-name }
 synced-tabs-fxa-sign-in = Masuk untuk menyinkronkan
 synced-tabs-turn-on-sync = Aktifkan sinkronisasi

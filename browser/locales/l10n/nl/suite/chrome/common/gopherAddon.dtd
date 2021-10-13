@@ -1,9 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY loadError.label        "Fout bij het laden van de pagina">
 <!ENTITY gopherAddon.title      "Gopher-protocol">
 <!ENTITY gopherAddon.shortDesc  "Gopher is geen geregistreerd protocol.">
-<!ENTITY gopherAddon.longDesc   "Het adres specificeert het Gopher-protocol, dat niet meer wordt ondersteund, waardoor de browser niet met de website kan verbinden. Via Mozilla Add-ons kunt u een compatibele add-on verkrijgen om deze server te benaderen.">
+<!ENTITY gopherAddon.longDesc   "Het adres specificeert het Gopher-protocol, dat niet meer wordt ondersteund, waardoor de browser niet met de website kan verbinden. Via Waterfox Add-ons kunt u een compatibele add-on verkrijgen om deze server te benaderen.">
 <!ENTITY goToAddOn.label        "Ga naar de Add-on-pagina">

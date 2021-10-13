@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,11 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Datos de Telemetry
 about-telemetry-current-store = Almacenamiento actual:
 about-telemetry-more-information = ¿Buscas más información?
-about-telemetry-firefox-data-doc = La <a data-l10n-name="data-doc-link">documentación de datos de Firefox</a> contiene guías sobre cómo trabajar con tus herramientas de datos.
-about-telemetry-telemetry-client-doc = La <a data-l10n-name="client-doc-link">documentación de cliente de Firefox Telemetry</a> incluye definiciones para conceptos, documentación de API y referencias de datos.
-about-telemetry-telemetry-dashboard = Los <a data-l10n-name="dashboard-link">tableros de Telemetry</a> te permiten visualizar los datos que Mozilla recibe a través de Telemetry.
+about-telemetry-firefox-data-doc = La <a data-l10n-name="data-doc-link">documentación de datos de Waterfox</a> contiene guías sobre cómo trabajar con tus herramientas de datos.
+about-telemetry-telemetry-client-doc = La <a data-l10n-name="client-doc-link">documentación de cliente de Waterfox Telemetry</a> incluye definiciones para conceptos, documentación de API y referencias de datos.
+about-telemetry-telemetry-dashboard = Los <a data-l10n-name="dashboard-link">tableros de Telemetry</a> te permiten visualizar los datos que Waterfox recibe a través de Telemetry.
 about-telemetry-telemetry-probe-dictionary = El <a data-l10n-name="probe-dictionary-link">diccionario de sondeos</a> proporciona detalles y descripciones de los sondeos recopilados por Telemetry.
-about-telemetry-show-in-Firefox-json-viewer = Abrir en el visor de JSON
+about-telemetry-show-in-Waterfox-json-viewer = Abrir en el visor de JSON
 about-telemetry-home-section = Inicio
 about-telemetry-general-data-section =   Datos generales
 about-telemetry-environment-data-section = Entorno de Datos
@@ -68,7 +68,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } muestras, promedio = { $prettyAverage }, suma = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
 about-telemetry-page-subtitle = Esta página muestra la información de rendimiento, hardware, uso y personalizaciones recopilada por Telemetry. Esta información se envía a { $telemetryServerOwner } para ayudar a mejorar { -brand-full-name }.
 about-telemetry-settings-explanation = La telemetría está recolectando { about-telemetry-data-type } y la carga está <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
 # Variables:
@@ -140,8 +140,8 @@ about-telemetry-origin-section = Telemetría de origen
 about-telemetry-origin-origin = origen
 about-telemetry-origin-count = recuento
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">La Telemetría de origen de Firefox</a> codifica los datos antes de enviarlos para que { $telemetryServerOwner } pueda contar las cosas, pero no sepa cual fue el { -brand-product-name } que contributó a ese conteo. (<a data-l10n-name="prio-blog-link">Saber más</a>)
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">La Telemetría de origen de Waterfox</a> codifica los datos antes de enviarlos para que { $telemetryServerOwner } pueda contar las cosas, pero no sepa cual fue el { -brand-product-name } que contributó a ese conteo. (<a data-l10n-name="prio-blog-link">Saber más</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = Proceso de { $process }

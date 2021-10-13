@@ -1,14 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-### Firefox Home / New Tab strings for about:home / about:newtab.
+### Waterfox Home / New Tab strings for about:home / about:newtab.
 
 newtab-page-title = Новая вкладка
 newtab-settings-button =
     .title = Настроить свою страницу новой вкладки
-newtab-personalize-button-label = Настроить
+newtab-personalize-icon-label =
     .title = Настроить новую вкладку
     .aria-label = Настроить новую вкладку
 newtab-personalize-dialog-label =
@@ -20,7 +20,6 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = Искать
     .aria-label = Искать
-newtab-search-box-search-the-web-text = Искать в Интернете
 # Variables
 #  $engine (String): the name of the user's default search engine
 newtab-search-box-handoff-text = Найдите в { $engine } или введите адрес
@@ -39,7 +38,7 @@ newtab-search-box-search-the-web-input =
     .placeholder = Искать в Интернете
     .title = Искать в Интернете
     .aria-label = Искать в Интернете
-newtab-search-box-text = Поиск в Интернете
+newtab-search-box-text = Искать в Интернете
 newtab-search-box-input =
     .placeholder = Поиск в Интернете
     .aria-label = Поиск в Интернете
@@ -170,6 +169,11 @@ newtab-label-sponsored = { $sponsorOrSource } · На правах реклам�
 # Variables:
 #  $sponsor (String): This is the name of a sponsor
 newtab-label-sponsored-by = От спонсора { $sponsor }
+# This string is used under the image of story cards to indicate source and time to read
+# Variables:
+#  $source (String): This is the name of a company or their domain
+#  $timeToRead (Number): This is the estimated number of minutes to read this story
+newtab-label-source-read-time = { $source } · { $timeToRead } мин.
 
 ## Section Menu: These strings are displayed in the section context menu and are
 ## meant as a call to action for the given section.
@@ -222,10 +226,25 @@ newtab-discovery-empty-section-topstories-timed-out = Ой! Мы почти за
 
 # This is shown at the bottom of the trending stories section and precedes a list of links to popular topics.
 newtab-pocket-read-more = Популярные темы:
+newtab-pocket-new-topics-title = Хотите увидеть ещё больше историй? Вот самые популярные темы от { -pocket-brand-name }
 newtab-pocket-more-recommendations = Ещё рекомендации
 newtab-pocket-learn-more = Подробнее
 newtab-pocket-cta-button = Загрузить { -pocket-brand-name }
 newtab-pocket-cta-text = Сохраняйте интересные статьи в { -pocket-brand-name } и подпитывайте свой ум увлекательным чтением.
+newtab-pocket-pocket-firefox-family = { -pocket-brand-name } является частью семейства { -brand-product-name }
+# A save to Pocket button that shows over the card thumbnail on hover.
+newtab-pocket-save-to-pocket = Сохранить в { -pocket-brand-name }
+newtab-pocket-saved-to-pocket = Сохранено в { -pocket-brand-name }
+# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
+newtab-pocket-load-more-stories-button = Загрузить больше историй
+
+## Pocket Final Card Section.
+## This is for the final card in the Pocket grid.
+
+newtab-pocket-last-card-title = Вы всё прочитали!
+newtab-pocket-last-card-desc = Зайдите попозже, чтобы увидеть больше.
+newtab-pocket-last-card-image =
+    .alt = Вы всё прочитали
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -250,10 +269,4 @@ newtab-custom-pocket-sponsored = Статьи спонсоров
 newtab-custom-recent-title = Последние действия
 newtab-custom-recent-subtitle = Подборка недавних сайтов и контента
 newtab-custom-close-button = Закрыть
-# For the "Snippets" feature traditionally on about:home.
-# Alternative translation options: "Small Note" or something that
-# expresses the idea of "a small message, shortened from something else,
-# and non-essential but also not entirely trivial and useless.
-newtab-custom-snippets-title = Заметки
-newtab-custom-snippets-subtitle = Советы и новости от { -vendor-short-name } и { -brand-product-name }
 newtab-custom-settings = Управление дополнительными настройками

@@ -1,17 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 close-button =
     .aria-label = Cerrar
-preferences-title =
-    .title =
-        { PLATFORM() ->
-            [windows] Opciones
-           *[other] Preferencias
-        }
-preferences-tab-title =
-    .title = Preferencias
 preferences-doc-title = Preferencias
 category-list =
     .aria-label = Categorías
@@ -91,19 +83,11 @@ update-in-progress-ok-button = &Descartar
 # Continue is the cancel button so pressing escape or using a platform standard
 # method of closing the UI will not discard the update.
 update-in-progress-cancel-button = &Continuar
-addons-button = Extensiones y temas
 account-button = Configuración de la cuenta
 open-addons-sidebar-button = Complementos y temas
 
 ## OS Authentication dialog
 
-# This message can be seen by trying to add a Master Password.
-master-password-os-auth-dialog-message-win = Para crear una contraseña maestra, proporciona tus credenciales de inicio de sesión de Windows. Esto ayuda a proteger la seguridad de tus cuentas.
-# This message can be seen by trying to add a Master Password.
-# The macOS strings are preceded by the operating system with "Thunderbird is trying to "
-# and includes subtitle of "Enter password for the user "xxx" to allow this." These
-# notes are only valid for English. Please test in your locale.
-master-password-os-auth-dialog-message-macosx = crear una contraseña maestra
 # This message can be seen by trying to add a Primary Password.
 primary-password-os-auth-dialog-message-win = Para crear una contraseña principal, proporciona los datos de acceso de Windows. Esto ayuda a proteger la seguridad de las cuentas.
 # This message can be seen by trying to add a Primary Password.
@@ -166,9 +150,6 @@ animated-alert-label =
 customize-alert-label =
     .label = Personalizar…
     .accesskey = C
-tray-icon-label =
-    .label = Mostrar un icono de bandeja
-    .accesskey = t
 biff-use-system-alert =
     .label = Usar la notificación del sistema
 tray-icon-unread-label =
@@ -263,6 +244,9 @@ diskspace-legend = Espacio en disco
 offline-compact-folder =
     .label = Compactar carpetas cuando se recuperen más de
     .accesskey = a
+offline-compact-folder-automatically =
+    .label = Preguntar cada vez antes de compactar
+    .accesskey = a
 compact-folder-size =
     .value = MB en total
 
@@ -325,8 +309,6 @@ smaller-size-item =
 quoted-text-color =
     .label = Color:
     .accesskey = o
-search-input =
-    .placeholder = Buscar
 search-handler-table =
     .placeholder = Filtrar tipos de contenido y acciones
 type-column-label =
@@ -549,13 +531,6 @@ passwords-description = { -brand-short-name } puede recordar contraseñas para t
 passwords-button =
     .label = Contraseñas guardadas…
     .accesskey = S
-master-password-description = Una contraseña maestra protege todas tus contraseñas, pero debes ingresarla una vez por sesión.
-master-password-label =
-    .label = Usar una contraseña maestra
-    .accesskey = U
-master-password-button =
-    .label = Cambiar contraseña maestra…
-    .accesskey = C
 primary-password-description = La contraseña principal protegerá el resto de tus contraseñas, pero deberás proporcionarla una vez por sesión.
 primary-password-label =
     .label = Utilizar una contraseña principal
@@ -696,24 +671,6 @@ no-preview-description = Este tema no es válido o no está actualmente disponib
 chat-variant-label =
     .value = Variante:
     .accesskey = V
-chat-header-label =
-    .label = Mostrar encabezado
-    .accesskey = H
-# This is used to determine the width of the search field in about:preferences,
-# in order to make the entire placeholder string visible
-#
-# Please keep the placeholder string short to avoid truncation.
-#
-# Notice: The value of the `.style` attribute is a CSS string, and the `width`
-# is the name of the CSS property. It is intended only to adjust the element's width.
-# Do not translate.
-search-input-box =
-    .style = width: 15.4em
-    .placeholder =
-        { PLATFORM() ->
-            [windows] Buscar en Opciones
-           *[other] Buscar en Preferencias
-        }
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
 #

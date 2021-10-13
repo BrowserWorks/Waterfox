@@ -1,17 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 close-button =
     .aria-label = Sluiten
-preferences-title =
-    .title =
-        { PLATFORM() ->
-            [windows] Opties
-           *[other] Voorkeuren
-        }
-preferences-tab-title =
-    .title = Voorkeuren
 preferences-doc-title = Voorkeuren
 category-list =
     .aria-label = Categorieën
@@ -91,19 +83,11 @@ update-in-progress-ok-button = &Verwerpen
 # Continue is the cancel button so pressing escape or using a platform standard
 # method of closing the UI will not discard the update.
 update-in-progress-cancel-button = &Doorgaan
-addons-button = Extensies & Thema’s
 account-button = Accountinstellingen
 open-addons-sidebar-button = Add-ons en thema’s
 
 ## OS Authentication dialog
 
-# This message can be seen by trying to add a Master Password.
-master-password-os-auth-dialog-message-win = Voer uw aanmeldgegevens voor Windows in om een hoofdwachtwoord in te stellen. Hierdoor wordt de beveiliging van uw accounts beschermd.
-# This message can be seen by trying to add a Master Password.
-# The macOS strings are preceded by the operating system with "Thunderbird is trying to "
-# and includes subtitle of "Enter password for the user "xxx" to allow this." These
-# notes are only valid for English. Please test in your locale.
-master-password-os-auth-dialog-message-macosx = een hoofdwachtwoord aan te maken
 # This message can be seen by trying to add a Primary Password.
 primary-password-os-auth-dialog-message-win = Voer uw aanmeldgegevens voor Windows in om een hoofdwachtwoord in te stellen. Hierdoor wordt de beveiliging van uw accounts beschermd.
 # This message can be seen by trying to add a Primary Password.
@@ -155,10 +139,22 @@ mail-play-sound-label =
 mail-play-button =
     .label = Afspelen
     .accesskey = f
-change-dock-icon = Voorkeuren van het programmasymbool wijzigen
+change-dock-icon =
+    { PLATFORM() ->
+        [macos] Voorkeuren van het programmasymbool wijzigen
+       *[other] Voorkeuren van het taakbalkitem wijzigen
+    }
 app-icon-options =
-    .label = Programmasymboolopties…
-    .accesskey = P
+    .label =
+        { PLATFORM() ->
+            [macos] Programmasymboolopties…
+           *[other] Taakbalkitemopties…
+        }
+    .accesskey =
+        { PLATFORM() ->
+            [macos] P
+           *[other] T
+        }
 notification-settings = Waarschuwingen en het standaardgeluid kunnen worden uitgeschakeld via het paneel Berichtgeving in Systeemvoorkeuren.
 animated-alert-label =
     .label = Een waarschuwing tonen
@@ -166,9 +162,6 @@ animated-alert-label =
 customize-alert-label =
     .label = Aanpassen…
     .accesskey = A
-tray-icon-label =
-    .label = Een systeemvakpictogram tonen
-    .accesskey = t
 biff-use-system-alert =
     .label = De systeemmelding gebruiken
 tray-icon-unread-label =
@@ -263,6 +256,9 @@ diskspace-legend = Schijfruimte
 offline-compact-folder =
     .label = Alle mappen comprimeren als dit meer bespaart dan
     .accesskey = m
+offline-compact-folder-automatically =
+    .label = Altijd vragen voor comprimeren
+    .accesskey = o
 compact-folder-size =
     .value = MB in totaal
 
@@ -325,16 +321,10 @@ smaller-size-item =
 quoted-text-color =
     .label = Kleur:
     .accesskey = u
-search-input =
-    .placeholder = Zoeken
 search-handler-table =
     .placeholder = Inhoudstypen en acties filteren
-type-column-label =
-    .label = Inhoudstype
-    .accesskey = t
-action-column-label =
-    .label = Actie
-    .accesskey = A
+type-column-label = Inhoudstype
+action-column-label = Actie
 save-to-label =
     .label = Bestanden opslaan in
     .accesskey = o
@@ -549,13 +539,6 @@ passwords-description = { -brand-short-name } kan wachtwoordinformatie voor al u
 passwords-button =
     .label = Opgeslagen wachtwoorden…
     .accesskey = O
-master-password-description = Een hoofdwachtwoord beveiligt al uw wachtwoorden, maar u moet het eens per sessie invoeren.
-master-password-label =
-    .label = Een hoofdwachtwoord gebruiken
-    .accesskey = h
-master-password-button =
-    .label = Hoofdwachtwoord wijzigen…
-    .accesskey = w
 primary-password-description = Een hoofdwachtwoord beveiligt al uw wachtwoorden, maar u moet het eens per sessie invoeren.
 primary-password-label =
     .label = Een hoofdwachtwoord gebruiken
@@ -696,24 +679,6 @@ no-preview-description = Dit thema is ongeldig of momenteel niet beschikbaar (ui
 chat-variant-label =
     .value = Variant:
     .accesskey = V
-chat-header-label =
-    .label = Kop tonen
-    .accesskey = K
-# This is used to determine the width of the search field in about:preferences,
-# in order to make the entire placeholder string visible
-#
-# Please keep the placeholder string short to avoid truncation.
-#
-# Notice: The value of the `.style` attribute is a CSS string, and the `width`
-# is the name of the CSS property. It is intended only to adjust the element's width.
-# Do not translate.
-search-input-box =
-    .style = width: 15.4em
-    .placeholder =
-        { PLATFORM() ->
-            [windows] In Opties zoeken
-           *[other] In Voorkeuren zoeken
-        }
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
 #

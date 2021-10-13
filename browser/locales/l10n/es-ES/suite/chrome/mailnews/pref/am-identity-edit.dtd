@@ -1,12 +1,14 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY identityDialog.style "min-width: 80ch;">
 <!ENTITY identityListDesc.label "Configurar los parámetros de esta identidad:">
+
 <!ENTITY settingsTab.label "Configuración">
 <!ENTITY copiesFoldersTab.label "Copias y carpetas">
 <!ENTITY addressingTab.label "Redacción y direcciones">
+
 <!ENTITY publicData.label "Datos públicos">
 <!ENTITY privateData.label "Datos privados">
 <!ENTITY identityAlias.label "Etiqueta de identidad:">

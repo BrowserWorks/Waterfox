@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -23,8 +23,10 @@
 <!ENTITY publishAsCmd.accesskey "m">
 <!ENTITY fileRevert.label "Revertir">
 <!ENTITY fileRevert.accesskey "t">
+
 <!ENTITY publishSettings.label "Configuración de sitio de publicación…">
 <!ENTITY publishSettings.accesskey "b">
+
 <!ENTITY insertFormMenu.label "Formulario">
 <!ENTITY insertFormMenu.accesskey "">
 <!ENTITY insertFormCmd.label "Definir formulario…">
@@ -43,6 +45,7 @@
 <!ENTITY insertLabelCmd.accesskey "n">
 <!ENTITY insertFieldSetCmd.label "Definir conjunto de campos…">
 <!ENTITY insertFieldSetCmd.accesskey "f">
+
 <!ENTITY newToolbarCmd.label "Nuevo">
 <!ENTITY newToolbarCmd.tooltip "Crear una página nueva en Composer">
 <!ENTITY openToolbarCmd.label "Abrir">

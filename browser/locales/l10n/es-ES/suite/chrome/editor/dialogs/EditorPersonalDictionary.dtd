@@ -1,8 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowTitle.label "Diccionario personal">
+
 <!ENTITY wordEditField.label "Nueva palabra:">
 <!ENTITY wordEditField.accessKey "N">
 <!ENTITY AddButton.label "Añadir">
@@ -13,5 +14,6 @@
 <!ENTITY ReplaceButton.accessKey "R">
 <!ENTITY RemoveButton.label "Eliminar">
 <!ENTITY RemoveButton.accessKey "e">
+
 <!ENTITY CloseButton.label "Cerrar">
 <!ENTITY CloseButton.accessKey "C">

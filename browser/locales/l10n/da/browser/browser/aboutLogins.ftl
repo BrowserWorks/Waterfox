@@ -1,23 +1,13 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
 
 about-logins-page-title = Logins & adgangskoder
-
-# "Google Play" and "App Store" are both branding and should not be translated
-
-login-app-promo-title = Tag dine adgangskoder med overalt
-login-app-promo-subtitle = Hent { -lockwise-brand-name }-app'en gratis
-login-app-promo-android =
-    .alt = Hent den fra  Google Play
-login-app-promo-apple =
-    .alt = Hent den i App Store
 login-filter =
     .placeholder = Søg efter logins
 create-login-button = Opret nyt login
 fxaccounts-sign-in-text = Få dine adgangkoder på alle dine enheder
-fxaccounts-sign-in-button = Log ind på { -sync-brand-short-name }
 fxaccounts-sign-in-sync-button = Log ind for at synkronisere
 fxaccounts-avatar-button =
     .title = Håndter konto
@@ -37,8 +27,6 @@ menu-menuitem-preferences =
        *[other] Indstillinger
     }
 about-logins-menu-menuitem-help = Hjælp
-menu-menuitem-android-app = { -lockwise-brand-short-name } til Android
-menu-menuitem-iphone-app = { -lockwise-brand-short-name } til iPhone og iPad
 
 ## Login List
 
@@ -52,6 +40,8 @@ login-list-count =
 login-list-sort-label-text = Sorter efter:
 login-list-name-option = Navn (A-Z)
 login-list-name-reverse-option = Navn (Z-A)
+login-list-username-option = Brugernavn (A-Å)
+login-list-username-reverse-option = Brugernavn (Å-A)
 about-logins-login-list-alerts-option = Advarsler
 login-list-last-changed-option = Senest ændret
 login-list-last-used-option = Senest brugt
@@ -66,16 +56,18 @@ about-logins-list-item-breach-icon =
     .title = Websted med datalæk
 about-logins-list-item-vulnerable-password-icon =
     .title = Usikker adgangskode
+about-logins-list-section-breach = Websteder med datalæk
+about-logins-list-section-vulnerable = Usikre adgangskoder
+about-logins-list-section-nothing = Ingen advarsel
+about-logins-list-section-today = I dag
+about-logins-list-section-yesterday = I går
+about-logins-list-section-week = Seneste 7 dage
 
 ## Introduction screen
 
-login-intro-heading = Leder du efter dine gemte logins? Opsæt { -sync-brand-short-name }.
 about-logins-login-intro-heading-logged-out2 = Leder du efter dine gemte logins? Slå synkronisering til eller importer dem.
 about-logins-login-intro-heading-logged-in = Ingen synkroniserede logins fundet.
 login-intro-description = Hvis du har gemt dine logins i { -brand-product-name } på en anden enhed, så skal du gøre sådan for at anvende dem her også:
-login-intro-instruction-fxa = Opret eller log ind på din { -fxaccount-brand-name } på den enhed, hvor dine logins er gemt
-login-intro-instruction-fxa-settings = Vær sikker på, at du har sat et flueben ud for Logins i { -sync-brand-short-name }-indstillingerne.
-about-logins-intro-instruction-help = Besøg <a data-l10n-name="help-link">{ -lockwise-brand-short-name } denne side</a> for at få mere hjælp
 login-intro-instructions-fxa = Opret eller log ind på din { -fxaccount-brand-name } på den enhed, hvor dine logins er gemt.
 login-intro-instructions-fxa-settings = Gå til Indstillinger > Sync > Slå synkronisering til… Sæt flueben ud for Logins og adgangskoder.
 login-intro-instructions-fxa-help = Besøg siden <a data-l10n-name="help-link">Hjælp til { -lockwise-brand-short-name }</a>
@@ -112,7 +104,7 @@ login-item-time-used = Senest brugt: { DATETIME($timeUsed, day: "numeric", month
 
 about-logins-os-auth-dialog-caption = { -brand-full-name }
 
-## The macOS strings are preceded by the operating system with "Firefox is trying to "
+## The macOS strings are preceded by the operating system with "Waterfox is trying to "
 ## and includes subtitle of "Enter password for the user "xxx" to allow this." These
 ## notes are only valid for English. Please test in your respected locale.
 
@@ -131,10 +123,6 @@ about-logins-copy-password-os-auth-dialog-message-win = Indtast dine login-infor
 # This message can be seen when attempting to copy a password in about:logins
 # On MacOS, only provide the reason that account verification is needed. Do not put a complete sentence here.
 about-logins-copy-password-os-auth-dialog-message-macosx = kopiere den gemte adgangskode
-
-## Master Password notification
-
-master-password-notification-message = Indtast din hovedadgangskode for at se gemte logins og adgangskoder
 # This message can be seen when attempting to export a password in about:logins on Windows.
 about-logins-export-password-os-auth-dialog-message-win = Indtast dine login-informationer til Windows for at eksportere dine logins. Dette hjælper med at beskytte dine kontis sikkerhed.
 # This message can be seen when attempting to export a password in about:logins
@@ -147,24 +135,6 @@ about-logins-primary-password-notification-message = Indtast din hovedadgangskod
 master-password-reload-button =
     .label = Log ind
     .accesskey = L
-
-## Password Sync notification
-
-enable-password-sync-notification-message =
-    { PLATFORM() ->
-        [windows] Vil du have dine logins på alle dine enheder med { -brand-product-name }? Gå til indstillingerne for { -sync-brand-short-name }, og sæt et flueben ud for Logins.
-       *[other] Vil du have dine logins på alle dine enheder med { -brand-product-name }? Gå til indstillingerne for { -sync-brand-short-name }, og sæt et flueben ud for Logins.
-    }
-enable-password-sync-preferences-button =
-    .label =
-        { PLATFORM() ->
-            [windows] Gå til { -sync-brand-short-name }-indstillinger
-           *[other] Gå til { -sync-brand-short-name }-indstillinger
-        }
-    .accesskey = G
-about-logins-enable-password-sync-dont-ask-again-button =
-    .label = Spørg mig ikke igen
-    .accesskey = S
 
 ## Dialogs
 

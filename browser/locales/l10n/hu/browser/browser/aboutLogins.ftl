@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
@@ -7,17 +7,12 @@ about-logins-page-title = Bejelentkezések és jelszavak
 
 # "Google Play" and "App Store" are both branding and should not be translated
 
-login-app-promo-title = Vigye magával a jelszavait bárhová
-login-app-promo-subtitle = Szerezze be az ingyenes { -lockwise-brand-name } alkalmazást
-login-app-promo-android =
-    .alt = Szerezze be a Google Play-en
-login-app-promo-apple =
-    .alt = Töltse le az App Store-ból
 login-filter =
     .placeholder = Bejelentkezések keresése
+
 create-login-button = Új bejelentkezés létrehozása
+
 fxaccounts-sign-in-text = Érje el jelszavait a többi eszközén is
-fxaccounts-sign-in-button = Jelentkezzen be a { -sync-brand-short-name }be
 fxaccounts-sign-in-sync-button = Bejelentkezés a szinkronizáláshoz
 fxaccounts-avatar-button =
     .title = Fiók kezelése
@@ -37,8 +32,6 @@ menu-menuitem-preferences =
        *[other] Beállítások
     }
 about-logins-menu-menuitem-help = Súgó
-menu-menuitem-android-app = { -lockwise-brand-short-name } Androidra
-menu-menuitem-iphone-app = { -lockwise-brand-short-name } iPhone és iPad készülékekhez
 
 ## Login List
 
@@ -52,6 +45,8 @@ login-list-count =
 login-list-sort-label-text = Rendezés:
 login-list-name-option = Név (A-Z)
 login-list-name-reverse-option = Név (Z-A)
+login-list-username-option = Felhasználónév (A-Z)
+login-list-username-reverse-option = Felhasználónév (Z-A)
 about-logins-login-list-alerts-option = Riasztások
 login-list-last-changed-option = Legutóbbi módosítás
 login-list-last-used-option = Legutóbbi használat
@@ -67,16 +62,18 @@ about-logins-list-item-breach-icon =
 about-logins-list-item-vulnerable-password-icon =
     .title = Sebezhető jelszó
 
+about-logins-list-section-breach = Adatsértésben érintett weboldalak
+about-logins-list-section-vulnerable = Sebezhető jelszavak
+about-logins-list-section-nothing = Nincs riasztás
+about-logins-list-section-today = Ma
+about-logins-list-section-yesterday = Tegnap
+about-logins-list-section-week = Elmúlt 7 nap
+
 ## Introduction screen
 
-login-intro-heading = A mentett bejelentkezéseit keresi? Állítsa be a { -sync-brand-short-name }-t.
-about-logins-login-intro-heading-logged-out = A mentett bejelentkezéseit keresi? Állítsa be a { -sync-brand-short-name }-et vagy importálja őket.
 about-logins-login-intro-heading-logged-out2 = A mentett bejelentkezéseit keresi? Kapcsolja be a szinkronizálást vagy importálja őket.
 about-logins-login-intro-heading-logged-in = Nem található szinkronizált bejelentkezés.
 login-intro-description = Ha egy másik eszközön mentette a bejelentkezéseit a { -brand-product-name }ban, akkor így érheti el őket itt:
-login-intro-instruction-fxa = Hozzon létre egyet, vagy jelentkezzen be a { -fxaccount-brand-name }jába azon az eszközön, amelyen a bejelentkezéseit menti
-login-intro-instruction-fxa-settings = Győződjön meg róla, hogy bejelölte a Bejelentkezések választómezőt a { -sync-brand-short-name } beállításokban
-about-logins-intro-instruction-help = További segítéségért keresse fel a <a data-l10n-name="help-link">{ -lockwise-brand-short-name } támogatást</a>
 login-intro-instructions-fxa = Hozzon létre egyet, vagy jelentkezzen be a { -fxaccount-brand-name }jába azon az eszközön, amelyen a bejelentkezéseit menti
 login-intro-instructions-fxa-settings = Válassza a Beállítások > Szinkronizálás > Szinkronizálás bekapcsolása… lehetőséget. Jelölje be a Bejelentkezések és jelszavak jelölőnégyzetet.
 login-intro-instructions-fxa-help = További segítéségért keresse fel a <a data-l10n-name="help-link">{ -lockwise-brand-short-name } támogatást</a>.
@@ -113,7 +110,7 @@ login-item-time-used = Legutóbb használva: { DATETIME($timeUsed, day: "numeric
 
 about-logins-os-auth-dialog-caption = { -brand-full-name }
 
-## The macOS strings are preceded by the operating system with "Firefox is trying to "
+## The macOS strings are preceded by the operating system with "Waterfox is trying to "
 ## and includes subtitle of "Enter password for the user "xxx" to allow this." These
 ## notes are only valid for English. Please test in your respected locale.
 
@@ -122,11 +119,13 @@ about-logins-edit-login-os-auth-dialog-message-win = A bejelentkezés szerkeszt�
 # This message can be seen when attempting to edit a login in about:logins
 # On MacOS, only provide the reason that account verification is needed. Do not put a complete sentence here.
 about-logins-edit-login-os-auth-dialog-message-macosx = szerkessze a mentett bejelentkezést
+
 # This message can be seen when attempting to reveal a password in about:logins on Windows.
 about-logins-reveal-password-os-auth-dialog-message-win = A jelszava megtekintéséhez írja be a Windows bejelentkezési adatait. Ez elősegíti a fiókja biztonságának védelmét.
 # This message can be seen when attempting to reveal a password in about:logins
 # On MacOS, only provide the reason that account verification is needed. Do not put a complete sentence here.
 about-logins-reveal-password-os-auth-dialog-message-macosx = felfedje a mentett jelszót
+
 # This message can be seen when attempting to copy a password in about:logins on Windows.
 about-logins-copy-password-os-auth-dialog-message-win = A jelszava másolásához írja be a Windows bejelentkezési adatait. Ez elősegíti a fiókja biztonságának védelmét.
 # This message can be seen when attempting to copy a password in about:logins
@@ -135,7 +134,6 @@ about-logins-copy-password-os-auth-dialog-message-macosx = másolja a mentett je
 
 ## Master Password notification
 
-master-password-notification-message = Adja meg a mesterjelszavát a mentett bejelentkezések és jelszavak megtekintéséhez
 # This message can be seen when attempting to export a password in about:logins on Windows.
 about-logins-export-password-os-auth-dialog-message-win = A bejelentkezés exportálásához írja be a Windows bejelentkezési adatait. Ez elősegíti a fiókja biztonságának védelmét.
 # This message can be seen when attempting to export a password in about:logins
@@ -151,42 +149,30 @@ master-password-reload-button =
 
 ## Password Sync notification
 
-enable-password-sync-notification-message =
-    { PLATFORM() ->
-        [windows] Mindenhol szeretne hozzáférni a bejelentkezéseihez, ahol a { -brand-product-name }ot használja? Ugorjon a { -sync-brand-short-name } beállításokhoz és jelölje be a Bejelentkezések választógombot.
-       *[other] Mindenhol szeretne hozzáférni a bejelentkezéseihez, ahol a { -brand-product-name }ot használja? Ugorjon a { -sync-brand-short-name } beállításokhoz és jelölje be a Bejelentkezések választógombot.
-    }
-enable-password-sync-preferences-button =
-    .label =
-        { PLATFORM() ->
-            [windows] { -sync-brand-short-name } beállítások megtekintése
-           *[other] { -sync-brand-short-name } beállítások megtekintése
-        }
-    .accesskey = m
-about-logins-enable-password-sync-dont-ask-again-button =
-    .label = Ne kérdezze meg többet
-    .accesskey = N
-
 ## Dialogs
 
 confirmation-dialog-cancel-button = Mégse
 confirmation-dialog-dismiss-button =
     .title = Mégse
+
 about-logins-confirm-remove-dialog-title = Eltávolítja ezt a bejelentkezést?
 confirm-delete-dialog-message = Ez a művelet nem vonható vissza.
 about-logins-confirm-remove-dialog-confirm-button = Eltávolítás
+
 about-logins-confirm-remove-all-dialog-confirm-button-label =
     { $count ->
         [1] Eltávolítás
         [one] Eltávolítás
        *[other] Összes eltávolítása
     }
+
 about-logins-confirm-remove-all-dialog-checkbox-label =
     { $count ->
         [1] Igen, a bejelentkezés eltávolítása
         [one] Igen, a bejelentkezés eltávolítása
        *[other] Igen, a bejelentkezések eltávolítása
     }
+
 about-logins-confirm-remove-all-dialog-title =
     { $count ->
         [one] Eltávolít { $count } bejelentkezést?
@@ -198,6 +184,7 @@ about-logins-confirm-remove-all-dialog-message =
         [one] Ez eltávolítja a { -brand-short-name }ba mentett bejelentkezést és az itt megjelenő adatsértési figyelmeztetéseket is. Ez a művelet nem vonható vissza.
        *[other] Ez eltávolítja a { -brand-short-name }ba mentett bejelentkezéseket és az itt megjelenő adatsértési figyelmeztetéseket is. Ez a művelet nem vonható vissza.
     }
+
 about-logins-confirm-remove-all-sync-dialog-title =
     { $count ->
         [one] Eltávolít { $count } bejelentkezést az összes eszközről?
@@ -209,11 +196,14 @@ about-logins-confirm-remove-all-sync-dialog-message =
         [one] Ez eltávolítja az összes, a { -brand-short-name }ba mentett bejelentkezést, az összes, a { -fxaccount-brand-name }jával szinkronizált eszközéről. Ez eltávolítja az itt megjelenő figyelmeztetéseket is. Ez a művelet nem vonható vissza.
        *[other] Ez eltávolítja az összes, a { -brand-short-name }ba mentett bejelentkezést, az összes, a { -fxaccount-brand-name }jával szinkronizált eszközéről. Ez eltávolítja az itt megjelenő figyelmeztetéseket is. Ez a művelet nem vonható vissza.
     }
+
 about-logins-confirm-export-dialog-title = Bejelentkezések és jelszavak exportálása
 about-logins-confirm-export-dialog-message = A jelszavai olvasható szövegként lesznek mentve (például R0sszJel$zó), így bárki megtekintheti, aki meg tudja nyitni az exportált fájlt.
 about-logins-confirm-export-dialog-confirm-button = Exportálás…
+
 about-logins-alert-import-title = Importálás kész
 about-logins-alert-import-message = Részletes importálási összefoglaló megtekintése
+
 confirm-discard-changes-dialog-title = Elveti a mentetlen módosításokat?
 confirm-discard-changes-dialog-message = Minden nem mentett változás elvész.
 confirm-discard-changes-dialog-confirm-button = Elvetés
@@ -244,6 +234,7 @@ about-logins-vulnerable-alert-learn-more-link = További tudnivalók
 # Variables:
 #   $loginTitle (String) - The title of the website associated with the login.
 about-logins-error-message-duplicate-login-with-link = Már létezik bejegyzése a(z) { $loginTitle } oldalhoz ezzel a felhasználónévvel. <a data-l10n-name="duplicate-link">Ugrás a létező bejegyzéshez?</a>
+
 # This is a generic error message.
 about-logins-error-message-default = Hiba történt a jelszó mentésekor.
 
@@ -293,11 +284,13 @@ about-logins-import-dialog-items-added =
         [one] <span>Új bejelentkezés hozzáadva:</span> <span data-l10n-name="count">{ $count }</span>
        *[other] <span>Új bejelentkezések hozzáadva:</span> <span data-l10n-name="count">{ $count }</span>
     }
+
 about-logins-import-dialog-items-modified =
     { $count ->
         [one] <span>Meglévő bejelentkezés frissítve:</span> <span data-l10n-name="count">{ $count }</span>
        *[other] <span>Meglévő bejelentkezések frissítve:</span> <span data-l10n-name="count">{ $count }</span>
     }
+
 about-logins-import-dialog-items-no-change =
     { $count ->
         [one] <span>Ismétlődő bejelentkezés található:</span> <span data-l10n-name="count">{ $count }</span> <span data-l10n-name="meta">(nem lett importálva)</span>
@@ -309,6 +302,7 @@ about-logins-import-dialog-items-error =
        *[other] <span>Hibák:</span> <span data-l10n-name="count">{ $count }</span> <span data-l10n-name="meta">(nem lett importálva)</span>
     }
 about-logins-import-dialog-done = Kész
+
 about-logins-import-dialog-error-title = Importálási hiba
 about-logins-import-dialog-error-conflicting-values-title = Több ütköző érték egy bejelentkezéshez
 about-logins-import-dialog-error-conflicting-values-description = Például: több felhasználónév, jelszó, URL-ek stb. egy bejelentkezéshez.
@@ -320,11 +314,12 @@ about-logins-import-dialog-error-unable-to-read-title = Nem lehet értelmezni a 
 about-logins-import-dialog-error-unable-to-read-description = Győződjön meg arról, hogy CSV- vagy TSV-fájlt választott ki.
 about-logins-import-dialog-error-no-logins-imported = Nem lettek bejelentkezések importálva
 about-logins-import-dialog-error-learn-more = További tudnivalók
-about-logins-import-dialog-error-try-again = Próbálja újra…
 about-logins-import-dialog-error-try-import-again = Importálás újrapróbálása…
 about-logins-import-dialog-error-cancel = Mégse
+
 about-logins-import-report-title = Importálási összefoglaló
 about-logins-import-report-description = A { -brand-short-name }ba importált bejelentkezési adatok és jelszavak.
+
 #
 # Variables:
 #  $number (number) - The number of the row

@@ -1,11 +1,11 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
 <!-- Window title -->
-
-
 <!ENTITY windowTitle.label "转换成表格">
-<!ENTITY instructions1.label   "网页编写器为选中的每段在表中新建一行。">
+<!ENTITY instructions1.label   "编辑器为选中的每段在表中新建一行。">
 <!ENTITY instructions2.label   "选择用来分隔所选内容到多列的字符：">
 <!ENTITY commaRadio.label      "逗号">
 <!ENTITY spaceRadio.label      "空格">

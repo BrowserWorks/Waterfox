@@ -1,10 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY spellAddToDictionary.label "Thêm vào từ điển">
 <!ENTITY spellAddToDictionary.accesskey "v">
-<!ENTITY spellUndoAddToDictionary.label "Hoàn tác việc thêm vào từ điển">
+<!ENTITY spellUndoAddToDictionary.label "Hoàn tác thêm vào từ điển">
 <!ENTITY spellUndoAddToDictionary.accesskey "n">
 <!ENTITY spellCheckToggle.label "Kiểm tra chính tả">
 <!ENTITY spellCheckToggle.accesskey "K">
@@ -14,11 +14,3 @@
 
 <!ENTITY searchTextBox.clear.label "Xóa trắng">
 
-<!ENTITY fillLoginMenu.label          "Điền thông tin đăng nhập">
-<!ENTITY fillLoginMenu.accesskey      "t">
-<!ENTITY fillPasswordMenu.label       "Điền mật khẩu">
-<!ENTITY fillPasswordMenu.accesskey   "m">
-<!ENTITY fillUsernameMenu.label       "Điền tên người dùng">
-<!ENTITY fillUsernameMenu.accesskey   "t">
-<!ENTITY noLoginSuggestions.label     "(Không có gợi ý đăng nhập)">
-<!ENTITY viewSavedLogins.label        "Xem thông tin đăng nhập đã lưu">

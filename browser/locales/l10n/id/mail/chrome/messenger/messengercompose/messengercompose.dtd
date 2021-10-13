@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "Baru">
 <!ENTITY newMenu.accesskey "B">
 <!ENTITY newMessage.label "Pesan">
-<!ENTITY newMessage.key "M">
 <!ENTITY newMessageCmd2.key "N">
-<!ENTITY newMessage.accesskey "P">
 <!ENTITY newContact.label "Kenalan dari Buku Alamat…">
 <!ENTITY newContact.accesskey "K">
 <!ENTITY attachMenu.label "Lampirkan">
 <!ENTITY attachMenu.accesskey "L">
-<!ENTITY attachFileCmd.label "Berkas…">
-<!ENTITY attachFileCmd.accesskey "B">
-<!ENTITY attachFileCmd.key "A">
 <!ENTITY attachCloudCmd.label "Filelink">
 <!ENTITY attachCloudCmd.accesskey "i">
 <!ENTITY attachPageCmd.label "Laman Web…">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "Kirim Nanti">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "N">
-<!ENTITY printSetupCmd.label "Tata Laman…">
-<!ENTITY printSetupCmd.accesskey "L">
-<!ENTITY printPreviewCmd.label "Pratinjau Cetak">
-<!ENTITY printPreviewCmd.accesskey "j">
 <!ENTITY printCmd.label "Cetak…">
 <!ENTITY printCmd.key "P">
 <!ENTITY printCmd.accesskey "C">
@@ -82,8 +73,6 @@
 <!ENTITY reorderAttachmentsCmd.label "Susun Lampiran…">
 <!ENTITY reorderAttachmentsCmd.accesskey "s">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "Panel Lampiran">
-<!ENTITY toggleAttachmentPaneCmd.accesskey "m">
 <!ENTITY selectAllCmd.accesskey "a">
 <!ENTITY findBarCmd.label "Cari…">
 <!ENTITY findBarCmd.accesskey "F">
@@ -102,11 +91,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "Tata Ulang Lampiran">
-<!ENTITY moveAttachmentTopPanelBtn.label "Pindahkan ke Atas">
-<!ENTITY moveAttachmentUpPanelBtn.label "Naikkan">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label "Pindahkan bersama">
-<!ENTITY moveAttachmentDownPanelBtn.label "Turunkan">
-<!ENTITY moveAttachmentBottomPanelBtn.label "Pindahkan ke Dasar">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -204,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "Setelan Akun">
 <!ENTITY accountManagerCmd2.accesskey "S">
 <!ENTITY accountManagerCmdUnix2.accesskey "S">
-<!ENTITY preferencesCmd2.label "Pilihan">
-<!ENTITY preferencesCmd2.accesskey "O">
-<!ENTITY preferencesCmdUnix.label "Pengaturan">
-<!ENTITY preferencesCmdUnix.accesskey "P">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "m">
@@ -220,7 +201,6 @@
 <!ENTITY sendButton.label "Kirim">
 <!ENTITY quoteButton.label "Kutip">
 <!ENTITY addressButton.label "Kenalan">
-<!ENTITY attachButton.label "Lampirkan">
 <!ENTITY spellingButton.label "Ejaan">
 <!ENTITY saveButton.label "Simpan">
 <!ENTITY printButton.label "Cetak">
@@ -230,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "Kirim pesan ini nanti">
 <!ENTITY quoteButton.tooltip "Kutip pesan sebelumnya">
 <!ENTITY addressButton.tooltip "Pilih penerima dari Buku Alamat">
-<!ENTITY attachButton.tooltip2 "Tambahkan lampiran">
 <!ENTITY spellingButton.tooltip "Periksa ejaan pada teks yang dipilih atau isi pesan keseluruhan">
 <!ENTITY saveButton.tooltip "Simpan pesan ini">
 <!ENTITY cutButton.tooltip              "Potong">
@@ -245,9 +224,6 @@
 <!ENTITY extraRecipients.tooltip "Tipe lain dari bidang pemberian alamat">
 <!ENTITY fromAddr2.label "Dari">
 <!ENTITY fromAddr.accesskey "r">
-<!ENTITY toAddr2.label "Kepada">
-<!ENTITY ccAddr2.label "Cc">
-<!ENTITY bccAddr2.label "Bcc">
 <!ENTITY replyAddr2.label "Balas-Kepada">
 <!ENTITY newsgroupsAddr2.label "Grup Berita">
 <!ENTITY followupAddr2.label "Tindaklanjut-Kepada:">
@@ -306,8 +282,6 @@
 <!ENTITY removeAllAttachments.accesskey "v">
 <!ENTITY selectAll.label "Pilih Semua">
 <!ENTITY selectAll.accesskey "a">
-<!ENTITY attachFile.label "Lampirkan berkas…">
-<!ENTITY attachFile.accesskey "L">
 <!ENTITY attachCloud.label "Filelink…">
 <!ENTITY attachCloud.accesskey "i">
 <!ENTITY convertCloud.label "Ubah menjadi…">

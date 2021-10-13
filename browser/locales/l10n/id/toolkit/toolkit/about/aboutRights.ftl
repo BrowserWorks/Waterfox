@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = Tentang Hak Anda
 rights-intro = { -brand-full-name } adalah perangkat lunak bebas dan terbuka yang dibangun oleh ribuan anggota komunitas dari berbagai penjuru dunia. Ada beberapa hal yang perlu Anda ketahui:
-rights-intro-point-1 = { -brand-short-name } disediakan berdasarkan persyaratan dalam lisensi <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a>. Ini berarti Anda dapat menggunakan, menyalin, dan mendistribusikan { -brand-short-name } kepada pihak lain. Anda juga dapat memodifikasi kode sumber program { -brand-short-name } sesuai dengan kebutuhan Anda. Lisensi Mozilla Public License memberi hak kepada Anda untuk mendistribusikan versi yang telah Anda modifikasi.
-rights-intro-point-2 = Anda tidak diberi hak atau lisensi apa pun atas merek dagang Mozilla Foundation atau pihak lainnya, termasuk tanpa batas, nama atau logo Firefox. Informasi lebih lanjut mengenai Merek Dagang dapat Anda temukan <a data-l10n-name="mozilla-trademarks-link">di sini</a>.
+rights-intro-point-1 = { -brand-short-name } disediakan berdasarkan persyaratan dalam lisensi <a data-l10n-name="mozilla-public-license-link">Waterfox Public License</a>. Ini berarti Anda dapat menggunakan, menyalin, dan mendistribusikan { -brand-short-name } kepada pihak lain. Anda juga dapat memodifikasi kode sumber program { -brand-short-name } sesuai dengan kebutuhan Anda. Lisensi Waterfox Public License memberi hak kepada Anda untuk mendistribusikan versi yang telah Anda modifikasi.
+rights-intro-point-2 = Anda tidak diberi hak atau lisensi apa pun atas merek dagang Waterfox Foundation atau pihak lainnya, termasuk tanpa batas, nama atau logo Waterfox. Informasi lebih lanjut mengenai Merek Dagang dapat Anda temukan <a data-l10n-name="mozilla-trademarks-link">di sini</a>.
 rights-intro-point-3 = Sebagian fitur dalam { -brand-short-name }, misalnya Pelapor Kerusakan, memberi Anda pilihan untuk memberi saran pada { -vendor-short-name }. Dengan memilih mengajukan saran, Anda memberi { -vendor-short-name } izin untuk menggunakan saran ini guna memperbaiki produk tersebut, untuk menayangkan saran di situs tersebut dan mendistribusikan saran.
 rights-intro-point-4 = Cara penggunaan informasi pribadi dan saran Anda yang dikirimkan kepada { -vendor-short-name } lewat { -brand-short-name } dijelaskan dalam <a data-l10n-name="mozilla-privacy-policy-link">Kebijakan Privasi { -brand-short-name }</a>.
 rights-intro-point-4-unbranded = Seluruh kebijakan privasi atas produk ini akan disebutkan di bawah ini.

@@ -1,11 +1,11 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY brandShortName "Thunderbird">
 <!ENTITY brandShorterName "Thunderbird">
-<!ENTITY brandFullName "Mozilla Thunderbird">
+<!ENTITY brandFullName "Waterfox Thunderbird">
 <!ENTITY brandProductName "Thunderbird">
-<!ENTITY vendorShortName "Mozilla">
-<!ENTITY trademarkInfo.part1 "Mozilla Thunderbird y los logos de Thunderbird
-son marcas registradas de la Fundación Mozilla.">
+<!ENTITY vendorShortName "Waterfox">
+<!ENTITY trademarkInfo.part1 "Waterfox Thunderbird y los logos de Thunderbird
+son marcas registradas de la Fundación Waterfox.">

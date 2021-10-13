@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -14,43 +14,22 @@ about-processes-shutdown-process =
     .title = "Ξεφόρτωμα" καρτελών και τερματισμός διεργασίας
 about-processes-shutdown-tab =
     .title = Κλείσιμο καρτέλας
+# Profiler icons
+# Variables:
+#    $duration (Number) The time in seconds during which the profiler will be running.
+#                       The value will be an integer, typically less than 10.
+about-processes-profile-process =
+    .title =
+        { $duration ->
+            [one] Καταγραφή όλων των νημάτων αυτής της διεργασίας για { $duration } δευτερόλεπτο
+           *[other] Καταγραφή όλων των νημάτων αυτής της διεργασίας για { $duration } δευτερόλεπτα
+        }
 
 ## Column headers
 
 about-processes-column-name = Όνομα
 about-processes-column-memory-resident = Μνήμη
 about-processes-column-cpu-total = CPU
-
-## Process names
-## Variables:
-##    $pid (String) The process id of this process, assigned by the OS.
-##    $origin (String) The domain name for this process.
-##    $type (String) The raw type for this process. Used for unknown processes.
-
-about-processes-browser-process-name = { -brand-short-name } (διεργασία { $pid })
-about-processes-web-process-name = Διαδίκτυο (διεργασία { $pid }, κοινό)
-about-processes-web-isolated-process-name = Διαδίκτυο (διεργασία { $pid }) για { $origin }
-about-processes-web-large-allocation = Διαδίκτυο (διεργασία { $pid }, μεγάλο) για { $origin }
-about-processes-with-coop-coep-process-name = Διαδίκτυο (διεργασία { $pid }, απομονωμένο από προελεύσεις) για { $origin }
-about-processes-file-process-name = Αρχεία (διεργασία { $pid })
-about-processes-extension-process-name = Επεκτάσεις (διεργασία { $pid })
-about-processes-privilegedabout-process-name = Πληροφορίες (διεργασία { $pid })
-about-processes-plugin-process-name = Αρθρώματα (διεργασία { $pid })
-about-processes-privilegedmozilla-process-name = Διαδίκτυο (διεργασία { $pid }) για ιστοσελίδες { -vendor-short-name }
-about-processes-gmp-plugin-process-name = Αρθρώματα πολυμέσων Gecko (διεργασία { $pid })
-about-processes-gpu-process-name = GPU (διεργασία { $pid })
-about-processes-vr-process-name = VR (διεργασία { $pid })
-about-processes-rdd-process-name = Αποκωδικοποιητής δεδομένων (διεργασία { $pid })
-about-processes-socket-process-name = Δίκτυο (διεργασία { $pid })
-about-processes-remote-sandbox-broker-process-name = Απομακρυσμένο Sandbox Broker (διεργασία { $pid })
-about-processes-fork-server-process-name = Διακομιστής Fork (διεργασία { $pid })
-about-processes-preallocated-process-name = Προκατανεμημένο (διεργασία { $pid })
-about-processes-unknown-process-name = Άλλο ({ $type }, διεργασία { $pid })
-# Process
-# Variables:
-#   $name (String) The name assigned to the process.
-#   $pid (String) The process id of this process, assigned by the OS.
-about-processes-process-name = Διεργασία { $pid }: { $name }
 
 ## Process names
 ## Variables:
@@ -91,17 +70,6 @@ about-processes-with-coop-coep-process-private = { $origin } — Ιδιωτικ�
 
 ## Details within processes
 
-# Single-line summary of threads
-# Variables:
-#    $number (Number) The number of threads in the process. Typically larger
-#                     than 30. We don't expect to ever have processes with less
-#                     than 5 threads.
-about-processes-thread-summary = Νήματα ({ $number })
-# Thread details
-# Variables:
-#   $name (String) The name assigned to the thread.
-#   $tid (String) The thread id of this thread, assigned by the OS.
-about-processes-thread-name = Νήμα { $tid }: { $name }
 # Single-line summary of threads (non-idle process)
 # Variables:
 #    $number (Number) The number of threads in the process. Typically larger
@@ -159,14 +127,10 @@ about-processes-frame-name-many = Υποπλαίσια ({ $number }): { $shortUr
 ##                   of `duration-unit-*`.
 
 # Common case.
-about-processes-cpu-user-and-kernel = { NUMBER($percent, maximumSignificantDigits: 2, style: "percent") } ({ NUMBER($total, maximumFractionDigits: 0) }{ $unit })
-# Common case.
 about-processes-cpu = { NUMBER($percent, maximumSignificantDigits: 2, style: "percent") }
     .title = Συνολικός χρόνος CPU: { NUMBER($total, maximumFractionDigits: 0) }{ $unit }
 # Special case: data is not available yet.
 about-processes-cpu-user-and-kernel-not-ready = (μέτρηση)
-# Special case: process or thread is currently idle.
-about-processes-cpu-user-and-kernel-idle = Αδρανές ({ NUMBER($total, maximumFractionDigits: 2) }{ $unit })
 # Special case: process or thread is currently idle.
 about-processes-cpu-idle = αδρανές
     .title = Συνολικός χρόνος CPU: { NUMBER($total, maximumFractionDigits: 2) }{ $unit }
@@ -182,8 +146,6 @@ about-processes-cpu-idle = αδρανές
 ##    $deltaUnit (String) The unit in which to display $delta. See the definitions
 ##                        of `memory-unit-*`.
 
-# Common case.
-about-processes-total-memory-size = { NUMBER($total, maximumFractionDigits: 0) }{ $totalUnit } ({ $deltaSign }{ NUMBER($delta, maximumFractionDigits: 0) }{ $deltaUnit })
 # Common case.
 about-processes-total-memory-size-changed = { NUMBER($total, maximumFractionDigits: 0) }{ $totalUnit }
     .title = Εξέλιξη: { $deltaSign }{ NUMBER($delta, maximumFractionDigits: 0) }{ $deltaUnit }

@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "속성">
 
 <!ENTITY generalInfo.label                       "일반 정보">
-<!ENTITY folderCharsetFallback2.label            "기본 문자 인코딩:">
-<!ENTITY folderCharsetFallback2.accesskey        "E">
-<!ENTITY folderCharsetEnforce2.label             "폴더 안의 모든 메시지에 인코딩 적용 (개별 메시지의 인코딩 설정과 자동 검출 인코딩은 무시 됩니다)">
-<!ENTITY folderCharsetEnforce2.accesskey         "A">
 <!ENTITY folderRebuildSummaryFileTip2.label      "요약 파일 색인을 재생성 합니다.">
 <!ENTITY folderRebuildSummaryFile2.label         "폴더 복구">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "R">

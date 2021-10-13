@@ -1,14 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-### Firefox Home / New Tab strings for about:home / about:newtab.
+### Waterfox Home / New Tab strings for about:home / about:newtab.
 
 newtab-page-title = Nyt faneblad
 newtab-settings-button =
     .title = Tilpas siden Nyt faneblad
-newtab-personalize-button-label = Tilpas
+newtab-personalize-icon-label =
     .title = Tilpas nyt faneblad
     .aria-label = Tilpas nyt faneblad
 newtab-personalize-dialog-label =
@@ -20,7 +20,6 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = Søg
     .aria-label = Søg
-newtab-search-box-search-the-web-text = Søg på internettet
 # Variables
 #  $engine (String): the name of the user's default search engine
 newtab-search-box-handoff-text = Søg med { $engine } eller indtast adresse
@@ -171,6 +170,11 @@ newtab-label-sponsored = { $sponsorOrSource } · Sponsoreret
 # Variables:
 #  $sponsor (String): This is the name of a sponsor
 newtab-label-sponsored-by = Sponsoreret af { $sponsor }
+# This string is used under the image of story cards to indicate source and time to read
+# Variables:
+#  $source (String): This is the name of a company or their domain
+#  $timeToRead (Number): This is the estimated number of minutes to read this story
+newtab-label-source-read-time = { $source } · { $timeToRead } min
 
 ## Section Menu: These strings are displayed in the section context menu and are
 ## meant as a call to action for the given section.
@@ -223,10 +227,25 @@ newtab-discovery-empty-section-topstories-timed-out = Hov. Det lykkedes ikke at 
 
 # This is shown at the bottom of the trending stories section and precedes a list of links to popular topics.
 newtab-pocket-read-more = Populære emner:
+newtab-pocket-new-topics-title = Vil du have endnu flere historier? Se disse populære emner fra { -pocket-brand-name }
 newtab-pocket-more-recommendations = Flere anbefalinger
 newtab-pocket-learn-more = Læs mere
 newtab-pocket-cta-button = Hent { -pocket-brand-name }
 newtab-pocket-cta-text = Gem dine yndlingshistorier i { -pocket-brand-name } og hav dem altid ved hånden.
+newtab-pocket-pocket-firefox-family = { -pocket-brand-name } er en del af { -brand-product-name }-familien
+# A save to Pocket button that shows over the card thumbnail on hover.
+newtab-pocket-save-to-pocket = Gem til { -pocket-brand-name }
+newtab-pocket-saved-to-pocket = Gemt til { -pocket-brand-name }
+# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
+newtab-pocket-load-more-stories-button = Indlæs flere historier
+
+## Pocket Final Card Section.
+## This is for the final card in the Pocket grid.
+
+newtab-pocket-last-card-title = Du har læst det hele!
+newtab-pocket-last-card-desc = Kom tilbage senere for at se flere historier.
+newtab-pocket-last-card-image =
+    .alt = Du har læst det hele
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -250,10 +269,4 @@ newtab-custom-pocket-sponsored = Sponsorerede historier
 newtab-custom-recent-title = Seneste aktivitet
 newtab-custom-recent-subtitle = Et udvalg af seneste websteder og indhold
 newtab-custom-close-button = Luk
-# For the "Snippets" feature traditionally on about:home.
-# Alternative translation options: "Small Note" or something that
-# expresses the idea of "a small message, shortened from something else,
-# and non-essential but also not entirely trivial and useless.
-newtab-custom-snippets-title = Notitser
-newtab-custom-snippets-subtitle = Tips og nyheder fra { -vendor-short-name } og { -brand-product-name }
 newtab-custom-settings = Håndter flere indstillinger

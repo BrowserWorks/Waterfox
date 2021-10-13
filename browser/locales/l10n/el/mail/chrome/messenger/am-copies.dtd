@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -21,7 +21,7 @@
 <!ENTITY saveMessageDlg.label "Εμφάνιση παραθύρου επιβεβαίωσης κατά την αποθήκευση μηνυμάτων">
 <!ENTITY saveMessageDlg.accesskey "β">
 <!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
-<!ENTITY sentFolderOn.label "Στον φάκελο &quot;Απεσταλμένα&quot; του:">
+<!ENTITY sentFolderOn.label "Στον φάκελο «Απεσταλμένα» του:">
 <!ENTITY sentFolderOn.accesskey "ε">
 <!ENTITY sentInOtherFolder.label "Σε άλλο:">
 <!ENTITY sentInOtherFolder.accesskey "λ">
@@ -31,20 +31,20 @@
 <!ENTITY keepArchives.accesskey "Δ">
 <!ENTITY archiveHierarchyButton.label "Επιλογές αρχειοθέτησης…">
 <!ENTITY archiveHierarchyButton.accesskey "χ">
-<!ENTITY archivesFolderOn.label "Στον φάκελο &quot;Αρχειοθήκη&quot; του:">
+<!ENTITY archivesFolderOn.label "Στον φάκελο «Αρχειοθήκη» του:">
 <!ENTITY archivesFolderOn.accesskey "χ">
 <!ENTITY archiveInOtherFolder.label "Σε άλλο:">
 <!ENTITY archiveInOtherFolder.accesskey "λ">
 <!ENTITY specialFolders.label "Προσχέδια και πρότυπα">
 <!ENTITY keepDrafts2.label "Διατήρηση προσχεδίων μηνυμάτων:">
 <!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
-<!ENTITY draftsFolderOn.label "Στον φάκελο &quot;Προσχέδια&quot; του:">
+<!ENTITY draftsFolderOn.label "Στον φάκελο «Προσχέδια» του:">
 <!ENTITY draftsFolderOn.accesskey "σ">
 <!ENTITY draftInOtherFolder.label "Σε άλλο:">
 <!ENTITY draftInOtherFolder.accesskey "λ">
 <!ENTITY keepTemplates.label "Διατήρηση προτύπων μηνυμάτων:">
 <!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
-<!ENTITY templatesFolderOn.label "Στον φάκελο &quot;Πρότυπα&quot; του:">
+<!ENTITY templatesFolderOn.label "Στον φάκελο «Πρότυπα» του:">
 <!ENTITY templatesFolderOn.accesskey "κ">
 <!ENTITY templateInOtherFolder.label "Σε άλλο:">
 <!ENTITY templateInOtherFolder.accesskey "ο">

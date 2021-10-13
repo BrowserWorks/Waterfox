@@ -1,24 +1,17 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY pref.masterpass.title "Hlavní heslo">
-<!ENTITY managepassword.caption "Platnost hlavního hesla">
-<!ENTITY managepassword.text "&brandShortName; požádá o vaše hlavní heslo:">
-<!ENTITY managepassword.askfirsttime "Pouze poprvé, když je třeba">
-<!ENTITY managepassword.askfirsttime.accesskey  "p">
-<!ENTITY managepassword.askeverytime "Pokaždé, když je třeba">
-<!ENTITY managepassword.askeverytime.accesskey  "k">
-<!ENTITY managepassword.asktimeout "Pokud nebylo používáno po ">
-<!ENTITY managepassword.asktimeout.accesskey "n">
-<!ENTITY managepassword.timeout.unit "minut nebo déle">
+<!ENTITY  pref.masterpass.title                  "Hlavní heslo">
 
-<!ENTITY changepassword.caption "Změnit hlavní heslo">
-<!ENTITY changepassword.text "Vaše hlavní heslo chrání citlivé informace jako hesla webových stránek a certifikáty.">
-<!ENTITY changepassword.button "Změnit heslo…">
-<!ENTITY changepassword.accesskey "m">
+<!ENTITY  changepassword.caption                 "Změnit hlavní heslo">
+<!ENTITY  changepassword.text                    "Vaše hlavní heslo chrání citlivé informace jako hesla webových stránek a certifikáty.">
+<!ENTITY  changepassword.button                  "Změnit heslo…">
+<!ENTITY  changepassword.accesskey               "m">
 
-<!ENTITY resetpassword.caption "Obnovit hlavní heslo">
-<!ENTITY resetpassword.text "Pokud obnovíte hlavní heslo, všechny vaše uložená hesla z webových stránek a e-mailů, vyplněná data z formulářů, osobní certifikáty a klíče budou ztraceny.">
-<!ENTITY resetpassword.button "Obnovit heslo">
-<!ENTITY resetpassword.accesskey "b">
+<!ENTITY  resetpassword.caption                  "Obnovit hlavní heslo">
+<!ENTITY  resetpassword.text                     "Pokud obnovíte hlavní heslo, všechny vaše uložená hesla z webových stránek a e-mailů, vyplněná data z formulářů, osobní certifikáty a klíče budou ztraceny.">
+<!ENTITY  resetpassword.button                   "Obnovit heslo">
+<!ENTITY  resetpassword.accesskey                "b">
+<!ENTITY  resetpassword2.button                  "Obnovit heslo">
+<!ENTITY  resetpassword2.accesskey               "b">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,13 +11,7 @@
 <!ENTITY helpMenuWin.accesskey "ช">
 <!ENTITY aboutProduct2.label "เกี่ยวกับ &brandShorterName;">
 <!ENTITY aboutProduct2.accesskey "ก">
-<!ENTITY helpTroubleshootingInfo.label     "ข้อมูลการแก้ไขปัญหา">
-<!ENTITY helpTroubleshootingInfo.accesskey "ข">
-<!ENTITY helpSafeMode.label     "เริ่มการทำงานใหม่พร้อมปิดใช้งานส่วนเสริม…">
-<!ENTITY helpSafeMode.accesskey "ร">
 
-<!ENTITY helpSafeMode.stop.label     "เริ่มการทำงานใหม่พร้อมเปิดใช้งานส่วนเสริม">
-<!ENTITY helpSafeMode.stop.accesskey "ร">
 <!ENTITY productHelp.label "ความช่วยเหลือของ &brandShortName;">
 <!ENTITY productHelp.accesskey "ค">
 <!ENTITY productHelp.commandkey "VK_F1">

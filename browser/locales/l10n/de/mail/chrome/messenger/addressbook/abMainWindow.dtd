@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,12 +31,6 @@
 <!ENTITY closeCmd.label                                 "Schließen">
 <!ENTITY closeCmd.key                                   "W">
 <!ENTITY closeCmd.accesskey                             "c">
-<!ENTITY printSetupCmd.label                            "Seite einrichten…">
-<!ENTITY printSetupCmd.accesskey                        "S">
-<!ENTITY printPreviewContactCmd.label                   "Druckvorschau: Kontakt">
-<!ENTITY printPreviewContactCmd.accesskey               "D">
-<!ENTITY printPreviewAddressBook.label                  "Druckvorschau: Adressbuch">
-<!ENTITY printPreviewAddressBook.accesskey              "r">
 <!ENTITY printContactCmd.label                          "Kontakt drucken…">
 <!ENTITY printContactCmd.accesskey                      "u">
 <!ENTITY printContactCmd.key                            "P">
@@ -48,7 +42,9 @@
 <!ENTITY editMenu.accesskey                             "B">
 <!ENTITY deleteCmd.label                                "Löschen">
 <!ENTITY deleteAbCmd.label                              "Adressbuch löschen">
+<!ENTITY deleteAbCmd.accesskey                          "c">
 <!ENTITY removeAbCmd.label                              "Adressbuch entfernen">
+<!ENTITY removeAbCmd.accesskey                          "n">
 <!ENTITY deleteContactCmd.label                         "Kontakt löschen">
 <!ENTITY deleteContactsCmd.label                        "Kontakte löschen">
 <!ENTITY deleteListCmd.label                            "Liste löschen">
@@ -59,7 +55,7 @@
 <!ENTITY propertiesMenu.accesskey                       "n">
 <!ENTITY propertiesCmd.key                              "i">
 <!ENTITY abPropertiesMenu.label                         "Adressbucheigenschaften">
-<!ENTITY abPropertiesMenu.accesskey                     "e">
+<!ENTITY abPropertiesMenu.accesskey                     "g">
 <!ENTITY contactPropertiesMenu.label                    "Kontakteigenschaften">
 <!ENTITY contactPropertiesMenu.accesskey                "e">
 <!ENTITY mailingListPropertiesMenu.label                "Verteilerlisteeigenschaften">
@@ -103,19 +99,12 @@
 <!ENTITY messengerCmd.label                             "Nachrichten &amp; Newsgruppen">
 <!ENTITY messengerCmd.accesskey                         "N">
 <!ENTITY messengerCmd.commandkey                        "1">
-<!ENTITY addressBookCmd.label                           "Adressbuch">
-<!ENTITY addressBookCmd.accesskey                       "b">
-<!ENTITY addressBookCmd.key                             "B">
 <!ENTITY searchAddressesCmd.label                       "Adressen suchen…">
 <!ENTITY searchAddressesCmd.accesskey                   "s">
 <!ENTITY importCmd.label                                "Importieren…">
 <!ENTITY importCmd.accesskey                            "m">
 <!ENTITY exportCmd.label                                "Exportieren…">
 <!ENTITY exportCmd.accesskey                            "x">
-<!ENTITY preferencesCmd2.label                          "Einstellungen">
-<!ENTITY preferencesCmd2.accesskey                      "E">
-<!ENTITY preferencesCmdUnix.label                       "Einstellungen">
-<!ENTITY preferencesCmdUnix.accesskey                   "n">
 
 <!-- Address Book Toolbar and Context Menus -->
 <!ENTITY newContactButton.label                         "Neuer Kontakt">

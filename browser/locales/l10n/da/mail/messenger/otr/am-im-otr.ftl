@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,11 +15,7 @@ view-fingerprint-button =
 otr-settings-title = OTR-indstillinger
 otr-log =
     .label = Inkluder OTR-krypterede meddelelser i samtalelogger
-otr-requireEncryption =
-    .label = Kræv end to end-kryptering ved en til en-samtaler
-otr-verifyNudge =
-    .label = Mind mig altid om at bekræfte en ubekræftet kontakt
-otr-notYetAvailable = endnu ikke tilgængelig
+
 otr-require-encryption =
     .label = Kræv end to end-kryptering ved en til en-samtaler
 otr-require-encryption-info =
@@ -28,4 +24,6 @@ otr-require-encryption-info =
     vises ikke som en del af den almindelige samtale og bliver heller ikke logget.
 otr-verify-nudge =
     .label = Mind mig altid om at bekræfte en ubekræftet kontakt
+
 otr-not-yet-available = endnu ikke tilgængelig
+

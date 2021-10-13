@@ -1,9 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY loadError.label        "Oldalbetöltési hiba">
 <!ENTITY gopherAddon.title      "Gopher protokoll">
 <!ENTITY gopherAddon.shortDesc  "A gopher nem regisztrált protokoll.">
-<!ENTITY gopherAddon.longDesc   "A megadott cím a már nem támogatott gopher protokollt használja, így a böngésző nem tud a helyhez csatlakozni. A kiszolgáló eléréséhez letöltheti a kompatibilitási kiterjesztést a Mozilla Kiegészítők webhelyről.">
+<!ENTITY gopherAddon.longDesc   "A megadott cím a már nem támogatott gopher protokollt használja, így a böngésző nem tud a helyhez csatlakozni. A kiszolgáló eléréséhez letöltheti a kompatibilitási kiterjesztést a Waterfox Kiegészítők webhelyről.">
 <!ENTITY goToAddOn.label        "Ugrás a Kiegészítők oldalra">

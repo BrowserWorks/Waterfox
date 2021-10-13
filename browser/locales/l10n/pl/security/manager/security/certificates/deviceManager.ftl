@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -115,8 +115,6 @@ devinfo-label =
 
 devinfo-serialnum =
     .label = Numer seryjny
-
-fips-nonempty-password-required = Tryb FIPS wymaga hasła głównego ustawionego dla każdego urządzenia zabezpieczającego. Ustaw hasło przed włączeniem trybu FIPS.
 
 fips-nonempty-primary-password-required = Tryb FIPS wymaga hasła głównego ustawionego dla każdego urządzenia zabezpieczającego. Ustaw hasło przed włączeniem trybu FIPS.
 unable-to-toggle-fips = Nie udało się zmienić trybu FIPS dla urządzenia bezpieczeństwa. Zaleca się zakończenie pracy i ponowne uruchomienie tego programu.

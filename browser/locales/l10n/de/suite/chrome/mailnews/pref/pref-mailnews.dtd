@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,6 +8,17 @@
 <!ENTITY confirmMove.accesskey            "B">
 <!ENTITY preserveThreading.label          "Threads beim Sortieren erhalten">
 <!ENTITY preserveThreading.accesskey      "T">
+<!ENTITY mailAutoHide.label               "Tab-Leiste für Mail verstecken, wenn nur ein Tab angezeigt wird">
+<!ENTITY mailAutoHide.accesskey           "e">
+<!ENTITY loadInBackground.label           "Zu neuen Tabs, die geöffnet werden, umschalten">
+<!ENTITY loadInBackground.accesskey       "Z">
+<!ENTITY mailOpenTabsFor.label            "Tabs statt Fenster öffnen bei">
+<!ENTITY mailMiddleClick.label            "Mittel-Klick, Strg+Klick oder Strg+Enter für eine Nachricht oder einen Ordner">
+<!ENTITY mailMiddleClick.accesskey        "M">
+<!ENTITY mailMiddleClickMac.label         "Mittel-Klick, &#8984;+Klick oder &#8984;+Enter für eine Nachricht oder einen Ordner">
+<!ENTITY mailMiddleClickMac.accesskey     "M">
+<!ENTITY mailDoubleClick.label            "Doppel-Klick für eine Nachricht">
+<!ENTITY mailDoubleClick.accesskey        "k">
 <!ENTITY mailBiffOnNewWindow.label        "Erst nach Öffnen von Mail &amp; Newsgroups auf neue Nachrichten prüfen">
 <!ENTITY mailBiffOnNewWindow.accesskey    "E">
 

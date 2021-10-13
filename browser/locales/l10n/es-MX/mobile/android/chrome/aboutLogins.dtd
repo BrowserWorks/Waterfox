@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
-   %brandDTD;
-<!ENTITY aboutLogins.title                       "Inicios de sesión">
-<!ENTITY aboutLogins.update                      "Actualizar">
-<!ENTITY aboutLogins.emptyLoginText              "Mantén tus inicios de sesión seguros">
-<!ENTITY aboutLogins.emptyLoginHint              "Inicios de sesión y credenciales que guardas usando &brandShortName; se mostrarán aquí.">

@@ -1,13 +1,13 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY     tab.cookiesonsystem.label      "Αποθηκευμένα cookies">
-<!ENTITY     tab.bannedservers.label        "Ιστοσελίδες cookie">
+<!ENTITY     tab.bannedservers.label        "Ιστότοποι cookie">
 <!ENTITY     div.bannedservers.label        "Διαχειριστείτε ιστοσελίδες που μπορούν ή όχι, να αποθηκεύσουν cookies στον υπολογιστή σας.">
 <!ENTITY     div.cookiesonsystem.label      "Δείτε και αφαιρέστε cookies που είναι αποθηκευμένα στον υπολογιστή σας.">
 <!ENTITY     treehead.cookiename.label      "Όνομα cookie">
-<!ENTITY     treehead.cookiedomain.label    "Ιστοσελίδα">
+<!ENTITY     treehead.cookiedomain.label    "Ιστότοπος">
 <!ENTITY     treehead.cookieexpires.label   "Λήξη">
 <!ENTITY     treehead.infoselected.label    "Πληροφορίες για το επιλεγμένο cookie">
 <!ENTITY     button.removecookie.label      "Αφαίρεση cookie">
@@ -26,7 +26,7 @@
 <!ENTITY     props.secure.label             "Αποστολή για:">
 <!ENTITY     props.expires.label            "Λήγει:">
 
-<!ENTITY     treehead.sitename.label        "Ιστοσελίδα">
+<!ENTITY     treehead.sitename.label        "Ιστότοπος">
 <!ENTITY     treehead.scheme.label          "Σχέδιο">
 <!ENTITY     treehead.status.label          "Κατάσταση">
 <!ENTITY     windowtitle.label              "Διαχείριση cookies">
@@ -37,9 +37,9 @@
 <!ENTITY     allowSite.accesskey            "Α">
 <!ENTITY     allowSiteSession.label         "Συνεδρία">
 <!ENTITY     allowSiteSession.accesskey     "Σ">
-<!ENTITY     removepermission.label         "Αφαίρεση ιστοσελίδας">
+<!ENTITY     removepermission.label         "Αφαίρεση ιστοτόπου">
 <!ENTITY     removepermission.accesskey     "Α">
-<!ENTITY     removeallpermissions.label     "Αφαίρεση όλων των ιστοσελίδων">
+<!ENTITY     removeallpermissions.label     "Αφαίρεση όλων των ιστοτόπων">
 <!ENTITY     removeallpermissions.accesskey "φ">
 
 <!ENTITY     futureCookies.label            "Απόρριψη μελλοντικών cookies από ιστοσελίδες με διαγραμμένα cookies">

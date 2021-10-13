@@ -1,7 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
 <!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
 <!ENTITY rights.locale-direction "ltr">
 <!ENTITY rights.pagetitle       "about:rights">
@@ -17,8 +17,8 @@
      Also note the leading/trailing whitespace in strings here, which is
      deliberate for formatting around the embedded links. -->
 <!ENTITY rights.intro-point1a "Το &brandShortName; είναι διαθέσιμο σε εσάς υπό τους όρους της ">
-<!ENTITY rights.intro-point1b "άδειας Mozilla Public License">
-<!ENTITY rights.intro-point1c ". Δηλαδή, μπορείτε να χρησιμοποιήσετε, να αντιγράψετε και να διανείμετε το &brandShortName; σε τρίτους. Είστε ευπρόσδεκτοι να τροποποιήσετε τον πηγαίο κώδικα του &brandShortName; ώστε να ταιριάζει στις ανάγκες σας. Η άδεια Mozilla Public License σας δίνει επίσης το δικαίωμα να διανείμετε τις τροποποιημένες εκδόσεις σας.">
+<!ENTITY rights.intro-point1b "άδειας Waterfox Public License">
+<!ENTITY rights.intro-point1c ". Δηλαδή, μπορείτε να χρησιμοποιήσετε, να αντιγράψετε και να διανείμετε το &brandShortName; σε τρίτους. Είστε ευπρόσδεκτοι να τροποποιήσετε τον πηγαίο κώδικα του &brandShortName; ώστε να ταιριάζει στις ανάγκες σας. Η άδεια Waterfox Public License σας δίνει επίσης το δικαίωμα να διανείμετε τις τροποποιημένες εκδόσεις σας.">
 
 <!ENTITY rights.intro-point2aa "Η &vendorShortName; δεν σας παραχωρεί κανένα δικαίωμα για τα εμπορικά σήματα ή τα λογότυπα του &quot;&brandFullName;&quot;. Περισσότερες πληροφορίες σχετικά με τα εμπορικά σήματα μπορείτε να βρείτε ">
 <!ENTITY rights.intro-point2b "εδώ">
@@ -37,14 +37,14 @@
 <!ENTITY rights.intro-point4b "όρους υπηρεσίας">
 <!ENTITY rights.intro-point4c ".">
 
-<!ENTITY rights.webservices-header "Υπηρεσίες ιστοσελίδας &brandFullName;">
+<!ENTITY rights.webservices-header "Υπηρεσίες ιστοτόπων του &brandFullName;">
 
 <!-- Note that this paragraph references entities from extensions.dtd,
      preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
      so that we can refer to text the user sees in the UI, without
      this page being forgotten every time those strings are updated.  -->
 <!-- intro paragraph for branded builds -->
-<!ENTITY rights3.webservices-aa "Η &vendorShortName; παρέχει προαιρετικές υπηρεσίες ιστού (&quot;Υπηρεσίες&quot;) που διατίθενται για χρήση σε αυτή την έκδοση του &brandShortName;, όπως περιγράφεται παρακάτω. Ορισμένες από αυτές τις υπηρεσίες (όπως η πρόταση προσθέτων και οι υπηρεσίες ενημερώσεων, η υπηρεσία ασφαλούς περιήγησης, ή η λειτουργία ειδοποίησης κατά την περιήγηση βάσει τοποθεσίας) είναι ενεργές από προεπιλογή. Αν δεν θέλετε να χρησιμοποιήσετε κάποια από αυτές τις Υπηρεσίες ή δεν αποδέχεστε τους παρακάτω όρους, μπορείτε να βρείτε τις οδηγίες απενεργοποίησης μιας συγκεκριμένης λειτουργίας ή Υπηρεσίας ">
+<!ENTITY rights3.webservices-aa "Η &vendorShortName; παρέχει προαιρετικές υπηρεσίες ιστού («Υπηρεσίες») που διατίθενται για χρήση σε αυτήν την έκδοση του &brandShortName;, όπως περιγράφεται παρακάτω. Ορισμένες από αυτές τις υπηρεσίες (όπως η πρόταση προσθέτων και οι υπηρεσίες ενημερώσεων, η υπηρεσία ασφαλούς περιήγησης, ή η λειτουργία ειδοποίησης κατά την περιήγηση βάσει τοποθεσίας) είναι ενεργές από προεπιλογή. Αν δεν θέλετε να χρησιμοποιήσετε κάποια από αυτές τις Υπηρεσίες ή δεν αποδέχεστε τους παρακάτω όρους, μπορείτε να βρείτε τις οδηγίες απενεργοποίησης μιας συγκεκριμένης λειτουργίας ή Υπηρεσίας">
 <!ENTITY rights3.webservices-b "εδώ">
 <!ENTITY rights3.webservices-c ". Άλλες λειτουργίες και υπηρεσίες μπορούν να (απ)ενεργοποιηθούν στις προτιμήσεις της εφαρμογής.">
 

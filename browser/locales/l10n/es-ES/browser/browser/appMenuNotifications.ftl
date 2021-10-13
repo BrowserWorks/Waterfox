@@ -1,41 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-appmenu-update-available =
-    .label = Hay disponible una nueva actualización de { -brand-shorter-name }.
-    .buttonlabel = Descargar actualización
-    .buttonaccesskey = D
-    .secondarybuttonlabel = Ahora no
-    .secondarybuttonaccesskey = N
-appmenu-update-available-message = Actualice su { -brand-shorter-name } a lo último en velocidad y privacidad.
-appmenu-update-manual =
-    .label = { -brand-shorter-name } no puede actualizar a la última versión.
-    .buttonlabel = Descargar { -brand-shorter-name }
-    .buttonaccesskey = D
-    .secondarybuttonlabel = Ahora no
-    .secondarybuttonaccesskey = N
-appmenu-update-manual-message = Descargue una copia reciente de { -brand-shorter-name } y le ayudaremos a instalarla.
-appmenu-update-whats-new =
-    .value = Ver las novedades.
-appmenu-update-unsupported =
-    .label = { -brand-shorter-name } no puede actualizarse a la última versión.
-    .buttonlabel = Saber más
-    .buttonaccesskey = S
-    .secondarybuttonlabel = Cerrar
-    .secondarybuttonaccesskey = C
-appmenu-update-unsupported-message = Su sistema no admite la última versión de { -brand-shorter-name }.
-appmenu-update-restart =
-    .label = Reinicie para actualizar { -brand-shorter-name }.
-    .buttonlabel = Reiniciar y restaurar
-    .buttonaccesskey = R
-    .secondarybuttonlabel = Ahora no
-    .secondarybuttonaccesskey = N
-appmenu-update-restart-message = Tras un reinicio rápido, { -brand-shorter-name } restaurará todas sus ventanas y pestañas abiertas que no estén en el modo de navegación privada.
-appmenu-addon-private-browsing-installed =
-    .buttonlabel = Vale, entendido
-    .buttonaccesskey = O
-appmenu-addon-post-install-message = Gestione sus complementos haciendo clic <image data-l10n-name='addon-install-icon'></image> en el menú <image data-l10n-name='addon-menu-icon'></image>.
 appmenu-update-available2 =
     .label = Actualización disponible
     .buttonlabel = Descargar
@@ -71,26 +37,15 @@ appmenu-update-other-instance =
     .secondarybuttonlabel = Ahora no
     .secondarybuttonaccesskey = N
 appmenu-update-other-instance-message = Hay una nueva actualización de { -brand-shorter-name } disponible, pero no se puede instalar porque se está ejecutando otra copia de { -brand-shorter-name }. Ciérrela para continuar con la actualización o elija actualizar de todas formas (es posible que la otra copia no funcione correctamente hasta que la reinicie).
+
 appmenu-addon-private-browsing-installed2 =
     .buttonlabel = Aceptar
     .buttonaccesskey = A
-appmenu-addon-post-install-message2 = Administre sus extensiones y temas a través del menú de aplicaciones.
 appmenu-addon-post-install-message3 = Administre sus complementos y temas desde el menú de la aplicación.
 appmenu-addon-post-install-incognito-checkbox =
     .label = Permitir que esta extensión se ejecute en ventanas privadas
     .accesskey = A
-appmenu-new-tab-controlled =
-    .label = Su pestaña nueva ha cambiado.
-    .buttonlabel = Conservar cambios
-    .buttonaccesskey = v
-    .secondarybuttonlabel = Desactivar extensión
-    .secondarybuttonaccesskey = D
-appmenu-homepage-controlled =
-    .label = Su página de inicio ha cambiado.
-    .buttonlabel = Conservar cambios
-    .buttonaccesskey = C
-    .secondarybuttonlabel = Desactivar extensión
-    .secondarybuttonaccesskey = D
+    
 appmenu-new-tab-controlled-changes =
     .label = Tu página de nueva pestaña ha cambiado.
     .buttonlabel = Mantener los cambios

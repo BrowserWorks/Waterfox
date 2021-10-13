@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -40,7 +40,7 @@
 <!ENTITY widthEditField.accessKey "λ">
 <!ENTITY constrainCheckbox.label "Περιορισμός">
 <!ENTITY constrainCheckbox.accessKey "ε">
-<!ENTITY constrainCheckbox.tooltip "Διατήρηση των αναλογιών της εικόνας">
+<!ENTITY constrainCheckbox.tooltip "Διατήρηση αναλογιών εικόνας">
 
 <!-- These controls are in the Image Map box of the expanded area -->
 <!ENTITY imagemapBox.label "Χάρτης εικόνας">
@@ -69,7 +69,7 @@
 <!ENTITY showImageLinkBorder.accessKey "β">
 <!ENTITY LinkAdvancedEditButton.label "Προηγμένη επεξεργασία συνδέσμου…">
 <!ENTITY LinkAdvancedEditButton.accessKey "δ">
-<!ENTITY LinkAdvancedEditButton.tooltip "Προσθήκη ή τροποποίηση ιδιοτήτων HTML, στυλ και JavaScript">
+<!ENTITY LinkAdvancedEditButton.tooltip "Προσθήκη ή τροποποίηση ιδιοτήτων HTML, ιδιοτήτων στυλ και JavaScript">
 
 <!-- These tabs are currently used in the image input dialog -->
 <!ENTITY imageInputTab.label "Φόρμα">

@@ -1,22 +1,13 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
 <!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
 
-<!ENTITY appmenu.tooltip                     "افتح القائمة">
 <!ENTITY navbarOverflow.label                "المزيد من الأدوات…">
 
 <!-- Tab context menu -->
-
-<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
-used as a metaphor for expressing the fact that these tabs are "pinned" to the
-left edge of the tabstrip. Really we just want the string to express the idea
-that this is a lightweight and reversible action that keeps your tab where you
-can reach it easily. -->
-<!ENTITY  pinTab.label                       "ثبّت اللسان">
-<!ENTITY  unpinTab.label                     "أفلِت اللسان">
 
 <!ENTITY  listAllTabs.label      "اسرد كل الألسنة">
 
@@ -24,21 +15,12 @@ can reach it easily. -->
 <!ENTITY openFileCmd.label "افتح ملفًا…">
 <!ENTITY printCmd.label "اطبع…">
 
-<!ENTITY taskManagerCmd.label "مدير المهام">
-
 <!ENTITY menubarCmd.label "شريط القوائم">
 <!ENTITY menubarCmd.accesskey "ق">
 <!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
 include the word "toolbar" or such, because screen readers already know that
 this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY navbar.accessibleLabel "التنقل">
-<!ENTITY personalbarCmd.label "شريط العلامات">
-<!ENTITY personalbarCmd.accesskey "ش">
-<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
-include the word "toolbar" or such, because screen readers already know that
-this container is a toolbar. This avoids double-speaking. -->
-<!ENTITY personalbar.accessibleLabel "العلامات">
-<!ENTITY bookmarksToolbarItem.label "عناصر شريط العلامات">
 
 <!ENTITY fullScreenCmd.label "ملء الشاشة">
 
@@ -46,54 +28,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY pictureInPictureHideToggle.label "أخفِ زر تفعيل/تعطيل الڤديوهات المعترِضة">
 <!ENTITY pictureInPictureHideToggle.accesskey "خ">
 
-<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
-     followed by the user's email. -->
-<!ENTITY fxa.menu.syncSettings2.label "إعدادات &syncBrand.shortName.label;">
-<!ENTITY fxa.menu.connectAnotherDevice2.label "صِلْ جهازا آخر…">
-<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
 
 <!ENTITY fxa.menu.signin.label "لِج إلى &brandProductName;">
-<!ENTITY fxa.menu.turnOnSync.label "فعّل &syncBrand.shortName.label;">
-<!ENTITY fxa.menu.firefoxServices.label "خدمات &brandProductName;">
-<!ENTITY fxa.menu.account.label "الحساب">
-<!ENTITY fxa.menu.settings.label "الإعدادات">
-<!ENTITY fxa.menu.accountSettings.label "إعدادات الحساب">
-<!ENTITY fxa.menu.manageAccount2.label "أدِر الحساب">
-<!ENTITY fxa.menu.signOut.label "اخرج…">
-<!ENTITY fxa.menu.setupSync.label "اضبط &syncBrand.shortName.label;…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "أرسِل اللسان مباشرةً إلى أي جهاز ولجت فيه.">
-
-<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
-     fullscreenWarning.afterDomain.label): these two strings are used
-     respectively before and after the domain requiring fullscreen.
-     Localizers can use one of them, or both, to better adapt this
-     sentence to their language. -->
-<!ENTITY fullscreenWarning.beforeDomain.label "">
-<!ENTITY fullscreenWarning.afterDomain.label "يملأ الشاشة الآن">
-<!ENTITY fullscreenWarning.generic.label "يملأ هذا المستند الشاشة الآن">
-
-<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
-     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
-     is uppercase, while on Mac keyboards it is lowercase -->
-<!ENTITY exitDOMFullscreen.button "غادر ملء الشاشة (Esc)">
-<!ENTITY exitDOMFullscreenMac.button "غادر ملء الشاشة (esc)">
-
-<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
-     pointerlockWarning.afterDomain.label): these two strings are used
-     respectively before and after the domain requiring pointerlock.
-     Localizers can use one of them, or both, to better adapt this
-     sentence to their language. -->
-<!ENTITY pointerlockWarning.beforeDomain.label "يتحكم ">
-<!ENTITY pointerlockWarning.afterDomain.label "في مؤشرك. اضغط Esc لتستعيد التحكم.">
-<!ENTITY pointerlockWarning.generic.label "يتحكم هذا المستند في مؤشرك. اضغط Esc لتستعيد التحكم.">
-
-<!ENTITY showAllBookmarks2.label "أظهِر كل العلامات">
-<!ENTITY recentBookmarks.label "المعلّم حديثا">
-<!ENTITY bookmarksToolbarChevron.tooltip "أظهِر المزيد من العلامات">
 
 <!ENTITY printButton.label            "اطبع">
 <!ENTITY printButton.tooltip          "اطبع هذه الصفحة">
@@ -105,28 +45,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY homeButton.label             "البداية">
 <!ENTITY homeButton.defaultPage.tooltip "صفحة بداية &brandShortName;">
 
-<!ENTITY bookmarksButton.label          "العلامات">
-
-<!ENTITY bookmarksSubview.label             "العلامات">
-<!ENTITY bookmarksMenuButton2.label         "قائمة العلامات">
-<!ENTITY bookmarksMenuButton.other.label    "العلامات الأخرى">
-<!ENTITY bookmarksMenuButton.mobile.label   "علامات المحمول">
-<!ENTITY viewBookmarksSidebar2.label        "أظهِر شريط العلامات الجانبي">
-<!ENTITY hideBookmarksSidebar.label         "أخفِ شريط العلامات الجانبي">
-<!ENTITY viewBookmarksToolbar.label         "أظهِر شريط أدوات العلامات">
-<!ENTITY hideBookmarksToolbar.label         "أخفِ شريط أدوات العلامات">
-<!ENTITY searchBookmarks.label              "ابحث في العلامات">
-<!ENTITY bookmarkingTools.label             "أدوات العلامات">
-<!ENTITY addBookmarksMenu.label             "أضِف قائمة العلامات إلى شريط الأدوات">
-<!ENTITY removeBookmarksMenu.label          "أزِل قائمة العلامات من شريط الأدوات">
-
 <!ENTITY historyButton.label            "التأريخ">
 
 <!ENTITY downloads.label              "التنزيلات">
 <!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
   -  downloads.label, but used in the Library panel. -->
 <!ENTITY libraryDownloads.label       "التنزيلات">
-<!ENTITY addons.label                 "الإضافات">
 
 <!ENTITY webDeveloperMenu.label       "مطوّري الوب">
 
@@ -142,25 +66,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY overflowCustomizeToolbar.accesskey   "ش">
 
 <!ENTITY historyMenu.label "التأريخ">
-<!ENTITY historyUndoMenu.label "الألسنة المُغلقة مؤخرًا">
-<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
-<!ENTITY historyUndoWindowMenu.label "النوافذ المغلقة مؤخرًا">
 
-<!ENTITY appMenuHistory.showAll.label "أظهر كل التأريخ">
-<!ENTITY appMenuHistory.clearRecent.label "امسح التأريخ الحالي…">
-<!ENTITY appMenuHistory.restoreSession.label "استعد الجلسة السابقة">
-<!ENTITY appMenuHistory.viewSidebar.label "أظهر شريط التأريخ الجانبي">
-<!ENTITY appMenuHistory.hideSidebar.label "أخفِ شريط التأريخ الجانبي">
-<!ENTITY appMenuHistory.recentHistory.label "التأريخ القريب">
 <!ENTITY appMenuHelp.label "مساعدة">
 
-<!ENTITY appMenuRemoteTabs.label "الألسنة المُزامنة">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
      the name of a device when that device has no open tabs -->
 <!ENTITY appMenuRemoteTabs.notabs.label "لا ألسنة مفتوحة">
-<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
-     This is shown after the tabs list if we can display more tabs by clicking on the button -->
-<!ENTITY appMenuRemoteTabs.showMore.label "اعرض المزيد">
 <!ENTITY appMenuRemoteTabs.showMore.tooltip "اعرض المزيد من الألسنة من هذا الجهاز">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
      This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
@@ -171,19 +82,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "فعّل مزامنة الألسنة لعرض قائمة بالألسنة من أجهزتك الأخرى.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "أتريد رؤية ألسنتك من الأجهزة الأخرى هنا؟">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "افتح تفضيلات «تزامُن»">
 <!ENTITY appMenuRemoteTabs.welcome.label "اعرض قائمة بالألسنة من أجهزتك الأخرى.">
 <!ENTITY appMenuRemoteTabs.unverified.label "يجب تأكيد حسابك.">
-<!ENTITY appMenuRemoteTabs.signintosync.label "لِج إلى &syncBrand.shortName.label;…">
-<!ENTITY appMenuRemoteTabs.turnonsync.label "فعّل &syncBrand.shortName.label;…">
-<!ENTITY appMenuRemoteTabs.managedevices.label "أدِر الأجهزة…">
-<!ENTITY appMenuRemoteTabs.sidebar.label "أظهر شريط الألسنة المزامَنة الجانبي">
-<!ENTITY appMenuRemoteTabs.hidesidebar.label "أخفِ شريط الألسنة المزامَنة الجانبي">
 <!ENTITY appMenuRemoteTabs.connectdevice.label "صِلْ جهازا آخر">
-
-<!ENTITY appMenuRecentHighlights.label "آخر الأخبار المهمة">
 
 <!ENTITY customizeMenu.addToToolbar.label "أضف إلى شريط الأدوات">
 <!ENTITY customizeMenu.addToToolbar.accesskey "ض">
@@ -195,8 +99,6 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY customizeMenu.addToOverflowMenu.accesskey "ض">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.label "أزل التثبيت من قائمة الزيادة">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "ت">
-<!ENTITY customizeMenu.removeFromToolbar.label "احذف من شريط الأدوات">
-<!ENTITY customizeMenu.removeFromToolbar.accesskey "ح">
 <!ENTITY customizeMenu.addMoreItems.label "أضف المزيد من العناصر…">
 <!ENTITY customizeMenu.addMoreItems.accesskey "ض">
 
@@ -214,15 +116,6 @@ this container is a toolbar. This avoids double-speaking. -->
 
 <!ENTITY openLinkCmdInTab.accesskey   "ل">
 
-<!ENTITY pageAction.copyLink.label    "انسخ الرابط">
-
-<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
-  "Pocket" is a brand name. -->
-<!ENTITY saveToPocketCmd.label        "احفظ الصفحة في Pocket">
-<!ENTITY pocketMenuitem.label         "اعرض قائمة Pocket">
-
-<!ENTITY emailPageCmd.label           "أرسل الرابط بالبريد…">
-
 <!-- Media (video/audio) controls -->
 
 <!-- LOCALIZATION NOTE :
@@ -234,13 +127,6 @@ you can use these alternative items. Otherwise, their values should be empty.  -
 <!ENTITY fullZoom.label                 "قرّب">
 
 <!ENTITY sidebarCloseButton.tooltip     "أغلِق الشريط الجانبي">
-
-<!ENTITY quitApplicationCmdWin2.label       "اخرج">
-<!ENTITY quitApplicationCmdWin2.accesskey   "خ">
-<!ENTITY quitApplicationCmdWin2.tooltip     "أغلق &brandShorterName;">
-<!ENTITY quitApplicationCmd.label       "أغلق">
-<!ENTITY quitApplicationCmd.accesskey   "غ">
-<!ENTITY quitApplicationCmdMac2.label   "أغلق &brandShorterName;">
 
 <!ENTITY allowPopups.accesskey "ن">
 <!-- On Windows we use the term "Options" to describe settings, but
@@ -261,10 +147,6 @@ you can use these alternative items. Otherwise, their values should be empty.  -
      The word "toolbar" is appended automatically and should not be contained below! -->
 <!ENTITY tabsToolbar.label "ألسنة المتصفح">
 
-<!ENTITY syncBrand.shortName.label    "تزامُن">
-
-<!ENTITY customizeMode.autoHideDownloadsButton.label "إخفاء آلي">
-
 
 <!ENTITY uiTour.infoPanel.close "أغلق">
 
@@ -272,15 +154,7 @@ you can use these alternative items. Otherwise, their values should be empty.  -
 <!ENTITY panicButton.thankyou.msg2                "التصفح الآمن!">
 <!ENTITY panicButton.thankyou.buttonlabel         "شكرًا!">
 
-<!ENTITY updateAvailable.panelUI.label "نزّل تحديث &brandShorterName;">
-<!ENTITY updateManual.panelUI.label "نزّل نسخة جديدة من &brandShorterName;">
-<!ENTITY updateUnsupported.panelUI.label "لا يمكنك التحديث أكثر من هذا">
-<!ENTITY updateRestart.panelUI.label2 "أعد التشغيل لتحديث &brandShorterName;">
-
 <!ENTITY sendToDevice.syncNotReady.label "يُزامن الأجهزة…">
-
-<!ENTITY pageAction.shareUrl.label "شارِك">
-<!ENTITY pageAction.shareMore.label "أكثر…">
 
 <!ENTITY libraryButton.tooltip "اعرض التأريخ، والعلامات المحفوظة وغيرها">
 

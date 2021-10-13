@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,12 +31,6 @@
 <!ENTITY closeCmd.label                                 "ปิด">
 <!ENTITY closeCmd.key                                   "W">
 <!ENTITY closeCmd.accesskey                             "ป">
-<!ENTITY printSetupCmd.label                            "ตั้งค่าหน้ากระดาษ…">
-<!ENTITY printSetupCmd.accesskey                        "ต">
-<!ENTITY printPreviewContactCmd.label                   "แสดงตัวอย่างผู้ติดต่อก่อนพิมพ์">
-<!ENTITY printPreviewContactCmd.accesskey               "แ">
-<!ENTITY printPreviewAddressBook.label                  "แสดงตัวอย่างสมุดรายชื่อก่อนพิมพ์">
-<!ENTITY printPreviewAddressBook.accesskey              "ส">
 <!ENTITY printContactCmd.label                          "พิมพ์ผู้ติดต่อ…">
 <!ENTITY printContactCmd.accesskey                      "พ">
 <!ENTITY printContactCmd.key                            "P">
@@ -108,10 +102,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY importCmd.accesskey                            "น">
 <!ENTITY exportCmd.label                                "ส่งออก…">
 <!ENTITY exportCmd.accesskey                            "ส">
-<!ENTITY preferencesCmd2.label                          "ตัวเลือก">
-<!ENTITY preferencesCmd2.accesskey                      "ต">
-<!ENTITY preferencesCmdUnix.label                       "ค่ากำหนด">
-<!ENTITY preferencesCmdUnix.accesskey                   "ค">
 
 <!-- Address Book Toolbar and Context Menus -->
 <!ENTITY newContactButton.label                         "ผู้ติดต่อใหม่">

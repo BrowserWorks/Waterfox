@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -24,12 +24,6 @@ site-data-local-file-host = (ไฟล์ในเครื่อง)
 site-data-remove-selected =
     .label = เอาที่เลือกออก
     .accesskey = อ
-site-data-button-cancel =
-    .label = ยกเลิก
-    .accesskey = ย
-site-data-button-save =
-    .label = บันทึกการเปลี่ยนแปลง
-    .accesskey = บ
 site-data-settings-dialog =
     .buttonlabelaccept = บันทึกการเปลี่ยนแปลง
     .buttonaccesskeyaccept = บ
@@ -54,4 +48,7 @@ site-data-removing-dialog =
     .buttonlabelaccept = เอาออก
 site-data-removing-header = การเอาคุกกี้และข้อมูลไซต์ออก
 site-data-removing-desc = การเอาคุกกี้และข้อมูลไซต์ออกอาจนำคุณออกจากระบบของเว็บไซต์ คุณแน่ใจหรือไม่ว่าต้องการทำการเปลี่ยนแปลง?
+# Variables:
+#   $baseDomain (String) - The single domain for which data is being removed
+site-data-removing-single-desc = การเอาคุกกี้และข้อมูลไซต์ออกอาจนำคุณออกจากระบบเว็บไซต์ต่าง ๆ คุณแน่ใจหรือไม่ว่าต้องการเอาคุกกี้และข้อมูลไซต์สำหรับ <strong>{ $baseDomain }</strong> ออก?
 site-data-removing-table = คุกกี้และข้อมูลไซต์สำหรับเว็บไซต์ดังต่อไปนี้จะถูกเอาออก

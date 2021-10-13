@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -123,7 +123,7 @@ ssl-error-insufficient-security-alert = 服务器要求的密码比那些由客�
 ssl-error-internal-error-alert = 对等端报告其遇到一个内部错误。
 ssl-error-user-canceled-alert = 对等端用户取消了握手。
 ssl-error-no-renegotiation-alert = 对等端不允许 SSL 安全参数重议。
-ssl-error-server-cache-not-configured = SSL 服务器缓存没有设置且对此接口没有禁用。
+ssl-error-server-cache-not-configured = SSL 服务器缓存未配置，且未对此套接字禁用。
 ssl-error-unsupported-extension-alert = SSL 对等端不支持所请求的 TLS hello 扩展。
 ssl-error-certificate-unobtainable-alert = SSL 对等端无法从所提供的 URL 获得您的证书。
 ssl-error-unrecognized-name-alert = SSL 对等端没有所请求 DNS 名称的证书。

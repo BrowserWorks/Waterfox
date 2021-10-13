@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -37,3 +37,20 @@ text-action-select-all-shortcut =
     .key = A
 text-action-spell-no-suggestions =
     .label = Geen spellingsuggesties
+text-action-spell-add-to-dictionary =
+    .label = Toevoegen aan woordenboek
+    .accesskey = o
+text-action-spell-undo-add-to-dictionary =
+    .label = Toevoegen aan woordenboek ongedaan maken
+    .accesskey = g
+text-action-spell-check-toggle =
+    .label = Spelling controleren
+    .accesskey = g
+text-action-spell-add-dictionaries =
+    .label = Woordenboeken toevoegen…
+    .accesskey = t
+text-action-spell-dictionaries =
+    .label = Talen
+    .accesskey = T
+text-action-search-text-box-clear =
+    .title = Wissen

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,11 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Данные телеметрии
 about-telemetry-current-store = Текущее хранилище:
 about-telemetry-more-information = Ищете больше информации?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Документация по данным Firefox</a> содержит руководства по работе с нашими инструментами сбора данных.
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Документация клиента телеметрии Firefox</a> содержит определения концепций, документацию по API и справку по данным.
-about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Панели Телеметрии</a> позволяют вам визуализировать данные, полученные Mozilla через Телеметрию.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Документация по данным Waterfox</a> содержит руководства по работе с нашими инструментами сбора данных.
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Документация клиента телеметрии Waterfox</a> содержит определения концепций, документацию по API и справку по данным.
+about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Панели Телеметрии</a> позволяют вам визуализировать данные, полученные Waterfox через Телеметрию.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Словарь Зондов</a> содержит сведения о зондах и описания зондов, собранные Телеметрией.
-about-telemetry-show-in-Firefox-json-viewer = Открыть в просмотрщике JSON
+about-telemetry-show-in-Waterfox-json-viewer = Открыть в просмотрщике JSON
 about-telemetry-home-section = Главная
 about-telemetry-general-data-section = Общие данные
 about-telemetry-environment-data-section = Данные окружения
@@ -69,9 +69,9 @@ about-telemetry-histogram-stats =
        *[many] { $sampleCount } замеров, среднее = { $prettyAverage }, сумма = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
 about-telemetry-page-subtitle = На этой странице показаны сведения о производительности, аппаратном обеспечении, использовании и настройках, собранные Телеметрией. Эта информация будет отправлена в { $telemetryServerOwner }, чтобы помочь улучшить { -brand-full-name }.
-about-telemetry-settings-explanation = Настроен сбор телеметрии на { about-telemetry-data-type } версии Firefox и её отправка <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
+about-telemetry-settings-explanation = Настроен сбор телеметрии на { about-telemetry-data-type } версии Waterfox и её отправка <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
 # Variables:
 #   $name (String): ping name, e.g. “saved-session”
 #   $timeStamp (String): ping localized timestamp, e.g. “2017/07/08 10:40:46”
@@ -141,8 +141,8 @@ about-telemetry-origin-section = Телеметрия источников
 about-telemetry-origin-origin = источник
 about-telemetry-origin-count = количество
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Телеметрия источников Firefox</a> кодирует данные перед отправкой, поэтому { $telemetryServerOwner } может посчитать вещи, не узнав, внёс ли какой-либо { -brand-product-name } вклад для этого. (<a data-l10n-name="prio-blog-link">узнать больше</a>)
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Телеметрия источников Waterfox</a> кодирует данные перед отправкой, поэтому { $telemetryServerOwner } может посчитать вещи, не узнав, внёс ли какой-либо { -brand-product-name } вклад для этого. (<a data-l10n-name="prio-blog-link">узнать больше</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = Процесс { $process }

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,8 +8,17 @@
 <!ENTITY confirmMove.accesskey            "Ε">
 <!ENTITY preserveThreading.label          "Διατήρηση νημάτων κατά την ταξινόμηση μηνυμάτων">
 <!ENTITY preserveThreading.accesskey      "ν">
+<!ENTITY mailAutoHide.label               "Απόκρυψη γραμμής καρτελών email όταν είναι ανοικτή μόνο μία καρτέλα">
+<!ENTITY mailAutoHide.accesskey           "ρ">
 <!ENTITY loadInBackground.label           "Εναλλαγή σε νέες καρτέλες όταν ανοίγουν">
 <!ENTITY loadInBackground.accesskey       "γ">
+<!ENTITY mailOpenTabsFor.label            "Άνοιγμα καρτελών αντί παραθύρων για">
+<!ENTITY mailMiddleClick.label            "Μεσαίο κλικ ή Ctrl+Enter σε μήνυμα ή φάκελο">
+<!ENTITY mailMiddleClick.accesskey        "Μ">
+<!ENTITY mailMiddleClickMac.label         "Μεσαίο κλικ ή &#8984;+Return σε μήνυμα ή φάκελο">
+<!ENTITY mailMiddleClickMac.accesskey     "Μ">
+<!ENTITY mailDoubleClick.label            "Διπλό κλικ σε μήνυμα">
+<!ENTITY mailDoubleClick.accesskey        "κ">
 <!ENTITY mailBiffOnNewWindow.label        "Έλεγχος για νέα email μόνο μετά το άνοιγμα της Αλληλογραφίας &amp; ομάδων συζητήσεων">
 <!ENTITY mailBiffOnNewWindow.accesskey    "Έ">
 

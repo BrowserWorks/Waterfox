@@ -1,13 +1,17 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowtitle "Instalar plugin…">
+
 <!ENTITY name.label "Nombre:">
 <!ENTITY name.accesskey "N">
+
 <!ENTITY name.autopick.label "Escoger un nombre automáticamente por mí">
 <!ENTITY name.autopick.accesskey "E">
+
 <!ENTITY source.label "Origen:">
 <!ENTITY source.accesskey "O">
+
 <!ENTITY browse.label "Examinar…">
 <!ENTITY browse.accesskey "x">

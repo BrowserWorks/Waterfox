@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -19,5 +19,5 @@ abierto, que incluye detección avanzada de correo basura y otras útiles caract
 <!ENTITY dict_intro.label "Los diccionarios se usan para comprobar la ortografía de sus mensajes.">
 <!ENTITY dict_info.label2 'Pueden instalarse muchos idiomas adicionales desde la sección de <a href="dictURL">diccionarios</a> de <a href="https://addons.thunderbird.net/seamonkey/">Add-ons de SeaMonkey y Thunderbird</a>.'>
 <!ENTITY info.title "Más información">
-<!ENTITY info_bugs.label '<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">Nosotros</a> agradecemos los informes
+<!ENTITY info_bugs.label '<a href="https://developer.mozilla.org/docs/Waterfox/Projects/MailNews">Nosotros</a> agradecemos los informes
 de fallos y solicitudes de nuevas características, pero, por favor, lea antes las <a id="releaseNotesURL" href="">notas de la versión</a> y consulte primero <a href="http://bugzilla.mozilla.org/query.cgi">Bugzilla</a>.'>

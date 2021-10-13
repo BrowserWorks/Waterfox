@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -705,11 +705,6 @@
        <rdf:Description ID="master_password:forgetting"
          nc:name="&#191;Qu&#233; hacer si olvida su contrase&#241;a maestra?"
 	 nc:link="using_priv_help.xhtml#what_to_do_if_you_forget_your_master_password"/>
-     </rdf:li>
-     <rdf:li>
-       <rdf:Description ID="master_password:preferences"
-         nc:name="preferencias de contrase&#241;a maestra"
-	 nc:link="passwords_help.xhtml#master_passwords"/>
      </rdf:li></rdf:Seq>
    </nc:subheadings>
 </rdf:Description>

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -39,7 +39,7 @@
 <!ENTITY PrimaryEmail.label             "Email:">
 <!ENTITY PrimaryEmail.accesskey         "E">
 <!ENTITY SecondEmail.label              "Email adicional:">
-<!ENTITY SecondEmail.accesskey          "a">
+<!ENTITY SecondEmail.accesskey          "d">
 <!ENTITY PreferMailFormat.label         "Prefere receber mensagens formatadas como:">
 <!ENTITY PreferMailFormat.accesskey     "f">
 <!ENTITY PlainText.label                "Texto sem formatação">
@@ -89,7 +89,7 @@
 <!ENTITY Department.label               "Departamento:">
 <!ENTITY Department.accesskey           "D">
 <!ENTITY Company.label                  "Organização:">
-<!ENTITY Company.accesskey              "p">
+<!ENTITY Company.accesskey              "O">
 <!ENTITY WorkAddress.label              "Endereço:">
 <!ENTITY WorkAddress.accesskey          "E">
 <!ENTITY WorkAddress2.label             "(continuação do endereço)">
@@ -119,7 +119,7 @@
 <!ENTITY Notes.accesskey                "N">
 
 <!ENTITY Chat.tab                       "Conversa">
-<!ENTITY Chat.accesskey                 "B">
+<!ENTITY Chat.accesskey                 "v">
 <!ENTITY Gtalk.label                    "Google Talk:">
 <!ENTITY Gtalk.accesskey                "G">
 <!ENTITY AIM.label                      "AIM:">
@@ -153,4 +153,4 @@
 <!ENTITY PhotoURL.placeholder           "Digite ou cole o endereço web de uma foto">
 <!ENTITY UpdatePhoto.label              "Atualizar">
 <!ENTITY UpdatePhoto.accesskey          "u">
-<!ENTITY PhotoDropTarget.label          "Arraste para cá uma nova foto">
+<!ENTITY PhotoDropTarget.label          "Arraste uma foto para cá">

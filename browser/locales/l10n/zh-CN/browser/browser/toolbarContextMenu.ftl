@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,13 +20,6 @@ toolbar-context-menu-bookmark-selected-tabs =
 toolbar-context-menu-select-all-tabs =
     .label = 选择所有标签页
     .accesskey = S
-toolbar-context-menu-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] 恢复关闭的标签页
-           *[other] 恢复关闭的标签页
-        }
-    .accesskey = U
 toolbar-context-menu-reopen-closed-tabs =
     .label =
         { $tabCount ->
@@ -41,7 +34,7 @@ toolbar-context-menu-remove-extension =
     .label = 移除扩展
     .accesskey = v
 # This label is used in the extensions toolbar buttons context menus,
-# a user can use this command to submit to Mozilla an abuse report
+# a user can use this command to submit to Waterfox an abuse report
 # related to that extension. "Report" is a verb.
 toolbar-context-menu-report-extension =
     .label = 举报扩展
@@ -52,9 +45,6 @@ toolbar-context-menu-report-extension =
 toolbar-context-menu-pin-to-overflow-menu =
     .label = 隐藏到折叠菜单
     .accesskey = P
-toolbar-context-menu-auto-hide-downloads-button =
-    .label = 于工具栏自动隐去
-    .accesskey = A
 toolbar-context-menu-auto-hide-downloads-button-2 =
     .label = 空闲时隐藏按钮
     .accesskey = H
@@ -79,3 +69,6 @@ toolbar-context-menu-bookmarks-toolbar-on-new-tab-2 =
 toolbar-context-menu-bookmarks-show-other-bookmarks =
     .label = 显示 - 其他书签
     .accesskey = h
+toolbar-context-menu-menu-bar-cmd =
+    .toolbarname = 菜单栏
+    .accesskey = M

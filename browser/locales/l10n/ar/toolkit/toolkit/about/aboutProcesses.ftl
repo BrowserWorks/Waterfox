@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # Page title
 about-processes-title = مدير العمليات
+
 # The Actions column
 about-processes-column-action =
     .title = الإجراءات
@@ -27,7 +28,14 @@ about-processes-column-cpu-total = المعالج
 ##    $origin (String) The domain name for this process.
 ##    $type (String) The raw type for this process. Used for unknown processes.
 
-about-processes-web-process-name = الوِب (العملية { $pid }، مشتركة)
+## Process names
+## Variables:
+##    $pid (String) The process id of this process, assigned by the OS.
+
+## Isolated process names
+## Variables:
+##    $pid (String) The process id of this process, assigned by the OS.
+##    $origin (String) The domain name for this process.
 
 ## Details within processes
 
@@ -40,9 +48,6 @@ about-processes-web-process-name = الوِب (العملية { $pid }، مشت�
 ##                    its start.
 ##    $unit (String) The unit in which to display $total. See the definitions
 ##                   of `duration-unit-*`.
-
-# Special case: process or thread is currently idle.
-about-processes-cpu-user-and-kernel-idle = خامل ({ NUMBER($total, maximumFractionDigits: 2) }{ $unit })
 
 ## Displaying Memory (total and delta)
 ## Variables:

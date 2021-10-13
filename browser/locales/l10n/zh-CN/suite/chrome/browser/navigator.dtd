@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -57,10 +57,6 @@
 <!ENTITY goButton.tooltip             "在左边的区域中输入地址后单击 转到">
 <!ENTITY printButton.label            "打印">
 <!ENTITY printButton.tooltip          "打印此页面">
-
-<!ENTITY throbber.tooltip             "转到 &vendorShortName; 主页">
-
-<!ENTITY throbber.tooltip2            "转到 &brandShortName; 主页">
 
 <!ENTITY locationBar.tooltip          "输入搜索条件、关键词或网址">
 <!ENTITY locationBar.accesskey        "d">

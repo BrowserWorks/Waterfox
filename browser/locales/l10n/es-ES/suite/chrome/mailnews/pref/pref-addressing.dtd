@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -7,6 +7,7 @@
 <!ENTITY emailCollectionPicker.label "Añadir direcciones a mi:">
 <!ENTITY emailCollectionPicker.accesskey "m">
 <!ENTITY emailCollectiontext.label "Las direcciones de correo de los mensajes salientes pueden añadirse automáticamente a una libreta de direcciones local.">
+
 <!ENTITY addressingTitle.label "Autocompletado de direcciones">
 <!ENTITY highlightNonMatches.label "Resaltar direcciones que no se autocompletan">
 <!ENTITY highlightNonMatches.accesskey "a">

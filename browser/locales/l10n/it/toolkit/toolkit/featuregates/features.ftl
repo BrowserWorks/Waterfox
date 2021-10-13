@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,12 @@
 experimental-features-css-masonry2 =
     .label = CSS: Masonry Layout
 experimental-features-css-masonry-description = Attiva il supporto per la funzione sperimentale CSS Masonry Layout. Consultare <a data-l10n-name="explainer">questo documento</a> per ottenere una descrizione generale di questa funzione. Per fornire commenti e suggerimenti è possibile utilizzare <a data-l10n-name="w3c-issue">questa issue in GitHub</a> o <a data-l10n-name="bug">questo bug</a>.
+
+# The following string should not be localized as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS: Cascade Layers
+experimental-features-css-cascade-layers-description = Attiva supporto per CSS Cascade Layers. Consultare le <a data-l10n-name="spec">specifiche (in lavorazione)</a> per dettagli. Per problemi causati da questa funzione, aprire un bug bloccando il <a data-l10n-name="bugzilla">bug 1699215</a>.
 
 # The following string should not be localized as it may be referenced
 # by various online articles and is technical in nature.
@@ -84,6 +90,11 @@ experimental-features-webrtc-global-mute-toggles =
     .label = Attivazione/disattivazione audio e video WebRTC a livello globale
 experimental-features-webrtc-global-mute-toggles-description = Aggiungi controlli all’indicatore di condivisione WebRTC per consentire agli utenti di interrompere a livello globale la condivisione di microfono e fotocamera.
 
+# Win32k Lockdown
+experimental-features-win32k-lockdown =
+    .label = Win32k Lockdown
+experimental-features-win32k-lockdown-description = Disattiva l’utilizzo delle API Win32k nelle schede del browser (solo in ambiente Windows). Questo garantisce una maggiore sicurezza ma potrebbe risultare instabile.
+
 # JS JIT Warp project
 experimental-features-js-warp =
     .label = JavaScript JIT: Warp
@@ -103,8 +114,3 @@ experimental-features-multi-pip-description = Attiva il supporto sperimentale pe
 experimental-features-ime-search =
     .label = Barra degli indirizzi: mostra risultati quando si usa la composizione IME
 experimental-features-ime-search-description = Un IME (Input Method Editor) è uno strumento che permette di inserire simboli complessi, come quelli utilizzati da lingue asiatiche o indiane, utilizzando una tastiera tradizionale. Attivando questo esperimento il pannello della barra degli indirizzi rimarrà aperto, mostrando risultati di ricerca e suggerimenti, anche quando si utilizza IME per inserire il testo. Alcuni IME utilizzano un pannello che potrebbe coprire i risultati della barra degli indirizzi, per cui si consiglia di attivare questa opzione solo per IME che non usano questo approccio.
-
-# Win32k Lockdown
-experimental-features-win32k-lockdown =
-    .label = Win32k Lockdown
-experimental-features-win32k-lockdown-description = Disattiva l’utilizzo delle API Win32k nelle schede del browser (solo in ambiente Windows). Questo garantisce una maggiore sicurezza ma potrebbe risultare instabile.

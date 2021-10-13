@@ -1,6 +1,6 @@
 #filter emptyLines
 
-#define MOZ_LANGPACK_CREATOR Mozilla.cz
+#define MOZ_LANGPACK_CREATOR Waterfox.cz
 
 #define MOZ_LANGPACK_HOMEPAGE https://www.mozilla.cz/
 

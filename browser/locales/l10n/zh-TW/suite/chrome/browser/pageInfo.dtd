@@ -1,5 +1,5 @@
 <!--
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
@@ -61,8 +61,6 @@
 
 <!ENTITY  mediaTab              "媒體">
 <!ENTITY  mediaTab.accesskey    "M">
-<!ENTITY  mediaURL              "網址:">
-<!ENTITY  mediaAlt              "替代文字:">
 <!ENTITY  mediaLocation         "位置:">
 <!ENTITY  mediaText             "關聯文字:">
 <!ENTITY  mediaAltHeader        "替代文字">
@@ -70,9 +68,6 @@
 <!ENTITY  mediaType             "類型">
 <!ENTITY  mediaSize             "大小">
 <!ENTITY  mediaCount            "數量">
-<!ENTITY  mediaDimensions       "尺寸:">
-<!ENTITY  mediaPhysDimensions   "真實大小:">
-<!ENTITY  mediaTitle            "標題:">
 <!ENTITY  mediaDimension        "尺寸:">
 <!ENTITY  mediaLongdesc         "完整描述:">
 <!ENTITY  mediaBlockImage.accesskey "B">
@@ -88,18 +83,7 @@
 
 <!ENTITY  permTab               "權限">
 <!ENTITY  permTab.accesskey     "P">
-<!ENTITY  permUseDefault        "使用預設值">
-<!ENTITY  permAskAlways         "總是詢問">
-<!ENTITY  permAllow             "允許">
-<!ENTITY  permAllowSession      "此次瀏覽階段允許">
-<!ENTITY  permBlock             "封鎖">
 <!ENTITY  permissionsFor        "此網站權限設定:">
-<!ENTITY  permImage             "載入圖片">
-<!ENTITY  permPopup             "開啟彈出式視窗">
-<!ENTITY  permCookie            "設定 Cookie">
-<!ENTITY  permNotifications     "顯示通知">
-<!ENTITY  permInstall           "安裝擴充套件或佈景主題">
-<!ENTITY  permGeo               "透露地理位置">
 
 <!ENTITY  securityTab           "安全性">
 <!ENTITY  securityTab.accesskey "S">

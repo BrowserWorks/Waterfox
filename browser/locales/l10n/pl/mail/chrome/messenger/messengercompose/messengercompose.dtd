@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "Utwórz">
 <!ENTITY newMenu.accesskey "U">
 <!ENTITY newMessage.label "Wiadomość">
-<!ENTITY newMessage.key "M">
 <!ENTITY newMessageCmd2.key "N">
-<!ENTITY newMessage.accesskey "m">
 <!ENTITY newContact.label "Wizytówkę…">
 <!ENTITY newContact.accesskey "W">
 <!ENTITY attachMenu.label "Załącz">
 <!ENTITY attachMenu.accesskey "c">
-<!ENTITY attachFileCmd.label "Plik…">
-<!ENTITY attachFileCmd.accesskey "l">
-<!ENTITY attachFileCmd.key "A">
 <!ENTITY attachCloudCmd.label "Odnośnik do serwisu przechowywania plików">
 <!ENTITY attachCloudCmd.accesskey "d">
 <!ENTITY attachPageCmd.label "Stronę WWW…">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "Wyślij później">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "W">
-<!ENTITY printSetupCmd.label "Ustawienia strony…">
-<!ENTITY printSetupCmd.accesskey "e">
-<!ENTITY printPreviewCmd.label "Podgląd wydruku">
-<!ENTITY printPreviewCmd.accesskey "o">
 <!ENTITY printCmd.label "Drukuj…">
 <!ENTITY printCmd.key "P">
 <!ENTITY printCmd.accesskey "D">
@@ -82,8 +73,6 @@
 <!ENTITY reorderAttachmentsCmd.label "Zmień kolejność załączników…">
 <!ENTITY reorderAttachmentsCmd.accesskey "k">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "Lista załączników">
-<!ENTITY toggleAttachmentPaneCmd.accesskey "a">
 <!ENTITY selectAllCmd.accesskey "a">
 <!ENTITY findBarCmd.label "Znajdź…">
 <!ENTITY findBarCmd.accesskey "Z">
@@ -102,11 +91,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "Zmień kolejność załączników">
-<!ENTITY moveAttachmentTopPanelBtn.label "Przenieś na górę">
-<!ENTITY moveAttachmentUpPanelBtn.label "Przenieś do góry">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label "Przenieś razem">
-<!ENTITY moveAttachmentDownPanelBtn.label "Przenieś w dół">
-<!ENTITY moveAttachmentBottomPanelBtn.label "Przenieś na dół">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -204,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "Konfiguracja kont">
 <!ENTITY accountManagerCmd2.accesskey "K">
 <!ENTITY accountManagerCmdUnix2.accesskey "K">
-<!ENTITY preferencesCmd2.label "Opcje">
-<!ENTITY preferencesCmd2.accesskey "O">
-<!ENTITY preferencesCmdUnix.label "Preferencje">
-<!ENTITY preferencesCmdUnix.accesskey "P">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "m">
@@ -220,7 +201,6 @@
 <!ENTITY sendButton.label "Wyślij">
 <!ENTITY quoteButton.label "Cytuj">
 <!ENTITY addressButton.label "Adresy">
-<!ENTITY attachButton.label "Załącz">
 <!ENTITY spellingButton.label "Pisownia">
 <!ENTITY saveButton.label "Zapisz jako">
 <!ENTITY printButton.label "Drukuj">
@@ -230,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "Wyślij tę wiadomość później">
 <!ENTITY quoteButton.tooltip "Zacytuj poprzednią wiadomość">
 <!ENTITY addressButton.tooltip "Wybierz adresata z książki adresowej">
-<!ENTITY attachButton.tooltip2 "Dodaj pliki do tej wiadomości">
 <!ENTITY spellingButton.tooltip "Sprawdź pisownię zaznaczonego fragmentu lub całej wiadomości">
 <!ENTITY saveButton.tooltip "Zapisz wiadomość jako">
 <!ENTITY cutButton.tooltip              "Wytnij">
@@ -245,9 +224,6 @@
 <!ENTITY extraRecipients.tooltip "Pozostałe typy pól adresowania">
 <!ENTITY fromAddr2.label "Nadawca">
 <!ENTITY fromAddr.accesskey "d">
-<!ENTITY toAddr2.label "Do">
-<!ENTITY ccAddr2.label "Kopia">
-<!ENTITY bccAddr2.label "Ukryta kopia">
 <!ENTITY replyAddr2.label "Odpowiedź do">
 <!ENTITY newsgroupsAddr2.label "Grupa dyskusyjna">
 <!ENTITY followupAddr2.label "Kontynuacja na">
@@ -306,8 +282,6 @@
 <!ENTITY removeAllAttachments.accesskey "U">
 <!ENTITY selectAll.label "Zaznacz wszystko">
 <!ENTITY selectAll.accesskey "w">
-<!ENTITY attachFile.label "Załącz plik">
-<!ENTITY attachFile.accesskey "p">
 <!ENTITY attachCloud.label "Odnośnik do serwisu przechowywania plików…">
 <!ENTITY attachCloud.accesskey "d">
 <!ENTITY convertCloud.label "Przekształć…">

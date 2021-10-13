@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,12 +31,6 @@
 <!ENTITY closeCmd.label                                 "关闭">
 <!ENTITY closeCmd.key                                   "W">
 <!ENTITY closeCmd.accesskey                             "C">
-<!ENTITY printSetupCmd.label                            "页面设置…">
-<!ENTITY printSetupCmd.accesskey                        "u">
-<!ENTITY printPreviewContactCmd.label                   "联系人打印预览">
-<!ENTITY printPreviewContactCmd.accesskey               "v">
-<!ENTITY printPreviewAddressBook.label                  "通讯录打印预览">
-<!ENTITY printPreviewAddressBook.accesskey              "B">
 <!ENTITY printContactCmd.label                          "打印联系人…">
 <!ENTITY printContactCmd.accesskey                      "P">
 <!ENTITY printContactCmd.key                            "P">
@@ -48,7 +42,9 @@
 <!ENTITY editMenu.accesskey                             "E">
 <!ENTITY deleteCmd.label                                "删除">
 <!ENTITY deleteAbCmd.label                              "删除通讯录">
+<!ENTITY deleteAbCmd.accesskey                          "D">
 <!ENTITY removeAbCmd.label                              "移除通讯录">
+<!ENTITY removeAbCmd.accesskey                          "d">
 <!ENTITY deleteContactCmd.label                         "删除联系人">
 <!ENTITY deleteContactsCmd.label                        "删除联系人">
 <!ENTITY deleteListCmd.label                            "删除列表">
@@ -109,10 +105,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY importCmd.accesskey                            "I">
 <!ENTITY exportCmd.label                                "导出…">
 <!ENTITY exportCmd.accesskey                            "E">
-<!ENTITY preferencesCmd2.label                          "选项">
-<!ENTITY preferencesCmd2.accesskey                      "O">
-<!ENTITY preferencesCmdUnix.label                       "首选项">
-<!ENTITY preferencesCmdUnix.accesskey                   "n">
 
 <!-- Address Book Toolbar and Context Menus -->
 <!ENTITY newContactButton.label                         "新建联系人">

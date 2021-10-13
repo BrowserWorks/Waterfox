@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Waterfox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - Waterfox
+# private - "Waterfox Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Waterfox"
-# "private" - "Mozilla Firefox — (Private Browsing)"
+# "default" - Waterfox
+# "private" - "Waterfox Waterfox — (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -87,6 +87,10 @@ urlbar-plugins-notification-anchor =
     .tooltiptext = Hantera plugins som används
 urlbar-web-rtc-share-devices-notification-anchor =
     .tooltiptext = Hantera delning av din kamera och/eller mikrofon med webbplatsen
+# "Speakers" is used in a general sense that might include headphones or
+# another audio output connection.
+urlbar-web-rtc-share-speaker-notification-anchor =
+    .tooltiptext = Hantera delning av andra högtalare med webbplatsen
 urlbar-autoplay-notification-anchor =
     .tooltiptext = Öppna panelen automatisk uppspelning
 urlbar-persistent-storage-notification-anchor =
@@ -156,12 +160,8 @@ urlbar-star-add-bookmark =
 
 ## Page Action Context Menu
 
-page-action-add-to-urlbar =
-    .label = Lägg till i adressfältet
 page-action-manage-extension =
     .label = Hantera tillägg…
-page-action-remove-from-urlbar =
-    .label = Ta bort från adressfältet
 page-action-remove-extension =
     .label = Ta bort tillägg
 
@@ -179,10 +179,6 @@ full-screen-exit =
 # This string prompts the user to use the list of search shortcuts in
 # the Urlbar and searchbar.
 search-one-offs-with-title = Denna gång, sök med:
-# This string won't wrap, so if the translated string is longer,
-# consider translating it as if it said only "Search Settings".
-search-one-offs-change-settings-button =
-    .label = Ändra sökinställningar
 search-one-offs-change-settings-compact-button =
     .tooltiptext = Ändra sökinställningar
 search-one-offs-context-open-new-tab =
@@ -246,8 +242,6 @@ bookmark-panel-remove =
 bookmark-panel-show-editor-checkbox =
     .label = Visa redigeraren när du sparar
     .accesskey = V
-bookmark-panel-done-button =
-    .label = Klar
 bookmark-panel-save-button =
     .label = Spara
 # Width of the bookmark panel.
@@ -272,13 +266,11 @@ identity-connection-internal = Detta är en säker { -brand-short-name } sida.
 identity-connection-file = Den här sidan är lagrad på din dator.
 identity-extension-page = Den här sidan laddas från ett tillägg.
 identity-active-blocked = { -brand-short-name } har blockerat några osäkra komponenter på sidan.
-identity-custom-root = Anslutning verifierad av en certifikatutgivare som inte känns igen av Mozilla.
+identity-custom-root = Anslutning verifierad av en certifikatutgivare som inte känns igen av Waterfox.
 identity-passive-loaded = Vissa komponenter av den här sidan är inte säkra (t.ex. bilder).
 identity-active-loaded = Du har stängt av skyddet på den här sidan.
 identity-weak-encryption = Den här sidan använder en svag kryptering.
 identity-insecure-login-forms = Inloggningar som anges på den här sidan kan äventyras.
-identity-permissions =
-    .value = Behörigheter
 identity-https-only-connection-upgraded = (uppgraderad till HTTPS)
 identity-https-only-label = Endast HTTPS-läge
 identity-https-only-dropdown-on =
@@ -294,13 +286,12 @@ identity-permissions-storage-access-header = Globala kakor
 identity-permissions-storage-access-hint = Dessa parter kan använda global kakor och webbplatsinformation medan du är på denna webbplats.
 identity-permissions-storage-access-learn-more = Läs mer
 identity-permissions-reload-hint = Du kan behöva ladda om sidan för att ändringarna ska verkställas.
-identity-permissions-empty = Du har inte beviljat denna webbplats några särskilda rättigheter.
 identity-clear-site-data =
     .label = Rensa kakor och webbplatsdata…
 identity-connection-not-secure-security-view = Du är inte säkert ansluten till den här webbplatsen.
 identity-connection-verified = Du är säkert ansluten till den här webbplatsen.
 identity-ev-owner-label = Certifikat utfärdat till:
-identity-description-custom-root = Mozilla känner inte igen denna certifikatutgivare. Den kan ha lagts till från ditt operativsystem eller av en administratör. <label data-l10n-name="link">Lär dig mer</label>
+identity-description-custom-root = Waterfox känner inte igen denna certifikatutgivare. Den kan ha lagts till från ditt operativsystem eller av en administratör. <label data-l10n-name="link">Lär dig mer</label>
 identity-remove-cert-exception =
     .label = Ta bort undantag
     .accesskey = R
@@ -376,12 +367,6 @@ bookmarks-toolbar-empty-message = För snabb åtkomst placerar du dina bokmärke
 
 ## WebRTC Pop-up notifications
 
-popup-select-camera =
-    .value = Kamera att dela:
-    .accesskey = K
-popup-select-microphone =
-    .value = Mikrofon att dela:
-    .accesskey = M
 popup-select-camera-device =
     .value = Kamera:
     .accesskey = K
@@ -395,14 +380,6 @@ popup-select-microphone-icon =
 popup-select-speaker-icon =
     .tooltiptext = Ljudenhet
 popup-all-windows-shared = Alla synliga fönster på din skärm kommer att delas.
-popup-screen-sharing-not-now =
-    .label = Inte nu
-    .accesskey = n
-popup-screen-sharing-never =
-    .label = Tillåt aldrig
-    .accesskey = T
-popup-silence-notifications-checkbox = Inaktivera aviseringar från { -brand-short-name } när du delar
-popup-silence-notifications-checkbox-warning = { -brand-short-name } kommer inte att visa aviseringar medan du delar.
 popup-screen-sharing-block =
     .label = Blockera
     .accesskey = B
@@ -426,14 +403,10 @@ enable-devtools-popup-description = För att använda tangentbordskommandot F12,
 
 ## URL Bar
 
-urlbar-default-placeholder =
-    .defaultPlaceholder = Sök eller ange adress
 # This placeholder is used when not in search mode and the user's default search
 # engine is unknown.
 urlbar-placeholder =
     .placeholder = Sök eller ange adress
-urlbar-remote-control-notification-anchor =
-    .tooltiptext = Webbläsaren är fjärrstyrd
 # This placeholder is used in search mode with search engines that search the
 # entire web.
 # Variables
@@ -482,8 +455,6 @@ urlbar-go-button =
     .tooltiptext = Gå till adressen i adressfältet
 urlbar-page-action-button =
     .tooltiptext = Åtgärder för sida
-urlbar-pocket-button =
-    .tooltiptext = Spara till { -pocket-brand-name }
 
 ## Action text shown in urlbar results, usually appended after the search
 ## string or the url, like "result value - action text".
@@ -539,6 +510,19 @@ urlbar-result-action-calculator-result = = { $result }
 urlbar-result-action-search-bookmarks = Sök i bokmärken
 urlbar-result-action-search-history = Sök i historik
 urlbar-result-action-search-tabs = Sök i flikar
+
+## Labels shown above groups of urlbar results
+
+# A label shown above the "Waterfox Suggest" (bookmarks/history) group in the
+# urlbar results.
+urlbar-group-firefox-suggest =
+    .label = { -firefox-suggest-brand-name }
+# A label shown above the search suggestions group in the urlbar results. It
+# should use title case.
+# Variables
+#  $engine (String): the name of the search engine providing the suggestions
+urlbar-group-search-suggestions =
+    .label = { $engine } Förslag
 
 ## Full Screen and Pointer Lock UI
 
@@ -672,6 +656,30 @@ toolbar-settings-button =
 more-menu-go-offline =
     .label = Arbeta nedkopplad
     .accesskey = b
+toolbar-overflow-customize-button =
+    .label = Anpassa verktygsfält…
+    .accesskey = n
+toolbar-button-email-link =
+    .label = E-posta länk
+    .tooltiptext = Mejla en länk till denna sidan
+# Variables:
+#  $shortcut (String): keyboard shortcut to save a copy of the page
+toolbar-button-save-page =
+    .label = Spara sida
+    .tooltiptext = Spara denna sida ({ $shortcut })
+# Variables:
+#  $shortcut (String): keyboard shortcut to open a local file
+toolbar-button-open-file =
+    .label = Öppna fil
+    .tooltiptext = Öppna en fil ({ $shortcut })
+toolbar-button-synced-tabs =
+    .label = Synkade flikar
+    .tooltiptext = Visa flikar från andra enheter
+# Variables
+# $shortcut (string) - Keyboard shortcut to open a new private browsing window
+toolbar-button-new-private-window =
+    .label = Nytt privat fönster
+    .tooltiptext = Öppna ett nytt privat fönster ({ $shortcut })
 
 ## EME notification panel
 
@@ -698,3 +706,79 @@ addon-removal-abuse-report-checkbox = Rapportera detta tillägg till { -vendor-s
 remote-tabs-manage-account =
     .label = Hantera konto
 remote-tabs-sync-now = Synkronisera nu
+
+##
+
+# "More" item in macOS share menu
+menu-share-more =
+    .label = Mer…
+ui-tour-info-panel-close =
+    .tooltiptext = Stäng
+
+## Variables:
+##  $uriHost (String): URI host for which the popup was allowed or blocked.
+
+popups-infobar-allow =
+    .label = Tillåt popup-fönster för { $uriHost }
+    .accesskey = p
+popups-infobar-block =
+    .label = Blockera popup-fönster för { $uriHost }
+    .accesskey = p
+
+##
+
+popups-infobar-dont-show-message =
+    .label = Visa inte det här meddelandet när popup-fönster blockeras
+    .accesskey = D
+edit-popup-settings =
+    .label = Hantera popup-inställningar...
+    .accesskey = p
+picture-in-picture-hide-toggle =
+    .label = Dölj bild-i-bild växling
+    .accesskey = D
+
+# Navigator Toolbox
+
+# This string is a spoken label that should not include
+# the word "toolbar" or such, because screen readers already know that
+# this container is a toolbar. This avoids double-speaking.
+navbar-accessible =
+    .aria-label = Navigering
+navbar-downloads =
+    .label = Filhämtaren
+navbar-overflow =
+    .tooltiptext = Fler verktyg…
+# Variables:
+#   $shortcut (String): keyboard shortcut to print the page
+navbar-print =
+    .label = Skriv ut
+    .tooltiptext = Skriv ut denna sida… ({ $shortcut })
+navbar-print-tab-modal-disabled =
+    .label = Skriv ut
+    .tooltiptext = Skriv ut denna sida
+navbar-home =
+    .label = Startsida
+    .tooltiptext = { -brand-short-name } Hemsida
+navbar-library =
+    .label = Bibliotek
+    .tooltiptext = Visa historik, sparade bokmärken och mer
+navbar-search =
+    .title = Sök
+navbar-accessibility-indicator =
+    .tooltiptext = Tillgänglighetsfunktioner aktiverade
+# Name for the tabs toolbar as spoken by screen readers. The word
+# "toolbar" is appended automatically and should not be included in
+# in the string
+tabs-toolbar =
+    .aria-label = Webbläsarflikar
+tabs-toolbar-new-tab =
+    .label = Ny flik
+tabs-toolbar-list-all-tabs =
+    .label = Lista alla flikar
+    .tooltiptext = Lista alla flikar
+
+## Infobar shown at startup to suggest session-restore
+
+# <img data-l10n-name="icon"/> will be replaced by the application menu icon
+restore-session-startup-suggestion-message = <strong>Öppna tidigare flikar?</strong>Du kan återställa din tidigare session från programmenyn i { -brand-short-name } <img data-l10n-name="icon"/>, under Historik.
+restore-session-startup-suggestion-button = Visa mig hur

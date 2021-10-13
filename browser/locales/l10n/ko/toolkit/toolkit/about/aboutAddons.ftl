@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-addons-window =
-    .title = 부가 기능 관리자
 addons-page-title = 부가 기능 관리자
 search-header =
     .placeholder = addons.mozilla.org 검색
@@ -24,17 +22,6 @@ list-empty-button =
 help-button = 부가 기능 지원
 sidebar-help-button-title =
     .title = 부가 기능 지원
-preferences =
-    { PLATFORM() ->
-        [windows] { -brand-short-name } 설정
-       *[other] { -brand-short-name } 설정
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] { -brand-short-name } 설정
-           *[other] { -brand-short-name } 설정
-        }
 addons-settings-button = { -brand-short-name } 설정
 sidebar-settings-button-title =
     .title = { -brand-short-name } 설정
@@ -42,36 +29,6 @@ show-unsigned-extensions-button =
     .label = 몇몇 확장 기능은 확인을 할 수 없음
 show-all-extensions-button =
     .label = 모든 확장 기능 보기
-cmd-show-details =
-    .label = 자세히 보기
-    .accesskey = S
-cmd-find-updates =
-    .label = 업데이트 찾기
-    .accesskey = F
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] 설정
-           *[other] 환경 설정
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] P
-        }
-cmd-enable-theme =
-    .label = 테마 적용
-    .accesskey = W
-cmd-disable-theme =
-    .label = 테마 적용 중지
-    .accesskey = W
-cmd-install-addon =
-    .label = 설치
-    .accesskey = I
-cmd-contribute =
-    .label = 기여하기
-    .accesskey = C
-    .tooltiptext = 이 부가 기능의 개발에 기여하기
 detail-version =
     .label = 버전
 detail-last-updated =
@@ -214,7 +171,7 @@ addon-updates-reset-updates-to-manual = 모든 부가 기능을 수동 업데이
 
 ## Status messages displayed when updating add-ons
 
-addon-updates-updating = 업데이트 확인 중
+addon-updates-updating = 업데이트 확인 중…
 addon-updates-installed = 업데이트 완료
 addon-updates-none-found = 업데이트 없음
 addon-updates-manual-updates-found = 업데이트 가능 항목 보기
@@ -286,6 +243,7 @@ install-theme-button = 테마 설치
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = 관리
 find-more-addons = 더 많은 부가 기능 찾기
+find-more-themes = 더 많은 테마 찾기
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
 addon-options-button =
@@ -315,13 +273,14 @@ extension-enabled-heading = 사용함
 extension-disabled-heading = 사용 안 함
 theme-enabled-heading = 사용함
 theme-disabled-heading = 사용 안 함
+theme-monochromatic-heading = 컬러웨이
+theme-monochromatic-subheading = { -brand-product-name }의 생동감 넘치는 새로운 컬러웨이입니다. 제한된 시간 동안 사용할 수 있습니다.
 plugin-enabled-heading = 사용함
 plugin-disabled-heading = 사용 안 함
 dictionary-enabled-heading = 사용함
 dictionary-disabled-heading = 사용 안 함
 locale-enabled-heading = 사용함
 locale-disabled-heading = 사용 안 함
-ask-to-activate-button = 활성화 요청
 always-activate-button = 항상 사용
 never-activate-button = 사용 안 함
 addon-detail-author-label = 제작자
@@ -366,7 +325,7 @@ install-update-button = 업데이트
 addon-badge-private-browsing-allowed2 =
     .title = 사생활 보호 창에서 허용됨
     .aria-label = { addon-badge-private-browsing-allowed2.title }
-addon-detail-private-browsing-help = 허용된 경우, 확장 기능은 사생활 보호 모드에서 온라인 활동에 접근 할 수 있습니다. <a data-l10n-name="learn-more">더 알아보기</a>
+addon-detail-private-browsing-help = 허용되면 확장 기능은 사생활 보호 모드에서 온라인 활동에 접근 할 수 있습니다. <a data-l10n-name="learn-more">더 알아보기</a>
 addon-detail-private-browsing-allow = 허용
 addon-detail-private-browsing-disallow = 허용 안 함
 
@@ -374,12 +333,12 @@ addon-detail-private-browsing-disallow = 허용 안 함
 ## badge is a small icon displayed next to an extension when it is recommended on AMO.
 
 addon-badge-recommended2 =
-    .title = { -brand-product-name }는 보안 및 성능 표준을 충족하는 확장 기능만 추천합니다
+    .title = { -brand-product-name }는 보안 및 성능 표준을 충족하는 확장 기능만 추천함
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Mozilla" in the string below because the extensions are built
-# by Mozilla and we don't want forks to display "by Fork".
+# We hard code "Waterfox" in the string below because the extensions are built
+# by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = Mozilla에서 만든 공식 확장 기능. 보안 및 성능 표준 충족
+    .title = Waterfox에서 만든 공식 확장 기능. 보안 및 성능 표준 충족
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = 이 확장 기능은 보안 및 성능 표준을 충족하는 것으로 검토되었습니다
@@ -397,9 +356,9 @@ addon-permissions-optional = 추가 기능에 필요한 선택 권한:
 addon-permissions-learnmore = 권한에 대해 더 알아보기
 recommended-extensions-heading = 추천 확장 기능
 recommended-themes-heading = 추천 테마
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
-# list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = 창의적인 느낌이 떠오르십니까? <a data-l10n-name="link">Firefox Color로 나만의 테마를 만들어 보세요.</a>
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
+# list view. The "Waterfox Color" name itself should not be translated.
+recommended-theme-1 = 창의적인 느낌이 떠오르십니까? <a data-l10n-name="link">Waterfox Color로 나만의 테마를 만들어 보세요.</a>
 
 ## Page headings
 

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -18,6 +18,10 @@
 <!ENTITY sidebar.loadstopped.label      "Laden abgebrochen">
 <!ENTITY sidebar.loading.stop.label     "Stopp">
 <!ENTITY sidebar.loading.stop.accesskey "S">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
 
 <!ENTITY sidebar.no-panels.state     "Sidebar ist derzeit leer.">
 <!ENTITY sidebar.no-panels.add       'Sie können Tabs hinzufügen, indem Sie die "Tabs"-Schaltfläche oben anklicken.'>

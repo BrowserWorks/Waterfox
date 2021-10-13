@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -21,39 +21,6 @@ about-processes-shutdown-tab =
 about-processes-column-name = プロセス名
 about-processes-column-memory-resident = メモリー
 about-processes-column-cpu-total = CPU
-
-## Process names
-## Variables:
-##    $pid (String) The process id of this process, assigned by the OS.
-##    $origin (String) The domain name for this process.
-##    $type (String) The raw type for this process. Used for unknown processes.
-
-about-processes-browser-process-name = { -brand-short-name } (プロセス { $pid })
-about-processes-web-process-name = ウェブ (プロセス { $pid }、共有)
-about-processes-web-isolated-process-name = { $origin } のウェブ (プロセス { $pid })
-about-processes-web-large-allocation = { $origin } のウェブ (プロセス { $pid }、大きい)
-about-processes-with-coop-coep-process-name = { $origin } のウェブ (プロセス { $pid }、クロスオリジン隔離)
-about-processes-file-process-name = ファイル (プロセス { $pid })
-about-processes-extension-process-name = 拡張機能 (プロセス { $pid })
-about-processes-privilegedabout-process-name = About (プロセス { $pid })
-about-processes-plugin-process-name = プラグイン (プロセス { $pid })
-about-processes-privilegedmozilla-process-name = { -vendor-short-name } サイトのウェブ (プロセス { $pid })
-about-processes-gmp-plugin-process-name = Gecko メディアプラグイン (プロセス { $pid })
-about-processes-gpu-process-name = GPU (プロセス { $pid })
-about-processes-vr-process-name = VR (プロセス { $pid })
-about-processes-rdd-process-name = データデコーダー (プロセス { $pid })
-about-processes-socket-process-name = ネットワーク (プロセス { $pid })
-about-processes-remote-sandbox-broker-process-name = リモートサンドボックスブローカー (プロセス { $pid })
-about-processes-fork-server-process-name = フォークサーバー (プロセス { $pid })
-about-processes-preallocated-process-name = 事前割り当て (プロセス { $pid })
-about-processes-unknown-process-name = その他 ({ $type }、プロセス { $pid })
-
-
-# Process
-# Variables:
-#   $name (String) The name assigned to the process.
-#   $pid (String) The process id of this process, assigned by the OS.
-about-processes-process-name = プロセス { $pid }: { $name }
 
 ## Process names
 ## Variables:
@@ -94,19 +61,6 @@ about-processes-web-large-allocation-process-private = { $origin } — プライ
 about-processes-with-coop-coep-process-private = { $origin } — プライベート ({ $pid }, クロスオリジン隔離)
 
 ## Details within processes
-
-# Single-line summary of threads
-# Variables:
-#    $number (Number) The number of threads in the process. Typically larger
-#                     than 30. We don't expect to ever have processes with less
-#                     than 5 threads.
-about-processes-thread-summary = スレッド ({ $number })
-
-# Thread details
-# Variables:
-#   $name (String) The name assigned to the thread.
-#   $tid (String) The thread id of this thread, assigned by the OS.
-about-processes-thread-name = スレッド { $tid }: { $name }
 
 # Single-line summary of threads (non-idle process)
 # Variables:
@@ -168,17 +122,11 @@ about-processes-frame-name-many = サブフレーム ({ $number }): { $shortUrl 
 ##                   of `duration-unit-*`.
 
 # Common case.
-about-processes-cpu-user-and-kernel = { NUMBER($percent, maximumSignificantDigits: 2, style: "percent") } ({ NUMBER($total, maximumFractionDigits: 0) }{ $unit })
-
-# Common case.
 about-processes-cpu = { NUMBER($percent, maximumSignificantDigits: 2, style: "percent") }
     .title = 合計 CPU 時間: { NUMBER($total, maximumFractionDigits: 0) }{ $unit }
 
 # Special case: data is not available yet.
 about-processes-cpu-user-and-kernel-not-ready = (計測中)
-
-# Special case: process or thread is currently idle.
-about-processes-cpu-user-and-kernel-idle = 待機 ({ NUMBER($total, maximumFractionDigits: 2) }{ $unit })
 
 # Special case: process or thread is currently idle.
 about-processes-cpu-idle = 待機
@@ -194,9 +142,6 @@ about-processes-cpu-idle = 待機
 ##                        or "-" if it has decreased.
 ##    $deltaUnit (String) The unit in which to display $delta. See the definitions
 ##                        of `memory-unit-*`.
-
-# Common case.
-about-processes-total-memory-size = { NUMBER($total, maximumFractionDigits:0) }{ $totalUnit } ({ $deltaSign }{ NUMBER($delta, maximumFractionDigits:0) }{ $deltaUnit })
 
 # Common case.
 about-processes-total-memory-size-changed = { NUMBER($total, maximumFractionDigits:0) }{ $totalUnit }

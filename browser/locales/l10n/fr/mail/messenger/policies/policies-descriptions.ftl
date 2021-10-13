@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,6 +18,8 @@ policy-AppUpdateURL = Définir une URL personnalisée pour la mise à jour de l�
 
 policy-Authentication = Configurer l’authentification intégrée pour les sites web qui la prennent en charge.
 
+policy-BackgroundAppUpdate2 = Activer ou désactiver la mise à jour en arrière-plan.
+
 policy-BlockAboutAddons = Bloquer l’accès au gestionnaire de modules complémentaires (about:addons).
 
 policy-BlockAboutConfig = Bloquer l’accès à la page about:config.
@@ -31,6 +33,8 @@ policy-CaptivePortal = Activer ou désactiver la prise en charge du portail capt
 policy-CertificatesDescription = Ajouter des certificats ou utiliser les certificats intégrés.
 
 policy-Cookies = Autoriser ou refuser les cookies des sites web.
+
+policy-DisableBuiltinPDFViewer = Désactiver PDF.js, la visionneuse PDF intégrée dans { -brand-short-name }.
 
 policy-DisabledCiphers = Désactiver les chiffrements.
 
@@ -85,6 +89,8 @@ policy-ExtensionSettings = Gérer tous les aspects de l’installation d’exten
 
 policy-ExtensionUpdate = Activer ou désactiver les mises à jour automatiques des extensions.
 
+policy-Handlers = Configurer les gestionnaires d’applications par défaut.
+
 policy-HardwareAcceleration = Si la valeur est sur false, l’accélération matérielle est désactivée.
 
 policy-InstallAddonsPermission = Autoriser certains sites web à installer des modules complémentaires.
@@ -100,6 +106,8 @@ policy-LegacySameSiteCookieBehaviorEnabledForDomainList = Revenir au comportemen
 ##
 
 policy-LocalFileLinks = Autoriser des sites web spécifiques à créer des liens vers des fichiers locaux.
+
+policy-ManualAppUpdateOnly = Autoriser uniquement les mises à jour manuelles et ne pas informer l’utilisateur ou l’utilisatrice de la disponibilité de mises à jour.
 
 policy-NetworkPrediction = Activer ou désactiver la prédiction réseau (prélecture DNS).
 
@@ -120,6 +128,8 @@ policy-Permissions2 = Configurer les permissions pour la caméra, le microphone,
 
 policy-Preferences = Définir et verrouiller la valeur pour un sous-ensemble de préférences.
 
+policy-PrimaryPassword = Exiger ou empêcher l’utilisation d’un mot de passe principal.
+
 policy-PromptForDownloadLocation = Demander où sauvegarder les fichiers lors du téléchargement.
 
 policy-Proxy = Configurer les paramètres de proxy.
@@ -132,7 +142,7 @@ policy-SearchEngines = Configurer les paramètres du moteur de recherche. Cette 
 
 policy-SearchSuggestEnabled = Activer ou désactiver les suggestions de recherche.
 
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = Installer des modules PKCS #11.
 
 policy-SSLVersionMax = Définir la version SSL maximale.

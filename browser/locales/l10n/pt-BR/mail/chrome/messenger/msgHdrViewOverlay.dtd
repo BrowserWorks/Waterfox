@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -12,7 +12,7 @@
 <!ENTITY subjectField4.label "Assunto">
 <!ENTITY ccField4.label "Cc">
 <!ENTITY bccField4.label "Cco">
-<!ENTITY newsgroupsField4.label "Newsgroups">
+<!ENTITY newsgroupsField4.label "Grupos de notícias">
 <!ENTITY followupToField4.label "Repassar para">
 <!ENTITY tagsHdr4.label "Etiquetas">
 <!ENTITY dateField4.label "Data">
@@ -27,12 +27,12 @@
 <!ENTITY hdrSmartReplyButton1.label "Responder inteligente">
 <!ENTITY hdrReplyButton1.label "Responder">
 <!ENTITY hdrReplyButton2.tooltip "Responder ao remetente desta mensagem">
-<!ENTITY hdrReplyAllButton1.label "Re: Todos">
+<!ENTITY hdrReplyAllButton1.label "Responder a todos">
 <!ENTITY hdrReplyAllButton1.tooltip "Responder ao remetente e a todos os destinatários">
-<!ENTITY hdrReplyListButton1.label "Re: Lista">
+<!ENTITY hdrReplyListButton1.label "Responder à lista">
 <!ENTITY hdrReplyListButton1.tooltip "Responder à lista de emails">
 <!ENTITY hdrFollowupButton1.label "Responder">
-<!ENTITY hdrFollowupButton1.tooltip "Postar uma resposta neste grupo">
+<!ENTITY hdrFollowupButton1.tooltip "Publicar uma resposta neste grupo de notícias">
 <!ENTITY hdrForwardButton1.label "Encaminhar">
 <!ENTITY hdrForwardButton1.tooltip "Encaminhar mensagem">
 <!ENTITY hdrJunkButton1.label "Spam">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -95,8 +95,8 @@ perftools-thread-img-decoder =
     .title = Afbeeldingsontsleutelingsthreads
 perftools-thread-dns-resolver =
     .title = Op deze thread vindt DNS-omzetting plaats
-perftools-thread-js-helper =
-    .title = Achtergrondwerk van de JS-engine, zoals off-main-threadcompilaties
+perftools-thread-task-controller =
+    .title = TaskController-threadpoolthreads
 
 ##
 
@@ -108,9 +108,30 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Waterfox Profiler
 perftools-onboarding-message = <b>Nieuw</b>: { -profiler-brand-name } is nu geïntegreerd in de Ontwikkelaarshulpmiddelen. <a>Meer info</a> over dit krachtige nieuwe hulpmiddel.
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (U kunt tijdelijk het oorspronkelijke paneel Prestaties benaderen via <a>{ options-context-advanced-settings }</a>)
 perftools-onboarding-close-button =
     .aria-label = Het welkomstbericht sluiten
+
+## Profiler presets
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# The same labels and descriptions are also defined in appmenu.ftl.
+
+perftools-presets-web-developer-label = Webontwikkelaar
+perftools-presets-web-developer-description = Aanbevolen voorinstelling voor de meeste foutopsporing in web-apps, met lage overhead.
+perftools-presets-firefox-platform-label = Waterfox-platform
+perftools-presets-firefox-platform-description = Aanbevolen voorinstelling voor interne foutopsporing in het Waterfox-platform.
+perftools-presets-firefox-front-end-label = Waterfox-front-end
+perftools-presets-firefox-front-end-description = Aanbevolen voorinstelling voor interne foutopsporing in het front-end van Waterfox.
+perftools-presets-firefox-graphics-label = Waterfox-grafisch
+perftools-presets-firefox-graphics-description = Aanbevolen voorinstelling voor onderzoek naar grafische prestaties van Waterfox.
+perftools-presets-media-label = Media
+perftools-presets-media-description = Aanbevolen voorinstelling voor het analyseren van audio- en videoproblemen.
+perftools-presets-custom-label = Aangepast
+
+##
+

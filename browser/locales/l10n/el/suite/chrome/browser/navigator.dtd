@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,7 +31,7 @@
 <!ENTITY minimizeButton.tooltip       "Ελαχιστοποίηση">
 <!ENTITY restoreButton.tooltip        "Επαναφορά">
 
-<!ENTITY feedsMenu.label "Συνδρομή σε αυτή τη σελίδα">
+<!ENTITY feedsMenu.label "Συνδρομή σε αυτήν τη σελίδα">
 <!ENTITY feedsMenu.accesskey "Σ">
 
 <!ENTITY menuBar.tooltip                  "Γραμμή μενού">
@@ -61,7 +61,7 @@
 <!ENTITY locationBar.tooltip          "Εισάγετε όρο αναζήτησης, λέξη-κλειδί ή διεύθυνση ιστού">
 <!ENTITY locationBar.accesskey        "θ">
 <!ENTITY locationBar.title            "Διεύθυνση">
-<!ENTITY proxyIcon.tooltip            "Σύρετε και εναποθέστε αυτό το εικονίδιο για δημιουργία συνδέσμου για αυτή τη σελίδα">
+<!ENTITY proxyIcon.tooltip            "Σύρετε και εναποθέστε αυτό το εικονίδιο για δημιουργία συνδέσμου για αυτήν τη σελίδα">
 
 <!ENTITY searchItem.title             "Αναζήτηση">
 
@@ -74,7 +74,7 @@
 <!-- Statusbar -->
 <!ENTITY  statusText.label            "Τέλος">
 
-<!ENTITY popupIcon.tooltiptext      "Αποδοχή αναδυόμενων παραθύρων ιστοσελίδας">
+<!ENTITY popupIcon.tooltiptext      "Άρση φραγής αναδυόμενων παραθύρων ιστοτόπου">
 
 <!ENTITY viewSecurityInfo.label      "Προβολή πληροφοριών ασφάλειας">
 <!ENTITY viewSecurityInfo.accesskey  "α">

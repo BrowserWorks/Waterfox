@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,7 +11,6 @@
 
 <!ENTITY feedLocation.label          "來源 URL:">
 <!ENTITY feedLocation.accesskey      "U">
-<!ENTITY feedLocation.placeholder    "請輸入有效的消息來源網址以新增">
 <!ENTITY feedLocation2.placeholder   "輸入有效的資訊來源網址">
 <!ENTITY locationValidate.label      "驗證">
 <!ENTITY validateText.label          "確認是否有效並回傳有效的網址。">

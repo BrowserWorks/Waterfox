@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -55,4 +55,4 @@
 <!ENTITY smiley16Cmd.accesskey "ί">
 <!ENTITY smiley16Cmd.tooltip "Εισαγωγή προσώπου με σφραγισμένα χείλη">
 <!ENTITY SmileButton.label "Εισαγωγή Smiley">
-<!ENTITY SmileButton.tooltip "Εισαγωγή χαμογελαστού προσώπου">
+<!ENTITY SmileButton.tooltip "Εισαγωγή emoji">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,6 @@ about-addressbook-title = Address Book
 
 about-addressbook-toolbar-new-address-book =
   .label = 新しいアドレス帳
-about-addressbook-toolbar-new-carddav-address-book =
-  .label = 新しい CardDAV アドレス帳
-about-addressbook-toolbar-new-ldap-address-book =
-  .label = 新しい LDAP アドレス帳
 about-addressbook-toolbar-add-carddav-address-book =
   .label = CardDAV アドレス帳を追加
 about-addressbook-toolbar-add-ldap-address-book =
@@ -20,6 +16,8 @@ about-addressbook-toolbar-new-contact =
   .label = 新しい連絡先
 about-addressbook-toolbar-new-list =
   .label = 新しいアドレスリスト
+about-addressbook-toolbar-import =
+  .label = インポート
 
 ## Books
 
@@ -31,12 +29,14 @@ about-addressbook-books-context-synchronize =
   .label = 同期
 about-addressbook-books-context-print =
   .label = 印刷...
+about-addressbook-books-context-export =
+  .label = エクスポート...
 about-addressbook-books-context-delete =
   .label = 削除
-
 about-addressbook-books-context-remove =
   .label = 削除
-
+about-addressbook-books-context-startup-default =
+  .label = 初期表示ディレクトリー
 about-addressbook-confirm-delete-book-title = アドレス帳の削除
 # Variables:
 # $name (String) - Name of the address book to be deleted.
@@ -73,6 +73,8 @@ about-addressbook-sort-email-ascending =
 about-addressbook-sort-email-descending =
   .label = メールアドレスで並べ替え (降順)
 
+about-addressbook-cards-context-write =
+  .label = 作成
 about-addressbook-confirm-delete-mixed-title = 連絡先とアドレスリストの削除
 # Variables:
 # $count (Number) - The number of contacts and lists to be deleted. Always greater than 1.

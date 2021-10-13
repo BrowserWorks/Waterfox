@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = Sobre sus derechos
 rights-intro = { -brand-full-name } es un software gratuito y de código abierto construido por una comunidad de miles de colaboradores de todo el mundo. Hay una serie de cosas que debería conocer:
-rights-intro-point-1 = { -brand-short-name } está disponible para usted bajo los términos de la <a data-l10n-name="mozilla-public-license-link">Mozilla Public License (Licencia Pública de Mozilla)</a>. Esto significa que puede usar, copiar y distribuir { -brand-short-name } a los demás. También puede modificar el código fuente de { -brand-short-name } para adaptarlo a sus necesidades. La Mozilla Public License (Licencia Pública de Mozilla) le otorga el derecho de distribuir sus versiones modificadas.
-rights-intro-point-2 = No se le concede ningún derecho ni licencia sobre las marcas comerciales de Mozilla Foundation o sus filiales, incluyendo sin limitación el nombre y logo de Firefox. Puede encontrarse información adicional sobre las marcas comerciales <a data-l10n-name="mozilla-trademarks-link">aquí</a>.
+rights-intro-point-1 = { -brand-short-name } está disponible para usted bajo los términos de la <a data-l10n-name="mozilla-public-license-link">Waterfox Public License (Licencia Pública de Waterfox)</a>. Esto significa que puede usar, copiar y distribuir { -brand-short-name } a los demás. También puede modificar el código fuente de { -brand-short-name } para adaptarlo a sus necesidades. La Waterfox Public License (Licencia Pública de Waterfox) le otorga el derecho de distribuir sus versiones modificadas.
+rights-intro-point-2 = No se le concede ningún derecho ni licencia sobre las marcas comerciales de Waterfox Foundation o sus filiales, incluyendo sin limitación el nombre y logo de Waterfox. Puede encontrarse información adicional sobre las marcas comerciales <a data-l10n-name="mozilla-trademarks-link">aquí</a>.
 rights-intro-point-3 = Algunas características en { -brand-short-name }, como el agente de informe de fallos, le dan la opción de proporcionar información a { -vendor-short-name }. Al elegir enviar esa información, concede a { -vendor-short-name } permiso para usar la misma para mejorar sus productos, para publicar esa información en sus sitios web y para distribuirla.
 rights-intro-point-4 = La manera en que usamos su información personal y las opiniones enviadas a { -vendor-short-name } a través de { -brand-short-name } se describe en la <a data-l10n-name="mozilla-privacy-policy-link">Política de privacidad de { -brand-short-name }</a>.
 rights-intro-point-4-unbranded = Cualquier política de privacidad aplicable a este producto se debe listar aquí.

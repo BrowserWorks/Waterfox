@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,10 +22,6 @@ content-tab-security-broken-icon =
     .alt = Die Verbindung ist nicht verschlüsselt.
 
 ## Toolbar
-
-addons-and-themes-button =
-    .label = Add-ons und Themes
-    .tooltip = Add-ons verwalten
 
 addons-and-themes-toolbarbutton =
     .label = Add-ons und Themes
@@ -150,3 +146,9 @@ caret-browsing-prompt-check-text = Das nächste Mal nicht nachfragen
 repair-text-encoding-button =
   .label = Textkodierung reparieren
   .tooltiptext = Richtige Textkodierung basierend auf dem Nachrichteninhalt erraten
+
+## no-reply handling
+
+no-reply-title = Antwort nicht unterstützt
+no-reply-message = Nachrichten an die Antwortadresse ({ $email }) werden wahrscheinlich von niemandem gelesen.
+no-reply-reply-anyway-button = Trotzdem antworten

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -32,7 +32,6 @@
 <!ENTITY DisplayName.label              "Отображать как:">
 <!ENTITY DisplayName.accesskey          "т">
 <!ENTITY preferDisplayName.label        "Всегда использовать отображаемое имя вместо имени из заголовка сообщения">
-<!ENTITY preferDisplayName.accesskey    "е">
 <!ENTITY preferDisplayName2.accesskey   "е">
 <!ENTITY NickName.label                 "Псевдоним:">
 <!ENTITY NickName.accesskey             "д">
@@ -46,8 +45,6 @@
 <!ENTITY PlainText.label                "Простой текст">
 <!ENTITY HTML.label                     "HTML">
 <!ENTITY Unknown.label                  "Неизвестно">
-<!ENTITY ScreenName.label               "Интернет-пейджер:">
-<!ENTITY ScreenName.accesskey           "й">
 
 <!ENTITY chatName.label                 "Имя в чате:">
 
@@ -145,7 +142,6 @@
 
 <!ENTITY Photo.tab                      "Фото">
 <!ENTITY Photo.accesskey                "о">
-<!ENTITY PhotoDesc.label                "Выберите один из следующих вариантов:">
 <!ENTITY GenericPhoto.label             "Стандартное фото">
 <!ENTITY GenericPhoto.accesskey         "н">
 <!ENTITY DefaultPhoto.label             "По умолчанию">

@@ -1,10 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY fieldMapImport.title "Adressbuch importieren">
 <!ENTITY fieldMapImport.size "width: 55em; height: 40em;">
-<!ENTITY fieldMapImport.recordNumber "Importierte Daten für Eintrag Nr.:">
 <!ENTITY fieldMapImport.next.label "Nächster">
 <!ENTITY fieldMapImport.next.accesskey "N">
 <!ENTITY fieldMapImport.previous.label "Vorhergehender">

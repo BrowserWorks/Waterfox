@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 fonts-window =
     .title = Lettertypen
+
 fonts-window-close =
     .key = w
 
@@ -11,6 +12,7 @@ fonts-window-close =
 
 fonts-langgroup-header = Lettertypen voor
     .accesskey = L
+
 fonts-langgroup-arabic =
     .label = Arabisch
 fonts-langgroup-armenian =
@@ -75,24 +77,33 @@ fonts-langgroup-other =
 
 fonts-proportional-header = Proportioneel
     .accesskey = P
+
 fonts-default-serif =
     .label = Met schreef
 fonts-default-sans-serif =
     .label = Schreefloos
+
 fonts-proportional-size = Grootte
     .accesskey = G
+
 fonts-serif = Met schreef
     .accesskey = s
+
 fonts-sans-serif = Schreefloos
     .accesskey = c
+
 fonts-monospace = Monospace
     .accesskey = M
+
 fonts-monospace-size = Grootte
     .accesskey = o
+
 fonts-minsize = Minimale lettergrootte
     .accesskey = n
+
 fonts-minsize-none =
     .label = Geen
+
 fonts-allow-own =
     .label = Pagina’s toestaan om hun eigen lettertypen te kiezen, in plaats van uw selecties hierboven
     .accesskey = e
@@ -102,42 +113,6 @@ fonts-allow-own =
 ## Translate the encoding names as adjectives for an encoding, not as the name
 ## of the language.
 
-fonts-languages-fallback-header = Tekstcodering voor legacy-inhoud
-fonts-languages-fallback-desc = Deze tekstcodering wordt gebruikt voor legacy-inhoud die geen eigen codering kan aangeven.
-fonts-languages-fallback-label = Terugvaltekstcodering
-    .accesskey = T
-fonts-languages-fallback-name-auto =
-    .label = Standaard voor huidige landinstelling
-fonts-languages-fallback-name-arabic =
-    .label = Arabisch
-fonts-languages-fallback-name-baltic =
-    .label = Baltisch
-fonts-languages-fallback-name-ceiso =
-    .label = Centraal-Europees, ISO
-fonts-languages-fallback-name-cewindows =
-    .label = Centraal-Europees, Microsoft
-fonts-languages-fallback-name-simplified =
-    .label = Chinees, vereenvoudigd
-fonts-languages-fallback-name-traditional =
-    .label = Chinees, traditioneel
-fonts-languages-fallback-name-cyrillic =
-    .label = Cyrillisch
-fonts-languages-fallback-name-greek =
-    .label = Grieks
-fonts-languages-fallback-name-hebrew =
-    .label = Hebreeuws
-fonts-languages-fallback-name-japanese =
-    .label = Japans
-fonts-languages-fallback-name-korean =
-    .label = Koreaans
-fonts-languages-fallback-name-thai =
-    .label = Thais
-fonts-languages-fallback-name-turkish =
-    .label = Turks
-fonts-languages-fallback-name-vietnamese =
-    .label = Vietnamees
-fonts-languages-fallback-name-other =
-    .label = Anders (incl. West-Europees)
 # Variables:
 #   $name {string, "Arial"} - Name of the default font
 fonts-label-default =

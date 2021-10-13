@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/. --
 
@@ -94,7 +94,7 @@ security-view-privacy =
 security-view-privacy-history-value = Eu já visitei este site antes?
 security-view-privacy-sitedata-value = Este site está armazenando informações no meu computador?
 security-view-privacy-clearsitedata =
-    .label = Limpar cookies e dados de sites
+    .label = Limpar cookies e dados do domínio
     .accesskey = L
 security-view-privacy-passwords-value = Eu salvei alguma senha deste site?
 security-view-privacy-viewpasswords =

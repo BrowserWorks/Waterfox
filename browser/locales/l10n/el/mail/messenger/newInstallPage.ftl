@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,4 +12,4 @@ options-title = Ποιες είναι οι επιλογές μου;
 options-do-nothing = Αν δεν κάνετε κάτι, τα δεδομένα του προφίλ σας στο { -brand-short-name } θα είναι διαφορετικά από τα δεδομένα του προφίλ σε άλλες εγκαταστάσεις του { -brand-product-name }.
 resources = Πόροι
 about-pofiles-link = Δείτε και διαχειριστείτε τα προφίλ σας
-support-link = Χρήση του Διαχειριστή Προφίλ - Άρθρο υποστήριξης
+support-link = Χρήση της Διαχείρισης προφίλ - Άρθρο υποστήριξης

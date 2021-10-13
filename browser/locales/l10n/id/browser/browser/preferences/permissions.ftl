@@ -1,69 +1,81 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 permissions-window =
     .title = Pengecualian
     .style = width: 41em
+
 permissions-close-key =
     .key = w
+
 permissions-address = Alamat situs web
     .accesskey = l
+
 permissions-block =
     .label = Blokir
     .accesskey = B
+
 permissions-session =
     .label = Izinkan untuk Sesi ini
     .accesskey = S
+
 permissions-allow =
     .label = Izinkan
     .accesskey = I
+
 permissions-button-off =
     .label = Nonaktifkan
     .accesskey = N
+
 permissions-button-off-temporarily =
     .label = Nonaktifkan Sementara
     .accesskey = S
+
 permissions-site-name =
     .label = Situs web
+
 permissions-status =
     .label = Status
+
 permissions-remove =
     .label = Hapus Situs Web
     .accesskey = H
+
 permissions-remove-all =
     .label = Hapus Semua Situs Web
     .accesskey = a
-permissions-button-cancel =
-    .label = Batal
-    .accesskey = B
-permissions-button-ok =
-    .label = Simpan Perubahan
-    .accesskey = S
+
 permission-dialog =
     .buttonlabelaccept = Simpan Perubahan
     .buttonaccesskeyaccept = S
+
 permissions-autoplay-menu = Baku untuk semua situs Web:
+
 permissions-searchbox =
     .placeholder = Cari Situs Web
+
 permissions-capabilities-autoplay-allow =
     .label = Izinkan Audio dan Video
 permissions-capabilities-autoplay-block =
     .label = Blokir Audio
 permissions-capabilities-autoplay-blockall =
     .label = Blokir Audio dan Video
+
 permissions-capabilities-allow =
     .label = Izinkan
 permissions-capabilities-block =
     .label = Blokir
 permissions-capabilities-prompt =
     .label = Tanyakan Selalu
+
 permissions-capabilities-listitem-allow =
     .value = Izinkan
 permissions-capabilities-listitem-block =
     .value = Blokir
 permissions-capabilities-listitem-allow-session =
     .value = Izinkan untuk Sesi ini
+
 permissions-capabilities-listitem-off =
     .value = Nonaktif
 permissions-capabilities-listitem-off-temporarily =

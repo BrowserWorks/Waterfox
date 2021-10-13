@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-screenshots-context-menu = Tomar captura de pantalla
 screenshot-toolbarbutton =
     .label = Captura de pantalla
     .tooltiptext = Tomar captura
-screenshots-my-shots-button = Mis capturas
+screenshot-shortcut =
+    .key = S
 screenshots-instructions = Arrastra o haz clic en la página para seleccionar la región. Presiona ESC para cancelar.
 screenshots-cancel-button = Cancelar
 screenshots-save-visible-button = Guardar visible
@@ -31,7 +31,6 @@ screenshots-connection-error-details = Comprueba tu conexión a Internet. Si pue
 screenshots-login-error-details = No se pudo guardar la captura porque hay un problema con el servicio { -screenshots-brand-name }. Inténtalo más tarde.
 screenshots-unshootable-page-error-title = No podemos realizar una captura de pantalla a esta página.
 screenshots-unshootable-page-error-details = Esta no es una página web estándar, por lo tanto no podemos tomar una captura de pantalla de ella.
-screenshots-self-screenshot-error-title = ¡No puedes hacer una captura de la página de { -screenshots-brand-name }!
 screenshots-empty-selection-error-title = Tu selección es demasiado pequeña
 screenshots-private-window-error-title = Waterfox { -screenshots-brand-name } está deshabilitado en el modo de navegación privada
 screenshots-private-window-error-details = Disculpen las molestias. Estamos trabajando en esta característica para las versiones futuras.

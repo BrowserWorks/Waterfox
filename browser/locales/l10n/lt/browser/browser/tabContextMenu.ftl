@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -51,9 +51,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = Įrašyti kortelę į adresyną
     .accesskey = r
-reopen-in-container =
-    .label = Atverti iš naujo sudėtiniame rodinyje
-    .accesskey = e
 tab-context-open-in-new-container-tab =
     .label = Atverti naujoje sudėtinėje kortelėje
     .accesskey = e
@@ -69,27 +66,6 @@ move-to-new-window =
 tab-context-close-multiple-tabs =
     .label = Užverti keletą kortelių
     .accesskey = v
-tab-context-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] Atšaukti kortelės užvėrimą
-            [one] Atšaukti kortelės užvėrimą
-            [few] Atšaukti kortelių užvėrimus
-           *[other] Atšaukti kortelių užvėrimus
-        }
-    .accesskey = A
-close-tab =
-    .label = Užverti kortelę
-    .accesskey = U
-close-tabs =
-    .label = Užverti korteles
-    .accesskey = e
-move-tabs =
-    .label = Perkelti korteles
-    .accesskey = t
-move-tab =
-    .label = Perkelti kortelę
-    .accesskey = t
 tab-context-share-url =
     .label = Dalintis
     .accesskey = i
@@ -117,6 +93,15 @@ tab-context-close-tabs =
            *[other] Užverti kortelių
         }
     .accesskey = U
+tab-context-close-n-tabs =
+    .label =
+        { $tabCount ->
+            [1] Užverti kortelę
+            [one] Užverti kortelę
+            [few] Užverti { $tabCount } korteles
+           *[other] Užverti { $tabCount } kortelių
+        }
+    .accesskey = v
 tab-context-move-tabs =
     .label =
         { $tabCount ->
@@ -126,3 +111,12 @@ tab-context-move-tabs =
            *[other] Perkelti kortelių
         }
     .accesskey = k
+
+tab-context-send-tabs-to-device =
+    .label =
+        { $tabCount ->
+            [one] Siųsti kortelę į įrenginį
+            [few] Siųsti { $tabCount } kortelių į įrenginį
+           *[other] Siųsti { $tabCount } korteles į įrenginį
+        }
+    .accesskey = t

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,11 +9,12 @@ by NSS/PSM via netError.xhtml. -->
 <!ENTITY certerror.pagetitle  "Keine vertrauenswürdige Verbindung">
 <!ENTITY certerror.longpagetitle "Dieser Verbindung wird nicht vertraut">
 
-<!-- Localization note (certerror.introPara1) - The string "#1" will
-be replaced at runtime with the name of the server to which the user
+<!-- Localization note (certerror.introPara1a) - The text content of the span
+tag will be replaced at runtime with the name of the server to which the user
 was trying to connect. -->
-<!ENTITY certerror.introPara1 "Sie haben &brandShortName; angewiesen, eine gesicherte
-Verbindung zu <b>#1</b> aufzubauen, es kann aber nicht überprüft werden, ob die Verbindung sicher ist.">
+<!ENTITY certerror.introPara1a "Sie haben &brandShortName; angewiesen, eine gesicherte
+Verbindung zu <b><span class='hostname'/></b> aufzubauen. Es kann aber nicht
+überprüft werden, ob die Verbindung sicher ist.">
 <!ENTITY certerror.introPara2 "Wenn Sie normalerweise eine gesicherte Verbindung aufbauen,
 weist sich die Website mit einer vertrauenswürdigen Identifikation aus, um zu garantieren,
 dass Sie die richtige Website besuchen. Die Identifikation dieser Website dagegen kann nicht bestätigt werden.">
@@ -35,3 +36,6 @@ dass es einen guten dafür Grund gibt, warum diese Website keine vertrauenswürd
 <!ENTITY certerror.addException.label "Ausnahme hinzufügen…">
 
 <!ENTITY certerror.technical.heading "Technische Details">
+
+<!ENTITY dnsNotFound.pageTitle "Server nicht gefunden">
+<!ENTITY malformedURI.pageTitle "Ungültige Adresse">

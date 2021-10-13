@@ -1,9 +1,6 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-addons-window =
-    .title = アドオンマネージャー
 
 addons-page-title = アドオンマネージャー
 search-header =
@@ -25,17 +22,6 @@ list-empty-button =
 help-button = アドオンのサポート
 sidebar-help-button-title =
     .title = アドオンのサポート
-preferences =
-    { PLATFORM() ->
-        [windows] { -brand-short-name } オプション
-       *[other] { -brand-short-name } 設定
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] { -brand-short-name } オプション
-           *[other] { -brand-short-name } 設定
-        }
 addons-settings-button = { -brand-short-name } 設定
 sidebar-settings-button-title =
     .title = { -brand-short-name } 設定
@@ -43,36 +29,6 @@ show-unsigned-extensions-button =
     .label = 一部の拡張機能を検証できませんでした
 show-all-extensions-button =
     .label = すべての拡張機能を表示
-cmd-show-details =
-    .label = 詳細情報を表示
-    .accesskey = S
-cmd-find-updates =
-    .label = 更新を確認
-    .accesskey = F
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] 設定
-           *[other] 設定
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] P
-        }
-cmd-enable-theme =
-    .label = テーマを適用
-    .accesskey = W
-cmd-disable-theme =
-    .label = テーマを外す
-    .accesskey = W
-cmd-install-addon =
-    .label = インストール
-    .accesskey = I
-cmd-contribute =
-    .label = 寄付
-    .accesskey = C
-    .tooltiptext = このアドオンの開発者に寄付します
 detail-version =
     .label = バージョン
 detail-last-updated =
@@ -199,8 +155,8 @@ addon-updates-view-updates = 最近更新したアドオンを表示
 
 # This menu item is a checkbox that toggles the default global behavior for
 # add-on update checking.
-
-addon-updates-update-addons-automatically = アドオンを自動的に更新
+# (^m^) en-US: Update Add-ons Autmatically
+addon-updates-update-addons-automatically = アドオンを既定で自動更新する
     .accesskey = A
 
 ## Specific add-ons can have custom update checking behaviors ("Manually",
@@ -208,10 +164,11 @@ addon-updates-update-addons-automatically = アドオンを自動的に更新
 ## update checking behavior for all add-ons to the default global behavior
 ## (which itself is either "Automatically" or "Manually", controlled by the
 ## extensions-updates-update-addons-automatically.label menu item).
-
-addon-updates-reset-updates-to-automatic = すべてのアドオンを自動的に更新
+# (^m^) 原文が直感的でないため実際の動作に合わせて、"Automatically / Manually" を使わない表現に変更した。
+# https://github.com/mozilla-japan/gecko-l10n/issues/263
+addon-updates-reset-updates-to-automatic = すべてのアドオンの更新設定を既定にリセット
     .accesskey = R
-addon-updates-reset-updates-to-manual = すべてのアドオンを手動で更新
+addon-updates-reset-updates-to-manual = すべてのアドオンの更新設定を既定にリセット
     .accesskey = R
 
 ## Status messages displayed when updating add-ons
@@ -272,7 +229,7 @@ header-back-button =
 discopane-intro =
     拡張機能とテーマは、ブラウザー用のアプリのようなものです。
     パスワードの保護や動画のダウンロード、商品の検索、迷惑な広告のブロック、ブラウザーの外観の変更など、様々な機能を追加できます。
-    これらの小さなソフトウェアプログラムの多くは、Mozilla 以外の第三者により開発されています。
+    これらの小さなソフトウェアプログラムの多くは、Waterfox 以外の第三者により開発されています。
     ここでは、{ -brand-product-name } が選ぶセキュリティ、パフォーマンス、機能性に優れた <a data-l10n-name="learn-more-trigger">おすすめのアドオン</a> を紹介します。
 # Notice to make user aware that the recommendations are personalized.
 discopane-notice-recommendations =
@@ -329,7 +286,6 @@ dictionary-enabled-heading = 有効
 dictionary-disabled-heading = 無効
 locale-enabled-heading = 有効
 locale-disabled-heading = 無効
-ask-to-activate-button = 実行時に確認
 always-activate-button = 常に有効化
 never-activate-button = 無効化
 addon-detail-author-label = 作者
@@ -362,11 +318,11 @@ addon-detail-reviews-link = { $numberOfReviews } 件のレビュー
 #   $addon (string) - Name of the add-on
 pending-uninstall-description = <span data-l10n-name="addon-name">{ $addon }</span> は削除されます。
 pending-uninstall-undo-button = 元に戻す
-addon-detail-updates-label = 自動更新の許可
+addon-detail-updates-label = このアドオンの自動更新
 addon-detail-updates-radio-default = 既定
-addon-detail-updates-radio-on = オン
-addon-detail-updates-radio-off = オフ
-addon-detail-update-check-label = 更新の確認
+addon-detail-updates-radio-on = 許可する
+addon-detail-updates-radio-off = 許可しない
+addon-detail-update-check-label = 今すぐ確認
 install-update-button = 更新
 # This is the tooltip text for the private browsing badge in about:addons. The
 # badge is the private browsing icon included next to the extension's name.
@@ -379,12 +335,12 @@ addon-detail-private-browsing-disallow = 許可しない
 ## This is the tooltip text for the recommended badges for an extension in about:addons. The
 ## badge is a small icon displayed next to an extension when it is recommended on AMO.
 addon-badge-recommended2 =
-    .title = { -brand-product-name } は Mozilla が定めた安全性とパフォーマンスの基準に適合する拡張機能のみをおすすめします
+    .title = { -brand-product-name } は Waterfox が定めた安全性とパフォーマンスの基準に適合する拡張機能のみをおすすめします
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Mozilla" in the string below because the extensions are built
-# by Mozilla and we don't want forks to display "by Fork".
+# We hard code "Waterfox" in the string below because the extensions are built
+# by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
-  .title = Mozilla により作成された公式の拡張機能です。安全性とパフォーマンスの基準に適合します
+  .title = Waterfox により作成された公式の拡張機能です。安全性とパフォーマンスの基準に適合します
   .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
   .title = この拡張機能はセキュリティとパフォーマンスの基準に適合するようレビューされています。
@@ -402,9 +358,9 @@ addon-permissions-optional = 追加機能の任意の許可設定:
 addon-permissions-learnmore = 許可設定についての詳細情報
 recommended-extensions-heading = おすすめの拡張機能
 recommended-themes-heading = おすすめのテーマ
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
-# list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = ご自分で作ってみませんか？ <a data-l10n-name="link">Firefox Color で独自のテーマを構築できます。</a>
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
+# list view. The "Waterfox Color" name itself should not be translated.
+recommended-theme-1 = ご自分で作ってみませんか？ <a data-l10n-name="link">Waterfox Color で独自のテーマを構築できます。</a>
 
 ## Page headings
 

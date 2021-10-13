@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,10 +8,10 @@
 <!ENTITY signatureCert.label "Προβολή πιστοποιητικού υπογραφής">
 <!ENTITY encryptionCert.label "Προβολή πιστοποιητικού κρυπτογράφησης">
 
-<!ENTITY signer.name "Υπογράφηκε από:">
+<!ENTITY signer.name "Υπογράφτηκε από:">
 <!ENTITY recipient.name "Κρυπτογραφήθηκε για:">
 <!ENTITY email.address "Διεύθυνση email:">
-<!ENTITY issuer.name "Πιστοποιητικό εκδόθηκε από:">
+<!ENTITY issuer.name "Έκδοση πιστοποιητικού από:">
 
 <!-- LOCALIZATION NOTE(SMIME.label): This a name for a technical standard. You should not translate it, but if applicable, you may write it using localized characters. -->
 <!ENTITY SMIME.label "S/MIME">

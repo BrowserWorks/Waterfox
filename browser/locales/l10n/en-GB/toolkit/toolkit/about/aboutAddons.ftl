@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-addons-window =
-    .title = Add-ons Manager
 addons-page-title = Add-ons Manager
 search-header =
     .placeholder = Search addons.mozilla.org
@@ -24,17 +22,6 @@ list-empty-button =
 help-button = Add-ons Support
 sidebar-help-button-title =
     .title = Add-ons Support
-preferences =
-    { PLATFORM() ->
-        [windows] { -brand-short-name } Options
-       *[other] { -brand-short-name } Preferences
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] { -brand-short-name } Options
-           *[other] { -brand-short-name } Preferences
-        }
 addons-settings-button = { -brand-short-name } Settings
 sidebar-settings-button-title =
     .title = { -brand-short-name } Settings
@@ -42,36 +29,6 @@ show-unsigned-extensions-button =
     .label = Some extensions could not be verified
 show-all-extensions-button =
     .label = Show all extensions
-cmd-show-details =
-    .label = Show More Information
-    .accesskey = S
-cmd-find-updates =
-    .label = Find Updates
-    .accesskey = F
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Options
-           *[other] Preferences
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] P
-        }
-cmd-enable-theme =
-    .label = Wear Theme
-    .accesskey = W
-cmd-disable-theme =
-    .label = Stop Wearing Theme
-    .accesskey = W
-cmd-install-addon =
-    .label = Install
-    .accesskey = I
-cmd-contribute =
-    .label = Contribute
-    .accesskey = C
-    .tooltiptext = Contribute to the development of this add-on
 detail-version =
     .label = Version
 detail-last-updated =
@@ -295,6 +252,7 @@ install-theme-button = Install Theme
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = Manage
 find-more-addons = Find more add-ons
+find-more-themes = Find more themes
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
 addon-options-button =
@@ -324,13 +282,14 @@ extension-enabled-heading = Enabled
 extension-disabled-heading = Disabled
 theme-enabled-heading = Enabled
 theme-disabled-heading = Disabled
+theme-monochromatic-heading = Colourways
+theme-monochromatic-subheading = Vibrant new colourways from { -brand-product-name }. Available for a limited time.
 plugin-enabled-heading = Enabled
 plugin-disabled-heading = Disabled
 dictionary-enabled-heading = Enabled
 dictionary-disabled-heading = Disabled
 locale-enabled-heading = Enabled
 locale-disabled-heading = Disabled
-ask-to-activate-button = Ask to Activate
 always-activate-button = Always Activate
 never-activate-button = Never Activate
 addon-detail-author-label = Author
@@ -386,10 +345,10 @@ addon-detail-private-browsing-disallow = Don’t Allow
 addon-badge-recommended2 =
     .title = { -brand-product-name } only recommends extensions that meet our standards for security and performance
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Mozilla" in the string below because the extensions are built
-# by Mozilla and we don't want forks to display "by Fork".
+# We hard code "Waterfox" in the string below because the extensions are built
+# by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = Official extension built by Mozilla. Meets security and performance standards
+    .title = Official extension built by Waterfox. Meets security and performance standards
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = This extension has been reviewed to meet our standards for security and performance
@@ -407,9 +366,9 @@ addon-permissions-optional = Optional permissions for added functionality:
 addon-permissions-learnmore = Learn more about permissions
 recommended-extensions-heading = Recommended Extensions
 recommended-themes-heading = Recommended Themes
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
-# list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Feeling creative? <a data-l10n-name="link">Build your own theme with Firefox Colour.</a>
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
+# list view. The "Waterfox Color" name itself should not be translated.
+recommended-theme-1 = Feeling creative? <a data-l10n-name="link">Build your own theme with Waterfox Colour.</a>
 
 ## Page headings
 

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -27,9 +27,6 @@
 <!ENTITY useHtml.accesskey                    "C">
 <!ENTITY autoQuote.label                      "回信時自動引用原信內容">
 <!ENTITY autoQuote.accesskey                  "m">
-<!-- LOCALIZATION NOTE (then.label): This will concatenate with the 4 strings that follow. -->
-<!ENTITY then.label                           "然後，">
-<!ENTITY then.accesskey                       "T">
 <!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
 <!ENTITY quoting.label                        "引用時，">
 <!ENTITY quoting.accesskey                    "q">

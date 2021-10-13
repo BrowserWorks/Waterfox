@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label		"プロパティ">
 
 <!ENTITY generalInfo.label			"一般情報">
-<!ENTITY folderCharsetFallback2.label		"フォールバックテキストエンコーディング:">
-<!ENTITY folderCharsetFallback2.accesskey	"E">
-<!ENTITY folderCharsetEnforce2.label		"このエンコーディングをフォルダー内のすべてのメッセージに適用する (各メッセージのテキストエンコーディング指定や自動判別結果は無視されます)">
-<!ENTITY folderCharsetEnforce2.accesskey	"A">
 <!ENTITY folderRebuildSummaryFileTip2.label	"要約ファイルの索引を再構築します">
 <!ENTITY folderRebuildSummaryFile2.label	"フォルダーを修復">
 <!ENTITY folderRebuildSummaryFile2.accesskey	"R">

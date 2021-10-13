@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -52,9 +52,6 @@ import-label = Impor
     .aria-label = Impor data dari program lainnya
 
 about-paragraph = Thunderbird adalah klien surel dan kalender lintas platform sumber terbuka, yang gratis digunakan untuk bisnis dan penggunaan pribadi. Kami ingin tetap aman dan menjadi lebih baik. Donasi akan memungkinkan kami untuk mempekerjakan pengembang, membayar infrastruktur, dan terus melakukan peningkatan.
-
-about-paragraph-2 = <b>Thunderbird didanai oleh pengguna seperti Anda! Jika Anda menyukai Thunderbird, silakan pertimbangkan untuk memberikan donasi.</b> Cara terbaik untuk memastikan Thunderbird tetap tersedia adalah dengan
-about-donation = berdonasi
 
 about-paragraph-consider-donation = <b>Thunderbird didanai oleh pengguna seperti Anda! Jika Anda menyukai Thunderbird, silakan pertimbangkan untuk memberikan donasi.</b> Cara terbaik untuk memastikan Thunderbird tetap tersedia adalah dengan <a data-l10n-name="donation-link"> berdonasi </a>.
 

@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-title = Ημερολόγιο
 calendar-title-reminder = Υπενθυμίσεις
+calendar-title-notification = Ειδοποιήσεις
 calendar-title-category = Κατηγορίες
 dateformat-label =
     .value = Μορφή ημερομηνίας:
@@ -34,7 +35,7 @@ day-6-name =
 day-7-name =
     .label = Σάββατο
 show-weeknumber-label =
-    .label = Εμφάνιση αριθμού εβδομάδας στις προβολές και τον μικρο-μήνα
+    .label = Εμφάνιση αριθμού εβδομάδας στις προβολές και τον «μικρο-μήνα»
     .accesskey = θ
 workdays-label =
     .value = Εργάσιμες ημέρες:
@@ -99,12 +100,12 @@ week-6-label =
 previous-weeks-label =
     .value = Προηγούμενες εβδομάδες προς εμφάνιση:
     .accesskey = γ
-todaypane-legend = Προβολή ημέρας
+todaypane-legend = Προβολή «Σήμερα»
 # Note: "Upcoming" is the name of a section and the translation must match the
 # translation of that section name (calendar.upcoming.button.label). Also,
 # it should be upper case (as a proper name) if the target language permits.
 soon-label =
-    .value = Η ενότητα "Επερχόμενα" εμφανίζει:
+    .value = Η ενότητα «Επερχόμενα» εμφανίζει:
     .accesskey = Ε
 event-task-legend = Εκδηλώσεις και εργασίες
 default-length-label =
@@ -133,11 +134,14 @@ task-due-label =
 edit-intab-label =
     .label = Επεξεργασία εκδηλώσεων και εργασιών σε νέα καρτέλα αντί σε παράθυρο διαλόγου.
     .accesskey = κ
+prompt-delete-label =
+    .label = Ερώτηση πριν από τη διαγραφή εκδηλώσεων και εργασιών.
+    .accesskey = ρ
 accessibility-legend = Προσβασιμότητα
 accessibility-colors-label =
     .label = Βελτιστοποίηση χρωμάτων για προσβασιμότητα
     .accesskey = Β
-reminder-legend = Όταν εκπνέει ο χρόνος της υπενθύμισης:
+reminder-legend = Όταν εκπνέει η υπενθύμιση:
 reminder-play-checkbox =
     .label = Αναπαραγωγή ήχου
     .accesskey = χ
@@ -148,28 +152,28 @@ reminder-default-sound-label =
     .label = Χρήση προεπιλεγμένου ήχου
     .accesskey = λ
 reminder-custom-sound-label =
-    .label = Χρήση του ακόλουθου αρχείου ήχου
+    .label = Χρήση του εξής αρχείου ήχου
     .accesskey = Χ
 reminder-browse-sound-label =
     .label = Περιήγηση…
     .accesskey = Π
 reminder-dialog-label =
-    .label = Εμφάνιση του παραθύρου διαλόγου υπενθύμισης
+    .label = Εμφάνιση διαλόγου υπενθύμισης
     .accesskey = θ
 missed-reminder-label =
     .label = Εμφάνιση χαμένων υπενθυμίσεων για εγγράψιμα ημερολόγια
     .accesskey = φ
 reminder-default-legend = Προεπιλογές υπενθυμίσεων
 default-snooze-label =
-    .value = Προεπιλεγμένη διάρκεια αναστολής υπενθύμισης:
+    .value = Προεπιλεγμένη διάρκεια αναβολής:
     .accesskey = δ
 event-alarm-label =
     .value = Προεπιλεγμένη ρύθμιση υπενθύμισης για εκδηλώσεις:
     .accesskey = σ
 alarm-on-label =
-    .label = Ναι
+    .label = Ενεργή
 alarm-off-label =
-    .label = Όχι
+    .label = Ανενεργή
 task-alarm-label =
     .value = Προεπιλεγμένη ρύθμιση υπενθύμισης για εργασίες:
     .accesskey = ε
@@ -179,8 +183,9 @@ event-alarm-time-label =
 task-alarm-time-label =
     .value = Προεπιλεγμένος χρόνος ορισμού υπενθύμισης πριν από εργασία:
     .accesskey = ρ
+calendar-notifications-customize-label = Οι ειδοποιήσεις μπορούν να προσαρμοστούν για κάθε ημερολόγιο στο παράθυρο ιδιοτήτων ημερολογίου.
 category-new-label = Νέα κατηγορία
 category-edit-label = Επεξεργασία κατηγορίας
 category-overwrite-title = Προειδοποίηση: Διπλότυπο όνομα
-category-overwrite = Υπάρχει ήδη κατηγορία με αυτό το όνομα. \n Θέλετε να την αντικαταστήσετε;
+category-overwrite = Υπάρχει ήδη κατηγορία με αυτό το όνομα. Θέλετε να την αντικαταστήσετε;
 category-blank-warning = Πρέπει να εισαγάγετε όνομα κατηγορίας.

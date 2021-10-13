@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,11 @@
 experimental-features-css-masonry2 =
     .label = CSS: Masonry Layout
 experimental-features-css-masonry-description = Maakt ondersteuning voor de experimentele functie CSS Masonry Layout mogelijk. Lees de <a data-l10n-name="explainer">uitleg</a> voor een globale beschrijving van de functie. Plaats een opmerking in <a data-l10n-name="w3c-issue">dit GitHub-issue</a> of <a data-l10n-name="bug">deze bug</a> om feedback te leveren.
+# The title of the experiment should be kept in English as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS: Cascade Layers
+experimental-features-css-cascade-layers-description = Schakelt ondersteuning voor CSS Cascade Layers in. Lees de <a data-l10n-name="spec">specificatie-in-wording</a> voor details. Meld bugs die <a data-l10n-name="bugzilla">bug 1699215</a> blokkeren voor bugs in relatie tot deze functie.
 # The title of the experiment should be kept in English as it may be referenced
 # by various online articles and is technical in nature.
 experimental-features-web-gpu2 =
@@ -85,9 +90,6 @@ experimental-features-fission-description = Fission (website-isolatie) is een ex
 experimental-features-multi-pip =
     .label = Ondersteuning voor meerdere Picture-in-picture
 experimental-features-multi-pip-description = Experimentele ondersteuning voor gelijktijdig openen van meerdere Picture-in-Picturevensters.
-experimental-features-http3 =
-    .label = HTTP/3-protocol
-experimental-features-http3-description = Experimentele ondersteuning voor het HTTP/3-protocol.
 # Search during IME
 experimental-features-ime-search =
     .label = Adresbalk: resultaten tonen tijdens opstellen met IME

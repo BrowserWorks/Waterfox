@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,8 +13,5 @@
 <!ENTITY makeUrlRelative.accessKey "r">
 <!ENTITY makeUrlRelative.tooltip "Change between relative and absolute URL. You must first save the page to change this.">
 
-<!-- Shared by Link and Image dialogs -->
-<!ENTITY LinkURLEditField.label "Enter a web page location, a local file, or select a Named Anchor or Heading from the popup list:">
-<!ENTITY LinkURLEditField.accessKey "L">
 <!ENTITY LinkURLEditField2.label "Enter a web page location, a local file, or select a Named Anchor or Heading from the field's context menu:">
 <!ENTITY LinkURLEditField2.accessKey "w">

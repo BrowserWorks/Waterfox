@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -28,5 +28,5 @@
 <!ENTITY info.title		"詳細情報">
 <!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
 <!ENTITY info_bugs.label
-'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">私たち</a> はバグ報告や新機能の提案を歓迎しています。
+'<a href="https://developer.mozilla.org/docs/Waterfox/Projects/MailNews">私たち</a> はバグ報告や新機能の提案を歓迎しています。
 ただし、<a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a> にバグを報告する前に <a id="releaseNotesURL" href="">リリースノート</a> を確認することを忘れないでください。'>

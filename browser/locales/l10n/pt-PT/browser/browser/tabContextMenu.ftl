@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -51,9 +51,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = Adicionar separador aos marcadores
     .accesskey = m
-reopen-in-container =
-    .label = Reabrir no contentor
-    .accesskey = e
 tab-context-open-in-new-container-tab =
     .label = Abrir num novo separador contentor
     .accesskey = e
@@ -69,26 +66,6 @@ move-to-new-window =
 tab-context-close-multiple-tabs =
     .label = Fechar múltiplos separadores
     .accesskey = m
-tab-context-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] Reabrir separador fechado
-            [one] Reabrir separador fechado
-           *[other] Reabrir separadores fechados
-        }
-    .accesskey = b
-close-tab =
-    .label = Fechar separador
-    .accesskey = c
-close-tabs =
-    .label = Fechar separadores
-    .accesskey = s
-move-tabs =
-    .label = Mover separadores
-    .accesskey = v
-move-tab =
-    .label = Mover separador
-    .accesskey = v
 tab-context-share-url =
     .label = Partilhar
     .accesskey = h
@@ -114,6 +91,14 @@ tab-context-close-tabs =
            *[other] Fechar separadores
         }
     .accesskey = c
+tab-context-close-n-tabs =
+    .label =
+        { $tabCount ->
+            [1] Fechar separador
+            [one] Fechar { $tabCount } separadores
+           *[other] Fechar { $tabCount } separadores
+        }
+    .accesskey = c
 tab-context-move-tabs =
     .label =
         { $tabCount ->
@@ -122,3 +107,11 @@ tab-context-move-tabs =
            *[other] Mover separadores
         }
     .accesskey = v
+
+tab-context-send-tabs-to-device =
+    .label =
+        { $tabCount ->
+            [one] Enviar separador para dispositivo
+           *[other] Enviar { $tabCount } separadores para dispositivo
+        }
+    .accesskey = n

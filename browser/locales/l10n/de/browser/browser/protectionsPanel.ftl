@@ -1,8 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 protections-panel-sendreportview-error = Bei der Übermittlung des Berichts ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.
+
 # A link shown when ETP is disabled for a site. Opens the breakage report subview when clicked.
 protections-panel-sitefixedsendreport-label = Website funktioniert? Bericht senden
 
@@ -21,10 +22,13 @@ protections-popup-footer-protection-label-standard = Standard
 # The text a screen reader speaks when focused on the info button.
 protections-panel-etp-more-info =
     .aria-label = Weitere Informationen zum verbesserten Schutz vor Aktivitätenverfolgung
+
 protections-panel-etp-on-header = Verbesserter Schutz vor Aktivitätenverfolgung ist für diese Website AKTIVIERT
 protections-panel-etp-off-header = Verbesserter Schutz vor Aktivitätenverfolgung ist für diese Website DEAKTIVIERT
+
 # The link to be clicked to open the sub-panel view
 protections-panel-site-not-working = Funktioniert die Website nicht richtig?
+
 # The heading/title of the sub-panel view
 protections-panel-site-not-working-view =
     .title = Funktioniert die Website nicht richtig?
@@ -39,7 +43,9 @@ protections-panel-not-blocking-why-etp-off-tooltip = Alle Elemente zur Aktivitä
 ##
 
 protections-panel-no-trackers-found = { -brand-short-name } erkannte keine Skripte zur Aktivitätenverfolgung auf dieser Seite.
+
 protections-panel-content-blocking-tracking-protection = Inhalte zur Aktivitätenverfolgung
+
 protections-panel-content-blocking-socialblock = Skripte zur Aktivitätenverfolgung durch soziale Netzwerke
 protections-panel-content-blocking-cryptominers-label = Heimliche Digitalwährungsberechner (Krypto-Miner)
 protections-panel-content-blocking-fingerprinters-label = Identifizierer (Fingerprinter)
@@ -65,12 +71,14 @@ protections-panel-protectionsdashboard-label = Schutzmaßnahmen-Übersicht
 
 # The header of the list
 protections-panel-site-not-working-view-header = Deaktivieren Sie die Schutzmaßnahmen, falls es Probleme gibt mit:
+
 # The list items, shown in a <ul>
 protections-panel-site-not-working-view-issue-list-login-fields = Anmeldefeldern
 protections-panel-site-not-working-view-issue-list-forms = Formularen
 protections-panel-site-not-working-view-issue-list-payments = Zahlungen
 protections-panel-site-not-working-view-issue-list-comments = Kommentaren
 protections-panel-site-not-working-view-issue-list-videos = Videos
+
 protections-panel-site-not-working-view-send-report = Einen Bericht senden
 
 ##
@@ -80,16 +88,19 @@ protections-panel-cryptominers = Heimliche Digitalwährungsberechner (Krypto-Min
 protections-panel-fingerprinters = Identifizierer (Fingerprinter) sammeln Eigenschaften Ihres Browsers und Computers und erstellen daraus ein Profil. Mit diesem digitalen Fingerabdruck können diese Sie über Websites hinweg verfolgen.
 protections-panel-tracking-content = Websites können Werbung, Videos und andere Inhalte mit Skripten zur Aktivitätenverfolgung von anderen Websites laden. Das Blockieren von Inhalten zur Aktivitätenverfolgung ermöglicht es unter Umständen, dass Websites schneller laden, aber einige Schaltflächen, Formulare und Anmeldefelder funktionieren dann eventuell nicht richtig.
 protections-panel-social-media-trackers = Auf anderen Websites eingebundene Elemente sozialer Netzwerke (z.B. zum Teilen von Inhalten) können Skripte enthalten, die verfolgen, was Sie online machen, angezeigt bekommen und sich anschauen. Dies ermöglicht den Unternehmen hinter den sozialen Netzwerken, mehr über Sie zu erfahren als allein durch die Inhalte, die Sie mit Ihrem Profil im sozialen Netzwerk teilen.
+
 protections-panel-description-shim-allowed = Die Blockierung von einigen der unten markierten Skripte zur Aktivitätenverfolgung wurde teilweise aufgehoben, weil Sie mit diesen interagiert haben.
 protections-panel-description-shim-allowed-learn-more = Weitere Informationen
 protections-panel-shim-allowed-indicator =
     .tooltiptext = Blockierung von Skripten zur Aktivitätenverfolgung teilweise aufgehoben
+
 protections-panel-content-blocking-manage-settings =
     .label = Schutzmaßnahmen-Einstellungen verwalten
     .accesskey = E
+
 protections-panel-content-blocking-breakage-report-view =
     .title = Problem mit Website melden
-protections-panel-content-blocking-breakage-report-view-description = Das Blockieren bestimmter Skripte zur Aktivitätenverfolgung kann bei einigen Websites zu Problemen führen. Wenn Sie Probleme melden, helfen Sie { -brand-short-name } für alle besser zu machen. Beim Senden des Berichts werden eine Adresse sowie Informationen über Ihre Browser-Einstellungen an Mozilla gesendet. <label data-l10n-name="learn-more">Weitere Informationen</label>
+protections-panel-content-blocking-breakage-report-view-description = Das Blockieren bestimmter Skripte zur Aktivitätenverfolgung kann bei einigen Websites zu Problemen führen. Wenn Sie Probleme melden, helfen Sie { -brand-short-name } für alle besser zu machen. Beim Senden des Berichts werden eine Adresse sowie Informationen über Ihre Browser-Einstellungen an Waterfox gesendet. <label data-l10n-name="learn-more">Weitere Informationen</label>
 protections-panel-content-blocking-breakage-report-view-collection-url = Adresse
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = Adresse

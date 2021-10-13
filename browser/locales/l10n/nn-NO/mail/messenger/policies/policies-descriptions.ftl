@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -132,7 +132,7 @@ policy-SearchEngines = Konfigurer søkjemotorinnstillingar. Denne policyen er ku
 
 policy-SearchSuggestEnabled = Slå på/av søkjeforslag.
 
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = Installer PKCS #11-modular.
 
 policy-SSLVersionMax = Still inn den maksimale SSL-versjonen.

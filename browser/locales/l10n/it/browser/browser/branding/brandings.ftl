@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -28,5 +28,10 @@
 -pocket-brand-name = Pocket
 -send-brand-name = Waterfox Send
 -screenshots-brand-name = Waterfox Screenshots
--mozilla-vpn-brand-name = Mozilla VPN
+-mozilla-vpn-brand-name = Waterfox VPN
 -profiler-brand-name = Waterfox Profiler
+-translations-brand-name = Waterfox Translations
+
+# “Suggest” can be localized, “Waterfox” must be treated as a brand
+# and kept in English.
+-firefox-suggest-brand-name = Waterfox Suggest

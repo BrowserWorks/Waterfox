@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = أتريد رؤية ألسنتك من �
 synced-tabs-sidebar-intro = اعرض قائمة بالألسنة من أجهزتك الأخرى.
 synced-tabs-sidebar-unverified = يجب تأكيد حسابك.
 synced-tabs-sidebar-notabs = لا ألسنة مفتوحة
-synced-tabs-sidebar-openprefs = افتح تفضيلات { -sync-brand-short-name }
 synced-tabs-sidebar-open-settings = افتح إعدادات المزامنة
 synced-tabs-sidebar-tabsnotsyncing = فعّل مزامنة الألسنة لعرض قائمة بالألسنة من أجهزتك الأخرى.
 synced-tabs-sidebar-connect-another-device = صِلْ جهازا آخر
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = زامِن الآن
     .accesskey = ز
-fxa-sign-in = لِج إلى { -sync-brand-short-name }
-turn-on-sync = فعّل { -sync-brand-short-name }
 synced-tabs-fxa-sign-in = لِج كي تبدأ المزامنة
 synced-tabs-turn-on-sync = فعّل المزامنة

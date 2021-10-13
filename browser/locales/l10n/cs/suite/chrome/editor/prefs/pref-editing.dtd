@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -7,10 +7,12 @@
 <!ENTITY authorName.label "Autor:">
 <!ENTITY authorName.accesskey "A">
 <!ENTITY pageColorHeader "Výchozí vzhled stránky">
+
 <!ENTITY defaultColors.label "Neurčovat barvy (nenastavovat barvy na stránce)">
 <!ENTITY defaultColors.accesskey "e">
 <!ENTITY customColors.label "Použít vlastní barvy:">
 <!ENTITY customColors.accesskey "P">
+
 <!ENTITY normalText.label "Běžný text">
 <!ENTITY normalText.accesskey "t">
 <!ENTITY linkText.label "Odkaz">
@@ -22,6 +24,7 @@
 <!ENTITY background.label "Pozadí:">
 <!ENTITY background.accesskey "z">
 <!ENTITY colon.character ":">
+
 <!ENTITY backgroundImage.label "Obrázek na pozadí:">
 <!ENTITY backgroundImage.accesskey "b">
 <!ENTITY chooseFile.label "Vybrat soubor…">

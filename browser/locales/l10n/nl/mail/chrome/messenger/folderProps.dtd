@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "Eigenschappen">
 
 <!ENTITY generalInfo.label                       "Algemene informatie">
-<!ENTITY folderCharsetFallback2.label            "Terugvaltekstcodering:">
-<!ENTITY folderCharsetFallback2.accesskey        "e">
-<!ENTITY folderCharsetEnforce2.label             "Codering op alle berichten in de map toepassen (de in berichten opgegeven tekstcodering en autodetectie worden genegeerd)">
-<!ENTITY folderCharsetEnforce2.accesskey         "a">
 <!ENTITY folderRebuildSummaryFileTip2.label      "Samenvattingsbestand opnieuw opbouwen">
 <!ENTITY folderRebuildSummaryFile2.label         "Map repareren">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "r">

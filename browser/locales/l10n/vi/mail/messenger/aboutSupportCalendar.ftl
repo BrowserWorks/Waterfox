@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -14,7 +14,11 @@ calendars-table-refreshinterval = Khoảng thời gian làm mới
 calendars-table-readonly = Chỉ đọc
 calendars-table-suppressalarms = Hạn chế thông báo
 calendars-table-cache-enabled = Đã bật bộ nhớ đệm
+calendars-table-imip-identity = Danh tính iMIP
+calendars-table-imip-identity-disabled = iMIP bị tắt
+calendars-table-imip-identity-account = Tài khoản iMIP
 calendars-table-organizerid = Id người tổ chức
+calendars-table-forceemailscheduling = Buộc lập lịch email
 calendars-table-capabilities-alarms-popup-supported = Thông báo bật lên được hỗ trợ
 calendars-table-capabilities-alarms-oninviations-supported = Thông báo về lời mời được hỗ trợ
 calendars-table-capabilities-alarms-maxcount = Thông báo tối đa cho mỗi sự kiện

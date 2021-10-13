@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,13 @@ connection-dialog-window =
         }
 connection-disable-extension =
     .label = Kiegészítő letiltása
+disable-extension-button = Kiegészítő letiltása
+# Variables:
+#   $name (String) - The extension that is controlling the proxy settings.
+#
+# The extension-icon is the extension's icon, or a fallback image. It should be
+# purely decoration for the actual extension name, with alt="".
+proxy-settings-controlled-by-extension = A(z) <img data-l10n-name="extension-icon" alt="" /> { $name } kiegészítő vezérli, hogy a { -brand-short-name } hogy kapcsolódik az internethez.
 connection-proxy-legend = Proxy beállítása az internet eléréséhez
 proxy-type-no =
     .label = Nincs proxy
@@ -73,8 +80,6 @@ no-proxy-label =
     .value = Nincs proxy a következőhöz:
     .accesskey = N
 no-proxy-example = Példa: .mozilla.org, .net.nz, 192.168.1.0/24
-# Note: Do not translate localhost, 127.0.0.1 and ::1.
-no-proxy-localhost-label = A localhost, a 127.0.0.1 és a ::1 felé nyitott kapcsolatok sosem kerülnek proxyzásra.
 # Do not translate "localhost", "127.0.0.1/8" and "::1". (You can translate "and".)
 connection-proxy-noproxy-localhost-desc-2 = A localhost, a 127.0.0.1/8, és a ::1 felé nyitott kapcsolatok sosem kerülnek proxyzásra.
 proxy-password-prompt =

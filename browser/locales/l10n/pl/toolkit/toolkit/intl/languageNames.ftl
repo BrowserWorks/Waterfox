@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -78,7 +78,7 @@ language-name-hy = Ormiański
 language-name-hz = Herero
 language-name-ia = Interlingua
 language-name-id = Indonezyjski
-language-name-ie = Interlingua
+language-name-ie = Interlingue
 language-name-ig = Igbo
 language-name-ii = Syczuański
 language-name-ik = Inupiak

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -57,10 +57,6 @@
 <!ENTITY goButton.tooltip             "Введите адрес в поле адреса и нажмите «Перейти»">
 <!ENTITY printButton.label            "Печать">
 <!ENTITY printButton.tooltip          "Распечатать эту страницу">
-
-<!ENTITY throbber.tooltip             "Перейти на домашнюю страницу &vendorShortName;">
-
-<!ENTITY throbber.tooltip2            "Перейти на домашнюю страницу &brandShortName;">
 
 <!ENTITY locationBar.tooltip          "Введите выражение для поиска, краткое имя закладки или веб-адрес">
 <!ENTITY locationBar.accesskey        "д">

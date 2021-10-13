@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -25,6 +25,7 @@ search-popover = Søge-genveje
 # Describes searches limited to a specific scope
 # (e.g. searching only in history).
 search-search-in = Søg i:
+
 ## Various categories of shortcuts for search.
 
 search-bookmarks = Bogmærker
@@ -32,4 +33,5 @@ search-history = Historik
 search-opentabs = Åbne faneblade
 search-tags = Mærkater
 search-titles = Titler
+
 ##

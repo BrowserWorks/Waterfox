@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,13 @@ connection-dialog-window =
         }
 connection-disable-extension =
     .label = 禁用扩展
+disable-extension-button = 禁用扩展
+# Variables:
+#   $name (String) - The extension that is controlling the proxy settings.
+#
+# The extension-icon is the extension's icon, or a fallback image. It should be
+# purely decoration for the actual extension name, with alt="".
+proxy-settings-controlled-by-extension = 扩展 <img data-l10n-name="extension-icon" alt="" /> { $name } 正在控制 { -brand-short-name } 如何连接互联网。
 connection-proxy-legend = 配置访问互联网的代理
 proxy-type-no =
     .label = 不使用代理
@@ -73,8 +80,6 @@ no-proxy-label =
     .value = 不使用代理:
     .accesskey = N
 no-proxy-example = 例如： .mozilla.org.cn, .net.nz, 192.168.1.0/24
-# Note: Do not translate localhost, 127.0.0.1 and ::1.
-no-proxy-localhost-label = 与 localhost、127.0.0.1 和 ::1 的连接永不经过代理。
 # Do not translate "localhost", "127.0.0.1/8" and "::1". (You can translate "and".)
 connection-proxy-noproxy-localhost-desc-2 = 与 localhost、127.0.0.1/8 和 ::1 的连接永不经过代理。
 proxy-password-prompt =

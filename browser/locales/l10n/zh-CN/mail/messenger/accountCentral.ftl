@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -48,9 +48,6 @@ import-label = 导入
     .aria-label = 从其他程序导入数据
 
 about-paragraph = Thunderbird 是领先的开源、跨平台电子邮件和日历客户端，免费供企业和个人使用。我们希望它保持安全和变得更好。通过捐款，您可帮助我们聘请更多工程师、支付基础设施费用，并不断改进。
-
-about-paragraph-2 = <b>Thunderbird 的发展离不开您的资助！若您也喜欢 Thunderbird，请捐款支持我们。</b>能够确保 Thunderbird 持续发展的最好方式就是
-about-donation = 向我们捐款
 
 about-paragraph-consider-donation = <b>Thunderbird 依赖着像您一样的用户来资助。如有能力，请考虑捐款。</b>确保 Thunderbird 维持运作的最佳方式是<a data-l10n-name="donation-link">向我们捐款</a>
 

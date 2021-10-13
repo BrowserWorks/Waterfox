@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-title = Kalender
 calendar-title-reminder = Påminnelser
+calendar-title-notification = Aviseringar
 calendar-title-category = Kategorier
 dateformat-label =
     .value = Datum textformat:
@@ -106,6 +107,9 @@ todaypane-legend = Panel för idag
 soon-label =
     .value = Kommande avsnittet visar:
     .accesskey = K
+agenda-days =
+    .value = Agendan visar:
+    .accesskey = g
 event-task-legend = Händelser och uppgifter
 default-length-label =
     .value = Standardlängd för händelser och uppgifter:
@@ -133,6 +137,9 @@ task-due-label =
 edit-intab-label =
     .label = Redigera händelser och uppgifter i en flik istället för i en dialogruta.
     .accesskey = f
+prompt-delete-label =
+    .label = Fråga innan du tar bort händelser och uppgifter.
+    .accesskey = F
 accessibility-legend = Tillgänglighet
 accessibility-colors-label =
     .label = Optimera färger för tillgänglighet
@@ -179,6 +186,7 @@ event-alarm-time-label =
 task-alarm-time-label =
     .value = Standardtid för att aktivera en påminnelse före en uppgift:
     .accesskey = i
+calendar-notifications-customize-label = Aviseringar kan anpassas för varje kalender i kalenderns inställningar.
 category-new-label = Ny kategori
 category-edit-label = Redigera kategori
 category-overwrite-title = Varning: Namnet finns redan

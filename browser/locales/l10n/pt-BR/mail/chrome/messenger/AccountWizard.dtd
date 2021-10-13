@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,14 +17,11 @@
 <!ENTITY accountTypeMail.accesskey "E">
 <!ENTITY accountTypeNews.label "Conta de grupo de notícias">
 <!ENTITY accountTypeNews.accesskey "n">
-<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
-<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
-<!ENTITY accountTypeMovemail.accesskey "U">
 
 <!-- Entities for Identity page -->
 
 <!ENTITY identityTitle.label "Identidade">
-<!ENTITY identityDesc.label "Cada conta tem sua própria identidade, que é a informação que identifica você aos destinatários das suas mensagens.">
+<!ENTITY identityDesc.label "Cada conta tem uma identidade, a informação que identifica você aos outros quando recebem suas mensagens.">
 
 <!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
 <!ENTITY fullnameDesc.label "Insira o nome que você quer que seja exibido no campo &quot;De&quot; das suas mensagens enviadas">
@@ -106,7 +103,7 @@
 
 <!ENTITY accnameTitle.label "Nome da conta">
 <!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
-<!ENTITY accnameDesc.label "Insira o nome pelo qual você gostaria de referir a esta conta (por exemplo, &quot;Conta do trabalho&quot;, &quot;Conta doméstica&quot; ou &quot;Conta de notícias&quot;).">
+<!ENTITY accnameDesc.label "Insira o nome pelo qual você quer se referir a esta conta (por exemplo, &quot;Trabalho&quot;, &quot;Casa&quot; ou &quot;Notícias&quot;).">
 <!ENTITY accnameLabel.label "Nome da conta:">
 <!ENTITY accnameLabel.accesskey "t">
 
@@ -124,4 +121,4 @@
 <!ENTITY deferStorage.label "Usar a Caixa de Entrada Global (armazena o correio em Pastas Locais)">
 <!ENTITY deferStorage.accesskey "g">
 <!ENTITY clickFinish.label "Clique em Concluir para salvar estas configurações e sair do assistente de contas.">
-<!ENTITY clickFinish.labelMac "Clique em Feito para salvar estas configurações e sair do assistente de contas.">
+<!ENTITY clickFinish.labelMac "Clique em 'Pronto' para salvar essas configurações e sair do assistente de contas.">

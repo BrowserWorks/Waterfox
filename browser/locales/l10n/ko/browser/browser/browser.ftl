@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Waterfox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - Waterfox
+# private - "Waterfox Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Waterfox"
-# "private" - "Mozilla Firefox — (Private Browsing)"
+# "default" - Waterfox
+# "private" - "Waterfox Waterfox — (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -64,7 +64,7 @@ urlbar-web-authn-anchor =
 urlbar-canvas-notification-anchor =
     .tooltiptext = 캔버스 추출 권한 관리
 urlbar-web-rtc-share-microphone-notification-anchor =
-    .tooltiptext = 사이트에서 마이크를 사용할지 관리
+    .tooltiptext = 사이트의 마이크 공유 관리
 urlbar-default-notification-anchor =
     .tooltiptext = 메시지 패널 열기
 urlbar-geolocation-notification-anchor =
@@ -76,7 +76,7 @@ urlbar-storage-access-anchor =
 urlbar-translate-notification-anchor =
     .tooltiptext = 페이지 번역
 urlbar-web-rtc-share-screen-notification-anchor =
-    .tooltiptext = 사이트에서 창이나 화면을 공유할지를 관리
+    .tooltiptext = 사이트의 창 또는 화면 공유 관리
 urlbar-indexed-db-notification-anchor =
     .tooltiptext = 오프라인 저장소 메시지 패널 열기
 urlbar-password-notification-anchor =
@@ -86,7 +86,11 @@ urlbar-translated-notification-anchor =
 urlbar-plugins-notification-anchor =
     .tooltiptext = 플러그인 사용 관리
 urlbar-web-rtc-share-devices-notification-anchor =
-    .tooltiptext = 사이트에서 카메라와 마이크를 사용할지 관리
+    .tooltiptext = 사이트의 카메라와 마이크 공유 관리
+# "Speakers" is used in a general sense that might include headphones or
+# another audio output connection.
+urlbar-web-rtc-share-speaker-notification-anchor =
+    .tooltiptext = 사이트의 다른 스피커 공유 관리
 urlbar-autoplay-notification-anchor =
     .tooltiptext = 자동 재생 패널 열기
 urlbar-persistent-storage-notification-anchor =
@@ -156,12 +160,8 @@ urlbar-star-add-bookmark =
 
 ## Page Action Context Menu
 
-page-action-add-to-urlbar =
-    .label = 주소 표시줄에 추가
 page-action-manage-extension =
     .label = 확장 기능 관리…
-page-action-remove-from-urlbar =
-    .label = 주소 표시줄에서 제거
 page-action-remove-extension =
     .label = 확장 기능 제거
 
@@ -179,10 +179,6 @@ full-screen-exit =
 # This string prompts the user to use the list of search shortcuts in
 # the Urlbar and searchbar.
 search-one-offs-with-title = 이번만 검색:
-# This string won't wrap, so if the translated string is longer,
-# consider translating it as if it said only "Search Settings".
-search-one-offs-change-settings-button =
-    .label = 검색 설정 변경
 search-one-offs-change-settings-compact-button =
     .tooltiptext = 검색 설정 변경
 search-one-offs-context-open-new-tab =
@@ -242,8 +238,6 @@ bookmark-panel-remove =
 bookmark-panel-show-editor-checkbox =
     .label = 저장할 때 편집기 표시
     .accesskey = S
-bookmark-panel-done-button =
-    .label = 완료
 bookmark-panel-save-button =
     .label = 저장
 # Width of the bookmark panel.
@@ -268,13 +262,11 @@ identity-connection-internal = 안전한 { -brand-short-name } 페이지입니�
 identity-connection-file = 이 페이지는 컴퓨터에 저장되어 있습니다.
 identity-extension-page = 이 페이지는 확장 기능으로부터 로드되었습니다.
 identity-active-blocked = { -brand-short-name }가 안전하지 않은 페이지의 일부를 차단했습니다.
-identity-custom-root = Mozilla에서 인식하지 못하는 인증서 발급자가 연결을 확인했습니다.
+identity-custom-root = Waterfox에서 인식하지 못하는 인증서 발급자가 연결을 확인했습니다.
 identity-passive-loaded = 페이지의 일부(이미지 등)가 안전하지 않습니다.
 identity-active-loaded = 이 페이지에서 보호를 비활성화하셨습니다.
 identity-weak-encryption = 이 페이지는 약한 암호화를 사용합니다.
 identity-insecure-login-forms = 이 페이지에 입력된 로그인 정보는 노출될 수 있습니다.
-identity-permissions =
-    .value = 권한
 identity-https-only-connection-upgraded = (HTTPS로 업그레이드됨)
 identity-https-only-label = HTTPS 전용 모드
 identity-https-only-dropdown-on =
@@ -290,13 +282,12 @@ identity-permissions-storage-access-header = 교차 사이트 쿠키
 identity-permissions-storage-access-hint = 이 당사자는 사용자가 이 사이트에 있는 동안 교차 사이트 쿠키 및 사이트 데이터를 사용할 수 있습니다.
 identity-permissions-storage-access-learn-more = 더 알아보기
 identity-permissions-reload-hint = 변경 사항을 적용하려면 페이지를 다시 로드해야할 수도 있습니다.
-identity-permissions-empty = 이 사이트를 특별한 권한으로 승인하지 않았습니다.
 identity-clear-site-data =
     .label = 쿠키 및 사이트 데이터 지우기…
 identity-connection-not-secure-security-view = 이 사이트에 안전하게 연결되어 있지 않습니다.
 identity-connection-verified = 이 사이트에 안전하게 연결되어 있습니다.
 identity-ev-owner-label = 인증서 발급 대상:
-identity-description-custom-root = Mozilla는 이 인증서 발급자를 인식하지 못합니다. 운영 체제 또는 관리자가 추가한 것일 수 있습니다. <label data-l10n-name="link">더 알아보기</label>
+identity-description-custom-root = Waterfox는 이 인증서 발급자를 인식하지 못합니다. 운영 체제 또는 관리자가 추가한 것일 수 있습니다. <label data-l10n-name="link">더 알아보기</label>
 identity-remove-cert-exception =
     .label = 예외 제거
     .accesskey = R
@@ -372,12 +363,6 @@ bookmarks-toolbar-empty-message = 빠르게 접근하려면, 여기 북마크 �
 
 ## WebRTC Pop-up notifications
 
-popup-select-camera =
-    .value = 공유할 카메라:
-    .accesskey = C
-popup-select-microphone =
-    .value = 공유할 마이크:
-    .accesskey = M
 popup-select-camera-device =
     .value = 카메라:
     .accesskey = C
@@ -391,14 +376,6 @@ popup-select-microphone-icon =
 popup-select-speaker-icon =
     .tooltiptext = 스피커
 popup-all-windows-shared = 화면에 표시되어 있는 모든 창을 공유합니다.
-popup-screen-sharing-not-now =
-    .label = 나중에
-    .accesskey = w
-popup-screen-sharing-never =
-    .label = 허용 안 함
-    .accesskey = N
-popup-silence-notifications-checkbox = 공유하는 동안 { -brand-short-name }에서 알림을 사용 안 함
-popup-silence-notifications-checkbox-warning = { -brand-short-name }는 공유하는 동안 알림을 표시하지 않습니다.
 popup-screen-sharing-block =
     .label = 차단
     .accesskey = B
@@ -422,14 +399,10 @@ enable-devtools-popup-description = F12 단축키를 사용하려면, 먼저 웹
 
 ## URL Bar
 
-urlbar-default-placeholder =
-    .defaultPlaceholder = 검색어 또는 주소 입력
 # This placeholder is used when not in search mode and the user's default search
 # engine is unknown.
 urlbar-placeholder =
     .placeholder = 검색어 또는 주소 입력
-urlbar-remote-control-notification-anchor =
-    .tooltiptext = 브라우저가 원격 제어중
 # This placeholder is used in search mode with search engines that search the
 # entire web.
 # Variables
@@ -478,8 +451,6 @@ urlbar-go-button =
     .tooltiptext = 주소 표시줄의 주소로 이동
 urlbar-page-action-button =
     .tooltiptext = 페이지 작업
-urlbar-pocket-button =
-    .tooltiptext = { -pocket-brand-name }에 저장
 
 ## Action text shown in urlbar results, usually appended after the search
 ## string or the url, like "result value - action text".
@@ -536,12 +507,25 @@ urlbar-result-action-search-bookmarks = 북마크 검색
 urlbar-result-action-search-history = 기록 검색
 urlbar-result-action-search-tabs = 탭 검색
 
+## Labels shown above groups of urlbar results
+
+# A label shown above the "Waterfox Suggest" (bookmarks/history) group in the
+# urlbar results.
+urlbar-group-firefox-suggest =
+    .label = { -firefox-suggest-brand-name }
+# A label shown above the search suggestions group in the urlbar results. It
+# should use title case.
+# Variables
+#  $engine (String): the name of the search engine providing the suggestions
+urlbar-group-search-suggestions =
+    .label = { $engine } 제안
+
 ## Full Screen and Pointer Lock UI
 
 # Please ensure that the domain stays in the `<span data-l10n-name="domain">` markup.
 # Variables
 #  $domain (String): the domain that is full screen, e.g. "mozilla.org"
-fullscreen-warning-domain = <span data-l10n-name="domain">{ $domain }</span> 이 전체 화면 모드입니다
+fullscreen-warning-domain = <span data-l10n-name="domain">{ $domain }</span> 사이트가 전체 화면 모드입니다
 fullscreen-warning-no-domain = 이 문서는 전체 화면 모드입니다
 fullscreen-exit-button = 전체 화면 종료 (Esc)
 # "esc" is lowercase on mac keyboards, but uppercase elsewhere.
@@ -668,6 +652,30 @@ toolbar-settings-button =
 more-menu-go-offline =
     .label = 오프라인으로 작업
     .accesskey = w
+toolbar-overflow-customize-button =
+    .label = 도구 모음 사용자 지정…
+    .accesskey = C
+toolbar-button-email-link =
+    .label = 메일로 링크 보내기
+    .tooltiptext = 메일로 이 페이지의 링크 보내기
+# Variables:
+#  $shortcut (String): keyboard shortcut to save a copy of the page
+toolbar-button-save-page =
+    .label = 페이지 저장
+    .tooltiptext = 이 페이지 저장 ({ $shortcut })
+# Variables:
+#  $shortcut (String): keyboard shortcut to open a local file
+toolbar-button-open-file =
+    .label = 파일 열기
+    .tooltiptext = 파일 열기 ({ $shortcut })
+toolbar-button-synced-tabs =
+    .label = 동기화된 탭
+    .tooltiptext = 다른 기기의 탭 보기
+# Variables
+# $shortcut (string) - Keyboard shortcut to open a new private browsing window
+toolbar-button-new-private-window =
+    .label = 새 사생활 보호 창
+    .tooltiptext = 새 사생활 보호 창 열기 ({ $shortcut })
 
 ## EME notification panel
 
@@ -694,3 +702,79 @@ addon-removal-abuse-report-checkbox = 이 확장 기능을 { -vendor-short-name 
 remote-tabs-manage-account =
     .label = 계정 관리
 remote-tabs-sync-now = 지금 동기화
+
+##
+
+# "More" item in macOS share menu
+menu-share-more =
+    .label = 더보기…
+ui-tour-info-panel-close =
+    .tooltiptext = 닫기
+
+## Variables:
+##  $uriHost (String): URI host for which the popup was allowed or blocked.
+
+popups-infobar-allow =
+    .label = { $uriHost }의 팝업 허용
+    .accesskey = p
+popups-infobar-block =
+    .label = { $uriHost }의 팝업 차단
+    .accesskey = p
+
+##
+
+popups-infobar-dont-show-message =
+    .label = 팝업이 차단될 때 이 메시지를 표시하지 않음
+    .accesskey = D
+edit-popup-settings =
+    .label = 팝업 설정 관리…
+    .accesskey = M
+picture-in-picture-hide-toggle =
+    .label = 화면 속 화면 토글 숨기기
+    .accesskey = H
+
+# Navigator Toolbox
+
+# This string is a spoken label that should not include
+# the word "toolbar" or such, because screen readers already know that
+# this container is a toolbar. This avoids double-speaking.
+navbar-accessible =
+    .aria-label = 탐색
+navbar-downloads =
+    .label = 다운로드
+navbar-overflow =
+    .tooltiptext = 도구 더보기…
+# Variables:
+#   $shortcut (String): keyboard shortcut to print the page
+navbar-print =
+    .label = 인쇄
+    .tooltiptext = 이 페이지 인쇄… ({ $shortcut })
+navbar-print-tab-modal-disabled =
+    .label = 인쇄
+    .tooltiptext = 이 페이지 인쇄
+navbar-home =
+    .label = 홈
+    .tooltiptext = { -brand-short-name } 홈 페이지
+navbar-library =
+    .label = 라이브러리
+    .tooltiptext = 기록, 저장된 북마크 등 보기
+navbar-search =
+    .title = 검색
+navbar-accessibility-indicator =
+    .tooltiptext = 접근성 기능 활성화됨
+# Name for the tabs toolbar as spoken by screen readers. The word
+# "toolbar" is appended automatically and should not be included in
+# in the string
+tabs-toolbar =
+    .aria-label = 브라우저 탭
+tabs-toolbar-new-tab =
+    .label = 새 탭
+tabs-toolbar-list-all-tabs =
+    .label = 탭 전체 목록
+    .tooltiptext = 탭 전체 목록
+
+## Infobar shown at startup to suggest session-restore
+
+# <img data-l10n-name="icon"/> will be replaced by the application menu icon
+restore-session-startup-suggestion-message = <strong>이전 탭을 여시겠습니까?</strong> { -brand-short-name } 애플리케이션 메뉴 <img data-l10n-name="icon"/>의 기록 아래에서 이전 세션을 복원할 수 있습니다.
+restore-session-startup-suggestion-button = 사용법 보기

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -27,9 +27,9 @@ graph-week-summary-private-window = Spårare { -brand-short-name } blockerade de
 
 protection-report-webpage-title = Säkerhetsöversikt
 protection-report-page-content-title = Säkerhetsöversikt
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } kan skydda din integritet bakom kulisserna medan du surfar. Detta är en personlig sammanfattning av dessa skydd, inklusive verktyg för att ta kontroll över din online-säkerhet.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } skyddar din integritet bakom kulisserna medan du surfar. Detta är en personlig sammanfattning av dessa skydd, inklusive verktyg för att ta kontroll över din online-säkerhet.
 
 protection-report-settings-link = Hantera dina integritets och säkerhetsinställningar
@@ -100,9 +100,6 @@ lockwise-scanned-text-no-breached-logins =
        *[other] Dina lösenord lagras säkert.
     }
 lockwise-how-it-works-link = Hur det fungerar
-
-turn-on-sync = Slå på { -sync-brand-short-name }…
-    .title = Gå till inställningar för sync
 
 monitor-title = Håll koll på dataintrång
 monitor-link = Hur fungerar det

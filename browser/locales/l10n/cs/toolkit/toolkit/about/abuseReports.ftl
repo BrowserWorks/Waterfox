@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,6 +8,7 @@
 # Variables:
 #   $addon-name (string) - Name of the add-on being reported
 abuse-report-dialog-title = Nahlášení rozšíření { $addon-name }
+
 abuse-report-title-extension =
     Nahlásit toto rozšíření { -vendor-short-name.gender ->
         [masculine] { -vendor-short-name(case: "dat") }
@@ -23,12 +24,15 @@ abuse-report-title-theme =
        *[other] organizaci { -vendor-short-name }
     }
 abuse-report-subtitle = Jaký je problém?
+
 # Variables:
 #   $author-name (string) - Name of the add-on author
 abuse-report-addon-authored-by = od <a data-l10n-name="author-name">{ $author-name }</a>
+
 abuse-report-learnmore =
     Nevíte, který problém vybrat?
     Podívejte se na <a data-l10n-name="learnmore-link">informace o hlášení rozšíření a doplňků</a>
+
 abuse-report-submit-description = Popis problému (nepovinný)
 abuse-report-textarea =
     .placeholder = Pokud podrobně popíšete, jaký problém pozorujete, je pro nás snazší ho vyřešit. Děkujeme vám za hlášení a pomoc.
@@ -75,14 +79,18 @@ abuse-report-messagebar-action-cancel = Zrušit
 
 abuse-report-damage-reason-v2 = Poškozuje můj počítač nebo data
 abuse-report-damage-example = Příklad: malware či krádež dat
+
 abuse-report-spam-reason-v2 = Obsahuje spam nebo vkládá nevyžádané reklamy
 abuse-report-spam-example = Příklad: vkládání reklam do webových stránek
+
 abuse-report-settings-reason-v2 = Mění nastavení vyhledávače, domovské stránky nebo nového panelu bez předchozího dotazu
 abuse-report-settings-suggestions = Před nahlášením tohoto rozšíření prosím zkontrolujte tato nastavení:
 abuse-report-settings-suggestions-search = nastavení výchozího vyhledávače
 abuse-report-settings-suggestions-homepage = nastavení domovské stránky a nového panelu
+
 abuse-report-deceptive-reason-v2 = Vydává se za něco jiného
 abuse-report-deceptive-example = Příklad: zavádějící popis nebo náhledy
+
 abuse-report-broken-reason-extension-v2 =
     Nefunguje, rozbíjí webové stránky nebo zpomaluje{ -brand-product-name.gender ->
         [masculine] { -brand-product-name(case: "acc") }
@@ -94,8 +102,12 @@ abuse-report-broken-reason-theme-v2 = Nefunguje nebo robíjí rozhraní prohlí�
 abuse-report-broken-example = Příklad: funkce je pomalá, špatně se používá, vůbec nefunguje, nebo omezuje funkčnost a zobrazení webových stránek
 abuse-report-broken-suggestions-extension = Zdá se, že jste objevili chybu. Kromě odeslání hlášení nám v řešení problému pomůže, pokud kontaktujete i autora rozšíření. <a data-l10n-name="support-link">Navštivte stránky rozšíření</a>, kde na autora najdete kontakt.
 abuse-report-broken-suggestions-theme = Zdá se, že jste objevili chybu. Kromě odeslání hlášení nám v řešení problému pomůže, pokud kontaktujete i autora vzhledu. <a data-l10n-name="support-link">Navštivte stránky vzhledu</a>, kde na autora najdete kontakt.
+
 abuse-report-policy-reason-v2 = Obsahuje nenávistný, násilný nebo nelegální obsah
 abuse-report-policy-suggestions = Poznámka: Problémy s autorskými právy prosím hlaste podle <a data-l10n-name="report-infringement-link">tohoto návodu</a>.
+
 abuse-report-unwanted-reason-v2 = Toto rozšíření jsem nechtěl(a) instalovat a nevím, jak ho odebrat
 abuse-report-unwanted-example = Příklad: nainstalováno cizí aplikací bez vašeho svolení
+
 abuse-report-other-reason = Něco jiného
+

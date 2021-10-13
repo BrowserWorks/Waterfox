@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,7 +31,7 @@
 <!ENTITY insertLinkCmd2.label "Σύνδεσμος…">
 <!ENTITY insertLinkCmd2.accesskey "Σ">
 <!ENTITY insertLinkCmd2.key "K">
-<!ENTITY insertAnchorCmd.label "Άγκυρα με όνομα…">
+<!ENTITY insertAnchorCmd.label "Επώνυμη άγκυρα…">
 <!ENTITY insertAnchorCmd.accesskey "α">
 <!ENTITY insertImageCmd.label "Εικόνα…">
 <!ENTITY insertImageCmd.accesskey "Ε">
@@ -172,7 +172,7 @@
 <!ENTITY formatlistMenu.accesskey "Λ">
 <!ENTITY noneCmd.label "Κανένα">
 <!ENTITY noneCmd.accesskey "ν">
-<!ENTITY listBulletCmd.label "Κουκίδες">
+<!ENTITY listBulletCmd.label "Κουκκίδες">
 <!ENTITY listBulletCmd.accesskey "Κ">
 <!ENTITY listNumberedCmd.label "Αριθμημένη">
 <!ENTITY listNumberedCmd.accesskey "μ">

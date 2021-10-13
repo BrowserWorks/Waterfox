@@ -1,16 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 # Addressing widget
-
-#   $type (String) - the type of the addressing row
-remove-address-row-type = Hapus bidang { $type }
-
-#   $type (String) - the type of the addressing row
-remove-address-row-type-label =
-    .tooltiptext = Hapus bidang { $type }
 
 #   $type (String) - the type of the addressing row
 #   $count (Number) - the number of address pills currently present in the addressing row
@@ -42,6 +35,8 @@ pill-action-move-bcc =
     .label = Pindahkan ke BCC
     .accesskey = B
 
+# Attachment widget
+
 #   $count (Number) - the number of attachments in the attachment bucket
 attachment-bucket-count =
     .value =
@@ -50,17 +45,20 @@ attachment-bucket-count =
         }
     .accesskey = m
 
-#   $count (Number) - the number of attachments in the attachment bucket
-attachments-placeholder-tooltip =
-    .tooltiptext =
-        { $count ->
-           *[other] { $count } Lampiran
-        }
-
-#   { attachment-bucket-count.accesskey } - Do not localize this message.
-key-toggle-attachment-pane =
-    .key = { attachment-bucket-count.accesskey }
+# Reorder Attachment Panel
 
 button-return-receipt =
     .label = Tanda Terima
     .tooltiptext = Minta tanda terima untuk pesan ini
+
+# Encryption
+
+# Addressing Area
+
+
+## Notifications
+
+## Editing
+
+# Tools
+

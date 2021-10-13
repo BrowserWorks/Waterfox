@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -33,6 +33,12 @@ abuse-report-submit-button = Invia
 
 ## Variables:
 ##   $addon-name (string) - Name of the add-on
+
+## Message bars descriptions.
+##
+## Variables:
+##   $addon-name (string) - Name of the add-on
+
 abuse-report-messagebar-aborted = Segnalazione per <span data-l10n-name="addon-name">{ $addon-name }</span> annullata.
 abuse-report-messagebar-submitting = Invio segnalazione per <span data-l10n-name="addon-name">{ $addon-name }</span>.
 abuse-report-messagebar-submitted = Grazie per aver inviato una segnalazione. Rimuovere <span data-l10n-name="addon-name">{ $addon-name }</span>?

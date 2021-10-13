@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Waterfox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - Waterfox
+# private - "Waterfox Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Waterfox"
-# "private" - "Mozilla Firefox — (Private Browsing)"
+# "default" - Waterfox
+# "private" - "Waterfox Waterfox — (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -87,6 +87,10 @@ urlbar-plugins-notification-anchor =
     .tooltiptext = Plug-in-gebruik beheren
 urlbar-web-rtc-share-devices-notification-anchor =
     .tooltiptext = Delen van uw camera en/of microfoon met de website beheren
+# "Speakers" is used in a general sense that might include headphones or
+# another audio output connection.
+urlbar-web-rtc-share-speaker-notification-anchor =
+    .tooltiptext = Delen van uw andere luidsprekers met de website beheren
 urlbar-autoplay-notification-anchor =
     .tooltiptext = Paneel voor automatisch afspelen openen
 urlbar-persistent-storage-notification-anchor =
@@ -156,12 +160,8 @@ urlbar-star-add-bookmark =
 
 ## Page Action Context Menu
 
-page-action-add-to-urlbar =
-    .label = Toevoegen aan adresbalk
 page-action-manage-extension =
     .label = Extensie beheren…
-page-action-remove-from-urlbar =
-    .label = Verwijderen van adresbalk
 page-action-remove-extension =
     .label = Extensie verwijderen
 
@@ -179,10 +179,6 @@ full-screen-exit =
 # This string prompts the user to use the list of search shortcuts in
 # the Urlbar and searchbar.
 search-one-offs-with-title = Deze keer zoeken met:
-# This string won't wrap, so if the translated string is longer,
-# consider translating it as if it said only "Search Settings".
-search-one-offs-change-settings-button =
-    .label = Zoekinstellingen wijzigen
 search-one-offs-change-settings-compact-button =
     .tooltiptext = Zoekinstellingen wijzigen
 search-one-offs-context-open-new-tab =
@@ -246,8 +242,6 @@ bookmark-panel-remove =
 bookmark-panel-show-editor-checkbox =
     .label = Editor tonen bij opslaan
     .accesskey = E
-bookmark-panel-done-button =
-    .label = Gereed
 bookmark-panel-save-button =
     .label = Opslaan
 # Width of the bookmark panel.
@@ -272,13 +266,11 @@ identity-connection-internal = Dit is een beveiligde { -brand-short-name }-pagin
 identity-connection-file = Deze pagina is op uw computer opgeslagen.
 identity-extension-page = Deze pagina is geladen vanuit een extensie.
 identity-active-blocked = { -brand-short-name } heeft onderdelen van deze pagina die niet zijn beveiligd geblokkeerd.
-identity-custom-root = Verbinding geverifieerd door een certificaatuitgever die niet door Mozilla wordt herkend.
+identity-custom-root = Verbinding geverifieerd door een certificaatuitgever die niet door Waterfox wordt herkend.
 identity-passive-loaded = Onderdelen van deze pagina zijn niet beveiligd (zoals afbeeldingen).
 identity-active-loaded = U hebt bescherming op deze pagina uitgeschakeld.
 identity-weak-encryption = Deze pagina gebruikt zwakke versleuteling.
 identity-insecure-login-forms = Ingevoerde aanmeldingen op deze pagina zouden kunnen worden onderschept.
-identity-permissions =
-    .value = Toestemmingen
 identity-https-only-connection-upgraded = (geüpgraded naar HTTPS)
 identity-https-only-label = Alleen-HTTPS-modus
 identity-https-only-dropdown-on =
@@ -294,13 +286,12 @@ identity-permissions-storage-access-header = Cross-sitecookies
 identity-permissions-storage-access-hint = Deze partijen kunnen tijdens uw bezoek aan deze website cross-sitecookies en websitegegevens gebruiken.
 identity-permissions-storage-access-learn-more = Meer info
 identity-permissions-reload-hint = Mogelijk dient u de pagina te vernieuwen om wijzigingen van kracht te laten worden.
-identity-permissions-empty = U hebt deze website geen speciale toestemmingen gegeven.
 identity-clear-site-data =
     .label = Cookies en websitegegevens wissen…
 identity-connection-not-secure-security-view = U hebt een onbeveiligde verbinding met deze website.
 identity-connection-verified = U hebt een beveiligde verbinding met deze website.
 identity-ev-owner-label = Certificaat uitgegeven aan:
-identity-description-custom-root = Mozilla herkent deze certificaatuitgever niet. Hij is mogelijk vanuit uw besturingssysteem of door een beheerder toegevoegd. <label data-l10n-name="link">Meer info</label>
+identity-description-custom-root = Waterfox herkent deze certificaatuitgever niet. Hij is mogelijk vanuit uw besturingssysteem of door een beheerder toegevoegd. <label data-l10n-name="link">Meer info</label>
 identity-remove-cert-exception =
     .label = Uitzondering verwijderen
     .accesskey = w
@@ -379,12 +370,6 @@ bookmarks-toolbar-empty-message = Plaats voor snelle toegang uw bladwijzers hier
 
 ## WebRTC Pop-up notifications
 
-popup-select-camera =
-    .value = Te delen camera:
-    .accesskey = C
-popup-select-microphone =
-    .value = Te delen microfoon:
-    .accesskey = M
 popup-select-camera-device =
     .value = Camera:
     .accesskey = C
@@ -398,14 +383,6 @@ popup-select-microphone-icon =
 popup-select-speaker-icon =
     .tooltiptext = Luidsprekers
 popup-all-windows-shared = Alle zichtbare vensters op uw scherm worden gedeeld.
-popup-screen-sharing-not-now =
-    .label = Niet nu
-    .accesskey = i
-popup-screen-sharing-never =
-    .label = Nooit toestaan
-    .accesskey = N
-popup-silence-notifications-checkbox = Notificaties van { -brand-short-name } uitschakelen tijdens delen
-popup-silence-notifications-checkbox-warning = { -brand-short-name } toont geen meldingen terwijl u deelt.
 popup-screen-sharing-block =
     .label = Blokkeren
     .accesskey = B
@@ -429,14 +406,10 @@ enable-devtools-popup-description = Open eerst DevTools in het menu Webontwikkel
 
 ## URL Bar
 
-urlbar-default-placeholder =
-    .defaultPlaceholder = Voer zoekterm of adres in
 # This placeholder is used when not in search mode and the user's default search
 # engine is unknown.
 urlbar-placeholder =
     .placeholder = Voer zoekterm of adres in
-urlbar-remote-control-notification-anchor =
-    .tooltiptext = Browser wordt op afstand bestuurd
 # This placeholder is used in search mode with search engines that search the
 # entire web.
 # Variables
@@ -485,8 +458,6 @@ urlbar-go-button =
     .tooltiptext = Naar het adres in de locatiebalk gaan
 urlbar-page-action-button =
     .tooltiptext = Pagina-acties
-urlbar-pocket-button =
-    .tooltiptext = Opslaan naar { -pocket-brand-name }
 
 ## Action text shown in urlbar results, usually appended after the search
 ## string or the url, like "result value - action text".
@@ -542,6 +513,19 @@ urlbar-result-action-calculator-result = = { $result }
 urlbar-result-action-search-bookmarks = Bladwijzers doorzoeken
 urlbar-result-action-search-history = Geschiedenis doorzoeken
 urlbar-result-action-search-tabs = Tabbladen doorzoeken
+
+## Labels shown above groups of urlbar results
+
+# A label shown above the "Waterfox Suggest" (bookmarks/history) group in the
+# urlbar results.
+urlbar-group-firefox-suggest =
+    .label = { -firefox-suggest-brand-name }
+# A label shown above the search suggestions group in the urlbar results. It
+# should use title case.
+# Variables
+#  $engine (String): the name of the search engine providing the suggestions
+urlbar-group-search-suggestions =
+    .label = { $engine }-suggesties
 
 ## Full Screen and Pointer Lock UI
 
@@ -675,6 +659,30 @@ toolbar-settings-button =
 more-menu-go-offline =
     .label = Offline werken
     .accesskey = f
+toolbar-overflow-customize-button =
+    .label = Werkbalk aanpassen…
+    .accesskey = a
+toolbar-button-email-link =
+    .label = Koppeling e-mailen
+    .tooltiptext = Een koppeling naar deze pagina e-mailen
+# Variables:
+#  $shortcut (String): keyboard shortcut to save a copy of the page
+toolbar-button-save-page =
+    .label = Pagina opslaan
+    .tooltiptext = Deze pagina opslaan ({ $shortcut })
+# Variables:
+#  $shortcut (String): keyboard shortcut to open a local file
+toolbar-button-open-file =
+    .label = Bestand openen
+    .tooltiptext = Een bestand openen ({ $shortcut })
+toolbar-button-synced-tabs =
+    .label = Gesynchroniseerde tabbladen
+    .tooltiptext = Tabbladen van andere apparaten tonen
+# Variables
+# $shortcut (string) - Keyboard shortcut to open a new private browsing window
+toolbar-button-new-private-window =
+    .label = Nieuw privévenster
+    .tooltiptext = Een nieuw privénavigatievenster openen ({ $shortcut })
 
 ## EME notification panel
 
@@ -701,3 +709,79 @@ addon-removal-abuse-report-checkbox = Deze extensie rapporteren aan { -vendor-sh
 remote-tabs-manage-account =
     .label = Account beheren
 remote-tabs-sync-now = Nu synchroniseren
+
+##
+
+# "More" item in macOS share menu
+menu-share-more =
+    .label = Meer…
+ui-tour-info-panel-close =
+    .tooltiptext = Sluiten
+
+## Variables:
+##  $uriHost (String): URI host for which the popup was allowed or blocked.
+
+popups-infobar-allow =
+    .label = Pop-ups van { $uriHost } toestaan
+    .accesskey = P
+popups-infobar-block =
+    .label = Pop-ups van { $uriHost } blokkeren
+    .accesskey = P
+
+##
+
+popups-infobar-dont-show-message =
+    .label = Dit bericht niet tonen wanneer pop-ups worden geblokkeerd
+    .accesskey = n
+edit-popup-settings =
+    .label = Pop-upinstellingen beheren…
+    .accesskey = b
+picture-in-picture-hide-toggle =
+    .label = Picture-in-Picture-knop verbergen
+    .accesskey = v
+
+# Navigator Toolbox
+
+# This string is a spoken label that should not include
+# the word "toolbar" or such, because screen readers already know that
+# this container is a toolbar. This avoids double-speaking.
+navbar-accessible =
+    .aria-label = Navigatie
+navbar-downloads =
+    .label = Downloads
+navbar-overflow =
+    .tooltiptext = Meer hulpmiddelen…
+# Variables:
+#   $shortcut (String): keyboard shortcut to print the page
+navbar-print =
+    .label = Afdrukken
+    .tooltiptext = Deze pagina afdrukken… ({ $shortcut })
+navbar-print-tab-modal-disabled =
+    .label = Afdrukken
+    .tooltiptext = Deze pagina afdrukken
+navbar-home =
+    .label = Startpagina
+    .tooltiptext = { -brand-short-name }-startpagina
+navbar-library =
+    .label = Bibliotheek
+    .tooltiptext = Geschiedenis, opgeslagen bladwijzers en meer bekijken
+navbar-search =
+    .title = Zoeken
+navbar-accessibility-indicator =
+    .tooltiptext = Toegankelijkheidsfuncties ingeschakeld
+# Name for the tabs toolbar as spoken by screen readers. The word
+# "toolbar" is appended automatically and should not be included in
+# in the string
+tabs-toolbar =
+    .aria-label = Browsertabbladen
+tabs-toolbar-new-tab =
+    .label = Nieuw tabblad
+tabs-toolbar-list-all-tabs =
+    .label = Alle tabbladtitels tonen
+    .tooltiptext = Alle tabbladtitels tonen
+
+## Infobar shown at startup to suggest session-restore
+
+# <img data-l10n-name="icon"/> will be replaced by the application menu icon
+restore-session-startup-suggestion-message = <strong>Eerdere tabbladen openen?</strong> U kunt uw vorige sessie herstellen vanuit het toepassingsmenu van { -brand-short-name } <img data-l10n-name="icon"/>, onder Geschiedenis.
+restore-session-startup-suggestion-button = Tonen hoe

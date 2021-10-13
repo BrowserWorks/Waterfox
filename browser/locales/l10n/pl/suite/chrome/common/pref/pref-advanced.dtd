@@ -1,13 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY pref.advanced.title "Zaawansowane">
-
-<!ENTITY systemPref.caption "Preferencje systemowe">
-<!ENTITY systemPrefCheck.label "Pobieraj preferencje z systemu">
-<!ENTITY systemPrefCheck.accesskey "s">
-<!ENTITY systemPref.desc "Po włączeniu tej opcji program &brandShortName; pobiera z systemu preferencje, które zastępują dotychczasowe ustawienia.">
 
 <!ENTITY prefCheckDefault.caption "Integracja z systemem">
 <!ENTITY prefCheckDefaultClient.label "Sprawdzaj ustawienia domyślnych aplikacji podczas uruchamiania">

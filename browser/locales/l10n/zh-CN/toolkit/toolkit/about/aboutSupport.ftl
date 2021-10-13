@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,16 +7,12 @@ page-subtitle =
     本页面包含的技术信息在您寻求解决方法时或许能帮上忙。
     如果您正在寻找 { -brand-short-name } 常见问题的答案，
     可以查阅我们的<a data-l10n-name="support-link">帮助网站</a>。
+
 crashes-title = 崩溃报告
 crashes-id = 报告 ID
 crashes-send-date = 提交日期
 crashes-all-reports = 全部崩溃报告
 crashes-no-config = 此应用程序未被配置为显示崩溃报告。
-extensions-title = 扩展
-extensions-name = 名称
-extensions-enabled = 启用
-extensions-version = 版本
-extensions-id = ID
 support-addons-title = 附加组件
 support-addons-name = 名称
 support-addons-type = 类型
@@ -62,6 +58,7 @@ app-basics-enabled-plugins = 已启用的插件
 app-basics-build-config = 构建配置
 app-basics-user-agent = 用户代理
 app-basics-os = 操作系统
+app-basics-os-theme = 操作系统主题
 # Rosetta is Apple's translation process to run apps containing x86_64
 # instructions on Apple Silicon. This should remain in English.
 app-basics-rosetta = 由 Rosetta 转译
@@ -77,7 +74,7 @@ app-basics-remote-processes-count = 远程进程
 app-basics-enterprise-policies = 企业策略
 app-basics-location-service-key-google = Google 位置服务密钥
 app-basics-safebrowsing-key-google = Google 安全浏览密钥
-app-basics-key-mozilla = Mozilla 位置服务密钥
+app-basics-key-mozilla = Waterfox 位置服务密钥
 app-basics-safe-mode = 安全模式
 show-dir-label =
     { PLATFORM() ->
@@ -132,8 +129,6 @@ sandbox-sys-call-tid = TID
 sandbox-sys-call-proc-type = 进程类型
 sandbox-sys-call-number = 系统调用
 sandbox-sys-call-args = 参数
-safe-mode-title = 尝试安全模式
-restart-in-safe-mode-label = 以安全模式重启浏览器…
 troubleshoot-mode-title = 诊断问题
 restart-in-troubleshoot-mode-label = 排障模式…
 clear-startup-cache-title = 尝试清除启动缓存
@@ -178,7 +173,7 @@ intl-regional-prefs = 地区偏好
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.
@@ -191,51 +186,26 @@ remote-debugging-url = URL
 
 ##
 
-support-third-party-modules-title = 第三方模块
-support-third-party-modules-module = 模块文件
-support-third-party-modules-version = 文件版本
-support-third-party-modules-vendor = 厂商信息
-support-third-party-modules-occurrence = 加载次数
-support-third-party-modules-process = 进程类型与 ID
-support-third-party-modules-thread = 线程
-support-third-party-modules-base = 映像基址
-support-third-party-modules-uptime = 进程运行时间（毫秒）
-support-third-party-modules-duration = 加载持续时间（毫秒）
-support-third-party-modules-status = 状态
-support-third-party-modules-status-loaded = 已加载
-support-third-party-modules-status-blocked = 已屏蔽
-support-third-party-modules-status-redirected = 已重定向
-support-third-party-modules-empty = 未加载第三方模块。
-support-third-party-modules-no-value = （暂无值）
-support-third-party-modules-button-open =
-    .title = 打开文件位置…
-support-third-party-modules-expand =
-    .title = 显示详细信息
-support-third-party-modules-collapse =
-    .title = 收起详细信息
-support-third-party-modules-unsigned-icon =
-    .title = 此模块未签名
-support-third-party-modules-folder-icon =
-    .title = 打开文件位置…
-support-third-party-modules-down-icon =
-    .title = 显示详细信息
-support-third-party-modules-up-icon =
-    .title = 收起详细信息
 # Variables
 # $days (Integer) - Number of days of crashes to log
 report-crash-for-days = 近 { $days } 天的崩溃报告
+
 # Variables
 # $minutes (integer) - Number of minutes since crash
 crashes-time-minutes = { $minutes } 分钟前
+
 # Variables
 # $hours (integer) - Number of hours since crash
 crashes-time-hours = { $hours } 小时前
+
 # Variables
 # $days (integer) - Number of days since crash
 crashes-time-days = { $days } 天前
+
 # Variables
 # $reports (integer) - Number of pending reports
 pending-reports = 全部崩溃报告（包括 { $reports } 个待上传的指定时间范围内的崩溃）
+
 raw-data-copied = 原始数据已复制到剪贴板
 text-copied = 文本已复制到剪贴板
 
@@ -248,9 +218,11 @@ blocked-mismatched-version = 因您的注册表与 DLL 中的显卡驱动程序�
 # Variables
 # $driverVersion - The graphics driver version string
 try-newer-driver = 因您的显卡驱动版本而无法启用。请尝试更新您的显卡驱动程序至版本 { $driverVersion } 或更新的版本。
+
 # "ClearType" is a proper noun and should not be translated. Feel free to leave English strings if
 # there are no good translations, these are only used in about:support
 clear-type-parameters = ClearType 参数
+
 compositing = 合成
 hardware-h264 = H264 硬件解码
 main-thread-no-omtc = 主线程，无 OMTC
@@ -265,6 +237,7 @@ virtual-monitor-disp = 虚拟显示器
 
 found = 存在
 missing = 缺失
+
 gpu-process-pid = GPUProcessPid
 gpu-process = GPUProcess
 gpu-description = 描述
@@ -287,21 +260,19 @@ webgl2-renderer = WebGL2 渲染器
 webgl2-version = WebGL 2 驱动程序版本
 webgl2-driver-extensions = WebGL 2 驱动程序扩展
 webgl2-extensions = WebGL 2 扩展
-blocklisted-bug = 因已知问题已被列入黑名单
-# Variables
-# $bugNumber (string) - String of bug number from Bugzilla
-bug-link = bug { $bugNumber }
+
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = 由于已知问题，被列入屏蔽列表：<a data-l10n-name="bug-link">bug { $bugNumber }</a>
+
 # Variables
 # $failureCode (string) - String that can be searched in the source tree.
 unknown-failure = 已列入黑名单；故障代码 { $failureCode }
+
 d3d11layers-crash-guard = D3D11 合成器
-d3d11video-crash-guard = D3D11 视频解码器
-d3d9video-crash-guard = D3D9 视频解码器
 glcontext-crash-guard = OpenGL
 wmfvpxvideo-crash-guard = WMF VPX 视频解码器
+
 reset-on-next-restart = 下次开启时重置
 gpu-process-kill-button = 终止 GPU 进程
 gpu-device-reset = 设备重置
@@ -311,8 +282,10 @@ content-uses-tiling = 使用 Tiling（内容）
 off-main-thread-paint-enabled = 非主线程绘制已启用
 off-main-thread-paint-worker-count = 非主线程绘制工作器数量
 target-frame-rate = 目标帧率
+
 min-lib-versions = 预期最低版本
 loaded-lib-versions = 目前使用版本
+
 has-seccomp-bpf = Seccomp-BPF（系统调用过滤）
 has-seccomp-tsync = Seccomp 线程同步
 has-user-namespaces = 用户命名空间
@@ -326,27 +299,22 @@ sandbox-proc-type-content = 内容
 sandbox-proc-type-file = 文件内容
 sandbox-proc-type-media-plugin = 媒体插件
 sandbox-proc-type-data-decoder = 数据解码器
+
 startup-cache-title = 启动缓存
 startup-cache-disk-cache-path = 磁盘缓存路径
 startup-cache-ignore-disk-cache = 忽略磁盘缓存
 startup-cache-found-disk-cache-on-init = 在初始化时发现磁盘缓存
 startup-cache-wrote-to-disk-cache = 已写入磁盘缓存
+
 launcher-process-status-0 = 启用
 launcher-process-status-1 = 因故障而禁用
 launcher-process-status-2 = 强制禁用
 launcher-process-status-unknown = 未知状态
+
 # Variables
 # $remoteWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows
 multi-process-windows = { $remoteWindows }/{ $totalWindows }
-multi-process-status-0 = 由用户启用
-multi-process-status-1 = 默认启用
-multi-process-status-2 = 被禁用
-multi-process-status-4 = 因无障碍环境的工具而禁用
-multi-process-status-6 = 因不支持的文本输入而禁用
-multi-process-status-7 = 因部分附加组件而禁用
-multi-process-status-8 = 被强制禁用
-multi-process-status-unknown = 未知状态
 # Variables
 # $fissionWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows
@@ -362,6 +330,7 @@ fission-status-enabled-by-user-pref = 由用户启用
 fission-status-disabled-by-user-pref = 被用户禁用
 fission-status-disabled-by-e10s-other = 已禁用 E10s
 fission-status-enabled-by-rollout = 通过分阶段推出启用
+
 async-pan-zoom = 异步平移/缩放
 apz-none = 无
 wheel-enabled = 滚轮输入已启用
@@ -398,6 +367,7 @@ support-remote-experiments-title = 远程实验
 support-remote-experiments-name = 名称
 support-remote-experiments-branch = 实验分支
 support-remote-experiments-see-about-studies = 欲详细了解，请参见 <a data-l10n-name="support-about-studies-link">about:studies</a>，包括如何禁用单个实验或禁止 { -brand-short-name } 以后运行此类实验。
+
 support-remote-features-title = 远程功能
 support-remote-features-name = 名称
 support-remote-features-status = 状态

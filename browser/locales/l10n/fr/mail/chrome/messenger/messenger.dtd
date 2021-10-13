@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Imprimer…">
 <!ENTITY printCmd.accesskey "p">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Aperçu avant impression">
-<!ENTITY printPreviewCmd.accesskey "u">
-<!ENTITY printSetupCmd.label "Mise en page…">
-<!ENTITY printSetupCmd.accesskey "g">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Supprimer le message">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "R">
 <!ENTITY compactVersion.label "Vue compacte">
 <!ENTITY compactVersion.accesskey "V">
-<!ENTITY folderPaneBar.label "Barre d’outils du panneau des dossiers">
-<!ENTITY folderPaneBar.accesskey "B">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Trier par">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Carnet d’adresses">
 <!ENTITY addressBookCmd.accesskey "a">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Modules complémentaires">
-<!ENTITY addons.accesskey "c">
-<!ENTITY addonPrefs.label "Options des modules">
-<!ENTITY addonPrefs.accesskey "p">
-<!ENTITY addonPrefsUnix.label "Préférences des modules">
-<!ENTITY addonPrefsUnix.accesskey "P">
 <!ENTITY addonNoPrefs.label "Aucun paramètre de module n’a été trouvé.">
 <!ENTITY activitymanager.label "Activités">
 <!ENTITY activitymanager.accesskey "v">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "e">
 <!ENTITY importCmd.label "Importer…">
 <!ENTITY importCmd.accesskey "I">
+<!ENTITY exportCmd.label "Exporter…">
+<!ENTITY exportCmd.accesskey "x">
 <!ENTITY clearRecentHistory.label "Supprimer l’historique récent…">
 <!ENTITY clearRecentHistory.accesskey "h">
 <!ENTITY accountManagerCmd2.label "Paramètres des comptes">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Déboguer les modules">
 <!ENTITY debugAddonsCmd.accesskey "M">
-<!ENTITY tabsDebugCmd.label "Débogueur de cadres de contenu">
-<!ENTITY tabsDebugCmd.accesskey "c">
 <!ENTITY errorConsoleCmd.label "Console d’erreurs">
 <!ENTITY errorConsoleCmd.accesskey "s">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Reculer">
 <!ENTITY goForwardButton1.label "Avancer">
 <!ENTITY deleteItem.title "Supprimer">
-<!ENTITY deleteButton.label "Supprimer">
-<!ENTITY undeleteButton.label "Restaurer">
 <!ENTITY markButton.label "Marquer">
 <!ENTITY printButton.label "Imprimer">
 <!ENTITY stopButton.label "Arrêter">
 <!ENTITY throbberItem.title "Indicateur d’activité">
 <!ENTITY junkItem.title "Indésirable">
-<!ENTITY junkButton.label "Indésirable">
-<!ENTITY notJunkButton.label "Acceptable">
 <!ENTITY addressBookButton.label "Adresses">
 <!ENTITY chatButton.label "Messagerie instantanée">
 <!ENTITY glodaSearch.title "Recherche globale">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Aller au précédent message">
 <!ENTITY goForwardButton.tooltip "Avancer d’un message">
 <!ENTITY goBackButton.tooltip "Reculer d’un message">
-<!ENTITY deleteButton.tooltip "Supprimer le message ou le dossier sélectionné">
-<!ENTITY undeleteButton.tooltip "Restaurer le message sélectionné">
 <!ENTITY markButton.tooltip "Marquer les messages">
 <!ENTITY printButton.tooltip "Imprimer ce message">
 <!ENTITY stopButton.tooltip "Arrêter le transfert courant">
-<!ENTITY junkButton.tooltip "Marquer les messages sélectionnés comme indésirables">
-<!ENTITY notJunkButton.tooltip "Marquer les messages sélectionnés comme acceptables">
 <!ENTITY addressBookButton.tooltip "Ouvrir le carnet d’adresses">
 <!ENTITY chatButton.tooltip "Afficher l’onglet de messagerie instantanée">
 <!ENTITY tagButton.tooltip "Étiqueter les messages">
 <!ENTITY compactButton.tooltip "Retirer les messages supprimés du dossier sélectionné">
 <!ENTITY appmenuButton1.tooltip "Afficher le menu de &brandShortName;">
-<!ENTITY addonsButton.tooltip "Gérer les modules complémentaires">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Transférer au format intégré">
@@ -719,7 +698,6 @@
 <!ENTITY locationColumn.label "Emplacement">
 <!ENTITY idColumn.label "Ordre de réception">
 <!ENTITY attachmentColumn.label "Pièces jointes">
-
 <!ENTITY deleteColumn.label "Supprimer">
 
 <!-- Thread Pane Tooltips -->
@@ -745,7 +723,6 @@
 <!ENTITY locationColumn2.tooltip "Trier par adresse">
 <!ENTITY idColumn2.tooltip "Trier par ordre de réception">
 <!ENTITY attachmentColumn2.tooltip "Trier par pièces jointes">
-
 <!ENTITY deleteColumn.tooltip "Supprimer un message">
 
 <!-- Thread Pane Context Menu -->

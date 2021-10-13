@@ -1,9 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY junkSettings.label "Configurações de correio indesejado">
-<!ENTITY trainingDescription.label "Se estiver ativado, você deve, primeiramente, treinar o &brandShortName; para identificar às mensagens indesejadas utilizando o botão Indesejada na barra de ferramentas para marcar às mensagens como indesejadas ou não. Você precisa identificar tanto as mensagens que são indesejadas como as que não são. Depois disso, o &brandShortName; será capaz de marcar as indesejadas automaticamente.">
+<!ENTITY trainingDescription.label "Se for ativado, primeiro você deve treinar o &brandShortName; para identificar mensagens indesejadas usando o botão na barra de ferramentas para marcar spam. Você precisa identificar mensagens legítimas e mensagens de spam. Depois disso, o &brandShortName; conseguirá marcar spam automaticamente.">
 <!ENTITY level.label "Ativar controles adaptativos de lixo eletrônico nesta conta">
 <!ENTITY level.accesskey "A">
 
@@ -20,7 +20,7 @@
 <!ENTITY whitelistHeader.label "Não marcar automaticamente mensagens como spam se o remetente estiver em: ">
 <!ENTITY whitelistHeader.accesskey "N">
 
-<!ENTITY ispHeadersWarning.label "Se ativado, o &brandShortName; considerará automaticamente as mensagens marcadas por este classificador externo como spam.">
+<!ENTITY ispHeadersWarning.label "Se ativado, o &brandShortName; considera como spam automaticamente mensagens marcadas por este classificador externo.">
 <!ENTITY ispHeaders.label "Confiar em cabeçalhos de spam definidos por: ">
 <!ENTITY ispHeaders.accesskey "o">
 

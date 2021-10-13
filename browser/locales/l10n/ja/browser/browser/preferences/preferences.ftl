@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,28 +8,6 @@ do-not-track-option-default-content-blocking-known =
     .label = 既知のトラッカーをブロックする設定時のみ
 do-not-track-option-always =
     .label = 常に送る
-
-pref-page-title =
-    { PLATFORM() ->
-        [windows] オプション
-       *[other] 設定
-    }
-
-# This is used to determine the width of the search field in about:preferences,
-# in order to make the entire placeholder string visible
-#
-# Please keep the placeholder string short to avoid truncation.
-#
-# Notice: The value of the `.style` attribute is a CSS string, and the `width`
-# is the name of the CSS property. It is intended only to adjust the element's width.
-# Do not translate.
-search-input-box =
-    .style = width: 15.4em
-    .placeholder =
-        { PLATFORM() ->
-            [windows] オプションを検索
-           *[other] 設定を検索
-        }
 
 settings-page-title = 設定
 
@@ -65,10 +43,6 @@ category-search =
 pane-privacy-title = プライバシーとセキュリティ
 category-privacy =
     .tooltiptext = { pane-privacy-title }
-
-pane-sync-title2 = { -sync-brand-short-name }
-category-sync2 =
-    .tooltiptext = { pane-sync-title2 }
 
 pane-sync-title3 = 同期
 category-sync3 =
@@ -113,14 +87,6 @@ restart-later = 後で再起動
 ## Variables:
 ##   $name (String): name of the extension
 
-# This string is shown to notify the user that their home page
-# is being controlled by an extension.
-extension-controlled-homepage-override = 拡張機能 <img data-l10n-name="icon"/> { $name } によりホームページ設定が変更されています。
-
-# This string is shown to notify the user that their new tab page
-# is being controlled by an extension.
-extension-controlled-new-tab-url = 拡張機能 <img data-l10n-name="icon"/> { $name } により新しいタブページが変更されています。
-
 # This string is shown to notify the user that the password manager setting
 # is being controlled by an extension
 extension-controlled-password-saving = 拡張機能 <img data-l10n-name="icon"/> { $name } により、この設定が変更されています。
@@ -128,10 +94,6 @@ extension-controlled-password-saving = 拡張機能 <img data-l10n-name="icon"/>
 # This string is shown to notify the user that their notifications permission
 # is being controlled by an extension.
 extension-controlled-web-notifications = 拡張機能 <img data-l10n-name="icon"/> { $name } により、この設定が変更されています。
-
-# This string is shown to notify the user that the default search engine
-# is being controlled by an extension.
-extension-controlled-default-search = 拡張機能 <img data-l10n-name="icon"/> { $name } により既定の検索エンジンが変更されています。
 
 # This string is shown to notify the user that Container Tabs
 # are being enabled by an extension.
@@ -157,13 +119,6 @@ extension-controlled-enable = 拡張機能を有効にするには、<img data-l
 search-results-header = 検索結果
 
 # `<span data-l10n-name="query"></span>` will be replaced by the search term.
-search-results-empty-message =
-    { PLATFORM() ->
-        [windows] “<span data-l10n-name="query"></span>” オプションについての検索結果はありません。
-       *[other] “<span data-l10n-name="query"></span>” 設定についての検索結果はありません。
-    }
-
-# `<span data-l10n-name="query"></span>` will be replaced by the search term.
 search-results-empty-message2 =
         申し訳ありません。“<span data-l10n-name="query"></span>” の設定についての検索結果はありません。
 
@@ -172,14 +127,6 @@ search-results-help-link = ヘルプが必要な方は、<a data-l10n-name="url"
 ## General Section
 
 startup-header = 起動
-
-# { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
-separate-profile-mode =
-    .label = { -brand-short-name } と Firefox の同時起動を許可する
-use-firefox-sync = ヒント: これは別のプロファイルを使用します。データを共有するには { -sync-brand-short-name } を使用してください。
-get-started-not-logged-in = { -sync-brand-short-name } にログインする...
-get-started-configured = { -sync-brand-short-name } 設定を開く
 
 always-check-default =
     .label = { -brand-short-name } が既定のブラウザーか確認する
@@ -194,6 +141,10 @@ set-as-my-default-browser =
 
 startup-restore-previous-session =
     .label = 前回のセッションを復元する
+    .accesskey = s
+
+startup-restore-windows-and-tabs =
+    .label = 前回のウィンドウとタブを開く
     .accesskey = s
 
 startup-restore-warn-on-quit =
@@ -216,13 +167,22 @@ warn-on-close-multiple-tabs =
     .label = 同時に複数のタブを閉じるときは確認する
     .accesskey = m
 
+confirm-on-close-multiple-tabs =
+    .label = 同時に複数のタブを閉じる前に確認する
+    .accesskey = m
+
+# This string is used for the confirm before quitting preference.
+# Variables:
+#   $quitKey (String) - the quit keyboard shortcut, and formatted
+#                       in the same manner as it would appear,
+#                       for example, in the File menu.
+confirm-on-quit-with-key =
+    .label = { $quitKey } キーで終了する前に確認する
+    .accesskey = b
+
 warn-on-open-many-tabs =
     .label = 同時に複数のタブを開いて { -brand-short-name } の動作が遅くなるときは確認する
     .accesskey = d
-
-switch-links-to-new-tabs =
-    .label = リンクを新しいタブで開いたとき、すぐにそのタブに切り替える
-    .accesskey = h
 
 switch-to-new-tabs =
     .label = リンク、画像、メディアを新しいタブで開いたとき、すぐにそのタブに切り替える
@@ -307,6 +267,8 @@ confirm-browser-language-change-button = 適用して再起動
 translate-web-pages =
     .label = ウェブページを翻訳
     .accesskey = T
+
+fx-translate-web-pages = { -translations-brand-name }
 
 # The <img> element is replaced by the logo of the provider
 # used to provide machine translations for web pages.
@@ -398,11 +360,6 @@ applications-manage-app =
     .label = プログラムの管理...
 applications-always-ask =
     .label = 毎回確認する
-applications-type-pdf = PDF 文書 (PDF)
-
-# Variables:
-#   $type (String) - the MIME type (e.g application/binary)
-applications-type-pdf-with-type = { applications-type-pdf } ({ $type })
 
 # Variables:
 #   $type-description (String) - Description of the type (e.g "Portable Document Format")
@@ -492,17 +449,6 @@ update-application-warning-cross-user-setting = この設定はこの端末の�
 update-application-use-service =
     .label = 更新のインストールにバックグラウンドサービスを使用する
     .accesskey = b
-
-update-setting-write-failure-title = 変更した設定の保存エラー
-
-# Variables:
-#   $path (String) - Path to the configuration file
-# The newlines between the main text and the line containing the path is
-# intentional so the path is easier to identify.
-update-setting-write-failure-message =
-    { -brand-short-name } がエラーに遭遇したため変更を保存できませんでした。この設定変更を保存するには、以下のファイルの書き込み権限が必要なことに注意してください。あなたかシステム管理者が、このファイルにユーザーグループのフルコントロール権限を与えると、エラーを解決できる可能性があります。
-    
-    ファイルに書き込みできません: { $path }
 
 update-setting-write-failure-title2 = 設定変更の保存エラー
 
@@ -654,7 +600,7 @@ choose-bookmark =
     .label = ブックマークを使う...
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
 home-prefs-content-header = Waterfox Home コンテンツ
 home-prefs-content-description = Waterfox Home に表示するコンテンツを選びましょう。
@@ -664,7 +610,6 @@ home-prefs-search-header =
 home-prefs-topsites-header =
     .label = トップサイト
 home-prefs-topsites-description = よく訪れるサイト
-
 home-prefs-topsites-by-option-sponsored =
     .label = 広告トップサイト
 home-prefs-shortcuts-header =
@@ -753,13 +698,9 @@ search-show-suggestions-above-history-option =
 search-show-suggestions-private-windows =
     .label = プライベートウィンドウで検索候補を表示する
 
-suggestions-addressbar-settings-generic = アドレスバーの入力候補のその他の設定を変更
-
 suggestions-addressbar-settings-generic2 = アドレスバーの入力候補のその他の設定を変更
 
 search-suggestions-cant-show = 履歴を保存しない設定となっているため、ロケーションバーに検索候補が表示されません。
-
-search-one-click-header = ワンクリック検索エンジン
 
 search-one-click-header2 = 検索ショートカット
 
@@ -777,7 +718,6 @@ search-restore-default =
 search-remove-engine =
     .label = 削除
     .accesskey = R
-
 search-add-engine =
     .label = 追加
     .accesskey = A
@@ -794,13 +734,6 @@ search-keyword-warning-bookmark = ブックマークで使用されているキ�
 
 ## Containers Section
 
-containers-back-button =
-    .aria-label =
-      { PLATFORM() ->
-          [windows] オプションに戻る
-         *[other] 設定に戻る
-      }
-
 containers-back-button2 =
     .aria-label = 設定に戻る
 containers-header = コンテナータブ
@@ -812,24 +745,15 @@ containers-new-tab-check =
     .label = 新しいタブを開くコンテナーを毎回選択する
     .accesskey = S
 
-containers-preferences-button =
-    .label = 設定
-
 containers-settings-button =
     .label = 設定
 containers-remove-button =
     .label = 削除
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Waterfox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = ウェブを持ち歩こう
-sync-signedout-description = ブックマークやページの表示履歴、タブ、パスワード、アドオン、設定を、お持ちのすべての端末間で同期できます。
-
-sync-signedout-account-signin2 =
-    .label = { -sync-brand-short-name } にログイン...
-    .accesskey = i
-
 sync-signedout-description2 = ブックマークやページの表示履歴、タブ、パスワード、アドオン、設定を、お持ちのすべての端末間で同期できます。
 
 sync-signedout-account-signin3 =
@@ -846,7 +770,7 @@ sync-signedout-account-signin3 =
 # to your language, but should not be changed or translated.
 sync-mobile-promo = Waterfox for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> または <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> をダウンロードしてモバイル端末と同期しましょう。
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = プロフィール写真を変更します
@@ -879,12 +803,6 @@ prefs-syncing-on = 同期: オン
 
 prefs-syncing-off = 同期: オフ
 
-prefs-sync-setup =
-    .label = { -sync-brand-short-name } をセットアップ...
-    .accesskey = S
-
-prefs-sync-offer-setup-label = ブックマーク、履歴、タブ、パスワード、アドオン、設定をあなたの端末すべてに同期化します。
-
 prefs-sync-turn-on-syncing =
     .label = 同期をオンにしています...
     .accesskey = s
@@ -907,12 +825,6 @@ sync-currently-syncing-logins-passwords = ログイン情報とパスワード
 sync-currently-syncing-addresses = 所在地フォーム
 sync-currently-syncing-creditcards = クレジットカード
 sync-currently-syncing-addons = アドオン
-sync-currently-syncing-prefs =
-    { PLATFORM() ->
-        [windows] オプション
-       *[other] 個人設定
-    }
-
 sync-currently-syncing-settings = 個人設定
 
 sync-change-options =
@@ -959,17 +871,8 @@ sync-engine-creditcards =
 
 sync-engine-addons =
     .label = アドオン
-    .tooltiptext = デスクトップ版 Firefox の拡張機能とテーマです
+    .tooltiptext = デスクトップ版 Waterfox の拡張機能とテーマです
     .accesskey = A
-
-sync-engine-prefs =
-    .label =
-        { PLATFORM() ->
-            [windows] オプション
-           *[other] 個人設定
-        }
-    .tooltiptext = 変更した一般、プライバシー、セキュリティの設定です
-    .accesskey = s
 
 sync-engine-settings =
     .label = 個人設定
@@ -1026,9 +929,6 @@ forms-fill-logins-and-passwords =
 forms-saved-logins =
     .label = 保存されているログイン情報...
     .accesskey = L
-forms-master-pw-use =
-    .label = マスターパスワードを使用する
-    .accesskey = U
 forms-primary-pw-use =
     .label = マスターパスワードを使用する
     .accesskey = U
@@ -1039,8 +939,6 @@ forms-primary-pw-learn-more-link = 詳細情報
 forms-master-pw-change =
     .label = マスターパスワードを変更...
     .accesskey = M
-
-forms-master-pw-fips-title = 現在 FIPS モードです。FIPS モードではマスターパスワードを空には設定できません。
 forms-primary-pw-change =
     .label = マスターパスワードを変更...
     .accesskey = P
@@ -1051,23 +949,18 @@ forms-primary-pw-former-name = { "" }
 
 forms-primary-pw-fips-title = 現在 FIPS モードです。FIPS モードではマスターパスワードを空には設定できません。
 forms-master-pw-fips-desc = パスワードを変更できませんでした
+forms-windows-sso =
+    .label = Microsoft アカウント、職場または学校アカウントで Windows のシングルサインオンを許可する
+forms-windows-sso-learn-more-link = 詳細情報
+forms-windows-sso-desc = 端末の設定でアカウントを管理します
 
 ## OS Authentication dialog
-
-# This message can be seen by trying to add a Master Password.
-master-password-os-auth-dialog-message-win = マスターパスワードを作成するには、Windows でのあなたの資格情報を入力してください。これはアカウントのセキュリティ保護に役立ちます。
-
-# This message can be seen by trying to add a Master Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
-# and includes subtitle of "Enter password for the user "xxx" to allow this." These
-# notes are only valid for English. Please test in your locale.
-master-password-os-auth-dialog-message-macosx = マスターパスワードを作成
 
 # This message can be seen by trying to add a Primary Password.
 primary-password-os-auth-dialog-message-win = マスターパスワードを作成するには、Windows でのあなたの資格情報を入力してください。これはアカウントのセキュリティ保護に役立ちます。
 
 # This message can be seen by trying to add a Primary Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
+# The macOS strings are preceded by the operating system with "Waterfox is trying to "
 # and includes subtitle of "Enter password for the user "xxx" to allow this." These
 # notes are only valid for English. Please test in your locale.
 primary-password-os-auth-dialog-message-macosx = マスターパスワードを作成
@@ -1080,12 +973,12 @@ history-header = 履歴
 # This label is followed, on the same line, by a dropdown list of options
 # (Remember history, etc.).
 # In English it visually creates a full sentence, e.g.
-# "Firefox will" + "Remember history".
+# "Waterfox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
 #   - Simply as "Waterfox", moving the verb into each option.
 #     This will result in "Waterfox" + "Will remember history", etc.
-#   - As a stand-alone message, for example "Firefox history settings:".
+#   - As a stand-alone message, for example "Waterfox history settings:".
 history-remember-label = { -brand-short-name } に
     .accesskey = w
 
@@ -1180,10 +1073,6 @@ sitedata-settings =
     .label = データを管理...
     .accesskey = M
 
-sitedata-cookies-permissions =
-    .label = サイトの設定を管理...
-    .accesskey = P
-
 sitedata-cookies-exceptions =
     .label = 例外を管理...
     .accesskey = x
@@ -1210,7 +1099,6 @@ addressbar-locbar-shortcuts-option =
 addressbar-locbar-topsites-option =
     .label = トップサイト
     .accesskey = T
-
 addressbar-locbar-engines-option =
     .label = 検索エンジン
     .accesskey = a
@@ -1246,7 +1134,6 @@ enhanced-tracking-protection-setting-custom =
 content-blocking-etp-standard-desc = 保護と性能をバランスよく。ページが正しく機能するように読み込みます。
 content-blocking-etp-strict-desc = より強固な保護ですが、一部のサイトやコンテンツが機能しなくなる可能性があります。
 content-blocking-etp-custom-desc = ブロックするトラッカーとスクリプトを選択します。
-
 content-blocking-etp-blocking-desc = { -brand-short-name } は以下のものをブロックします:
 
 content-blocking-private-windows = プライベートウィンドウのトラッキングコンテンツ
@@ -1355,6 +1242,13 @@ permissions-block-popups-exceptions =
     .label = 許可サイト...
     .accesskey = E
 
+# "popup" is a misspelling that is more popular than the correct spelling of
+# "pop-up" so it's included as a search keyword, not displayed in the UI.
+permissions-block-popups-exceptions-button =
+    .label = 許可サイト...
+    .accesskey = E
+    .searchkeywords = popups
+
 permissions-addon-install-warning =
     .label = アドオンのインストールを求められたときに警告する
     .accesskey = W
@@ -1362,12 +1256,6 @@ permissions-addon-install-warning =
 permissions-addon-exceptions =
     .label = 許可サイト...
     .accesskey = E
-
-permissions-a11y-privacy-checkbox =
-    .label = アクセシビリティサービスによるブラウザーへのアクセスを止める
-    .accesskey = a
-
-permissions-a11y-privacy-link = 詳細情報
 
 ## Privacy Section - Data Collection
 
@@ -1395,11 +1283,6 @@ addon-recommendations-link = 詳細情報
 # This message is displayed above disabled data sharing options in developer builds
 # or builds with no Telemetry support available.
 collection-health-report-disabled = このビルド設定ではヘルスレポートが無効化されています
-
-collection-backlogged-crash-reports =
-    .label = { -brand-short-name } があなたに代わって未送信のクラッシュレポートを送信することを許可する
-    .accesskey = c
-collection-backlogged-crash-reports-link = 詳細情報
 
 collection-backlogged-crash-reports-with-link = { -brand-short-name } があなたに代わって未送信のクラッシュレポートを送信することを許可する <a data-l10n-name="crash-reports-link">詳細情報</a>
     .accesskey = c
@@ -1430,16 +1313,6 @@ security-block-uncommon-software =
 
 certs-header = 証明書
 
-certs-personal-label = サーバーが個人証明書を要求したとき
-
-certs-select-auto-option =
-    .label = 自動的に選択する
-    .accesskey = S
-
-certs-select-ask-option =
-    .label = 毎回自分で選択する
-    .accesskey = A
-
 certs-enable-ocsp =
     .label = OCSP レスポンダーサーバーに問い合わせて証明書の現在の正当性を確認する
     .accesskey = Q
@@ -1451,34 +1324,6 @@ certs-view =
 certs-devices =
     .label = セキュリティデバイス...
     .accesskey = D
-
-space-alert-learn-more-button =
-    .label = 詳細情報
-    .accesskey = L
-
-space-alert-over-5gb-pref-button =
-    .label =
-        { PLATFORM() ->
-            [windows] オプションを開く
-           *[other] 設定を開く
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] O
-        }
-
-space-alert-over-5gb-message =
-    { PLATFORM() ->
-        [windows] { -brand-short-name } を実行するためのディスク領域が足りません。ウェブサイトが正しく表示されない可能性があります。[オプション] > [プライバシーとセキュリティ] > [Cookie とサイトデータ] から、保存されたデータを削除してください。
-       *[other] { -brand-short-name } を実行するためのディスク領域が足りません。ウェブサイトが正しく表示されない可能性があります。[設定] > [プライバシーとセキュリティ] > [Cookie とサイトデータ] から、保存されたデータを削除してください。
-    }
-
-space-alert-under-5gb-ok-button =
-    .label = OK
-    .accesskey = K
-
-space-alert-under-5gb-message = { -brand-short-name } を実行するためのディスク領域が足りません。ウェブサイトが正しく表示されない可能性があります。快適なブラウジングのために、[詳細情報] のリンク先を読み、ディスク使用量を最適化してください。
 
 space-alert-over-5gb-settings-button =
     .label = 設定を開く

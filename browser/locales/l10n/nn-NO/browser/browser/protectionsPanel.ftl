@@ -1,8 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 protections-panel-sendreportview-error = Ein feil oppstod ved innsending av rapporten. Prøv igjen seinare.
+
 # A link shown when ETP is disabled for a site. Opens the breakage report subview when clicked.
 protections-panel-sitefixedsendreport-label = Fungerer nettstaden no? Send rapport
 
@@ -21,10 +22,13 @@ protections-popup-footer-protection-label-standard = Standard
 # The text a screen reader speaks when focused on the info button.
 protections-panel-etp-more-info =
     .aria-label = Meir informasjon om utvida sporingsvern
+
 protections-panel-etp-on-header = Utvida sporingsvern er slått PÅ for denne nettstaden
 protections-panel-etp-off-header = Utvida sporingsvern er slått AV for denne nettstaden
+
 # The link to be clicked to open the sub-panel view
 protections-panel-site-not-working = Fungerer ikkje nettstaden?
+
 # The heading/title of the sub-panel view
 protections-panel-site-not-working-view =
     .title = Fungerer ikkje nettstaden?
@@ -39,7 +43,9 @@ protections-panel-not-blocking-why-etp-off-tooltip = Alle sporarar på denne net
 ##
 
 protections-panel-no-trackers-found = Ingen sporarar kjende for { -brand-short-name } vart oppdaga på denne sida.
+
 protections-panel-content-blocking-tracking-protection = Sporingsinnhald
+
 protections-panel-content-blocking-socialblock = Sporing via sosiale medium
 protections-panel-content-blocking-cryptominers-label = Kryptoutvinnarar
 protections-panel-content-blocking-fingerprinters-label = Nettlesaravtrykk
@@ -65,12 +71,14 @@ protections-panel-protectionsdashboard-label = Tryggingsoversyn
 
 # The header of the list
 protections-panel-site-not-working-view-header = Slå av vern om du har problem med:
+
 # The list items, shown in a <ul>
 protections-panel-site-not-working-view-issue-list-login-fields = Innloggingsfelt
 protections-panel-site-not-working-view-issue-list-forms = Skjema
 protections-panel-site-not-working-view-issue-list-payments = Betalingar
 protections-panel-site-not-working-view-issue-list-comments = Kommentarar
 protections-panel-site-not-working-view-issue-list-videos = Videoar
+
 protections-panel-site-not-working-view-send-report = Send inn ein rapport
 
 ##
@@ -80,16 +88,19 @@ protections-panel-cryptominers = Kryptoutvinnarar brukar datakrafta til systemet
 protections-panel-fingerprinters = Fingerprinters samlar innstillingar frå nettlesaren din og datamaskina for å opprette ein profil av deg. Ved hjelp av dette digitale fingeravtrykket kan dei spore deg på ulike nettstadar.
 protections-panel-tracking-content = Nettstadar kan laste eksterne annonsar, videoar og annna innhald med sporingskode. Blokkering av sporingsinnhald kan gjere at nettstadar lastar raskare, men det kan hende at nokre knappar, skjema og innloggingsfelt ikkje fungerer.
 protections-panel-social-media-trackers = Sosiale nettverk plasserer sporarar på andre nettstadar for å følgje det du gjer og ser på nettet. Dette gjer at sosiale mediaselskap kan lære meir om deg utover det du deler på profilane dine på sosiale medium.
+
 protections-panel-description-shim-allowed = Nokre sporarar som er merkte nedanfor, er delvis blitt avblokkerte på denne sida fordi du samhandla med dei.
 protections-panel-description-shim-allowed-learn-more = Les meir
 protections-panel-shim-allowed-indicator =
     .tooltiptext = Sporing delvis avblokkert
+
 protections-panel-content-blocking-manage-settings =
     .label = Handter instillingar for vern
     .accesskey = n
+
 protections-panel-content-blocking-breakage-report-view =
     .title = Rapporter problem med ein nettstad
-protections-panel-content-blocking-breakage-report-view-description = Blokkering av visse sporarar kan føre til problem med enkelte nettstadar. Rapportering av desse problema er med på å gjere { -brand-short-name } betre for alle. Ved sending av denne rapporten vil du sende ein URL og informasjon om nettlesarinnstillingane dine, til Mozilla. <label data-l10n-name="learn-more">Les meir</label>
+protections-panel-content-blocking-breakage-report-view-description = Blokkering av visse sporarar kan føre til problem med enkelte nettstadar. Rapportering av desse problema er med på å gjere { -brand-short-name } betre for alle. Ved sending av denne rapporten vil du sende ein URL og informasjon om nettlesarinnstillingane dine, til Waterfox. <label data-l10n-name="learn-more">Les meir</label>
 protections-panel-content-blocking-breakage-report-view-collection-url = URL-adresse
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = URL-adresse

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -10,9 +10,12 @@
 <!ENTITY managedevices.text "Use este botón para administrar sus dispositivos de seguridad, tales como tarjetas inteligentes.">
 <!ENTITY managedevices.button "Administrar dispositivos de seguridad…">
 <!ENTITY managedevices.accesskey "S">
+
 <!ENTITY ssl.label "SSL">
+
 <!ENTITY pref.certs.title "Certificados">
 <!ENTITY certs.label "Certificados">
+
 <!ENTITY validation.ocsp.caption "OCSP">
 <!ENTITY enableOCSP.label "Usar el protocolo de estado de certificados en línea (OCSP) para confirmar la validez actual de los certificados">
 <!ENTITY enableOCSP.accesskey "C">

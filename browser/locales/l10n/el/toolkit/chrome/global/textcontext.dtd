@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,17 +8,8 @@
 <!ENTITY spellUndoAddToDictionary.accesskey "ν">
 <!ENTITY spellCheckToggle.label "Ορθογραφικός έλεγχος">
 <!ENTITY spellCheckToggle.accesskey "θ">
-<!ENTITY spellNoSuggestions.label "(Δεν υπάρχουν προτάσεις)">
+<!ENTITY spellNoSuggestions.label "(Καμία πρόταση ορθογραφίας)">
 <!ENTITY spellDictionaries.label "Γλώσσες">
 <!ENTITY spellDictionaries.accesskey "λ">
 
-<!ENTITY searchTextBox.clear.label "Εκκαθάριση">
-
-<!ENTITY fillLoginMenu.label          "Συμπλήρωση λογαριασμού">
-<!ENTITY fillLoginMenu.accesskey      "ι">
-<!ENTITY fillPasswordMenu.label       "Συμπλήρωση κωδικού">
-<!ENTITY fillPasswordMenu.accesskey   "υ">
-<!ENTITY fillUsernameMenu.label       "Συμπλήρωση ονόματος χρήστη">
-<!ENTITY fillUsernameMenu.accesskey   "ο">
-<!ENTITY noLoginSuggestions.label     "(δεν υπάρχουν προτεινόμενοι λογαριασμοί)">
-<!ENTITY viewSavedLogins.label        "Προβολή αποθηκευμένων συνδέσεων">
+<!ENTITY searchTextBox.clear.label "Απαλοιφή">

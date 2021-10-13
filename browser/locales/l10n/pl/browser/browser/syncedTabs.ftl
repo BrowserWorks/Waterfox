@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = Czy wyświetlić tutaj listę kart otwa
 synced-tabs-sidebar-intro = Wyświetl listę kart z innych urządzeń.
 synced-tabs-sidebar-unverified = Konto musi zostać zweryfikowane.
 synced-tabs-sidebar-notabs = Brak otwartych kart
-synced-tabs-sidebar-openprefs = Otwórz ustawienia { -sync-brand-short-name(case: "gen", capitalization: "lower") }
 synced-tabs-sidebar-open-settings = Otwórz ustawienia synchronizacji
 synced-tabs-sidebar-tabsnotsyncing = Włącz synchronizację kart, aby wyświetlić ich listę z innych urządzeń.
 synced-tabs-sidebar-connect-another-device = Połącz inne urządzenie
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = Synchronizuj teraz
     .accesskey = S
-fxa-sign-in = Zaloguj się do { -sync-brand-short-name(case: "gen", capitalization: "lower") }
-turn-on-sync = Włącz { -sync-brand-short-name(case: "acc", capitalization: "lower") }
 synced-tabs-fxa-sign-in = Zaloguj się do synchronizacji
 synced-tabs-turn-on-sync = Włącz synchronizację

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,16 +12,20 @@
 # $hostname (String) - Hostname of the website with SSL error.
 # $errorMessage (String) - Error message corresponding to the type of error we are experiencing.
 ssl-connection-error = { $hostname }에 연결하는 동안 오류가 발생했습니다. { $errorMessage }
+
 # Variables:
 # $error (string) - NSS error code string that specifies type of cert error. e.g. unknown issuer, invalid cert, etc.
 cert-error-code-prefix = 오류 코드: { $error }
+
 psmerr-ssl-disabled = SSL 프로토콜을 사용할 수 없어서 보안 연결을 할 수 없습니다.
 psmerr-ssl2-disabled = 보안에 취약한 오래된 SSL 프로토콜을 사용하고 있어서 보안 연결을 할 수 없습니다.
+
 # This is a multi-line message.
 psmerr-hostreusedissuerandserial =
     유효하지 않은 인증서를 받았습니다. 서버 관리자등에게 연락해서 다음 정보를 제공하세요:
     
     인증서에 인증 기관에서 발급한 다른 인증서와 같은 일련 번호가 있습니다. 고유한 일련 번호를 가진 새 인증서를 받으세요.
+
 ssl-error-export-only-server = 안전하게 통신을 할 수 없습니다. 상대방이 높은 등급의 암호화를 지원하지 않습니다.
 ssl-error-us-only-server = 안전하게 통신을 할 수 없습니다. 상대방이 지원하지 않는 높은 등급의 암호화를 요청합니다.
 ssl-error-no-cypher-overlap = 상대방과 안전하게 통신을 할 수 없음: 일반 암호화 알고리듬이 없습니다.

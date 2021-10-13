@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -41,6 +41,10 @@ account-provisioner-button = Új e-mail-cím kérése
     .accesskey = j
 account-setup-password-toggle =
     .title = Jelszó megjelenítése/elrejtése
+account-setup-password-toggle-show =
+    .title = Jelszó megjelenítése
+account-setup-password-toggle-hide =
+    .title = Jelszó elrejtése
 account-setup-remember-password = Jelszó megjegyzése
     .accesskey = m
 account-setup-exchange-label = Az Ön bejelentkezése
@@ -74,8 +78,8 @@ account-setup-looking-up-settings-guess = Konfiguráció keresése: Gyakori kisz
 account-setup-looking-up-settings-half-manual = Konfiguráció keresése: Kiszolgáló vizsgálata…
 account-setup-looking-up-disk = Konfiguráció keresése: { -brand-short-name } telepítés…
 account-setup-looking-up-isp = Konfiguráció keresése: E-mail-szolgáltató…
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-looking-up-db = Konfiguráció keresése: Mozilla ISP adatbázis…
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-looking-up-db = Konfiguráció keresése: Waterfox ISP adatbázis…
 account-setup-looking-up-mx = Konfiguráció keresése: Bejövő e-mail domain…
 account-setup-looking-up-exchange = Konfiguráció keresése: Exchange kiszolgáló…
 account-setup-checking-password = Jelszó ellenőrzése…
@@ -85,8 +89,8 @@ account-setup-success-guess = A beállításokat a gyakori kiszolgálónevek ker
 account-setup-success-guess-offline = Kapcsolat nélküli üzemmódban van. Néhány beállítást kitaláltunk, de meg kell adnia a helyes beállításokat.
 account-setup-success-password = Jelszó rendben
 account-setup-success-addon = A kiegészítő telepítése sikeresen megtörtént
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-success-settings-db = A konfiguráció megtalálható a Mozilla ISP adatbázisában.
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-success-settings-db = A konfiguráció megtalálható a Waterfox ISP adatbázisában.
 account-setup-success-settings-disk = A konfiguráció megtalálható a { -brand-short-name } telepítésben.
 account-setup-success-settings-isp = A konfiguráció megtalálható az e-mail-szolgáltatónál.
 # Note: Microsoft Exchange is a product name.
@@ -104,12 +108,13 @@ account-setup-step4-image =
     .title = Kapcsolódási hiba
 account-setup-step5-image =
     .title = Fiók létrehozva
-account-setup-privacy-footnote = A hitelesítő adatait az <a data-l10n-name="privacy-policy-link">adatvédelmi irányelveink</a> szerint használjuk fel, és csak helyben tároljuk, az Ön számítógépén.
+account-setup-privacy-footnote2 = A hitelesítő adatok csak helyben lesznek tárolva a számítógépen.
 account-setup-selection-help = Nem tudja, mit válasszon?
 account-setup-selection-error = Segítségre van szüksége?
 account-setup-success-help = Nem biztos a következő lépésekben?
 account-setup-documentation-help = Telepítési dokumentáció
 account-setup-forum-help = Támogatói fórum
+account-setup-privacy-help = Adatvédelmi irányelvek
 account-setup-getting-started = Első lépések
 
 ## Results area
@@ -129,7 +134,8 @@ account-setup-result-pop = POP3
 account-setup-result-pop-description = Mappák és e-mailek tárolása az Ön számítógépén
 # Note: Exchange is the name of a product.
 account-setup-result-exchange = Exchange
-account-setup-result-exchange-description = Microsoft Exchange Server
+# Note: Exchange, Office365 are the name of products.
+account-setup-result-exchange2-description = Microsoft Exchange vagy Office 365 felhőszolgáltatások használata
 account-setup-incoming-title = Bejövő
 account-setup-outgoing-title = Kimenő
 account-setup-username-title = Felhasználónév
@@ -151,6 +157,7 @@ account-setup-credentials-incomplete = Hitelesítés sikertelen. A megadott hite
 account-setup-credentials-wrong = Hitelesítés sikertelen. Ellenőrizze a felhasználónevet és a jelszót.
 account-setup-find-settings-failed = A { -brand-short-name } nem találta meg az e-mail-fiókja beállításait
 account-setup-exchange-config-unverifiable = A konfigurációt nem lehetett megerősíteni. Ha a felhasználóneve és a jelszava helyes, akkor valószínű, hogy a kiszolgáló adminisztrátora letiltotta a fiókjának kiválasztott konfigurációját. Próbáljon meg másik protokollt választani.
+account-setup-provisioner-error = Hiba történt az új fiókja beállításakor a { -brand-short-name }ban. Próbálja kézzel beállítani a fiókját a hitelesítő adataival.
 
 ## Manual configuration area
 
@@ -206,6 +213,17 @@ insecure-dialog-confirm-button = Megerősítés
 exchange-dialog-question = A { -brand-short-name } megtalálta a fiókinformációit ehhez: { $domain }. Folytatja és elküldi a hitelesítő adatait?
 exchange-dialog-confirm-button = Bejelentkezés
 exchange-dialog-cancel-button = Mégse
+
+## Dismiss account creation dialog
+
+exit-dialog-title = Nincs e-mail-fiók beállítva
+exit-dialog-description = Biztos, hogy megszakítja a telepítési folyamatot? A { -brand-short-name } továbbra is használható lesz e-mail-fiók nélkül, de számos funkció nem lesz elérhető.
+account-setup-no-account-checkbox = A { -brand-short-name } használata e-mail-fiók nélkül
+    .accesskey = h
+exit-dialog-cancel-button = Beállítás folytatása
+    .accesskey = f
+exit-dialog-confirm-button = Kilépés a beállításból
+    .accesskey = K
 
 ## Alert dialogs
 

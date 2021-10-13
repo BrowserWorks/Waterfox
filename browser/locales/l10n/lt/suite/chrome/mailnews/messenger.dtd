@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -12,6 +12,7 @@
 <!ENTITY tabmailNewButton.tooltip "Dubliuoti aktyvią kortelę">
 <!ENTITY tabmailCloseButton.tooltip "Užverti aktyvią kortelę">
 <!ENTITY tabmailAllTabs.tooltip "Visų kortelių sąrašas">
+
 <!-- menu items: the . means that the menu item isn't implemented yet -->
 <!-- File menu items -->
 
@@ -47,7 +48,6 @@
 <!ENTITY getNewMsgForCmd.accesskey "ų">
 <!ENTITY getAllNewMsgCmdPopupMenu.label "Visus laiškus">
 <!ENTITY getAllNewMsgCmdPopupMenu.accesskey "a">
-<!ENTITY getAllNewMsgCmd.label "Visus laiškus">
 <!ENTITY getAllNewMsgCmd2.key "d">
 <!ENTITY getNextNMsgCmd.label "Atsiųsti kitus 500 naujienų laiškų">
 <!ENTITY getNextNMsgCmd.accesskey "i">
@@ -238,6 +238,7 @@
      This is the key used to show the Lightning quick filter bar. -->
 
 <!ENTITY quickFilterBar.show.key2 "K">
+
 <!-- Go Menu -->
 
 
@@ -402,6 +403,7 @@
 <!-- Toolbar items -->
 
 <!ENTITY getMsgButton.label "Atsiųsti">
+<!ENTITY getAllNewMsgCmd.label "Visus laiškus">
 <!ENTITY newMsgButton.label "Rašyti">
 <!ENTITY newHTMLMessageCmd.label "Rašyti HTML">
 <!ENTITY newHTMLMessageCmd.accesskey "H">
@@ -441,7 +443,6 @@
 <!ENTITY undeleteButton.tooltip "Atkurti pažymėtą pašalintą laišką">
 <!ENTITY markButton.tooltip "Pažymėti laiškus">
 <!ENTITY stopButton.tooltip "Stabdyti atsiuntimą">
-<!ENTITY throbber.tooltip "Atverti &vendorShortName; pradžios tinklalapį">
 <!ENTITY junkButton.tooltip "Pažymėti išrinktus laiškus kaip brukalą (arba pašalinti tokį žymėjimą)">
 <!ENTITY notJunkButton.tooltip "Pažymėti, kad išrinkti laiškai nėra brukalas">
 <!-- Remote Content Button Popup -->

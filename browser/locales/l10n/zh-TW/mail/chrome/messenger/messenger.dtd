@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "列印…">
 <!ENTITY printCmd.accesskey "P">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "預覽列印">
-<!ENTITY printPreviewCmd.accesskey "v">
-<!ENTITY printSetupCmd.label "頁面設定…">
-<!ENTITY printSetupCmd.accesskey "u">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "刪除郵件">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "R">
 <!ENTITY compactVersion.label "精簡檢視">
 <!ENTITY compactVersion.accesskey "C">
-<!ENTITY folderPaneBar.label "資料夾窗格工具列">
-<!ENTITY folderPaneBar.accesskey "F">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "排序方式">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "通訊錄">
 <!ENTITY addressBookCmd.accesskey "B">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "附加元件">
-<!ENTITY addons.accesskey "A">
-<!ENTITY addonPrefs.label "附加元件選項">
-<!ENTITY addonPrefs.accesskey "O">
-<!ENTITY addonPrefsUnix.label "附加元件偏好設定">
-<!ENTITY addonPrefsUnix.accesskey "P">
 <!ENTITY addonNoPrefs.label "找不到附加元件設定。">
 <!ENTITY activitymanager.label "活動管理員">
 <!ENTITY activitymanager.accesskey "v">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "D">
 <!ENTITY importCmd.label "匯入…">
 <!ENTITY importCmd.accesskey "m">
+<!ENTITY exportCmd.label "匯出…">
+<!ENTITY exportCmd.accesskey "x">
 <!ENTITY clearRecentHistory.label "清除最近的歷史記錄…">
 <!ENTITY clearRecentHistory.accesskey "H">
 <!ENTITY accountManagerCmd2.label "帳號設定">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "對附加元件除錯">
 <!ENTITY debugAddonsCmd.accesskey "A">
-<!ENTITY tabsDebugCmd.label "內容框架除錯器">
-<!ENTITY tabsDebugCmd.accesskey "C">
 <!ENTITY errorConsoleCmd.label "錯誤主控台">
 <!ENTITY errorConsoleCmd.accesskey "E">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "上一頁">
 <!ENTITY goForwardButton1.label "下一頁">
 <!ENTITY deleteItem.title "刪除">
-<!ENTITY deleteButton.label "刪除">
-<!ENTITY undeleteButton.label "還原">
 <!ENTITY markButton.label "標記">
 <!ENTITY printButton.label "列印">
 <!ENTITY stopButton.label "停止">
 <!ENTITY throbberItem.title "進度指示器">
 <!ENTITY junkItem.title "垃圾郵件">
-<!ENTITY junkButton.label "垃圾郵件">
-<!ENTITY notJunkButton.label "非垃圾郵件">
 <!ENTITY addressBookButton.label "通訊錄">
 <!ENTITY chatButton.label "聊天">
 <!ENTITY glodaSearch.title "全域搜尋">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "移動至上一封訊息">
 <!ENTITY goForwardButton.tooltip "下一封郵件">
 <!ENTITY goBackButton.tooltip "上一封郵件">
-<!ENTITY deleteButton.tooltip "刪除已選取的訊息或資料夾">
-<!ENTITY undeleteButton.tooltip "還原選取的郵件">
 <!ENTITY markButton.tooltip "標示訊息">
 <!ENTITY printButton.tooltip "列印此訊息">
 <!ENTITY stopButton.tooltip "停止傳送">
-<!ENTITY junkButton.tooltip "標示所選訊息為垃圾信">
-<!ENTITY notJunkButton.tooltip "標示所選訊息為非垃圾信">
 <!ENTITY addressBookButton.tooltip "前往通訊錄">
 <!ENTITY chatButton.tooltip "顯示聊天分頁">
 <!ENTITY tagButton.tooltip "將郵件加上標籤">
 <!ENTITY compactButton.tooltip "從指定資料夾移除已刪郵件">
 <!ENTITY appmenuButton1.tooltip "顯示 &brandShortName; 選單">
-<!ENTITY addonsButton.tooltip "管理您的附加元件">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "行內轉寄">
@@ -719,7 +698,6 @@
 <!ENTITY locationColumn.label "地點">
 <!ENTITY idColumn.label "收件順序">
 <!ENTITY attachmentColumn.label "附件">
-
 <!ENTITY deleteColumn.label "刪除">
 
 <!-- Thread Pane Tooltips -->
@@ -745,7 +723,6 @@
 <!ENTITY locationColumn2.tooltip "依照位置">
 <!ENTITY idColumn2.tooltip "依照接收順序排序">
 <!ENTITY attachmentColumn2.tooltip "依照附件排序">
-
 <!ENTITY deleteColumn.tooltip "刪除訊息">
 
 <!-- Thread Pane Context Menu -->

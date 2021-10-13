@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,6 +9,11 @@
 <!ENTITY  closeTab.accesskey         "T">
 <!ENTITY  closeOtherTabs.label   "Andere Tabs schließen">
 <!ENTITY  closeOtherTabs.accesskey         "A">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Rechte Tabs schließen">
+<!ENTITY  closeTabsToTheEnd.accesskey "R">
 <!ENTITY  reloadAllTabs.label    "Alle Tabs neu laden">
 <!ENTITY  reloadAllTabs.accesskey         "A">
 <!ENTITY  reloadTab.label        "Tab neu laden">

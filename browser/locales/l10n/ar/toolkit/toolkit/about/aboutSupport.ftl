@@ -1,19 +1,15 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 page-title = معلومات مواجهة الأعطال
 page-subtitle = تحتوي هذه الصفحة معلومات تقنية قد تكون مفيدة عندما تحاول حل مشكلة ما. إن كنت تبحث عن إجابات لأسئلة شائعة تخص { -brand-short-name }، تحقق من <a data-l10n-name="support-link">موقع الدعم</a>.
+
 crashes-title = بلاغات الانهيار
 crashes-id = معرّف البلاغ
 crashes-send-date = أُرسلَ
 crashes-all-reports = كل بلاغات الانهيار
 crashes-no-config = لم يُضبط التطبيق لعرض بلاغات الانهيار.
-extensions-title = الامتدادات
-extensions-name = الاسم
-extensions-enabled = مفعّل
-extensions-version = النسخة
-extensions-id = المعرّف
 support-addons-title = الإضافات
 support-addons-name = الاسم
 support-addons-type = النوع
@@ -69,7 +65,7 @@ app-basics-remote-processes-count = العمليات البعيدة
 app-basics-enterprise-policies = سياسات المؤسسات
 app-basics-location-service-key-google = مفتاح خدمة التموضع من جوجل
 app-basics-safebrowsing-key-google = مفتاح التصفّح الآمن من جوجل
-app-basics-key-mozilla = مفتاح خدمة التموضع من Mozilla
+app-basics-key-mozilla = مفتاح خدمة التموضع من Waterfox
 app-basics-safe-mode = الوضع الآمن
 show-dir-label =
     { PLATFORM() ->
@@ -124,12 +120,9 @@ sandbox-sys-call-tid = معرف الخيط
 sandbox-sys-call-proc-type = نوع السيرورة
 sandbox-sys-call-number = نداء النظام
 sandbox-sys-call-args = المعطيات
-safe-mode-title = جرّب الوضع الآمن
-restart-in-safe-mode-label = أعِد التشغيل مع تعطيل الإضافات…
+
 clear-startup-cache-title = جرّب مسح خبيئة البدء
 clear-startup-cache-label = امسح خبيئة البدء…
-startup-cache-dialog-title = امسح خبيئة البدء
-startup-cache-dialog-body = أعِد تشغيل { -brand-short-name } لمسح خبيئة البدء. لن يُغيّر هذا إعداداتك أو يُزيل امتداداتك التي أضفتها إلى { -brand-short-name }.
 restart-button-label = أعِد التشغيل
 
 ## Media titles
@@ -164,7 +157,7 @@ intl-regional-prefs = التفضيلات الإقليمية
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.
@@ -186,6 +179,7 @@ report-crash-for-days =
         [many] بلاغات انهيار آخر { $days } يومًا
        *[other] بلاغات انهيار آخر { $days } يوم
     }
+
 # Variables
 # $minutes (integer) - Number of minutes since crash
 crashes-time-minutes =
@@ -197,6 +191,7 @@ crashes-time-minutes =
         [many] منذ { $minutes } دقيقة
        *[other] منذ { $minutes } دقيقة
     }
+
 # Variables
 # $hours (integer) - Number of hours since crash
 crashes-time-hours =
@@ -208,6 +203,7 @@ crashes-time-hours =
         [many] منذ { $hours } ساعة
        *[other] منذ { $hours } ساعة
     }
+
 # Variables
 # $days (integer) - Number of days since crash
 crashes-time-days =
@@ -219,6 +215,7 @@ crashes-time-days =
         [many] منذ { $days } يومًا
        *[other] منذ { $days } يوم
     }
+
 # Variables
 # $reports (integer) - Number of pending reports
 pending-reports =
@@ -230,6 +227,7 @@ pending-reports =
         [many] كل بلاغات الانهيار (تشمل { $reports } بلاغ انهيار معلّق في الفترة الزمنية المحددة)
        *[other] كل بلاغات الانهيار (تشمل { $reports } بلاغ انهيار معلّق في الفترة الزمنية المحددة)
     }
+
 raw-data-copied = نُسخت البيانات الخام إلى الحافظة
 text-copied = نُسخ النص إلى الحافظة
 
@@ -242,9 +240,11 @@ blocked-mismatched-version = معطلة بسبب عدم تطابق إصدارة 
 # Variables
 # $driverVersion - The graphics driver version string
 try-newer-driver = معطّلة بسبب إصدارة مشغل البطاقة الرسومية. جرّب تحديث مشغل البطاقة الرسومية لديك إلى النسخة { $driverVersion } أو أحدث.
+
 # "ClearType" is a proper noun and should not be translated. Feel free to leave English strings if
 # there are no good translations, these are only used in about:support
 clear-type-parameters = معاملات ClearType
+
 compositing = التراكب
 hardware-h264 = فك ترميز H264 باستخدام العتاد
 main-thread-no-omtc = الخيط الأساسي، لا OMTC
@@ -257,6 +257,7 @@ no = لا
 
 found = موجود
 missing = مفقود
+
 gpu-description = الوصف
 gpu-vendor-id = معرّف المنتِج
 gpu-device-id = معرّف الجهاز
@@ -276,20 +277,18 @@ webgl2-renderer = مصيّر مشغّل WebGL 2
 webgl2-version = إصدارة مشغّل WebGL 2
 webgl2-driver-extensions = امتدادات مشغّل WebGL 2
 webgl2-extensions = امتدادات WebGL 2
-blocklisted-bug = على قائمة الحجب بسبب مشاكل معروفة معه
-# Variables
-# $bugNumber (string) - String of bug number from Bugzilla
-bug-link = العلة { $bugNumber }
+
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = على قائمة الحجب بسبب المشاكل المعروفة: <a data-l10n-name="bug-link">علة { $bugNumber }</a>
+
 # Variables
 # $failureCode (string) - String that can be searched in the source tree.
 unknown-failure = على قائمة الحجب؛ رمز العطل { $failureCode }
+
 d3d11layers-crash-guard = مركّب D3D11
-d3d11video-crash-guard = فاكك ترميز D3D11 للڤديو
-d3d9video-crash-guard = فاكك ترميز D3D9 للڤديو
 glcontext-crash-guard = أوپن‌جي‌إل
+
 reset-on-next-restart = صفّر عند التشغيل التالي
 gpu-process-kill-button = أنهِ سيرورة وحدة معالجة الرسوميات
 gpu-device-reset-button = أطلِق عملية إعادة الجهاز إلى حالته المبدئية
@@ -298,8 +297,10 @@ content-uses-tiling = يستخدم البلاطات (المحتوى)
 off-main-thread-paint-enabled = الرسم خارج الخيط الرئيسي مفعل
 off-main-thread-paint-worker-count = عدد عمال الرسم خارج الخيط الرئيسي
 target-frame-rate = معدّل الإطارات الهدف
+
 min-lib-versions = أقل إصدارة مقبولة
 loaded-lib-versions = الإصدارة المستخدمة
+
 has-seccomp-bpf = ‏Seccomp-BPF (ترشيح استدعاءات النظام)
 has-seccomp-tsync = مزامنة Seccomp للخيوط
 has-user-namespaces = نطاقات أسماء المستخدمين
@@ -311,18 +312,12 @@ effective-content-sandbox-level = مستوى عزل سيرورة المحتوى 
 sandbox-proc-type-content = محتوى
 sandbox-proc-type-file = محتوى الملف
 sandbox-proc-type-media-plugin = ملحقة وسائط
+
 # Variables
 # $remoteWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows
 multi-process-windows = { $remoteWindows }/{ $totalWindows }
-multi-process-status-0 = فعّله المستخدم
-multi-process-status-1 = مفعّل مبدئيًا
-multi-process-status-2 = معطّل
-multi-process-status-4 = عطّلته أدوات الإتاحة
-multi-process-status-6 = عطّله إدخال النصوص غير المدعوم
-multi-process-status-7 = عطّلته الإضافات
-multi-process-status-8 = عطّل إجبارًا
-multi-process-status-unknown = الحالة غير معروفة
+
 # Variables
 # $fissionWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows
@@ -331,6 +326,7 @@ fission-status-experiment-treatment = فعّلتها ميزة تجريبية
 fission-status-enabled-by-env = فعّلتها البيئة
 fission-status-enabled-by-default = مفعّلة مبدئيًا
 fission-status-enabled-by-user-pref = فعّلها المستخدم
+
 async-pan-zoom = التقريب غير المتزامن
 apz-none = لا شيء
 wheel-enabled = إدخال البكرة مُفعّل

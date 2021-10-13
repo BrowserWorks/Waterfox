@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,19 +9,16 @@
 <!ENTITY autoHide.accesskey2 "e">
 <!ENTITY background.label "Switch to new tabs opened from links">
 <!ENTITY background.accesskey "S">
+<!ENTITY diverted.label "Switch to new tabs opened from diverted links">
+<!ENTITY diverted.accesskey "a">
+<!ENTITY browserFocus.label "Focus browser window for links opened in tabs from other applications">
+<!ENTITY browserFocus.accesskey "F">
 <!ENTITY warnOnClose.label "Warn me when closing a window with multiple tabs">
 <!ENTITY warnOnClose.accesskey "n">
 <!ENTITY relatedAfterCurrent.label "Open related tabs after current tab">
 <!ENTITY relatedAfterCurrent.accesskey "O">
 
-<!ENTITY loadGroup.label "When opening a bookmark group">
-<!ENTITY loadGroupAppend.label "Add tabs">
-<!ENTITY loadGroupAppend.accesskey "A">
-<!ENTITY loadGroupReplace.label "Replace existing tabs">
-<!ENTITY loadGroupReplace.accesskey "R">
-
 <!ENTITY openTabs.label "Open tabs instead of windows for">
-
 <!ENTITY middleClick.label "Middle-click, Ctrl+click or Ctrl+Enter on links in a Web page">
 <!ENTITY middleClick.accesskey "M">
 <!ENTITY middleClickMac.label "Middle-click, &#8984;+click or &#8984;+Return on links in a Web page">

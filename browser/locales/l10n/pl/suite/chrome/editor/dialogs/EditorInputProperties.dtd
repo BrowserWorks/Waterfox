@@ -1,9 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowTitle.label "Właściwości pola formularza">
 <!ENTITY windowTitleImage.label "Właściwości obrazu formularza">
+
 <!ENTITY InputType.label "Typ pola">
 <!ENTITY InputType.accesskey "T">
 <!ENTITY text.value "Tekst">
@@ -16,6 +17,7 @@
 <!ENTITY hidden.value "Ukryte">
 <!ENTITY image.value "Obraz">
 <!ENTITY button.value "Przycisk">
+
 <!ENTITY InputSettings.label "Ustawienia pola">
 <!ENTITY InputName.label "Nazwa pola:">
 <!ENTITY InputName.accesskey "p">
@@ -43,5 +45,6 @@
 <!ENTITY AccessKey.accesskey "K">
 <!ENTITY Accept.label "Akceptuj typy:">
 <!ENTITY Accept.accesskey "c">
+
 <!ENTITY ImageProperties.label "Właściwości obrazu…">
 <!ENTITY ImageProperties.accesskey "z">

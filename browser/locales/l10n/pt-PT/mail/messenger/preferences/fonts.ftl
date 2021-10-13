@@ -1,20 +1,24 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 fonts-window-close =
     .key = w
+
 # Variables:
 #   $name {string, "Arial"} - Name of the default font
 fonts-label-default =
     .label = Predefinido ({ $name })
 fonts-label-default-unnamed =
     .label = Predefinido
+
 fonts-encoding-dialog-title =
     .title = Tipos de letra e codificação
+
 fonts-language-legend =
     .value = Tipos de letra para:
     .accesskey = T
+
 fonts-proportional-label =
     .value = Proporcional:
     .accesskey = P
@@ -85,38 +89,45 @@ font-language-group-tibetan =
 
 default-font-serif =
     .label = Serifa
+
 default-font-sans-serif =
     .label = Sem serifa
-font-size-label =
-    .value = Tamanho:
-    .accesskey = h
+
 font-size-proportional-label =
     .value = Tamanho:
     .accesskey = h
+
 font-size-monospace-label =
     .value = Tamanho:
     .accesskey = n
+
 font-serif-label =
     .value = Serifa:
     .accesskey = S
+
 font-sans-serif-label =
     .value = Sem serifa:
     .accesskey = e
+
 font-monospace-label =
     .value = Monoespaço:
     .accesskey = M
+
 font-min-size-label =
     .value = Tamanho mínimo da letra:
     .accesskey = i
+
 min-size-none =
     .label = Nenhum
 
 ## Fonts in message
 
 font-control-legend = Controlo de letras
+
 use-document-fonts-checkbox =
     .label = Permitir que as mensagens utilizem outros tipos de letra
     .accesskey = g
+
 use-fixed-width-plain-checkbox =
     .label = Utilizar largura fixa para mensagens sem formatação
     .accesskey = x
@@ -124,13 +135,17 @@ use-fixed-width-plain-checkbox =
 ## Language settings
 
 text-encoding-legend = Codificação de texto
+
 text-encoding-description = Defina a codificação de texto para receção e envio de mensagens
+
 font-outgoing-email-label =
     .value = Mensagens enviadas:
     .accesskey = v
+
 font-incoming-email-label =
     .value = Mensagens recebidas:
     .accesskey = i
+
 default-font-reply-checkbox =
     .label = Se possível, utilizar codificação predefinida nas respostas
     .accesskey = u

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -51,9 +51,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = Tab als Lesezeichen hinzufügen
     .accesskey = L
-reopen-in-container =
-    .label = In Tab-Umgebung öffnen
-    .accesskey = U
 tab-context-open-in-new-container-tab =
     .label = In neuem Tab in Umgebung öffnen
     .accesskey = U
@@ -69,25 +66,6 @@ move-to-new-window =
 tab-context-close-multiple-tabs =
     .label = Mehrere Tabs schließen
     .accesskey = M
-tab-context-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] Geschlossenen Tab wiederherstellen
-           *[other] Geschlossene Tabs wiederherstellen
-        }
-    .accesskey = G
-close-tab =
-    .label = Tab schließen
-    .accesskey = c
-close-tabs =
-    .label = Tabs schließen
-    .accesskey = c
-move-tabs =
-    .label = Tabs verschieben
-    .accesskey = v
-move-tab =
-    .label = Tab verschieben
-    .accesskey = v
 tab-context-share-url =
     .label = Teilen
     .accesskey = T
@@ -112,6 +90,14 @@ tab-context-close-tabs =
            *[other] Tabs schließen
         }
     .accesskey = c
+tab-context-close-n-tabs =
+    .label =
+        { $tabCount ->
+            [1] Tab schließen
+            [one] Tab schließen
+           *[other] { $tabCount } Tabs schließen
+        }
+    .accesskey = c
 tab-context-move-tabs =
     .label =
         { $tabCount ->
@@ -120,3 +106,11 @@ tab-context-move-tabs =
            *[other] Tabs verschieben
         }
     .accesskey = v
+
+tab-context-send-tabs-to-device =
+    .label =
+        { $tabCount ->
+            [one] Tab an Gerät senden
+           *[other] { $tabCount } Tabs an Gerät senden
+        }
+    .accesskey = s

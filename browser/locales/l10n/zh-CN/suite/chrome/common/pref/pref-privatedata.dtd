@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,7 +17,6 @@
     no longer used but we might bring it back later
 -->
 <!ENTITY askBeforeClear.label             "清除隐私数据之前询问我">
-<!ENTITY askBeforeClear.accesskey         "k">
 
 <!ENTITY clearDataSettings.label          "当要求 &brandShortName; 清除隐私数据时, 将清除:">
 

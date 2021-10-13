@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,10 +15,10 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "s">
 <!ENTITY prefPara                            "Estas opções permitem aumentar o desempenho e a compatibilidade das conexões HTTP . Alguns servidores, por exemplo, são conhecidos por exigirem HTTP 1.0 (veja detalhes nas notas de atualização).">
 <!ENTITY prefUseragent.label                 "Agente do usuário">
-<!ENTITY prefFirefoxStrict.label             "Identificar como Firefox">
-<!ENTITY prefFirefoxStrict.accesskey         "I">
-<!ENTITY prefFirefoxNone.label               "Identificar como SeaMonkey">
-<!ENTITY prefFirefoxNone.accesskey           "M">
-<!ENTITY prefFirefoxCompat2.label            "Identificar como SeaMonkey e anunciar compatibilidade com o Firefox">
-<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefWaterfoxStrict.label             "Identificar como Waterfox">
+<!ENTITY prefWaterfoxStrict.accesskey         "I">
+<!ENTITY prefWaterfoxNone.label               "Identificar como SeaMonkey">
+<!ENTITY prefWaterfoxNone.accesskey           "M">
+<!ENTITY prefWaterfoxCompat2.label            "Identificar como SeaMonkey e anunciar compatibilidade com o Waterfox">
+<!ENTITY prefWaterfoxCompat2.accesskey        "F">
 <!ENTITY prefCompatWarning2.desc             "AVISO: Alterar esta configuração pode resultar em sites ou serviços não funcionarem corretamente.">

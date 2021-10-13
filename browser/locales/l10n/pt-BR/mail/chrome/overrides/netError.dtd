@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -29,7 +29,7 @@ que o &brandShortName; esteja autorizado a acessar a web.</li>
 
 <!ENTITY fileNotFound.title "Arquivo não encontrado">
 <!ENTITY fileNotFound.longDesc "<ul> 
-<li>Verifique se o nome do arquivo possui erros de digitação, como uma letra maiúscula em vez de minúscula.</li> 
+<li>Verifique se o nome do arquivo tem erro de digitação, como uma letra maiúscula em vez de minúscula.</li> 
 <li>Verifique se o arquivo foi movido, renomeado ou excluído.</li> 
 </ul>">
 
@@ -106,9 +106,8 @@ de cookies.</li>
 
 <!ENTITY unknownSocketType.title "Resposta não prevista do servidor">
 <!ENTITY unknownSocketType.longDesc "<ul> 
-<li>Certifique-se de que o seu sistema possui o Personal Security Manager 
-instalado.</li> 
-<li>Isto pode ser devido a uma configuração não padrão do servidor.</li> 
+<li>Certifique-se de que seu sistema tem o Personal Security Manager instalado.</li> 
+<li>Isso pode ser devido a uma configuração não padrão do servidor.</li> 
 </ul>">
 
 <!ENTITY nssFailure2.title "Falha na conexão segura">

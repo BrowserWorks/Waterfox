@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = About Developer Tools
-enable-title = Enable Firefox Developer Tools
-enable-inspect-element-title = Enable Firefox Developer Tools to use Inspect Element
+enable-title = Enable Waterfox Developer Tools
+enable-inspect-element-title = Enable Waterfox Developer Tools to use Inspect Element
 enable-inspect-element-message = Examine and edit HTML and CSS with the Developer Tools’ Inspector.
-enable-about-debugging-message = Develop and debug WebExtensions, web workers, service workers and more with Firefox Developer Tools.
+enable-about-debugging-message = Develop and debug WebExtensions, web workers, service workers and more with Waterfox Developer Tools.
 enable-key-shortcut-message = You activated a Developer Tools shortcut. If that was a mistake, you can close this Tab.
 enable-menu-message = Perfect your web site’s HTML, CSS, and JavaScript with tools like Inspector and Debugger.
 enable-common-message = Waterfox Developer Tools are disabled by default to give you more control over your browser.
@@ -14,18 +14,18 @@ enable-learn-more-link = Learn more about Developer Tools
 enable-enable-button = Enable Developer Tools
 enable-close-button = Close this Tab
 
-welcome-title = Welcome to Firefox Developer Tools!
-newsletter-title = Mozilla Developer Newsletter
+welcome-title = Welcome to Waterfox Developer Tools!
+newsletter-title = Waterfox Developer Newsletter
 newsletter-message = Get developer news, tricks and resources sent straight to your inbox.
 newsletter-email-placeholder =
     .placeholder = Email
-newsletter-privacy-label = I’m okay with Mozilla handling my info as explained in this <a data-l10n-name="privacy-policy">Privacy Policy</a>.
+newsletter-privacy-label = I’m okay with Waterfox handling my info as explained in this <a data-l10n-name="privacy-policy">Privacy Policy</a>.
 newsletter-subscribe-button = Subscribe
 newsletter-thanks-title = Thanks!
-newsletter-thanks-message = If you haven’t previously confirmed a subscription to a Mozilla-related newsletter you may have to do so. Please check your inbox or your spam filter for an email from us.
+newsletter-thanks-message = If you haven’t previously confirmed a subscription to a Waterfox-related newsletter you may have to do so. Please check your inbox or your spam filter for an email from us.
 
 footer-title = Waterfox Developer Edition
-footer-message = Looking for more than just Developer Tools? Check out the Firefox browser that is built specifically for developers and modern workflows.
+footer-message = Looking for more than just Developer Tools? Check out the Waterfox browser that is built specifically for developers and modern workflows.
 footer-learn-more-link = Learn more
 
 features-learn-more = Learn more

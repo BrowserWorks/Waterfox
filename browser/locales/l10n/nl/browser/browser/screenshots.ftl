@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-screenshots-context-menu = Een schermafbeelding maken
 screenshot-toolbarbutton =
     .label = Schermafbeelding
     .tooltiptext = Een schermafbeelding maken
-screenshots-my-shots-button = Mijn afbeeldingen
+screenshot-shortcut =
+    .key = S
 screenshots-instructions = Sleep of klik op de pagina om een gebied te selecteren. Druk op ESC om te annuleren.
 screenshots-cancel-button = Annuleren
 screenshots-save-visible-button = Zichtbaar gebied opslaan
@@ -31,7 +31,6 @@ screenshots-connection-error-details = Controleer uw internetverbinding. Als u v
 screenshots-login-error-details = Uw afbeelding kon niet worden opgeslagen, omdat er een probleem is met de { -screenshots-brand-name }-service. Probeer het later opnieuw.
 screenshots-unshootable-page-error-title = Een schermafbeelding van deze pagina is niet mogelijk.
 screenshots-unshootable-page-error-details = Dit is geen standaardwebpagina, dus u kunt er geen schermafbeelding van maken.
-screenshots-self-screenshot-error-title = U kunt geen afbeelding van een { -screenshots-brand-name }-pagina maken!
 screenshots-empty-selection-error-title = Uw selectie is te klein
 screenshots-private-window-error-title = { -screenshots-brand-name } is uitgeschakeld in Privénavigatiemodus
 screenshots-private-window-error-details = Sorry voor het ongemak. Voor toekomstige releases wordt aan deze functie gewerkt.

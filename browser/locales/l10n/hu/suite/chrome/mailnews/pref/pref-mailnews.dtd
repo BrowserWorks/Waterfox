@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,8 +8,17 @@
 <!ENTITY confirmMove.accesskey            "J">
 <!ENTITY preserveThreading.label          "Témacsoportok megőrzése az üzenetek rendezésekor">
 <!ENTITY preserveThreading.accesskey      "T">
+<!ENTITY mailAutoHide.label               "A levelezés lapsáv elrejtése, ha csak egy lap van nyitva">
+<!ENTITY mailAutoHide.accesskey           "r">
 <!ENTITY loadInBackground.label           "Átváltás az új lapokra megnyitáskor">
 <!ENTITY loadInBackground.accesskey       "v">
+<!ENTITY mailOpenTabsFor.label            "Megnyitás új ablak helyett új lapon, ha a felhasználó">
+<!ENTITY mailMiddleClick.label            "Középső gombbal kattint, vagy Ctrl+Entert üt egy üzeneten vagy egy mappán">
+<!ENTITY mailMiddleClick.accesskey        "K">
+<!ENTITY mailMiddleClickMac.label         "Középső gombbal kattint, vagy &#8984;+Entert üt egy üzeneten vagy egy mappán">
+<!ENTITY mailMiddleClickMac.accesskey     "K">
+<!ENTITY mailDoubleClick.label            "Duplán kattint egy üzeneten">
+<!ENTITY mailDoubleClick.accesskey        "D">
 <!ENTITY mailBiffOnNewWindow.label        "Új üzenetek letöltése csak a Levelező és hírolvasó megnyitása után">
 <!ENTITY mailBiffOnNewWindow.accesskey    "o">
 

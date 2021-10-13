@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -51,9 +51,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = Bogmærk faneblad
     .accesskey = B
-reopen-in-container =
-    .label = Åbn igen i Kontekst
-    .accesskey = o
 tab-context-open-in-new-container-tab =
     .label = Åbn i nyt kontekst-faneblad
     .accesskey = t
@@ -69,25 +66,6 @@ move-to-new-window =
 tab-context-close-multiple-tabs =
     .label = Luk flere faneblade
     .accesskey = a
-tab-context-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] Fortryd lukning af faneblad
-           *[other] Fortryd lukning af faneblade
-        }
-    .accesskey = r
-close-tab =
-    .label = Luk faneblad
-    .accesskey = u
-close-tabs =
-    .label = Luk faneblade
-    .accesskey = u
-move-tabs =
-    .label = Flyt faneblade
-    .accesskey = y
-move-tab =
-    .label = Flyt faneblad
-    .accesskey = y
 tab-context-share-url =
     .label = Del
     .accesskey = D
@@ -113,6 +91,14 @@ tab-context-close-tabs =
            *[other] Luk faneblade
         }
     .accesskey = u
+tab-context-close-n-tabs =
+    .label =
+        { $tabCount ->
+            [1] Luk faneblad
+            [one] Luk faneblad
+           *[other] Luk { $tabCount } faneblade
+        }
+    .accesskey = L
 tab-context-move-tabs =
     .label =
         { $tabCount ->
@@ -121,3 +107,11 @@ tab-context-move-tabs =
            *[other] Flyt faneblade
         }
     .accesskey = y
+
+tab-context-send-tabs-to-device =
+    .label =
+        { $tabCount ->
+            [one] Send faneblad til enhed
+           *[other] Send { $tabCount } faneblade til enhed
+        }
+    .accesskey = n

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -19,10 +19,6 @@
 <!ENTITY savePageCmd.label "Salvar página como…">
 <!ENTITY savePageCmd.accesskey "P">
 <!ENTITY savePageCmd.commandkey "S">
-<!ENTITY pageSetupCmd.label "Configurar página…">
-<!ENTITY pageSetupCmd.accesskey "c">
-<!ENTITY printPreviewCmd.label "Visualizar Impressão">
-<!ENTITY printPreviewCmd.accesskey "v">
 <!ENTITY printCmd.label "Imprimir…">
 <!ENTITY printCmd.accesskey "I">
 <!ENTITY printCmd.commandkey "P">
@@ -70,7 +66,7 @@ you can use these alternative items. Otherwise, their values should be empty.  -
 <!ENTITY findOnCmd.accesskey "F">
 <!ENTITY findOnCmd.commandkey "f">
 <!ENTITY findAgainCmd.label  "Procurar novamente">
-<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.accesskey "n">
 <!ENTITY findAgainCmd.commandkey "g">
 <!ENTITY findAgainCmd.commandkey2 "VK_F3">
 <!ENTITY findSelectionCmd.commandkey "e">

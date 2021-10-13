@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,8 +23,6 @@ customize-mode-uidensity-menu-touch =
     .tooltiptext = لمس
 customize-mode-uidensity-auto-touch-mode-checkbox =
     .label = استخدم كثافة اللمس لنمط اللوح
-customize-mode-extra-drag-space =
-    .label = مساحة للسحب
 customize-mode-lwthemes =
     .label = السِمات
 customize-mode-overflow-list-description = اسحب وأسقِط العناصر هنا لتبقيها قريبة منك ولكن خارج شريط الأدوات…
@@ -32,10 +30,6 @@ customize-mode-uidensity-menu-normal =
     .label = عادية
     .accesskey = ع
     .tooltiptext = عادية
-customize-mode-uidensity-menu-compact =
-    .label = مضغوطة
-    .accesskey = ط
-    .tooltiptext = مضغوطة
 customize-mode-lwthemes-menu-get-more =
     .label = احصل على مزيد من السِمات
     .accesskey = ح

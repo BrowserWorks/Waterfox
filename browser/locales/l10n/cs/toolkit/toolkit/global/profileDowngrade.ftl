@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -11,8 +11,10 @@ profiledowngrade-window =
            *[other] aplikace { -brand-product-name }
         }
     .style = width: 490px;
+
 profiledowngrade-window-create =
     .label = Vytvořit nový profil
+
 profiledowngrade-sync =
     Spuštěním starší verze { -brand-product-name.gender ->
         [masculine] { -brand-product-name(case: "gen") }
@@ -37,5 +39,6 @@ profiledowngrade-nosync =
         [neuter] { -brand-short-name(case: "gen") }
        *[other] aplikace { -brand-short-name }
     } vytvořte profil nový.
+
 profiledowngrade-quit =
     .label = Ukončit

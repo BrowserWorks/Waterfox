@@ -1,5 +1,5 @@
 <!--
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
@@ -61,8 +61,6 @@
 
 <!ENTITY  mediaTab              "Media">
 <!ENTITY  mediaTab.accesskey    "M">
-<!ENTITY  mediaURL              "Addresse:">
-<!ENTITY  mediaAlt              "Alternativ tekst:">
 <!ENTITY  mediaLocation         "Adresse:">
 <!ENTITY  mediaText             "Tilknytt tekst:">
 <!ENTITY  mediaAltHeader        "Alternativ tekst">
@@ -70,9 +68,6 @@
 <!ENTITY  mediaType             "Type">
 <!ENTITY  mediaSize             "Storleik">
 <!ENTITY  mediaCount            "Tal på">
-<!ENTITY  mediaDimensions       "Dimensjonar:">
-<!ENTITY  mediaPhysDimensions   "Eigentleg storleik:">
-<!ENTITY  mediaTitle            "Tittel:">
 <!ENTITY  mediaDimension        "Dimensjonar:">
 <!ENTITY  mediaLongdesc         "Lang skildring:">
 <!ENTITY  mediaBlockImage.accesskey "L">
@@ -88,18 +83,7 @@
 
 <!ENTITY  permTab               "Løyve">
 <!ENTITY  permTab.accesskey     "L">
-<!ENTITY  permUseDefault        "Bruk standard">
-<!ENTITY  permAskAlways         "Spør alltid">
-<!ENTITY  permAllow             "Tillat">
-<!ENTITY  permAllowSession      "Tillat for programøkta">
-<!ENTITY  permBlock             "Blokker">
 <!ENTITY  permissionsFor        "Løyve for:">
-<!ENTITY  permImage             "Laste inn bilde">
-<!ENTITY  permPopup             "Opne sprettoppvindauge">
-<!ENTITY  permCookie            "Vel infokapslar">
-<!ENTITY  permNotifications     "Vis varsel">
-<!ENTITY  permInstall           "Installere utvidingar og tema">
-<!ENTITY  permGeo               "Del plassering">
 
 <!ENTITY  securityTab           "Sikkerheit">
 <!ENTITY  securityTab.accesskey "S">

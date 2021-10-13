@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,16 +12,20 @@
 # $hostname (String) - Hostname of the website with SSL error.
 # $errorMessage (String) - Error message corresponding to the type of error we are experiencing.
 ssl-connection-error = Προέκυψε σφάλμα κατά την σύνδεση στο { $hostname }. { $errorMessage }
+
 # Variables:
 # $error (string) - NSS error code string that specifies type of cert error. e.g. unknown issuer, invalid cert, etc.
 cert-error-code-prefix = Κωδικός σφάλματος: { $error }
+
 psmerr-ssl-disabled = Αδυναμία ασφαλούς σύνδεσης λόγω απενεργοποίησης του πρωτοκόλλου SSL.
 psmerr-ssl2-disabled = Αδυναμία ασφαλούς σύνδεσης. επειδή η σελίδα χρησιμοποιεί μια παλαιότερη, μη ασφαλή έκδοση του πρωτοκόλλου SSL.
+
 # This is a multi-line message.
 psmerr-hostreusedissuerandserial =
     Έχετε λάβει ένα μη έγκυρο πιστοποιητικό. Παρακαλώ επικοινωνήστε με το διαχειριστή του συστήματος ή με τον αποστολέα και δώστε του αυτές τις πληροφορίες:
     
     Το πιστοποιητικό σας περιέχει τον ίδιο σειριακό αριθμό με ένα άλλο πιστοποιητικό που εκδόθηκε από την αρχή πιστοποίησης.  Παρακαλώ αποκτήστε ένα νέο πιστοποιητικό που να περιέχει έναν μοναδικό σειριακό αριθμό.
+
 ssl-error-export-only-server = Αδύνατη η επικοινωνία με ασφάλεια. Ο κόμβος δεν υποστηρίζει κρυπτογράφηση υψηλού βαθμού.
 ssl-error-us-only-server = Αδύνατη η επικοινωνία με ασφάλεια. Ο κόμβος απαιτεί κρυπτογράφηση υψηλού βαθμού που δεν υποστηρίζεται.
 ssl-error-no-cypher-overlap = Δεν ήταν δυνατή η ασφαλής επικοινωνία με τον κόμβο: κανένας κοινός αλγόριθμος κρυπτογράφησης.
@@ -78,7 +82,7 @@ ssl-error-rx-unexpected-application-data = Το SSL έλαβε μια μη αν�
 ssl-error-rx-unknown-record-type = Το SSL έλαβε μια εγγραφή με άγνωστο τύπο περιεχομένου.
 ssl-error-rx-unknown-handshake = Το SSL έλαβε ένα μήνυμα χειραψίας με άγνωστο τύπο μηνύματος.
 ssl-error-rx-unknown-alert = Το SSL έλαβε μια εγγραφή με άγνωστη περιγραφή ειδοποίησης.
-ssl-error-close-notify-alert = Ο κόμβος SSL έχει κλείσει αυτή τη σύνδεση.
+ssl-error-close-notify-alert = Το ομότιμο SSL έχει κλείσει αυτήν τη σύνδεση.
 ssl-error-handshake-unexpected-alert = Ο κόμβος SSL δεν περίμενε ένα μήνυμα χειραψίας που έλαβε.
 ssl-error-decompression-failure-alert = Ο κόμβος SSL δεν μπόρεσε να αποσυμπιέσει επιτυχώς μια εγγραφή SSL που έλαβε.
 ssl-error-handshake-failure-alert = Ο κόμβος SSL δεν μπόρεσε να διαπραγματευτεί ένα αποδεκτό σύνολο παραμέτρων ασφαλείας.
@@ -123,7 +127,7 @@ ssl-error-insufficient-security-alert = Ο διακομιστής απαιτεί
 ssl-error-internal-error-alert = Ο κόμβος αναφέρει ότι διαπίστωσε εσωτερικό σφάλμα.
 ssl-error-user-canceled-alert = Ο χρήστης του κόμβου ακύρωσε τη χειραψία.
 ssl-error-no-renegotiation-alert = Ο κόμβος δεν επιτρέπει επαναδιαπραγμάτευση των SSL παραμέτρων ασφαλείας.
-ssl-error-server-cache-not-configured = Η κρυφή μνήμη του διακομιστή SSL δεν έχει ρυθμιστεί και δεν έχει απενεργοποιηθεί για αυτή την υποδοχή.
+ssl-error-server-cache-not-configured = Η κρυφή μνήμη του διακομιστή SSL δεν έχει ρυθμιστεί και δεν έχει απενεργοποιηθεί για αυτήν την υποδοχή.
 ssl-error-unsupported-extension-alert = Ο κόμβος SSL δεν υποστηρίζει την ζητούμενη επέκταση TLS Hello.
 ssl-error-certificate-unobtainable-alert = Ο κόμβος SSL δεν μπόρεσε να λάβει το πιστοποιητικό σας από το παρεχόμενο URL.
 ssl-error-unrecognized-name-alert = Ο κόμβος SSL δεν έχει κανένα πιστοποιητικό για το ζητούμενο όνομα DNS.
@@ -132,7 +136,7 @@ ssl-error-bad-cert-hash-value-alert = Ο κόμβος SSL αναφέρεται �
 ssl-error-rx-unexpected-new-session-ticket = Το SSL έλαβε ένα μη αναμενόμενο μήνυμα χειραψίας New Session Ticket.
 ssl-error-rx-malformed-new-session-ticket = Το SSL έλαβε ένα ακατάλληλο μήνυμα χειραψίας New Session Ticket.
 ssl-error-decompression-failure = Το SSL έλαβε μια συμπιεσμένη εγγραφή που δεν μπόρεσε να αποσυμπιέσει.
-ssl-error-renegotiation-not-allowed = Η επαναδιαπραγμάτευση δεν επιτρέπεται σε αυτή την υποδοχή SSL.
+ssl-error-renegotiation-not-allowed = Δεν επιτρέπεται επαναδιαπραγμάτευση σε αυτήν την υποδοχή SSL.
 ssl-error-unsafe-negotiation = Ο κόμβος επιχείρησε παλιό στυλ (δυνητικά ευάλωτης) χειραψίας.
 ssl-error-rx-unexpected-uncompressed-record = Το SSL έλαβε μια μη αναμενόμενη ασυμπίεστη εγγραφή.
 ssl-error-weak-server-ephemeral-dh-key = Το SSL έλαβε ένα αδύναμο εφήμερο κλειδί Diffie-Hellman στο μήνυμα χειραψίας Server Key Exchange.
@@ -213,19 +217,19 @@ xp-sec-fortezza-no-card = Δεν βρέθηκαν κάρτες Fortezza
 xp-sec-fortezza-none-selected = Δεν έχει επιλεγεί κάρτα Fortezza
 xp-sec-fortezza-more-info = Παρακαλώ επιλέξτε ένα πρόσωπο για περισσότερες πληροφορίες
 xp-sec-fortezza-person-not-found = Δεν βρέθηκε προσωπικότητα
-xp-sec-fortezza-no-more-info = Καμία επιπλέον πληροφορία σχετικά με αυτή την προσωπικότητα
+xp-sec-fortezza-no-more-info = Καμία επιπλέον πληροφορία σχετικά με αυτήν την προσωπικότητα
 xp-sec-fortezza-bad-pin = Άκυρο PIN
 xp-sec-fortezza-person-error = Αδυναμία προετοιμασίας προσωπικοτήτων Fortezza.
-sec-error-no-krl = Δεν βρέθηκε KRL για το πιστοποιητικό αυτής της ιστοσελίδας.
-sec-error-krl-expired = Το KRL για το πιστοποιητικό αυτής της ιστοσελίδας έχει λήξει.
-sec-error-krl-bad-signature = Το KRL για το πιστοποιητικό αυτής της ιστοσελίδας έχει άκυρη υπογραφή.
-sec-error-revoked-key = Το κλειδί για το πιστοποιητικό αυτής της ιστοσελίδας έχει ανακληθεί.
+sec-error-no-krl = Δεν βρέθηκε KRL για το πιστοποιητικό αυτού του ιστοτόπου.
+sec-error-krl-expired = Το KRL για το πιστοποιητικό αυτού του ιστοτόπου έχει λήξει.
+sec-error-krl-bad-signature = Το KRL για το πιστοποιητικό αυτού του ιστοτόπου δεν έχει έγκυρη υπογραφή.
+sec-error-revoked-key = Το κλειδί για το πιστοποιητικό αυτού του ιστοτόπου έχει ανακληθεί.
 sec-error-krl-invalid = Το νέο KRL έχει άκυρη μορφή.
 sec-error-need-random = βιβλιοθήκη ασφαλείας: χρειάζονται τυχαία δεδομένα.
 sec-error-no-module = βιβλιοθήκη ασφαλείας: καμία μονάδα ασφαλείας δεν μπορεί να εκτελέσει τη λειτουργία που ζητήθηκε.
 sec-error-no-token = Η κάρτα ή το διακριτικό ασφάλειας δεν υπάρχει, πρέπει να προετοιμαστεί, ή έχει αφαιρεθεί.
 sec-error-read-only = βιβλιοθήκη ασφάλειας: βάση δεδομένων μόνο για ανάγνωση.
-sec-error-no-slot-selected = Δεν επιλέχθηκε καμία υποδοχή ή σύμβολο.
+sec-error-no-slot-selected = Δεν επιλέχθηκε καμία υποδοχή ή διακριτικό.
 sec-error-cert-nickname-collision = Υπάρχει ήδη ένα πιστοποιητικό με το ίδιο ψευδώνυμο.
 sec-error-key-nickname-collision = Υπάρχει ήδη ένα κλειδί με το ίδιο ψευδώνυμο.
 sec-error-safe-not-created = σφάλμα κατά τη δημιουργία ασφαλούς αντικειμένου
@@ -250,7 +254,7 @@ sec-error-pkcs12-duplicate-data = Δεν εισήχθη, είναι ήδη στ�
 sec-error-message-send-aborted = Το μήνυμα δεν εστάλη.
 sec-error-inadequate-key-usage = Η χρήση κλειδιού πιστοποιητικού δεν επαρκεί για την αποπειραθείσα λειτουργία.
 sec-error-inadequate-cert-type = Ο τύπος του πιστοποιητικού δεν εγκρίθηκε για εφαρμογή.
-sec-error-cert-addr-mismatch = Η διεύθυνση στο πιστοποιητικό υπογραφής δεν συμφωνεί με αυτήν στις επικεφαλίδες μηνυμάτων.
+sec-error-cert-addr-mismatch = Η διεύθυνση στο πιστοποιητικό υπογραφής δεν συμφωνεί με αυτή στις επικεφαλίδες μηνυμάτων.
 sec-error-pkcs12-unable-to-import-key = Δεν ήταν δυνατή η εισαγωγή. Σφάλμα προσπάθειας εισαγωγής ιδιωτικού κλειδιού.
 sec-error-pkcs12-importing-cert-chain = Δεν ήταν δυνατή η εισαγωγή. Σφάλμα προσπάθειας εισαγωγής αλυσίδας πιστοποιητικών.
 sec-error-pkcs12-unable-to-locate-object-by-name = Δεν ήταν δυνατή η εξαγωγή. Δεν ήταν δυνατός ο εντοπισμός πιστοποιητικού ή κλειδιού από το ψευδώνυμο.
@@ -264,10 +268,10 @@ sec-error-retry-old-password = Ο παλιός κωδικός πρόσβασης
 sec-error-bad-nickname = Το ψευδώνυμο του πιστοποιητικού είναι ήδη σε χρήση.
 sec-error-not-fortezza-issuer = Ο κόμβος στην αλυσίδα FORTEZZA έχει μη-FORTEZZA πιστοποιητικό.
 sec-error-cannot-move-sensitive-key = Ένα ευαίσθητο κλειδί δεν μπορεί να μετακινηθεί στην υποδοχή όπου χρειάζεται.
-sec-error-js-invalid-module-name = Άκυρο όνομα μονάδας.
-sec-error-js-invalid-dll = Άκυρη διαδρομή/όνομα αρχείου μονάδας
+sec-error-js-invalid-module-name = Μη έγκυρο όνομα μονάδας.
+sec-error-js-invalid-dll = Μη έγκυρη διαδρομή/όνομα αρχείου μονάδας
 sec-error-js-add-mod-failure = Δεν ήταν δυνατή η προσθήκη μονάδας
-sec-error-js-del-mod-failure = Δεν ήταν δυνατή η διαγραφή της μονάδας
+sec-error-js-del-mod-failure = Δεν ήταν δυνατή η διαγραφή μονάδας
 sec-error-old-krl = Το νέο KRL δεν είναι νεότερο από το τρέχον.
 sec-error-ckl-conflict = Η νέα CKL έχει διαφορετικό εκδότη από την τρέχουσα CKL. Διαγράψτε την τρέχουσα CKL.
 sec-error-cert-not-in-name-space = Η αρχή πιστοποίησης αυτού του πιστοποιητικού δεν επιτρέπεται να εκδώσει πιστοποιητικό με αυτό το όνομα.
@@ -281,12 +285,12 @@ sec-error-ocsp-bad-http-response = Ο διακομιστής OCSP επέστρε
 sec-error-ocsp-malformed-request = Ο διακομιστής OCSP βρήκε ότι η αίτηση είναι κατεστραμμένη ή αφύσικα διαμορφωμένη.
 sec-error-ocsp-server-error = Ο διακομιστής OCSP διαπίστωσε εσωτερικό σφάλμα.
 sec-error-ocsp-try-server-later = Ο διακομιστής OCSP προτείνει να δοκιμάσετε ξανά αργότερα.
-sec-error-ocsp-request-needs-sig = Ο διακομιστής OCSP απαιτεί υπογραφή σε αυτή η αίτηση.
-sec-error-ocsp-unauthorized-request = Ο διακομιστής OCSP αρνήθηκε αυτήν την αίτηση ως μη εξουσιοδοτημένη.
+sec-error-ocsp-request-needs-sig = Ο διακομιστής OCSP απαιτεί υπογραφή σε αυτό το αίτημα.
+sec-error-ocsp-unauthorized-request = Ο διακομιστής OCSP αρνήθηκε αυτό το αίτημα ως μη εξουσιοδοτημένο.
 sec-error-ocsp-unknown-response-status = Ο διακομιστής OCSP επέστρεψε μη αναγνωρίσιμη κατάσταση.
 sec-error-ocsp-unknown-cert = Ο διακομιστής OCSP δεν έχει την κατάσταση για το πιστοποιητικό.
-sec-error-ocsp-not-enabled = Πρέπει να ενεργοποιήσετε το OCSP πριν εκτελέσετε αυτή την λειτουργία.
-sec-error-ocsp-no-default-responder = Πρέπει να ορίσετε έναν προεπιλεγμένο ανταποκριτή OCSP πριν εκτελέσετε αυτή την λειτουργία.
+sec-error-ocsp-not-enabled = Πρέπει να ενεργοποιήσετε το OCSP πριν εκτελέσετε αυτήν τη λειτουργία.
+sec-error-ocsp-no-default-responder = Πρέπει να ορίσετε έναν προεπιλεγμένο ανταποκριτή OCSP πριν εκτελέσετε αυτήν τη λειτουργία.
 sec-error-ocsp-malformed-response = Η απόκριση του διακομιστή OCSP ήταν κατεστραμμένη ή αφύσικα διαμορφωμένη.
 sec-error-ocsp-unauthorized-response = Ο υπογράφων της απόκρισης OCSP δεν είναι εξουσιοδοτημένος για να δώσει την κατάσταση αυτού του πιστοποιητικού.
 sec-error-ocsp-future-response = Η απόκριση OCSP δεν είναι ακόμη έγκυρη (περιέχει μελλοντική ημερομηνία).
@@ -310,7 +314,7 @@ sec-error-crl-v1-critical-extension = Η λίστα ανάκλησης πιστ�
 sec-error-crl-unknown-critical-extension = Η λίστα ανάκλησης πιστοποιητικών V2 του εκδότη έχει άγνωστη κρίσιμη επέκταση.
 sec-error-unknown-object-type = Καθορίστηκε άγνωστος τύπος αντικειμένου.
 sec-error-incompatible-pkcs11 = Ο οδηγός PKCS #11 παραβιάζει τις προδιαγραφές με ασύμβατο τρόπο.
-sec-error-no-event = Δεν υπάρχει διαθέσιμο συμβάν νέας υποδοχής αυτή τη στιγμή.
+sec-error-no-event = Δεν υπάρχει διαθέσιμο συμβάν νέας υποδοχής αυτήν τη στιγμή.
 sec-error-crl-already-exists = Το CRL υπάρχει ήδη.
 sec-error-not-initialized = Το NSS δεν έχει προετοιμαστεί.
 sec-error-token-not-logged-in = Η λειτουργία απέτυχε επειδή το διακριτικό PKCS#11 δεν είναι συνδεδεμένο.

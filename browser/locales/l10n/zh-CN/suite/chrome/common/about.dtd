@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -12,7 +12,7 @@
      between this phrase and the linked about.credits.linkTitle phrase, so if
      your locale needs a space between words, add it at the end of this
      entity. -->
-<!ENTITY about.credits.beforeLink     "查看 Mozilla 项目的">
+<!ENTITY about.credits.beforeLink     "查看 Waterfox 项目的">
 <!ENTITY about.credits.linkTitle      "贡献者列表">
 <!-- LOCALIZATION NOTE (about.credits.afterLink): note that there is no space
      between the linked about.credits.linkTitle phrase and this phrase, so if

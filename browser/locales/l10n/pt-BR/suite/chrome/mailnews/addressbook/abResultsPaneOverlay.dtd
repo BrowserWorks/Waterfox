@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -30,8 +30,6 @@
 <!ENTITY HomePhone.accesskey                   "r">
 <!ENTITY WorkPhone.label                       "Telefone comercial">
 <!ENTITY WorkPhone.accesskey                   "i">
-<!ENTITY ScreenName.label                      "Nome de tela">
-<!ENTITY ScreenName.accesskey                  "t">
 <!ENTITY ChatName.label                        "Nome na conversa">
 <!ENTITY ChatName.accesskey                    "c">
 <!ENTITY sortAscending.label                   "Ordem crescente">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Imprimir...">
 <!ENTITY printCmd.accesskey "p">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Pré-visualizar impressão">
-<!ENTITY printPreviewCmd.accesskey "v">
-<!ENTITY printSetupCmd.label "Configurar página...">
-<!ENTITY printSetupCmd.accesskey "C">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Apagar mensagem">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "R">
 <!ENTITY compactVersion.label "Visão compactada">
 <!ENTITY compactVersion.accesskey "c">
-<!ENTITY folderPaneBar.label "Barra do painel de pastas">
-<!ENTITY folderPaneBar.accesskey "d">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Ordenar por">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Livro de endereços">
 <!ENTITY addressBookCmd.accesskey "i">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Extras">
-<!ENTITY addons.accesskey "E">
-<!ENTITY addonPrefs.label "Opções de extras">
-<!ENTITY addonPrefs.accesskey "O">
-<!ENTITY addonPrefsUnix.label "Preferências de extras">
-<!ENTITY addonPrefsUnix.accesskey "P">
 <!ENTITY addonNoPrefs.label "Não foram encontradas definições de extras.">
 <!ENTITY activitymanager.label "Gestor de atividade">
 <!ENTITY activitymanager.accesskey "v">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "e">
 <!ENTITY importCmd.label "Importar...">
 <!ENTITY importCmd.accesskey "m">
+<!ENTITY exportCmd.label "Exportar…">
+<!ENTITY exportCmd.accesskey "x">
 <!ENTITY clearRecentHistory.label "Limpar histórico recente...">
 <!ENTITY clearRecentHistory.accesskey "h">
 <!ENTITY accountManagerCmd2.label "Definições da conta">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Depurar extras">
 <!ENTITY debugAddonsCmd.accesskey "e">
-<!ENTITY tabsDebugCmd.label "Depurador de frame de conteúdo">
-<!ENTITY tabsDebugCmd.accesskey "c">
 <!ENTITY errorConsoleCmd.label "Consola de erros">
 <!ENTITY errorConsoleCmd.accesskey "n">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Recuar">
 <!ENTITY goForwardButton1.label "Avançar">
 <!ENTITY deleteItem.title "Apagar">
-<!ENTITY deleteButton.label "Apagar">
-<!ENTITY undeleteButton.label "Recuperar">
 <!ENTITY markButton.label "Marcar">
 <!ENTITY printButton.label "Imprimir">
 <!ENTITY stopButton.label "Parar">
 <!ENTITY throbberItem.title "Indicador de atividade">
 <!ENTITY junkItem.title "Lixo eletrónico">
-<!ENTITY junkButton.label "Lixo eletrónico">
-<!ENTITY notJunkButton.label "Não é lixo eletrónico">
 <!ENTITY addressBookButton.label "Livro de endereços">
 <!ENTITY chatButton.label "Chat">
 <!ENTITY glodaSearch.title "Pesquisa global">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Ir para a mensagem anterior">
 <!ENTITY goForwardButton.tooltip "Avançar uma mensagem">
 <!ENTITY goBackButton.tooltip "Recuar uma mensagem">
-<!ENTITY deleteButton.tooltip "Apagar pasta ou mensagem selecionada">
-<!ENTITY undeleteButton.tooltip "Recuperar mensagem selecionada">
 <!ENTITY markButton.tooltip "Marcar mensagens">
 <!ENTITY printButton.tooltip "Imprimir esta mensagem">
 <!ENTITY stopButton.tooltip "Parar descarga em curso">
-<!ENTITY junkButton.tooltip "Marcar mensagens selecionadas como lixo eletrónico">
-<!ENTITY notJunkButton.tooltip "Marcar mensagens selecionadas como não sendo lixo eletrónico">
 <!ENTITY addressBookButton.tooltip "Ir para o livro de endereços">
 <!ENTITY chatButton.tooltip "Mostrar o separador de chat">
 <!ENTITY tagButton.tooltip "Classificar mensagens">
 <!ENTITY compactButton.tooltip "Remover mensagens apagadas da pasta selecionada">
 <!ENTITY appmenuButton1.tooltip "Mostrar menu do &brandShortName;">
-<!ENTITY addonsButton.tooltip "Gerir os seus extras">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Reencaminhar inline">
@@ -719,7 +698,6 @@
 <!ENTITY locationColumn.label "Localização">
 <!ENTITY idColumn.label "Ordem de receção">
 <!ENTITY attachmentColumn.label "Anexos">
-
 <!ENTITY deleteColumn.label "Eliminar">
 
 <!-- Thread Pane Tooltips -->
@@ -745,7 +723,6 @@
 <!ENTITY locationColumn2.tooltip "Ordenar por localização">
 <!ENTITY idColumn2.tooltip "Ordenar por ordem de receção">
 <!ENTITY attachmentColumn2.tooltip "Ordenar por anexos">
-
 <!ENTITY deleteColumn.tooltip "Eliminar uma mensagem">
 
 <!-- Thread Pane Context Menu -->

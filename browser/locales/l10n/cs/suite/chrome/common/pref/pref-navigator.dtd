@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -30,6 +30,12 @@
 <!ENTITY restoreTabsAtATime.label       "panelů najednou">
 <!ENTITY restoreDeferred.label          "Obnovit panely až když jsou potřeba">
 <!ENTITY restoreDeferred.accesskey      "n">
+
+<!ENTITY siteIcons.label                "Ikony webového serveru">
+<!ENTITY useSiteIcons.label             "Zobrazovat ikony webového serveru">
+<!ENTITY useSiteIcons.accesskey         "Z">
+<!ENTITY useFavIcons.label              "Zkusit použít ikonu serveru, pokud stránka neurčuje vlastní">
+<!ENTITY useFavIcons.accesskey          "t">
 
 <!ENTITY homePageIntro.label            "Na tuto stránku přejdete klepnutím na tlačítko Domů.">
 <!ENTITY useCurrent.label               "Použít aktuální stránku">

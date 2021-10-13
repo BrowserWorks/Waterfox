@@ -1,6 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 
 <!ENTITY messengerCmd.label "Correo y noticias">
 <!ENTITY messengerCmd.accesskey "O">
@@ -8,10 +9,13 @@
 <!ENTITY addressBookCmd.label "Libreta de direcciones">
 <!ENTITY addressBookCmd.accesskey "d">
 <!ENTITY addressBookCmd.commandkey "5">
+
 <!ENTITY taskMessenger.tooltip "Correo y noticias">
 <!ENTITY taskAddressBook.tooltip "Libreta de direcciones">
+
 <!ENTITY searchAddressesCmd.label "Buscar direcciones…">
 <!ENTITY searchAddressesCmd.accesskey "A">
+
 <!ENTITY searchMailCmd.label "Buscar mensajes…">
 <!ENTITY searchMailCmd.accesskey "M">
 <!ENTITY searchMailCmd.key "f">

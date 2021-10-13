@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -81,6 +81,7 @@ certificate-viewer-authority-info-aia = Thông tin thẩm quyền (AIA)
 certificate-viewer-certificate-policies = Chính sách chứng chỉ
 certificate-viewer-embedded-scts = SCT tích hợp
 certificate-viewer-crl-endpoints = Điểm cuối CRL
+
 # This message is used as a row header in the Miscellaneous section.
 # The associated data cell contains links to download the certificate.
 certificate-viewer-download = Nội dung
@@ -100,6 +101,7 @@ certificate-viewer-download-pem = PEM (chứng chỉ)
     .download = { $fileName }.pem
 certificate-viewer-download-pem-chain = PEM (chain)
     .download = { $fileName }-chain.pem
+
 # The title attribute for Critical Extension icon
 certificate-viewer-critical-extension =
     .title = Tiện ích mở rộng này đã được đánh dấu là nghiêm trọng, có nghĩa là khách hàng phải từ chối chứng chỉ nếu họ không hiểu nó.

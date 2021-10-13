@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,15 +15,10 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
 <!ENTITY prefPara                            "Zde lze podrobněji nastavit HTTP spojení pro vylepšení rychlosti nebo kompatibility. Některé proxy servery vyžadují např. použít HTTP/1.0.">
 <!ENTITY prefUseragent.label                 "Řetězec user agent">
-<!ENTITY prefFirefoxCompat.label             "Inzerovat kompatibilitu s Firefoxem">
-<!ENTITY prefFirefoxCompat.accesskey         "F">
-<!ENTITY prefLightningShow.label             "Doporučit instalaci doplňku Lightning">
-<!ENTITY prefLightningShow.accesskey         "L">
-<!ENTITY prefCompatWarning                   "VAROVÁNÍ: vypnutí těchto voleb může způsobit, že webové stránky nebo služby nebudou fungovat správně.">
-<!ENTITY prefFirefoxStrict.label             "Identifikovat jako Firefox">
-<!ENTITY prefFirefoxStrict.accesskey         "I">
-<!ENTITY prefFirefoxNone.label               "Identifikovat jako SeaMonkey">
-<!ENTITY prefFirefoxNone.accesskey           "M">
-<!ENTITY prefFirefoxCompat2.label            "Identifikovat jako SeaMonkey a inzerovat kompatibilitu s Firefoxem">
-<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefWaterfoxStrict.label             "Identifikovat jako Waterfox">
+<!ENTITY prefWaterfoxStrict.accesskey         "I">
+<!ENTITY prefWaterfoxNone.label               "Identifikovat jako SeaMonkey">
+<!ENTITY prefWaterfoxNone.accesskey           "M">
+<!ENTITY prefWaterfoxCompat2.label            "Identifikovat jako SeaMonkey a inzerovat kompatibilitu s Waterfoxem">
+<!ENTITY prefWaterfoxCompat2.accesskey        "F">
 <!ENTITY prefCompatWarning2.desc             "VAROVÁNÍ: vypnutí těchto voleb může způsobit, že webové stránky nebo služby nemusí fungovat správně.">

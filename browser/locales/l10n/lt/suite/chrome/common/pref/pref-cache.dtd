@@ -1,6 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 <!-- extracted from content/pref-cache.xul -->
 <!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
 
@@ -29,3 +30,4 @@
 <!ENTITY prefetchTitle.label             "Parengtinis saitų įkėlimas">
 <!ENTITY enablePrefetch.label            "Kai siuntimas vyksta lėtai, naudoti tinklalapio parengtinio saitų įkėlimo galimybę (jei tinklalapis ją turi).">
 <!ENTITY enablePrefetch.accesskey        "s">
+

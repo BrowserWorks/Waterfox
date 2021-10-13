@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,13 +11,7 @@
 <!ENTITY helpMenuWin.accesskey "u">
 <!ENTITY aboutProduct2.label "Informazioni su &brandShorterName;">
 <!ENTITY aboutProduct2.accesskey "I">
-<!ENTITY helpTroubleshootingInfo.label     "Risoluzione dei problemi">
-<!ENTITY helpTroubleshootingInfo.accesskey "s">
-<!ENTITY helpSafeMode.label     "Riavvia disattivando i componenti aggiuntivi">
-<!ENTITY helpSafeMode.accesskey "R">
 
-<!ENTITY helpSafeMode.stop.label     "Riavvia attivando i componenti aggiuntivi">
-<!ENTITY helpSafeMode.stop.accesskey "a">
 <!ENTITY productHelp.label "Guida di &brandShortName;">
 <!ENTITY productHelp.accesskey "G">
 <!ENTITY productHelp.commandkey "VK_F1">

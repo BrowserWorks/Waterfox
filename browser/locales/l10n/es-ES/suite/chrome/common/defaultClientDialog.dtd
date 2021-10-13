@@ -1,12 +1,14 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY defaultClient.title "Cliente predeterminado">
 <!ENTITY defaultClient.intro "Usar &brandShortName; como cliente predeterminado para:">
+
 <!ENTITY browser.label "Navegador">
 <!ENTITY email.label "Correo-e">
 <!ENTITY newsgroups.label "Grupos de noticias">
 <!ENTITY feeds.label "Canales">
+
 <!ENTITY checkOnStartup.label "Hacer siempre esta comprobación al iniciar &brandShortName;">
 <!ENTITY checkOnStartup.accesskey "H">

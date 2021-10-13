@@ -1,17 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY  pref.masterpass.title                  "Password principale">
-<!ENTITY  managepassword.caption                 "Tempo limite per la password principale">
-<!ENTITY  managepassword.text                    "&brandShortName; richiederà la password principale:">
-<!ENTITY  managepassword.askfirsttime            "La prima volta sia necessaria">
-<!ENTITY  managepassword.askfirsttime.accesskey  "L">
-<!ENTITY  managepassword.askeverytime            "Ogni volta sia necessaria">
-<!ENTITY  managepassword.askeverytime.accesskey  "O">
-<!ENTITY  managepassword.asktimeout              "Se non usata per ">
-<!ENTITY  managepassword.asktimeout.accesskey    "S">
-<!ENTITY  managepassword.timeout.unit            "minuti o più">
 
 <!ENTITY  changepassword.caption                 "Modifica password principale">
 <!ENTITY  changepassword.text                    "La password principale protegge informazioni personali quali ad esempio password per siti web e certificati.">

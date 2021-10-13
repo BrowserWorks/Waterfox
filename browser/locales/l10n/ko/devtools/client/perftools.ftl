@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -95,8 +95,8 @@ perftools-thread-img-decoder =
     .title = 이미지 디코딩 스레드
 perftools-thread-dns-resolver =
     .title = 이 스레드에서 DNS 확인 발생
-perftools-thread-js-helper =
-    .title = 오프 메인 스레드 컴파일과 같은 JS 엔진 백그라운드 작업
+perftools-thread-task-controller =
+    .title = TaskController 스레드 풀 스레드
 
 ##
 
@@ -108,9 +108,30 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Waterfox Profiler
 perftools-onboarding-message = <b>새 기능</b>: { -profiler-brand-name }가 이제 개발자 도구에 통합되었습니다. 이 강력한 새 도구에 대해 <a>더 알아보세요</a>.
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (한시적으로 <a>{ options-context-advanced-settings }</a>을 통해 원래의 성능 패널에 액세스할 수 있습니다)
 perftools-onboarding-close-button =
     .aria-label = 온보딩 메시지 닫기
+
+## Profiler presets
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# The same labels and descriptions are also defined in appmenu.ftl.
+
+perftools-presets-web-developer-label = 웹 개발자
+perftools-presets-web-developer-description = 오버헤드가 낮은 대부분의 웹 앱 디버깅에 권장되는 프리셋입니다.
+perftools-presets-firefox-platform-label = Waterfox 플랫폼
+perftools-presets-firefox-platform-description = 내부 Waterfox 플랫폼 디버깅에 권장되는 프리셋입니다.
+perftools-presets-firefox-front-end-label = Waterfox 프런트 엔드
+perftools-presets-firefox-front-end-description = 내부 Waterfox 프런트 엔드 디버깅에 권장되는 프리셋입니다.
+perftools-presets-firefox-graphics-label = Waterfox 그래픽
+perftools-presets-firefox-graphics-description = Waterfox 그래픽 성능 조사에 권장되는 프리셋입니다.
+perftools-presets-media-label = 미디어
+perftools-presets-media-description = 오디오 및 비디오 문제 진단에 권장되는 프리셋입니다.
+perftools-presets-custom-label = 사용자 지정
+
+##
+

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,12 +31,6 @@
 <!ENTITY closeCmd.label                                 "Fechar">
 <!ENTITY closeCmd.key                                   "W">
 <!ENTITY closeCmd.accesskey                             "F">
-<!ENTITY printSetupCmd.label                            "Configurar página…">
-<!ENTITY printSetupCmd.accesskey                        "u">
-<!ENTITY printPreviewContactCmd.label                   "Pré-visualizar contacto">
-<!ENTITY printPreviewContactCmd.accesskey               "v">
-<!ENTITY printPreviewAddressBook.label                  "Pré-visualizar livro de endereços">
-<!ENTITY printPreviewAddressBook.accesskey              "e">
 <!ENTITY printContactCmd.label                          "Imprimir contacto…">
 <!ENTITY printContactCmd.accesskey                      "p">
 <!ENTITY printContactCmd.key                            "P">
@@ -48,6 +42,9 @@
 <!ENTITY editMenu.accesskey                             "E">
 <!ENTITY deleteCmd.label                                "Apagar">
 <!ENTITY deleteAbCmd.label                              "Apagar livro de endereços">
+<!ENTITY deleteAbCmd.accesskey                          "l">
+<!ENTITY removeAbCmd.label                              "Remover livro de endereços">
+<!ENTITY removeAbCmd.accesskey                          "v">
 <!ENTITY deleteContactCmd.label                         "Apagar contacto">
 <!ENTITY deleteContactsCmd.label                        "Apagar contactos">
 <!ENTITY deleteListCmd.label                            "Apagar lista">
@@ -108,10 +105,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY importCmd.accesskey                            "I">
 <!ENTITY exportCmd.label                                "Exportar...">
 <!ENTITY exportCmd.accesskey                            "E">
-<!ENTITY preferencesCmd2.label                          "Opções">
-<!ENTITY preferencesCmd2.accesskey                      "O">
-<!ENTITY preferencesCmdUnix.label                       "Preferências">
-<!ENTITY preferencesCmdUnix.accesskey                   "P">
 
 <!-- Address Book Toolbar and Context Menus -->
 <!ENTITY newContactButton.label                         "Novo contacto">
@@ -140,6 +133,9 @@ because displayed names don't have the comma in between. -->
 <!ENTITY deleteButton2.label                            "Apagar">
 <!ENTITY deleteButton2.accesskey                        "A">
 
+<!ENTITY removeButton.label                             "Remover">
+<!ENTITY removeButton.accesskey                         "R">
+
 <!-- Address Book Toolbar Tooltips -->
 <!ENTITY columnChooser.tooltip                          "Selecione as colunas a mostrar">
 <!ENTITY newContactButton.tooltip                       "Criar novo contacto no livro de endereços">
@@ -151,6 +147,8 @@ because displayed names don't have the comma in between. -->
 <!ENTITY newmsgButton.tooltip                           "Enviar uma mensagem">
 <!ENTITY newIM.tooltip                                  "Enviar mensagem instantânea ou de chat">
 <!ENTITY deleteButton2.tooltip                          "Apagar item selecionado">
+
+<!ENTITY removeButton.tooltip                           "Remover o livro de endereços selecionado">
 
 <!-- Search Bar -->
 <!ENTITY SearchNameOrEmail.label                        "Nome ou e-mail">

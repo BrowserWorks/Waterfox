@@ -1,17 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY  pref.masterpass.title                  "Palavras-passe mestras">
-<!ENTITY  managepassword.caption                 "Palavra-passe mestra expirada">
-<!ENTITY  managepassword.text                    "O &brandShortName; irá pedir a sua palavra-passe mestra:">
-<!ENTITY  managepassword.askfirsttime            "Na primeira vez que for necessária">
-<!ENTITY  managepassword.askfirsttime.accesskey  "p">
-<!ENTITY  managepassword.askeverytime            "Sempre que for necessária">
-<!ENTITY  managepassword.askeverytime.accesskey  "e">
-<!ENTITY  managepassword.asktimeout              "Se não tiver sido utilizada durante ">
-<!ENTITY  managepassword.asktimeout.accesskey    "n">
-<!ENTITY  managepassword.timeout.unit            "minutos ou mais">
 
 <!ENTITY  changepassword.caption                 "Alterar palavra-passe mestra">
 <!ENTITY  changepassword.text                    "A sua palavra-passe mestra protege informação sensível tal como palavra-passe web e certificados.">

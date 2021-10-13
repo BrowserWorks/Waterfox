@@ -1,8 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 protections-panel-sendreportview-error = Une erreur s’est produite lors de l’envoi du rapport. Veuillez réessayer plus tard.
+
 # A link shown when ETP is disabled for a site. Opens the breakage report subview when clicked.
 protections-panel-sitefixedsendreport-label = Le site est réparé ? Envoyez le rapport.
 
@@ -21,10 +22,13 @@ protections-popup-footer-protection-label-standard = Standards
 # The text a screen reader speaks when focused on the info button.
 protections-panel-etp-more-info =
     .aria-label = Plus d’informations sur la protection renforcée contre le pistage
+
 protections-panel-etp-on-header = La protection renforcée contre le pistage est ACTIVÉE pour ce site.
 protections-panel-etp-off-header = La protection renforcée contre le pistage est DÉSACTIVÉE pour ce site.
+
 # The link to be clicked to open the sub-panel view
 protections-panel-site-not-working = Le site ne fonctionne pas ?
+
 # The heading/title of the sub-panel view
 protections-panel-site-not-working-view =
     .title = Le site ne fonctionne pas ?
@@ -39,7 +43,9 @@ protections-panel-not-blocking-why-etp-off-tooltip = Tous les traqueurs sur ce s
 ##
 
 protections-panel-no-trackers-found = Aucun traqueur connu par { -brand-short-name } n’a été détecté sur cette page.
+
 protections-panel-content-blocking-tracking-protection = Contenu utilisé pour le pistage
+
 protections-panel-content-blocking-socialblock = Traqueurs de réseaux sociaux
 protections-panel-content-blocking-cryptominers-label = Mineurs de cryptomonnaies
 protections-panel-content-blocking-fingerprinters-label = Détecteurs d’empreinte numérique
@@ -65,12 +71,14 @@ protections-panel-protectionsdashboard-label = Tableau de bord des protections
 
 # The header of the list
 protections-panel-site-not-working-view-header = Désactivez les protections si vous rencontrez des problèmes avec :
+
 # The list items, shown in a <ul>
 protections-panel-site-not-working-view-issue-list-login-fields = Les champs de connexion
 protections-panel-site-not-working-view-issue-list-forms = Les formulaires
 protections-panel-site-not-working-view-issue-list-payments = Les paiements
 protections-panel-site-not-working-view-issue-list-comments = Les commentaires
 protections-panel-site-not-working-view-issue-list-videos = Les vidéos
+
 protections-panel-site-not-working-view-send-report = Envoyer un rapport
 
 ##
@@ -80,16 +88,19 @@ protections-panel-cryptominers = Les mineurs de cryptomonnaies utilisent la puis
 protections-panel-fingerprinters = Les détecteurs d’empreinte numérique recueillent les paramètres de votre navigateur et de votre ordinateur pour créer un profil de vous. En utilisant cette empreinte numérique, ils peuvent vous pister sur différents sites web.
 protections-panel-tracking-content = Les sites web peuvent charger des publicités, des vidéos et d’autres contenus externes qui contiennent des éléments de pistage. Le blocage du contenu utilisé pour le pistage peut accélérer le chargement des sites, mais certains boutons, formulaires ou champs de connexion risquent de ne pas fonctionner.
 protections-panel-social-media-trackers = Les réseaux sociaux placent des traqueurs sur d’autres sites web pour suivre ce que vous faites, lisez et regardez en ligne. Cela permet aux entreprises de réseaux sociaux d’en savoir plus sur vous au-delà de ce que vous partagez sur vos profils en ligne.
+
 protections-panel-description-shim-allowed = Certains traqueurs marqués ci-dessous ont été partiellement débloqués sur cette page car vous avez interagi avec eux.
 protections-panel-description-shim-allowed-learn-more = En savoir plus
 protections-panel-shim-allowed-indicator =
     .tooltiptext = Traqueur partiellement débloqué
+
 protections-panel-content-blocking-manage-settings =
     .label = Gérer les paramètres de protection
     .accesskey = G
+
 protections-panel-content-blocking-breakage-report-view =
     .title = Signaler des problèmes avec ce site
-protections-panel-content-blocking-breakage-report-view-description = Le blocage de certains traqueurs peut occasionner des problèmes sur des sites web. En signalant ces problèmes, vous contribuez à rendre { -brand-short-name } meilleur pour tout le monde. L’envoi du rapport communiquera une URL ainsi que des informations sur les préférences de votre navigateur à Mozilla. <label data-l10n-name="learn-more">En savoir plus</label>
+protections-panel-content-blocking-breakage-report-view-description = Le blocage de certains traqueurs peut occasionner des problèmes sur des sites web. En signalant ces problèmes, vous contribuez à rendre { -brand-short-name } meilleur pour tout le monde. L’envoi du rapport communiquera une URL ainsi que des informations sur les préférences de votre navigateur à Waterfox. <label data-l10n-name="learn-more">En savoir plus</label>
 protections-panel-content-blocking-breakage-report-view-collection-url = URL
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = URL

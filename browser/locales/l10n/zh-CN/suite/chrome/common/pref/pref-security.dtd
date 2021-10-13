@@ -1,8 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
 
+<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
 <!ENTITY pref.security.title              "隐私和安全">
 
 <!ENTITY tracking.label                   "用户跟踪">
@@ -22,13 +22,13 @@
 <!ENTITY geoEnabled.accesskey             "m">
 <!ENTITY geoDisabled.label                "禁用此功能并拒绝所有请求">
 <!ENTITY geoDisabled.accesskey            "D">
+
 <!-- LOCALIZATION NOTE (safeBrowsing.label, blockWebForgeries.label, blockAttackSites.label):
   The methods by which forged (phished) and attack sites will be detected by
   phishing providers will vary from human review to machine-based heuristics
   to a combination of both, so it's important that these strings convey the
   meaning "reported" (and not something like "known").
 -->
-
 <!ENTITY safeBrowsing.label               "安全浏览">
 <!ENTITY safeBrowsingIntro.label          "&brandShortName; 可以阻止已被报告包含恶意内容的网站。">
 
@@ -37,3 +37,6 @@
 
 <!ENTITY blockWebForgeries.label          "阻止已被报告的伪造网站（钓鱼网站）">
 <!ENTITY blockWebForgeries.accesskey      "P">
+
+<!ENTITY blockAutoRefresh.label           "当网站试图重定向或重新载入页面时发出警告">
+<!ENTITY blockAutoRefresh.accesskey       "a">

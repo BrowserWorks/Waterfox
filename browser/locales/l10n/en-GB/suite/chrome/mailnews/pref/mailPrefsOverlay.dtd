@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,11 +15,11 @@
 <!-- These are added to Preferences dialog -->
 <!ENTITY viewingMessages.label            "Message Display">
 <!ENTITY notifications.label              "Notifications">
-<!ENTITY address.label                    "Addressing">
 <!ENTITY composingMessages.label          "Composition">
 <!ENTITY format.label                     "Send Format">
-<!ENTITY return.label                     "Return Receipts">
+<!ENTITY address.label                    "Addressing">
 <!ENTITY junk.label                       "Junk &amp; Suspect Mail">
 <!ENTITY tags.label                       "Tags">
+<!ENTITY return.label                     "Return Receipts">
 <!ENTITY characterEncoding2.label         "Text Encoding">
 <!ENTITY networkStorage.label             "Network &amp; Storage">

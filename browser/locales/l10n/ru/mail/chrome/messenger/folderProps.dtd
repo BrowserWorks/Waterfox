@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "Свойства">
 
 <!ENTITY generalInfo.label                       "Основная информация">
-<!ENTITY folderCharsetFallback2.label            "Резервная кодировка текста:">
-<!ENTITY folderCharsetFallback2.accesskey        "е">
-<!ENTITY folderCharsetEnforce2.label             "Использовать как кодировку для всех сообщений в папке (игнорировать кодировки текста, определённые для отдельных сообщений, и автоопределение)">
-<!ENTITY folderCharsetEnforce2.accesskey         "л">
 <!ENTITY folderRebuildSummaryFileTip2.label      "Перестроить файл индекса">
 <!ENTITY folderRebuildSummaryFile2.label         "Починить папку">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "ч">

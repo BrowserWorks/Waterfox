@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,9 +8,9 @@ cert-error-intro = { $hostname } utiliza um certificado de segurança inválido.
 
 cert-error-mitm-intro = Os websites provam a sua identidade via certificados, que são emitidos por autoridades certificadoras.
 
-cert-error-mitm-mozilla = O { -brand-short-name } é apoiado pela, sem fins lucrativos, Mozilla, que administra um armazenamento completamente aberto de autoridade certificadora (CA). O armazenamento CA ajuda a assegura que as autoridades certificadoras estão a seguir as melhores práticas para segurança de utilizadores.
+cert-error-mitm-mozilla = O { -brand-short-name } é apoiado pela, sem fins lucrativos, Waterfox, que administra um armazenamento completamente aberto de autoridade certificadora (CA). O armazenamento CA ajuda a assegura que as autoridades certificadoras estão a seguir as melhores práticas para segurança de utilizadores.
 
-cert-error-mitm-connection = O { -brand-short-name } utiliza o armazenamento CA da Mozilla para verificar que uma ligação é segura, em vez dos certificados fornecidos pelo sistema operativo do utilizador. Por isso, se um programa antivírus ou rede estão a intercetar uma ligação com um certificado de segurança emitido por uma CA que não está no armazenamento CA da Mozilla, a ligação é considerada insegura.
+cert-error-mitm-connection = O { -brand-short-name } utiliza o armazenamento CA da Waterfox para verificar que uma ligação é segura, em vez dos certificados fornecidos pelo sistema operativo do utilizador. Por isso, se um programa antivírus ou rede estão a intercetar uma ligação com um certificado de segurança emitido por uma CA que não está no armazenamento CA da Waterfox, a ligação é considerada insegura.
 
 cert-error-trust-unknown-issuer-intro = Alguém pode estar a tentar fazer-se passar pelo site e você não deve continuar.
 

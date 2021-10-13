@@ -1,9 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY addressbookWindow.title                        "Ευρετήριο">
-<!ENTITY blankResultsPaneMessage.label                  "Αυτό το ευρετήριο εμφανίζει επαφές μόνο μετά από μια αναζήτηση">
+<!ENTITY blankResultsPaneMessage.label                  "Αυτό το ευρετήριο εμφανίζει επαφές μόνο μετά από αναζήτηση">
 <!ENTITY localResultsOnlyMessage.label                  "Επαφές από απομακρυσμένα ευρετήρια δεν εμφανίζονται μέχρι να γίνει αναζήτηση">
 
 <!-- File Menu -->
@@ -31,12 +31,6 @@
 <!ENTITY closeCmd.label                                 "Κλείσιμο">
 <!ENTITY closeCmd.key                                   "W">
 <!ENTITY closeCmd.accesskey                             "Κ">
-<!ENTITY printSetupCmd.label                            "Διαμόρφωση σελίδας…">
-<!ENTITY printSetupCmd.accesskey                        "Δ">
-<!ENTITY printPreviewContactCmd.label                   "Προεπισκόπηση εκτύπωσης επαφής">
-<!ENTITY printPreviewContactCmd.accesskey               "ε">
-<!ENTITY printPreviewAddressBook.label                  "Προεπισκόπηση εκτύπωσης ευρετηρίου διευθύνσεων">
-<!ENTITY printPreviewAddressBook.accesskey              "δ">
 <!ENTITY printContactCmd.label                          "Εκτύπωση επαφής…">
 <!ENTITY printContactCmd.accesskey                      "π">
 <!ENTITY printContactCmd.key                            "P">
@@ -74,7 +68,7 @@
 <!ENTITY viewToolbarsMenu.accesskey                     "γ">
 <!ENTITY menubarCmd.label                               "Γραμμή μενού">
 <!ENTITY menubarCmd.accesskey                           "μ">
-<!ENTITY showAbToolbarCmd.label                         "Γραμμή ευρετηρίων διευθύνσεων">
+<!ENTITY showAbToolbarCmd.label                         "Γραμμή ευρετηρίων">
 <!ENTITY showAbToolbarCmd.accesskey                     "ρ">
 <!ENTITY showTaskbarCmd.label                           "Γραμμή κατάστασης">
 <!ENTITY showTaskbarCmd.accesskey                       "μ">
@@ -102,8 +96,8 @@ because displayed names don't have the comma in between. -->
 <!-- Tools Menu -->
 <!ENTITY tasksMenu.label                                "Εργαλεία">
 <!ENTITY tasksMenu.accesskey                            "γ">
-<!ENTITY messengerCmd.label                             "Αλληλογραφία &amp; ομάδες συζήτησης">
-<!ENTITY messengerCmd.accesskey                         "λ">
+<!ENTITY messengerCmd.label                             "Ταχυδρομείο &amp; ομάδες συζητήσεων">
+<!ENTITY messengerCmd.accesskey                         "χ">
 <!ENTITY messengerCmd.commandkey                        "1">
 <!ENTITY searchAddressesCmd.label                       "Αναζήτηση διευθύνσεων…">
 <!ENTITY searchAddressesCmd.accesskey                   "ζ">
@@ -111,10 +105,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY importCmd.accesskey                            "ι">
 <!ENTITY exportCmd.label                                "Εξαγωγή…">
 <!ENTITY exportCmd.accesskey                            "ξ">
-<!ENTITY preferencesCmd2.label                          "Επιλογές">
-<!ENTITY preferencesCmd2.accesskey                      "π">
-<!ENTITY preferencesCmdUnix.label                       "Προτιμήσεις">
-<!ENTITY preferencesCmdUnix.accesskey                   "μ">
 
 <!-- Address Book Toolbar and Context Menus -->
 <!ENTITY newContactButton.label                         "Νέα επαφή">
@@ -142,28 +132,26 @@ because displayed names don't have the comma in between. -->
 <!ENTITY printButton.accesskey                          "π">
 <!ENTITY deleteButton2.label                            "Διαγραφή">
 <!ENTITY deleteButton2.accesskey                        "Δ">
-
 <!ENTITY removeButton.label                             "Αφαίρεση">
 <!ENTITY removeButton.accesskey                         "Α">
 
 <!-- Address Book Toolbar Tooltips -->
 <!ENTITY columnChooser.tooltip                          "Επιλέξτε στήλες προς εμφάνιση">
-<!ENTITY newContactButton.tooltip                       "Δημιουργία νέας επαφής στο ευρετήριο">
+<!ENTITY newContactButton.tooltip                       "Δημιουργία νέας επαφής ευρετηρίου">
 <!ENTITY newlistButton.tooltip                          "Δημιουργία νέας λίστας">
 <!ENTITY editPropertiesButton.tooltip                   "Επεξεργασία επιλεγμένου στοιχείου">
-<!ENTITY editAbPropertiesButton.tooltip                 "Επεξεργασία ιδιοτήτων επιλεγμένου ευρετηρίου διευθύνσεων">
+<!ENTITY editAbPropertiesButton.tooltip                 "Επεξεργασία ιδιοτήτων επιλεγμένου ευρετηρίου">
 <!ENTITY editContactPropertiesButton.tooltip            "Επεξεργασία επιλεγμένης επαφής">
 <!ENTITY editMailingListPropertiesButton.tooltip        "Επεξεργασία επιλεγμένης λίστας αλληλογραφίας">
-<!ENTITY newmsgButton.tooltip                           "Αποστολή ενός μηνύματος αλληλογραφίας">
-<!ENTITY newIM.tooltip                                  "Αποστολή ενός άμεσου μηνύματος ή chat">
-<!ENTITY deleteButton2.tooltip                          "Διαγραφή επιλεγμένου αντικειμένου">
-
+<!ENTITY newmsgButton.tooltip                           "Αποστολή μηνύματος email">
+<!ENTITY newIM.tooltip                                  "Αποστολή άμεσου μηνύματος ή συνομιλία">
+<!ENTITY deleteButton2.tooltip                          "Διαγραφή επιλεγμένου στοιχείου">
 <!ENTITY removeButton.tooltip                           "Αφαίρεση του επιλεγμένου ευρετηρίου">
 
 <!-- Search Bar -->
 <!ENTITY SearchNameOrEmail.label                        "Όνομα ή email">
 <!ENTITY SearchNameOrEmail.accesskey                    "ν">
-<!ENTITY advancedButton.tooltip                         "Προχωρημένη αναζήτηση διεύθυνσης">
+<!ENTITY advancedButton.tooltip                         "Σύνθετη αναζήτηση διεύθυνσης">
 <!ENTITY quickSearchCmd.key                             "k">
 <!ENTITY searchItem.title "Γρήγορη αναζήτηση">
 
@@ -176,7 +164,7 @@ because displayed names don't have the comma in between. -->
 <!ENTITY PrimaryEmail.accesskey                         "E">
 <!ENTITY ChatName.label                                 "Όνομα συνομιλίας">
 <!ENTITY ChatName.accesskey                             "σ">
-<!ENTITY Company.label                                  "Εταιρεία">
+<!ENTITY Company.label                                  "Οργανισμός">
 <!ENTITY Company.accesskey                              "ρ">
 <!ENTITY NickName.label                                 "Ψευδώνυμο">
 <!ENTITY NickName.accesskey                             "δ">
@@ -216,7 +204,7 @@ because displayed names don't have the comma in between. -->
 <!ENTITY addresses.heading                              "Διευθύνσεις">
 <!-- For Map It! -->
 <!ENTITY mapItButton.label                              "Λήψη χάρτη">
-<!ENTITY mapIt.tooltip                                  "Εμφάνιση ενός χάρτη αυτής της διεύθυνσης από το διαδίκτυο">
+<!ENTITY mapIt.tooltip                                  "Προβολή χάρτη για αυτήν τη διεύθυνση από το διαδίκτυο">
 
 <!-- Status Bar -->
 <!ENTITY statusText.label                               "">

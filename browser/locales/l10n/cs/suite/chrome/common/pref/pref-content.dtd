@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -29,14 +29,15 @@
 <!ENTITY maxZoom.label                          "do">
 <!ENTITY maxZoom.accesskey                      "d">
 <!ENTITY percent.label                          "&#37;">
-
 <!ENTITY defaultZoom.label                      "Výchozí velikost">
 <!ENTITY defaultZoom.accesskey                  "V">
 
-<!ENTITY siteSpecific.label                     "Pamatovat si velikost stránky pro jednotlivé weby">
-<!ENTITY siteSpecific.accesskey                 "P">
 <!ENTITY textZoomOnly.label                     "Měnit velikost pouze textu místo celé stránky">
 <!ENTITY textZoomOnly.accesskey                 "n">
+<!ENTITY siteSpecific.label                     "Pamatovat si velikost stránky pro jednotlivé weby">
+<!ENTITY siteSpecific.accesskey                 "P">
+<!ENTITY showZoomStatusPanel.label              "Zobrazit ovládání lupy ve stavovém řádku">
+<!ENTITY showZoomStatusPanel.accesskey          "s">
 <!ENTITY enableAutomaticImageResizing.label     "Zmenšovat velké obrázky na rozměr okna prohlížeče">
 <!ENTITY enableAutomaticImageResizing.accesskey "e">
 
@@ -45,4 +46,3 @@
 <!ENTITY blockAutoRefresh.label                 "Varovat, pokud se stránka pokouší o přesměrování nebo obnovení">
 <!ENTITY blockAutoRefresh.accesskey             "u">
 
-<!ENTITY showZoomStatusPanel.label              "Zobrazit ovládání lupy ve stavovém řádku">

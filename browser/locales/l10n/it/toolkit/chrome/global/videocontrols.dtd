@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,7 +13,6 @@
 <!ENTITY fullscreenButton.exitfullscreenlabel "Esci da schermo intero">
 <!ENTITY castingButton.castingLabel "Trasmetti a schermo">
 <!ENTITY closedCaption.off "Disattivati">
-<!ENTITY volumeScrubber.label "Dispositivo di scorrimento volume">
 
 <!ENTITY pictureInPicture.label "Picture-in-Picture">
 

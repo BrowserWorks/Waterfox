@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -57,10 +57,6 @@
 <!ENTITY goButton.tooltip             "Typ een locatie in het veld links hiernaast en klik daarna op Gaan">
 <!ENTITY printButton.label            "Afdrukken">
 <!ENTITY printButton.tooltip          "Deze pagina afdrukken">
-
-<!ENTITY throbber.tooltip             "Naar de &vendorShortName;-startpagina gaan">
-
-<!ENTITY throbber.tooltip2            "Naar de &brandShortName;-startpagina gaan">
 
 <!ENTITY locationBar.tooltip          "Voer een zoekterm, sleutelwoord of webadres in">
 <!ENTITY locationBar.accesskey        "d">

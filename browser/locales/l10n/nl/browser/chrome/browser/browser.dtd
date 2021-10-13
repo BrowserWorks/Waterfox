@@ -1,22 +1,13 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
 <!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
 
-<!ENTITY appmenu.tooltip                     "Menu openen">
 <!ENTITY navbarOverflow.label                "Meer hulpmiddelen…">
 
 <!-- Tab context menu -->
-
-<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
-used as a metaphor for expressing the fact that these tabs are "pinned" to the
-left edge of the tabstrip. Really we just want the string to express the idea
-that this is a lightweight and reversible action that keeps your tab where you
-can reach it easily. -->
-<!ENTITY  pinTab.label                       "Tabblad vastmaken">
-<!ENTITY  unpinTab.label                     "Tabblad losmaken">
 
 <!ENTITY  listAllTabs.label      "Alle tabbladtitels tonen">
 
@@ -24,21 +15,12 @@ can reach it easily. -->
 <!ENTITY openFileCmd.label "Bestand openen…">
 <!ENTITY printCmd.label "Afdrukken…">
 
-<!ENTITY taskManagerCmd.label "Taakbeheerder">
-
 <!ENTITY menubarCmd.label "Menubalk">
 <!ENTITY menubarCmd.accesskey "M">
 <!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
 include the word "toolbar" or such, because screen readers already know that
 this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY navbar.accessibleLabel "Navigatie">
-<!ENTITY personalbarCmd.label "Bladwijzerwerkbalk">
-<!ENTITY personalbarCmd.accesskey "B">
-<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
-include the word "toolbar" or such, because screen readers already know that
-this container is a toolbar. This avoids double-speaking. -->
-<!ENTITY personalbar.accessibleLabel "Bladwijzers">
-<!ENTITY bookmarksToolbarItem.label "Bladwijzerwerkbalkitems">
 
 <!ENTITY fullScreenCmd.label "Volledig scherm">
 
@@ -49,54 +31,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY pictureInPictureHideToggle.label "Picture-in-Picture-knop verbergen">
 <!ENTITY pictureInPictureHideToggle.accesskey "V">
 
-<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
-     followed by the user's email. -->
-<!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label;-instellingen">
-<!ENTITY fxa.menu.connectAnotherDevice2.label "Een ander apparaat verbinden…">
-<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
 
 <!ENTITY fxa.menu.signin.label "Aanmelden bij &brandProductName;">
-<!ENTITY fxa.menu.turnOnSync.label "&syncBrand.shortName.label; inschakelen">
-<!ENTITY fxa.menu.firefoxServices.label "&brandProductName;-diensten">
-<!ENTITY fxa.menu.account.label "Account">
-<!ENTITY fxa.menu.settings.label "Instellingen">
-<!ENTITY fxa.menu.accountSettings.label "Accountinstellingen">
-<!ENTITY fxa.menu.manageAccount2.label "Account beheren">
-<!ENTITY fxa.menu.signOut.label "Afmelden…">
-<!ENTITY fxa.menu.setupSync.label "&syncBrand.shortName.label; instellen…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "Stuur een tabblad direct naar elk apparaat waarop u bent aangemeld.">
-
-<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
-     fullscreenWarning.afterDomain.label): these two strings are used
-     respectively before and after the domain requiring fullscreen.
-     Localizers can use one of them, or both, to better adapt this
-     sentence to their language. -->
-<!ENTITY fullscreenWarning.beforeDomain.label "">
-<!ENTITY fullscreenWarning.afterDomain.label "gebruikt nu het volledige scherm">
-<!ENTITY fullscreenWarning.generic.label "Dit document gebruikt nu het volledige scherm">
-
-<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
-     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
-     is uppercase, while on Mac keyboards it is lowercase -->
-<!ENTITY exitDOMFullscreen.button "Volledig scherm verlaten (Esc)">
-<!ENTITY exitDOMFullscreenMac.button "Volledig scherm verlaten (esc)">
-
-<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
-     pointerlockWarning.afterDomain.label): these two strings are used
-     respectively before and after the domain requiring pointerlock.
-     Localizers can use one of them, or both, to better adapt this
-     sentence to their language. -->
-<!ENTITY pointerlockWarning.beforeDomain.label "">
-<!ENTITY pointerlockWarning.afterDomain.label "heeft de controle over uw aanwijzer. Druk op Esc om de controle weer over te nemen.">
-<!ENTITY pointerlockWarning.generic.label "Dit document heeft de controle over uw aanwijzer. Druk op Esc om de controle weer over te nemen.">
-
-<!ENTITY showAllBookmarks2.label "Alle bladwijzers tonen">
-<!ENTITY recentBookmarks.label "Recent aangemaakte bladwijzers">
-<!ENTITY bookmarksToolbarChevron.tooltip "Meer bladwijzers tonen">
 
 <!ENTITY printButton.label            "Afdrukken">
 <!ENTITY printButton.tooltip          "Deze pagina afdrukken">
@@ -108,28 +48,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY homeButton.label             "Startpagina">
 <!ENTITY homeButton.defaultPage.tooltip "&brandShortName;-startpagina">
 
-<!ENTITY bookmarksButton.label          "Bladwijzers">
-
-<!ENTITY bookmarksSubview.label             "Bladwijzers">
-<!ENTITY bookmarksMenuButton2.label         "Bladwijzermenu">
-<!ENTITY bookmarksMenuButton.other.label    "Andere bladwijzers">
-<!ENTITY bookmarksMenuButton.mobile.label   "Mobiel-bladwijzers">
-<!ENTITY viewBookmarksSidebar2.label        "Bladwijzerzijbalk weergeven">
-<!ENTITY hideBookmarksSidebar.label         "Bladwijzerzijbalk verbergen">
-<!ENTITY viewBookmarksToolbar.label         "Bladwijzerwerkbalk weergeven">
-<!ENTITY hideBookmarksToolbar.label         "Bladwijzerwerkbalk verbergen">
-<!ENTITY searchBookmarks.label              "Bladwijzers doorzoeken">
-<!ENTITY bookmarkingTools.label             "Bladwijzerhulpmiddelen">
-<!ENTITY addBookmarksMenu.label             "Bladwijzermenu toevoegen aan werkbalk">
-<!ENTITY removeBookmarksMenu.label          "Bladwijzermenu verwijderen van werkbalk">
-
 <!ENTITY historyButton.label            "Geschiedenis">
 
 <!ENTITY downloads.label              "Downloads">
 <!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
   -  downloads.label, but used in the Library panel. -->
 <!ENTITY libraryDownloads.label       "Downloads">
-<!ENTITY addons.label                 "Add-ons">
 
 <!ENTITY webDeveloperMenu.label       "Webontwikkelaar">
 
@@ -145,25 +69,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY overflowCustomizeToolbar.accesskey   "a">
 
 <!ENTITY historyMenu.label "Geschiedenis">
-<!ENTITY historyUndoMenu.label "Onlangs gesloten tabbladen">
-<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
-<!ENTITY historyUndoWindowMenu.label "Onlangs gesloten vensters">
 
-<!ENTITY appMenuHistory.showAll.label "Alle geschiedenis tonen">
-<!ENTITY appMenuHistory.clearRecent.label "Recente geschiedenis wissen…">
-<!ENTITY appMenuHistory.restoreSession.label "Vorige sessie herstellen">
-<!ENTITY appMenuHistory.viewSidebar.label "Geschiedeniszijbalk weergeven">
-<!ENTITY appMenuHistory.hideSidebar.label "Geschiedeniszijbalk verbergen">
-<!ENTITY appMenuHistory.recentHistory.label "Recente geschiedenis">
 <!ENTITY appMenuHelp.label "Help">
 
-<!ENTITY appMenuRemoteTabs.label "Gesynchroniseerde tabbladen">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
      the name of a device when that device has no open tabs -->
 <!ENTITY appMenuRemoteTabs.notabs.label "Geen open tabbladen">
-<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
-     This is shown after the tabs list if we can display more tabs by clicking on the button -->
-<!ENTITY appMenuRemoteTabs.showMore.label "Meer tonen">
 <!ENTITY appMenuRemoteTabs.showMore.tooltip "Meer tabbladen van dit apparaat tonen">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
      This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
@@ -174,19 +85,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Zet tabbladsynchronisatie aan om een lijst van tabbladen van uw andere apparaten weer te geven.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Wilt u hier uw tabbladen van andere apparaten zien?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Sync-voorkeuren openen">
 <!ENTITY appMenuRemoteTabs.welcome.label "Bekijk een lijst met tabbladen van uw overige apparaten.">
 <!ENTITY appMenuRemoteTabs.unverified.label "Uw account moet worden geverifieerd.">
-<!ENTITY appMenuRemoteTabs.signintosync.label "Aanmelden bij &syncBrand.shortName.label;…">
-<!ENTITY appMenuRemoteTabs.turnonsync.label "&syncBrand.shortName.label; inschakelen…">
-<!ENTITY appMenuRemoteTabs.managedevices.label "Apparaten beheren…">
-<!ENTITY appMenuRemoteTabs.sidebar.label "Weergeven in zijbalk">
-<!ENTITY appMenuRemoteTabs.hidesidebar.label "Zijbalk met gesynchroniseerde tabbladen verbergen">
 <!ENTITY appMenuRemoteTabs.connectdevice.label "Een ander apparaat verbinden">
-
-<!ENTITY appMenuRecentHighlights.label "Recente Highlights">
 
 <!ENTITY customizeMenu.addToToolbar.label "Toevoegen aan werkbalk">
 <!ENTITY customizeMenu.addToToolbar.accesskey "w">
@@ -198,8 +102,6 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY customizeMenu.addToOverflowMenu.accesskey "m">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.label "Losmaken van overloopmenu">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "L">
-<!ENTITY customizeMenu.removeFromToolbar.label "Verwijderen van werkbalk">
-<!ENTITY customizeMenu.removeFromToolbar.accesskey "w">
 <!ENTITY customizeMenu.addMoreItems.label "Meer items toevoegen…">
 <!ENTITY customizeMenu.addMoreItems.accesskey "M">
 
@@ -217,13 +119,6 @@ this container is a toolbar. This avoids double-speaking. -->
 
 <!ENTITY openLinkCmdInTab.accesskey   "t">
 
-<!ENTITY pageAction.copyLink.label    "Koppeling kopiëren">
-
-<!ENTITY saveToPocketCmd.label        "Pagina opslaan naar Pocket">
-<!ENTITY pocketMenuitem.label         "Pocket-lijst weergeven">
-
-<!ENTITY emailPageCmd.label           "Koppeling e-mailen…">
-
 <!-- Media (video/audio) controls -->
 
 <!-- LOCALIZATION NOTE :
@@ -235,13 +130,6 @@ you can use these alternative items. Otherwise, their values should be empty.  -
 <!ENTITY fullZoom.label                 "Zoomen">
 
 <!ENTITY sidebarCloseButton.tooltip     "Zijbalk sluiten">
-
-<!ENTITY quitApplicationCmdWin2.label       "Afsluiten">
-<!ENTITY quitApplicationCmdWin2.accesskey   "A">
-<!ENTITY quitApplicationCmdWin2.tooltip     "&brandShorterName; afsluiten">
-<!ENTITY quitApplicationCmd.label       "Afsluiten">
-<!ENTITY quitApplicationCmd.accesskey   "A">
-<!ENTITY quitApplicationCmdMac2.label   "&brandShorterName; afsluiten">
 
 <!ENTITY allowPopups.accesskey "P">
 <!-- On Windows we use the term "Options" to describe settings, but
@@ -262,10 +150,6 @@ you can use these alternative items. Otherwise, their values should be empty.  -
      The word "toolbar" is appended automatically and should not be contained below! -->
 <!ENTITY tabsToolbar.label "Browsertabbladen">
 
-<!ENTITY syncBrand.shortName.label    "Sync">
-
-<!ENTITY customizeMode.autoHideDownloadsButton.label "Automatisch verbergen">
-
 
 <!ENTITY uiTour.infoPanel.close "Sluiten">
 
@@ -273,15 +157,7 @@ you can use these alternative items. Otherwise, their values should be empty.  -
 <!ENTITY panicButton.thankyou.msg2                "Hou het veilig!">
 <!ENTITY panicButton.thankyou.buttonlabel         "Bedankt!">
 
-<!ENTITY updateAvailable.panelUI.label "&brandShorterName;-update downloaden">
-<!ENTITY updateManual.panelUI.label "Een nieuwe kopie van &brandShorterName; downloaden">
-<!ENTITY updateUnsupported.panelUI.label "U kunt geen verdere updates uitvoeren">
-<!ENTITY updateRestart.panelUI.label2 "Herstarten om &brandShorterName; bij te werken">
-
 <!ENTITY sendToDevice.syncNotReady.label "Apparaten synchroniseren…">
-
-<!ENTITY pageAction.shareUrl.label "Delen">
-<!ENTITY pageAction.shareMore.label "Meer…">
 
 <!ENTITY libraryButton.tooltip "Geschiedenis, opgeslagen bladwijzers en meer bekijken">
 

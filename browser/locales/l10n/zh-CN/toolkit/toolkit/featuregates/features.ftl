@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,11 @@
 experimental-features-css-masonry2 =
     .label = CSS：瀑布流（Masonry）布局
 experimental-features-css-masonry-description = 启用对 CSS 瀑布流布局的实验性支持。欲详细了解该功能，请参阅<a data-l10n-name="explainer">说明文档</a>。若要提供反馈，请在 <a data-l10n-name="w3c-issue">GitHub Issue</a> 或此 <a data-l10n-name="bug">Bug</a> 中留言。
+# The title of the experiment should be kept in English as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS: Cascade Layers
+experimental-features-css-cascade-layers-description = 启用对 CSS Cascade Layers 的支持。更多信息，请参阅<a data-l10n-name="spec">编撰中的规范</a>。若要提交与此功能相关的任何 bug，请 block <a data-l10n-name="bugzilla">Bug 1699215</a>。
 # The title of the experiment should be kept in English as it may be referenced
 # by various online articles and is technical in nature.
 experimental-features-web-gpu2 =
@@ -85,9 +90,6 @@ experimental-features-fission-description = Fission（网站隔离）是 { -bran
 experimental-features-multi-pip =
     .label = 画中画支持多开
 experimental-features-multi-pip-description = 允许同时打开多个画中画窗口的实验性支持。
-experimental-features-http3 =
-    .label = HTTP/3 协议
-experimental-features-http3-description = 对 HTTP/3 协议的实验性支持。
 # Search during IME
 experimental-features-ime-search =
     .label = 地址栏：实时显示输入过程中的结果

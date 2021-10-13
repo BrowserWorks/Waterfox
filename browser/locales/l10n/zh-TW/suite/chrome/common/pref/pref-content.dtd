@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -7,7 +7,7 @@
 <!ENTITY pref.content.title                     "內容">
 <!ENTITY pref.content.description               "這些設定將會影響網頁及內容在 &brandShortName; 顯示的方式。">
 
-<!ENTITY siteIcons.label                        "網頁圖示">
+<!ENTITY siteIcons.label                        "網站圖示">
 <!ENTITY useSiteIcons.label                     "顯示網站圖示">
 <!ENTITY useSiteIcons.accesskey                 "S">
 <!ENTITY useFavIcons2.label                     "當頁面沒有指定圖示時，嘗試使用伺服器的 favicon">
@@ -29,14 +29,15 @@
 <!ENTITY maxZoom.label                          "到">
 <!ENTITY maxZoom.accesskey                      "o">
 <!ENTITY percent.label                          "&#37;">
-
 <!ENTITY defaultZoom.label                      "預設縮放比例">
 <!ENTITY defaultZoom.accesskey                  "D">
 
-<!ENTITY siteSpecific.label                     "針對每個不同的網站記憶縮放等級">
-<!ENTITY siteSpecific.accesskey                 "m">
 <!ENTITY textZoomOnly.label                     "只縮放文字，而不是整個頁面">
 <!ENTITY textZoomOnly.accesskey                 "Z">
+<!ENTITY siteSpecific.label                     "針對每個不同的網站記憶縮放等級">
+<!ENTITY siteSpecific.accesskey                 "m">
+<!ENTITY showZoomStatusPanel.label              "在狀態列顯示縮放元件">
+<!ENTITY showZoomStatusPanel.accesskey          "S">
 <!ENTITY enableAutomaticImageResizing.label     "自動縮放圖片以符合瀏覽器視窗大小">
 <!ENTITY enableAutomaticImageResizing.accesskey "R">
 
@@ -45,4 +46,3 @@
 <!ENTITY blockAutoRefresh.label                 "當網站試圖重新導向或重新載入頁面時警告">
 <!ENTITY blockAutoRefresh.accesskey             "W">
 
-<!ENTITY showZoomStatusPanel.label              "在狀態列顯示縮放元件">

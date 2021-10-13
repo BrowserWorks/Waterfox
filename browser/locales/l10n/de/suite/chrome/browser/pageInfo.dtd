@@ -1,5 +1,5 @@
 <!--
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
@@ -24,6 +24,7 @@
 
 <!ENTITY  generalTab            "Allgemein">
 <!ENTITY  generalTab.accesskey  "g">
+<!ENTITY  generalTitle          "Titel:">
 <!ENTITY  generalURL            "Adresse:">
 <!ENTITY  generalType           "Typ:">
 <!ENTITY  generalMode           "Anzeigemodus:">
@@ -60,16 +61,14 @@
 
 <!ENTITY  mediaTab              "Medien">
 <!ENTITY  mediaTab.accesskey    "M">
-<!ENTITY  mediaURL              "Adresse:">
-<!ENTITY  mediaAlt              "Alternativtext:">
+<!ENTITY  mediaLocation         "Adresse:">
+<!ENTITY  mediaText             "Zugeordneter Text:">
 <!ENTITY  mediaAltHeader        "Alternativtext">
 <!ENTITY  mediaAddress          "Adresse">
 <!ENTITY  mediaType             "Typ">
 <!ENTITY  mediaSize             "Größe">
 <!ENTITY  mediaCount            "Anzahl">
-<!ENTITY  mediaDimensions       "Angegebene Dimensionen:">
-<!ENTITY  mediaPhysDimensions   "Wirkliche Dimensionen:">
-<!ENTITY  mediaTitle            "Titel:">
+<!ENTITY  mediaDimension        "Maße:">
 <!ENTITY  mediaLongdesc         "Lange Beschreibung:">
 <!ENTITY  mediaBlockImage.accesskey "b">
 <!ENTITY  mediaSaveAs           "Speichern unter…">
@@ -84,18 +83,7 @@
 
 <!ENTITY  permTab               "Berechtigungen">
 <!ENTITY  permTab.accesskey     "u">
-<!ENTITY  permUseDefault        "Standard verwenden">
-<!ENTITY  permAskAlways         "Immer nachfragen">
-<!ENTITY  permAllow             "Erlauben">
-<!ENTITY  permAllowSession      "Für Sitzung erlauben">
-<!ENTITY  permBlock             "Blockieren">
 <!ENTITY  permissionsFor        "Berechtigungen für:">
-<!ENTITY  permImage             "Grafiken laden">
-<!ENTITY  permPopup             "Pop-up-Fenster öffnen">
-<!ENTITY  permCookie            "Cookies setzen">
-<!ENTITY  permNotifications     "Benachrichtigungen anzeigen">
-<!ENTITY  permInstall           "Erweiterungen oder Themes installieren">
-<!ENTITY  permGeo               "Aufenthaltsort mitteilen">
 
 <!ENTITY  securityTab           "Sicherheit">
 <!ENTITY  securityTab.accesskey "S">
@@ -109,6 +97,7 @@
 <!ENTITY  securityView.identity.owner    "Eigentümer:">
 <!ENTITY  securityView.identity.domain   "Website:">
 <!ENTITY  securityView.identity.verifier "Verifiziert von:">
+<!ENTITY  securityView.identity.validity "Gültig bis:">
 
 <!ENTITY  securityView.privacy.header                   "Privatsphäre &amp; Chronik">
 <!ENTITY  securityView.privacy.history                  "Wurde diese Website heute schon besucht?">

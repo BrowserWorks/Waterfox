@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,9 +16,6 @@ safeb-palm-see-details-label = Ver detalles
 safeb-blocked-phishing-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> ha sido <a data-l10n-name='error_desc_link'>reportado como sitio peligroso</a>. Puedes <a data-l10n-name='report_detection'>reportar la detección del problema</a> o <a data-l10n-name='ignore_warning_link'>ignorar el riesgo</a> e ir al sitio inseguro.
 safeb-blocked-phishing-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> ha sido <a data-l10n-name='error_desc_link'>reportado como sitio peligroso</a>. Puedes <a data-l10n-name='report_detection'>reportar la detección del problema</a>.
 safeb-blocked-phishing-page-learn-more = Conoce más sobre sitios peligrosos y phishing en <a data-l10n-name='learn_more_link'>www.antiphishing.org</a>. Conoce más acerca de la protección contra malware y phishing que ofrece { -brand-short-name } en <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
-safeb-blocked-malware-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> ha sido <a data-l10n-name='error_desc_link'>reportado como contenedor de software malicioso</a>. Puedes <a data-l10n-name='report_detection'>reportar esta dirección web</a> o <a data-l10n-name='ignore_warning_link'>ignorar el riesgo</a> e ir al sitio inseguro.
-safeb-blocked-malware-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> ha sido <a data-l10n-name='error_desc_link'>reportado como contenedor de software malicioso</a>. Puedes <a data-l10n-name='report_detection'>reportar este sitio web</a>.
-safeb-blocked-malware-page-learn-more = Conoce más sobre contenido web peligroso, incluyendo diversos virus y malware y cómo puedes proteger tu computadora en <a data-l10n-name='learn_more_link'>StopBadware.org</a>. Conoce más acerca de la protección contra phishing y malware que ofrece { -brand-short-name } en <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
 safeb-blocked-malware-page-error-desc-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> ha sido <a data-l10n-name='error_desc_link'>reportado como contenedor de software malicioso</a>. Puedes <a data-l10n-name='ignore_warning_link'>ignorar el riesgo</a> e ir a este sitio inseguro.
 safeb-blocked-malware-page-error-desc-no-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> ha sido <a data-l10n-name='error_desc_link'>reportado por contener software malicioso</a>.
 safeb-blocked-malware-page-learn-more-sumo = Aprende más sobre la protección de phishing y malware de { -brand-short-name } en <a data-l10n-name='firefox_support'>support.mozilla.org</a>.

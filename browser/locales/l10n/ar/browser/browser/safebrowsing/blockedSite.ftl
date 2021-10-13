@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,9 +16,6 @@ safeb-palm-see-details-label = اعرض التفاصيل
 safeb-blocked-phishing-page-error-desc-override = أُبلغ عن أن <span data-l10n-name='sitename'>{ $sitename }</span> <a data-l10n-name='error_desc_link'>موقع مخادع</a>. يمكنك <a data-l10n-name='report_detection'>الإبلاغ عن مشكلة في الاكتشاف</a> أو <a data-l10n-name='ignore_warning_link'>تجاهل المخاطر</a> و زيارة هذا الموقع غير الآمن.
 safeb-blocked-phishing-page-error-desc-no-override = أُبلغ عن أن <span data-l10n-name='sitename'>{ $sitename }</span> <a data-l10n-name='error_desc_link'>موقع مخادع</a>. يمكنك <a data-l10n-name='report_detection'>الإبلاغ عن مشكلة في الاكتشاف</a>.
 safeb-blocked-phishing-page-learn-more = اطلع على المزيد عن الاحتيال في <a data-l10n-name='learn_more_link'>www.antiphishing.org</a>. اطلع على المزيد عن حماية { -brand-short-name } من الاحتيال و البرمجيات الخبيثة في <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
-safeb-blocked-malware-page-error-desc-override = أُبلغ عن أن <span data-l10n-name='sitename'>{ $sitename }</span> <a data-l10n-name='error_desc_link'>يحتوي برمجيات خبيثة</a>. يمكنك <a data-l10n-name='report_detection'>الإبلاغ عن مشكلة في الاكتشاف</a> أو <a data-l10n-name='ignore_warning_link'>تجاهل المخاطر</a> و زيارة هذا الموقع غير الآمن.
-safeb-blocked-malware-page-error-desc-no-override = أُبلغ عن أن <span data-l10n-name='sitename'>{ $sitename }</span> <a data-l10n-name='error_desc_link'>يحتوي برمجيات خبيثة</a>. يمكنك <a data-l10n-name='report_detection'>الإبلاغ عن مشكلة في الاكتشاف</a>.
-safeb-blocked-malware-page-learn-more = اطلع على المزيد عن محتوى الوب الضار الذي يشمل الفيروسات و البرمجيات الخبيثة الأخرى و كيفية حماية حاسوبك في <a data-l10n-name='learn_more_link'>StopBadware.org</a>. اطلع على المزيد عن حماية { -brand-short-name } من الاحتيال و البرمجيات الخبيثة في <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
 safeb-blocked-malware-page-error-desc-override-sumo = أُبلغ عن أن <span data-l10n-name='sitename'>{ $sitename }</span> <a data-l10n-name='error_desc_link'>يحتوي برمجيات خبيثة</a>. يمكنك <a data-l10n-name='ignore_warning_link'>تجاهل المخاطر</a> و زيارة هذا الموقع غير الآمن.
 safeb-blocked-malware-page-error-desc-no-override-sumo = أُبلغ عن أن <span data-l10n-name='sitename'>{ $sitename }</span> <a data-l10n-name='error_desc_link'>يحتوي برمجيات خبيثة</a>.
 safeb-blocked-malware-page-learn-more-sumo = اطّلع على المزيد عن حماية { -brand-short-name } من الاحتيال و البرمجيات الخبيثة في <a data-l10n-name='firefox_support'>support.mozilla.org</a>.

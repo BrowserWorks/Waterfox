@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -14,5 +14,5 @@
 <!ENTITY widthEditField.accessKey "Π">
 <!ENTITY borderEditField.label "Πλαίσιο:">
 <!ENTITY borderEditField.accessKey "λ">
-<!ENTITY borderEditField.tooltip "Εισάγετε ένα μέγεθος για το πλαίσιο πίνακα, ή εισάγετε μηδέν (0) για να μην υπάρχει πλαίσιο">
+<!ENTITY borderEditField.tooltip "Εισαγάγετε ένα μέγεθος για το πλαίσιο πίνακα ή μηδέν (0) για να μην υπάρχει πλαίσιο">
 <!ENTITY pixels.label "εικονοστοιχεία">

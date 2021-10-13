@@ -1,15 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 # Addressing widget
 
-#   $type (String) - the type of the addressing row
-remove-address-row-type = Ta bort fältet { $type }
-#   $type (String) - the type of the addressing row
-remove-address-row-type-label =
-    .tooltiptext = Ta bort { $type }-fältet
 #   $type (String) - the type of the addressing row
 remove-address-row-button =
     .title = Ta bort { $type }-fältet
@@ -67,6 +62,10 @@ toolbar-button-add-attachment =
 add-attachment-notification-reminder =
     .label = Lägg till bilaga…
     .tooltiptext = { toolbar-button-add-attachment.tooltiptext }
+add-attachment-notification-reminder2 =
+    .label = Lägg till bilaga…
+    .accesskey = L
+    .tooltiptext = { toolbar-button-add-attachment.tooltiptext }
 menuitem-attach-files =
     .label = Fil(er)…
     .accesskey = F
@@ -84,21 +83,14 @@ attachment-bucket-count =
            *[other] { $count } bilagor
         }
     .accesskey = b
-#   $count (Number) - the number of attachments in the attachment bucket
-attachments-placeholder-tooltip =
-    .tooltiptext =
-        { $count ->
-            [1] Bilagor
-            [one] { $count } bilaga
-           *[other] { $count } bilagor
-        }
-#   { attachment-bucket-count.accesskey } - Do not localize this message.
-key-toggle-attachment-pane =
-    .key = { attachment-bucket-count.accesskey }
 expand-attachment-pane-tooltip =
     .tooltiptext = Visa bifogningsfönstret { ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key }()
 collapse-attachment-pane-tooltip =
     .tooltiptext = Dölj bifogningsfönstret ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
+attachment-area-show =
+    .title = Visa bifogningsfönstret ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
+attachment-area-hide =
+    .title = Dölj bifogningsfönstret ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
 drop-file-label-attachment =
     { $count ->
         [one] Lägg till som bilaga
@@ -123,6 +115,13 @@ move-attachment-last-panel-button =
 button-return-receipt =
     .label = Kvitto
     .tooltiptext = Begär ett returkvitto för detta meddelande
+
+# Encryption
+
+message-to-be-signed-icon =
+    .alt = Signera meddelande
+message-to-be-encrypted-icon =
+    .alt = Kryptera meddelande
 
 # Addressing Area
 
@@ -158,12 +157,74 @@ bcc-compose-show-address-row-label =
     .tooltiptext = Visa fältet { bcc-compose-address-row-label.value } ({ bcc-compose-show-address-row-menuitem.acceltext })
 #   $count (Number) - the count of addresses in the "To" and "Cc" fields.
 many-public-recipients-info = { $count } mottagare i fältet Till och Kopia kan se varandras adresser. Du kan undvika att avslöja mottagare genom att använda Dold kopia istället.
+to-address-row-label =
+    .value = Till
+#   $key (String) - the shortcut key for this field
+show-to-row-main-menuitem =
+    .label = Fältet till
+    .accesskey = T
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-to-row-button text.
+show-to-row-extra-menuitem =
+    .label = Till
+    .accesskey = T
+#   $key (String) - the shortcut key for this field
+show-to-row-button = Till
+    .title = Visa fält till ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+cc-address-row-label =
+    .value = Kopia
+#   $key (String) - the shortcut key for this field
+show-cc-row-main-menuitem =
+    .label = Fältet kopia
+    .accesskey = k
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-cc-row-button text.
+show-cc-row-extra-menuitem =
+    .label = Kopia
+    .accesskey = K
+#   $key (String) - the shortcut key for this field
+show-cc-row-button = Kopia
+    .title = Visa fältet kopia ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+bcc-address-row-label =
+    .value = Dold kopia
+#   $key (String) - the shortcut key for this field
+show-bcc-row-main-menuitem =
+    .label = Fältet dold kopia
+    .accesskey = d
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-bcc-row-button text.
+show-bcc-row-extra-menuitem =
+    .label = Dold kopia
+    .accesskey = D
+#   $key (String) - the shortcut key for this field
+show-bcc-row-button = Dold kopia
+    .title = Visa fältet dold kopia ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+extra-address-rows-menu-button =
+    .title = Andra adresseringsfält att visa
+#   $count (Number) - the count of addresses in the "To" and "Cc" fields.
+many-public-recipients-notice =
+    { $count ->
+        [one] Ditt meddelande har en offentlig mottagare. Du kan undvika att avslöja mottagare genom att använda Dold kopia istället.
+       *[other] { $count } mottagare i fältet Till och Kopia kan se varandras adresser. Du kan undvika att avslöja mottagare genom att använda Dold kopia istället.
+    }
 many-public-recipients-bcc =
     .label = Använd dold kopia istället
     .accesskey = A
 many-public-recipients-ignore =
     .label = Håll mottagarna offentliga
     .accesskey = H
+many-public-recipients-prompt-title = För många offentliga mottagare
+#   $count (Number) - the count of addresses in the public recipients fields.
+many-public-recipients-prompt-msg =
+    { $count ->
+        [one] Ditt meddelande har en offentlig mottagare. Detta kan vara en integritetsfråga. Du kan undvika detta genom att flytta mottagaren från Till/Kopia till Dold kopia istället.
+       *[other] Ditt meddelande har { $count } offentliga mottagare, som kommer att kunna se varandras adresser. Detta kan vara en integritetsfråga. Du kan undvika att avslöja mottagare genom att flytta mottagare från Till/Kopia till Dold kopia istället.
+    }
+many-public-recipients-prompt-cancel = Avbryt sändning
+many-public-recipients-prompt-send = Skicka ändå
 
 ## Notifications
 
@@ -172,3 +233,11 @@ many-public-recipients-ignore =
 compose-missing-identity-warning = En unik identitet som matchar Från-adressen hittades inte. Meddelandet skickas med det aktuella Från-fältet och inställningar från identitet { $identity }.
 encrypted-bcc-warning = När du skickar ett krypterat meddelande döljs inte mottagare i dold kopia helt. Alla mottagare kan kanske identifiera dem.
 encrypted-bcc-ignore-button = Förstått
+
+## Editing
+
+
+# Tools
+
+compose-tool-button-remove-text-styling =
+    .tooltiptext = Ta bort textstyling

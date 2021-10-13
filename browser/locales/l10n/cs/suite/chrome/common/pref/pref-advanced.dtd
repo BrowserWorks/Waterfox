@@ -1,18 +1,28 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
 <!ENTITY pref.advanced.title              "Rozšířené">
 
-<!ENTITY systemPref.caption               "Systémové předvolby">
-<!ENTITY systemPrefCheck.label            "Použít předvolby ze systému">
-<!ENTITY systemPrefCheck.accesskey        "U">
-<!ENTITY systemPref.desc                  "Zaškrtnutím této možnosti se zdědí předvolby ze systému. Tím se přepíší předvolby aplikace &brandShortName;">
-
 <!ENTITY prefCheckDefault.caption         "Nastavení systému">
 <!ENTITY prefCheckDefaultClient.label     "Při startu kontrolovat nastavení výchozí aplikace">
 <!ENTITY prefCheckDefaultClient.accesskey "t">
+
+<!ENTITY defaultClientFor.description     "Použít aplikaci &brandShortName; jako výchozí program pro:">
+<!ENTITY setDefaultBrowser.label          "Prohlížeč">
+<!ENTITY setDefaultBrowser.accesskey      "P">
+<!ENTITY setDefaultMail.label             "Pošta">
+<!ENTITY setDefaultMail.accesskey         "o">
+<!ENTITY setDefaultNews.label             "Diskusní skupiny">
+<!ENTITY setDefaultNews.accesskey         "n">
+<!ENTITY setDefaultFeed.label             "Kanály">
+<!ENTITY setDefaultFeed.accesskey         "K">
+<!ENTITY useInternalSettings.description  "Použít &brandShortName; Mail &amp; Novinky při otevření odkazu pro:">
+<!ENTITY useInternalMail.label            "E-mail (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "Novinky (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "v">
 
 <!ENTITY printing.label                   "Tisk">
 <!ENTITY useNativePrintDialog.label       "Použít nativní dialog tisku (pokud je podporován)">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,15 +15,10 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
 <!ENTITY prefPara                            "HTTP connections may be fine-tuned using these options to enhance either performance or compatibility. Some proxy servers, for example, are known to require HTTP/1.0 (see the release notes for details).">
 <!ENTITY prefUseragent.label                 "User Agent String">
-<!ENTITY prefFirefoxCompat.label             "Advertise Firefox compatibility">
-<!ENTITY prefFirefoxCompat.accesskey         "F">
-<!ENTITY prefLightningShow.label             "Advertise Lightning installation">
-<!ENTITY prefLightningShow.accesskey         "L">
-<!ENTITY prefCompatWarning                   "WARNING: disabling these settings may result in web sites or services not working properly.">
-<!ENTITY prefFirefoxStrict.label             "Identify as Firefox">
-<!ENTITY prefFirefoxStrict.accesskey         "I">
-<!ENTITY prefFirefoxNone.label               "Identify as SeaMonkey">
-<!ENTITY prefFirefoxNone.accesskey           "M">
-<!ENTITY prefFirefoxCompat2.label            "Identify as SeaMonkey and advertise Firefox compatibility">
-<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefWaterfoxStrict.label             "Identify as Waterfox">
+<!ENTITY prefWaterfoxStrict.accesskey         "I">
+<!ENTITY prefWaterfoxNone.label               "Identify as SeaMonkey">
+<!ENTITY prefWaterfoxNone.accesskey           "M">
+<!ENTITY prefWaterfoxCompat2.label            "Identify as SeaMonkey and advertise Waterfox compatibility">
+<!ENTITY prefWaterfoxCompat2.accesskey        "F">
 <!ENTITY prefCompatWarning2.desc             "WARNING: changing this setting may result in web sites or services not working properly.">

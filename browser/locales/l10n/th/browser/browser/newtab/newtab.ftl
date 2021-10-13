@@ -1,14 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-### Firefox Home / New Tab strings for about:home / about:newtab.
+### Waterfox Home / New Tab strings for about:home / about:newtab.
 
 newtab-page-title = แท็บใหม่
 newtab-settings-button =
     .title = ปรับแต่งหน้าแท็บใหม่ของคุณ
-newtab-personalize-button-label = ปรับให้เป็นแบบส่วนตัว
+newtab-personalize-icon-label =
     .title = ปรับแท็บใหม่ให้เป็นส่วนตัว
     .aria-label = ปรับแท็บใหม่ให้เป็นส่วนตัว
 newtab-personalize-dialog-label =
@@ -20,7 +20,6 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = ค้นหา
     .aria-label = ค้นหา
-newtab-search-box-search-the-web-text = ค้นหาเว็บ
 # Variables
 #  $engine (String): the name of the user's default search engine
 newtab-search-box-handoff-text = ค้นหาด้วย { $engine } หรือป้อนที่อยู่
@@ -203,7 +202,7 @@ newtab-section-header-pocket = แนะนำโดย { $provider }
 
 ## Empty Section States: These show when there are no more items in a section. Ex. When there are no more Pocket story recommendations, in the space where there would have been stories, this is shown instead.
 
-newtab-empty-section-highlights = เริ่มท่องเว็บและเราจะแสดงบทความ วิดีโอ และหน้าอื่น ๆ บางส่วนที่ยอดเยี่ยมที่คุณได้เยี่ยมชมหรือเพิ่มที่คั่นหน้าไว้ล่าสุดที่นี่
+newtab-empty-section-highlights = เริ่มเรียกดูและเราจะแสดงบทความ วิดีโอ และหน้าอื่น ๆ บางส่วนที่ยอดเยี่ยมที่คุณได้เยี่ยมชมหรือเพิ่มที่คั่นหน้าไว้ล่าสุดที่นี่
 # Ex. When there are no more Pocket story recommendations, in the space where there would have been stories, this is shown instead.
 # Variables:
 #  $provider (String): Name of the content provider for this section, e.g "Pocket".
@@ -248,10 +247,4 @@ newtab-custom-pocket-sponsored = เรื่องราวที่ได้�
 newtab-custom-recent-title = กิจกรรมล่าสุด
 newtab-custom-recent-subtitle = ไซต์และเนื้อหาล่าสุดที่คัดสรรมา
 newtab-custom-close-button = ปิด
-# For the "Snippets" feature traditionally on about:home.
-# Alternative translation options: "Small Note" or something that
-# expresses the idea of "a small message, shortened from something else,
-# and non-essential but also not entirely trivial and useless.
-newtab-custom-snippets-title = ส่วนย่อย
-newtab-custom-snippets-subtitle = เคล็ดลับและข่าวสารจาก { -vendor-short-name } และ { -brand-product-name }
 newtab-custom-settings = จัดการการตั้งค่าเพิ่มเติม

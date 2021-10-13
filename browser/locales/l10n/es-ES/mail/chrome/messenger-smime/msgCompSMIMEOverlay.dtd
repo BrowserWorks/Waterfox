@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,9 +17,6 @@
 
 <!ENTITY menu_securitySign.label "Firmar digitalmente este mensaje">
 <!ENTITY menu_securitySign.accesskey "F">
-
-<!ENTITY menu_securityAttachMyKey.label "Adjuntar mi clave pública">
-<!ENTITY menu_securityAttachMyKey.accesskey "A">
 
 <!ENTITY menu_securityTech.label "Tecnología de cifrado">
 <!ENTITY menu_securityTech.accesskey "T">

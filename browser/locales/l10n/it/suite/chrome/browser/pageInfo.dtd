@@ -1,5 +1,5 @@
 <!--
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
@@ -61,8 +61,6 @@
 
 <!ENTITY  mediaTab              "Media">
 <!ENTITY  mediaTab.accesskey    "M">
-<!ENTITY  mediaURL              "Indirizzo:">
-<!ENTITY  mediaAlt              "Testo alternativo:">
 <!ENTITY  mediaLocation         "Luogo:">
 <!ENTITY  mediaText             "Testo associato:">
 <!ENTITY  mediaAltHeader        "Testo alternativo">
@@ -70,9 +68,6 @@
 <!ENTITY  mediaType             "Tipo">
 <!ENTITY  mediaSize             "Dimensione">
 <!ENTITY  mediaCount            "Conteggio">
-<!ENTITY  mediaDimensions       "Dimensioni specificate:">
-<!ENTITY  mediaPhysDimensions   "Dimensioni attuali:">
-<!ENTITY  mediaTitle            "Titolo:">
 <!ENTITY  mediaDimension        "Dimensioni:">
 <!ENTITY  mediaLongdesc         "Descrizione estesa:">
 <!ENTITY  mediaBlockImage.accesskey "B">
@@ -88,18 +83,7 @@
 
 <!ENTITY  permTab               "Permessi">
 <!ENTITY  permTab.accesskey     "P">
-<!ENTITY  permUseDefault        "Utilizza predefiniti">
-<!ENTITY  permAskAlways         "Chiedi ogni volta">
-<!ENTITY  permAllow             "Permetti">
-<!ENTITY  permAllowSession      "Permetti per la sessione">
-<!ENTITY  permBlock             "Blocca">
 <!ENTITY  permissionsFor        "Permessi per:">
-<!ENTITY  permImage             "Caricare immagini">
-<!ENTITY  permPopup             "Aprire finestre pop-up">
-<!ENTITY  permCookie            "Impostare cookie">
-<!ENTITY  permNotifications     "Visualizzare notifiche">
-<!ENTITY  permInstall           "Installare estensioni o temi">
-<!ENTITY  permGeo               "Comunicare la posizione">
 
 <!ENTITY  securityTab           "Sicurezza">
 <!ENTITY  securityTab.accesskey "S">

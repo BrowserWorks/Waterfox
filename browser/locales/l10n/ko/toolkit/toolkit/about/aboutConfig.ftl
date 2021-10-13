@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,11 +15,14 @@ config-about-warning-button =
     .label = 위험을 감수하겠습니다!
 config-about-warning-checkbox =
     .label = 다음에 이 경고창 계속 보여 주기
+
 config-search-prefs =
     .value = 검색:
     .accesskey = r
+
 config-focus-search =
     .key = r
+
 config-focus-search-2 =
     .key = f
 
@@ -47,45 +50,60 @@ config-copy-pref =
     .key = C
     .label = 복사
     .accesskey = C
+
 config-copy-name =
     .label = 이름 복사
     .accesskey = N
+
 config-copy-value =
     .label = 값 복사
     .accesskey = V
+
 config-modify =
     .label = 수정
     .accesskey = M
+
 config-toggle =
     .label = 설정/해제
     .accesskey = T
+
 config-reset =
     .label = 초기화
     .accesskey = R
+
 config-new =
     .label = 새로 만들기
     .accesskey = w
+
 config-string =
     .label = 문자열
     .accesskey = S
+
 config-integer =
     .label = 정수
     .accesskey = I
+
 config-boolean =
     .label = 불린
     .accesskey = B
+
 config-default = 기본
 config-modified = 수정됨
 config-locked = 잠금
+
 config-property-string = 문자열
 config-property-int = 정수
 config-property-bool = 불린
+
 config-new-prompt = 설정 이름을 입력하세요
+
 config-nan-title = 유효하지 않는 값
 config-nan-text = 입력한 문자가 숫자가 아닙니다.
+
 # Variables:
 #   $type (String): type of value (boolean, integer or string)
 config-new-title = 새 { $type } 값
+
 # Variables:
 #   $type (String): type of value (boolean, integer or string)
 config-modify-title = { $type } 값 입력

@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-screenshots-context-menu = Képernyőkép készítése
 screenshot-toolbarbutton =
     .label = Képernyőkép
     .tooltiptext = Képernyőkép készítése
-screenshots-my-shots-button = Az Ön képei
+screenshot-shortcut =
+    .key = S
 screenshots-instructions = Húzza, vagy kattintson a lapra a terület kiválasztásához. A megszakításhoz nyomja meg az ESC billentyűt.
 screenshots-cancel-button = Mégse
 screenshots-save-visible-button = Látható rész mentése
@@ -31,7 +31,6 @@ screenshots-connection-error-details = Ellenőrizze az internetkapcsolatot. Ha t
 screenshots-login-error-details = Nem tudtuk elmenteni a képét, mert probléma lépett fel a { -screenshots-brand-name } szolgáltatással. Próbálja újra később.
 screenshots-unshootable-page-error-title = Nem lehet képet készíteni erről a lapról.
 screenshots-unshootable-page-error-details = Ez egy nem szabványos weblap, így nem készíthet róla képernyőképet.
-screenshots-self-screenshot-error-title = Nem készíthet képet a { -screenshots-brand-name } oldalról!
 screenshots-empty-selection-error-title = A kijelölés túl kicsi
 screenshots-private-window-error-title = A { -screenshots-brand-name } le vannak tiltva Privát böngészésben
 screenshots-private-window-error-details = Sajnáljuk a kényelmetlenséget. Dolgozunk ezen a funkción a jövőbeli kiadásokhoz.

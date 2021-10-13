@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,6 +8,7 @@
 
 # The text "WebRTC" is a proper noun and should not be translated.
 about-webrtc-document-title = داخليات WebRTC
+
 # "about:webrtc" is a internal browser URL and should not be
 # translated. This string is used as a title for a file save dialog box.
 about-webrtc-save-page-dialog-title = احفظ about:webrtc باسم
@@ -56,13 +57,7 @@ about-webrtc-ice-pair-bytes-sent = البايتات المرسلة:
 about-webrtc-ice-pair-bytes-received = البايتات المستقبَلة:
 about-webrtc-ice-component-id = معرف المكون
 
-##
-
-
 ## "Avg." is an abbreviation for Average. These are used as data labels.
-
-
-##
 
 
 ## These adjectives are used to label a line of statistics collected for a peer
@@ -74,13 +69,16 @@ about-webrtc-type-remote = بعيد
 
 ##
 
+
 # This adjective is used to label a table column. Cells in this column contain
 # the localized javascript string representation of "true" or are left blank.
 about-webrtc-nominated = مرشَّح
+
 # This adjective is used to label a table column. Cells in this column contain
 # the localized javascript string representation of "true" or are left blank.
 # This represents an attribute of an ICE candidate.
 about-webrtc-selected = محدد
+
 about-webrtc-save-page-label = احفظ الصفحة
 about-webrtc-debug-mode-msg-label = طور تمحيص الأخطاء
 about-webrtc-debug-mode-off-state-label = ابدأ وضع التنقيح
@@ -106,6 +104,7 @@ about-webrtc-connection-closed = [ { $browser-id } | { $id } ] { $url } (أُغ�
 
 ##
 
+
 about-webrtc-local-candidate = مرشح محلي
 about-webrtc-remote-candidate = مرشح بعيد
 about-webrtc-raw-candidates-heading = كل المرشحين الخام
@@ -128,7 +127,6 @@ about-webrtc-encoder-label = المُرمِّز
 
 ##
 
-
 ## These are paths used for saving the about:webrtc page or log files so
 ## they can be attached to bug reports.
 ## Variables:
@@ -146,6 +144,7 @@ about-webrtc-aec-logging-off-state-msg = ملف السجل المأخوذ موج
 # Variables:
 #   $jitter (Number) - The jitter.
 about-webrtc-jitter-label = التقلقل { $jitter }
+
 # ICE candidates arriving after the remote answer arrives are considered trickled
 # (an attribute of an ICE candidate). These are highlighted in the ICE stats
 # table with light blue background.
@@ -153,6 +152,11 @@ about-webrtc-trickle-caption-msg = سيظهر المرشحون المتقاطر�
 
 ## "SDP" is an abbreviation for Session Description Protocol, an IETF standard.
 ## See http://wikipedia.org/wiki/Session_Description_Protocol
+
+
+##
+
+##
 
 
 ##

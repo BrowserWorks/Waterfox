@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -6,15 +6,15 @@
 <!ENTITY pref.locationBar.title                "Γραμμή διευθύνσεων">
 
 <!ENTITY autoComplete.label                    "Αυτόματη συμπλήρωση">
-<!ENTITY autoCompleteMatchHistory.label        "Αυτόματη πρόταση ιστοσελίδων από το ιστορικό">
+<!ENTITY autoCompleteMatchHistory.label        "Αυτόματη πρόταση ιστοτόπων από το ιστορικό">
 <!ENTITY autoCompleteMatchHistory.accesskey    "Α">
-<!ENTITY autoCompleteMatchBookmarks.label      "Αυτόματη πρόταση ιστοσελίδων από τους σελιδοδείκτες">
+<!ENTITY autoCompleteMatchBookmarks.label      "Αυτόματη πρόταση ιστοτόπων από τους σελιδοδείκτες">
 <!ENTITY autoCompleteMatchBookmarks.accesskey  "σ">
 <!ENTITY autoCompleteAutoFill.label            "Αυτόματη συμπλήρωση καλύτερης αντιστοιχίας">
 <!ENTITY autoCompleteAutoFill.accesskey        "υ">
 <!ENTITY autoCompleteShowPopup.label           "Εμφάνιση λίστας αποτελεσμάτων">
 <!ENTITY autoCompleteShowPopup.accesskey       "Ε">
-<!ENTITY autoCompleteMatchOnlyTyped.label      "Αντιστοίχιση μόνο των ιστοσελίδων που έχετε πληκτρολογήσει στο παρελθόν">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Αντιστοίχιση μόνο των ιστοτόπων που έχετε πληκτρολογήσει στο παρελθόν">
 <!ENTITY autoCompleteMatchOnlyTyped.accesskey  "χ">
 <!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
   part of the menulist items listed below, mainly to make the control available
@@ -30,7 +30,7 @@
 <!ENTITY showInternetSearch.accesskey          "φ">
 
 <!ENTITY formatting.label                      "Μορφοποίηση">
-<!ENTITY domainFormatting.label                "Επισήμανση αποδοτικού τομέα για ιστοσελίδες και διακομιστές FTP">
+<!ENTITY domainFormatting.label                "Επισήμανση αποδοτικού τομέα για ιστοτόπους και διακομιστές FTP">
 <!ENTITY domainFormatting.accesskey            "τ">
 <!ENTITY highlightSecure.label                 "Επισήμανση ιστοσελίδων με υψηλό επίπεδο ασφάλειας σύνδεσης">
 <!ENTITY highlightSecure.accesskey             "σ">

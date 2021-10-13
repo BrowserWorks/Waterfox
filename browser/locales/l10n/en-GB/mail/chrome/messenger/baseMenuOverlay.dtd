@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,13 +11,7 @@
 <!ENTITY helpMenuWin.accesskey "H">
 <!ENTITY aboutProduct2.label "About &brandShorterName;">
 <!ENTITY aboutProduct2.accesskey "A">
-<!ENTITY helpTroubleshootingInfo.label     "Troubleshooting Information">
-<!ENTITY helpTroubleshootingInfo.accesskey "T">
-<!ENTITY helpSafeMode.label     "Restart with Add-ons Disabled…">
-<!ENTITY helpSafeMode.accesskey "R">
 
-<!ENTITY helpSafeMode.stop.label     "Restart with Add-ons Enabled">
-<!ENTITY helpSafeMode.stop.accesskey "R">
 <!ENTITY productHelp.label "&brandShortName; Help">
 <!ENTITY productHelp.accesskey "H">
 <!ENTITY productHelp.commandkey "VK_F1">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,7 @@ privatebrowsingpage-open-private-window-label = プライベートウィンド�
 about-private-browsing-search-placeholder = ウェブ検索
 about-private-browsing-info-title = プライベートウィンドウです
 about-private-browsing-info-myths = プライベートブラウジングに共通する話題
-about-private-browsing =
+about-private-browsing-search-btn =
     .title = ウェブ検索
 # Variables
 #  $engine (String): the name of the user's default search engine
@@ -24,6 +24,12 @@ about-private-browsing-info-description = ブラウザーを終了するかプ�
 
 about-private-browsing-need-more-privacy = より厳重なプライバシーが必要ですか？
 about-private-browsing-turn-on-vpn = { -mozilla-vpn-brand-name } をお試しください
+
+about-private-browsing-info-description-simplified = { -brand-short-name } はプライベートウィンドウをすべて閉じると、検索履歴と閲覧履歴を消去しますが、匿名化されているわけではありません。
+about-private-browsing-learn-more-link = 詳細情報
+
+about-private-browsing-hide-activity = あなたの行動と訪問先のすべてを秘匿します
+about-private-browsing-prominent-cta = { -mozilla-vpn-brand-name } でプライバシーを確保
 
 # This string is the title for the banner for search engine selection
 # in a private window.

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -35,9 +35,7 @@ connection-proxy-http = Proxy HTTP
     .accesskey = H
 connection-proxy-http-port = Porta
     .accesskey = P
-connection-proxy-http-sharing =
-    .label = Utilizza questo proxy anche per FTP e HTTPS
-    .accesskey = c
+
 connection-proxy-https-sharing =
     .label = Utilizza questo proxy anche per HTTPS
     .accesskey = c
@@ -46,11 +44,6 @@ connection-proxy-https = Proxy HTTPS
     .accesskey = S
 connection-proxy-ssl-port = Porta
     .accesskey = o
-
-connection-proxy-ftp = Proxy FTP
-    .accesskey = F
-connection-proxy-ftp-port = Porta
-    .accesskey = r
 
 connection-proxy-socks = Host SOCKS
     .accesskey = K
@@ -68,7 +61,6 @@ connection-proxy-noproxy = Nessun proxy per
 
 connection-proxy-noproxy-desc = Esempio: .mozilla.org, .net.nz, 192.168.1.0/24
 
-connection-proxy-noproxy-localhost-desc = Le connessioni verso localhost, 127.0.0.1 e ::1 non usano mai proxy.
 connection-proxy-noproxy-localhost-desc-2 = Le connessioni verso localhost, 127.0.0.1/8 e ::1 non usano mai proxy.
 
 connection-proxy-autotype =

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -12,15 +12,15 @@
 
 <!-- LOCALIZATION NOTE (articleNotFound.desc): A longer description for the news
      error page. -->
-<!ENTITY articleNotFound.desc "Ο διακομιστής ομάδας συζήτησης αναφέρει ότι δεν μπορεί να βρει το άρθρο.">
+<!ENTITY articleNotFound.desc "Ο διακομιστής της ομάδας συζητήσεων αναφέρει ότι δεν μπορεί να βρει το άρθρο.">
 
 <!-- LOCALIZATION NOTE (serverResponded.title): A string preceding the text
      response from the newsgroup server describing the error. -->
-<!ENTITY serverResponded.title "Ο διακομιστής ομάδας συζήτησης αποκρίθηκε:">
+<!ENTITY serverResponded.title "Ο διακομιστής της ομάδας συζητήσεων απάντησε:">
 
 <!-- LOCALIZATION NOTE (articleExpired.title): A string explaining that the
      article may have expired. -->
-<!ENTITY articleExpired.title "Μήπως το άρθρο έχει λήξει;">
+<!ENTITY articleExpired.title "Μήπως έχει λήξει το άρθρο;">
 
 <!-- LOCALIZATION NOTE (trySearching.title): A string preceding the message's
      ID. -->

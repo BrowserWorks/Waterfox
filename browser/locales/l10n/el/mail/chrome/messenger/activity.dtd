@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,10 +8,10 @@ file names and tall enough to hint that there are more activities in the list --
 <!ENTITY window.width2                    "500">
 <!ENTITY window.height                    "310">
 
-<!ENTITY activity.title                  "Διαχείριση δραστηριότητας">
+<!ENTITY activity.title                  "Διαχείριση δραστηριοτήτων">
 
 <!ENTITY cmd.pause.label                  "Παύση">
-<!ENTITY cmd.pause.accesskey              "σ">
+<!ENTITY cmd.pause.accesskey              "Π">
 <!ENTITY cmd.resume.label                 "Συνέχεια">
 <!ENTITY cmd.resume.accesskey             "ν">
 <!ENTITY cmd.cancel.label                 "Ακύρωση">
@@ -28,9 +28,9 @@ file names and tall enough to hint that there are more activities in the list --
 <!ENTITY cmd.close.commandkey             "w">
 <!ENTITY cmd.close2.commandkey            "j">
 <!ENTITY cmd.close2Unix.commandkey        "y">
-<!ENTITY cmd.clearList.label              "Εκκαθάριση λίστας">
+<!ENTITY cmd.clearList.label              "Απαλοιφή λίστας">
 <!ENTITY cmd.clearList.tooltip            "Αφαιρεί ολοκληρωμένα, ακυρωμένα και αποτυχημένα στοιχεία από τη λίστα">
-<!ENTITY cmd.clearList.accesskey          "θ">
+<!ENTITY cmd.clearList.accesskey          "φ">
 <!ENTITY cmd.find.commandkey              "f">
 <!ENTITY cmd.search.commandkey            "k">
 

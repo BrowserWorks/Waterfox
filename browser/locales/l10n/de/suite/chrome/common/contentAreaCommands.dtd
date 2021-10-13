@@ -1,12 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- Context Menu -->
-<!ENTITY popupWindowRejectCmd.label     "Pop-up-Fenster von dieser Website ablehnen">
-<!ENTITY popupWindowRejectCmd.accesskey "P">
-<!ENTITY popupWindowAllowCmd.label      "Pop-up-Fenster von dieser Website erlauben">
-<!ENTITY popupWindowAllowCmd.accesskey  "P">
 <!ENTITY openLinkCmdInTab.label       "Link in neuem Tab öffnen">
 <!ENTITY openLinkCmdInTab.accesskey   "T">
 <!ENTITY openLinkCmd.label            "Link in neuem Fenster öffnen">
@@ -53,6 +49,8 @@
 <!ENTITY reloadImageCmd.accesskey     "r">
 <!ENTITY viewImageCmd.label           "Grafik anzeigen">
 <!ENTITY viewImageCmd.accesskey       "G">
+<!ENTITY viewImageInfoCmd.label       "Grafik Informationen anzeigen">
+<!ENTITY viewImageInfoCmd.accesskey   "f">
 <!ENTITY viewVideoCmd.label           "Video ansehen">
 <!ENTITY viewVideoCmd.accesskey       "o">
 <!ENTITY viewBGImageCmd.label         "Hintergrundgrafik anzeigen">
@@ -153,6 +151,16 @@ items are mutually exclusive. -->
 <!ENTITY spellDictionaries.accesskey    "S">
 <!ENTITY spellAddDictionaries.label     "Weitere Wörterbücher herunterladen…">
 <!ENTITY spellAddDictionaries.accesskey "e">
+
+<!ENTITY fillLoginMenu.label          "Zugangsdaten einfügen">
+<!ENTITY fillLoginMenu.accesskey      "Z">
+<!ENTITY fillPasswordMenu.label       "Passwort einfügen">
+<!ENTITY fillPasswordMenu.accesskey   "P">
+<!ENTITY fillUsernameMenu.label       "Benutzernamen einfügen">
+<!ENTITY fillUsernameMenu.accesskey   "B">
+<!ENTITY noLoginSuggestions.label     "(Keine Anmeldevorschläge)">
+<!ENTITY viewSavedLogins.label        "Gespeicherte Zugangsdaten ansehen">
+
 <!-- Developer Tools -->
 <!ENTITY devtoolsInspect.label          "Element inspizieren">
 <!ENTITY devtoolsInspect.accesskey      "n">

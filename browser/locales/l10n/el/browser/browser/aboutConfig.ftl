@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,14 +6,14 @@
 ## These strings appear on the warning you see when first visiting about:config.
 
 about-config-intro-warning-title = Συνεχίστε με προσοχή
-about-config-intro-warning-text = Η αλλαγή παραμέτρων των σύνθετων προτιμήσεων μπορεί να επηρεάσει την απόδοση ή την ασφάλεια του { -brand-short-name }.
+about-config-intro-warning-text = Η αλλαγή των σύνθετων προτιμήσεων μπορεί να επηρεάσει τις επιδόσεις ή την ασφάλεια του { -brand-short-name }.
 about-config-intro-warning-checkbox = Προειδοποίηση κατά την απόπειρα πρόσβασης σε αυτές τις προτιμήσεις
 about-config-intro-warning-button = Αποδοχή κινδύνου και συνέχεια
 
 ##
 
 # This is shown on the page before searching but after the warning is accepted.
-about-config-caution-text = Η αλλαγή αυτών των προτιμήσεων μπορεί να επηρεάσει την απόδοση ή την ασφάλεια του { -brand-short-name }.
+about-config-caution-text = Η αλλαγή αυτών των προτιμήσεων μπορεί να επηρεάσει τις επιδόσεις ή την ασφάλεια του { -brand-short-name }.
 about-config-page-title = Σύνθετες προτιμήσεις
 about-config-search-input1 =
     .placeholder = Αναζήτηση ονόματος προτίμησης

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -11,10 +11,12 @@
 # Placeholder text for tag input
 pocket-panel-saved-add-tags =
     .placeholder = أضف وسومًا
+
 pocket-panel-saved-error-generic = حدث عطل أثناء محاولة الحفظ في { -pocket-brand-name }.
 pocket-panel-saved-error-tag-length = أقصى طول للوسم ٢٥ حرفًا
 pocket-panel-saved-error-only-links = لا يمكن حفظ إلا الوصلات
 pocket-panel-saved-error-not-saved = لم تُحفظ الصفحة
+pocket-panel-saved-error-no-internet = يجب أن تكون متصلًا بالإنترنت للحفظ في { -pocket-brand-name }. رجاء اتصل بالإنترنت ثم أعِد المحاولة.
 pocket-panel-saved-page-removed = أزِيلت الصفحة
 pocket-panel-saved-page-saved = حُفِظت في { -pocket-brand-name }
 pocket-panel-saved-processing-remove = يُزيل الصفحة…
@@ -40,3 +42,8 @@ pocket-panel-signup-tagline-story-two = اعرض في { -pocket-brand-name } ع�
 
 ## about:pocket-home panel
 
+pocket-panel-home-my-list = قائمتي
+pocket-panel-home-welcome-back = مرحبا بعودتك
+pocket-panel-home-explore-popular-topics = استكشف المواضيع الشائعة
+pocket-panel-home-discover-more = اكتشف المزيد
+pocket-panel-home-explore-more = استكشف

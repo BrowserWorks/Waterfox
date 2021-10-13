@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -37,3 +37,6 @@
 
 <!ENTITY blockWebForgeries.label          "Bloquear sites avaliados como fraudulentos (roubo de dados)">
 <!ENTITY blockWebForgeries.accesskey      "r">
+
+<!ENTITY blockAutoRefresh.label           "Avisar quando sites tentarem redirecionar ou recarregar a página">
+<!ENTITY blockAutoRefresh.accesskey       "A">

@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "الخصائص">
 
 <!ENTITY generalInfo.label                       "معلومات عامة">
-<!ENTITY folderCharsetFallback2.label            "ترميز النص الاحتياطي:">
-<!ENTITY folderCharsetFallback2.accesskey        "ت">
-<!ENTITY folderCharsetEnforce2.label             "طبّق الترميز على كل الرسائل في المجلد (سيتجاهل إعدادات الترميز المستقلة لكل رسالة و كذلك الاكتشاف التلقائي)">
-<!ENTITY folderCharsetEnforce2.accesskey         "ط">
 <!ENTITY folderRebuildSummaryFileTip2.label      "أعد بناء فهرس ملف الملخص">
 <!ENTITY folderRebuildSummaryFile2.label         "أصلِح المجلد">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "ص">

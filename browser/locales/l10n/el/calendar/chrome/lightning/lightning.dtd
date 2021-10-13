@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -45,6 +45,10 @@
      - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Προς το παρόν, μπορείτε να το ενεργοποιήσετε μόνο αφού ρυθμίσετε αυτό το ημερολόγιο στο παράθυρο ιδιοτήτων, αν ο διακομιστής ημερολογίων διαχειρίζεται τον προγραμματισμό.">
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Η επιλογή είναι διαθέσιμη αν ο διακομιστής ημερολογίου διαχειρίζεται τον προγραμματισμό. Η ενεργοποίησή του θα επιτρέψει την εναλλακτική ο προγραμματισμός να γίνεται βάσει του ηλεκτρονικού ταχυδρομείου αντί να το αφήνει στον διακομιστή.">
+
+<!-- The notifications settings in the properties dialog -->
+<!ENTITY lightning.calendarproperties.notifications.label                   "Ειδοποιήσεις">
+<!ENTITY lightning.calendarproperties.globalNotifications.label             "Γενικές προτιμήσεις ειδοποιήσεων…">
 
 <!-- iMIP Bar (meeting support) -->
 <!ENTITY lightning.imipbar.btnAccept.label                                  "Αποδοχή">
@@ -105,6 +109,6 @@
 <!ENTITY todaypane.showMiniday.accesskey  "η">
 <!ENTITY todaypane.showNone.label "Τίποτα από τα δύο">
 <!ENTITY todaypane.showNone.accesskey "Τ">
-<!ENTITY todaypane.showTodayPane.label "Εμφάνιση παραθύρου ημέρας">
+<!ENTITY todaypane.showTodayPane.label "Εμφάνιση προβολής «Σήμερα»">
 <!ENTITY todaypane.showTodayPane.accesskey "π">
 <!ENTITY todaypane.statusButton.label "Προβολή ημέρας">

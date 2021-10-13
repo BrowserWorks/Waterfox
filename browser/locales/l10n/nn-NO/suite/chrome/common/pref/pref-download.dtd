@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -22,18 +22,9 @@
 <!ENTITY alwaysAsk.label                "Spør meg alltid om kvar filer skal lagrast">
 <!ENTITY alwaysAsk.accesskey            "S">
 
-<!ENTITY downloadHistory.label          "Nedlastingshistorikk">
-<!ENTITY removeEntries.label            "Fjern nedlastingsoppføringar">
-<!ENTITY removeEntries.accesskey        "F">
-<!ENTITY whenCompleted.label            "Når dei er fullførte">
-<!ENTITY whenQuittingApp.label          "Ved avslutning av &brandShortName;">
-<!ENTITY neverRemove.label              "Aldri">
-
 <!ENTITY finishedBehavior.label         "Når ei nedlasting fullfører">
 <!ENTITY playSound.label                "Spel av ein lyd">
 <!ENTITY playSound.accesskey            "S">
-<!ENTITY showAlert.label                "Vis eit varsel">
-<!ENTITY showAlert.accesskey            "v">
 <!ENTITY browse.label                   "Bla gjennom…">
 <!ENTITY browse.accesskey               "B">
 <!ENTITY playButton.label               "Spel av">

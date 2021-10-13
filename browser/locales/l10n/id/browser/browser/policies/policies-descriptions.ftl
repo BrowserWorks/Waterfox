@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -32,13 +32,12 @@ policy-DisableBuiltinPDFViewer = Nonaktifkan PDF.js, penampil PDF bawaan di { -b
 policy-DisableDefaultBrowserAgent = Cegah agen bawaan peramban untuk melakukan tindakan apapun. Hanya berlaku di Windows; platform lain tidak memiliki agen.
 policy-DisableDeveloperTools = Blokir akses ke alat pengembang.
 policy-DisableFeedbackCommands = Nonaktifkan perintah untuk mengirim umpan balik dari menu Bantuan (Kirim Saran dan Laporkan Situs Tipuan).
-policy-DisableFirefoxAccounts = Nonaktifkan layanan berbasis { -fxaccount-brand-name }, termasuk Sync.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Nonaktifkan fitur Firefox Screenshots.
-policy-DisableFirefoxStudies = Cegah { -brand-short-name } menjalankan kajian.
+policy-DisableWaterfoxAccounts = Nonaktifkan layanan berbasis { -fxaccount-brand-name }, termasuk Sync.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableWaterfoxScreenshots = Nonaktifkan fitur Waterfox Screenshots.
+policy-DisableWaterfoxStudies = Cegah { -brand-short-name } menjalankan kajian.
 policy-DisableForgetButton = Cegah akses ke tombol Lupakan.
 policy-DisableFormHistory = Jangan ingat riwayat pencarian dan formulir.
-policy-DisableMasterPasswordCreation = Jika ya, sandi utama tidak bisa dibuat.
 policy-DisablePrimaryPasswordCreation = Jika ya, Sandi Utama tidak bisa dibuat.
 policy-DisablePasswordReveal = Jangan izinkan untuk menampilkan kata sandi dalam info masuk tersimpan.
 policy-DisablePocket = Nonaktifkan fitur untuk menyimpan laman web ke Pocket.
@@ -65,7 +64,7 @@ policy-EncryptedMediaExtensions = Aktifkan atau nonaktifkan Ekstensi Media Teren
 policy-Extensions = Memasang, mencopot, atau mengunci ekstensi. Opsi Memasang membutuhkan parameter URL atau jalur. Opsi Mencopot dan Mengunci membutuhkan ID ekstensi.
 policy-ExtensionSettings = Kelola semua aspek pemasangan ekstensi.
 policy-ExtensionUpdate = Aktifkan atau nonaktifkan pembaruan ekstensi otomatis.
-policy-FirefoxHome = Atur Firefox Home.
+policy-WaterfoxHome = Atur Beranda Waterfox.
 policy-FlashPlugin = Izinkan atau tolak penggunaan plugin Flash.
 policy-Handlers = Konfigurasikan penanganan aplikasi baku.
 policy-HardwareAcceleration = Jika bernilai false, menonaktifkan akselerasi perangkat keras.
@@ -83,7 +82,6 @@ policy-LegacySameSiteCookieBehaviorEnabledForDomainList = Kembalikan ke perilaku
 
 policy-LocalFileLinks = Izinkan situs web tertentu untuk bertaut dengan berkas lokal.
 policy-ManagedBookmarks = Mengonfigurasi daftar markah yang dikelola oleh administrator yang tidak dapat diubah oleh pengguna.
-policy-MasterPassword = Membutuhkan atau mencegah penggunaan kata sandi utama.
 policy-ManualAppUpdateOnly = Izinkan pembaruan manual saja dan jangan beri tahu pengguna tentang pembaruan.
 policy-PrimaryPassword = Membutuhkan atau mencegah penggunaan Sandi Utama.
 policy-NetworkPrediction = Aktifkan atau nonaktifkan prediksi jaringan (DNS prefetching).
@@ -107,7 +105,7 @@ policy-SanitizeOnShutdown2 = Bersihkan data navigasi saat dimatikan
 policy-SearchBar = Setel lokasi bawaan untuk bilah pencarian. Pengguna masih diizinkan untuk mengubahsuainya.
 policy-SearchEngines = Konfigurasikan setelan mesin pencari. Kebijakan ini hanya tersedia dalam versi Extended Support Release (ESR).
 policy-SearchSuggestEnabled = Aktifkan atau nonaktifkan saran pencarian.
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = Pasang modul PKCS #11.
 policy-ShowHomeButton = Tampilkan tombol beranda pada bilah alat.
 policy-SSLVersionMax = Tetapkan versi SSL maksimum.

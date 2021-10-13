@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,8 +7,8 @@ privatebrowsingpage-open-private-window-label = Öppna ett privat fönster
 about-private-browsing-search-placeholder = Sök på nätet
 about-private-browsing-info-title = Du är i ett privat fönster
 about-private-browsing-info-myths = Vanliga myter om privat surfning
-about-private-browsing =
-    .title = Sök på nätet
+about-private-browsing-search-btn =
+    .title = Sök på webben
 # Variables
 #  $engine (String): the name of the user's default search engine
 about-private-browsing-handoff =
@@ -23,6 +23,13 @@ about-private-browsing-not-private = Du är för närvarande inte i ett privat f
 about-private-browsing-info-description = { -brand-short-name } rensar din sök- och surfhistorik när du avslutar appen eller stänger alla privata flikar och fönster. Även om det här inte gör dig anonym för webbplatser eller din internetleverantör, gör det det lättare att behålla det du gör online privat från någon annan som använder den här datorn.
 about-private-browsing-need-more-privacy = Behöver du mer integritet?
 about-private-browsing-turn-on-vpn = Prova { -mozilla-vpn-brand-name }
+about-private-browsing-info-description-private-window = Privat fönster: { -brand-short-name } rensar din sök- och surfhistorik när du stänger alla privata fönster. Detta gör dig inte anonym.
+about-private-browsing-info-description-simplified = { -brand-short-name } rensar din sök- och surfhistorik när du stänger alla privata fönster, men det gör dig inte anonym.
+about-private-browsing-learn-more-link = Läs mer
+about-private-browsing-hide-activity = Dölj din aktivitet och plats, var du än surfar
+about-private-browsing-get-privacy = Få integritetsskydd överallt där du surfar
+about-private-browsing-hide-activity-1 = Dölj surfaktivitet och plats med { -mozilla-vpn-brand-name }. Ett klick skapar en säker anslutning, även på offentligt Wi-Fi.
+about-private-browsing-prominent-cta = Håll dig privat med { -mozilla-vpn-brand-name }
 # This string is the title for the banner for search engine selection
 # in a private window.
 # Variables:

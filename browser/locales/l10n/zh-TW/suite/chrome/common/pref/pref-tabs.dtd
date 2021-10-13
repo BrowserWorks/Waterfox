@@ -1,27 +1,24 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY tabHeader.label "分頁瀏覽">
 
 <!ENTITY tabDisplay.label "分頁顯示">
-<!ENTITY autoHide.label "只有一個分頁時自動隱藏分頁工具列">
+<!ENTITY autoHide.label "只開啟一個分頁時自動隱藏分頁列">
 <!ENTITY autoHide.accesskey2 "e">
 <!ENTITY background.label "在背景載入鏈結">
 <!ENTITY background.accesskey "S">
+<!ENTITY diverted.label "點擊跳轉鏈結開啟分頁時，切換到新開的分頁">
+<!ENTITY diverted.accesskey "a">
+<!ENTITY browserFocus.label "於其他應用程式開啟鏈結時，將瀏覽器視窗拉到最上層">
+<!ENTITY browserFocus.accesskey "F">
 <!ENTITY warnOnClose.label "關閉瀏覽器時若還有多個分頁請通知我">
 <!ENTITY warnOnClose.accesskey "W">
 <!ENTITY relatedAfterCurrent.label "將相關分頁開啟於目前分頁之後">
 <!ENTITY relatedAfterCurrent.accesskey "O">
 
-<!ENTITY loadGroup.label "開啟書籤群組時">
-<!ENTITY loadGroupAppend.label "新增分頁">
-<!ENTITY loadGroupAppend.accesskey "A">
-<!ENTITY loadGroupReplace.label "取代已有分頁">
-<!ENTITY loadGroupReplace.accesskey "R">
-
 <!ENTITY openTabs.label "在下列情形開啟至分頁而非新視窗:">
-
 <!ENTITY middleClick.label "在網頁的鏈結上按中鍵、壓住 Ctrl 按左鍵，或是 Ctrl+Enter">
 <!ENTITY middleClick.accesskey "M">
 <!ENTITY middleClickMac.label "在網頁的鏈結上按滑鼠中鍵、&#8984;+滑鼠左鍵或 &#8984;+Return">

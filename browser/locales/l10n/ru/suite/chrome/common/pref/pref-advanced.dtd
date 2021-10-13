@@ -1,18 +1,28 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
 <!ENTITY pref.advanced.title              "Дополнительно">
 
-<!ENTITY systemPref.caption               "Системные настройки">
-<!ENTITY systemPrefCheck.label            "Использовать настройки системы">
-<!ENTITY systemPrefCheck.accesskey        "с">
-<!ENTITY systemPref.desc                  "С этой опцией, &brandShortName; будет использовать системные настройки. Эти системные настройки будут перекрывать параметры &brandShortName;.">
-
 <!ENTITY prefCheckDefault.caption         "Интеграция с системой">
 <!ENTITY prefCheckDefaultClient.label     "Проверять при запуске параметры приложений по умолчанию">
 <!ENTITY prefCheckDefaultClient.accesskey "в">
+
+<!ENTITY defaultClientFor.description     "Установить &brandShortName; как приложение по умолчанию для:">
+<!ENTITY setDefaultBrowser.label          "Браузера">
+<!ENTITY setDefaultBrowser.accesskey      "з">
+<!ENTITY setDefaultMail.label             "Почты">
+<!ENTITY setDefaultMail.accesskey         "ч">
+<!ENTITY setDefaultNews.label             "Конференций">
+<!ENTITY setDefaultNews.accesskey         "н">
+<!ENTITY setDefaultFeed.label             "Лент новостей">
+<!ENTITY setDefaultFeed.accesskey         "в">
+<!ENTITY useInternalSettings.description  "Использовать Почту и Новости &brandShortName; при открытии в браузере ссылок на:">
+<!ENTITY useInternalMail.label            "Почту (mailto:)">
+<!ENTITY useInternalMail.accesskey        "ч">
+<!ENTITY useInternalNews.label            "Новости (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "в">
 
 <!ENTITY printing.label                   "Печать">
 <!ENTITY useNativePrintDialog.label       "Использовать системный диалог печати (если поддерживается)">

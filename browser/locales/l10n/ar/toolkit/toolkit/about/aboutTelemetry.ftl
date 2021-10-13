@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,8 +16,8 @@ about-telemetry-previous-ping = >>
 about-telemetry-next-ping = <<
 about-telemetry-page-title = البيانات المُؤقتة
 about-telemetry-more-information = هل تبحث عن معلومات إضافية؟
-about-telemetry-firefox-data-doc = تجد في <a data-l10n-name="data-doc-link">توثيق بيانات Firefox</a> أدلّة تُخبرك بكيف تعمل مع أدوات البيانات التي نقدّمها.
-about-telemetry-show-in-Firefox-json-viewer = افتح في عارض JSON
+about-telemetry-firefox-data-doc = تجد في <a data-l10n-name="data-doc-link">توثيق بيانات Waterfox</a> أدلّة تُخبرك بكيف تعمل مع أدوات البيانات التي نقدّمها.
+about-telemetry-show-in-Waterfox-json-viewer = افتح في عارض JSON
 about-telemetry-home-section = البداية
 about-telemetry-general-data-section = بيانات عامة
 about-telemetry-environment-data-section = بيانات البيئة
@@ -54,7 +54,7 @@ about-telemetry-upload-type =
        *[disabled] معطّل
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
 about-telemetry-page-subtitle = تظهر هذه الصفحة معلومات عن الأداء، و العتاد، و الاستخدام، و التخصيصات التي جمعتها أداة تليمتري. تُرسل هذه المعلومات إلى { $telemetryServerOwner } للمساعدة في تحسين { -brand-full-name }.
 about-telemetry-settings-explanation = يجمع تيليمتري { about-telemetry-data-type } و الرفع <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
 # Variables:

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,16 +8,12 @@ page-subtitle =
     rozwiązywania problemów. Jeśli szukasz odpowiedzi na często zadawane pytania
     dotyczące programu { -brand-short-name }, sprawdź naszą <a data-l10n-name="support-link">stronę wsparcia
     technicznego</a>.
+
 crashes-title = Zgłoszenia awarii
 crashes-id = ID zgłoszenia
 crashes-send-date = Data przesłania
 crashes-all-reports = Wszystkie zgłoszenia awarii
 crashes-no-config = Ten program nie został skonfigurowany do wyświetlania zgłoszeń awarii.
-extensions-title = Rozszerzenia
-extensions-name = Nazwa
-extensions-enabled = Włączone
-extensions-version = Wersja
-extensions-id = ID
 support-addons-title = Dodatki
 support-addons-name = Nazwa
 support-addons-type = Typ
@@ -63,12 +59,14 @@ app-basics-enabled-plugins = Włączone wtyczki
 app-basics-build-config = Konfiguracja kompilacji
 app-basics-user-agent = Identyfikator programu
 app-basics-os = System operacyjny
+app-basics-os-theme = Motyw systemu operacyjnego
 # Rosetta is Apple's translation process to run apps containing x86_64
 # instructions on Apple Silicon. This should remain in English.
 app-basics-rosetta = Używa systemu Rosetta
 app-basics-memory-use = Zużycie pamięci
 app-basics-performance = Wydajność
 app-basics-service-workers = Zarejestrowane wątki usługowe
+app-basics-third-party = Moduły zewnętrzne
 app-basics-profiles = Profile
 app-basics-launcher-process-status = Proces uruchamiający
 app-basics-multi-process-support = Okna wieloprocesowe
@@ -132,8 +130,6 @@ sandbox-sys-call-tid = TID
 sandbox-sys-call-proc-type = Typ procesu
 sandbox-sys-call-number = Wywołanie systemowe
 sandbox-sys-call-args = Parametry
-safe-mode-title = Tryb awaryjny
-restart-in-safe-mode-label = Uruchom ponownie z wyłączonymi dodatkami…
 troubleshoot-mode-title = Diagnozuj problemy
 restart-in-troubleshoot-mode-label = Tryb rozwiązywania problemów…
 clear-startup-cache-title = Spróbuj wyczyścić pamięć podręczną uruchamiania
@@ -178,7 +174,7 @@ intl-regional-prefs = Preferencje regionalne
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.
@@ -191,36 +187,6 @@ remote-debugging-url = Adres URL
 
 ##
 
-support-third-party-modules-title = Moduły zewnętrzne
-support-third-party-modules-module = Plik modułu
-support-third-party-modules-version = Wersja pliku
-support-third-party-modules-vendor = Informacje o dostawcy
-support-third-party-modules-occurrence = Liczba wystąpień
-support-third-party-modules-process = Typ i ID procesu
-support-third-party-modules-thread = Wątek
-support-third-party-modules-base = Adres ImageBase
-support-third-party-modules-uptime = Czas działania procesu (ms)
-support-third-party-modules-duration = Czas wczytywania (ms)
-support-third-party-modules-status = Stan
-support-third-party-modules-status-loaded = Wczytany
-support-third-party-modules-status-blocked = Zablokowany
-support-third-party-modules-status-redirected = Przekierowany
-support-third-party-modules-empty = Nie wczytano żadnych modułów zewnętrznych.
-support-third-party-modules-no-value = (Brak wartości)
-support-third-party-modules-button-open =
-    .title = Otwórz położenie pliku…
-support-third-party-modules-expand =
-    .title = Wyświetl szczegółowe informacje
-support-third-party-modules-collapse =
-    .title = Zwiń szczegółowe informacje
-support-third-party-modules-unsigned-icon =
-    .title = Ten moduł nie jest podpisany
-support-third-party-modules-folder-icon =
-    .title = Otwórz położenie pliku…
-support-third-party-modules-down-icon =
-    .title = Wyświetl szczegółowe informacje
-support-third-party-modules-up-icon =
-    .title = Zwiń szczegółowe informacje
 # Variables
 # $days (Integer) - Number of days of crashes to log
 report-crash-for-days =
@@ -229,6 +195,7 @@ report-crash-for-days =
         [few] Zgłoszenia awarii z ostatnich { $days } dni
        *[many] Zgłoszenia awarii z ostatnich { $days } dni
     }
+
 # Variables
 # $minutes (integer) - Number of minutes since crash
 crashes-time-minutes =
@@ -237,6 +204,7 @@ crashes-time-minutes =
         [few] { $minutes } minuty temu
        *[many] { $minutes } minut temu
     }
+
 # Variables
 # $hours (integer) - Number of hours since crash
 crashes-time-hours =
@@ -245,6 +213,7 @@ crashes-time-hours =
         [few] { $hours } godziny temu
        *[many] { $hours } godzin temu
     }
+
 # Variables
 # $days (integer) - Number of days since crash
 crashes-time-days =
@@ -253,6 +222,7 @@ crashes-time-days =
         [few] { $days } dni temu
        *[many] { $days } dni temu
     }
+
 # Variables
 # $reports (integer) - Number of pending reports
 pending-reports =
@@ -261,6 +231,7 @@ pending-reports =
         [few] Wszystkie zgłoszenia awarii (łącznie z { $reports } oczekującymi we wskazanym okresie)
        *[many] Wszystkie zgłoszenia awarii (łącznie z { $reports } oczekującymi we wskazanym okresie)
     }
+
 raw-data-copied = Nieprzetworzone dane skopiowane do schowka
 text-copied = Tekst skopiowany do schowka.
 
@@ -273,9 +244,11 @@ blocked-mismatched-version = Zablokowane z powodu różnicy wersji pomiędzy re
 # Variables
 # $driverVersion - The graphics driver version string
 try-newer-driver = Zablokowane dla zainstalowanej wersji sterownika grafiki. Zalecana jest aktualizacja sterownika do wersji { $driverVersion } lub nowszej.
+
 # "ClearType" is a proper noun and should not be translated. Feel free to leave English strings if
 # there are no good translations, these are only used in about:support
 clear-type-parameters = Parametry ClearType
+
 compositing = Komponowanie
 hardware-h264 = Sprzętowe dekodowanie H.264
 main-thread-no-omtc = główny wątek, brak OMTC
@@ -290,6 +263,7 @@ virtual-monitor-disp = Wirtualny monitor
 
 found = Obecny
 missing = Brak
+
 gpu-process-pid = PID procesu GPU
 gpu-process = Proces GPU
 gpu-description = Opis
@@ -312,21 +286,19 @@ webgl2-renderer = Renderer sterownika WebGL 2
 webgl2-version = Wersja sterownika WebGL 2
 webgl2-driver-extensions = Rozszerzenia sterownika WebGL 2
 webgl2-extensions = Rozszerzenia WebGL 2
-blocklisted-bug = Zablokowano z powodu znanych problemów
-# Variables
-# $bugNumber (string) - String of bug number from Bugzilla
-bug-link = zgłoszenie { $bugNumber }
+
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = Zablokowano z powodu znanych problemów: <a data-l10n-name="bug-link">zgłoszenie { $bugNumber }</a>
+
 # Variables
 # $failureCode (string) - String that can be searched in the source tree.
 unknown-failure = Zablokowano. Kod błędu: { $failureCode }
+
 d3d11layers-crash-guard = Kompozytor D3D11
-d3d11video-crash-guard = Dekoder wideo D3D11
-d3d9video-crash-guard = Dekoder wideo D3D9
 glcontext-crash-guard = OpenGL
 wmfvpxvideo-crash-guard = Dekoder wideo WMF VPX
+
 reset-on-next-restart = Spróbuj włączyć przy następnym uruchomieniu
 gpu-process-kill-button = Zakończ proces GPU
 gpu-device-reset = Reset urządzenia
@@ -336,8 +308,10 @@ content-uses-tiling = Używa kafelkowania (treść)
 off-main-thread-paint-enabled = Rysowanie poza głównym wątkiem
 off-main-thread-paint-worker-count = Wątki rysujące poza głównym
 target-frame-rate = Docelowa liczba klatek na sekundę
+
 min-lib-versions = Oczekiwana wersja minimalna
 loaded-lib-versions = Wersja w użyciu
+
 has-seccomp-bpf = Seccomp-BPF (filtrowanie wywołań systemowych)
 has-seccomp-tsync = Synchronizacja wątków Seccomp
 has-user-namespaces = Przestrzenie nazw użytkownika
@@ -351,27 +325,22 @@ sandbox-proc-type-content = zawartość
 sandbox-proc-type-file = zawartość pliku
 sandbox-proc-type-media-plugin = wtyczka
 sandbox-proc-type-data-decoder = dekoder danych
+
 startup-cache-title = Pamięć podręczna uruchamiania
 startup-cache-disk-cache-path = Ścieżka do pamięci podręcznej na dysku
 startup-cache-ignore-disk-cache = Ignorowanie pamięci podręcznej na dysku
 startup-cache-found-disk-cache-on-init = Odnaleziono pamięć podręczną na dysku podczas inicjacji
 startup-cache-wrote-to-disk-cache = Zapisano do pamięci podręcznej na dysku
+
 launcher-process-status-0 = włączony
 launcher-process-status-1 = wyłączony z powodu awarii
 launcher-process-status-2 = wymuszone wyłączenie
 launcher-process-status-unknown = nieznany stan
+
 # Variables
 # $remoteWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows
 multi-process-windows = { $remoteWindows }/{ $totalWindows }
-multi-process-status-0 = włączone przez użytkownika
-multi-process-status-1 = włączone domyślnie
-multi-process-status-2 = wyłączone
-multi-process-status-4 = wyłączone przez usługi ułatwień dostępu
-multi-process-status-6 = wyłączone ze względu na nieobsługiwaną metodę wprowadzania
-multi-process-status-7 = wyłączone przez dodatki
-multi-process-status-8 = wymuszone wyłączenie
-multi-process-status-unknown = nieznany stan
 # Variables
 # $fissionWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows
@@ -386,6 +355,8 @@ fission-status-disabled-by-default = wyłączone domyślnie
 fission-status-enabled-by-user-pref = włączone przez użytkownika
 fission-status-disabled-by-user-pref = wyłączone przez użytkownika
 fission-status-disabled-by-e10s-other = e10s jest wyłączone
+fission-status-enabled-by-rollout = włączone przez stopniowe wdrażanie
+
 async-pan-zoom = Asynchroniczne przewijanie/powiększanie
 apz-none = brak
 wheel-enabled = kółko
@@ -422,6 +393,7 @@ support-remote-experiments-title = Zdalne eksperymenty
 support-remote-experiments-name = Nazwa
 support-remote-experiments-branch = Gałąź eksperymentu
 support-remote-experiments-see-about-studies = <a data-l10n-name="support-about-studies-link">about:studies</a> zawiera więcej informacji, w tym jak wyłączyć poszczególne eksperymenty lub uniemożliwić programowi { -brand-short-name } przeprowadzanie tego typu eksperymentów w przyszłości.
+
 support-remote-features-title = Zdalne funkcje
 support-remote-features-name = Nazwa
 support-remote-features-status = Stan

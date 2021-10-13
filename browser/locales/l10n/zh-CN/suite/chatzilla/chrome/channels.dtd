@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -22,9 +22,10 @@
 <!ENTITY maxusers.label     "最大用户数：">
 <!ENTITY maxusers.accesskey "x">
 
-<!ENTITY refresh.label     "立即刷新">
-<!ENTITY refresh.accesskey "">
+<!ENTITY refreshNow.label     "立即刷新">
+<!ENTITY refreshNow.accesskey "R">
 
+<!ENTITY network.hint.label "输入任何网络或服务器名称（可包含端口），以及要加入的频道名称。">
 
 <!ENTITY col.network "网络">
 <!ENTITY col.name  "名称">

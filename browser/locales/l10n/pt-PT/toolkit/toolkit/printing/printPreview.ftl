@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,6 +38,7 @@ printpreview-page-setup =
 printpreview-page =
     .value = Página:
     .accesskey = P
+
 # Variables
 # $sheetNum (integer) - The current sheet number
 # $sheetCount (integer) - The total number of sheets to print
@@ -61,6 +62,7 @@ printpreview-nextarrow =
 printpreview-endarrow =
     .label = { $arrow }
     .tooltiptext = Última página
+
 printpreview-homearrow-button =
     .title = Primeira página
 printpreview-previousarrow-button =

@@ -1,14 +1,20 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- extracted from content/pref-fonts.xul -->
+
 <!ENTITY pref.fonts.title "Caratteri">
+
 <!ENTITY language.label "Caratteri per la codifica:">
 <!ENTITY language.accesskey "C">
+
 <!ENTITY typefaces.label "Carattere visualizzato">
 <!ENTITY sizes.label "Dimensione (pixel)">
+
 <!ENTITY proportional.label "Proporzionale:">
 <!ENTITY proportional.accesskey "P">
+
 <!ENTITY serif.label "Con grazie:">
 <!ENTITY serif.accesskey "z">
 <!ENTITY sans-serif.label "Senza grazie:">
@@ -19,6 +25,7 @@
 <!ENTITY fantasy.accesskey "F">
 <!ENTITY cursive.label "Corsivo:">
 <!ENTITY cursive.accesskey "o">
+
 <!ENTITY font.langGroup.latin "Latino">
 <!ENTITY font.langGroup.japanese "Giapponese">
 <!ENTITY font.langGroup.trad-chinese "Cinese Tradizionale(Taiwan)">
@@ -51,10 +58,15 @@
 <!ENTITY minSize.label "Dimensione minima caratteri:">
 <!ENTITY minSize.accesskey "D">
 <!ENTITY minSize.none "Nessuna">
+
 <!ENTITY useDefaultFontSerif.label "Con grazie">
 <!ENTITY useDefaultFontSansSerif.label "Senza grazie">
+
 <!ENTITY useDocumentFonts.label "Permetti ai documenti di utilizzare i propri caratteri">
 <!ENTITY useDocumentFonts.accesskey "n">
+
+<!-- leaving this stuff in for now -->
+
 <!ENTITY header2 "Quando una pagina web specifica i propri caratteri">
 <!ENTITY useDefaultFont.label "Utilizza i caratteri selezionati, ignorando i caratteri specificati dalla pagina">
 <!ENTITY useDefaultFont.accesskey "U">

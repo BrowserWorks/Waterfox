@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,7 +26,7 @@ accessibility-best-practices =
 ## that describe that currently selected accessible object has an accessibility issue
 ## with its text label or accessible name.
 
-accessibility-text-label-issue-area = Используйте атрибут <code>alt</code для задания альтернативного текста для элементов <div>area</div> с атрибутом <span>href</span>. <a>Подробнее</a>
+accessibility-text-label-issue-area = Используйте атрибут <code>alt</code> для задания альтернативного текста для элементов <div>area</div> с атрибутом <span>href</span>. <a>Подробнее</a>
 
 accessibility-text-label-issue-dialog = Элементы dialog должны иметь альтернативный текст. <a>Подробнее</a>
 

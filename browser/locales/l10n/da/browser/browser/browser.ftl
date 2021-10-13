@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Waterfox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - Waterfox
+# private - "Waterfox Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Waterfox"
-# "private" - "Mozilla Firefox — (Private Browsing)"
+# "default" - Waterfox
+# "private" - "Waterfox Waterfox — (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -87,6 +87,10 @@ urlbar-plugins-notification-anchor =
     .tooltiptext = Administrer brug af plugins
 urlbar-web-rtc-share-devices-notification-anchor =
     .tooltiptext = Administrer deling af dit kamera og/eller mikrofon med webstedet
+# "Speakers" is used in a general sense that might include headphones or
+# another audio output connection.
+urlbar-web-rtc-share-speaker-notification-anchor =
+    .tooltiptext = Håndter deling af andre højttalere med webstedet
 urlbar-autoplay-notification-anchor =
     .tooltiptext = Åbn panelet for automatisk afspilning
 urlbar-persistent-storage-notification-anchor =
@@ -156,59 +160,10 @@ urlbar-star-add-bookmark =
 
 ## Page Action Context Menu
 
-page-action-add-to-urlbar =
-    .label = Føj til adressefeltet
 page-action-manage-extension =
     .label = Håndter udvidelse…
-page-action-remove-from-urlbar =
-    .label = Fjern fra adressefeltet
 page-action-remove-extension =
     .label = Fjern udvidelse
-
-## Page Action menu
-
-# Variables
-# $tabCount (integer) - Number of tabs selected
-page-action-send-tabs-panel =
-    .label =
-        { $tabCount ->
-            [one] Send faneblad til enhed
-           *[other] Send { $tabCount } faneblade til enhed
-        }
-page-action-send-tabs-urlbar =
-    .tooltiptext =
-        { $tabCount ->
-            [one] Send faneblad til enhed
-           *[other] Send { $tabCount } faneblade til enhed
-        }
-page-action-copy-url-panel =
-    .label = Kopier link
-page-action-copy-url-urlbar =
-    .tooltiptext = Kopier link
-page-action-email-link-panel =
-    .label = Send link…
-page-action-email-link-urlbar =
-    .tooltiptext = Send link…
-page-action-share-url-panel =
-    .label = Del
-page-action-share-url-urlbar =
-    .tooltiptext = Del
-page-action-share-more-panel =
-    .label = Mere…
-page-action-send-tab-not-ready =
-    .label = Synkroniserer enheder…
-# "Pin" is being used as a metaphor for expressing the fact that these tabs
-# are "pinned" to the left edge of the tabstrip. Really we just want the
-# string to express the idea that this is a lightweight and reversible
-# action that keeps your tab where you can reach it easily.
-page-action-pin-tab-panel =
-    .label = Fastgør faneblad
-page-action-pin-tab-urlbar =
-    .tooltiptext = Fastgør faneblad
-page-action-unpin-tab-panel =
-    .label = Frigør faneblad
-page-action-unpin-tab-urlbar =
-    .tooltiptext = Frigør faneblad
 
 ## Auto-hide Context Menu
 
@@ -224,10 +179,6 @@ full-screen-exit =
 # This string prompts the user to use the list of search shortcuts in
 # the Urlbar and searchbar.
 search-one-offs-with-title = Søg denne gang med:
-# This string won't wrap, so if the translated string is longer,
-# consider translating it as if it said only "Search Settings".
-search-one-offs-change-settings-button =
-    .label = Skift søgeindstillinger
 search-one-offs-change-settings-compact-button =
     .tooltiptext = Skift søgeindstillinger
 search-one-offs-context-open-new-tab =
@@ -291,8 +242,6 @@ bookmark-panel-remove =
 bookmark-panel-show-editor-checkbox =
     .label = Vis editor, når der gemmes
     .accesskey = V
-bookmark-panel-done-button =
-    .label = Færdig
 bookmark-panel-save-button =
     .label = Gem
 # Width of the bookmark panel.
@@ -317,13 +266,11 @@ identity-connection-internal = Dette er en sikker { -brand-short-name }-side.
 identity-connection-file = Denne side er gemt på din computer.
 identity-extension-page = Denne side er indlæst fra en udvidelse.
 identity-active-blocked = { -brand-short-name } har blokeret usikre dele af denne side.
-identity-custom-root = Forbindelsen blev bekræftet af en certifikatudsteder, som Mozilla ikke kender.
+identity-custom-root = Forbindelsen blev bekræftet af en certifikatudsteder, som Waterfox ikke kender.
 identity-passive-loaded = Dele af denne side (såsom billeder) er ikke sikre.
 identity-active-loaded = Du har slået beskyttelse fra på denne side.
 identity-weak-encryption = Denne side bruger svag kryptering.
 identity-insecure-login-forms = Logins foretaget på denne side kan blive kompromitteret.
-identity-permissions =
-    .value = Tilladelser
 identity-https-only-connection-upgraded = (opgraderet til HTTPS)
 identity-https-only-label = Tilstanden Kun-HTTPS
 identity-https-only-dropdown-on =
@@ -339,13 +286,12 @@ identity-permissions-storage-access-header = Cookies på tværs af websteder
 identity-permissions-storage-access-hint = Disse parter kan anvende webstedsdata og cookies på tværs af websteder, mens du besøger dette websted.
 identity-permissions-storage-access-learn-more = Læs mere
 identity-permissions-reload-hint = Du skal muligvis genindlæse siden, før at ændringerne slår igennem.
-identity-permissions-empty = Du har ikke tildelt dette websted nogen særlige tilladelser.
 identity-clear-site-data =
     .label = Ryd cookies og webstedsdata…
 identity-connection-not-secure-security-view = Din forbindelse til webstedet er ikke sikker.
 identity-connection-verified = Din forbindelse til dette websted er sikker.
 identity-ev-owner-label = Certifikatet er udstedt til:
-identity-description-custom-root = Mozilla kender ikke udstederen af dette certifikat. Det kan være tilføjet af dit styresystem eller en administrator. <label data-l10n-name="link">Læs mere</label>
+identity-description-custom-root = Waterfox kender ikke udstederen af dette certifikat. Det kan være tilføjet af dit styresystem eller en administrator. <label data-l10n-name="link">Læs mere</label>
 identity-remove-cert-exception =
     .label = Fjern undtagelser
     .accesskey = F
@@ -424,12 +370,6 @@ bookmarks-toolbar-empty-message = Få hurtig adgang til dine bogmærker ved at p
 
 ## WebRTC Pop-up notifications
 
-popup-select-camera =
-    .value = Kamera til deling:
-    .accesskey = K
-popup-select-microphone =
-    .value = Mikrofon til deling:
-    .accesskey = M
 popup-select-camera-device =
     .value = Kamera:
     .accesskey = K
@@ -440,15 +380,9 @@ popup-select-microphone-device =
     .accesskey = M
 popup-select-microphone-icon =
     .tooltiptext = Mikrofon
+popup-select-speaker-icon =
+    .tooltiptext = Højttalere
 popup-all-windows-shared = Alle synlige vinduer på din skærm vil blive delt.
-popup-screen-sharing-not-now =
-    .label = Ikke nu
-    .accesskey = n
-popup-screen-sharing-never =
-    .label = Tillad aldrig
-    .accesskey = a
-popup-silence-notifications-checkbox = Deaktiver beskeder fra { -brand-short-name } ved deling
-popup-silence-notifications-checkbox-warning = { -brand-short-name } vil ikke vise beskeder, når du deler
 popup-screen-sharing-block =
     .label = Bloker
     .accesskey = B
@@ -472,8 +406,6 @@ enable-devtools-popup-description = For at bruge F12 som genvej skal du først �
 
 ## URL Bar
 
-urlbar-default-placeholder =
-    .defaultPlaceholder = Søg eller indtast en adresse
 # This placeholder is used when not in search mode and the user's default search
 # engine is unknown.
 urlbar-placeholder =
@@ -510,8 +442,6 @@ urlbar-placeholder-search-mode-other-tabs =
 #  $name (String): the name of the user's default search engine
 urlbar-placeholder-with-name =
     .placeholder = Søg med { $name } eller indtast en adresse
-urlbar-remote-control-notification-anchor =
-    .tooltiptext = Browseren fjernstyres
 # Variables
 #  $component (String): the name of the component which forces remote control.
 #    Example: "DevTools", "Marionette", "RemoteAgent".
@@ -528,8 +458,6 @@ urlbar-go-button =
     .tooltiptext = Gå til adressen i adressefeltet
 urlbar-page-action-button =
     .tooltiptext = Sidehandlinger
-urlbar-pocket-button =
-    .tooltiptext = Gem til { -pocket-brand-name }
 
 ## Action text shown in urlbar results, usually appended after the search
 ## string or the url, like "result value - action text".
@@ -586,6 +514,19 @@ urlbar-result-action-search-bookmarks = Søg i bogmærker
 urlbar-result-action-search-history = Søg i historik
 urlbar-result-action-search-tabs = Søg i faneblade
 
+## Labels shown above groups of urlbar results
+
+# A label shown above the "Waterfox Suggest" (bookmarks/history) group in the
+# urlbar results.
+urlbar-group-firefox-suggest =
+    .label = { -firefox-suggest-brand-name }
+# A label shown above the search suggestions group in the urlbar results. It
+# should use title case.
+# Variables
+#  $engine (String): the name of the search engine providing the suggestions
+urlbar-group-search-suggestions =
+    .label = Forslag fra { $engine }
+
 ## Full Screen and Pointer Lock UI
 
 # Please ensure that the domain stays in the `<span data-l10n-name="domain">` markup.
@@ -605,6 +546,10 @@ pointerlock-warning-no-domain = Dette dokument kontrollerer din markør. Tryk Es
 ## Subframe crash notification
 
 crashed-subframe-message = <strong>En del af denne side gik ned</strong>. Indsend en rapport for at fortælle { -brand-product-name } om dette problem, så det hurtigere kan blive løst.
+# The string for crashed-subframe-title.title should match crashed-subframe-message,
+# but without any markup.
+crashed-subframe-title =
+    .title = Dele af denne side gik ned. Indsend en rapport for at fortælle { -brand-product-name } om dette problem, så det hurtigere kan blive løst.
 crashed-subframe-learnmore-link =
     .value = Læs mere
 crashed-subframe-submit =
@@ -688,6 +633,9 @@ save-to-pocket-button =
 
 ## Repair text encoding toolbar button
 
+repair-text-encoding-button =
+    .label = Reparer tegnkodning
+    .tooltiptext = Fastlæg den korrekte tekstkodning ud fra meddelelsens indhold
 
 ## Customize Toolbar Buttons
 
@@ -711,6 +659,30 @@ toolbar-settings-button =
 more-menu-go-offline =
     .label = Arbejd offline
     .accesskey = o
+toolbar-overflow-customize-button =
+    .label = Tilpas værktøjslinje…
+    .accesskey = T
+toolbar-button-email-link =
+    .label = Send link
+    .tooltiptext = Send link til siden i en mail…
+# Variables:
+#  $shortcut (String): keyboard shortcut to save a copy of the page
+toolbar-button-save-page =
+    .label = Gem side
+    .tooltiptext = Gem denne side ({ $shortcut })
+# Variables:
+#  $shortcut (String): keyboard shortcut to open a local file
+toolbar-button-open-file =
+    .label = Åbn fil
+    .tooltiptext = Åbn en fil ({ $shortcut })
+toolbar-button-synced-tabs =
+    .label = Synkroniserede faneblade
+    .tooltiptext = Vis faneblade fra dine andre enheder
+# Variables
+# $shortcut (string) - Keyboard shortcut to open a new private browsing window
+toolbar-button-new-private-window =
+    .label = Nyt privat vindue
+    .tooltiptext = Åbn et nyt vindue til privat browsing ({ $shortcut })
 
 ## EME notification panel
 
@@ -737,3 +709,77 @@ addon-removal-abuse-report-checkbox = Rapporter denne udvidelse til { -vendor-sh
 remote-tabs-manage-account =
     .label = Håndter konto
 remote-tabs-sync-now = Synkroniser nu
+
+##
+
+# "More" item in macOS share menu
+menu-share-more =
+    .label = Mere…
+ui-tour-info-panel-close =
+    .tooltiptext = Luk
+
+## Variables:
+##  $uriHost (String): URI host for which the popup was allowed or blocked.
+
+popups-infobar-allow =
+    .label = Tillad pop op-vinduer for { $uriHost }
+    .accesskey = T
+popups-infobar-block =
+    .label = Bloker pop op-vinduer for { $uriHost }
+    .accesskey = T
+
+##
+
+popups-infobar-dont-show-message =
+    .label = Vis ikke denne besked når pop op-vinduer bliver blokeret
+    .accesskey = V
+edit-popup-settings =
+    .label = Håndter pop op-indstillinger
+    .accesskey = H
+picture-in-picture-hide-toggle =
+    .label = Skjul kontakt for billed-i-billed
+    .accesskey = S
+
+# Navigator Toolbox
+
+# This string is a spoken label that should not include
+# the word "toolbar" or such, because screen readers already know that
+# this container is a toolbar. This avoids double-speaking.
+navbar-accessible =
+    .aria-label = Navigation
+navbar-downloads =
+    .label = Filhentning
+navbar-overflow =
+    .tooltiptext = Flere værktøjer…
+# Variables:
+#   $shortcut (String): keyboard shortcut to print the page
+navbar-print =
+    .label = Udskriv
+    .tooltiptext = Udskriv denne side… ({ $shortcut })
+navbar-print-tab-modal-disabled =
+    .label = Udskriv
+    .tooltiptext = Udskriv denne side
+navbar-home =
+    .label = Hjem
+    .tooltiptext = Startside for { -brand-short-name }
+navbar-library =
+    .label = Arkiv
+    .tooltiptext = Se historik, gemte bogmærker og andet
+navbar-search =
+    .title = Søgefelt
+navbar-accessibility-indicator =
+    .tooltiptext = Tilgængelighedsfunktioner er aktiveret
+# Name for the tabs toolbar as spoken by screen readers. The word
+# "toolbar" is appended automatically and should not be included in
+# in the string
+tabs-toolbar =
+    .aria-label = Faneblade
+tabs-toolbar-new-tab =
+    .label = Nyt faneblad
+tabs-toolbar-list-all-tabs =
+    .label = List alle faneblade
+    .tooltiptext = List alle faneblade
+
+## Infobar shown at startup to suggest session-restore
+
+restore-session-startup-suggestion-button = Vis mig hvordan

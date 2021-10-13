@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -10,6 +10,7 @@
 <!ENTITY customColorsRadio.label "Usar colores personalizados:">
 <!ENTITY customColorsRadio.accessKey "C">
 <!ENTITY customColorsRadio.tooltip "Esta configuración de colores tendrá preferencia sobre la del navegador del lector">
+
 <!ENTITY normalText.label "Texto normal">
 <!ENTITY normalText.accessKey "N">
 <!ENTITY linkText.label "Texto de enlace">

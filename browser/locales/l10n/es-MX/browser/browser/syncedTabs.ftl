@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = ¿Quieres ver las pestañas de tus otro
 synced-tabs-sidebar-intro = Ver una lista de pestañas de sus otros dispositivos.
 synced-tabs-sidebar-unverified = Tu cuenta necesita ser verificada.
 synced-tabs-sidebar-notabs = No hay pestañas abiertas
-synced-tabs-sidebar-openprefs = Abriendo preferencias de { -sync-brand-short-name }
 synced-tabs-sidebar-open-settings = Abrir configuración de Sync
 synced-tabs-sidebar-tabsnotsyncing = Activa la sincronización de pestañas para ver una lista de pestañas desde tus otros dispositivos.
 synced-tabs-sidebar-connect-another-device = Conectar otro dispositivo
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = Sincronizar ahora
     .accesskey = S
-fxa-sign-in = Iniciar sesión con { -sync-brand-short-name }
-turn-on-sync = Activar { -sync-brand-short-name }
 synced-tabs-fxa-sign-in = Iniciar sesión para sincronizar
 synced-tabs-turn-on-sync = Activar sincronización

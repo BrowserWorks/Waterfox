@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,12 +31,6 @@
 <!ENTITY closeCmd.label                                 "Užverti">
 <!ENTITY closeCmd.key                                   "W">
 <!ENTITY closeCmd.accesskey                             "U">
-<!ENTITY printSetupCmd.label                            "Puslapio nuostatos…">
-<!ENTITY printSetupCmd.accesskey                        "P">
-<!ENTITY printPreviewContactCmd.label                   "Spausdinsimos adresato kortelės peržiūra">
-<!ENTITY printPreviewContactCmd.accesskey               "o">
-<!ENTITY printPreviewAddressBook.label                  "Spausdinsimos adresų knygos peržiūra">
-<!ENTITY printPreviewAddressBook.accesskey              "d">
 <!ENTITY printContactCmd.label                          "Spausdinti adresato kortelę…">
 <!ENTITY printContactCmd.accesskey                      "S">
 <!ENTITY printContactCmd.key                            "P">
@@ -108,10 +102,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY importCmd.accesskey                            "I">
 <!ENTITY exportCmd.label                                "Eksportas…">
 <!ENTITY exportCmd.accesskey                            "E">
-<!ENTITY preferencesCmd2.label                          "Nuostatos">
-<!ENTITY preferencesCmd2.accesskey                      "N">
-<!ENTITY preferencesCmdUnix.label                       "Nuostatos">
-<!ENTITY preferencesCmdUnix.accesskey                   "N">
 
 <!-- Address Book Toolbar and Context Menus -->
 <!ENTITY newContactButton.label                         "Naujas adresatas">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,8 +15,3 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey "r">
 <!ENTITY prefPara "Poniższe opcje pozwalają na dostosowanie ustawień połączeń HTTP w celu zwiększenia wydajności lub kompatybilności. Niektóre serwery proxy wymagają protokołu HTTP w wersji HTTP/1.0 (szczegóły w notatkach do bieżącego wydania).">
 <!ENTITY prefUseragent.label "Identyfikator programu">
-<!ENTITY prefFirefoxCompat.label "Deklaruj kompatybilność z przeglądarką Firefox">
-<!ENTITY prefFirefoxCompat.accesskey "F">
-<!ENTITY prefLightningShow.label "Deklaruj instalację Lightninga">
-<!ENTITY prefLightningShow.accesskey "L">
-<!ENTITY prefCompatWarning "UWAGA: dezaktywowanie tych ustawień może skutkować nieprawidłowym działaniem witryn bądź serwisów internetowych.">

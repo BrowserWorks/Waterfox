@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -58,7 +58,21 @@ printui-two-sided-printing-short-edge = 短辺とじ
 printui-options = オプション
 printui-headers-footers-checkbox = ヘッダーとフッターを印刷する
 printui-backgrounds-checkbox = 背景画像を印刷する
-printui-selection-checkbox = 選択範囲のみを印刷する
+
+## The "Format" section, select a version of the website to print. Radio
+## options to select between the original page, selected text only, or a version
+## where the page is processed with "Reader View".
+
+# The section title.
+printui-source-label = 印刷形式
+# Option for printing the original page.
+printui-source-radio = 元のページ
+# Option for printing just the content a user selected prior to printing.
+printui-selection-radio = 選択部分のみ
+# Option for "simplifying" the page by printing the Reader View version.
+printui-simplify-page-radio = ページを単純化
+
+##
 
 printui-color-mode-label = カラーモード
 printui-color-mode-color = カラー

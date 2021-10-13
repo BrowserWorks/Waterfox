@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,6 +20,7 @@ about-networking-active = 활성
 about-networking-idle = 대기
 about-networking-host = 호스트
 about-networking-tcp = TCP
+about-networking-type = 유형
 about-networking-sent = 보낸 데이터 양
 about-networking-received = 받은 데이터 양
 about-networking-family = 계통

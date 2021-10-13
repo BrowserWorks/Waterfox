@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,13 +11,7 @@
 <!ENTITY helpMenuWin.accesskey "S">
 <!ENTITY aboutProduct2.label "A &brandShorterName; névjegye">
 <!ENTITY aboutProduct2.accesskey "n">
-<!ENTITY helpTroubleshootingInfo.label     "Hibakeresési információ">
-<!ENTITY helpTroubleshootingInfo.accesskey "H">
-<!ENTITY helpSafeMode.label     "Újraindítás letiltott kiegészítőkkel…">
-<!ENTITY helpSafeMode.accesskey "r">
 
-<!ENTITY helpSafeMode.stop.label     "Újraindítás engedélyezett kiegészítőkkel">
-<!ENTITY helpSafeMode.stop.accesskey "R">
 <!ENTITY productHelp.label "&brandShortName; Súgó">
 <!ENTITY productHelp.accesskey "S">
 <!ENTITY productHelp.commandkey "VK_F1">

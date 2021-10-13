@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -10,11 +10,6 @@ crashes-id = ID segnalazione
 crashes-send-date = Inviata
 crashes-all-reports = Tutte le segnalazioni
 crashes-no-config = Questa applicazione non è stata configurata per visualizzare le segnalazioni di arresto anomalo.
-extensions-title = Estensioni
-extensions-name = Nome
-extensions-enabled = Attiva
-extensions-version = Versione
-extensions-id = ID
 support-addons-title = Componenti aggiuntivi
 support-addons-name = Nome
 support-addons-type = Tipo
@@ -49,6 +44,7 @@ app-basics-enabled-plugins = Plugin attivi
 app-basics-build-config = Configurazione build
 app-basics-user-agent = User agent
 app-basics-os = SO
+app-basics-os-theme = Tema SO
 # Rosetta is Apple's translation process to run apps containing x86_64
 # instructions on Apple Silicon. This should remain in English.
 app-basics-rosetta = Conversione Rosetta
@@ -64,7 +60,7 @@ app-basics-remote-processes-count = Processi remoti
 app-basics-enterprise-policies = Criteri a livello aziendale
 app-basics-location-service-key-google = Chiave servizio Google Location
 app-basics-safebrowsing-key-google = Chiave servizio Google Safebrowsing
-app-basics-key-mozilla = Chiave per georilevazione di Mozilla
+app-basics-key-mozilla = Chiave per georilevazione di Waterfox
 app-basics-safe-mode = Modalità provvisoria
 show-dir-label =
     { PLATFORM() ->
@@ -117,11 +113,9 @@ sandbox-sys-call-tid = TID
 sandbox-sys-call-proc-type = Tipo processo
 sandbox-sys-call-number = Syscall
 sandbox-sys-call-args = Argomenti
+
 troubleshoot-mode-title = Identifica e risolvi problemi
 restart-in-troubleshoot-mode-label = Modalità risoluzione problemi…
-safe-mode-title = Prova la modalità provvisoria
-restart-in-safe-mode-label = Riavvia disattivando i componenti aggiuntivi…
-
 clear-startup-cache-title = Prova a cancellare la cache di avvio
 clear-startup-cache-label = Cancella cache di avvio…
 startup-cache-dialog-title2 = Riavviare { -brand-short-name } per cancellare la cache di avvio?
@@ -163,7 +157,7 @@ intl-regional-prefs = Impostazioni internazionali
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.
@@ -173,37 +167,6 @@ intl-regional-prefs = Impostazioni internazionali
 remote-debugging-title = Debug remoto (protocollo Chromium)
 remote-debugging-accepting-connections = Connessioni accettate
 remote-debugging-url = URL
-
-support-third-party-modules-title = Moduli di terze parti
-support-third-party-modules-module = File del modulo
-support-third-party-modules-version = Versione del file
-support-third-party-modules-vendor = Informazioni produttore
-support-third-party-modules-occurrence = Occorrenze
-support-third-party-modules-process = Tipo processo e ID
-support-third-party-modules-thread = Thread
-support-third-party-modules-base = Indirizzo imagebase
-support-third-party-modules-uptime = Tempo di attività del processo (ms)
-support-third-party-modules-duration = Durata caricamento (ms)
-support-third-party-modules-status = Stato
-support-third-party-modules-status-loaded = Caricato
-support-third-party-modules-status-blocked = Bloccato
-support-third-party-modules-status-redirected = Reindirizzato
-support-third-party-modules-empty = Nessun modulo di terze parti caricato
-support-third-party-modules-no-value = (nessun valore)
-support-third-party-modules-button-open =
-    .title = Apri posizione file…
-support-third-party-modules-expand =
-    .title = Mostra informazioni dettagliate
-support-third-party-modules-collapse =
-    .title = Nascondi informazioni dettagliate
-support-third-party-modules-unsigned-icon =
-    .title = Questo modulo non è firmato
-support-third-party-modules-folder-icon =
-    .title = Apri posizione file…
-support-third-party-modules-down-icon =
-    .title = Mostra informazioni dettagliate
-support-third-party-modules-up-icon =
-    .title = Nascondi informazioni dettagliate
 
 ##
 
@@ -301,11 +264,6 @@ webgl2-renderer = Renderer driver WebGL 2
 webgl2-version = Versione driver WebGL 2
 webgl2-driver-extensions = Estensioni driver WebGL 2
 webgl2-extensions = Estensioni WebGL 2
-blocklisted-bug = Bloccato per problemi noti
-
-# Variables
-# $bugNumber (string) - String of bug number from Bugzilla
-bug-link = bug { $bugNumber }
 
 support-blocklisted-bug = Bloccato per problemi noti: <a data-l10n-name="bug-link">bug { $bugNumber }</a>
 
@@ -314,8 +272,6 @@ support-blocklisted-bug = Bloccato per problemi noti: <a data-l10n-name="bug-lin
 unknown-failure = Bloccato: codice non funzionante { $failureCode }
 
 d3d11layers-crash-guard = D3D11 - Compositore
-d3d11video-crash-guard = D3D11 - Decoder video
-d3d9video-crash-guard = D3D9 - Decoder video
 glcontext-crash-guard = OpenGL
 wmfvpxvideo-crash-guard = WMF VPX - Decoder video
 
@@ -361,14 +317,6 @@ launcher-process-status-unknown = Stato sconosciuto
 # $remoteWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows
 multi-process-windows = { $remoteWindows }/{ $totalWindows }
-multi-process-status-0 = Attivato manualmente
-multi-process-status-1 = Attivato automaticamente
-multi-process-status-2 = Disattivato
-multi-process-status-4 = Disattivato a causa degli strumenti di accessibilità
-multi-process-status-6 = Disattivato per mancanza supporto inserimento testo
-multi-process-status-7 = Disattivato da componenti aggiuntivi
-multi-process-status-8 = Disattivato in modo forzato
-multi-process-status-unknown = Stato sconosciuto
 
 # Variables
 # $fissionWindows (integer) - Number of remote windows
@@ -384,6 +332,7 @@ fission-status-disabled-by-default = Disattivato per impostaz. predefinita
 fission-status-enabled-by-user-pref = Attivato da utente
 fission-status-disabled-by-user-pref = Disattivato da utente
 fission-status-disabled-by-e10s-other = E10s disattivato
+
 fission-status-enabled-by-rollout = Attivato da implementazione a fasi
 
 async-pan-zoom = Panoramica/zoom asincroni (APZ)

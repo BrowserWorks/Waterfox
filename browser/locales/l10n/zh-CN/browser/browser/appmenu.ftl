@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,25 +12,30 @@ appmenuitem-update-banner3 =
     .label-update-unsupported = 无法更新 — 系统不兼容
     .label-update-restart = 有可用更新 — 立即重启
 appmenuitem-protection-dashboard-title = 保护信息面板
-appmenuitem-customize-mode =
-    .label = 定制…
-
-## Zoom Controls
-
 appmenuitem-new-tab =
     .label = 新建标签页
 appmenuitem-new-window =
     .label = 新建窗口
 appmenuitem-new-private-window =
     .label = 新建隐私窗口
+appmenuitem-history =
+    .label = 历史
+appmenuitem-downloads =
+    .label = 下载
 appmenuitem-passwords =
     .label = 密码
 appmenuitem-addons-and-themes =
     .label = 扩展和主题
+appmenuitem-print =
+    .label = 打印…
 appmenuitem-find-in-page =
     .label = 在页面中查找…
+appmenuitem-zoom =
+    .value = 缩放
 appmenuitem-more-tools =
     .label = 更多工具
+appmenuitem-help =
+    .label = 帮助
 appmenuitem-exit2 =
     .label =
         { PLATFORM() ->
@@ -57,15 +62,31 @@ appmenuitem-zoom-reduce =
 appmenuitem-fullscreen =
     .label = 全屏
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
-fxa-toolbar-sync-now =
-    .label = 立即同步
 appmenu-remote-tabs-sign-into-sync =
     .label = 登录以同步…
 appmenu-remote-tabs-turn-on-sync =
     .label = 开启同步…
+# This is shown after the tabs list if we can display more tabs by clicking on the button
+appmenu-remote-tabs-showmore =
+    .label = 显示更多标签页
+    .tooltiptext = 显示此设备的更多标签页
+# This is shown beneath the name of a device when that device has no open tabs
+appmenu-remote-tabs-notabs = 没有打开的标签页
+# This is shown when Sync is configured but syncing tabs is disabled.
+appmenu-remote-tabs-tabsnotsyncing = 打开标签页同步功能，就能看到其他设备上打开的标签页。
+appmenu-remote-tabs-opensettings =
+    .label = 设置
+# This is shown when Sync is configured but this appears to be the only device attached to
+# the account. We also show links to download Waterfox for android/ios.
+appmenu-remote-tabs-noclients = 想查看您在其他设备上的标签页吗？
+appmenu-remote-tabs-connectdevice =
+    .label = 关联其他设备
+appmenu-remote-tabs-welcome = 查看您的其他设备上的标签页列表。
+appmenu-remote-tabs-unverified = 您的账号需要验证。
 appmenuitem-fxa-toolbar-sync-now2 = 立即同步
+appmenuitem-fxa-sign-in = 登录 { -brand-product-name }
 appmenuitem-fxa-manage-account = 管理账户
 appmenu-fxa-header2 = { -fxaccount-brand-name }
 # Variables
@@ -90,10 +111,19 @@ whatsnew-panel-footer-checkbox =
     .label = 有新功能推出时通知我
     .accesskey = f
 
-## The Firefox Profiler – The popup is the UI to turn on the profiler, and record
+## The Waterfox Profiler – The popup is the UI to turn on the profiler, and record
 ## performance profiles. To enable it go to profiler.firefox.com and click
 ## "Enable Profiler Menu Button".
 
+profiler-popup-button-idle =
+    .label = 性能分析器
+    .tooltiptext = 记录性能分析数据
+profiler-popup-button-recording =
+    .label = 性能分析器
+    .tooltiptext = 分析器正在记录性能分析记录
+profiler-popup-button-capturing =
+    .label = 性能分析器
+    .tooltiptext = 分析器正在捕捉性能分析记录
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -102,10 +132,15 @@ profiler-popup-description-title =
     .value = 记录、分析、共享
 profiler-popup-description = 与您的团队共享性能测量信息，协作解决性能问题。
 profiler-popup-learn-more = 详细了解
+profiler-popup-learn-more-button =
+    .label = 详细了解
 profiler-popup-settings =
     .value = 设置
 # This link takes the user to about:profiling, and is only visible with the Custom preset.
 profiler-popup-edit-settings = 编辑设置…
+# This link takes the user to about:profiling, and is only visible with the Custom preset.
+profiler-popup-edit-settings-button =
+    .label = 编辑设置…
 profiler-popup-disabled = 分析器当前已禁用，可能是因为打开了隐私浏览窗口。
 profiler-popup-recording-screen = 正在记录…
 # The profiler presets list is generated elsewhere, but the custom preset is defined
@@ -128,6 +163,32 @@ profiler-popup-capture-shortcut =
         [macos] ⌃⇧2
        *[other] Ctrl+Shift+2
     }
+
+## Profiler presets
+## They are shown in the popup's select box.
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
+profiler-popup-presets-web-developer-description = 推荐在对大部分 Web 应用程序调试时使用，开销较少。
+profiler-popup-presets-web-developer-label =
+    .label = Web 开发者
+profiler-popup-presets-firefox-platform-description = 推荐在 Waterfox 内部平台调试时使用。
+profiler-popup-presets-firefox-platform-label =
+    .label = Waterfox 平台
+profiler-popup-presets-firefox-front-end-description = 推荐在 Waterfox 内部前端调试时使用。
+profiler-popup-presets-firefox-front-end-label =
+    .label = Waterfox 前端
+profiler-popup-presets-firefox-graphics-description = 推荐在检查 Waterfox 图形性能问题时使用。
+profiler-popup-presets-firefox-graphics-label =
+    .label = Waterfox 图形
+profiler-popup-presets-media-description = 推荐在诊断 Waterfox 音视频问题时使用。
+profiler-popup-presets-media-label =
+    .label = 媒体
+profiler-popup-presets-custom-label =
+    .label = 自定义
 
 ## History panel
 

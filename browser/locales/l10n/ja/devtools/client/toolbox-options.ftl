@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -57,10 +57,6 @@ options-stylesheet-autocompletion-tooltip =
 
 # The heading
 options-screenshot-label = スクリーンショットの動作
-# Label for the checkbox that toggles screenshot to clipboard feature
-options-screenshot-clipboard-label = スクリーンショットをクリップボードへコピー
-options-screenshot-clipboard-tooltip =
-    .title = スクリーンショットをクリップボードに直接保存します
 
 # Label for the checkbox that toggles screenshot to clipboard feature
 options-screenshot-clipboard-only-label = スクリーンショットをクリップボードだけにコピー

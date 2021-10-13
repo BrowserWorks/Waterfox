@@ -1,11 +1,13 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 <!-- Entities for AccountWizard -->
 
 
 <!ENTITY windowTitle.label "Paskyros vediklis">
 <!ENTITY accountWizard.size "width: 50em; height: 38em;">
+
 <!-- Entities for Account Type page -->
 
 
@@ -17,6 +19,7 @@
 <!ENTITY accountTypeMail.accesskey "e">
 <!ENTITY accountTypeNews.label "naujienų grupių serverį">
 <!ENTITY accountTypeNews.accesskey "n">
+
 <!-- Entities for Identity page -->
 
 
@@ -35,6 +38,7 @@
 
 <!ENTITY emailLabel.label "El. pašto adresas:">
 <!ENTITY emailLabel.accesskey "E">
+
 <!-- Entities for Incoming Server page -->
 
 
@@ -64,6 +68,7 @@
 <!ENTITY newsServerNameDesc.label "Įveskite naujienų (NNTP) serverio vardą (pvz., „news.example.net“).">
 <!ENTITY newsServerLabel.label "Naujienų serveris:">
 <!ENTITY newsServerLabel.accesskey "s">
+
 <!-- Entities for Outgoing Server page -->
 
 
@@ -98,6 +103,7 @@
 -->
 <!ENTITY haveSmtp3.prefix "Nurodytas laiškų išsiuntimo serverio vardas – „">
 <!ENTITY haveSmtp3.suffix3 "“ – yra toks pat, kaip ir laiškų gavimo serverio vardas, todėl prisijungimui prie laiškų išsiuntimo serverio bus naudojamas laiškų gavimo abonento vardas.">
+
 <!-- Entities for Account name page -->
 
 
@@ -106,6 +112,7 @@
 <!ENTITY accnameDesc.label "Surinkite paskyros pavadinimą. Tai gali būti el. pašto adresas, interneto paslaugų teikėjo vardas arba bet koks jūsų pasirinktas vardas (pvz., „Darbas“, „Namai“).">
 <!ENTITY accnameLabel.label "Paskyros pavadinimas:">
 <!ENTITY accnameLabel.accesskey "v">
+
 <!-- Entities for Done (Congratulations) page -->
 
 

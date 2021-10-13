@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -11,14 +11,6 @@ navbar-tooltip-instruction =
 
 ## Back
 
-main-context-menu-back =
-    .tooltiptext = 前のページへ戻ります
-    .aria-label = 戻る
-    .accesskey = B
-navbar-tooltip-back = 
-    .value = { main-context-menu-back.tooltiptext }
-toolbar-button-back =
-    .label = { main-context-menu-back.aria-label }
 # Variables
 #   $shortcut (String) - A keyboard shortcut for the Go Back command.
 main-context-menu-back-2 =
@@ -38,14 +30,6 @@ toolbar-button-back-2 =
 
 ## Forward
 
-main-context-menu-forward =
-    .tooltiptext = 次のページへ進みます
-    .aria-label = 進む
-    .accesskey = F
-navbar-tooltip-forward =
-    .value = { main-context-menu-forward.tooltiptext } 
-toolbar-button-forward =
-    .label = { main-context-menu-forward.aria-label }
 # Variables
 #   $shortcut (String) - A keyboard shortcut for the Go Forward command.
 main-context-menu-forward-2 =
@@ -92,7 +76,7 @@ toolbar-button-stop =
 toolbar-button-stop-reload =
     .title = { main-context-menu-reload.aria-label }
 
-## Firefox Account Button
+## Waterfox Account Button
 
 toolbar-button-fxaccount =
     .label = { -fxaccount-brand-name }
@@ -103,8 +87,6 @@ toolbar-button-fxaccount =
 main-context-menu-page-save =
     .label = 名前を付けてページを保存...
     .accesskey = P
-toolbar-button-page-save =
-    .label = { main-context-menu-page-save.label }
 
 ## Simple menu items
 
@@ -158,9 +140,6 @@ main-context-menu-open-link-new-window =
 main-context-menu-open-link-new-private-window =
     .label = リンクを新しいプライベートウィンドウで開く
     .accesskey = P
-main-context-menu-bookmark-this-link =
-    .label = このリンクをブックマーク
-    .accesskey = L
 main-context-menu-bookmark-link =
     .label = リンクをブックマーク
     .accesskey = B
@@ -171,11 +150,6 @@ main-context-menu-save-link-to-pocket =
     .label = リンクを { -pocket-brand-name } に保存
     .accesskey = o
 
-## The access keys for "Copy Link Location" and "Copy Email Address"
-## should be the same if possible; the two context menu items
-## are mutually exclusive.
-
-
 ## The access keys for "Copy Link" and "Copy Email Address"
 ## should be the same if possible; the two context menu items
 ## are mutually exclusive.
@@ -183,9 +157,6 @@ main-context-menu-save-link-to-pocket =
 main-context-menu-copy-email =
     .label = メールアドレスをコピー
     .accesskey = l
-main-context-menu-copy-link =
-    .label = リンクの URL をコピー
-    .accesskey = a
 main-context-menu-copy-link-simple =
     .label = リンクをコピー
     .accesskey = L
@@ -211,26 +182,6 @@ main-context-menu-media-mute =
 main-context-menu-media-unmute =
     .label = ミュート解除
     .accesskey = m
-main-context-menu-media-play-speed =
-    .label = 再生スピード
-    .accesskey = d
-main-context-menu-media-play-speed-slow =
-    .label = スローモーション (0.5倍)
-    .accesskey = S
-main-context-menu-media-play-speed-normal =
-    .label = 通常
-    .accesskey = N
-main-context-menu-media-play-speed-fast =
-    .label = 少し早く (1.25倍)
-    .accesskey = F
-main-context-menu-media-play-speed-faster =
-    .label = 早送り (1.5倍)
-    .accesskey = a
-# "Ludicrous" is a reference to the movie "Space Balls" and is meant
-# to say that this speed is very fast.
-main-context-menu-media-play-speed-fastest =
-    .label = ウルトラスーパーハイ (2倍)
-    .accesskey = L
 
 main-context-menu-media-play-speed-2 =
     .label = 再生速度
@@ -273,11 +224,6 @@ main-context-menu-media-video-fullscreen =
 main-context-menu-media-video-leave-fullscreen =
     .label = 全画面表示モードを終了
     .accesskey = u
-# This is used when right-clicking on a video in the
-# content area when the Picture-in-Picture feature is enabled.
-main-context-menu-media-pip =
-    .label = ピクチャーインピクチャー
-    .accesskey = u
 
 # This is used when right-clicking on a video in the
 # content area when the Picture-in-Picture feature is enabled.
@@ -288,12 +234,6 @@ main-context-menu-media-watch-pip =
 main-context-menu-image-reload =
     .label = 画像を再読み込み
     .accesskey = R
-main-context-menu-image-view =
-    .label = 画像だけを表示
-    .accesskey = I
-main-context-menu-video-view =
-    .label = 動画だけを表示
-    .accesskey = I
 
 main-context-menu-image-view-new-tab =
     .label = 画像を新しいタブで開く
@@ -306,15 +246,6 @@ main-context-menu-video-view-new-tab =
 main-context-menu-image-copy =
     .label = 画像をコピー
     .accesskey = y
-main-context-menu-image-copy-location =
-    .label = 画像の URL をコピー
-    .accesskey = o
-main-context-menu-video-copy-location =
-    .label = 動画の URL をコピー
-    .accesskey = o
-main-context-menu-audio-copy-location =
-    .label = 音声の URL をコピー
-    .accesskey = o
 main-context-menu-image-copy-link =
     .label = 画像のリンクをコピー
     .accesskey = o
@@ -330,9 +261,6 @@ main-context-menu-image-save-as =
 main-context-menu-image-email =
     .label = 画像の URL をメールで送信...
     .accesskey = g
-main-context-menu-image-set-as-background =
-    .label = デスクトップの背景に設定...
-    .accesskey = S
 main-context-menu-image-set-image-as-background =
     .label = 画像をデスクトップの背景に設定...
     .accesskey = S
@@ -348,9 +276,6 @@ main-context-menu-video-save-as =
 main-context-menu-audio-save-as =
     .label = 名前を付けて音声を保存...
     .accesskey = v
-main-context-menu-video-image-save-as =
-    .label = スナップショットを保存...
-    .accesskey = S
 
 main-context-menu-video-take-snapshot =
     .label = スナップショットを撮影...
@@ -374,12 +299,6 @@ main-context-menu-save-to-pocket =
 main-context-menu-send-to-device =
     .label = ページを端末へ送信
     .accesskey = n
-main-context-menu-view-background-image =
-    .label = 背景画像だけを表示
-    .accesskey = w
-main-context-menu-generate-new-password =
-    .label = 生成パスワードを使用...
-    .accesskey = G
 
 ## The access keys for "Use Saved Login" and "Use Saved Password"
 ## should be the same if possible; the two context menu items
@@ -457,18 +376,12 @@ main-context-menu-take-frame-screenshot =
 main-context-menu-view-page-source =
     .label = ページのソースを表示
     .accesskey = V
-main-context-menu-view-page-info =
-    .label = ページの情報を表示
-    .accesskey = I
 main-context-menu-bidi-switch-text =
     .label = テキストの記述方向を切り替える
     .accesskey = w
 main-context-menu-bidi-switch-page =
     .label = ページの記述方向を切り替える
     .accesskey = D
-main-context-menu-inspect-element =
-    .label = 要素を調査
-    .accesskey = Q
 main-context-menu-inspect =
     .label = 調査
     .accesskey = Q
@@ -477,3 +390,9 @@ main-context-menu-inspect-a11y-properties =
 main-context-menu-eme-learn-more =
     .label = DRM の詳細...
     .accesskey = D
+
+# Variables
+#   $containerName (String): The name of the current container
+main-context-menu-open-link-in-container-tab =
+    .label = リンクを新しい { $containerName } タブで開く
+    .accesskey = T

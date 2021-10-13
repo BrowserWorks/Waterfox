@@ -1,12 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- Title -->
 <!ENTITY addressbookWindow.title                        "通讯录">
-
-<!-- Menus:  the . means that the menu item isn't implemented yet -->
-
 <!ENTITY blankResultsPaneMessage.label                  "进行搜索后才会显示此通讯录的联系人">
 <!ENTITY localResultsOnlyMessage.label                  "在进行搜索之前将不会显示远程通讯录中的联系人">
 <!-- File Menu -->
@@ -60,7 +57,6 @@
 <!ENTITY lastFirstCmd.accesskey                         "L">
 <!ENTITY displayNameCmd.label                           "显示名称">
 <!ENTITY displayNameCmd.accesskey                       "D">
-
 <!-- LOCALIZATION NOTE (toggleDirectoryPaneCmd.key): This is only used on the
      mac platform, other platforms use VK_F9. -->
 <!ENTITY toggleDirectoryPaneCmd.key                     "S">
@@ -78,7 +74,7 @@
 <!ENTITY newlistButton.accesskey                        "L">
 <!ENTITY editItemButton.label                           "属性">
 <!ENTITY editItemButton.accesskey                       "P">
-<!ENTITY newmsgButton.label                             "编写">
+<!ENTITY newmsgButton.label                             "撰写">
 <!ENTITY newmsgButton.accesskey                         "C">
 <!ENTITY deleteItemButton.label                         "删除">
 <!ENTITY deleteItemButton.accesskey                     "D">
@@ -98,8 +94,6 @@
 <!ENTITY newIM.tooltip                                  "发送一条即时消息或聊天">
 <!ENTITY printButton.tooltip                            "打印所选项目">
 <!ENTITY deleteItemButton.tooltip                       "删除选中项">
-<!ENTITY throbber.tooltip                               "转到 &vendorShortName; 主页">
-<!ENTITY throbber.tooltip2                              "前往 &brandShortName; 主页">
 <!ENTITY advancedButton.tooltip                         "高级地址搜索">
 
 <!-- Dir Tree header -->

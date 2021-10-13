@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,6 +17,7 @@ profile-selection-rename-button =
 profile-selection-delete-button =
     .label = プロファイルを削除...
     .accesskey = D
+profile-selection-conflict-message = { -brand-product-name } の別のコピーがプロファイルに変更を加えています。さらに変更する前に { -brand-short-name } を再起動しなければなりません。
 
 ## Messages used in the profile manager
 

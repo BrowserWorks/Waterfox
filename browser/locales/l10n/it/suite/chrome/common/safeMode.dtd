@@ -1,19 +1,27 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 <!ENTITY safeModeDialog.title "Modalità provvisoria di &brandShortName;">
 <!ENTITY window.width "37em">
+
 <!ENTITY safeModeDescription.label "&brandShortName; è avviato in modalità provvisoria, quindi i componenti aggiuntivi e le impostazioni personali sono stati temporaneamente disattivati.">
 <!ENTITY safeModeDescription2.label "È possibile eseguire in modo definitivo una o più delle seguenti operazioni:">
+
 <!ENTITY disableAddons.label "Disabilita tutti i componenti aggiuntivi">
 <!ENTITY disableAddons.accesskey "D">
+
 <!ENTITY resetToolbars.label "Ripristina le barre degli strumenti e i controlli">
 <!ENTITY resetToolbars.accesskey "R">
+
 <!ENTITY deleteBookmarks.label "Elimina tutti i segnalibri ad eccezione dei backup">
 <!ENTITY deleteBookmarks.accesskey "s">
+
 <!ENTITY resetUserPrefs.label "Ripristina le preferenze predefinite di &brandShortName;">
 <!ENTITY resetUserPrefs.accesskey "t">
+
 <!ENTITY restoreSearch.label "Ripristina i motori di ricerca predefiniti">
 <!ENTITY restoreSearch.accesskey "n">
+
 <!ENTITY changeAndRestartButton.label "Applica le modifiche e riavvia">
 <!ENTITY continueButton.label "Continua in modalità provvisoria">

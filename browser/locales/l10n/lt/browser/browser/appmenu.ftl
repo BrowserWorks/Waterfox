@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,25 +12,30 @@ appmenuitem-update-banner3 =
     .label-update-unsupported = Nepavyko atnaujinti – sistema nesuderinama
     .label-update-restart = Išleistas naujinimas – paleisti iš naujo dabar
 appmenuitem-protection-dashboard-title = Apsaugos skydelis
-appmenuitem-customize-mode =
-    .label = Tvarkyti…
-
-## Zoom Controls
-
 appmenuitem-new-tab =
     .label = Nauja kortelė
 appmenuitem-new-window =
     .label = Naujas langas
 appmenuitem-new-private-window =
     .label = Naujas privataus naršymo langas
+appmenuitem-history =
+    .label = Žurnalas
+appmenuitem-downloads =
+    .label = Atsiuntimai
 appmenuitem-passwords =
     .label = Slaptažodžiai
 appmenuitem-addons-and-themes =
     .label = Priedai ir grafiniai apvalkalai
+appmenuitem-print =
+    .label = Spausdinti…
 appmenuitem-find-in-page =
     .label = Rasti tinklalapyje…
+appmenuitem-zoom =
+    .value = Mastelis
 appmenuitem-more-tools =
     .label = Daugiau priemonių
+appmenuitem-help =
+    .label = Žinynas
 appmenuitem-exit2 =
     .label =
         { PLATFORM() ->
@@ -57,15 +62,31 @@ appmenuitem-zoom-reduce =
 appmenuitem-fullscreen =
     .label = Visas ekranas
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
-fxa-toolbar-sync-now =
-    .label = Sinchronizuoti dabar
 appmenu-remote-tabs-sign-into-sync =
     .label = Prisijungti sinchronizavimui…
 appmenu-remote-tabs-turn-on-sync =
     .label = Įjungti sinchronizavimą…
+# This is shown after the tabs list if we can display more tabs by clicking on the button
+appmenu-remote-tabs-showmore =
+    .label = Rodyti daugiau kortelių
+    .tooltiptext = Rodyti daugiau kortelių iš šio įrenginio
+# This is shown beneath the name of a device when that device has no open tabs
+appmenu-remote-tabs-notabs = Nėra atvirų kortelių
+# This is shown when Sync is configured but syncing tabs is disabled.
+appmenu-remote-tabs-tabsnotsyncing = Įjunkite kortelių sinchronizavimą, norėdami peržiūrėti kituose įrenginiuose esančias korteles.
+appmenu-remote-tabs-opensettings =
+    .label = Nustatymai
+# This is shown when Sync is configured but this appears to be the only device attached to
+# the account. We also show links to download Waterfox for android/ios.
+appmenu-remote-tabs-noclients = Norite čia matyti savo korteles iš kitų įrenginių?
+appmenu-remote-tabs-connectdevice =
+    .label = Susieti kitą įrenginį
+appmenu-remote-tabs-welcome = Peržiūrėkite kituose įrenginiuose esančias korteles.
+appmenu-remote-tabs-unverified = Jūsų paskyra turi būti patvirtinta.
 appmenuitem-fxa-toolbar-sync-now2 = Sinchronizuoti dabar
+appmenuitem-fxa-sign-in = Prisijungti prie „{ -brand-product-name }“
 appmenuitem-fxa-manage-account = Tvarkyti paskyrą
 appmenu-fxa-header2 = „{ -fxaccount-brand-name }“ paskyra
 # Variables
@@ -90,10 +111,13 @@ whatsnew-panel-footer-checkbox =
     .label = Pranešti apie naujas funkcijas
     .accesskey = f
 
-## The Firefox Profiler – The popup is the UI to turn on the profiler, and record
+## The Waterfox Profiler – The popup is the UI to turn on the profiler, and record
 ## performance profiles. To enable it go to profiler.firefox.com and click
 ## "Enable Profiler Menu Button".
 
+profiler-popup-button-idle =
+    .label = Profiliuoklė
+    .tooltiptext = Įrašyti našumo profilį
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -102,10 +126,15 @@ profiler-popup-description-title =
     .value = Įrašykite, analizuokite, dalinkitės
 profiler-popup-description = Bendraukite spręsdami našumo problemas, paskelbdami profilius pasidalinimui su savo komanda.
 profiler-popup-learn-more = Sužinoti daugiau
+profiler-popup-learn-more-button =
+    .label = Sužinoti daugiau
 profiler-popup-settings =
     .value = Nuostatos
 # This link takes the user to about:profiling, and is only visible with the Custom preset.
 profiler-popup-edit-settings = Keisti nuostatas…
+# This link takes the user to about:profiling, and is only visible with the Custom preset.
+profiler-popup-edit-settings-button =
+    .label = Keisti nuostatas…
 profiler-popup-disabled = Profiliuoklė šiuo metu išjungta, greičiausiai dėl atverto privačiojo naršymo lango.
 profiler-popup-recording-screen = Įrašinėjama…
 # The profiler presets list is generated elsewhere, but the custom preset is defined
@@ -128,6 +157,15 @@ profiler-popup-capture-shortcut =
         [macos] ⌃⇧2
        *[other] Ctrl+Shift+2
     }
+
+## Profiler presets
+## They are shown in the popup's select box.
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
 
 ## History panel
 

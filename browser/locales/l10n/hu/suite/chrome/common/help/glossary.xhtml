@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -32,7 +32,7 @@
 
 <br /><dt id="signing_certificate">Aláíró tanúsítvány</dt><dd>Olyan tanúsítvány, amelynek <a href="#private_key">személyes kulcsa</a> az átvitt adatok aláírására szolgál, és ezzel lehetővé teszi a fogadó számára, hogy ellenőrizhesse a küldő azonosságát. A hitelesítésszolgáltatók (CA-k) az elektronikus levelek titkosítására használt <a href="#encryption_certificate">titkosító tanúsítványok</a> kiállításával egy időben gyakran kibocsátanak egy aláíró tanúsítványt is, amely az üzenetek aláírására szolgál. Lásd még: <a href="#dual_key_pairs">szimmetrikus kulcspárok</a>, <a href="#digital_signature">digitális aláírás</a>.</dd>
 
-<br /><dt id="Status_Bar">Állapotsor</dt><dd>Az állapotsor minden Mozilla-ablak alján megjelenik. Az állapotsoron bal oldalt a <a href="#Component_Bar">Mozilla-komponensek</a> indító ikonsor, a jobb oldalon pedig az állapotikonok helyezkednek el.</dd>
+<br /><dt id="Status_Bar">Állapotsor</dt><dd>Az állapotsor minden Waterfox-ablak alján megjelenik. Az állapotsoron bal oldalt a <a href="#Component_Bar">Waterfox-komponensek</a> indító ikonsor, a jobb oldalon pedig az állapotikonok helyezkednek el.</dd>
 
 <br /><dt id="subordinate_CA">Alsóbb szintű hitelesítésszolgáltató</dt><dd>Egy másik alsóbb szintű hitelesítésszolgáltató vagy a legfelső szintű hitelesítésszolgáltató által aláírt tanúsítvánnyal rendelkező <a href="#certificate_authority"> hitelesítésszolgáltató</a>. Lásd még: <a href="#certificate_chain">tanúsítványlánc</a>, <a href="#root_CA">legfelső szintű hitelesítésszolgáltató</a>.</dd>
 
@@ -76,7 +76,7 @@
 
 <br /><dt id="authentication">Hitelesítés</dt><dd>Jelszó, tanúsítvány, személyes azonosítókód (PIN-kód) vagy egyéb olyan adat használata, amely egy számítógépes hálózatban a személyazonosság ellenőrzésére szolgál. Lásd még: <a href="#password-based_authentication">jelszó alapú hitelesítés</a>, <a href="#certificate-based_authentication">tanúsítvány alapú hitelesítés</a>, <a href="#client_authentication">ügyfél hitelesítése</a>, <a href="#server_authentication">kiszolgáló hitelesítése</a>.</dd>
 
-<br /><dt id="certificate_authority">Hitelesítésszolgáltató (CA)</dt><dd> Olyan szervezet, illetve szolgáltatás, amely a tanúsítványok kiállításához szükséges személyi, illetve szervezeti adatok valódiságát ellenőrzi. A hitelesítésszolgáltatók feladata a tanúsítványok meghosszabbítása és visszavonása is. A visszavont tanúsítványokról rendszeres időközönként jelentést készítenek. A hitelesítésszolgáltatók általában független cégek, esetleg tanúsítványkibocsátó kiszolgálóalkalmazásokat használó magánszemélyek vagy szervezetek. Ilyen alkalmazás például a Mozilla Certificate Management System (Mozilla Tanúsítványkezelő rendszer). Lásd még: <a href="#certificate">tanúsítvány</a>, <a href="#certificate_revocation_list">visszavont tanúsítványok listája (CRL)</a>.</dd>
+<br /><dt id="certificate_authority">Hitelesítésszolgáltató (CA)</dt><dd> Olyan szervezet, illetve szolgáltatás, amely a tanúsítványok kiállításához szükséges személyi, illetve szervezeti adatok valódiságát ellenőrzi. A hitelesítésszolgáltatók feladata a tanúsítványok meghosszabbítása és visszavonása is. A visszavont tanúsítványokról rendszeres időközönként jelentést készítenek. A hitelesítésszolgáltatók általában független cégek, esetleg tanúsítványkibocsátó kiszolgálóalkalmazásokat használó magánszemélyek vagy szervezetek. Ilyen alkalmazás például a Waterfox Certificate Management System (Waterfox Tanúsítványkezelő rendszer). Lásd még: <a href="#certificate">tanúsítvány</a>, <a href="#certificate_revocation_list">visszavont tanúsítványok listája (CRL)</a>.</dd>
 
 <br /><dt id="CA_certificate">Hitelesítésszolgáltató tanúsítványa</dt><dd> A hitelesítésszolgáltatót azonosító tanúsítvány. Lásd még: <a href="#certificate_authority">hitelesítésszolgáltató (CA)</a>, <a href="#subordinate_CA">alsóbb szintű hitelesítésszolgáltató</a>, <a href="#root_CA">legfelső szintű hitelesítésszolgáltató</a>.</dd>
 
@@ -132,7 +132,7 @@
 
 <br /><dt id="master_password">Mesterjelszó</dt><dd>A Tanúsítványkezelő által a főkulcs és/vagy valamely <a href="#security_device">adatvédelmi eszközön</a> tárolt titkos kulcsok védelmére használt jelszó. A Tanúsítványkezelőnek hozzá kell férnie a személyes kulcsainkhoz, például amikor egy elektronikus levelet írunk alá, vagy valamelyik tanúsítványunkkal kívánjuk azonosítani magunkat egy webhelyen. A Tanúsítványkezelőnek hozzáféréssel kell rendelkeznie továbbá a főkulcshoz is, amikor más alkalmazások nevében titkosít, vagy fejt vissza adatokat. Például amikor a Jelszókezelőnek el kell tárolnia a postafiókunkhoz tartozó jelszót, vagy hozzá kell ahhoz férnie. A mesterjelszót a Tanúsítványkezelő főablakának Saját tanúsítványok lapján adhatjuk vagy változtathatjuk meg. Minden egyes adatvédelmi eszközhöz külön mesterjelszó tartozik. Lásd még: <a href="#private_key">személyes kulcs</a>, <a href="#master_key">főkulcs</a>.</dd>
 
-<br /><dt id="Component_Bar">Mozilla-komponensek</dt><dd>Ez az indítóikonsor minden Mozilla-ablak bal alsó részén megtalálható. Az indítóikonsor segítségével indíthatjuk el a különböző Mozilla-komponenseket úgy, hogy a Böngésző, HTML-szerkesztő, Levelező és hírolvasó, stb. ikonjaira kattintunk. </dd>
+<br /><dt id="Component_Bar">Waterfox-komponensek</dt><dd>Ez az indítóikonsor minden Waterfox-ablak bal alsó részén megtalálható. Az indítóikonsor segítségével indíthatjuk el a különböző Waterfox-komponenseket úgy, hogy a Böngésző, HTML-szerkesztő, Levelező és hírolvasó, stb. ikonjaira kattintunk. </dd>
 
 <br /><dt id="public_key">Nyilvános kulcs</dt><dd>A nyilvános kulcsú titkosításban használt <a href="#key">kulcsokból</a> alkotott kulcspár egyik tagja. A nyilvános kulcs szabadon terjeszthető, és a megfelelő <a href="#certificate">tanúsítvány</a> részeként kerül közzétételre. Rendszerint olyan adatok titkosítására használatos, melyeknek címzettje a nyilvános kulcs tulajdonosa, aki a nyilvános kulcshoz tartozó személyes kulcs alapján tudja visszafejteni az adatokat.</dd>
 
@@ -184,7 +184,7 @@
 
 <br /><dt id="certificate">Tanúsítvány</dt><dd>A személyazonosító igazolvány digitális megfelelője. A tanúsítvány egy személy, cég vagy egyéb szervezet nevét tartalmazza, és igazolja, hogy a tanúsítványban szereplő nyilvános kulcs valóban az adott személyhez, céghez vagy szervezethez tartozik. Ha digitális aláírással látnak el egy üzenetet (vagy bármilyen más adatot), a szóban forgó üzenet digitális aláírása a tanúsítványában szereplő nyilvános kulcshoz tartozó titkos kulcs segítségével készül el. A tanúsítványokat <a href="#certificate_authority">hitelesítésszolgáltató szervezetek (CA-k)</a> bocsátják ki, és digitális aláírásukkal hitelesítik. Egy tanúsítvány érvényessége az azt kibocsátó hitelesítésszolgáltató <a href="#digital_signature">digitális aláírásának</a> ellenőrzésével ellenőrizhető. Egyéb elnevezései: digitális azonosító, digitális útlevél, nyilvános kulcsú tanúsítvány, X.509 tanúsítvány, illetve biztonsági tanúsítvány. Lásd még: <a href="#public-key_cryptography">nyilvános kulcsú titkosítás</a>.</dd>
 
-<br /><dt id="Certificate_Manager">Tanúsítványkezelő</dt><dd>A böngésző azon része, melyen keresztül a tanúsítványokat megtekinthetjük, illetve különböző műveleteket végezhetünk velük. A tanúsítványkezelő főablakának megnyitásához válasszuk a Szerkesztés menü (Mac OS X alatt a Mozilla menü) Beállítások pontját, ott az Adatvédelem és biztonság kategóriában válasszuk a Tanúsítványok pontot, majd kattintsunk a Tanúsítványok kezelése gombra.</dd>
+<br /><dt id="Certificate_Manager">Tanúsítványkezelő</dt><dd>A böngésző azon része, melyen keresztül a tanúsítványokat megtekinthetjük, illetve különböző műveleteket végezhetünk velük. A tanúsítványkezelő főablakának megnyitásához válasszuk a Szerkesztés menü (Mac OS X alatt a Waterfox menü) Beállítások pontját, ott az Adatvédelem és biztonság kategóriában válasszuk a Tanúsítványok pontot, majd kattintsunk a Tanúsítványok kezelése gombra.</dd>
 
 <br /><dt id="certificate_chain">Tanúsítványlánc</dt><dd>Tanúsítványok olyan hierarchikus rendszere, amelyben minden tanúsítványt egy felsőbb szintű hitelesítésszolgáltató írt alá. A hitelesítésszolgáltató tanúsítványa azonosítja a <a href="#certificate_authority"> hitelesítésszolgáltatót</a>, és az általa kibocsátott tanúsítványok aláírására szolgál. A hitelesítésszolgáltató tanúsítványát aláírhatja egy felsőbb szintű hitelesítésszolgáltató, így egy egészen a <a href="#root_CA">legfelső szintű hitelesítésszolgáltatóig</a> nyúló lánc alakulhat ki.</dd>
 
@@ -218,7 +218,7 @@
 
 <br /><dt id="Form_Manager">Űrlapkezelő</dt><dd>A böngésző része, amelynek segítségével menthetjük az on-line űrlapokba írt személyes adatainkat, például a nevünket, címünket, telefonszámunkat stb. Amikor a webhely egy űrlap kitöltésére kér bennünket, az űrlapkezelő automatikusan kitölti azt helyettünk.</dd>
 
-<br /><dt id="World_Wide_Web">Világháló</dt><dd>Angol elnevezéssel World Wide Web vagy egyszerűen csak web. Az internet része, amely a <a href="#server">webkiszolgálókon</a> tárolt weboldalakból épül fel. A weboldalak megjelenítését az <a href="#client">ügyfélprogramok</a> (Például: Mozilla) végzik el.</dd>
+<br /><dt id="World_Wide_Web">Világháló</dt><dd>Angol elnevezéssel World Wide Web vagy egyszerűen csak web. Az internet része, amely a <a href="#server">webkiszolgálókon</a> tárolt weboldalakból épül fel. A weboldalak megjelenítését az <a href="#client">ügyfélprogramok</a> (Például: Waterfox) végzik el.</dd>
 
 <br /><dt id="decryption">Visszafejtés</dt><dd>Az eredeti adatok visszanyerésének folyamata korábban titkosított adatokból. Lásd még: <a href="#encryption">titkosítás</a>.</dd>
 

@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-screenshots-context-menu = Pořídit snímek stránky
 screenshot-toolbarbutton =
     .label = Snímek obrazovky
     .tooltiptext = Pořídí snímek obrazovky
-screenshots-my-shots-button = Mé snímky
+screenshot-shortcut =
+    .key = S
 screenshots-instructions = Oblast vyberete kliknutím nebo tahem myší. Pro zrušení stiskněte ESC.
 screenshots-cancel-button = Zrušit
 screenshots-save-visible-button = Uložit viditelnou oblast
@@ -31,7 +31,6 @@ screenshots-connection-error-details = Zkontrolujte prosím připojení k intern
 screenshots-login-error-details = Nemohli jsme uložit váš snímek, protože došlo k problému se službou { -screenshots-brand-name }. Zkuste to prosím znovu později.
 screenshots-unshootable-page-error-title = Snímek této stránky nelze pořídit.
 screenshots-unshootable-page-error-details = Toto není běžná webová stránka, a proto z ní nelze pořizovat žádné snímky.
-screenshots-self-screenshot-error-title = Nelze pořizovat snímek stránky { -screenshots-brand-name }!
 screenshots-empty-selection-error-title = Vybraná oblast je moc malá
 screenshots-private-window-error-title = Služba { -screenshots-brand-name } je v anonymním prohlížení vypnutá
 screenshots-private-window-error-details = Omlouváme se za nepříjemnosti. Na této funkci pracujeme pro některé příští vydání.

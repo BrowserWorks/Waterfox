@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,17 +15,11 @@ view-fingerprint-button =
 otr-settings-title = OTR-Einstellungen
 otr-log =
     .label = Mit OTR verschlüsselte Nachrichten ebenfalls in Gesprächsprotokoll aufnehmen
-otr-requireEncryption =
-    .label = Ende-zu-Ende-Verschlüsselung für Gespräche mit einer Person verlangen
+
 otr-require-encryption =
     .label = Ende-zu-Ende-Verschlüsselung für Gespräche mit einer Person verlangen
 otr-require-encryption-info =
     Falls Ende-zu-Ende-Verschlüsselung für Gespräche mit jeweils einer Person verlangt wird, können Nachrichten in diesen 1:1-Gesprächen nur gesendet werden, falls ihre Verschlüsselung möglich ist. Empfangene unverschlüsselte Nachrichten werden nicht als Teil des normalen Gesprächs angezeigt und auch nicht protokolliert.
-otr-verifyNudge =
-    .label = Immer erinnern, neue Kontakte zu bestätigen
-
-otr-notYetAvailable = noch nicht verfügbar
-
 otr-verify-nudge =
     .label = Immer erinnern, neue Kontakte zu bestätigen
 

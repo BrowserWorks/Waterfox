@@ -1,18 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
 
 about-logins-page-title = ログインとパスワード
-
-# "Google Play" and "App Store" are both branding and should not be translated
-
-login-app-promo-title = どこでもパスワードが使える
-login-app-promo-subtitle = 無料の { -lockwise-brand-name } アプリを入手しよう
-login-app-promo-android =
-  .alt = Google Play で入手
-login-app-promo-apple =
-  .alt = App Store でダウンロード
 
 login-filter =
   .placeholder = ログイン情報を検索
@@ -20,7 +11,6 @@ login-filter =
 create-login-button = 新しいログイン情報を作成
 
 fxaccounts-sign-in-text = 他の端末でもパスワードが使える
-fxaccounts-sign-in-button = { -sync-brand-short-name } にログイン
 fxaccounts-sign-in-sync-button = ログインして同期
 fxaccounts-avatar-button =
   .title = アカウントを管理
@@ -40,8 +30,6 @@ menu-menuitem-preferences =
      *[other] 設定
   }
 about-logins-menu-menuitem-help = ヘルプ
-menu-menuitem-android-app = { -lockwise-brand-short-name } for Android
-menu-menuitem-iphone-app = { -lockwise-brand-short-name } for iPhone and iPad
 
 ## Login List
 
@@ -51,6 +39,8 @@ login-list-count = { $count } 件のログイン情報
 login-list-sort-label-text = 並べ替え:
 login-list-name-option = 名前 (昇順)
 login-list-name-reverse-option = 名前 (降順)
+login-list-username-option = ユーザー名 (昇順)
+login-list-username-reverse-option = ユーザー名 (降順)
 about-logins-login-list-alerts-option = 警告
 login-list-last-changed-option = 最終更新日時
 login-list-last-used-option = 最終利用日時
@@ -66,21 +56,22 @@ about-logins-list-item-breach-icon =
 about-logins-list-item-vulnerable-password-icon =
   .title = 脆弱なパスワード
 
-## Introduction screen
+about-logins-list-section-breach = 漏洩したウェブサイト
+about-logins-list-section-vulnerable = 脆弱なパスワード
+about-logins-list-section-nothing = 警告なし
+about-logins-list-section-today = 今日
+about-logins-list-section-yesterday = 昨日
+about-logins-list-section-week = 直近 1 週間
 
-login-intro-heading = 保存したログイン情報をお探しですか？ { -sync-brand-short-name } を設定しましょう。
+## Introduction screen
 
 about-logins-login-intro-heading-logged-out2 = 保存したログイン情報をお探しですか？ 同期をオンにするか、インポートしましょう。
 about-logins-login-intro-heading-logged-in = 同期したログイン情報はありません。
 login-intro-description = 別の端末の { -brand-product-name } に保存したログイン情報は、以下の手順で取得できます:
-login-intro-instruction-fxa = ログイン情報を保存した端末で { -fxaccount-brand-name } を作成、またはログインしてください
-login-intro-instruction-fxa-settings = { -sync-brand-short-name } の設定のログイン情報のチェックボックスが選択されているか確認してください
-about-logins-intro-instruction-help = <a data-l10n-name="help-link">{ -lockwise-brand-short-name } サポート</a> で詳細なヘルプを確認できます
 login-intro-instructions-fxa = ログイン情報を保存した端末で { -fxaccount-brand-name } を作成、またはログインしてください。
 login-intro-instructions-fxa-settings = [設定] > [同期] > [同期をオンにする...] で、ログイン情報とパスワードのチェックボックスを選択してください。
 login-intro-instructions-fxa-help = <a data-l10n-name="help-link">{ -lockwise-brand-short-name } サポート</a> で詳細なヘルプを確認できます。
 about-logins-intro-import = 他のブラウザーでログイン情報を保存した場合は、<a data-l10n-name="import-link">そちらから { -lockwise-brand-short-name } にインポートできます</a>。
-
 about-logins-intro-import2 = { -brand-product-name } 以外のブラウザーでログイン情報を保存した場合は、<a data-l10n-name="import-browser-link">そのブラウザーから</a> または <a data-l10n-name="import-file-link">ファイルから</a> インポートできます。
 
 ## Login
@@ -113,7 +104,7 @@ login-item-time-used = 最終利用日時: { DATETIME($timeUsed, day: "numeric",
 
 about-logins-os-auth-dialog-caption = { -brand-full-name }
 
-## The macOS strings are preceded by the operating system with "Firefox is trying to "
+## The macOS strings are preceded by the operating system with "Waterfox is trying to "
 ## and includes subtitle of "Enter password for the user "xxx" to allow this." These
 ## notes are only valid for English. Please test in your respected locale.
 
@@ -135,10 +126,6 @@ about-logins-copy-password-os-auth-dialog-message-win = ログイン情報をコ
 # On MacOS, only provide the reason that account verification is needed. Do not put a complete sentence here.
 about-logins-copy-password-os-auth-dialog-message-macosx = 保存したパスワードをコピー
 
-## Master Password notification
-
-master-password-notification-message = 保存したログイン情報とパスワードを確認するには、マスターパスワードを入力してください
-
 # This message can be seen when attempting to export a password in about:logins on Windows.
 about-logins-export-password-os-auth-dialog-message-win = ログイン情報をエクスポートするには、Windows でのあなたの資格情報を入力してください。これはアカウントのセキュリティ保護に役立ちます。
 # This message can be seen when attempting to export a password in about:logins
@@ -151,24 +138,6 @@ about-logins-primary-password-notification-message = 保存したログイン情
 master-password-reload-button =
   .label = ログイン
   .accesskey = L
-
-## Password Sync notification
-
-enable-password-sync-notification-message =
-  { PLATFORM() ->
-      [windows] ご使用のどの { -brand-product-name } でもログイン情報を使えるようにしたいですか？ { -sync-brand-short-name } のオプションに移動して、ログイン情報のチェックボックスを選択してください。
-     *[other] ご使用のどの { -brand-product-name } でもログイン情報を使えるようにしたいですか？ { -sync-brand-short-name } の設定に移動して、ログイン情報のチェックボックスを選択してください。
-  }
-enable-password-sync-preferences-button =
-  .label =
-    { PLATFORM() ->
-        [windows] { -sync-brand-short-name } のオプションに移動
-       *[other] { -sync-brand-short-name } の設定に移動
-    }
-  .accesskey = V
-about-logins-enable-password-sync-dont-ask-again-button =
-  .label = 次回からは確認しない
-  .accesskey = D
 
 ## Dialogs
 
@@ -250,7 +219,6 @@ about-logins-error-message-duplicate-login-with-link = そのユーザー名は 
 
 # This is a generic error message.
 about-logins-error-message-default = このパスワードの保存中にエラーが発生しました。
-
 
 ## Login Export Dialog
 

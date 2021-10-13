@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -29,6 +29,26 @@
 <!ENTITY publishSettings.label "Publizierungs-Website-Einstellungen…">
 <!ENTITY publishSettings.accesskey "P">
 
+<!-- Insert menu items -->
+<!ENTITY insertFormMenu.label "Formular">
+<!ENTITY insertFormMenu.accesskey "F">
+<!ENTITY insertFormCmd.label "Definiere Formular…">
+<!ENTITY insertFormCmd.accesskey "D">
+<!ENTITY insertInputTagCmd.label "Formular Feld…">
+<!ENTITY insertInputTagCmd.accesskey "e">
+<!ENTITY insertInputImageCmd.label "Formular Bild…">
+<!ENTITY insertInputImageCmd.accesskey "i">
+<!ENTITY insertTextAreaCmd.label "Textbereich…">
+<!ENTITY insertTextAreaCmd.accesskey "T">
+<!ENTITY insertSelectCmd.label "Selektionsliste…">
+<!ENTITY insertSelectCmd.accesskey "S">
+<!ENTITY insertButtonCmd.label "Definiere  Knopf…">
+<!ENTITY insertButtonCmd.accesskey "K">
+<!ENTITY insertLabelCmd.label "Definiere Bezeichner">
+<!ENTITY insertLabelCmd.accesskey "B">
+<!ENTITY insertFieldSetCmd.label "Definiere Felder…">
+<!ENTITY insertFieldSetCmd.accesskey "F">
+
 <!-- Toolbar buttons/items -->
 <!ENTITY newToolbarCmd.label "Neu">
 <!ENTITY newToolbarCmd.tooltip "Eine neue Composer-Seite erstellen">
@@ -36,3 +56,7 @@
 <!ENTITY openToolbarCmd.tooltip "Eine lokale Datei öffnen">
 <!ENTITY saveToolbarCmd.tooltip "Die Datei auf einer lokalen Adresse speichern">
 <!ENTITY publishToolbarCmd.tooltip "Die Datei auf eine externe Adresse hochladen">
+<!ENTITY printToolbarCmd.label "Drucken">
+<!ENTITY printToolbarCmd.tooltip "Diese Seite drucken">
+<!ENTITY formToolbarCmd.label "Formular">
+<!ENTITY formToolbarCmd.tooltip "Neues Formular einfügen oder Eigenschaften des ausgewählten Formulars ändern">

@@ -1,17 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 close-button =
     .aria-label = أغلق
-
-preferences-title =
-    .title =
-        { PLATFORM() ->
-            [windows] الخيارات
-           *[other] التفضيلات
-        }
 
 pane-general-title = عام
 
@@ -77,8 +70,6 @@ update-setting-write-failure-title = حدث عُطل أثناء تحديث ال�
 
 update-in-progress-title = يجري الآن التحديث
 
-addons-button = الامتدادات والسمات
-
 ## OS Authentication dialog
 
 
@@ -133,10 +124,6 @@ animated-alert-label =
 customize-alert-label =
     .label = خصّص…
     .accesskey = خ
-
-tray-icon-label =
-    .label = أظهر أيقونة في لوحة النظام
-    .accesskey = ل
 
 mail-custom-sound-label =
     .label = استخدم ملف الصوت التالي
@@ -320,9 +307,6 @@ smaller-size-item =
 quoted-text-color =
     .label = اللون:
     .accesskey = ل
-
-search-input =
-    .placeholder = ابحث
 
 type-column-label =
     .label = نوع المحتوى
@@ -593,16 +577,6 @@ passwords-button =
     .label = كلمات السر المحفوظة…
     .accesskey = س
 
-master-password-description = عند تحديدها، ستحمي كلمة السر الرئيسيّة كل كلمات السر لكن يجب إدخالها مرة لكل جلسة.
-
-master-password-label =
-    .label = استخدم كلمة سر رئيسيّة
-    .accesskey = م
-
-master-password-button =
-    .label = غيّر كلمة السر الرئيسيّة…
-    .accesskey = غ
-
 
 junk-description = اضبط إعدادات السخام الافتراضيَّة. يمكن ضبط إعدادات السخام الخاصة بالحساب في إعدادات الحساب.
 
@@ -761,10 +735,6 @@ no-preview-description = ليست هذه السمة صحيحة أو ربما غ�
 chat-variant-label =
     .value = التنويعة:
     .accesskey = ع
-
-chat-header-label =
-    .label = اعرض الترويسة
-    .accesskey = ت
 
 ## Preferences UI Search Results
 

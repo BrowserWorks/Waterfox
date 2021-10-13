@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,15 +15,10 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
 <!ENTITY prefPara                            "A HTTP-kapcsolatok teljesítménye, illetve kompatibilitása finomhangolható ezekkel a beállításokkal. Bizonyos proxykiszolgálók például megkövetelik a HTTP/1.0-t (olvassa el a verzióinformációkat további részletekért).">
 <!ENTITY prefUseragent.label                 "Böngésző azonosító karakterlánc">
-<!ENTITY prefFirefoxCompat.label             "Firefox kompatibilitás jelzése">
-<!ENTITY prefFirefoxCompat.accesskey         "F">
-<!ENTITY prefLightningShow.label             "Lightning telepítés jelzése">
-<!ENTITY prefLightningShow.accesskey         "L">
-<!ENTITY prefCompatWarning                   "FIGYELMEZTETÉS: ezen beállítások letiltása azt eredményezheti, hogy a webhelyek vagy a szolgáltatások nem fognak megfelelően működni.">
-<!ENTITY prefFirefoxStrict.label             "Azonosítás Firefoxként">
-<!ENTITY prefFirefoxStrict.accesskey         "A">
-<!ENTITY prefFirefoxNone.label               "Azonosítás SeaMonkeyként">
-<!ENTITY prefFirefoxNone.accesskey           "M">
-<!ENTITY prefFirefoxCompat2.label            "Azonosítás SeaMonkeyként, és Firefox kompatibilitás hirdetése">
-<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefWaterfoxStrict.label             "Azonosítás Waterfoxként">
+<!ENTITY prefWaterfoxStrict.accesskey         "A">
+<!ENTITY prefWaterfoxNone.label               "Azonosítás SeaMonkeyként">
+<!ENTITY prefWaterfoxNone.accesskey           "M">
+<!ENTITY prefWaterfoxCompat2.label            "Azonosítás SeaMonkeyként, és Waterfox kompatibilitás hirdetése">
+<!ENTITY prefWaterfoxCompat2.accesskey        "F">
 <!ENTITY prefCompatWarning2.desc             "FIGYELMEZTETÉS: e beállítások megváltoztatása azt eredményezheti, hogy a webhelyek vagy a szolgáltatások nem fognak megfelelően működni.">

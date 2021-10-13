@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,10 +6,6 @@ saved-logins =
     .title = การเข้าสู่ระบบที่บันทึกไว้
 window-close =
     .key = w
-focus-search-shortcut =
-    .key = f
-focus-search-altshortcut =
-    .key = k
 copy-provider-url-cmd =
     .label = คัดลอก URL
     .accesskey = ก
@@ -48,9 +44,6 @@ remove =
 import =
     .label = นำเข้า…
     .accesskey = น
-close-button =
-    .label = ปิด
-    .accesskey = ป
 
 show-passwords =
     .label = แสดงรหัสผ่าน

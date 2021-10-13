@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -29,12 +29,6 @@
 <!ENTITY closeCmd.label "Cerrar">
 <!ENTITY closeCmd.key "W">
 <!ENTITY closeCmd.accesskey "C">
-<!ENTITY printSetupCmd.label "Configurar página…">
-<!ENTITY printSetupCmd.accesskey "u">
-<!ENTITY printPreviewContactCmd.label "Vista preliminar del contacto">
-<!ENTITY printPreviewContactCmd.accesskey "V">
-<!ENTITY printPreviewAddressBook.label "Vista preliminar de la libreta de direcciones">
-<!ENTITY printPreviewAddressBook.accesskey "B">
 <!ENTITY printContactCmd.label "Imprimir contacto…">
 <!ENTITY printContactCmd.accesskey "P">
 <!ENTITY printContactCmd.key "P">
@@ -95,19 +89,12 @@
 <!ENTITY messengerCmd.label "Correo y noticias">
 <!ENTITY messengerCmd.accesskey "o">
 <!ENTITY messengerCmd.commandkey "1">
-<!ENTITY addressBookCmd.label "Libreta de direcciones">
-<!ENTITY addressBookCmd.accesskey "L">
-<!ENTITY addressBookCmd.key "B">
 <!ENTITY searchAddressesCmd.label "Buscar direcciones…">
 <!ENTITY searchAddressesCmd.accesskey "S">
 <!ENTITY importCmd.label "Importar…">
 <!ENTITY importCmd.accesskey "I">
 <!ENTITY exportCmd.label "Exportar…">
 <!ENTITY exportCmd.accesskey "E">
-<!ENTITY preferencesCmd2.label "Opciones">
-<!ENTITY preferencesCmd2.accesskey "O">
-<!ENTITY preferencesCmdUnix.label "Preferencias">
-<!ENTITY preferencesCmdUnix.accesskey "n">
 
 <!ENTITY newContactButton.label "Nuevo contacto">
 <!ENTITY newContactButton.accesskey "C">
@@ -185,6 +172,7 @@
 <!ENTITY _PhoneticName.label "Nombre fonético">
 <!ENTITY _PhoneticName.accesskey "o">
 
+<!-- Card Summary Pane -->
 <!-- Card Summary Pane -->
 <!ENTITY contact.heading "Contacto">
 <!ENTITY home.heading "Inicio">

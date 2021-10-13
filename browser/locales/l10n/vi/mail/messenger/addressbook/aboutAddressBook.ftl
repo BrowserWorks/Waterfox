@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,6 @@ about-addressbook-title = Sổ địa chỉ
 
 about-addressbook-toolbar-new-address-book =
     .label = Sổ địa chỉ mới
-about-addressbook-toolbar-new-carddav-address-book =
-    .label = Sổ địa chỉ CardDAV mới
-about-addressbook-toolbar-new-ldap-address-book =
-    .label = Sổ địa chỉ LDAP mới
 about-addressbook-toolbar-add-carddav-address-book =
     .label = Thêm sổ địa chỉ CardDAV
 about-addressbook-toolbar-add-ldap-address-book =
@@ -20,6 +16,8 @@ about-addressbook-toolbar-new-contact =
     .label = Liên hệ mới
 about-addressbook-toolbar-new-list =
     .label = Danh sách mới
+about-addressbook-toolbar-import =
+    .label = Nhập
 
 ## Books
 
@@ -30,10 +28,14 @@ about-addressbook-books-context-synchronize =
     .label = Đồng bộ hoá
 about-addressbook-books-context-print =
     .label = In…
+about-addressbook-books-context-export =
+    .label = Xuất…
 about-addressbook-books-context-delete =
     .label = Xóa
 about-addressbook-books-context-remove =
     .label = Xóa
+about-addressbook-books-context-startup-default =
+    .label = Thư mục khởi động mặc định
 about-addressbook-confirm-delete-book-title = Xóa sổ địa chỉ
 # Variables:
 # $name (String) - Name of the address book to be deleted.
@@ -67,6 +69,8 @@ about-addressbook-sort-email-ascending =
     .label = Sắp xếp theo địa chỉ e-mail (A > Z)
 about-addressbook-sort-email-descending =
     .label = Sắp xếp theo địa chỉ e-mail (Z > A)
+about-addressbook-cards-context-write =
+    .label = Viết
 about-addressbook-confirm-delete-mixed-title = Xóa liên hệ và danh sách
 # Variables:
 # $count (Number) - The number of contacts and lists to be deleted. Always greater than 1.

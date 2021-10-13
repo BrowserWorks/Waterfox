@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -47,6 +47,7 @@ certificate-viewer-miscellaneous = متنوّع
 certificate-viewer-fingerprints = البصمات
 certificate-viewer-basic-constraints = القيود الأساسية
 certificate-viewer-extended-key-usages = استخدامات المفاتيح الموسّعة
+
 # This message is used as a row header in the Miscellaneous section.
 # The associated data cell contains links to download the certificate.
 certificate-viewer-download = نزّل

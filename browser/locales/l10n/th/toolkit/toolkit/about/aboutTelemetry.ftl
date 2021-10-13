@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,11 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = ข้อมูลการวัดและส่งข้อมูลทางไกล
 about-telemetry-current-store = ส่วนจัดเก็บปัจจุบัน:
 about-telemetry-more-information = กำลังมองหาข้อมูลเพิ่มเติม?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">เอกสารข้อมูล Firefox</a> มีคำแนะนำเกี่ยวกับวิธีการทำงานกับเครื่องมือข้อมูลของเรา
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">เอกสารเกี่ยวกับไคลเอนต์การวัดและส่งข้อมูลทางไกลของ Firefox</a> มีคำจำกัดความสำหรับหลักการทำงาน, เอกสาร API และการอ้างอิงข้อมูล
-about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">แดชบอร์ดการวัดและส่งข้อมูลทางไกล</a>ช่วยให้คุณเห็นภาพข้อมูลที่ Mozilla ได้รับผ่านการวัดและส่งข้อมูลทางไกล
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">เอกสารข้อมูล Waterfox</a> มีคำแนะนำเกี่ยวกับวิธีการทำงานกับเครื่องมือข้อมูลของเรา
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">เอกสารเกี่ยวกับไคลเอนต์การวัดและส่งข้อมูลทางไกลของ Waterfox</a> มีคำจำกัดความสำหรับหลักการทำงาน, เอกสาร API และการอ้างอิงข้อมูล
+about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">แดชบอร์ดการวัดและส่งข้อมูลทางไกล</a>ช่วยให้คุณเห็นภาพข้อมูลที่ Waterfox ได้รับผ่านการวัดและส่งข้อมูลทางไกล
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Probe Dictionary</a> มีรายละเอียดและคำอธิบายสำหรับโพรบที่รวบรวมโดยการวัดและส่งข้อมูลทางไกล
-about-telemetry-show-in-Firefox-json-viewer = เปิดในตัวดู JSON
+about-telemetry-show-in-Waterfox-json-viewer = เปิดในตัวดู JSON
 about-telemetry-home-section = หน้าแรก
 about-telemetry-general-data-section = ข้อมูลทั่วไป
 about-telemetry-environment-data-section = ข้อมูลสภาพแวดล้อม
@@ -67,7 +67,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } ตัวอย่าง, เฉลี่ย = { $prettyAverage }, ผลรวม = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
 about-telemetry-page-subtitle = หน้านี้แสดงข้อมูลเกี่ยวกับประสิทธิภาพ, ฮาร์ดแวร์, การใช้งาน และการปรับแต่งที่เก็บรวบรวมไว้โดยตัววัดและส่งข้อมูลทางไกล ข้อมูลนี้จะถูกส่งไปยัง { $telemetryServerOwner } เพื่อช่วยปรับปรุง { -brand-full-name }
 about-telemetry-settings-explanation = การวัดและส่งข้อมูลทางไกลกำลังรวบรวม { about-telemetry-data-type } และการอัปโหลด<a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>
 # Variables:
@@ -139,8 +139,8 @@ about-telemetry-origin-section = Origin Telemetry
 about-telemetry-origin-origin = ที่มา
 about-telemetry-origin-count = จำนวน
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Firefox Origin Telemetry</a> เข้ารหัสข้อูลทก่อนที่จะถูกส่งเพื่อให้ { $telemetryServerOwner } สามารถนับจำนวนสิ่งต่าง ๆ ได้ แต่จะไม่ทราบว่ามี { -brand-product-name } ที่ระบุใดมีส่วนร่วมกับการนับนั้น (<a data-l10n-name="prio-blog-link">เรียนรู้เพิ่มเติม</a>)
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Waterfox Origin Telemetry</a> เข้ารหัสข้อูลทก่อนที่จะถูกส่งเพื่อให้ { $telemetryServerOwner } สามารถนับจำนวนสิ่งต่าง ๆ ได้ แต่จะไม่ทราบว่ามี { -brand-product-name } ที่ระบุใดมีส่วนร่วมกับการนับนั้น (<a data-l10n-name="prio-blog-link">เรียนรู้เพิ่มเติม</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = โปรเซส { $process }

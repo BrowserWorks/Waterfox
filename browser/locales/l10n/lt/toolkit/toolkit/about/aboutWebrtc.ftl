@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,6 +8,7 @@
 
 # The text "WebRTC" is a proper noun and should not be translated.
 about-webrtc-document-title = „WebRTC“ vidus
+
 # "about:webrtc" is a internal browser URL and should not be
 # translated. This string is used as a title for a file save dialog box.
 about-webrtc-save-page-dialog-title = Įrašyti „about:webrtc“ kaip
@@ -75,10 +76,12 @@ about-webrtc-type-remote = Nuotolinis
 # This adjective is used to label a table column. Cells in this column contain
 # the localized javascript string representation of "true" or are left blank.
 about-webrtc-nominated = Nominuota
+
 # This adjective is used to label a table column. Cells in this column contain
 # the localized javascript string representation of "true" or are left blank.
 # This represents an attribute of an ICE candidate.
 about-webrtc-selected = Pasirinkta
+
 about-webrtc-save-page-label = Įrašyti tinklalapį
 about-webrtc-debug-mode-msg-label = Derinimo veiksena
 about-webrtc-debug-mode-off-state-label = Įjungti derinimo veikseną
@@ -144,26 +147,36 @@ about-webrtc-remote-send-ssrc = Nuotolinis siunčiamas SSRC
 # An option whose value will not be displayed but instead noted as having been
 # provided
 about-webrtc-configuration-element-provided = Pateikta
+
 # An option whose value will not be displayed but instead noted as having not
 # been provided
 about-webrtc-configuration-element-not-provided = Nepateikta
+
 # The options set by the user in about:config that could impact a WebRTC call
 about-webrtc-custom-webrtc-configuration-heading = Naudotojo nustatytos „WebRTC“ parinktys
+
 # Section header for estimated bandwidths of WebRTC media flows
 about-webrtc-bandwidth-stats-heading = Numatomas pralaidumas
+
 # The ID of the MediaStreamTrack
 about-webrtc-track-identifier = Takelio identifikatorius
+
 # The estimated bandwidth available for sending WebRTC media in bytes per second
 about-webrtc-send-bandwidth-bytes-sec = Siuntimo pralaidumas (baitai/sek)
+
 # The estimated bandwidth available for receiving WebRTC media in bytes per second
 about-webrtc-receive-bandwidth-bytes-sec = Gavimo pralaidumas (baitas/sek)
+
 # Maximum number of bytes per second that will be padding zeros at the ends of packets
 about-webrtc-max-padding-bytes-sec = Didžiausias užpildymas (baitai/sek)
+
 # The amount of time inserted between packets to keep them spaced out
 about-webrtc-pacer-delay-ms = Tempo delsa (ms)
+
 # The amount of time it takes for a packet to travel from the local machine to the remote machine,
 # and then have a packet return
 about-webrtc-round-trip-time-ms = RTT (ms)
+
 # This is a section heading for video frame statistics for a MediaStreamTrack.
 # see https://developer.mozilla.org/en-US/docs/Web/API/MediaStreamTrack.
 # Variables:
@@ -191,6 +204,7 @@ about-webrtc-received-label =
         [few] Gauti { $packets } duomenų paketai
        *[other] Gauta { $packets } duomenų paketų
     }
+
 # This is the total number of packets lost by the PeerConnection.
 # Variables:
 #  $packets (Number) - The number of packets lost.
@@ -200,6 +214,7 @@ about-webrtc-lost-label =
         [few] Pradingę { $packets } duomenų paketai
        *[other] Pradingę { $packets } duomenų paketų
     }
+
 # This is the total number of packets sent by the PeerConnection.
 # Variables:
 #  $packets (Number) - The number of packets sent.
@@ -209,11 +224,13 @@ about-webrtc-sent-label =
         [few] Išsiųsti { $packets } duomenų paketai
        *[other] Išsiųsta { $packets } duomenų paketų
     }
+
 # Jitter is the variance in the arrival time of packets.
 # See: https://w3c.github.io/webrtc-stats/#dom-rtcreceivedrtpstreamstats-jitter
 # Variables:
 #   $jitter (Number) - The jitter.
 about-webrtc-jitter-label = Virpėjimas { $jitter }
+
 # ICE candidates arriving after the remote answer arrives are considered trickled
 # (an attribute of an ICE candidate). These are highlighted in the ICE stats
 # table with light blue background.
@@ -226,10 +243,12 @@ about-webrtc-trickle-caption-msg = Vėlesni („trickled“) kandidatai (atvykst
 # Variables:
 #  $timestamp (Number) - The Unix Epoch time at which the SDP was set.
 about-webrtc-sdp-set-at-timestamp-local = Nustatyti „Vietinis SDP“ ties laiko žyma { NUMBER($timestamp, useGrouping: "false") }
+
 # This is used as a header for remote SDP.
 # Variables:
 #  $timestamp (Number) - The Unix Epoch time at which the SDP was set.
 about-webrtc-sdp-set-at-timestamp-remote = Nustatyti „Nutolęs SDP“ ties laiko žyma { NUMBER($timestamp, useGrouping: "false") }
+
 # This is used as a header for an SDP section contained in two columns allowing for side-by-side comparisons.
 # Variables:
 #  $timestamp (Number) - The Unix Epoch time at which the SDP was set.

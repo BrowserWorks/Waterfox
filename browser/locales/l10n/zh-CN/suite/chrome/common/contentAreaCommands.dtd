@@ -1,12 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!-- Context Menu -->
-<!ENTITY popupWindowRejectCmd.label     "拦截此站点弹出窗口">
-<!ENTITY popupWindowRejectCmd.accesskey "o">
-<!ENTITY popupWindowAllowCmd.label      "允许此站点弹出窗口">
-<!ENTITY popupWindowAllowCmd.accesskey  "o">
 <!ENTITY openLinkCmdInTab.label       "在新标签页中打开">
 <!ENTITY openLinkCmdInTab.accesskey   "T">
 <!ENTITY openLinkCmd.label            "在新窗口中打开">

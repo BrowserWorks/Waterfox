@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "Nytt">
 <!ENTITY newMenu.accesskey "N">
 <!ENTITY newMessage.label "Nytt meddelande">
-<!ENTITY newMessage.key "M">
 <!ENTITY newMessageCmd2.key "N">
-<!ENTITY newMessage.accesskey "M">
 <!ENTITY newContact.label "Ny adressbokskontakt…">
 <!ENTITY newContact.accesskey "A">
 <!ENTITY attachMenu.label "Bifoga">
 <!ENTITY attachMenu.accesskey "f">
-<!ENTITY attachFileCmd.label "Bifoga fil…">
-<!ENTITY attachFileCmd.accesskey "B">
-<!ENTITY attachFileCmd.key "A">
 <!ENTITY attachCloudCmd.label "Filelink">
 <!ENTITY attachCloudCmd.accesskey "i">
 <!ENTITY attachPageCmd.label "Bifoga webbsida…">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "Skicka senare">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "r">
-<!ENTITY printSetupCmd.label "Utskriftsformat…">
-<!ENTITY printSetupCmd.accesskey "o">
-<!ENTITY printPreviewCmd.label "Förhandsgranska">
-<!ENTITY printPreviewCmd.accesskey "h">
 <!ENTITY printCmd.label "Skriv ut…">
 <!ENTITY printCmd.key "P">
 <!ENTITY printCmd.accesskey "u">
@@ -82,8 +73,6 @@
 <!ENTITY reorderAttachmentsCmd.label "Omordna bilagor…">
 <!ENTITY reorderAttachmentsCmd.accesskey "O">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "Bifogningsfönstret">
-<!ENTITY toggleAttachmentPaneCmd.accesskey "g">
 <!ENTITY selectAllCmd.accesskey "M">
 <!ENTITY findBarCmd.label "Sök…">
 <!ENTITY findBarCmd.accesskey "S">
@@ -102,11 +91,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "Omordna bilagor">
-<!ENTITY moveAttachmentTopPanelBtn.label "Flytta till toppen">
-<!ENTITY moveAttachmentUpPanelBtn.label "Flytta upp">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label "Flytta ihop">
-<!ENTITY moveAttachmentDownPanelBtn.label "Flytta ner">
-<!ENTITY moveAttachmentBottomPanelBtn.label "Flytta till botten">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -204,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "Kontoinställningar">
 <!ENTITY accountManagerCmd2.accesskey "K">
 <!ENTITY accountManagerCmdUnix2.accesskey "K">
-<!ENTITY preferencesCmd2.label "Inställningar">
-<!ENTITY preferencesCmd2.accesskey "n">
-<!ENTITY preferencesCmdUnix.label "Inställningar">
-<!ENTITY preferencesCmdUnix.accesskey "I">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "m">
@@ -220,7 +201,6 @@
 <!ENTITY sendButton.label "Skicka">
 <!ENTITY quoteButton.label "Citera">
 <!ENTITY addressButton.label "Adress">
-<!ENTITY attachButton.label "Bifoga">
 <!ENTITY spellingButton.label "Stavning">
 <!ENTITY saveButton.label "Spara">
 <!ENTITY printButton.label "Skriv ut">
@@ -230,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "Skickar meddelandet senare">
 <!ENTITY quoteButton.tooltip "Citerar föregående meddelande">
 <!ENTITY addressButton.tooltip "Väljer mottagare ur någon adressbok">
-<!ENTITY attachButton.tooltip2 "Lägg till bilaga">
 <!ENTITY spellingButton.tooltip "Kontrollerar stavningen på markerad text eller hela meddelandet">
 <!ENTITY saveButton.tooltip "Sparar meddelandet">
 <!ENTITY cutButton.tooltip              "Klipp ut">
@@ -245,9 +224,6 @@
 <!ENTITY extraRecipients.tooltip "Andra typer av adressfält">
 <!ENTITY fromAddr2.label "Från">
 <!ENTITY fromAddr.accesskey "n">
-<!ENTITY toAddr2.label "Till">
-<!ENTITY ccAddr2.label "Kopia">
-<!ENTITY bccAddr2.label "Dold kopia">
 <!ENTITY replyAddr2.label "Svar till">
 <!ENTITY newsgroupsAddr2.label "Diskussionsgrupp">
 <!ENTITY followupAddr2.label "Uppföljning till">
@@ -306,8 +282,6 @@
 <!ENTITY removeAllAttachments.accesskey "r">
 <!ENTITY selectAll.label "Markera allt">
 <!ENTITY selectAll.accesskey "M">
-<!ENTITY attachFile.label "Bifoga fil(er)…">
-<!ENTITY attachFile.accesskey "B">
 <!ENTITY attachCloud.label "Filelink…">
 <!ENTITY attachCloud.accesskey "i">
 <!ENTITY convertCloud.label "Konvertera till…">

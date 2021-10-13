@@ -1,7 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
 <!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
 <!ENTITY rights.locale-direction "ltr">
 <!ENTITY rights.pagetitle       "O vašich právech">
@@ -18,16 +18,11 @@
      deliberate for formatting around the embedded links. -->
 <!ENTITY rights.intro-point1a "Aplikace &brandShortName; je dostupná za podmínek stanovených ve ">
 <!ENTITY rights.intro-point1b "Veřejné licenci Mozilly">
-<!ENTITY rights.intro-point1c " (MPL). Ta vám umožňuje aplikaci &brandShortName; používat, kopírovat a šířit. Pokud potřebujete, můžete také pozměnit zdrojový kód aplikace &brandShortName; podle vašich potřeb. Mozilla Public License vám dává také právo šířit vámi pozměněné verze.">
-
-<!ENTITY rights.intro-point2a "SeaMonkey e.V. vám nepodstupuje práva k ochranné známce a k logu SeaMonkey. Podrobnější informace o ochranných známkách jsou dostupné ">
+<!ENTITY rights.intro-point1c " (MPL). Ta vám umožňuje aplikaci &brandShortName; používat, kopírovat a šířit. Pokud potřebujete, můžete také pozměnit zdrojový kód aplikace &brandShortName; podle vašich potřeb. Waterfox Public License vám dává také právo šířit vámi pozměněné verze.">
 
 <!ENTITY rights.intro-point2aa "&vendorShortName; vám nepodstupuje práva k ochranné známce a k logu &quot;&brandFullName;&quot; . Podrobnější informace o ochranných známkách jsou dostupné ">
 <!ENTITY rights.intro-point2b "zde">
 <!ENTITY rights.intro-point2c ".">
-
-<!-- point 2d is technically point 3. in the list -->
-<!ENTITY rights.intro-point2d "Některé funkce v aplikaci &brandShortName;, jako je například hlášení pádů, vám dávají možnost poskytnout &vendorShortName; zpětnou vazbu. Tím, že se rozhodnete zpětnou vazbu odeslat, dáváte souhlas &vendorShortName; k využití zpětné vazby k vylepšení jejich aplikací a k jejímu zveřejnění.">
 
 <!-- point 2da is technically point 3. in the list -->
 <!ENTITY rights.intro-point2da "Některé funkce v aplikaci &brandShortName;, jako je například hlášení pádů, vám dávají možnost poskytnout &vendorShortName; zpětnou vazbu. Tím, že se rozhodnete zpětnou vazbu odeslat, dáváte souhlas &vendorShortName; k využití zpětné vazby k vylepšení jejich aplikací a k jejímu zveřejnění.">
@@ -48,8 +43,6 @@
      preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
      so that we can refer to text the user sees in the UI, without
      this page being forgotten every time those strings are updated.  -->
-<!-- intro paragraph for branded builds -->
-<!ENTITY rights3.webservices-a "&brandFullName; začleňuje volitelné webové služby (&quot;Služby&quot;), které jsou dostupné k použití v rámci této binární verze aplikace &brandShortName; za podmínek popsaných níže. Některé tyto služby (jako je navrhování doplňků nebo aktualizační služba, služba bezpečného prohlížení nebo funkce prohlížení se znalostí polohy) jsou ve výchozím stavu zapnuté. Pokud si nepřejete žádnou z těchto Služeb používat nebo jsou pro vás níže uvedené podmínky neakceptovatelné, pokyny, jak lze vypnout určitou funkcionalitu nebo Službu, jsou dostupné ">
 <!-- intro paragraph for branded builds -->
 <!ENTITY rights3.webservices-aa "&vendorShortName; začleňuje volitelné webové služby (&quot;Služby&quot;), které jsou dostupné k použití v rámci této binární verze aplikace &brandShortName; za podmínek popsaných níže. Některé tyto služby (jako je navrhování doplňků nebo aktualizační služba, služba bezpečného prohlížení nebo funkce prohlížení se znalostí polohy) jsou ve výchozím stavu zapnuté. Pokud si nepřejete žádnou z těchto Služeb používat nebo jsou pro vás níže uvedené podmínky neakceptovatelné, pokyny, jak lze vypnout určitou funkcionalitu nebo Službu, jsou dostupné ">
 <!ENTITY rights3.webservices-b "zde">
@@ -80,16 +73,11 @@
 <!ENTITY rights.locationawarebrowsing-term4 "Prohlížení se znalostí polohy je momentálně vypnuto">
 
 <!-- points 0-6 text for branded builds -->
-<!ENTITY rights.webservices-term0 "Organizace &vendorShortName;, jejich přispěvatelé, držitelé licencí a partneři se snaží poskytovat co nejvíce přesné a aktuální Služby. Přesto není možné garantovat, že poskytované informace jsou ucelené a bezchybné. Např. služba bezpečného prohlížení nemusí rozpoznat některé zákeřné stránky a může chybně označit některé bezpečné stránky a v rámci služeb se znalostí polohy jsou i všechny polohy vrácené našimi poskytovateli služeb pouze odhadnuté. Ani my ani náš poskytovatel služby negarantujeme přesnost poskytnuté polohy.">
-
-<!-- points 0-6 text for branded builds -->
 <!ENTITY rights.webservices-term0a "Organizace &vendorShortName;, jejich přispěvatelé, držitelé licencí a partneři se snaží poskytovat co nejvíce přesné a aktuální Služby. Přesto není možné garantovat, že poskytované informace jsou ucelené a bezchybné. Např. služba bezpečného prohlížení nemusí rozpoznat některé zákeřné stránky a může chybně označit některé bezpečné stránky a v rámci služeb se znalostí polohy jsou i všechny polohy vrácené našimi poskytovateli služeb pouze odhadnuté. Ani my ani náš poskytovatel služby negarantujeme přesnost poskytnuté polohy.">
 <!ENTITY rights.webservices-term1 "Organizace &vendorShortName; může libovolně ukončit nebo změnit užívání Služeb.">
-<!ENTITY rights.webservices-term2 "Jste zváni k užití Služeb spojených s touto verzí aplikace &brandShortName; a máte všechna práva k tomu potřebná. &vendorShortName; a držitelé licencí si vyhrazují všechna ostatní práva spojená se Službami. Cílem těchto podmínek není omezení žádných práv udělených v rámci licencí svobodného softwaru vztahujících se na aplikaci &brandShortName; a na odpovídající zdrojový kód této verze aplikace &brandShortName;.">
 <!ENTITY rights.webservices-term2a "Jste zváni k užití Služeb spojených s touto verzí aplikace &brandShortName; a máte všechna práva k tomu potřebná. &vendorShortName; a držitelé licencí si vyhrazují všechna ostatní práva spojená se Službami. Cílem těchto podmínek není omezení žádných práv udělených v rámci licencí svobodného softwaru vztahujících se na aplikaci &brandShortName; a na odpovídající zdrojový kód této verze aplikace &brandShortName;.">
 <!ENTITY rights.webservices-term3 "Služby jsou poskytovány „tak jak jsou“. Organizace &vendorShortName;, její přispěvatelé, držitelé licencí a distributoři se zříkají všech záruk, ať už vyjádřených nebo předpokládaných, včetně ale nikoliv výhradně, záruk zpeněžitelnosti Služeb a vhodnosti k vašemu určitému účelu. Jste plně zodpovědní za veškerá rizika spojená s volbou Služeb pro vaše účely, a to jak do kvality, tak do výkonnosti Služeb. Některé právní systémy nepovolují vyloučení nebo omezení předpokládaných záruk, v takovém případě toto zřeknutí pro vás neplatí.">
 <!ENTITY rights.webservices-term4 "Organizace &vendorShortName;, její přispěvatelé, držitelé licencí a distributoři nejsou mimo výjimky dané zákonem zodpovědní za žádné nepřímé, mimořádné, nahodilé škody (a ani za sankční náhradu škody) vyplývající ze způsobu použití nebo ze způsobu souvisejícího s použitím aplikace &brandShortName; a Služeb. Souhrnná odpovědnost za těchto podmínek nepřesáhne $500 (pět set dolarů). Některé právní systémy nepovolují vyloučení odpovědnosti za určité škody, v takovém případě tato vyloučení a omezení pro vás neplatí.">
 <!ENTITY rights.webservices-term5 "Organizace &vendorShortName; může dle nutnosti tyto podmínky libovolně aktualizovat. Tyto podmínky nelze měnit či zrušit bez písemného souhlasu organizace &vendorShortName;.">
-<!ENTITY rights.webservices-term6 "Tyto podmínky se řídí a vykládají v souladu s německými právními předpisy a všechny spory vzniklé v souvislosti s těmito podmínkami budou podléhat výlučné jurisdikci příslušného soudu v Německu. Pokud bude jakákoli část těchto podmínek považována za neplatnou nebo nevynutitelnou, zbývající části zůstanou v plné síle a účinku. V případě rozporu mezi přeloženou verzí těchto podmínek a anglickou jazykovou verzí má přednost anglická jazyková verze.">
 
 <!ENTITY rights.webservices-term6a "Tyto podmínky se řídí a vykládají v souladu s německými právními předpisy a všechny spory vzniklé v souvislosti s těmito podmínkami budou podléhat výlučné jurisdikci příslušného soudu v Německu. Pokud bude jakákoli část těchto podmínek považována za neplatnou nebo nevynutitelnou, zbývající části zůstanou v plné síle a účinku. V případě rozporu mezi přeloženou verzí těchto podmínek a anglickou jazykovou verzí má přednost anglická jazyková verze.">

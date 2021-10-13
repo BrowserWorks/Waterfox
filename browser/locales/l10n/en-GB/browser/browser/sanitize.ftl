@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,13 +34,13 @@ clear-time-duration-prefix =
     .accesskey = T
 
 clear-time-duration-value-last-hour =
-    .label = Last Hour
+    .label = Last hour
 
 clear-time-duration-value-last-2-hours =
-    .label = Last Two Hours
+    .label = Last two hours
 
 clear-time-duration-value-last-4-hours =
-    .label = Last Four Hours
+    .label = Last four hours
 
 clear-time-duration-value-today =
     .label = Today
@@ -57,7 +57,7 @@ clear-time-duration-suffix =
 history-section-label = History
 
 item-history-and-downloads =
-    .label = Browsing & Download History
+    .label = Browsing & download history
     .accesskey = B
 
 item-cookies =
@@ -65,7 +65,7 @@ item-cookies =
     .accesskey = C
 
 item-active-logins =
-    .label = Active Logins
+    .label = Active logins
     .accesskey = L
 
 item-cache =
@@ -73,7 +73,7 @@ item-cache =
     .accesskey = a
 
 item-form-search-history =
-    .label = Form & Search History
+    .label = Form & search history
     .accesskey = F
 
 data-section-label = Data
@@ -82,8 +82,12 @@ item-site-preferences =
     .label = Site Preferences
     .accesskey = S
 
+item-site-settings =
+    .label = Site settings
+    .accesskey = S
+
 item-offline-apps =
-    .label = Offline Web Site Data
+    .label = Offline web site data
     .accesskey = O
 
 sanitize-everything-undo-warning = This action cannot be undone.

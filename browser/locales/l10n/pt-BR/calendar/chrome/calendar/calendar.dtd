@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,8 +8,6 @@
 
 <!ENTITY calendar.newevent.button.tooltip         "Criar novo evento" >
 <!ENTITY calendar.newtask.button.tooltip          "Criar nova tarefa" >
-
-<!ENTITY calendar.unifinder.todoitems.label       "Tarefas" >
 
 <!ENTITY calendar.unifinder.showcompletedtodos.label "Exibir tarefas concluídas">
 
@@ -88,8 +86,6 @@
 
 <!ENTITY calendar.newevent.button.label         "Novo evento" >
 <!ENTITY calendar.newtask.button.label          "Nova tarefa" >
-<!ENTITY calendar.print.button.label            "Imprimir" >
-<!ENTITY calendar.print.button.accesskey        "p">
 
 <!ENTITY calendar.day.button.label              "Dia" >
 <!ENTITY calendar.week.button.label             "Semana" >
@@ -294,12 +290,12 @@
 
 <!-- LOCALIZATION NOTE (calendar.context.hidecalendar.accesskey)
      This is the access key used for the hideCalendar string -->
-<!ENTITY calendar.context.hidecalendar.accesskey      "H">
+<!ENTITY calendar.context.hidecalendar.accesskey      "c">
 
 <!-- LOCALIZATION NOTE (calendar.context.showonly.accesskey)
      This is the access key used for the showOnlyCalendar string -->
 <!ENTITY calendar.context.showonly.accesskey           "O">
-<!ENTITY calendar.context.showall.label                "Mostrar todas agendas">
+<!ENTITY calendar.context.showall.label                "Mostrar todas as agendas">
 <!ENTITY calendar.context.showall.accesskey            "a">
 
 <!ENTITY calendar.context.convertmenu.label              "Converter para">
@@ -355,7 +351,6 @@
 <!ENTITY calendarproperties.color.label                    "Cor:">
 <!ENTITY calendarproperties.webdav.label                   "iCalendar (ICS)">
 <!ENTITY calendarproperties.caldav.label                   "CalDAV">
-<!ENTITY calendarproperties.wcap.label                     "Sun Java System Calendar Server (WCAP)">
 <!ENTITY calendarproperties.format.label                   "Formato:">
 <!ENTITY calendarproperties.location.label                 "Local:">
 <!ENTITY calendarproperties.refreshInterval.label          "Atualizar agenda:">
@@ -364,7 +359,6 @@
 <!ENTITY calendarproperties.readonly.label                 "Somente leitura">
 <!ENTITY calendarproperties.firealarms.label               "Exibir lembretes">
 <!ENTITY calendarproperties.cache3.label                   "Suporte offline">
-<!ENTITY calendarproperties.enabled.label                  "Ativar esta agenda">
 <!ENTITY calendarproperties.enabled2.label                 "Ativar esta agenda">
 <!ENTITY calendarproperties.forceDisabled.label            "O provedor desta agenda não foi encontrado. Isto normalmente ocorre quando você desativa ou desinstala certas extensões.">
 <!ENTITY calendarproperties.unsubscribe.label              "Cancelar inscrição">
@@ -380,23 +374,6 @@
 
 <!-- Select Calendar Dialog -->
 <!ENTITY calendar.select.dialog.title    "Selecionar agenda">
-
-<!-- Calendar Printing -->
-<!ENTITY calendar.print.window.title "Imprimir uma agenda">
-<!ENTITY calendar.print.title.label "Título:">
-<!ENTITY calendar.print.layout.label "Modelo:">
-<!ENTITY calendar.print.range.label "O que imprimir">
-<!ENTITY calendar.print.currentView2.label "Visão atual">
-<!ENTITY calendar.print.selectedEventsAndTasks.label "Eventos/tarefas selecionados">
-<!ENTITY calendar.print.tasks.label "Tarefas">
-<!ENTITY calendar.print.events.label "Eventos">
-<!ENTITY calendar.print.custom.label "Período personalizado:">
-<!ENTITY calendar.print.from.label "De:">
-<!ENTITY calendar.print.to.label "Até:">
-<!ENTITY calendar.print.settingsGroup.label "Configuração de impressão">
-<!ENTITY calendar.print.optionsGroup.label "Opções">
-<!ENTITY calendar.print.taskswithnoduedate.label "Tarefas sem data de vencimento">
-<!ENTITY calendar.print.completedtasks.label "Tarefas concluídas">
 
 <!-- Error reporting -->
 <!ENTITY calendar.error.detail "Detalhes…">

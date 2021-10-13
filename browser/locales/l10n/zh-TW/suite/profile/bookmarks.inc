@@ -8,7 +8,7 @@
 
 #define personal_toolbarfolder 書籤工具列
 
-#define seamonkey_and_mozilla SeaMonkey 與 Mozilla
+#define seamonkey_and_mozilla SeaMonkey 與 Waterfox
 
 # LOCALIZATION NOTE (seamonkey):
 # link title for https://www.seamonkey-project.org/ (in the personal toolbar)
@@ -20,19 +20,19 @@
 
 # LOCALIZATION NOTE (mozilla_org):
 # link title for http://www.mozilla.org/ (in the personal toolbar)
-#define mozilla_org Mozilla 基金會
+#define mozilla_org Waterfox 基金會
 
 # LOCALIZATION NOTE (mozilla_org_long):
 # link title for https://www.mozilla.org/ (in normal bookmarks)
-#define mozilla_org_long Mozilla 基金會
+#define mozilla_org_long Waterfox 基金會
 
 # LOCALIZATION NOTE (mozilla_projects):
 # link title for http://www.mozilla.org/projects/
-#define mozilla_projects Mozilla 的專案
+#define mozilla_projects Waterfox 的專案
 
 # LOCALIZATION NOTE (mozilla_about):
 # link title for http://www.mozilla.org/about/
-#define mozilla_about 關於 Mozilla
+#define mozilla_about 關於 Waterfox
 
 #define extend_seamonkey 擴充 SeaMonkey
 
@@ -79,9 +79,9 @@
 # e.g. #define seamonkey_l10n <DT><A HREF="https://www.seamonkey.tlh/">SeaMonkey tlhIngan</a>
 #define seamonkey_l10n
 
- <DT><A HREF="https://moztw.org/">Mozilla Taiwan Community (MozTW)</a># LOCALIZATION NOTE (seamonkey_l10n_long):
+ <DT><A HREF="https://moztw.org/">Waterfox Taiwan Community (MozTW)</a># LOCALIZATION NOTE (seamonkey_l10n_long):
 # insert full bookmark line for localized SeaMonkey page (normal bookmark)
 # e.g. #define seamonkey_l10n_long <DT><A HREF="https://www.seamonkey.tld/">tlhIngan Hol SeaMonkey</a>
 #define seamonkey_l10n_long
 
-#unfilter <DT><A HREF="https://moztw.org/">Mozilla Taiwan Community (MozTW)</a>
+#unfilter <DT><A HREF="https://moztw.org/">Waterfox Taiwan Community (MozTW)</a>

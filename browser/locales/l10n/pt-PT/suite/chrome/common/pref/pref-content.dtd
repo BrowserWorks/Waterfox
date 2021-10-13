@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -33,10 +33,11 @@
 <!ENTITY defaultZoom.label                      "Zoom predefinido">
 <!ENTITY defaultZoom.accesskey                  "d">
 
-<!ENTITY siteSpecific.label                     "Memorizar níveis de zoom numa base por site">
-<!ENTITY siteSpecific.accesskey                 "m">
 <!ENTITY textZoomOnly.label                     "Ampliar apenas texto em vez de toda a página">
 <!ENTITY textZoomOnly.accesskey                 "A">
+<!ENTITY siteSpecific.label                     "Memorizar níveis de zoom numa base por site">
+<!ENTITY siteSpecific.accesskey                 "m">
+<!ENTITY showZoomStatusPanel.label              "Mostrar controlos de zoom na barra de estado">
 <!ENTITY enableAutomaticImageResizing.label     "Redimensionar imagens grandes para caberem na janela do navegador">
 <!ENTITY enableAutomaticImageResizing.accesskey "R">
 
@@ -45,4 +46,3 @@
 <!ENTITY blockAutoRefresh.label                 "Avisar-me quando os websites tentarem redirecionar ou recarregar a página">
 <!ENTITY blockAutoRefresh.accesskey             "w">
 
-<!ENTITY showZoomStatusPanel.label              "Mostrar controlos de zoom na barra de estado">

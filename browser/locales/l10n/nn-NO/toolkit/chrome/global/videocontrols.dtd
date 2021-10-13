@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -14,9 +14,6 @@
 <!ENTITY fullscreenButton.exitfullscreenlabel "Avslutt fullskjerm">
 <!ENTITY castingButton.castingLabel "Cast til skjerm">
 <!ENTITY closedCaption.off "Av">
-<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
-     accessibility software to clarify what the slider is for. -->
-<!ENTITY volumeScrubber.label "Volumkontroll">
 
 <!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
 the Picture-in-Picture video toggle button when the mouse is hovering it. -->

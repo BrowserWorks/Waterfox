@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -58,19 +58,51 @@
 <p>El panel principal de preferencias avanzadas le permite:</p>
 
 <ul>
-  <li class="unix"><strong>Usar las preferencias del sistema</strong>:
-    seleccione esta opción para utilizar las preferencias del sistema ya
-    establecidas, descartando las de &brandShortName;.</li>
-  <li class="win"><strong>Comprobar la condición de aplicación predeterminada
+  <li><strong>Comprobar la condición de aplicación predeterminada
     al iniciar</strong>: seleccione esta opción para que &brandShortName;
     compruebe si es la aplicación predeterminada para tareas como navegar y
     manejar el correo. Si &brandShortName; detecta al iniciarse que no es la
     aplicación predeterminada para cualquiera de estas tareas, aparecerá un
     diálogo que le permite elegir qué tareas debe manejar &brandShortName;
     de manera predeterminada.</li>
+  <li><strong>Hacer &brandShortName; la aplicación predeterminada para</strong>:
+    seleccionar &brandShortName; como la aplicación predeterminada de
+    navegador, cliente de correo, cliente de noticias y de canales en el
+    sistema operativo, como Windows, y desde dentro de otros aplicaciones, como
+    Microsoft Word.
+
+    <p><strong>Nota</strong>: configurar &brandShortName; como la aplicación
+      predeterminada de navegador, cliente de correo, cliente de noticias y de
+      canales puede eliminar la conexión que otras aplicaciones tenían con
+      estas tareas. Remítase a la documentación de las aplicaciones respectivas
+      para descubrir cómo restaurarlas.</p>
+  </li>
+  <li><strong>Usar Correo y Noticias &brandShortName; al abrir enlaces del
+    navegador de</strong>: por defecto, cualquier enlace a direcciones de
+    correo y grupos de noticias abiertos desde las páginas del navegador u
+    otros mensajes se maneja por el propio &brandShortName;. Desmarque las
+    casillas de correo y/o noticias si quiere que una aplicación externa
+    gestione esos enlaces. En este caso, se abrirá un diálogo para seleccionar
+    la aplicación que se debe usar.
+
+    <!-- remove the following warning once bug 198547 is fixed -->
+    <p><strong>Nota</strong>: no desmarque ninguna de estas casillas y luego
+      seleccione &brandShortName; en el diálogo a menos que también esté
+      registrado como la aplicación predeterminada de correo o noticias del
+      sistema. Hacerlo puede causar que &brandShortName; pregunte continuamente
+      qué programa usar al abrir un enlace.</p>
+  </li>
+  <li><strong>Usar diálogo de impresión nativo (donde sea posible)</strong>:
+    seleccione esta opción para hacer que &brandShortName; use el diálogo de
+    impresión nativo, donde sea posible, en lugar del suyo propio.</li>
+  <li><strong>Usar configuración general de impresión</strong>: seleccione esta
+    opción para hacer que &brandShortName; use la misma configuración de
+    impresión en todas las ventanas. Si se desactiva, cada ventana usa su
+    propia configuración y los cambios en una ventana no afecta a la
+    configuración en las otras.</li>
   <li><strong>Enviar informes de fallo</strong>: seleccione esta opción para
-    activar el agente de informes de fallos de Mozilla. Si &brandShortName; se
-    sierra, se le preguntará caso por caso si quiere informar del problema.</li>
+   activar el agente de informes de fallos de Waterfox. Si &brandShortName; se
+   sierra, se le preguntará caso por caso si quiere informar del problema.</li>
 </ul>
 
 <p>[<a href="#advanced_preferences">Volver al principio de la sección</a>]</p>
@@ -554,16 +586,16 @@ conexiones basadas en HTTP:</p>
     opción puede tener como resultado que los sitios web no funcionen
     correctamente. &brandShortName; puede:
     <ul>
-      <li><strong>Identificarse como Firefox</strong>: no se menciona a
-        &brandShortName;; se envía un identificador de Firefox en su lugar.
+      <li><strong>Identificarse como Waterfox</strong>: no se menciona a
+        &brandShortName;; se envía un identificador de Waterfox en su lugar.
         Esto puede ser necesario para sitios web que rehúsan funcionar cuando
         &brandShortName; se menciona en el identificador.</li>
       <li><strong>Identificarse como &brandShortName;</strong>: &brandShortName;
         se identificará a sí mismo como &brandShortName;, sin mencionar a
-        Firefox.</li>
+        Waterfox.</li>
       <li><strong>Identificarse como &brandShortName; y anunciar compatibilidad
-        con Firefox</strong>: &brandShortName; se identificará a sí mismo como
-        &brandShortName; y también como compatible con Firefox. Esto permite
+        con Waterfox</strong>: &brandShortName; se identificará a sí mismo como
+        &brandShortName; y también como compatible con Waterfox. Esto permite
         a los sitios web que buscan ciertos navegadores en lugar de cierta
         funcionalidad que funcionen con &brandShortName;, a la vez que aún
         aparecen como &brandShortName; en las estadísticas de los sitios

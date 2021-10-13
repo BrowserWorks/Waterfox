@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,6 +16,16 @@ about-processes-shutdown-process =
 about-processes-shutdown-tab =
     .title = Chiudi scheda
 
+# Profiler icons
+# Variables:
+#    $duration (Number) The time in seconds during which the profiler will be running.
+#                       The value will be an integer, typically less than 10.
+about-processes-profile-process =
+    .title = { $duration ->
+   [one] Crea un profilo di tutti i thread di questo processo per { $duration } secondo
+  *[other] Crea un profilo di tutti i thread di questo processo per { $duration } secondi
+}
+
 ## Column headers
 
 about-processes-column-name = Nome
@@ -27,6 +37,10 @@ about-processes-column-cpu-total = CPU
 ##    $pid (String) The process id of this process, assigned by the OS.
 ##    $origin (String) The domain name for this process.
 ##    $type (String) The raw type for this process. Used for unknown processes.
+
+## Process names
+## Variables:
+##    $pid (String) The process id of this process, assigned by the OS.
 
 about-processes-browser-process = { -brand-short-name } ({ $pid })
 about-processes-web-process = Processo web condiviso ({ $pid })
@@ -108,6 +122,14 @@ about-processes-cpu = { NUMBER($percent, maximumSignificantDigits: 2, style: "pe
 
 # Special case: data is not available yet.
 about-processes-cpu-user-and-kernel-not-ready = (misurazione in corso)
+
+# Special case: process or thread is almost idle (using less than 0.1% of a CPU core).
+# This case only occurs on Windows where the precision of the CPU times is low.
+about-processes-cpu-almost-idle = < 0,1%
+    .title = Tempo CPU complessivo: { NUMBER($total, maximumFractionDigits: 0) }{ $unit }
+
+about-processes-cpu-fully-idle = non attivo
+    .title = Tempo CPU complessivo: { NUMBER($total, maximumFractionDigits: 0) }{ $unit }
 
 about-processes-cpu-idle = non attivo
     .title = Tempo CPU complessivo: { NUMBER($total, maximumFractionDigits: 2) }{ $unit }

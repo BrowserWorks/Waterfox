@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -29,15 +29,13 @@ feeds-label = RSS
     .aria-label = Conectar-se a RSS
 feeds-description = O { -brand-short-name } permite conectar-se a feeds RSS/Atom para obter notícias e atualizações de todos os lados.
 newsgroups-label = Grupos de notícias
-    .aria-label = Conectar a um grupos de notícias
-newsgroups-description = O { -brand-short-name } permite conectar-se a todos os grupos de notícias que deseja.
+    .aria-label = Conectar a um grupo de notícias
+newsgroups-description = O { -brand-short-name } permite você se conectar a todos os grupos de notícias que quiser.
 import-title = Importar de outro programa
 import-paragraph = O { -brand-short-name } permite importar mensagens de email, itens do catálogo de endereços, assinaturas de feeds, preferências e/ou filtros de outros programas de email e de formatos comuns de catálogo de endereços.
 import-label = Importar
     .aria-label = Importar dados de outros programas
 about-paragraph = O Thunderbird é o principal cliente de email e agenda de código aberto, multiplataforma e livre para uso comercial e pessoal. Queremos que ele permaneça seguro e melhore ainda mais. Uma doação nos permitirá contratar mais desenvolvedores, pagar a infraestrutura e continuar a aprimorar.
-about-paragraph-2 = <b>O Thunderbird é financiado por usuários como você! Se gosta de usar o Thunderbird, considere fazer uma doação.</b> A melhor maneira de garantir que o Thunderbird permaneça disponível é
-about-donation = fazer uma doação
 about-paragraph-consider-donation = <b>O Thunderbird é financiado por usuários como você! Se você gosta do Thunderbird, considere fazer uma doação.</b> A melhor maneira de garantir que o Thunderbird continue disponível é <a data-l10n-name="donation-link">fazer uma doação</a>.
 explore-link = Explorar recursos
 support-link = Suporte

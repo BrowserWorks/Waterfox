@@ -1,6 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance prefs dialog.  -->
 
 <!ENTITY pref.appearance.title "Wygląd">
 <!ENTITY onStartLegend.label "Domyślny komponent otwierany po uruchomieniu programu &brandShortName;:">
@@ -18,5 +20,4 @@
 
 <!ENTITY pref.locales.title "Język interfejsu użytkownika">
 <!ENTITY selectLocale.label "Wybór języka tekstów wyświetlanych w oknach dialogowych, menu, paskach narzędziowych i etykietach przycisków:">
-<!ENTITY restartOnLangChange.label "Preferencje językowe zostaną zastosowane po ponownym uruchomieniu programu &brandShortName;.">
 

@@ -1,12 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 
 ## The following feature names must be treated as a brand, and kept in English.
 ## They cannot be:
 ## - Declined to adapt to grammatical case.
 ## - Transliterated.
 ## - Translated.
+
 
 ## The following feature names must be treated as a brand.
 ##
@@ -28,5 +30,42 @@
 -pocket-brand-name = Pocket
 -send-brand-name = Waterfox Send
 -screenshots-brand-name = Waterfox Screenshots
--mozilla-vpn-brand-name = Mozilla VPN
+-mozilla-vpn-brand-name = Waterfox VPN
 -profiler-brand-name = Waterfox Profiler
+-translations-brand-name = Waterfox Translations
+
+# “Suggest” can be localized, “Waterfox” must be treated as a brand
+# and kept in English.
+-firefox-suggest-brand-name =
+    { $case ->
+       *[nom]
+            { $capitalization ->
+               *[upper] Podpowiedzi Firefoksa
+                [lower] podpowiedzi Firefoksa
+            }
+        [gen]
+            { $capitalization ->
+               *[upper] Podpowiedzi Firefoksa
+                [lower] podpowiedzi Firefoksa
+            }
+        [dat]
+            { $capitalization ->
+               *[upper] Podpowiedziom Firefoksa
+                [lower] podpowiedziom Firefoksa
+            }
+        [acc]
+            { $capitalization ->
+               *[upper] Podpowiedzi Firefoksa
+                [lower] podpowiedzi Firefoksa
+            }
+        [ins]
+            { $capitalization ->
+               *[upper] Podpowiedziami Firefoksa
+                [lower] podpowiedziami Firefoksa
+            }
+        [loc]
+            { $capitalization ->
+               *[upper] Podpowiedziach Firefoksa
+                [lower] podpowiedziach Firefoksa
+            }
+    }

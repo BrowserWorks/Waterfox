@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!-- extracted from am-server-top.xul -->
@@ -44,7 +44,6 @@
 <!ENTITY deleteOnServer2.accesskey "d">
 <!ENTITY downloadOnBiff.label "Jei patikrinus paštą rasta laiškų, tai juos atsiųsti">
 <!ENTITY downloadOnBiff.accesskey "J">
-<!ENTITY username.label "Abonento vardas:">
 <!ENTITY deleteMessagePrefix.label "Šalintiną laišką:">
 <!ENTITY modelMoveToTrash.label "perkelti į šiukšlinę">
 <!ENTITY modelMoveToTrash.accesskey "š">

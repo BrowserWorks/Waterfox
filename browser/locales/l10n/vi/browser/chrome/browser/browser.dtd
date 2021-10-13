@@ -1,22 +1,13 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
 <!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
 
-<!ENTITY appmenu.tooltip                     "Mở menu">
 <!ENTITY navbarOverflow.label                "Thêm công cụ...">
 
 <!-- Tab context menu -->
-
-<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
-used as a metaphor for expressing the fact that these tabs are "pinned" to the
-left edge of the tabstrip. Really we just want the string to express the idea
-that this is a lightweight and reversible action that keeps your tab where you
-can reach it easily. -->
-<!ENTITY  pinTab.label                       "Ghim thẻ">
-<!ENTITY  unpinTab.label                     "Gỡ thẻ">
 
 <!ENTITY  listAllTabs.label      "Liệt kê tất cả các thẻ">
 
@@ -24,80 +15,30 @@ can reach it easily. -->
 <!ENTITY openFileCmd.label "Mở tập tin…">
 <!ENTITY printCmd.label "In…">
 
-<!ENTITY taskManagerCmd.label "Quản lý tác vụ">
-
 <!ENTITY menubarCmd.label "Thanh menu">
 <!ENTITY menubarCmd.accesskey "M">
 <!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
 include the word "toolbar" or such, because screen readers already know that
 this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY navbar.accessibleLabel "Điều hướng">
-<!ENTITY personalbarCmd.label "Thanh dấu trang">
-<!ENTITY personalbarCmd.accesskey "B">
-<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
-include the word "toolbar" or such, because screen readers already know that
-this container is a toolbar. This avoids double-speaking. -->
-<!ENTITY personalbar.accessibleLabel "Dấu trang">
-<!ENTITY bookmarksToolbarItem.label "Các mục của thanh dấu trang">
 
 <!ENTITY fullScreenCmd.label "Toàn màn hình">
-
 
 <!ENTITY pictureInPictureHideToggle.label "Ẩn nút hình trong hình">
 <!ENTITY pictureInPictureHideToggle.accesskey "H">
 
-<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
-     followed by the user's email. -->
-<!ENTITY fxa.menu.syncSettings2.label "Cài đặt &syncBrand.shortName.label;">
-<!ENTITY fxa.menu.connectAnotherDevice2.label "Kết nối thiết bị khác…">
-<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
 
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
 <!ENTITY fxa.menu.signin.label "Đăng nhập vào &brandProductName;">
-<!ENTITY fxa.menu.turnOnSync.label "Bật &syncBrand.shortName.label;">
-<!ENTITY fxa.menu.firefoxServices.label "Dịch vụ &brandProductName;">
-<!ENTITY fxa.menu.account.label "Tài khoản">
-<!ENTITY fxa.menu.settings.label "Cài đặt">
-<!ENTITY fxa.menu.accountSettings.label "Cài đặt tài khoản">
-<!ENTITY fxa.menu.manageAccount2.label "Quản lý tài khoản">
-<!ENTITY fxa.menu.signOut.label "Đăng xuất…">
-<!ENTITY fxa.menu.setupSync.label "Thiết lập &syncBrand.shortName.label;…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "Gửi một thẻ ngay lập tức đến bất kỳ thiết bị nào mà bạn đã đăng nhập.">
-
-<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
-     fullscreenWarning.afterDomain.label): these two strings are used
-     respectively before and after the domain requiring fullscreen.
-     Localizers can use one of them, or both, to better adapt this
-     sentence to their language. -->
-<!ENTITY fullscreenWarning.beforeDomain.label "">
-<!ENTITY fullscreenWarning.afterDomain.label "giờ đã hiển thị toàn màn hình">
-<!ENTITY fullscreenWarning.generic.label "Trang này giờ đã hiển thị toàn màn hình">
-
-<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
-     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
-     is uppercase, while on Mac keyboards it is lowercase -->
-<!ENTITY exitDOMFullscreen.button "Thoát toàn màn hình (Esc)">
-<!ENTITY exitDOMFullscreenMac.button "Thoát toàn màn hình (esc)">
-
-<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
-     pointerlockWarning.afterDomain.label): these two strings are used
-     respectively before and after the domain requiring pointerlock.
-     Localizers can use one of them, or both, to better adapt this
-     sentence to their language. -->
-<!ENTITY pointerlockWarning.beforeDomain.label "">
-<!ENTITY pointerlockWarning.afterDomain.label "có quyền điều khiển con trỏ của bạn. Ấn Esc để lấy lại quyền điều khiển.">
-<!ENTITY pointerlockWarning.generic.label "Trang này có quyền điều khiển con trỏ của bạn. Ấn Esc để lấy lại quyền điều khiển.">
-
-<!ENTITY showAllBookmarks2.label "Xem tất cả dấu trang">
-<!ENTITY recentBookmarks.label "Dấu trang gần đây">
-<!ENTITY bookmarksToolbarChevron.tooltip "Hiện thêm các dấu trang">
 
 <!ENTITY printButton.label            "In">
 <!ENTITY printButton.tooltip          "In trang này">
-
 
 <!ENTITY searchItem.title             "Tìm kiếm">
 
@@ -105,28 +46,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY homeButton.label             "Trang chủ">
 <!ENTITY homeButton.defaultPage.tooltip "&brandShortName; Trang Chủ">
 
-<!ENTITY bookmarksButton.label          "Dấu trang">
-
-<!ENTITY bookmarksSubview.label             "Dấu trang">
-<!ENTITY bookmarksMenuButton2.label         "Trình đơn dấu trang">
-<!ENTITY bookmarksMenuButton.other.label    "Dấu trang khác">
-<!ENTITY bookmarksMenuButton.mobile.label   "Dấu trang trên di động">
-<!ENTITY viewBookmarksSidebar2.label        "Hiển thị thanh lề dấu trang">
-<!ENTITY hideBookmarksSidebar.label         "Ẩn thanh lề dấu trang">
-<!ENTITY viewBookmarksToolbar.label         "Hiển thị thanh công cụ dấu trang">
-<!ENTITY hideBookmarksToolbar.label         "Ẩn thanh công cụ dấu trang">
-<!ENTITY searchBookmarks.label              "Tìm kiếm dấu trang">
-<!ENTITY bookmarkingTools.label             "Công cụ đánh dấu trang">
-<!ENTITY addBookmarksMenu.label             "Thêm bảng chọn dấu trang vào thanh công cụ">
-<!ENTITY removeBookmarksMenu.label          "Xóa bảng chọn dấu trang từ thanh công cụ">
-
 <!ENTITY historyButton.label            "Lịch sử">
 
 <!ENTITY downloads.label              "Tải xuống">
 <!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
   -  downloads.label, but used in the Library panel. -->
 <!ENTITY libraryDownloads.label       "Tải xuống">
-<!ENTITY addons.label                 "Tiện ích">
 
 <!ENTITY webDeveloperMenu.label       "Nhà phát triển Web">
 
@@ -136,31 +61,20 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY editMenu.label         "Chỉnh sửa">
 <!ENTITY preferencesCmd2.label       "Tùy chọn">
 <!ENTITY preferencesCmdUnix.label       "Tùy chỉnh">
-<!ENTITY logins.label                           "Đăng nhập và mật khẩu">
+<!ENTITY logins.label                           "Thông tin đăng nhập và mật khẩu">
 
 <!ENTITY overflowCustomizeToolbar.label       "Tùy biến thanh công cụ…">
 <!ENTITY overflowCustomizeToolbar.accesskey   "C">
 
 <!ENTITY historyMenu.label "Lịch sử">
-<!ENTITY historyUndoMenu.label "Thẻ mới đóng gần đây">
-<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
-<!ENTITY historyUndoWindowMenu.label "Các cửa sổ mới đóng">
 
-<!ENTITY appMenuHistory.showAll.label "Xem toàn bộ lịch sử">
-<!ENTITY appMenuHistory.clearRecent.label "Xóa lịch sử gần đây…">
-<!ENTITY appMenuHistory.restoreSession.label "Khôi phục phiên làm việc trước">
-<!ENTITY appMenuHistory.viewSidebar.label "Hiển thị thanh lề lịch sử">
-<!ENTITY appMenuHistory.hideSidebar.label "Ẩn thanh lề lịch sử">
-<!ENTITY appMenuHistory.recentHistory.label "Lịch sử gần đây">
 <!ENTITY appMenuHelp.label "Trợ giúp">
 
-<!ENTITY appMenuRemoteTabs.label "Các thẻ đã đồng bộ">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
      the name of a device when that device has no open tabs -->
 <!ENTITY appMenuRemoteTabs.notabs.label "Không có thẻ đang mở">
-<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.tooltip):
      This is shown after the tabs list if we can display more tabs by clicking on the button -->
-<!ENTITY appMenuRemoteTabs.showMore.label "Hiển thị nhiều hơn">
 <!ENTITY appMenuRemoteTabs.showMore.tooltip "Hiển thị các thẻ từ thiết bị này">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
      This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
@@ -171,32 +85,23 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Bật đồng bộ thẻ để xem danh sách thẻ từ các thiết bị khác của bạn.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Muốn xem thẻ từ các thiết bị khác của bạn ở đây?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Mở Tùy chỉnh Đồng bộ">
 <!ENTITY appMenuRemoteTabs.welcome.label "Xem danh sách các thẻ từ các thiết bị khác của bạn.">
 <!ENTITY appMenuRemoteTabs.unverified.label "Tài khoản của bạn cần phải xác thực.">
-<!ENTITY appMenuRemoteTabs.signintosync.label "Đăng nhập vào &syncBrand.shortName.label;…">
-<!ENTITY appMenuRemoteTabs.turnonsync.label "Bật &syncBrand.shortName.label;…">
-<!ENTITY appMenuRemoteTabs.managedevices.label "Quản lý các thiết bị…">
-<!ENTITY appMenuRemoteTabs.sidebar.label "Xem các thẻ đã đồng bộ trên thanh lề">
-<!ENTITY appMenuRemoteTabs.hidesidebar.label "Ẩn thanh lề đồng bộ hóa">
 <!ENTITY appMenuRemoteTabs.connectdevice.label "Kết nối thiết bị khác">
-
-<!ENTITY appMenuRecentHighlights.label "Nổi bật gần đây">
 
 <!ENTITY customizeMenu.addToToolbar.label "Thêm vào thanh công cụ">
 <!ENTITY customizeMenu.addToToolbar.accesskey "A">
 <!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
-     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     customizeMenu.unpinFromOverflowMenu.label)
      The overflow menu is the menu that appears if you click the chevron (>> button)
      in the location bar. -->
 <!ENTITY customizeMenu.addToOverflowMenu.label "Thêm vào menu gợi ý trên thanh địa chỉ">
 <!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.label "Gỡ khỏi menu gợi ý trên thanh địa chỉ">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
-<!ENTITY customizeMenu.removeFromToolbar.label "Xóa khỏi thanh công cụ">
-<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
 <!ENTITY customizeMenu.addMoreItems.label "Thêm mục mới…">
 <!ENTITY customizeMenu.addMoreItems.accesskey "A">
 
@@ -214,33 +119,12 @@ this container is a toolbar. This avoids double-speaking. -->
 
 <!ENTITY openLinkCmdInTab.accesskey   "T">
 
-<!ENTITY pageAction.copyLink.label    "Sao chép liên kết">
-
-<!ENTITY saveToPocketCmd.label        "Lưu trang vào Pocket">
-<!ENTITY pocketMenuitem.label         "Xem danh sách Pocket">
-
-<!ENTITY emailPageCmd.label           "Gửi liên kết qua email…">
-
-<!-- Media (video/audio) controls -->
-
-<!-- LOCALIZATION NOTE :
-fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
-fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
-If shift key is needed with your locale popular keyboard for them,
-you can use these alternative items. Otherwise, their values should be empty.  -->
-
 <!ENTITY fullZoom.label                 "Thu phóng">
 
 <!ENTITY sidebarCloseButton.tooltip     "Đóng thanh lề">
 
-<!ENTITY quitApplicationCmdWin2.label       "Thoát">
-<!ENTITY quitApplicationCmdWin2.accesskey   "x">
-<!ENTITY quitApplicationCmdWin2.tooltip     "Thoát &brandShorterName;">
-<!ENTITY quitApplicationCmd.label       "Thoát">
-<!ENTITY quitApplicationCmd.accesskey   "Q">
-<!ENTITY quitApplicationCmdMac2.label   "Thoát &brandShorterName;">
-
 <!ENTITY allowPopups.accesskey "p">
+
 <!-- On Windows we use the term "Options" to describe settings, but
      on Linux and Mac OS X we use "Preferences" - carry that distinction
      over into this string, which is used in the "popup blocked" info bar . -->
@@ -254,31 +138,19 @@ you can use these alternative items. Otherwise, their values should be empty.  -
 <!ENTITY spellAddDictionaries.label "Thêm từ điển…">
 <!ENTITY spellAddDictionaries.accesskey "A">
 
-
 <!-- Name for the tabs toolbar as spoken by screen readers.
      The word "toolbar" is appended automatically and should not be contained below! -->
 <!ENTITY tabsToolbar.label "Thẻ trình duyệt">
 
-<!ENTITY syncBrand.shortName.label    "Đồng bộ hóa">
-
-<!ENTITY customizeMode.autoHideDownloadsButton.label "Tự động ẩn">
-
 
 <!ENTITY uiTour.infoPanel.close "Đóng">
+
 
 <!ENTITY panicButton.thankyou.msg1                "Lịch sử gần đây đã bị xóa.">
 <!ENTITY panicButton.thankyou.msg2                "Duyệt web an toàn!">
 <!ENTITY panicButton.thankyou.buttonlabel         "Cảm ơn!">
 
-<!ENTITY updateAvailable.panelUI.label "Tải xuống bản cập nhật &brandShorterName;">
-<!ENTITY updateManual.panelUI.label "Tải xuống bản sao của &brandShorterName;">
-<!ENTITY updateUnsupported.panelUI.label "Bạn không thể thực hiện cập nhật thêm">
-<!ENTITY updateRestart.panelUI.label2 "Khởi động lại để cập nhật &brandShorterName;">
-
 <!ENTITY sendToDevice.syncNotReady.label "Đang đồng bộ các thiết bị…">
-
-<!ENTITY pageAction.shareUrl.label "Chia sẻ">
-<!ENTITY pageAction.shareMore.label "Thêm…">
 
 <!ENTITY libraryButton.tooltip "Xem lịch sử, dấu trang đã lưu và nhiều hơn nữa">
 

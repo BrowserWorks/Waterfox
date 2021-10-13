@@ -1,31 +1,31 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = GIới thiệu công cụ dành cho nhà phát triển
-enable-title = Kích hoạt công cụ dành cho nhà phát triển Firefox
-enable-inspect-element-title = Bật công cụ dành cho nhà phát triển Firefox để sử dụng kiểm tra phần tử
+enable-title = Kích hoạt công cụ dành cho nhà phát triển Waterfox
+enable-inspect-element-title = Bật công cụ dành cho nhà phát triển Waterfox để sử dụng kiểm tra phần tử
 enable-inspect-element-message = Kiểm tra và chỉnh sửa HTML và CSS với Trình kiểm tra trong công cụ dành cho nhà phát triển.
-enable-about-debugging-message = Phát triển và gỡ lỗi WebExtensions, web workers, service worker và nhiều hơn nữa với công cụ dành cho nhà phát triển Firefox.
+enable-about-debugging-message = Phát triển và gỡ lỗi WebExtensions, web workers, service worker và nhiều hơn nữa với công cụ dành cho nhà phát triển Waterfox.
 enable-key-shortcut-message = Bạn đã kích hoạt phím tắt công cụ dành cho nhà phát triển. Nếu đó là một sai lầm, bạn có thể đóng thẻ này.
 enable-menu-message = Hoàn thiện trang web của bạn HTML HTML, CSS và JavaScript bằng các công cụ như trình kiểm tra và trình gỡ lỗi.
-enable-common-message = Công cụ dành cho nhà phát triển Firefox bị tắt theo mặc định để cung cấp cho bạn quyền kiểm soát nhiều hơn đối với trình duyệt của bạn.
+enable-common-message = Công cụ dành cho nhà phát triển Waterfox bị tắt theo mặc định để cung cấp cho bạn quyền kiểm soát nhiều hơn đối với trình duyệt của bạn.
 enable-learn-more-link = Xem thêm về công cụ dành cho nhà phát triển
 enable-enable-button = Bật công cụ dành cho phát triển
 enable-close-button = Đóng thẻ này
 
-welcome-title = Chào mừng đến với công cụ dành cho nhà phát triển Firefox!
-newsletter-title = Bản tin nhà phát triển Mozilla
+welcome-title = Chào mừng đến với công cụ dành cho nhà phát triển Waterfox!
+newsletter-title = Bản tin nhà phát triển Waterfox
 newsletter-message = Nhận tin tức, thủ thuật và tài nguyên dành cho nhà phát triển được gửi vào hộp thư đến của bạn.
 newsletter-email-placeholder =
     .placeholder = Email
-newsletter-privacy-label = Tôi đồng ý với việc Mozilla sử dụng thông tin của tôi như được giải thích trong phần <a data-l10n-name="privacy-policy">chính sách bảo mật</a> này.
+newsletter-privacy-label = Tôi đồng ý với việc Waterfox sử dụng thông tin của tôi như được giải thích trong phần <a data-l10n-name="privacy-policy">chính sách bảo mật</a> này.
 newsletter-subscribe-button = Đăng ký
 newsletter-thanks-title = Cảm ơn!
-newsletter-thanks-message = Nếu bạn chưa xác nhận đăng kí các thư mới liên quan đến Mozilla thì bạn phải xác nhận lại. Hãy kiểm tra email của chúng tôi trong hộp thư đến của bạn hoặc tìm trong hộp thư spam.
+newsletter-thanks-message = Nếu bạn chưa xác nhận đăng kí các thư mới liên quan đến Waterfox thì bạn phải xác nhận lại. Hãy kiểm tra email của chúng tôi trong hộp thư đến của bạn hoặc tìm trong hộp thư spam.
 
-footer-title = Phiên bản Firefox cho nhà phát triển
-footer-message = Muốn tìm kiếm nhiều thứ hơn về công cụ dành cho nhà phát triển? Hãy xem trình duyệt Firefox được xây dựng dành riêng cho các nhà phát triển và quy trình làm việc hiện đại.
+footer-title = Phiên bản Waterfox cho nhà phát triển
+footer-message = Muốn tìm kiếm nhiều thứ hơn về công cụ dành cho nhà phát triển? Hãy xem trình duyệt Waterfox được xây dựng dành riêng cho các nhà phát triển và quy trình làm việc hiện đại.
 footer-learn-more-link = Xem thêm
 
 features-learn-more = Xem thêm

@@ -1,13 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 password-quality-meter = Качество пароля
 
 ## Change Password dialog
-
-change-password-window =
-    .title = Смена мастер-пароля
 
 change-device-password-window =
     .title = Сменить пароль
@@ -20,10 +17,6 @@ change-password-new = Новый пароль:
 change-password-reenter = Новый пароль (повторно):
 
 ## Reset Password dialog
-
-reset-password-window =
-    .title = Сброс мастер-пароля
-    .style = width: 40em
 
 pippki-failed-pw-change = Не удалось изменить пароль.
 pippki-incorrect-pw = Вы ввели некорректный текущий пароль. Попробуйте снова.
@@ -42,7 +35,6 @@ reset-primary-password-window =
     .style = width: 40em
 reset-password-button-label =
     .label = Сбросить
-reset-password-text = При сбросе мастер-пароля, все сохранённые пароли для веб-сайтов, электронной почты, данные форм, личные сертификаты и закрытые ключи будут утеряны. Вы действительно хотите сбросить свой мастер-пароль?
 
 reset-primary-password-text = При сбросе мастер-пароля, все сохранённые пароли для веб-сайтов, электронной почты, личные сертификаты и закрытые ключи будут утеряны. Вы действительно хотите сбросить свой мастер-пароль?
 
