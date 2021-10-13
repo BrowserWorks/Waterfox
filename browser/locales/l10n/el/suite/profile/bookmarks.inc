@@ -8,7 +8,7 @@
 
 #define personal_toolbarfolder Φάκελος προσωπικής γραμμής εργαλείων
 
-#define seamonkey_and_mozilla SeaMonkey και Mozilla
+#define seamonkey_and_mozilla SeaMonkey και Waterfox
 
 # LOCALIZATION NOTE (seamonkey):
 # link title for https://www.seamonkey-project.org/ (in the personal toolbar)
@@ -20,7 +20,7 @@
 
 # LOCALIZATION NOTE (mozilla_org_long):
 # link title for https://www.mozilla.org/ (in normal bookmarks)
-#define mozilla_org_long Ο οργανισμός Mozilla
+#define mozilla_org_long Ο οργανισμός Waterfox
 
 #define extend_seamonkey Επέκταση του SeaMonkey
 

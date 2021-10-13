@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -14,11 +14,3 @@
 
 <!ENTITY searchTextBox.clear.label "Limpiar">
 
-<!ENTITY fillLoginMenu.label          "Rellenar inicio de sesión">
-<!ENTITY fillLoginMenu.accesskey      "R">
-<!ENTITY fillPasswordMenu.label       "Rellenar contraseña">
-<!ENTITY fillPasswordMenu.accesskey   "l">
-<!ENTITY fillUsernameMenu.label       "Rellenar nombre de usuario">
-<!ENTITY fillUsernameMenu.accesskey   "R">
-<!ENTITY noLoginSuggestions.label     "(No hay sugerencias de inicio de sesión)">
-<!ENTITY viewSavedLogins.label        "Ver Inicios de sesión guardados">

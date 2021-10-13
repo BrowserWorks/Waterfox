@@ -1,7 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 <!-- extracted from content/navigator.xul -->
+
 <!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
 <!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
 <!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
@@ -54,8 +56,6 @@
 <!ENTITY printButton.label            "Spausdinti">
 <!ENTITY printButton.tooltip          "Spausdinti šį tinklalapį">
 
-<!ENTITY throbber.tooltip             "Eiti į &vendorShortName; tinklalapį">
-
 <!ENTITY locationBar.tooltip          "Paieškai surinkite žodį, frazę arba interneto adresą">
 
 <!ENTITY locationBar.title            "Adresas">
@@ -79,3 +79,4 @@
 <!ENTITY viewCertificate.accesskey   "l">
 <!ENTITY viewCertManager.label       "Atverti liudijimų tvarkytuvę">
 <!ENTITY viewCertManager.accesskey   "t">
+

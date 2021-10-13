@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -39,9 +39,6 @@
 <!ENTITY sendLaterCmd.label "Enviar más tarde">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "t">
-<!ENTITY editRewrapCmd.label "Reajuste de línea">
-<!ENTITY editRewrapCmd.key "R">
-<!ENTITY editRewrapCmd.accesskey "j">
 <!ENTITY accountManagerCmd.label "Configuración de cuentas de Correo y noticias…">
 <!ENTITY accountManagerCmd.accesskey "n">
 <!ENTITY showComposeToolbarCmd.label "Barra de herramientas de correo">

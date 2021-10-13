@@ -1,20 +1,24 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 fonts-window-close =
     .key = w
+
 # Variables:
 #   $name {string, "Arial"} - Name of the default font
 fonts-label-default =
     .label = Výchozí ({ $name })
 fonts-label-default-unnamed =
     .label = Výchozí
+
 fonts-encoding-dialog-title =
     .title = Písma a znaková sada
+
 fonts-language-legend =
     .value = Znaková sada:
     .accesskey = Z
+
 fonts-proportional-label =
     .value = Proporcionální:
     .accesskey = c
@@ -85,38 +89,45 @@ font-language-group-tibetan =
 
 default-font-serif =
     .label = Patkové
+
 default-font-sans-serif =
     .label = Bezpatkové
-font-size-label =
-    .value = Velikost:
-    .accesskey = e
+
 font-size-proportional-label =
     .value = Velikost:
     .accesskey = e
+
 font-size-monospace-label =
     .value = Velikost:
     .accesskey = l
+
 font-serif-label =
     .value = Patkové:
     .accesskey = a
+
 font-sans-serif-label =
     .value = Bezpatkové:
     .accesskey = B
+
 font-monospace-label =
     .value = Neproporcionální:
     .accesskey = N
+
 font-min-size-label =
     .value = Minimální velikost písma:
     .accesskey = M
+
 min-size-none =
     .label = Žádný
 
 ## Fonts in message
 
 font-control-legend = Nastavení písma
+
 use-document-fonts-checkbox =
     .label = Povolit zprávám používat další písma
     .accesskey = v
+
 use-fixed-width-plain-checkbox =
     .label = Pro zprávy v prostém textu použít neproporcionální písmo
     .accesskey = r
@@ -124,13 +135,17 @@ use-fixed-width-plain-checkbox =
 ## Language settings
 
 text-encoding-legend = Znaková sada textu
+
 text-encoding-description = Nastavení výchozí znakové sady pro text příchozí a odchozí pošty
+
 font-outgoing-email-label =
     .value = Odchozí pošta:
     .accesskey = O
+
 font-incoming-email-label =
     .value = Příchozí pošta:
     .accesskey = P
+
 default-font-reply-checkbox =
     .label = Pokud je to možné, použít u odpovědi výchozí znakovou sadu textu
     .accesskey = u

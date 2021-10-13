@@ -1,14 +1,15 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 
 ## The main browser window's title
 
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Waterfox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - Waterfox
+# private - "Waterfox Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -21,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Waterfox"
-# "private" - "Mozilla Firefox — (Private Browsing)"
+# "default" - Waterfox
+# "private" - "Waterfox Waterfox — (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -86,6 +87,10 @@ urlbar-plugins-notification-anchor =
     .tooltiptext = 使用するプラグインを管理します
 urlbar-web-rtc-share-devices-notification-anchor =
     .tooltiptext = カメラとマイクの共有を管理します
+# "Speakers" is used in a general sense that might include headphones or
+# another audio output connection.
+urlbar-web-rtc-share-speaker-notification-anchor =
+    .tooltiptext = その他のスピーカーの共有を管理します
 urlbar-autoplay-notification-anchor =
     .tooltiptext = 自動再生パネルを開きます
 urlbar-persistent-storage-notification-anchor =
@@ -155,52 +160,10 @@ urlbar-star-add-bookmark =
 
 ## Page Action Context Menu
 
-page-action-add-to-urlbar =
-    .label = アドレスバーに追加
-
 page-action-manage-extension =
     .label = 拡張機能を管理...
-page-action-remove-from-urlbar =
-    .label = アドレスバーから削除
 page-action-remove-extension =
     .label = 拡張機能を削除
-
-## Page Action menu
-
-# Variables
-# $tabCount (integer) - Number of tabs selected
-page-action-send-tabs-panel =
-    .label = { $tabCount } 個のタブを端末へ送信
-page-action-send-tabs-urlbar =
-    .tooltiptext = { $tabCount } 個のタブを端末へ送信
-page-action-copy-url-panel =
-    .label = リンクをコピー
-page-action-copy-url-urlbar =
-    .tooltiptext = リンクをコピー
-page-action-email-link-panel =
-    .label = ページの URL をメールで送信...
-page-action-email-link-urlbar =
-    .tooltiptext = ページの URL をメールで送信...
-page-action-share-url-panel =
-    .label = 共有
-page-action-share-url-urlbar =
-    .tooltiptext = 共有
-page-action-share-more-panel =
-    .label = その他...
-page-action-send-tab-not-ready =
-    .label = 端末を同期しています...
-# "Pin" is being used as a metaphor for expressing the fact that these tabs
-# are "pinned" to the left edge of the tabstrip. Really we just want the
-# string to express the idea that this is a lightweight and reversible
-# action that keeps your tab where you can reach it easily.
-page-action-pin-tab-panel =
-    .label = タブをピン留め
-page-action-pin-tab-urlbar =
-    .tooltiptext = タブをピン留め
-page-action-unpin-tab-panel =
-    .label = タブのピン留めを外す
-page-action-unpin-tab-urlbar =
-    .tooltiptext = タブのピン留めを外す
 
 ## Auto-hide Context Menu
 
@@ -216,15 +179,8 @@ full-screen-exit =
 # This string prompts the user to use the list of search shortcuts in
 # the Urlbar and searchbar.
 search-one-offs-with-title = 今回だけ使う検索エンジン:
-
-# This string won't wrap, so if the translated string is longer,
-# consider translating it as if it said only "Search Settings".
-search-one-offs-change-settings-button =
-    .label = 検索設定を変更
-
 search-one-offs-change-settings-compact-button =
     .tooltiptext = 検索設定を変更します
-
 search-one-offs-context-open-new-tab =
     .label = 新しいタブで検索
     .accesskey = T
@@ -234,14 +190,12 @@ search-one-offs-context-set-as-default =
 search-one-offs-context-set-as-default-private =
     .label = プライベートウィンドウの既定の検索エンジンに設定
     .accesskey = P
-
 # Search engine one-off buttons with an @alias shortcut/keyword.
 # Variables:
 #  $engineName (String): The name of the engine.
 #  $alias (String): The @alias shortcut/keyword.
 search-one-offs-engine-with-alias =
     .tooltiptext = { $engineName } ({ $alias })
-
 # Shown when adding new engines from the address bar shortcut buttons or context
 # menu, or from the search bar shortcut buttons.
 # Variables:
@@ -284,8 +238,6 @@ bookmark-panel-remove =
 bookmark-panel-show-editor-checkbox =
     .label = 追加時にエディターを表示する
     .accesskey = S
-bookmark-panel-done-button =
-    .label = 完了
 bookmark-panel-save-button =
     .label = 保存
 # Width of the bookmark panel.
@@ -310,14 +262,11 @@ identity-connection-internal = このページは { -brand-short-name } の安�
 identity-connection-file = これはあなたのコンピューターに保存されているページです。
 identity-extension-page = このページは拡張機能から読み込まれています。
 identity-active-blocked = このページの一部が安全でないため { -brand-short-name } がブロックしました。
-identity-custom-root = Mozilla が承認していない発行者の証明書で検証された接続です。
+identity-custom-root = Waterfox が承認していない発行者の証明書で検証された接続です。
 identity-passive-loaded = このページの一部 (画像など) は安全ではありません。
 identity-active-loaded = このページでの保護は無効に設定されています。
 identity-weak-encryption = このページは脆弱な暗号を使用しています。
 identity-insecure-login-forms = このページのログインフォームは安全ではありません。
-identity-permissions =
-    .value = このサイトの設定
-
 identity-https-only-connection-upgraded = (HTTPS で接続中)
 identity-https-only-label = HTTPS-Only モード
 identity-https-only-dropdown-on =
@@ -329,19 +278,16 @@ identity-https-only-dropdown-off-temporarily =
 identity-https-only-info-turn-on2 = このサイトで { -brand-short-name } に可能な限り接続をアップグレードさせたい場合は、HTTPS-Only モードをオンにしてください。
 identity-https-only-info-turn-off2 = ページが動作しない場合は HTTPS-Only モードをオフにして、安全でない HTTP 接続でこのサイトを再読み込みするとよいでしょう。
 identity-https-only-info-no-upgrade = 接続を HTTP からアップグレードできません。
-
 identity-permissions-storage-access-header = クロスサイト Cookie
 identity-permissions-storage-access-hint = 以下のサイトが、あなたがこのサイトにいる間、クロスサイト Cookie とサイトデータにアクセスできます。
 identity-permissions-storage-access-learn-more = 詳細情報
-
 identity-permissions-reload-hint = 変更内容を適用するには、ページの再読み込みが必要です。
-identity-permissions-empty = このサイトに特別な権限は設定されていません。
 identity-clear-site-data =
     .label = Cookie とサイトデータを消去...
 identity-connection-not-secure-security-view = このサイトとの接続は安全ではありません。
 identity-connection-verified = このサイトとの接続は安全です。
 identity-ev-owner-label = 証明書の発行先:
-identity-description-custom-root = Mozilla はこの証明書の発行者を承認していません。OS またはシステム管理者により追加された可能性があります。 <label data-l10n-name="link">詳細情報</label>
+identity-description-custom-root = Waterfox はこの証明書の発行者を承認していません。OS またはシステム管理者により追加された可能性があります。 <label data-l10n-name="link">詳細情報</label>
 identity-remove-cert-exception =
     .label = 例外から削除
     .accesskey = R
@@ -417,12 +363,6 @@ bookmarks-toolbar-empty-message = ブックマークをこのブックマーク�
 
 ## WebRTC Pop-up notifications
 
-popup-select-camera =
-    .value = 共有するカメラ:
-    .accesskey = C
-popup-select-microphone =
-    .value = 共有するマイク:
-    .accesskey = M
 popup-select-camera-device =
     .value = カメラ:
     .accesskey = C
@@ -436,14 +376,6 @@ popup-select-microphone-icon =
 popup-select-speaker-icon =
     .tooltiptext = スピーカー
 popup-all-windows-shared = 画面に表示されているすべてのウィンドウを共有します。
-popup-screen-sharing-not-now =
-    .label = 後で
-    .accesskey = w
-popup-screen-sharing-never =
-    .label = 以後許可しない
-    .accesskey = N
-popup-silence-notifications-checkbox = 共有中は { -brand-short-name } からの通知を無効にする。
-popup-silence-notifications-checkbox-warning = 共有中は { -brand-short-name } からの通知を表示しないようにします。
 popup-screen-sharing-block =
     .label = ブロック
     .accesskey = B
@@ -467,8 +399,6 @@ enable-devtools-popup-description = F12 ショートカットを使うには、�
 
 ## URL Bar
 
-urlbar-default-placeholder =
-    .defaultPlaceholder = URL または検索語句を入力します
 # This placeholder is used when not in search mode and the user's default search
 # engine is unknown.
 urlbar-placeholder =
@@ -505,9 +435,6 @@ urlbar-placeholder-search-mode-other-tabs =
 #  $name (String): the name of the user's default search engine
 urlbar-placeholder-with-name =
     .placeholder = { $name } で検索、または URL を入力します
-urlbar-remote-control-notification-anchor =
-    .tooltiptext = ブラウザーがリモート制御下にあります
-
 # Variables
 #  $component (String): the name of the component which forces remote control.
 #    Example: "DevTools", "Marionette", "RemoteAgent".
@@ -524,8 +451,6 @@ urlbar-go-button =
     .tooltiptext = アドレスバーに入力された URL へ移動します
 urlbar-page-action-button =
     .tooltiptext = ページ操作
-urlbar-pocket-button =
-    .tooltiptext = { -pocket-brand-name } に保存
 
 ## Action text shown in urlbar results, usually appended after the search
 ## string or the url, like "result value - action text".
@@ -582,6 +507,20 @@ urlbar-result-action-search-bookmarks = ブックマークを検索
 urlbar-result-action-search-history = 履歴を検索
 urlbar-result-action-search-tabs = タブを検索
 
+## Labels shown above groups of urlbar results
+
+# A label shown above the "Waterfox Suggest" (bookmarks/history) group in the
+# urlbar results.
+urlbar-group-firefox-suggest =
+  .label = { -firefox-suggest-brand-name }
+
+# A label shown above the search suggestions group in the urlbar results. It
+# should use title case.
+# Variables
+#  $engine (String): the name of the search engine providing the suggestions
+urlbar-group-search-suggestions =
+  .label = { $engine } の検索候補
+
 ## Full Screen and Pointer Lock UI
 
 # Please ensure that the domain stays in the `<span data-l10n-name="domain">` markup.
@@ -601,6 +540,10 @@ pointerlock-warning-no-domain = マウスポインターは現在、このペー
 ## Subframe crash notification
 
 crashed-subframe-message = <strong>このページの一部がクラッシュしました。</strong> { -brand-product-name } にこの問題を知らせて素早く修正するために、レポートを送信してください。
+# The string for crashed-subframe-title.title should match crashed-subframe-message,
+# but without any markup.
+crashed-subframe-title =
+    .title = このページの一部がクラッシュしました。{ -brand-product-name } にこの問題を知らせて素早く修正するために、レポートを送信してください。
 crashed-subframe-learnmore-link =
     .value = 詳細
 crashed-subframe-submit =
@@ -693,23 +636,47 @@ repair-text-encoding-button =
 # Variables:
 #  $shortcut (String): keyboard shortcut to open the add-ons manager
 toolbar-addons-themes-button =
-  .label = アドオンとテーマ
-  .tooltiptext = アドオンとテーマを管理します ({ $shortcut })
-
+    .label = アドオンとテーマ
+    .tooltiptext = アドオンとテーマを管理します ({ $shortcut })
 # Variables:
 #  $shortcut (String): keyboard shortcut to open settings (only on macOS)
 toolbar-settings-button =
-  .label = 設定
-  .tooltiptext = { PLATFORM() ->
-      [macos] 設定を開きます ({ $shortcut })
-     *[other] 設定を開きます
-  }
+    .label = 設定
+    .tooltiptext =
+        { PLATFORM() ->
+            [macos] 設定を開きます ({ $shortcut })
+           *[other] 設定を開きます
+        }
 
 ## More items
 
 more-menu-go-offline =
     .label = オフライン作業
     .accesskey = k
+toolbar-overflow-customize-button =
+    .label = ツールバーをカスタマイズ...
+    .accesskey = C
+toolbar-button-email-link =
+    .label = ページの URL をメールで送信
+    .tooltiptext = このページの URL をメールで送信します
+# Variables:
+#  $shortcut (String): keyboard shortcut to save a copy of the page
+toolbar-button-save-page =
+    .label = ページを保存
+    .tooltiptext = このページを保存します ({ $shortcut })
+# Variables:
+#  $shortcut (String): keyboard shortcut to open a local file
+toolbar-button-open-file =
+    .label = ファイルを開く
+    .tooltiptext = ファイルを開きます ({ $shortcut })
+toolbar-button-synced-tabs =
+    .label = 同期タブ
+    .tooltiptext = 他の端末のタブを表示します
+# Variables
+# $shortcut (string) - Keyboard shortcut to open a new private browsing window
+toolbar-button-new-private-window =
+    .label = 新しいプライベートウィンドウ
+    .tooltiptext = 新しいプライベートブラウジングウィンドウを開きます ({ $shortcut })
 
 ## EME notification panel
 
@@ -736,3 +703,75 @@ addon-removal-abuse-report-checkbox = この拡張機能を { -vendor-short-name
 remote-tabs-manage-account =
     .label = アカウントを管理
 remote-tabs-sync-now = 今すぐ同期
+
+##
+
+# "More" item in macOS share menu
+menu-share-more =
+    .label = その他...
+ui-tour-info-panel-close =
+    .tooltiptext = 閉じる
+
+## Variables:
+##  $uriHost (String): URI host for which the popup was allowed or blocked.
+
+popups-infobar-allow =
+    .label = このサイト ({ $uriHost }) によるポップアップを許可する
+    .accesskey = p
+popups-infobar-block =
+    .label = このサイト ({ $uriHost }) によるポップアップを禁止する
+    .accesskey = p
+
+##
+
+popups-infobar-dont-show-message =
+    .label = ポップアップをブロックするとき、このメッセージを表示しない
+    .accesskey = D
+
+edit-popup-settings =
+    .label = ポップアップの設定を管理...
+    .accesskey = M
+
+picture-in-picture-hide-toggle =
+    .label = ピクチャーインピクチャーの切り替えボタンを隠す
+    .accesskey = H
+
+# Navigator Toolbox
+
+# This string is a spoken label that should not include
+# the word "toolbar" or such, because screen readers already know that
+# this container is a toolbar. This avoids double-speaking.
+navbar-accessible =
+    .aria-label = ナビゲーション
+navbar-downloads =
+    .label = ダウンロード
+navbar-overflow =
+    .tooltiptext = その他のツール...
+# Variables:
+#   $shortcut (String): keyboard shortcut to print the page
+navbar-print =
+    .label = 印刷
+    .tooltiptext = このページを印刷します... ({ $shortcut })
+navbar-print-tab-modal-disabled =
+    .label = 印刷
+    .tooltiptext = このページを印刷します
+navbar-home =
+    .label = ホーム
+    .tooltiptext = { -brand-short-name } のホームページです
+navbar-library =
+    .label = ブラウジングライブラリー
+    .tooltiptext = 履歴や保存したブックマークなどを表示します
+navbar-search =
+    .title = 検索
+navbar-accessibility-indicator =
+    .tooltiptext = アクセシビリティ機能が有効です
+# Name for the tabs toolbar as spoken by screen readers. The word
+# "toolbar" is appended automatically and should not be included in
+# in the string
+tabs-toolbar =
+    .aria-label = ブラウザータブ
+tabs-toolbar-new-tab =
+    .label = 新しいタブ
+tabs-toolbar-list-all-tabs =
+    .label = タブを一覧表示する
+    .tooltiptext = タブを一覧表示します

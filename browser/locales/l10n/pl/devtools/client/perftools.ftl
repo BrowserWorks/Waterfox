@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -42,7 +42,9 @@ perftools-range-interval-milliseconds = { NUMBER($interval, maxFractionalUnits: 
 
 # The size of the memory buffer used to store things in the profiler.
 perftools-range-entries-label = Rozmiar bufora:
+
 perftools-custom-threads-label = Dodaj własne wątki według nazw:
+
 perftools-devtools-interval-label = Przedział:
 perftools-devtools-threads-label = Wątki:
 perftools-devtools-settings-label = Ustawienia
@@ -95,12 +97,14 @@ perftools-thread-img-decoder =
     .title = Wątki dekodowania obrazów
 perftools-thread-dns-resolver =
     .title = Rozwiązywanie DNS odbywa się w tym wątku
-perftools-thread-js-helper =
-    .title = Praca silnika JS w tle, taka jak kompilacje poza wątkiem głównym
+
+perftools-thread-task-controller =
+    .title = Wątki puli wątków TaskController
 
 ##
 
 perftools-record-all-registered-threads = Pomiń powyższy wybór i nagraj wszystkie zarejestrowane wątki
+
 perftools-tools-threads-input-label =
     .title = Te nazwy wątków to lista oddzielona przecinkami, która jest używana do włączenia profilowania wątków w profilerze. Nazwa może tylko częściowo pasować do nazwy wątku, aby została uwzględniona. Spacje są rozróżniane.
 
@@ -108,9 +112,10 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Waterfox Profiler
 perftools-onboarding-message = <b>Nowość</b>: { -profiler-brand-name } jest teraz zintegrowany z narzędziami dla programistów. <a>Więcej informacji</a> o tym nowym potężnym narzędziu.
+
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (Przez ograniczony czas można korzystać z poprzedniego panelu wydajności w sekcji <a>{ options-context-advanced-settings }</a>)
+
 perftools-onboarding-close-button =
     .aria-label = Zamknij ten komunikat

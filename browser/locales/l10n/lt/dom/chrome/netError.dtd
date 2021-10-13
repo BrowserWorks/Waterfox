@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -32,7 +32,7 @@
 <!ENTITY netInterrupt.longDesc "<p>Naršyklei pavyko užmegzti ryšį, tačiau ryšys buvo nutrauktas persiunčiant duomenis. Prašom bandyti vėliau.</p><ul><li>Jei nepavyksta įkelti ir kitų tinklalapių, tai patikrinkite jūsų kompiuterio ryšį su tinklu.</li><li>Jei nesklandumo pašalinti nepavyksta, tai prašom kreiptis į tinklo administratorių ar interneto paslaugų teikėją.</li></ul>">
 
 <!ENTITY notCached.title "Dokumento galiojimas baigėsi">
-<!ENTITY notCached.longDesc "<p>Prašomo dokumento „Firefox“ podėlyje nėra.</p><ul><li>Saugumo sumetimais „Firefox“ jautrių dokumentų automatiškai iš naujo neatsiunčia.</li><li>Jeigu norite dokumentą iš svetainės atsiųsti iš naujo, spustelėkite „Bandyti dar kartą“.</li></ul>">
+<!ENTITY notCached.longDesc "<p>Prašomo dokumento „Waterfox“ podėlyje nėra.</p><ul><li>Saugumo sumetimais „Waterfox“ jautrių dokumentų automatiškai iš naujo neatsiunčia.</li><li>Jeigu norite dokumentą iš svetainės atsiųsti iš naujo, spustelėkite „Bandyti dar kartą“.</li></ul>">
 
 <!ENTITY netOffline.title "Dirbama neprisijungus prie tinklo">
 <!ENTITY netOffline.longDesc2 "<p>Naršyklė yra atjungta nuo tinklo ir negali užmegzti ryšio su užklaustu objektu.</p><ul><li>Patikrinkite, ar kompiuteris prijungtas prie veikiančio tinklo.</li><li>Spustelėkite „Bandyti dar kartą“, kad būtų prisijungta prie tinklo ir pabandyta įkelti tinklalapį iš naujo.</li></ul>">

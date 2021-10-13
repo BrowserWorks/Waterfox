@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,26 +8,6 @@ do-not-track-option-default-content-blocking-known =
     .label = 仅当 { -brand-short-name } 设置为拦截已知跟踪器时
 do-not-track-option-always =
     .label = 一律发送
-pref-page-title =
-    { PLATFORM() ->
-        [windows] 选项
-       *[other] 首选项
-    }
-# This is used to determine the width of the search field in about:preferences,
-# in order to make the entire placeholder string visible
-#
-# Please keep the placeholder string short to avoid truncation.
-#
-# Notice: The value of the `.style` attribute is a CSS string, and the `width`
-# is the name of the CSS property. It is intended only to adjust the element's width.
-# Do not translate.
-search-input-box =
-    .style = width: 15.4em
-    .placeholder =
-        { PLATFORM() ->
-            [windows] 在选项中查找
-           *[other] 在首选项中查找
-        }
 settings-page-title = 设置
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
@@ -55,9 +35,6 @@ category-search =
 pane-privacy-title = 隐私与安全
 category-privacy =
     .tooltiptext = { pane-privacy-title }
-pane-sync-title2 = { -sync-brand-short-name }
-category-sync2 =
-    .tooltiptext = { pane-sync-title2 }
 pane-sync-title3 = 同步
 category-sync3 =
     .tooltiptext = { pane-sync-title3 }
@@ -96,21 +73,12 @@ restart-later = 稍后重启浏览器
 ## Variables:
 ##   $name (String): name of the extension
 
-# This string is shown to notify the user that their home page
-# is being controlled by an extension.
-extension-controlled-homepage-override = 扩展 <img data-l10n-name="icon"/> { $name } 正在控制您的主页。
-# This string is shown to notify the user that their new tab page
-# is being controlled by an extension.
-extension-controlled-new-tab-url = 扩展 <img data-l10n-name="icon"/> { $name } 正在控制您的新标签页。
 # This string is shown to notify the user that the password manager setting
 # is being controlled by an extension
 extension-controlled-password-saving = 扩展 <img data-l10n-name="icon"/> { $name } 正在控制此设置。
 # This string is shown to notify the user that their notifications permission
 # is being controlled by an extension.
 extension-controlled-web-notifications = 扩展 <img data-l10n-name="icon"/> { $name } 正在控制此设置。
-# This string is shown to notify the user that the default search engine
-# is being controlled by an extension.
-extension-controlled-default-search = 您的默认搜索引擎由扩展 <img data-l10n-name="icon"/> { $name } 设置。
 # This string is shown to notify the user that Container Tabs
 # are being enabled by an extension.
 extension-controlled-privacy-containers = 扩展 <img data-l10n-name="icon"/> { $name } 要求启用身份标签页功能。
@@ -131,25 +99,12 @@ extension-controlled-enable = 要启用该扩展，请从 <img data-l10n-name="m
 
 search-results-header = 搜索结果
 # `<span data-l10n-name="query"></span>` will be replaced by the search term.
-search-results-empty-message =
-    { PLATFORM() ->
-        [windows] 很抱歉，没有找到有关“<span data-l10n-name="query"></span>”的选项。
-       *[other] 很抱歉，没有找到有关“<span data-l10n-name="query"></span>”的首选项。
-    }
-# `<span data-l10n-name="query"></span>` will be replaced by the search term.
 search-results-empty-message2 = 很抱歉，没有找到有关“<span data-l10n-name="query"></span>”的设置。
 search-results-help-link = 需要帮助？访问 <a data-l10n-name="url">{ -brand-short-name } 技术支持</a>
 
 ## General Section
 
 startup-header = 启动
-# { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
-separate-profile-mode =
-    .label = 允许 { -brand-short-name } 和 Firefox 同时运行
-use-firefox-sync = 提示：这将使用单独的配置文件，可使用“{ -sync-brand-short-name }”在两套浏览器间共享数据。
-get-started-not-logged-in = 登录{ -sync-brand-short-name }服务…
-get-started-configured = 打开{ -sync-brand-short-name }服务首选项
 always-check-default =
     .label = 总是检查 { -brand-short-name } 是否是您的默认浏览器
     .accesskey = w
@@ -160,6 +115,9 @@ set-as-my-default-browser =
     .accesskey = D
 startup-restore-previous-session =
     .label = 恢复先前的浏览状态
+    .accesskey = s
+startup-restore-windows-and-tabs =
+    .label = 打开先前的窗口和标签页
     .accesskey = s
 startup-restore-warn-on-quit =
     .label = 退出浏览器时向您确认
@@ -175,12 +133,20 @@ open-new-link-as-tabs =
 warn-on-close-multiple-tabs =
     .label = 关闭多个标签页时向您确认
     .accesskey = m
+confirm-on-close-multiple-tabs =
+    .label = 关闭多个标签页时向您确认
+    .accesskey = m
+# This string is used for the confirm before quitting preference.
+# Variables:
+#   $quitKey (String) - the quit keyboard shortcut, and formatted
+#                       in the same manner as it would appear,
+#                       for example, in the File menu.
+confirm-on-quit-with-key =
+    .label = 按 { $quitKey } 退出时向您确认
+    .accesskey = b
 warn-on-open-many-tabs =
     .label = 打开多个标签页可能拖慢 { -brand-short-name } 前提醒我
     .accesskey = d
-switch-links-to-new-tabs =
-    .label = 在新标签页中打开链接时，立即切换过去
-    .accesskey = h
 switch-to-new-tabs =
     .label = 新建标签页打开链接、图像、媒体时，立即切换过去
     .accesskey = h
@@ -250,6 +216,7 @@ confirm-browser-language-change-button = 应用并重启浏览器
 translate-web-pages =
     .label = 翻译网页内容
     .accesskey = T
+fx-translate-web-pages = { -translations-brand-name }
 # The <img> element is replaced by the logo of the provider
 # used to provide machine translations for web pages.
 translate-attribution = 翻译由 <img data-l10n-name="logo"/> 提供
@@ -283,7 +250,7 @@ download-choose-folder =
            *[other] o
         }
 download-always-ask-where =
-    .label = 每次都问您要存到哪
+    .label = 每次都问您要存到何处
     .accesskey = A
 applications-header = 应用程序
 applications-description = 选择 { -brand-short-name } 如何处理这些文件。
@@ -322,10 +289,6 @@ applications-manage-app =
     .label = 应用程序详细信息…
 applications-always-ask =
     .label = 每次都问我
-applications-type-pdf = 便携式文档格式 (PDF)
-# Variables:
-#   $type (String) - the MIME type (e.g application/binary)
-applications-type-pdf-with-type = { applications-type-pdf } ({ $type })
 # Variables:
 #   $type-description (String) - Description of the type (e.g "Portable Document Format")
 #   $type (String) - the MIME type (e.g application/binary)
@@ -390,17 +353,8 @@ update-application-background-enabled =
     .accesskey = W
 update-application-warning-cross-user-setting = 此设置将影响使用这份 { -brand-short-name } 程序的所有 Windows 账户及 { -brand-short-name } 配置文件。
 update-application-use-service =
-    .label = 使用一项系统服务以静默安装更新
+    .label = 使用后台服务静默安装更新
     .accesskey = b
-update-setting-write-failure-title = 保存“更新”首选项时出错
-# Variables:
-#   $path (String) - Path to the configuration file
-# The newlines between the main text and the line containing the path is
-# intentional so the path is easier to identify.
-update-setting-write-failure-message =
-    { -brand-short-name } 遇到错误，未能保存此更改。请注意，设置此更新首选项需要写入下列文件的权限。您或系统管理员可以通过授予用户组对此文件的完全控制权来解决此错误。
-    
-    无法写入文件：{ $path }
 update-setting-write-failure-title2 = 保存“更新”设置时出错
 # Variables:
 #   $path (String) - Path to the configuration file
@@ -517,10 +471,10 @@ choose-bookmark =
     .label = 使用书签…
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
 home-prefs-content-header = Waterfox 主页内容
-home-prefs-content-description = 选择要在您的 Firefox 主页上显示的版块。
+home-prefs-content-description = 选择要在您的 Waterfox 主页上显示的版块。
 home-prefs-search-header =
     .label = 网络搜索
 home-prefs-topsites-header =
@@ -602,10 +556,8 @@ search-show-suggestions-above-history-option =
     .label = 在地址栏显示的结果中，将搜索建议显示在浏览历史上方
 search-show-suggestions-private-windows =
     .label = 在隐私窗口中显示搜索建议
-suggestions-addressbar-settings-generic = 更改其他地址栏建议首选项
 suggestions-addressbar-settings-generic2 = 更改其他地址栏建议设置
 search-suggestions-cant-show = 由于您已经设置 { -brand-short-name } 不要记住浏览历史，地址栏中将不会显示搜索建议。
-search-one-click-header = 快捷搜索引擎列表
 search-one-click-header2 = 快捷搜索
 search-one-click-desc = 请选择在地址栏和搜索栏输入关键词时，您希望显示在下方的其他可选用的搜索引擎。
 search-choose-engine-column =
@@ -632,12 +584,6 @@ search-keyword-warning-bookmark = 您选择的关键词已用于某个书签，�
 
 ## Containers Section
 
-containers-back-button =
-    .aria-label =
-        { PLATFORM() ->
-            [windows] 返回“选项”
-           *[other] 返回“首选项”
-        }
 containers-back-button2 =
     .aria-label = 回到设置
 containers-header = 身份标签页
@@ -647,21 +593,15 @@ containers-add-button =
 containers-new-tab-check =
     .label = 每次新建标签页时选择身份
     .accesskey = S
-containers-preferences-button =
-    .label = 首选项
 containers-settings-button =
     .label = 设置
 containers-remove-button =
     .label = 移除
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Waterfox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = 让您个性化的网络体验随身相伴
-sync-signedout-description = 在您的各种设备间同步您的书签、历史记录、标签页、密码、附加组件与首选项。
-sync-signedout-account-signin2 =
-    .label = 登录{ -sync-brand-short-name }服务…
-    .accesskey = i
 sync-signedout-description2 = 在您的各种设备间同步您的书签、历史记录、标签页、密码、附加组件与设置。
 sync-signedout-account-signin3 =
     .label = 登录同步服务…
@@ -674,9 +614,9 @@ sync-signedout-account-signin3 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = 在 <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> 或者 <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> 上安装 Firefox，让您的个性体验随身相伴。
+sync-mobile-promo = 在 <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> 或者 <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> 上安装 Waterfox，让您的个性体验随身相伴。
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = 更改头像
@@ -701,10 +641,6 @@ sync-sign-in =
 
 prefs-syncing-on = 同步：开启
 prefs-syncing-off = 同步：关闭
-prefs-sync-setup =
-    .label = 设置{ -sync-brand-short-name }
-    .accesskey = S
-prefs-sync-offer-setup-label = 在您的各种设备间同步您的书签、历史记录、标签页、密码、附加组件与首选项。
 prefs-sync-turn-on-syncing =
     .label = 正在开启同步...
     .accesskey = s
@@ -724,11 +660,6 @@ sync-currently-syncing-logins-passwords = 登录名和密码
 sync-currently-syncing-addresses = 邮政地址
 sync-currently-syncing-creditcards = 信用卡
 sync-currently-syncing-addons = 附加组件
-sync-currently-syncing-prefs =
-    { PLATFORM() ->
-        [windows] 选项
-       *[other] 首选项
-    }
 sync-currently-syncing-settings = 设置
 sync-change-options =
     .label = 更改…
@@ -767,16 +698,8 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = 附加组件
-    .tooltiptext = 用于 Firefox 桌面版的扩展和主题
+    .tooltiptext = 用于 Waterfox 桌面版的扩展和主题
     .accesskey = A
-sync-engine-prefs =
-    .label =
-        { PLATFORM() ->
-            [windows] 选项
-           *[other] 首选项
-        }
-    .tooltiptext = 您已更改的常规、隐私和安全设置
-    .accesskey = s
 sync-engine-settings =
     .label = 设置
     .tooltiptext = 您更改过的常规、隐私与安全等设置
@@ -826,9 +749,6 @@ forms-fill-logins-and-passwords =
 forms-saved-logins =
     .label = 已保存的登录信息…
     .accesskey = L
-forms-master-pw-use =
-    .label = 使用主密码
-    .accesskey = U
 forms-primary-pw-use =
     .label = 使用主密码
     .accesskey = U
@@ -839,7 +759,6 @@ forms-primary-pw-learn-more-link = 详细了解
 forms-master-pw-change =
     .label = 修改主密码…
     .accesskey = M
-forms-master-pw-fips-title = 您正处于 FIPS 模式。该模式需要一个非空的主密码。
 forms-primary-pw-change =
     .label = 更改主密码…
     .accesskey = P
@@ -849,20 +768,17 @@ forms-primary-pw-change =
 forms-primary-pw-former-name = { "" }
 forms-primary-pw-fips-title = 您正处于 FIPS 模式。该模式需要一个非空的主密码。
 forms-master-pw-fips-desc = 密码修改失败
+forms-windows-sso =
+    .label = 允许面向 Microsoft 账户（个人/工作/学校）的 Windows 单点登录
+forms-windows-sso-learn-more-link = 详细了解
+forms-windows-sso-desc = 在您的设备设置中管理账户
 
 ## OS Authentication dialog
 
-# This message can be seen by trying to add a Master Password.
-master-password-os-auth-dialog-message-win = 请输入 Windows 登录凭据，以创建主密码。这有助于保护您的账户安全。
-# This message can be seen by trying to add a Master Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
-# and includes subtitle of "Enter password for the user "xxx" to allow this." These
-# notes are only valid for English. Please test in your locale.
-master-password-os-auth-dialog-message-macosx = 创建主密码
 # This message can be seen by trying to add a Primary Password.
 primary-password-os-auth-dialog-message-win = 请输入 Windows 登录凭据，以创建主密码。这有助于保护您的账户安全。
 # This message can be seen by trying to add a Primary Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
+# The macOS strings are preceded by the operating system with "Waterfox is trying to "
 # and includes subtitle of "Enter password for the user "xxx" to allow this." These
 # notes are only valid for English. Please test in your locale.
 primary-password-os-auth-dialog-message-macosx = 创建主密码
@@ -874,12 +790,12 @@ history-header = 历史记录
 # This label is followed, on the same line, by a dropdown list of options
 # (Remember history, etc.).
 # In English it visually creates a full sentence, e.g.
-# "Firefox will" + "Remember history".
+# "Waterfox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
 #   - Simply as "Waterfox", moving the verb into each option.
 #     This will result in "Waterfox" + "Will remember history", etc.
-#   - As a stand-alone message, for example "Firefox history settings:".
+#   - As a stand-alone message, for example "Waterfox history settings:".
 history-remember-label = { -brand-short-name } 将
     .accesskey = w
 history-remember-option-all =
@@ -954,9 +870,6 @@ sitedata-clear =
 sitedata-settings =
     .label = 管理数据…
     .accesskey = M
-sitedata-cookies-permissions =
-    .label = 管理权限…
-    .accesskey = P
 sitedata-cookies-exceptions =
     .label = 管理例外…
     .accesskey = x
@@ -1101,16 +1014,18 @@ permissions-block-popups =
 permissions-block-popups-exceptions =
     .label = 例外…
     .accesskey = E
+# "popup" is a misspelling that is more popular than the correct spelling of
+# "pop-up" so it's included as a search keyword, not displayed in the UI.
+permissions-block-popups-exceptions-button =
+    .label = 例外…
+    .accesskey = e
+    .searchkeywords = popups 彈出 視窗
 permissions-addon-install-warning =
     .label = 当网站尝试安装附加组件时警告您
     .accesskey = W
 permissions-addon-exceptions =
     .label = 例外…
     .accesskey = E
-permissions-a11y-privacy-checkbox =
-    .label = 阻止无障碍服务接入您的浏览器
-    .accesskey = a
-permissions-a11y-privacy-link = 详细了解
 
 ## Privacy Section - Data Collection
 
@@ -1127,15 +1042,11 @@ collection-studies =
     .label = 允许 { -brand-short-name } 安装并运行一些实验项目
 collection-studies-link = 查看 { -brand-short-name } 在进行的实验
 addon-recommendations =
-    .label = 允许 { -brand-short-name } 提供个性化的扩展推荐
+    .label = 允许 { -brand-short-name } 提供个性化扩展推荐
 addon-recommendations-link = 详细了解
 # This message is displayed above disabled data sharing options in developer builds
 # or builds with no Telemetry support available.
 collection-health-report-disabled = 在此构建配置下数据反馈被禁用
-collection-backlogged-crash-reports =
-    .label = 允许 { -brand-short-name } 代您发送积压的崩溃报告
-    .accesskey = c
-collection-backlogged-crash-reports-link = 详细了解
 collection-backlogged-crash-reports-with-link = 允许 { -brand-short-name } 代您发送积压的崩溃报告 <a data-l10n-name="crash-reports-link">详细了解</a>
     .accesskey = c
 
@@ -1160,13 +1071,6 @@ security-block-uncommon-software =
 ## Privacy Section - Certificates
 
 certs-header = 证书
-certs-personal-label = 当服务器请求您的个人证书时
-certs-select-auto-option =
-    .label = 自动选择一个
-    .accesskey = S
-certs-select-ask-option =
-    .label = 每次均询问我
-    .accesskey = A
 certs-enable-ocsp =
     .label = 查询 OCSP 响应服务器，以确认证书当前是否有效
     .accesskey = Q
@@ -1176,29 +1080,6 @@ certs-view =
 certs-devices =
     .label = 安全设备…
     .accesskey = D
-space-alert-learn-more-button =
-    .label = 详细了解
-    .accesskey = L
-space-alert-over-5gb-pref-button =
-    .label =
-        { PLATFORM() ->
-            [windows] 打开选项
-           *[other] 打开首选项
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] O
-        }
-space-alert-over-5gb-message =
-    { PLATFORM() ->
-        [windows] { -brand-short-name } 运行所需的磁盘空间不足。网站内容可能无法正常显示。您可以在 选项 > 隐私与安全 > Cookie 和网站数据 中清除已存储的数据。
-       *[other] { -brand-short-name } 运行所需的磁盘空间不足。网站内容可能无法正常显示。您可以在 首选项 > 隐私与安全 > Cookie 和网站数据 中清除已存储的数据。
-    }
-space-alert-under-5gb-ok-button =
-    .label = 我知道了
-    .accesskey = K
-space-alert-under-5gb-message = { -brand-short-name } 运行所需的磁盘空间不足。网站内容可能无法正常显示。点击“详细了解”了解如何优化您的磁盘空间，从而获得更好的浏览体验。
 space-alert-over-5gb-settings-button =
     .label = 打开设置
     .accesskey = O

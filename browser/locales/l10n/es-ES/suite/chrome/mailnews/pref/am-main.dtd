@@ -1,6 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
 
 <!ENTITY accountTitle.label "Configuración de la cuenta">
 <!ENTITY accountName.label "Nombre de la cuenta:">
@@ -30,10 +32,13 @@
 <!ENTITY editVCard.accesskey "i">
 <!ENTITY attachVCard.label "Adjuntar mi tarjeta vCard en los mensajes.">
 <!ENTITY attachVCard.accesskey "v">
+
 <!ENTITY manageIdentities.label "Administrar identidades…">
 <!ENTITY manageIdentities.accesskey "A">
+
 <!ENTITY smtpName.label "Servidor de salida (SMTP):">
 <!ENTITY smtpName.accesskey "M">
 <!ENTITY smtpDefaultServer.label "Usar servidor predet.">
+
 <!ENTITY smtpServerEdit.label "Editar servidor SMTP…">
 <!ENTITY smtpServerEdit.accesskey "P">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -14,11 +14,15 @@ about-config-intro-warning-button = Chấp nhận rủi ro và tiếp tục
 
 # This is shown on the page before searching but after the warning is accepted.
 about-config-caution-text = Thay đổi các tùy chọn này có thể ảnh hưởng đến hiệu suất hoặc bảo mật { -brand-short-name }.
+
 about-config-page-title = Tùy chọn nâng cao
+
 about-config-search-input1 =
-    .placeholder = Tìm kiếm tên tùy chọn
+    .placeholder = Tìm kiếm tên tùy chỉnh
 about-config-show-all = Hiển thị tất cả
+
 about-config-show-only-modified = Chỉ hiển thị các tùy chọn đã sửa đổi
+
 about-config-pref-add-button =
     .title = Thêm
 about-config-pref-toggle-button =
@@ -34,7 +38,7 @@ about-config-pref-delete-button =
 
 ## Labels for the type selection radio buttons shown when adding preferences.
 
-about-config-pref-add-type-boolean = Luận lí
+about-config-pref-add-type-boolean = Logic
 about-config-pref-add-type-number = Số
 about-config-pref-add-type-string = Chuỗi
 

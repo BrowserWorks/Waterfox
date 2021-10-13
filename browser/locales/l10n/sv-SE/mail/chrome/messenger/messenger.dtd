@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Skriv ut…">
 <!ENTITY printCmd.accesskey "u">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Förhandsgranska">
-<!ENTITY printPreviewCmd.accesskey "h">
-<!ENTITY printSetupCmd.label "Utskriftsformat…">
-<!ENTITY printSetupCmd.accesskey "o">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Ta bort meddelande">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "T">
 <!ENTITY compactVersion.label "Kompakt vy">
 <!ENTITY compactVersion.accesskey "p">
-<!ENTITY folderPaneBar.label "Verktygsfältet mappfönster">
-<!ENTITY folderPaneBar.accesskey "m">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Ordna efter">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Adressboken">
 <!ENTITY addressBookCmd.accesskey "A">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Tillägg">
-<!ENTITY addons.accesskey "T">
-<!ENTITY addonPrefs.label "Inställningar för tillägg">
-<!ENTITY addonPrefs.accesskey "n">
-<!ENTITY addonPrefsUnix.label "Inställningar för tillägg">
-<!ENTITY addonPrefsUnix.accesskey "n">
 <!ENTITY addonNoPrefs.label "Inga inställningar för tillägg hittades.">
 <!ENTITY activitymanager.label "Aktiviteter">
 <!ENTITY activitymanager.accesskey "v">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "b">
 <!ENTITY importCmd.label "Importera…">
 <!ENTITY importCmd.accesskey "e">
+<!ENTITY exportCmd.label "Exportera…">
+<!ENTITY exportCmd.accesskey "x">
 <!ENTITY clearRecentHistory.label "Rensa historik…">
 <!ENTITY clearRecentHistory.accesskey "R">
 <!ENTITY accountManagerCmd2.label "Kontoinställningar">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Felsök tillägg">
 <!ENTITY debugAddonsCmd.accesskey "F">
-<!ENTITY tabsDebugCmd.label "Felsökning för innehållsram">
-<!ENTITY tabsDebugCmd.accesskey "n">
 <!ENTITY errorConsoleCmd.label "Felkonsol">
 <!ENTITY errorConsoleCmd.accesskey "F">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Bakåt">
 <!ENTITY goForwardButton1.label "Framåt">
 <!ENTITY deleteItem.title "Ta bort">
-<!ENTITY deleteButton.label "Ta bort">
-<!ENTITY undeleteButton.label "Återställ">
 <!ENTITY markButton.label "Märk">
 <!ENTITY printButton.label "Skriv ut">
 <!ENTITY stopButton.label "Stopp">
 <!ENTITY throbberItem.title "Aktivitetsindikator">
 <!ENTITY junkItem.title "Skräppost">
-<!ENTITY junkButton.label "Skräppost">
-<!ENTITY notJunkButton.label "Ej skräp">
 <!ENTITY addressBookButton.label "Adressboken">
 <!ENTITY chatButton.label "Chatt">
 <!ENTITY glodaSearch.title "Global sökning">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Flytta till föregående meddelande">
 <!ENTITY goForwardButton.tooltip "Gå framåt ett meddelande">
 <!ENTITY goBackButton.tooltip "Gå bakåt ett meddelande">
-<!ENTITY deleteButton.tooltip "Tar bort markerat meddelande eller mapp">
-<!ENTITY undeleteButton.tooltip "Ångra borttagning av markerat meddelande">
 <!ENTITY markButton.tooltip "Märker meddelande">
 <!ENTITY printButton.tooltip "Skriv ut detta meddelande">
 <!ENTITY stopButton.tooltip "Avbryter pågående överföring">
-<!ENTITY junkButton.tooltip "Märk de markerade meddelandena som skräp">
-<!ENTITY notJunkButton.tooltip "Märk de markerade meddelandena som icke skräp">
 <!ENTITY addressBookButton.tooltip "Gå till adressboken">
 <!ENTITY chatButton.tooltip "Visa fliken chatt">
 <!ENTITY tagButton.tooltip "Sätt etiketter på meddelanden">
 <!ENTITY compactButton.tooltip "Rensa ut borttagna meddelanden från markerad mapp">
 <!ENTITY appmenuButton1.tooltip "Visar &brandShortName; menyn">
-<!ENTITY addonsButton.tooltip "Hantera dina tillägg">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Vidarbefordra som infogad text">
@@ -719,7 +698,6 @@
 <!ENTITY locationColumn.label "Plats">
 <!ENTITY idColumn.label "Mottagen ordning">
 <!ENTITY attachmentColumn.label "Bilagor">
-
 <!ENTITY deleteColumn.label "Ta bort">
 
 <!-- Thread Pane Tooltips -->
@@ -745,7 +723,6 @@
 <!ENTITY locationColumn2.tooltip "Sortera efter plats">
 <!ENTITY idColumn2.tooltip "Sortera efter ordning mottaget">
 <!ENTITY attachmentColumn2.tooltip "Sortera efter bilagor">
-
 <!ENTITY deleteColumn.tooltip "Ta bort ett meddelande">
 
 <!-- Thread Pane Context Menu -->

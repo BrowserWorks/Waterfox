@@ -1,18 +1,28 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
 <!ENTITY pref.advanced.title              "Για προχωρημένους">
 
-<!ENTITY systemPref.caption               "Προτιμήσεις συστήματος">
-<!ENTITY systemPrefCheck.label            "Χρήση προτιμήσεων από το σύστημα">
-<!ENTITY systemPrefCheck.accesskey        "Χ">
-<!ENTITY systemPref.desc                  "Με αυτή την επιλογή, το &brandShortName; κληρονομεί προτιμήσεις από το σύστημα. Αυτές οι ρυθμίσεις συστήματος θα αντικαταστήσουν τις προτιμήσεις του &brandShortName;.">
-
 <!ENTITY prefCheckDefault.caption         "Ενσωμάτωση συστήματος">
 <!ENTITY prefCheckDefaultClient.label     "Έλεγχος ρυθμίσεων προεπιλεγμένης εφαρμογής κατά την εκκίνησης">
 <!ENTITY prefCheckDefaultClient.accesskey "Έ">
+
+<!ENTITY defaultClientFor.description     "Ορισμός του &brandShortName; ως προεπιλογής για:">
+<!ENTITY setDefaultBrowser.label          "Περιήγηση">
+<!ENTITY setDefaultBrowser.accesskey      "Π">
+<!ENTITY setDefaultMail.label             "Αλληλογραφία">
+<!ENTITY setDefaultMail.accesskey         "Α">
+<!ENTITY setDefaultNews.label             "Συζητήσεις">
+<!ENTITY setDefaultNews.accesskey         "Σ">
+<!ENTITY setDefaultFeed.label             "Ροές">
+<!ENTITY setDefaultFeed.accesskey         "Ρ">
+<!ENTITY useInternalSettings.description  "Χρήση του &brandShortName; για ταχυδρομείο &amp; ομάδες συζητήσεων κατά το άνοιγμα συνδέσμων για:">
+<!ENTITY useInternalMail.label            "Αλληλογραφία (mailto:)">
+<!ENTITY useInternalMail.accesskey        "γ">
+<!ENTITY useInternalNews.label            "Συζητήσεις (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "ζ">
 
 <!ENTITY printing.label                   "Εκτύπωση">
 <!ENTITY useNativePrintDialog.label       "Χρήση εγγενούς διαλόγου εκτύπωσης (όπου υποστηρίζεται)">

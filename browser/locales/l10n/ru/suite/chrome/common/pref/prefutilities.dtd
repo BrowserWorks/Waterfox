@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -34,6 +34,9 @@
 <!-- LOCALIZATION NOTE (FallbackCharset.turkish):
      Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
 <!ENTITY FallbackCharset.turkish      "Турецкая">
+<!-- LOCALIZATION NOTE (FallbackCharset.unicode):
+     Only used for mail and news default text encoding and not for browser locale fallback. -->
+<!ENTITY FallbackCharset.unicode      "Юникод (UTF-8)">
 <!-- LOCALIZATION NOTE (FallbackCharset.vietnamese):
      Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
 <!ENTITY FallbackCharset.vietnamese   "Вьетнамская">

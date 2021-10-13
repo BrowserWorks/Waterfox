@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -112,45 +112,6 @@ fonts-allow-own =
 ##
 ## Translate the encoding names as adjectives for an encoding, not as the name
 ## of the language.
-
-fonts-languages-fallback-header = รหัสอักขระสำหรับเนื้อหาแบบเก่า
-fonts-languages-fallback-desc = รหัสอักขระนี้ถูกใช้สำหรับเนื้อหาแบบเก่าที่ไม่สามารถประกาศการเข้ารหัสได้
-
-fonts-languages-fallback-label = รหัสอักขระที่ใช้แสดงแทน
-    .accesskey = ร
-
-fonts-languages-fallback-name-auto =
-    .label = ค่าเริ่มต้นสำหรับภาษาถิ่นปัจจุบัน
-fonts-languages-fallback-name-arabic =
-    .label = อาหรับ
-fonts-languages-fallback-name-baltic =
-    .label = บอลติก
-fonts-languages-fallback-name-ceiso =
-    .label = ยุโรปกลาง ISO
-fonts-languages-fallback-name-cewindows =
-    .label = ยุโรปกลาง Microsoft
-fonts-languages-fallback-name-simplified =
-    .label = จีนตัวย่อ
-fonts-languages-fallback-name-traditional =
-    .label = จีนตัวเต็ม
-fonts-languages-fallback-name-cyrillic =
-    .label = ซิริลลิก
-fonts-languages-fallback-name-greek =
-    .label = กรีก
-fonts-languages-fallback-name-hebrew =
-    .label = ฮิบรู
-fonts-languages-fallback-name-japanese =
-    .label = ญี่ปุ่น
-fonts-languages-fallback-name-korean =
-    .label = เกาหลี
-fonts-languages-fallback-name-thai =
-    .label = ไทย
-fonts-languages-fallback-name-turkish =
-    .label = ตุรกี
-fonts-languages-fallback-name-vietnamese =
-    .label = เวียดนาม
-fonts-languages-fallback-name-other =
-    .label = อื่น ๆ (รวมถึงยุโรปตะวันตก)
 
 # Variables:
 #   $name {string, "Arial"} - Name of the default font

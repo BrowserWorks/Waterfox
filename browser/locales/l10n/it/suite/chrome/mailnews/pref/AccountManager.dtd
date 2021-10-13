@@ -1,13 +1,19 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- extracted from AccountManager.xul -->
+
 <!ENTITY accountManagerTitle.label "Configurazione account di Posta e gruppi di discussione">
+
 <!ENTITY addAccountButton.label "Aggiungi account…">
 <!ENTITY addAccountButton.accesskey "A">
 <!ENTITY setDefaultButton.label "Imposta come predefinito">
 <!ENTITY setDefaultButton.accesskey "I">
 <!ENTITY removeButton.label "Elimina account">
 <!ENTITY removeButton.accesskey "E">
+
+<!-- AccountManager.xul -->
+<!-- AccountManager.xul -->
 <!ENTITY accountManager.size "width: 92ch; height: 50em;">
 <!ENTITY accountTree.width "width: 26ch;">

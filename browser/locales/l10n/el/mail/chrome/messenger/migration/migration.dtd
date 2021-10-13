@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -7,12 +7,10 @@
 
 <!ENTITY importFromWin.label            "Εισαγωγή επιλογών, ρυθμίσεων, ευρετηρίων, φίλτρων και άλλων δεδομένων από:">
 <!ENTITY importFromNonWin.label         "Εισαγωγή προτιμήσεων, ρυθμίσεων, ευρετηρίων, φίλτρων και άλλων δεδομένων από:">
-<!ENTITY importSourceNotFound.label     "Δεν βρέθηκε εφαρμογή από την οποία να μπορεί να γίνει εισαγωγή δεδομένων.">
+<!ENTITY importSourceNotFound.label     "Δεν βρέθηκε εφαρμογή για εισαγωγή δεδομένων.">
 
-<!ENTITY importFromNothing.label        "Να μην εισαχθεί τίποτα">
-<!ENTITY importFromNothing.accesskey    "τ">
-<!ENTITY importFromThunderbird.label     "Thunderbird">
-<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromNothing.label        "Χωρίς εισαγωγή">
+<!ENTITY importFromNothing.accesskey    "Χ">
 <!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 ή μεταγενέστερη">
 <!ENTITY importFromSeamonkey3.accesskey "S">
 <!ENTITY importFromOutlook.label        "Outlook">

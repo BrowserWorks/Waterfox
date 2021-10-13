@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-addons-window =
-    .title = 附加元件管理員
 addons-page-title = 附加元件管理員
 search-header =
     .placeholder = 在 addons.mozilla.org 搜尋
@@ -24,17 +22,6 @@ list-empty-button =
 help-button = 附加元件支援
 sidebar-help-button-title =
     .title = 附加元件支援
-preferences =
-    { PLATFORM() ->
-        [windows] { -brand-short-name } 選項
-       *[other] { -brand-short-name } 偏好設定
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] { -brand-short-name } 選項
-           *[other] { -brand-short-name } 偏好設定
-        }
 addons-settings-button = { -brand-short-name } 選項
 sidebar-settings-button-title =
     .title = { -brand-short-name } 選項
@@ -42,36 +29,6 @@ show-unsigned-extensions-button =
     .label = 無法驗證某些擴充套件
 show-all-extensions-button =
     .label = 顯示所有擴充套件
-cmd-show-details =
-    .label = 顯示更多資訊
-    .accesskey = S
-cmd-find-updates =
-    .label = 尋找更新
-    .accesskey = F
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] 選項
-           *[other] 偏好設定
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] P
-        }
-cmd-enable-theme =
-    .label = 套用佈景主題
-    .accesskey = W
-cmd-disable-theme =
-    .label = 停用佈景主題
-    .accesskey = W
-cmd-install-addon =
-    .label = 安裝
-    .accesskey = I
-cmd-contribute =
-    .label = 贊助
-    .accesskey = C
-    .tooltiptext = 贊助這個元件的開發
 detail-version =
     .label = 版本
 detail-last-updated =
@@ -263,7 +220,7 @@ header-back-button =
 
 # Explanatory introduction to the list of recommended add-ons. The action word
 # ("recommends") in the final sentence is a link to external documentation.
-discopane-intro = 擴充套件與佈景主題就是可以在瀏覽器中使用的應用程式，讓您獲得保護登入資訊、下載影片、比價、調整瀏覽器的外觀等等新增功能。這些小程式通常都不是由 Mozilla 開發的。以下是一些 { -brand-product-name } 所<a data-l10n-name="learn-more-trigger">推薦</a>，在安全性、效能、功能等方便都表現傑出的精選項目。
+discopane-intro = 擴充套件與佈景主題就是可以在瀏覽器中使用的應用程式，讓您獲得保護登入資訊、下載影片、比價、調整瀏覽器的外觀等等新增功能。這些小程式通常都不是由 Waterfox 開發的。以下是一些 { -brand-product-name } 所<a data-l10n-name="learn-more-trigger">推薦</a>，在安全性、效能、功能等方便都表現傑出的精選項目。
 # Notice to make user aware that the recommendations are personalized.
 discopane-notice-recommendations = 某些項目是根據您安裝的其他擴充套件、偏好設定、使用統計推導而出的個人化建議。
 discopane-notice-learn-more = 了解更多
@@ -282,6 +239,7 @@ install-theme-button = 安裝佈景主題
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = 管理
 find-more-addons = 看更多附加元件！
+find-more-themes = 尋找更多佈景主題
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
 addon-options-button =
@@ -311,13 +269,14 @@ extension-enabled-heading = 啟用
 extension-disabled-heading = 停用
 theme-enabled-heading = 啟用
 theme-disabled-heading = 停用
+theme-monochromatic-heading = 配色
+theme-monochromatic-subheading = 活力滿點的 { -brand-product-name } 新配色，限時提供。
 plugin-enabled-heading = 啟用
 plugin-disabled-heading = 停用
 dictionary-enabled-heading = 啟用
 dictionary-disabled-heading = 停用
 locale-enabled-heading = 啟用
 locale-disabled-heading = 停用
-ask-to-activate-button = 啟用時詢問
 always-activate-button = 總是啟用
 never-activate-button = 永不啟用
 addon-detail-author-label = 作者
@@ -372,10 +331,10 @@ addon-detail-private-browsing-disallow = 不允許
 addon-badge-recommended2 =
     .title = { -brand-product-name } 僅推薦符合我們的安全性與效能標準的擴充套件
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Mozilla" in the string below because the extensions are built
-# by Mozilla and we don't want forks to display "by Fork".
+# We hard code "Waterfox" in the string below because the extensions are built
+# by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = 由 Mozilla 打造的官方附加元件，符合各種安全性與運作效能標準
+    .title = 由 Waterfox 打造的官方附加元件，符合各種安全性與運作效能標準
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = 我們檢查過此擴充套件，確認符合安全性與運作效能標準
@@ -393,9 +352,9 @@ addon-permissions-optional = 選用功能需要下列權限:
 addon-permissions-learnmore = 了解權限的更多資訊
 recommended-extensions-heading = 推薦的擴充套件
 recommended-themes-heading = 推薦的佈景主題
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
-# list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = 突然有個靈感嗎？<a data-l10n-name="link">使用 Firefox Color 來打造自己的佈景主題。</a>
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
+# list view. The "Waterfox Color" name itself should not be translated.
+recommended-theme-1 = 突然有個靈感嗎？<a data-l10n-name="link">使用 Waterfox Color 來打造自己的佈景主題。</a>
 
 ## Page headings
 

@@ -1,6 +1,6 @@
 #filter emptyLines
 
-#define MOZ_LANGPACK_CREATOR Mozilla Lietuvoje
+#define MOZ_LANGPACK_CREATOR Waterfox Lietuvoje
 
 # If non-English locales wish to credit multiple contributors, uncomment this
 

@@ -1,8 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY pref.download.title "Descargas">
+
 <!ENTITY downloadBehavior.label "Cuando se inicie una descarga">
 <!ENTITY doNothing.label "No abrir nada">
 <!ENTITY doNothing.accesskey "N">
@@ -12,6 +13,7 @@
 <!ENTITY openDM.accesskey "a">
 <!ENTITY flashWhenOpen.label "Hacer que el administrador de descargas parpadee si ya está abierto">
 <!ENTITY flashWhenOpen.accesskey "H">
+
 <!ENTITY downloadLocation.label "Cuando se guarde un archivo:">
 <!ENTITY saveTo.label "Guardar archivos en">
 <!ENTITY saveTo.accesskey "G">
@@ -19,6 +21,7 @@
 <!ENTITY chooseDownloadFolder.accesskey "C">
 <!ENTITY alwaysAsk.label "Preguntarme siempre dónde guardar archivos">
 <!ENTITY alwaysAsk.accesskey "P">
+
 <!ENTITY finishedBehavior.label "Cuando se completa una descarga">
 <!ENTITY playSound.label "Reproducir un sonido">
 <!ENTITY playSound.accesskey "R">

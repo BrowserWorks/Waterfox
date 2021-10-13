@@ -1,13 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowTitle.label "Couleur">
 <!ENTITY lastPickedColor.label "Dernière couleur utilisée">
 <!ENTITY lastPickedColor.accessKey "c">
-<!ENTITY setColor1.label "Cliquez sur une couleur ou">
-<!ENTITY setColor2.label "saisissez une chaîne de couleur HTML">
-<!ENTITY setColor2.accessKey "H">
 <!ENTITY chooseColor1.label "Choisissez une couleur :">
 <!ENTITY chooseColor2.label "Saisissez un nom de couleur HTML">
 <!ENTITY chooseColor2.accessKey "H">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -33,7 +33,7 @@ about-config-pref-delete-button =
 
 ## Labels for the type selection radio buttons shown when adding preferences.
 
-about-config-pref-add-type-boolean = Luận lí
+about-config-pref-add-type-boolean = Logic
 about-config-pref-add-type-number = Số
 about-config-pref-add-type-string = Chuỗi
 

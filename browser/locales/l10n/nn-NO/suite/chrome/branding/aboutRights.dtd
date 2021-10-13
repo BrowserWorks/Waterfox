@@ -1,7 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
 <!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
 <!ENTITY rights.locale-direction "ltr">
 <!ENTITY rights.pagetitle       "about:rights">
@@ -17,8 +17,8 @@
      Also note the leading/trailing whitespace in strings here, which is
      deliberate for formatting around the embedded links. -->
 <!ENTITY rights.intro-point1a "&brandShortName; er gjort tilgjengeleg for deg under vilkåra i ">
-<!ENTITY rights.intro-point1b "Mozilla Public License">
-<!ENTITY rights.intro-point1c ". Dette tyder at du kan bruka, kopiera og distribuera &brandShortName; til andre. Du kan også endra kjeldekoden til &brandShortName; som du vil, for å passa til dine behov. Mozilla Public License gjev deg også rett til å distribuera endra versjonar.">
+<!ENTITY rights.intro-point1b "Waterfox Public License">
+<!ENTITY rights.intro-point1c ". Dette tyder at du kan bruka, kopiera og distribuera &brandShortName; til andre. Du kan også endra kjeldekoden til &brandShortName; som du vil, for å passa til dine behov. Waterfox Public License gjev deg også rett til å distribuera endra versjonar.">
 
 <!ENTITY rights.intro-point2aa "&vendorShortName; gir deg ikkje rett til å bruke «&brandFullName;»-varemerka eller logoane. Meir informasjon om varemerke finn du ">
 <!ENTITY rights.intro-point2b "her">

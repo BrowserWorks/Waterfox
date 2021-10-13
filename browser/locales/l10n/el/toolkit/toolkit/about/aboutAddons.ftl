@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-addons-window =
-    .title = Διαχείριση προσθέτων
 addons-page-title = Διαχείριση προσθέτων
 search-header =
     .placeholder = Αναζήτηση στο addons.mozilla.org
@@ -24,17 +22,6 @@ list-empty-button =
 help-button = Υποστήριξη προσθέτων
 sidebar-help-button-title =
     .title = Υποστήριξη προσθέτων
-preferences =
-    { PLATFORM() ->
-        [windows] Επιλογές { -brand-short-name }
-       *[other] Προτιμήσεις { -brand-short-name }
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] Επιλογές { -brand-short-name }
-           *[other] Προτιμήσεις { -brand-short-name }
-        }
 addons-settings-button = Ρυθμίσεις { -brand-short-name }
 sidebar-settings-button-title =
     .title = Ρυθμίσεις { -brand-short-name }
@@ -42,36 +29,6 @@ show-unsigned-extensions-button =
     .label = Δεν ήταν δυνατή η επαλήθευση ορισμένων πρόσθετων
 show-all-extensions-button =
     .label = Προβολή όλων των επεκτάσεων
-cmd-show-details =
-    .label = Προβολή περισσότερων πληροφοριών
-    .accesskey = β
-cmd-find-updates =
-    .label = Εύρεση ενημερώσεων
-    .accesskey = ρ
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Επιλογές
-           *[other] Προτιμήσεις
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] λ
-           *[other] Π
-        }
-cmd-enable-theme =
-    .label = Ενεργοποίηση θέματος
-    .accesskey = ν
-cmd-disable-theme =
-    .label = Απενεργοποίηση θέματος
-    .accesskey = π
-cmd-install-addon =
-    .label = Εγκατάσταση
-    .accesskey = γ
-cmd-contribute =
-    .label = Συνεισφορά
-    .accesskey = φ
-    .tooltiptext = Βοηθήστε στην ανάπτυξη αυτού του προσθέτου
 detail-version =
     .label = Έκδοση
 detail-last-updated =
@@ -111,7 +68,7 @@ detail-home =
 detail-home-value =
     .value = { detail-home.label }
 detail-repository =
-    .label = Προφίλ πρόσθετου
+    .label = Προφίλ προσθέτου
 detail-repository-value =
     .value = { detail-repository.label }
 detail-check-for-updates =
@@ -135,7 +92,7 @@ detail-show-preferences =
            *[other] Αλλαγή των προτιμήσεων
         }
 detail-rating =
-    .value = Αξιολόγηση
+    .value = Βαθμολογία
 addon-restart-now =
     .label = Επανεκκίνηση τώρα
 disabled-unsigned-heading =
@@ -207,9 +164,9 @@ addon-updates-update-addons-automatically = Αυτόματη ενημέρωση 
 ## (which itself is either "Automatically" or "Manually", controlled by the
 ## extensions-updates-update-addons-automatically.label menu item).
 
-addon-updates-reset-updates-to-automatic = Ρύθμιση όλων των προσθέτων σε αυτόματη ενημέρωση
-    .accesskey = Ρ
-addon-updates-reset-updates-to-manual = Ρύθμιση όλων των προσθέτων σε χειροκίνητη ενημέρωση
+addon-updates-reset-updates-to-automatic = Επαναφορά αυτόματης ενημέρωσης για όλα τα πρόσθετα
+    .accesskey = Ε
+addon-updates-reset-updates-to-manual = Επαναφορά χειροκίνητης ενημέρωσης για όλα τα πρόσθετα
     .accesskey = χ
 
 ## Status messages displayed when updating add-ons
@@ -221,7 +178,7 @@ addon-updates-manual-updates-found = Εμφάνιση διαθέσιμων εν�
 
 ## Add-on install/debug strings for page options menu
 
-addon-install-from-file = Εγκατάσταση πρόσθετου από αρχείο…
+addon-install-from-file = Εγκατάσταση προσθέτου από αρχείο…
     .accesskey = γ
 addon-install-from-file-dialog-title = Επιλέξτε πρόσθετο για εγκατάσταση
 addon-install-from-file-filter-name = Πρόσθετα
@@ -239,7 +196,7 @@ shortcuts-input =
     .placeholder = Πληκτρολογήστε μια συντόμευση
 shortcuts-browserAction2 = Κουμπί ενεργοποίησης γραμμής εργαλείων
 shortcuts-pageAction = Ενεργοποίηση ενέργειας σελίδας
-shortcuts-sidebarAction = (Απ)ενεργοποίηση πλευρικής γραμμής
+shortcuts-sidebarAction = (Απ)ενεργοποίηση πλαϊνής γραμμής
 shortcuts-modifier-mac = Συμπεριλάβετε Ctrl, Alt, ή ⌘
 shortcuts-modifier-other = Συμπεριλάβετε Ctrl ή Alt
 shortcuts-invalid = Άκυρος συνδυασμός
@@ -293,6 +250,7 @@ install-theme-button = Εγκατάσταση θέματος
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = Διαχείριση
 find-more-addons = Εύρεση περισσότερων προσθέτων
+find-more-themes = Εύρεση περισσότερων θεμάτων
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
 addon-options-button =
@@ -322,13 +280,14 @@ extension-enabled-heading = Ενεργές
 extension-disabled-heading = Ανενεργές
 theme-enabled-heading = Ενεργά
 theme-disabled-heading = Ανενεργά
+theme-monochromatic-heading = Χρωματικοί συνδυασμοί
+theme-monochromatic-subheading = Νέοι, δυναμικοί χρωματικοί συνδυασμοί από το { -brand-product-name }. Διαθέσιμοι για περιορισμένο χρονικό διάστημα.
 plugin-enabled-heading = Ενεργά
 plugin-disabled-heading = Ανενεργά
 dictionary-enabled-heading = Ενεργά
 dictionary-disabled-heading = Ανενεργά
 locale-enabled-heading = Ενεργές
 locale-disabled-heading = Ανενεργές
-ask-to-activate-button = Ερώτηση για ενεργοποίηση
 always-activate-button = Πάντα ενεργοποιημένο
 never-activate-button = Ποτέ ενεργοποιημένο
 addon-detail-author-label = Δημιουργός
@@ -384,10 +343,10 @@ addon-detail-private-browsing-disallow = Απόρριψη
 addon-badge-recommended2 =
     .title = Το { -brand-product-name } προτείνει μόνο επεκτάσεις που πληρούν τα πρότυπα ασφαλείας και επιδόσεών μας
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Mozilla" in the string below because the extensions are built
-# by Mozilla and we don't want forks to display "by Fork".
+# We hard code "Waterfox" in the string below because the extensions are built
+# by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = Επίσημη επέκταση από τη Mozilla. Πληροί τα πρότυπα ασφαλείας και επιδόσεων
+    .title = Επίσημη επέκταση από τη Waterfox. Πληροί τα πρότυπα ασφαλείας και επιδόσεων
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = Αυτή η επέκταση έχει ελεγχθεί και πληροί τα πρότυπα ασφαλείας και επιδόσεών μας
@@ -405,9 +364,9 @@ addon-permissions-optional = Προαιρετικά δικαιώματα για 
 addon-permissions-learnmore = Μάθετε περισσότερα σχετικά με τα δικαιώματα
 recommended-extensions-heading = Προτεινόμενες επεκτάσεις
 recommended-themes-heading = Προτεινόμενα θέματα
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
-# list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Αισθάνεστε δημιουργικοί; <a data-l10n-name="link">Δημιουργήστε το δικό σας θέμα με το Firefox Color.</a>
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
+# list view. The "Waterfox Color" name itself should not be translated.
+recommended-theme-1 = Αισθάνεστε δημιουργικοί; <a data-l10n-name="link">Δημιουργήστε το δικό σας θέμα με το Waterfox Color.</a>
 
 ## Page headings
 

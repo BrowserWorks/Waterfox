@@ -1,13 +1,20 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY pref.notifications.title "Notifiche">
 <!ENTITY notifications.caption "Notifiche">
 <!ENTITY newMessagesArrive.label "All'arrivo di un nuovo messaggio:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
 <!ENTITY showAlertFor.label "Mostra un avviso per">
 <!ENTITY showAlertFor.accesskey "M">
 <!ENTITY showAlertTimeEnd.label "secondi">
+
 <!ENTITY showAlertPreviewText.label "Mostra un'anteprima del testo del messaggio">
 <!ENTITY showAlertPreviewText.accesskey "o">
 <!ENTITY showAlertSubject.label "Mostra l'oggetto">
@@ -18,12 +25,14 @@
 <!ENTITY useSystemAlert.accesskey "s">
 <!ENTITY useBuiltInAlert.label "Usa le finestre di notifica di &brandShortName;">
 <!ENTITY useBuiltInAlert.accesskey "U">
+
 <!ENTITY showTrayIcon.label "Mostra una icona nell'area di notifica">
 <!ENTITY showTrayIcon.accesskey "o">
 <!ENTITY showBalloon.label "Mostra un messaggio di avviso">
 <!ENTITY showBalloon.accesskey "a">
 <!ENTITY bounceSystemDockIcon.label "Anima l'icona Dock">
 <!ENTITY bounceSystemDockIcon.accesskey "k">
+
 <!ENTITY playSound.label "Riproduci un suono">
 <!ENTITY playSound.accesskey "R">
 <!ENTITY playButton.label "Riproduci">

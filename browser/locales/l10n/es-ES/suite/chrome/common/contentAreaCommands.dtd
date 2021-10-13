@@ -1,11 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY popupWindowRejectCmd.label "Rechazar ventanas emergentes de este sitio web">
-<!ENTITY popupWindowRejectCmd.accesskey "R">
-<!ENTITY popupWindowAllowCmd.label "Permitir ventanas emergentes de este sitio web">
-<!ENTITY popupWindowAllowCmd.accesskey "P">
 <!ENTITY openLinkCmdInTab.label "Abrir enlace en una pestaña nueva">
 <!ENTITY openLinkCmdInTab.accesskey "T">
 <!ENTITY openLinkCmd.label "Abrir enlace en una ventana nueva">

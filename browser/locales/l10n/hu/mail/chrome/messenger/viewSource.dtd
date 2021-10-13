@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -19,10 +19,6 @@
 <!ENTITY savePageCmd.label "Oldal mentése…">
 <!ENTITY savePageCmd.accesskey "m">
 <!ENTITY savePageCmd.commandkey "S">
-<!ENTITY pageSetupCmd.label "Oldalbeállítás…">
-<!ENTITY pageSetupCmd.accesskey "b">
-<!ENTITY printPreviewCmd.label "Nyomtatási kép">
-<!ENTITY printPreviewCmd.accesskey "k">
 <!ENTITY printCmd.label "Nyomtatás…">
 <!ENTITY printCmd.accesskey "o">
 <!ENTITY printCmd.commandkey "P">

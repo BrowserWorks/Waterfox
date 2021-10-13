@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,12 +31,6 @@
 <!ENTITY closeCmd.label                                 "Lat att">
 <!ENTITY closeCmd.key                                   "W">
 <!ENTITY closeCmd.accesskey                             "L">
-<!ENTITY printSetupCmd.label                            "Utskriftsformat …">
-<!ENTITY printSetupCmd.accesskey                        "m">
-<!ENTITY printPreviewContactCmd.label                   "Førehandsvising av kort">
-<!ENTITY printPreviewContactCmd.accesskey               "r">
-<!ENTITY printPreviewAddressBook.label                  "Førehandsvising av adressebok">
-<!ENTITY printPreviewAddressBook.accesskey              "F">
 <!ENTITY printContactCmd.label                          "Skriv ut kontakt…">
 <!ENTITY printContactCmd.accesskey                      "S">
 <!ENTITY printContactCmd.key                            "P">
@@ -48,8 +42,11 @@
 <!ENTITY editMenu.accesskey                             "R">
 <!ENTITY deleteCmd.label                                "Slett">
 <!ENTITY deleteAbCmd.label                              "Slett adressebok">
-<!ENTITY deleteContactCmd.label                         "Slett kort">
-<!ENTITY deleteContactsCmd.label                        "Slett kort">
+<!ENTITY deleteAbCmd.accesskey                          "S">
+<!ENTITY removeAbCmd.label                              "Fjern adressebok">
+<!ENTITY removeAbCmd.accesskey                          "d">
+<!ENTITY deleteContactCmd.label                         "Slett kontakt">
+<!ENTITY deleteContactsCmd.label                        "Slett kontaktar">
 <!ENTITY deleteListCmd.label                            "Slett liste">
 <!ENTITY deleteListsCmd.label                           "Slett lister">
 <!ENTITY deleteItemsCmd.label                           "Slett element">
@@ -108,10 +105,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY importCmd.accesskey                            "m">
 <!ENTITY exportCmd.label                                "Eksporter …">
 <!ENTITY exportCmd.accesskey                            "k">
-<!ENTITY preferencesCmd2.label                          "Innstillingar">
-<!ENTITY preferencesCmd2.accesskey                      "I">
-<!ENTITY preferencesCmdUnix.label                       "Innstillingar …">
-<!ENTITY preferencesCmdUnix.accesskey                   "n">
 
 <!-- Address Book Toolbar and Context Menus -->
 <!ENTITY newContactButton.label                         "Ny kontakt">
@@ -139,6 +132,8 @@ because displayed names don't have the comma in between. -->
 <!ENTITY printButton.accesskey                          "k">
 <!ENTITY deleteButton2.label                            "Slett">
 <!ENTITY deleteButton2.accesskey                        "S">
+<!ENTITY removeButton.label                             "Fjern">
+<!ENTITY removeButton.accesskey                         "F">
 
 <!-- Address Book Toolbar Tooltips -->
 <!ENTITY columnChooser.tooltip                          "Vel kolonner å vise">
@@ -151,6 +146,7 @@ because displayed names don't have the comma in between. -->
 <!ENTITY newmsgButton.tooltip                           "Send ein e-post">
 <!ENTITY newIM.tooltip                                  "Send ei melding eller chat">
 <!ENTITY deleteButton2.tooltip                          "Slett valde element">
+<!ENTITY removeButton.tooltip                           "Fjern valde adressebok">
 
 <!-- Search Bar -->
 <!ENTITY SearchNameOrEmail.label                        "Namn eller e-post">

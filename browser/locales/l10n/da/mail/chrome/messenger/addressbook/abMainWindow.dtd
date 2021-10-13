@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,12 +31,6 @@
 <!ENTITY closeCmd.label                                 "Luk">
 <!ENTITY closeCmd.key                                   "W">
 <!ENTITY closeCmd.accesskey                             "L">
-<!ENTITY printSetupCmd.label                            "Sideopsætning…">
-<!ENTITY printSetupCmd.accesskey                        "o">
-<!ENTITY printPreviewContactCmd.label                   "Vis udskrift af kontakt">
-<!ENTITY printPreviewContactCmd.accesskey               "v">
-<!ENTITY printPreviewAddressBook.label                  "Vis udskrift af adressebog">
-<!ENTITY printPreviewAddressBook.accesskey              "a">
 <!ENTITY printContactCmd.label                          "Udskriv kontakt…">
 <!ENTITY printContactCmd.accesskey                      "u">
 <!ENTITY printContactCmd.key                            "P">
@@ -48,7 +42,9 @@
 <!ENTITY editMenu.accesskey                             "R">
 <!ENTITY deleteCmd.label                                "Slet">
 <!ENTITY deleteAbCmd.label                              "Slet adressebog">
+<!ENTITY deleteAbCmd.accesskey                          "d">
 <!ENTITY removeAbCmd.label                              "Fjern adressebog">
+<!ENTITY removeAbCmd.accesskey                          "d">
 <!ENTITY deleteContactCmd.label                         "Slet kontakt">
 <!ENTITY deleteContactsCmd.label                        "Slet kontakter">
 <!ENTITY deleteListCmd.label                            "Slet liste">
@@ -109,10 +105,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY importCmd.accesskey                            "I">
 <!ENTITY exportCmd.label                                "Eksporter…">
 <!ENTITY exportCmd.accesskey                            "E">
-<!ENTITY preferencesCmd2.label                          "Indstillinger">
-<!ENTITY preferencesCmd2.accesskey                      "n">
-<!ENTITY preferencesCmdUnix.label                       "Indstillinger">
-<!ENTITY preferencesCmdUnix.accesskey                   "I">
 
 <!-- Address Book Toolbar and Context Menus -->
 <!ENTITY newContactButton.label                         "Ny kontakt">

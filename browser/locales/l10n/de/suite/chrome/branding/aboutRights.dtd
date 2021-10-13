@@ -1,7 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
 <!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
 <!ENTITY rights.locale-direction "ltr">
 <!ENTITY rights.pagetitle       "about:rights">
@@ -17,18 +17,18 @@
      Also note the leading/trailing whitespace in strings here, which is
      deliberate for formatting around the embedded links. -->
 <!ENTITY rights.intro-point1a "&brandShortName; wird Ihnen unter den Bedingungen der ">
-<!ENTITY rights.intro-point1b "Mozilla Public License">
-<!ENTITY rights.intro-point1c " zur Verfügung gestellt. Das bedeutet, Sie dürfen &brandShortName; verwenden, kopieren und an andere verteilen. Sie sind auch gerne eingeladen, den Quelltext von &brandShortName; zu verändern und an Ihre eigenen Bedürfnisse anzupassen. Die Mozilla Public License gibt Ihnen auch das Recht, Ihre veränderte Version an andere zu verteilen.">
+<!ENTITY rights.intro-point1b "Waterfox Public License">
+<!ENTITY rights.intro-point1c " zur Verfügung gestellt. Das bedeutet, Sie dürfen &brandShortName; verwenden, kopieren und an andere verteilen. Sie sind auch gerne eingeladen, den Quelltext von &brandShortName; zu verändern und an Ihre eigenen Bedürfnisse anzupassen. Die Waterfox Public License gibt Ihnen auch das Recht, Ihre veränderte Version an andere zu verteilen.">
 
-<!ENTITY rights.intro-point2a "Mozilla gibt Ihnen kein Recht, die Marken &quot;Mozilla&quot; oder &quot;SeaMonkey&quot; oder die Logos zu verwenden. Weitere Informationen zur Nutzung der Marken finden Sie ">
+<!ENTITY rights.intro-point2aa "&vendorShortName; gibt Ihnen kein Recht, die Marke &quot;&brandFullName;&quot; oder die Logos zu verwenden. Weitere Informationen zur Nutzung der Marke finden Sie ">
 <!ENTITY rights.intro-point2b "hier">
 <!ENTITY rights.intro-point2c ".">
 
-<!-- point 2d is technically point 3. in the list -->
-<!ENTITY rights.intro-point2d "Manche Funktionen in &brandShortName; wie der Absturzmelder geben Ihnen die Möglichkeit, Rückmeldungen an &vendorShortName; zu geben. Wenn Sie das Senden von Rückmeldungen wählen, geben Sie &vendorShortName; und Mozilla die Berechtigung, die Rückmeldungen zur Verbesserung ihren Anwendungen zu verwenden, Rückmeldungen auf ihren Websites zu veröffentlichen und zu verteilen.">
+<!-- point 2da is technically point 3. in the list -->
+<!ENTITY rights.intro-point2da "Manche Funktionen in &brandShortName; wie der Absturzmelder geben Ihnen die Möglichkeit, Rückmeldungen an &vendorShortName; zu geben. Wenn Sie das Senden von Rückmeldungen wählen, geben Sie &vendorShortName; die Berechtigung, die Rückmeldungen zur Verbesserung ihren Anwendungen zu verwenden, Rückmeldungen auf ihren Websites zu veröffentlichen und zu verteilen.">
 
 <!-- point 3 text for official branded builds -->
-<!ENTITY rights.intro-point3a "Datenschutzrichtlinien für &vendorShortName;s Produkte finden Sie ">
+<!ENTITY rights.intro-point3a "Datenschutzrichtlinien für &vendorShortName; Produkte finden Sie ">
 <!ENTITY rights.intro-point3b "hier">
 <!ENTITY rights.intro-point3c ".">
 
@@ -45,7 +45,7 @@
      so that we can refer to text the user sees in the UI, without
      this page being forgotten every time those strings are updated.  -->
 <!-- intro paragraph for branded builds -->
-<!ENTITY rights3.webservices-a "&brandFullName; bietet optionale Web-basierte Dienste an (&quot;Dienste&quot;), die für Ihre Verwendung mit dieser Binärversion von &brandShortName; wie unten angeführt zur Verfügung stehen.  Manche dieser Dienste (wie Add-on-Vorschläge und -Aktualisierungsdienste, der SafeBrowsing-Dienst oder die Funktion zur Mitteilungen zu standortbezogenem Browsen) sind standardmäßig aktiviert. Wenn Sie keine der untenstehenden Dienste verwenden wollen oder die Bedingungen nicht akzeptabel sind, finden Sie Anleitungen, wie bestimmte Funktionen oder Dienste deaktiviert werden können, ">
+<!ENTITY rights3.webservices-aa "&vendorShortName; bietet optionale Web-basierte Dienste an (&quot;Dienste&quot;), die für Ihre Verwendung mit dieser Binärversion von &brandShortName; wie unten angeführt zur Verfügung stehen.  Manche dieser Dienste (wie Add-on-Vorschläge und -Aktualisierungsdienste, der SafeBrowsing-Dienst oder die Funktion zur Mitteilungen zu standortbezogenem Browsen) sind standardmäßig aktiviert. Wenn Sie keine der untenstehenden Dienste verwenden wollen oder die Bedingungen nicht akzeptabel sind, finden Sie Anleitungen, wie bestimmte Funktionen oder Dienste deaktiviert werden können, ">
 <!ENTITY rights3.webservices-b "hier">
 <!ENTITY rights3.webservices-c ". Andere Funktionen und Dienste können in den Anwendungseinstellungen aktiviert oder deaktiviert werden.">
 
@@ -74,11 +74,10 @@
 <!ENTITY rights.locationawarebrowsing-term4 "Standortbezogenes Browsen ist jetzt deaktiviert">
 
 <!-- points 0-6 text for branded builds -->
-<!ENTITY rights.webservices-term0 "&vendorShortName; und Mozilla sowie deren Mitwirkende, Lizenzpartner und Partner arbeiten zussamen, um die genauesten und aktuellsten Dienste zu bieten. Wir können jedoch nicht garanieren, dass diese Informationen vollständig und fehlerfrei sind. Beispielsweise könnte der SafeBrowsing-Dienst manche riskante Websites nicht erkennen und beim standortbezogenen Browsen sind alle Standorte, die von den Dienstanbietern geliefert werden, nur Annäherungen. Weder wir noch unsere Dienstanbieter können die Genauigkeit der angegebenen Standorte garantieren.">
+<!ENTITY rights.webservices-term0a "&vendorShortName; sowie deren Mitwirkende, Lizenzpartner und Partner arbeiten zussamen, um die genauesten und aktuellsten Dienste zu bieten. Wir können jedoch nicht garanieren, dass diese Informationen vollständig und fehlerfrei sind. Beispielsweise könnte der SafeBrowsing-Dienst manche riskante Websites nicht erkennen und beim standortbezogenen Browsen sind alle Standorte, die von den Dienstanbietern geliefert werden, nur Annäherungen. Weder wir noch unsere Dienstanbieter können die Genauigkeit der angegebenen Standorte garantieren.">
 <!ENTITY rights.webservices-term1 "&vendorShortName; kann die Dienste nach eigenem Ermessen abschalten oder verändern.">
-<!ENTITY rights.webservices-term2 "Sie sind eingeladen, diese Dienste mit der dazugehörigen &brandShortName;-Version zu verwenden, und Sie haben alle Rechte, die Sie dafür benötigen. &vendorShortName; und ihre Lizenzgeber behalten sich alle anderen Rechte an den Diensten vor. Diese Bedingungen beabsichtigen nicht, jegliche Rechte einzuschränken, die von Open-Source-Lizenzen gewährt werden, die auf &brandShortName; und entsprechende Quelltext-Versionen von &brandShortName; anwendbar sind.">
+<!ENTITY rights.webservices-term2a "Sie sind eingeladen, diese Dienste mit der dazugehörigen &brandShortName;-Version zu verwenden, und Sie haben alle Rechte, die Sie dafür benötigen. &vendorShortName; und seine Lizenzgeber behalten sich alle anderen Rechte an den Diensten vor. Diese Bedingungen beabsichtigen nicht, jegliche Rechte einzuschränken, die von Open-Source-Lizenzen gewährt werden, die auf &brandShortName; und entsprechende Quelltext-Versionen von &brandShortName; anwendbar sind.">
 <!ENTITY rights.webservices-term3 "Die Dienste werden &quot;wie sie sind&quot; zur Verfügung gestellt. &vendorShortName;, ihre Mitwirkenden, Lizenzgeber und Distributoren gewähren keinerlei Gewährleistung, weder ausdrücklich noch implizit, einschließlich – aber nicht begrenzt auf – Marktreife oder Verwendbarkeit für einen bestimmten Zweck. Das volle Risiko bezüglich der Auswahl des für Sie richtigen Dienstes und die Qualität und Leistungsfähigkeit des Dienstes liegt bei Ihnen. Manche Gerichtsbarkeiten erlauben nicht den Ausschluss oder die Eingrenzung von implizierten Risiken, so dass dieser Haftungsausschluss möglicherweise nicht für Sie gilt.">
 <!ENTITY rights.webservices-term4 "In keinem Fall, außer wenn durch geltendes Recht gefordert, sind &vendorShortName;, ihre Mitwirkenden, Lizenzgeber oder Distributoren für irgendwelchen indirekten oder speziellen Schäden, Schäden durch Seiteneffekte (Nebenwirkungen) oder Folgeschäden, die aus der Benutzung von &brandShortName; oder den Diensten folgen, haftbar. Die gesamte Haftbarkeit unter diesen Bedingungen beschränkt sich auf maximal $500 (fünfhundert Dollar). Manche Gerichtsbarkeiten erlauben den Ausschluss oder die Eingrenzung von bestimmten Risiken nicht, so dass diese Ausschlüsse oder Eingrenzungen möglicherweise nicht für Sie gelten.">
 <!ENTITY rights.webservices-term5 "&vendorShortName; kann diese Bedingungen bei Bedarf von Zeit zu Zeit aktualisieren. Diese Bedingungen können nicht ohne eine schriftliche Zusicherung von &vendorShortName; verändert oder aufgehoben werden.">
-<!ENTITY rights.webservices-term6 "Diese Bedingungen werden durch die Gesetze des Staates Kalifornien, USA, geschützt, ausschließlich den damit in Konflikt stehenden Rechtsvorschriften. Sollten einzelne Bestimmungen dieser Bedingungen unwirksam oder undurchführbar sein, bleibt davon die Wirksamkeit der anderen Bedingungen unberührt. Falls ein Konflikt zwischen der übersetzen Version dieser Bedingungen und der englischsprachigen Version bestehen sollte, gelten die Bedingungen der englischsprachigen Version.">
-
+<!ENTITY rights.webservices-term6a "Für Verbraucher mit ständigen Wohnsitz in einem Mitgliedstaat der Europäischen Union, gelten die Gesetze dieses Mitgliedstaats für jeglichen Anspruch, Klagegegenstand oder Streitfall, der sich &vendorShortName; gegenüber aus diesen Nutzungsbedingungen oder aus der &brandShortName;-Version oder im Zusammenhang damit ergibt („Anspruch“). Der Anspruch kann vor jedwedem Gericht in diesem Mitgliedsstaat geklärt werden, das für den Anspruch zuständig ist. In allen anderen Fällen stimmen Sie zu, dass der Anspruch vor einem zuständigen Gericht in Deutschland zu klären ist und dass diese Nutzungsbedingungen sowie jedweder Anspruch deutschem Recht unterliegen, und zwar ohne Rücksicht auf kollisionsrechtliche Bestimmungen. Sollten einzelne Bestimmungen dieser Bedingungen unwirksam oder undurchführbar sein, bleibt davon die Wirksamkeit der anderen Bedingungen unberührt. Falls ein Konflikt zwischen der übersetzen Version dieser Bedingungen und der englischsprachigen Version bestehen sollte, gelten die Bedingungen der englischsprachigen Version.">

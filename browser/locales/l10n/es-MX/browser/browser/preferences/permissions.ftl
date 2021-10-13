@@ -1,69 +1,81 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 permissions-window =
     .title = Administrador de imágenes
     .style = width: 45em
+
 permissions-close-key =
     .key = w
+
 permissions-address = Dirección del sitio web
     .accesskey = d
+
 permissions-block =
     .label = Bloquear
     .accesskey = B
+
 permissions-session =
     .label = Permitir durante la sesión
     .accesskey = s
+
 permissions-allow =
     .label = Permitir
     .accesskey = P
+
 permissions-button-off =
     .label = Desactivar
     .accesskey = D
+
 permissions-button-off-temporarily =
     .label = Desactivar temporalmente
     .accesskey = t
+
 permissions-site-name =
     .label = Sitio web
+
 permissions-status =
     .label = Estado
+
 permissions-remove =
     .label = Eliminar sitio web
     .accesskey = R
+
 permissions-remove-all =
     .label = Eliminar todos los sitios web
     .accesskey = e
-permissions-button-cancel =
-    .label = Cancelar
-    .accesskey = C
-permissions-button-ok =
-    .label = Guardar cambios
-    .accesskey = G
+
 permission-dialog =
     .buttonlabelaccept = Guardar cambios
     .buttonaccesskeyaccept = G
+
 permissions-autoplay-menu = Predeterminado para todos los sitios web:
+
 permissions-searchbox =
     .placeholder = Buscar sitio web
+
 permissions-capabilities-autoplay-allow =
     .label = Permitir audio y video
 permissions-capabilities-autoplay-block =
     .label = Bloquear audio
 permissions-capabilities-autoplay-blockall =
     .label = Bloquear audio y video
+
 permissions-capabilities-allow =
     .label = Permitir
 permissions-capabilities-block =
     .label = Bloquear
 permissions-capabilities-prompt =
     .label = Preguntar siempre
+
 permissions-capabilities-listitem-allow =
     .value = Permitir
 permissions-capabilities-listitem-block =
     .value = Bloquear
 permissions-capabilities-listitem-allow-session =
     .value = Permitir para la sesión
+
 permissions-capabilities-listitem-off =
     .value = Desactivado
 permissions-capabilities-listitem-off-temporarily =

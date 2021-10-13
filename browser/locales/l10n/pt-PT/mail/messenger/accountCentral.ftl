@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -48,9 +48,6 @@ import-label = Importar
     .aria-label = Importe dados de outros programas
 
 about-paragraph = O Thunderbird é a solução de código aberto líder para cliente de e-mail e calendário multi-plataforma, gratuita para utilização empresarial e pessoal. Queremos que se mantenha em segurança e que continue a melhorar ainda mais. Um donativo irá permitir-nos contratar programadores, pagar a infraestrutura e continuar a melhorar.
-
-about-paragraph-2 = <b>O Thunderbird é financiado por utilizadores como você! Se gosta do Thunderbird, considere fazer um donativo.</b> A melhor forma de garantir que o Thunderbird permanece disponível é
-about-donation = fazer um donativo
 
 about-paragraph-consider-donation = <b>O Thunderbird é financiado por utilizadores como você! Se gosta do Thunderbird, considere fazer um donativo.</b> A melhor forma para si de garantir que o Thunderbird se mantém disponível é <a data-l10n-name="donation-link">fazer um donativo.</a>
 

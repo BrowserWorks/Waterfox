@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -21,10 +21,6 @@
 <!ENTITY savePageCmd.label "Сохранить страницу как…">
 <!ENTITY savePageCmd.accesskey "х">
 <!ENTITY savePageCmd.commandkey "S">
-<!ENTITY pageSetupCmd.label "Параметры страницы…">
-<!ENTITY pageSetupCmd.accesskey "м">
-<!ENTITY printPreviewCmd.label "Предварительный просмотр">
-<!ENTITY printPreviewCmd.accesskey "е">
 <!ENTITY printCmd.label "Печать…">
 <!ENTITY printCmd.accesskey "ч">
 <!ENTITY printCmd.commandkey "P">

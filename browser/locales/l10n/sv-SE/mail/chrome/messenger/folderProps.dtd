@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "Egenskaper">
 
 <!ENTITY generalInfo.label                       "Allmänt">
-<!ENTITY folderCharsetFallback2.label            "Reservtextkodning:">
-<!ENTITY folderCharsetFallback2.accesskey        "k">
-<!ENTITY folderCharsetEnforce2.label             "Tillämpa kodning för alla meddelanden i mappen (inställningar för textkodning för enskilda meddelanden och automatisk detektering ignoreras) ">
-<!ENTITY folderCharsetEnforce2.accesskey         "T">
 <!ENTITY folderRebuildSummaryFileTip2.label      "Återskapa index för sammanfattningsfil">
 <!ENTITY folderRebuildSummaryFile2.label         "Reparera mapp">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "R">

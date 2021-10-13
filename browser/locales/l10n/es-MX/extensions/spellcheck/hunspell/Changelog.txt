@@ -37,10 +37,10 @@ Versión 1.17.9
   https://github.com/sbosio/rla-es/commits/master
 
 Versión 0.0.6
-- Primera versión estable en Mozilla Add-ons.
+- Primera versión estable en Waterfox Add-ons.
 
 Versión 0.0.5
-- Cambios menores para poder subir el complemento a Mozilla Add-ons.
+- Cambios menores para poder subir el complemento a Waterfox Add-ons.
 
 Versión 0.0.4
 - Versión de prueba 4.

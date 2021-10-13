@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,9 +22,6 @@ content-tab-security-broken-icon =
 
 ## Toolbar
 
-addons-and-themes-button =
-    .label = Tillägg och teman
-    .tooltip = Hantera dina tillägg
 addons-and-themes-toolbarbutton =
     .label = Tillägg och teman
     .tooltiptext = Hantera dina tillägg
@@ -73,9 +70,14 @@ folder-toolbar-toggle-folder-compact-view =
 redirect-msg-menuitem =
     .label = Omdirigera
     .accesskey = d
+menu-file-save-as-file =
+    .label = Arkiv…
+    .accesskey = A
 
 ## AppMenu
 
+appmenu-save-as-file =
+    .label = Arkiv…
 # Since v89 we dropped the platforms distinction between Options or Preferences
 # and consolidated everything with Preferences.
 appmenu-preferences =
@@ -130,3 +132,9 @@ caret-browsing-prompt-check-text = Fråga inte igen.
 repair-text-encoding-button =
     .label = Reparera textkodning
     .tooltiptext = Gissa korrekt textkodning från meddelandets innehåll
+
+## no-reply handling
+
+no-reply-title = Svar stöds inte
+no-reply-message = Svarsadressen ({ $email }) verkar inte vara en övervakad adress. Meddelanden till den här adressen kommer sannolikt inte att läsas av någon.
+no-reply-reply-anyway-button = Svara ändå

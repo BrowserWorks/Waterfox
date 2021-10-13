@@ -1,7 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
 <!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
 <!ENTITY rights.locale-direction "ltr">
 <!ENTITY rights.pagetitle       "about:rights">
@@ -17,17 +17,12 @@
      Also note the leading/trailing whitespace in strings here, which is
      deliberate for formatting around the embedded links. -->
 <!ENTITY rights.intro-point1a "Jums leidžiama naudotis „&brandShortName;“ programa, vadovaujantis ">
-<!ENTITY rights.intro-point1b "„Mozilla“ viešąja licencija (Mozilla Public License)">
+<!ENTITY rights.intro-point1b "„Waterfox“ viešąja licencija (Waterfox Public License)">
 <!ENTITY rights.intro-point1c ". Ši licencija leidžia naudotis „&brandShortName;“ programa, ją dauginti ir platinti. Be to, galite laisvai modifikuoti programos pirminius tekstus. Licencija nedraudžia platinti ir jūsų modifikuotų programos versijų.">
-
-<!ENTITY rights.intro-point2a "„Mozilla“ nesuteikia jokių teisių į „Mozilla“ ir „SeaMonkey“ prekės ženklus ar logotipus. Papildomą informaciją apie šiuos prekės ženklus ir jų naudojimą rasite ">
 
 <!ENTITY rights.intro-point2aa "„&vendorShortName;“ nesuteikia jokių teisių į „&brandFullName;“ prekės ženklus ar logotipus. Papildomą informaciją apie šiuos prekės ženklus ir jų naudojimą rasite ">
 <!ENTITY rights.intro-point2b "čia">
 <!ENTITY rights.intro-point2c ".">
-
-<!-- point 2d is technically point 3. in the list -->
-<!ENTITY rights.intro-point2d "Kai kurios „&brandShortName;“ savybės, pavyzdžiui, strigčių pranešiklis, suteikia galimybę siųsti atsiliepimus „&vendorShortName;“. Siųsdami atsiliepimus, jūs suteikiate „&vendorShortName;“ teisę jais naudotis savo kuriamų produktų tobulinimo tikslais, skelbti juos savo svetainėse ir platinti juos kitais būdais.">
 
 <!-- point 2da is technically point 3. in the list -->
 <!ENTITY rights.intro-point2da "Kai kurios „&brandShortName;“ savybės, pavyzdžiui, strigčių pranešiklis, suteikia galimybę siųsti atsiliepimus „&vendorShortName;“. Siųsdami atsiliepimus, jūs suteikiate „&vendorShortName;“ teisę jais naudotis savo kuriamų produktų tobulinimo tikslais, skelbti juos savo svetainėse ir platinti juos kitais būdais.">
@@ -77,9 +72,7 @@
 
 <!-- points 0-6 text for branded builds -->
 <!ENTITY rights.webservices-term1 "„&vendorShortName;“ gali vienašališkai nutraukti ar pakeisti Paslaugų teikimą.">
-<!ENTITY rights.webservices-term2 "Jūs esate kviečiami naudotis šiomis Paslaugomis su šia „&brandShortName;“ laida, ir tam jums suteikiamos visos teisės. „&vendorShortName;“ ir jos licencijų išdavėjai pasilieka visas kitas su Paslaugomis susijusias teises. Šiomis taisyklėmis nesiekiama apriboti teisių, kurias jums suteikia programai „&brandShortName;“ ir jos pirminiams tekstams taikoma atvirųjų programų licencija.">
 <!ENTITY rights.webservices-term3 "Paslaugos teikiamos „tokios, kokios yra“. „&vendorShortName;“, bendradarbiai, licencijų išdavėjai ir platintojai atsiriboja nuo bet kokių išreikštų ar numanomų garantijų, kaip antai nuo garantijų, jog Paslaugos yra veiksmingos ir atitiks jūsų poreikius. Jūs prisiimate visą riziką, susijusią su Paslaugų, atitinkančių jūsų poreikius, pasirinkimu, kokybe ir veiksnumu. Kai kuriose jurisdikcijose atsiriboti nuo numanomų garantijų neleidžiama, tad gali būti, kad jums ši taisyklė negalioja.">
 <!ENTITY rights.webservices-term4 "Išskyrus kiek to reikalauja įstatymai, „&vendorShortName;“, bendradarbiai, licencijų išdavėjai ir platintojai nebus laikomi atsakingais už bet kokią netiesioginę, tyčinę, netyčinę, pasėkminę, baudžiamąją ar kitokią žalą, kilusią dėl „&brandShortName;“ ir Paslaugų naudojimo ar bet kokiu būdu su tuo susijusią. Pagal šias taisykles, kolektyvinė atsakomybė negali viršyti 500 (penkių šimtų) JAV dolerių.  Kai kuriose jurisdikcijose atsiriboti nuo kai kurių tipų žalos neleidžiama, tad gali būti, kad jums ši taisyklė negalioja.">
 <!ENTITY rights.webservices-term5 "Kilus poreikiui, „&vendorShortName;“ šias taisykles gali keisti. Be išankstinio raštiško „&vendorShortName;“ sutikimo šios taisyklės negali būti taisomos ar atšaukiamos.">
-<!ENTITY rights.webservices-term6 "Šiose taisyklėse vadovaujamasi JAV Kalifornijos valstijoje galiojančiais įstatymais. Kilus neatitikimams tarp šių taisyklių ir įstatymų, įstatymai laikomi viršesniais. Jei kuri nors šių taisyklių dalis neatitinka įstatymų ar negali būti įgyvendanama, kitos jų dalys bus laikomos galiojančiomis. Jei tarp išverstos šių taisyklių versijos ir originalių taisyklių anglų kalba yra neatitikimų, turi būti vadovaujamasi angliškąja taisyklių versija.">
 

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,3 +13,5 @@
 <!ENTITY  resetpassword.text                     "Αν επαναφέρετε τον κύριο κωδικό πρόσβασής σας, θα χαθούν όλα τα αποθηκευμένα συνθηματικά, τα δεδομένα φορμών, τα προσωπικά πιστοποιητικά και τα ιδιωτικά κλειδιά.">
 <!ENTITY  resetpassword.button                   "Επαναφορά κωδικού πρόσβασης">
 <!ENTITY  resetpassword.accesskey                "Ε">
+<!ENTITY  resetpassword2.button                  "Επαναφορά κωδικού πρόσβασης">
+<!ENTITY  resetpassword2.accesskey               "κ">

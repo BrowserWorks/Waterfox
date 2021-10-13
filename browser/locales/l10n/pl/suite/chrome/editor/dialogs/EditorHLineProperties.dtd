@@ -1,8 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+
 <!ENTITY windowTitle.label "Właściwości linii poziomej">
+
 <!ENTITY dimensionsBox.label "Wymiary">
 <!ENTITY heightEditField.label "Wysokość:">
 <!ENTITY heightEditField.accessKey "W">
@@ -16,6 +18,7 @@
 <!ENTITY centerRadio.accessKey "r">
 <!ENTITY rightRadio.label "Do prawej">
 <!ENTITY rightRadio.accessKey "p">
+
 <!ENTITY threeDShading.label "Cienie 3-D">
 <!ENTITY threeDShading.accessKey "3">
 <!ENTITY saveSettings.label "Użyj jako domyślnych">

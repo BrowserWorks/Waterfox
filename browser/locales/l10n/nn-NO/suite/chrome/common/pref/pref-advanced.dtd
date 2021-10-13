@@ -1,14 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
 <!ENTITY pref.advanced.title              "Avansert">
-
-<!ENTITY systemPref.caption               "Systeminnstillingar">
-<!ENTITY systemPrefCheck.label            "Bruk innstillingar frå systemet">
-<!ENTITY systemPrefCheck.accesskey        "s">
-<!ENTITY systemPref.desc                  "Vel denne boksen for å arve innstillingar frå systemet. Systeminnstillingar vil overstyre &brandShortName;-innstillingar.">
 
 <!ENTITY prefCheckDefault.caption         "Systemintegrasjon">
 <!ENTITY prefCheckDefaultClient.label     "Kontroller standardprogram-innstillingar ved oppstart">

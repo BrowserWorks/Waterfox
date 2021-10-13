@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -52,9 +52,6 @@ import-label = นำเข้า
     .aria-label = นำเข้าข้อมูลจากโปรแกรมอื่น
 
 about-paragraph = Thunderbird เป็นไคลเอนต์อีเมลและปฏิทินแบบเปิดต้นฉบับข้ามแพลตฟอร์มชั้นนำซึ่งฟรีสำหรับธุรกิจและใช้ส่วนตัว เราต้องการให้โครงการนี้อยู่รอดได้อย่างปลอดภัยและดียิ่งขึ้น การบริจาคจะช่วยให้เราสามารถจ้างนักพัฒนา จ่ายค่าโครงสร้างพื้นฐาน และปรับปรุงต่อไป
-
-about-paragraph-2 = <b>Thunderbird ได้รับเงินสนับสนุนจากผู้ใช้เช่นคุณ! หากคุณชอบ Thunderbird โปรดพิจารณาทำการบริจาค</b> วิธีที่ดีที่สุดสำหรับคุณเพื่อให้แน่ใจว่า Thunderbird จะยังคงมีให้ใช้ต่อไปคือการ
-about-donation = ทำการบริจาค
 
 about-paragraph-consider-donation = <b>Thunderbird ได้รับเงินสนับสนุนจากผู้ใช้เช่นคุณ! หากคุณชอบ Thunderbird โปรดลองทำการบริจาค</b> วิธีที่ดีที่สุดสำหรับคุณเพื่อให้แน่ใจว่า Thunderbird ยังคงมีอยู่คือ<a data-l10n-name="donation-link">ทำการบริจาค</a>
 

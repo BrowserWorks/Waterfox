@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,26 +8,6 @@ do-not-track-option-default-content-blocking-known =
     .label = Csak akkor, ha a { -brand-short-name } az ismert követők blokkolására van állítva
 do-not-track-option-always =
     .label = Mindig
-pref-page-title =
-    { PLATFORM() ->
-        [windows] Beállítások
-       *[other] Beállítások
-    }
-# This is used to determine the width of the search field in about:preferences,
-# in order to make the entire placeholder string visible
-#
-# Please keep the placeholder string short to avoid truncation.
-#
-# Notice: The value of the `.style` attribute is a CSS string, and the `width`
-# is the name of the CSS property. It is intended only to adjust the element's width.
-# Do not translate.
-search-input-box =
-    .style = width: 15.4em
-    .placeholder =
-        { PLATFORM() ->
-            [windows] Keresés a beállításokban
-           *[other] Keresés a beállításokban
-        }
 settings-page-title = Beállítások
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
@@ -55,9 +35,6 @@ category-search =
 pane-privacy-title = Adatvédelem és biztonság
 category-privacy =
     .tooltiptext = { pane-privacy-title }
-pane-sync-title2 = { -sync-brand-short-name }
-category-sync2 =
-    .tooltiptext = { pane-sync-title2 }
 pane-sync-title3 = Szinkronizálás
 category-sync3 =
     .tooltiptext = { pane-sync-title3 }
@@ -96,21 +73,12 @@ restart-later = Újraindítás később
 ## Variables:
 ##   $name (String): name of the extension
 
-# This string is shown to notify the user that their home page
-# is being controlled by an extension.
-extension-controlled-homepage-override = Egy kiegészítő, a(z) <img data-l10n-name="icon"/> { $name }, vezérli a kezdőoldalt.
-# This string is shown to notify the user that their new tab page
-# is being controlled by an extension.
-extension-controlled-new-tab-url = Egy kiegészítő, a(z) <img data-l10n-name="icon"/> { $name }, vezérli az Új lap oldalt.
 # This string is shown to notify the user that the password manager setting
 # is being controlled by an extension
 extension-controlled-password-saving = Egy kiegészítő, a(z) <img data-l10n-name="icon"/>{ $name }, vezérli ezt a beállítást.
 # This string is shown to notify the user that their notifications permission
 # is being controlled by an extension.
 extension-controlled-web-notifications = Egy kiegészítő, a(z) <img data-l10n-name="icon"/> { $name } vezérli ezt a beállítást.
-# This string is shown to notify the user that the default search engine
-# is being controlled by an extension.
-extension-controlled-default-search = Egy kiegészítő, a(z) <img data-l10n-name="icon"/> { $name }, beállította az alapértelmezett keresőszolgáltatást.
 # This string is shown to notify the user that Container Tabs
 # are being enabled by an extension.
 extension-controlled-privacy-containers = A(z) <img data-l10n-name="icon"/> { $name } kiterjesztéshez szükségesek a konténerlapok.
@@ -131,25 +99,12 @@ extension-controlled-enable = A kiegészítő engedélyezéséhez ugorjon a <img
 
 search-results-header = Találatok
 # `<span data-l10n-name="query"></span>` will be replaced by the search term.
-search-results-empty-message =
-    { PLATFORM() ->
-        [windows] Elnézését, nincs találat a Beállítások közt erre: „<span data-l10n-name="query"></span>”.
-       *[other] Elnézését, nincs találat a Beállítások közt erre: „<span data-l10n-name="query"></span>”.
-    }
-# `<span data-l10n-name="query"></span>` will be replaced by the search term.
 search-results-empty-message2 = Elnézését, nincs találat a Beállítások közt erre: „<span data-l10n-name="query"></span>”.
 search-results-help-link = Segítségre van szüksége? Látogasson el ide: <a data-l10n-name="url">{ -brand-short-name } támogatás</a>
 
 ## General Section
 
 startup-header = Indítás
-# { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
-separate-profile-mode =
-    .label = A { -brand-short-name } és a Firefox futhat egyszerre
-use-firefox-sync = Tipp: Ez külön profilokat használ. A { -sync-brand-short-name } segítségével adatokat oszthat meg közöttük.
-get-started-not-logged-in = Bejelentkezés a { -sync-brand-short-name }be
-get-started-configured = A { -sync-brand-short-name } beállításainak megnyitása
 always-check-default =
     .label = Mindig ellenőrizze, hogy a { -brand-short-name }-e az alapértelmezett böngésző
     .accesskey = M
@@ -161,6 +116,9 @@ set-as-my-default-browser =
 startup-restore-previous-session =
     .label = Előző munkamenet helyreállítása
     .accesskey = h
+startup-restore-windows-and-tabs =
+    .label = Korábbi ablakok és lapok megnyitása
+    .accesskey = K
 startup-restore-warn-on-quit =
     .label = Figyelmeztetés, amikor kilép a böngészőből
 disable-extension =
@@ -175,12 +133,20 @@ open-new-link-as-tabs =
 warn-on-close-multiple-tabs =
     .label = Figyelmeztetés több lap bezárása előtt
     .accesskey = t
+confirm-on-close-multiple-tabs =
+    .label = Megerősítés több lap bezárása előtt
+    .accesskey = M
+# This string is used for the confirm before quitting preference.
+# Variables:
+#   $quitKey (String) - the quit keyboard shortcut, and formatted
+#                       in the same manner as it would appear,
+#                       for example, in the File menu.
+confirm-on-quit-with-key =
+    .label = Megerősítés a { $quitKey } billentyűvel történő kilépés előtt
+    .accesskey = b
 warn-on-open-many-tabs =
     .label = Figyelmeztetés, hogy több lap megnyitása lelassíthatja a { -brand-short-name } programot
     .accesskey = F
-switch-links-to-new-tabs =
-    .label = Hivatkozás új lapon való megnyitásakor átváltás rá azonnal
-    .accesskey = H
 switch-to-new-tabs =
     .label = Hivatkozás, kép vagy média új lapon való megnyitásakor átváltás rá azonnal
     .accesskey = H
@@ -254,6 +220,7 @@ confirm-browser-language-change-button = Alkalmaz és újraindítás
 translate-web-pages =
     .label = Webtartalom fordítása
     .accesskey = f
+fx-translate-web-pages = { -translations-brand-name }
 # The <img> element is replaced by the logo of the provider
 # used to provide machine translations for web pages.
 translate-attribution = Fordítás: <img data-l10n-name="logo"/>
@@ -326,10 +293,6 @@ applications-manage-app =
     .label = Alkalmazás részletei…
 applications-always-ask =
     .label = Rákérdezés mindig
-applications-type-pdf = Hordozható dokumentumformátum (PDF)
-# Variables:
-#   $type (String) - the MIME type (e.g application/binary)
-applications-type-pdf-with-type = { applications-type-pdf } ({ $type })
 # Variables:
 #   $type-description (String) - Description of the type (e.g "Portable Document Format")
 #   $type (String) - the MIME type (e.g application/binary)
@@ -375,7 +338,7 @@ play-drm-content =
 play-drm-content-learn-more = További tudnivalók
 update-application-title = { -brand-short-name } frissítések
 update-application-description = Tartsa naprakészen a { -brand-short-name }ot a legjobb teljesítmény, stabilitás és biztonság érdekében.
-update-application-version = Verzió{ $version } <a data-l10n-name="learn-more">Újdonságok</a>
+update-application-version = Verzió: { $version } <a data-l10n-name="learn-more">Újdonságok</a>
 update-history =
     .label = Frissítési előzmények megjelenítése…
     .accesskey = z
@@ -396,15 +359,6 @@ update-application-warning-cross-user-setting = Ez a beállítás érvényes az 
 update-application-use-service =
     .label = Háttérben futó szolgáltatás intézze a frissítést
     .accesskey = H
-update-setting-write-failure-title = Hiba történt a Frissítési beállításainak mentésekor
-# Variables:
-#   $path (String) - Path to the configuration file
-# The newlines between the main text and the line containing the path is
-# intentional so the path is easier to identify.
-update-setting-write-failure-message =
-    A { -brand-short-name } hibát észlelt, és nem mentette ezt a változtatást. Ne feledje, hogy ezen frissítési beállítás megadásához írási engedély szükségesen a lenti fájlon. Ön vagy a rendszergazdája megoldhatja a hibát azzal, hogy a Felhasználók csoportnak teljes jogosultságot ad a fájlhoz.
-    
-    Nem sikerült a fájlba írni: { $path }
 update-setting-write-failure-title2 = Hiba történt a Frissítési beállítások mentésekor
 # Variables:
 #   $path (String) - Path to the configuration file
@@ -460,8 +414,8 @@ browsing-search-on-start-typing =
     .label = Szöveg keresése a keresett szó beírásának elkezdésétől
     .accesskey = d
 browsing-picture-in-picture-toggle-enabled =
-    .label = Engedélyezze a kép a képben videóvezérlést
-    .accesskey = E
+    .label = Kép a képben videóvezérlés engedélyezése
+    .accesskey = e
 browsing-picture-in-picture-learn-more = További tudnivalók
 browsing-media-control =
     .label = Média vezérlése billentyűzeten, fejhallgatón vagy virtuális felületen keresztül
@@ -521,10 +475,10 @@ choose-bookmark =
     .label = Könyvjelző használata…
     .accesskey = n
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
 home-prefs-content-header = Waterfox kezdőlap tartalma
-home-prefs-content-description = Válassza ki milyen tartalmat szeretne a Firefox kezdőlapon.
+home-prefs-content-description = Válassza ki milyen tartalmat szeretne a Waterfox kezdőlapon.
 home-prefs-search-header =
     .label = Webes keresés
 home-prefs-topsites-header =
@@ -610,10 +564,8 @@ search-show-suggestions-above-history-option =
     .label = Keresési javaslatok megjelenítése a böngészési előzmények előtt a címsor találatai között
 search-show-suggestions-private-windows =
     .label = Keresési javaslatok megjelenítése a privát ablakokban
-suggestions-addressbar-settings-generic = Címsávjavaslatok beállításainak módosítása
 suggestions-addressbar-settings-generic2 = Címsávjavaslatok beállításainak módosítása
 search-suggestions-cant-show = A keresési javaslatok nem jelennek meg a címsáv találatai között, mert a { -brand-short-name } nem jegyzi meg az előzményeket.
-search-one-click-header = Egy kattintásos keresőszolgáltatások
 search-one-click-header2 = Keresési gyorsparancsok
 search-one-click-desc = Válassza ki a címsáv alatt és a keresősávban gépeléskor megjelenő alternatív keresőszolgáltatatásokat.
 search-choose-engine-column =
@@ -640,12 +592,6 @@ search-keyword-warning-bookmark = Olyan kulcsszót választott, amelyet jelenleg
 
 ## Containers Section
 
-containers-back-button =
-    .aria-label =
-        { PLATFORM() ->
-            [windows] Vissza a Beállításokhoz
-           *[other] Vissza a Beállításokhoz
-        }
 containers-back-button2 =
     .aria-label = Vissza a Beállításokhoz
 containers-header = Konténer lapok
@@ -655,21 +601,15 @@ containers-add-button =
 containers-new-tab-check =
     .label = Konténer kiválasztása minden új laphoz
     .accesskey = K
-containers-preferences-button =
-    .label = Beállítások
 containers-settings-button =
     .label = Beállítások
 containers-remove-button =
     .label = Eltávolítás
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Waterfox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Vigye magával a webet
-sync-signedout-description = Szinkronizálja könyvjelzőit, előzményeit, lapjait, jelszavait, kiegészítőit és beállításait minden eszközén.
-sync-signedout-account-signin2 =
-    .label = Bejelentkezés a { -sync-brand-short-name }be…
-    .accesskey = j
 sync-signedout-description2 = Szinkronizálja könyvjelzőit, előzményeit, lapjait, jelszavait, kiegészítőit és beállításait minden eszközén.
 sync-signedout-account-signin3 =
     .label = Jelentkezzen be a szinkronizáláshoz…
@@ -682,9 +622,9 @@ sync-signedout-account-signin3 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Töltse le a Firefox for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> vagy <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> appot a mobileszközével való szinkronizáláshoz.
+sync-mobile-promo = Töltse le a Waterfox for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> vagy <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> appot a mobileszközével való szinkronizáláshoz.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Profilkép módosítása
@@ -709,10 +649,6 @@ sync-sign-in =
 
 prefs-syncing-on = Szinkronizálás: BE
 prefs-syncing-off = Szinkronizálás: KI
-prefs-sync-setup =
-    .label = { -sync-brand-short-name } beállítása…
-    .accesskey = S
-prefs-sync-offer-setup-label = Szinkronizálja könyvjelzőit, előzményeit, lapjait, jelszavait, kiegészítőit és beállításait minden eszközén.
 prefs-sync-turn-on-syncing =
     .label = Szinkronizálás bekapcsolása…
     .accesskey = S
@@ -732,11 +668,6 @@ sync-currently-syncing-logins-passwords = Bejelentkezések és jelszavak
 sync-currently-syncing-addresses = Címek
 sync-currently-syncing-creditcards = Bankkártyák
 sync-currently-syncing-addons = Kiegészítők
-sync-currently-syncing-prefs =
-    { PLATFORM() ->
-        [windows] Beállítások
-       *[other] Beállítások
-    }
 sync-currently-syncing-settings = Beállítások
 sync-change-options =
     .label = Módosítás…
@@ -775,16 +706,8 @@ sync-engine-creditcards =
     .accesskey = B
 sync-engine-addons =
     .label = Kiegészítők
-    .tooltiptext = Kiegészítők és témák az asztali Firefoxhoz
+    .tooltiptext = Kiegészítők és témák az asztali Waterfoxhoz
     .accesskey = K
-sync-engine-prefs =
-    .label =
-        { PLATFORM() ->
-            [windows] Beállítások
-           *[other] Beállítások
-        }
-    .tooltiptext = Módosított általános, adatvédelmi és biztonsági beállítások
-    .accesskey = B
 sync-engine-settings =
     .label = Beállítások
     .tooltiptext = Módosított általános, adatvédelmi és biztonsági beállítások
@@ -834,9 +757,6 @@ forms-fill-logins-and-passwords =
 forms-saved-logins =
     .label = Mentett bejelentkezések…
     .accesskey = t
-forms-master-pw-use =
-    .label = Mesterjelszó használata
-    .accesskey = M
 forms-primary-pw-use =
     .label = Elsődleges jelszó használata
     .accesskey = E
@@ -847,7 +767,6 @@ forms-primary-pw-learn-more-link = Tudjon meg többet
 forms-master-pw-change =
     .label = Mesterjelszó megváltoztatása…
     .accesskey = z
-forms-master-pw-fips-title = Jelenleg FIPS-módban van. A FIPS-hez kötelező nem üres mesterjelszót megadni.
 forms-primary-pw-change =
     .label = Elsődleges jelszó megváltoztatása…
     .accesskey = m
@@ -857,20 +776,17 @@ forms-primary-pw-change =
 forms-primary-pw-former-name = Korábban mesterjelszóként ismert
 forms-primary-pw-fips-title = Jelenleg FIPS-módban van. A FIPS-hez nem üres elsődleges jelszó szükséges.
 forms-master-pw-fips-desc = Sikertelen jelszóváltoztatás
+forms-windows-sso =
+    .label = Lehetővé teszi a Windows egyszeri bejelentkezésének használatát a microsoftos, munkahelyi és iskolai fiókok számára
+forms-windows-sso-learn-more-link = További tudnivalók
+forms-windows-sso-desc = Fiókok kezelése az eszközbeállításokban
 
 ## OS Authentication dialog
 
-# This message can be seen by trying to add a Master Password.
-master-password-os-auth-dialog-message-win = Mesterjelszó létrehozásához írja be a Windows bejelentkezési hitelesítő adatait. Ez elősegíti a fiókjai biztonságának védelmét.
-# This message can be seen by trying to add a Master Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
-# and includes subtitle of "Enter password for the user "xxx" to allow this." These
-# notes are only valid for English. Please test in your locale.
-master-password-os-auth-dialog-message-macosx = mesterjelszót hozzon létre
 # This message can be seen by trying to add a Primary Password.
 primary-password-os-auth-dialog-message-win = Elsődleges jelszó létrehozásához írja be a Windows bejelentkezési hitelesítő adatait. Ez elősegíti a fiókjai biztonságának védelmét.
 # This message can be seen by trying to add a Primary Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
+# The macOS strings are preceded by the operating system with "Waterfox is trying to "
 # and includes subtitle of "Enter password for the user "xxx" to allow this." These
 # notes are only valid for English. Please test in your locale.
 primary-password-os-auth-dialog-message-macosx = elsődleges jelszó létrehozása
@@ -882,12 +798,12 @@ history-header = Előzmények
 # This label is followed, on the same line, by a dropdown list of options
 # (Remember history, etc.).
 # In English it visually creates a full sentence, e.g.
-# "Firefox will" + "Remember history".
+# "Waterfox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
 #   - Simply as "Waterfox", moving the verb into each option.
 #     This will result in "Waterfox" + "Will remember history", etc.
-#   - As a stand-alone message, for example "Firefox history settings:".
+#   - As a stand-alone message, for example "Waterfox history settings:".
 history-remember-label = A { -brand-short-name }
     .accesskey = A
 history-remember-option-all =
@@ -962,9 +878,6 @@ sitedata-clear =
 sitedata-settings =
     .label = Adatok kezelése…
     .accesskey = A
-sitedata-cookies-permissions =
-    .label = Engedélyek kezelése…
-    .accesskey = E
 sitedata-cookies-exceptions =
     .label = Kivételek kezelése…
     .accesskey = K
@@ -1109,16 +1022,18 @@ permissions-block-popups =
 permissions-block-popups-exceptions =
     .label = Kivételek…
     .accesskey = K
+# "popup" is a misspelling that is more popular than the correct spelling of
+# "pop-up" so it's included as a search keyword, not displayed in the UI.
+permissions-block-popups-exceptions-button =
+    .label = Kivételek…
+    .accesskey = K
+    .searchkeywords = popupok
 permissions-addon-install-warning =
     .label = Figyelmeztetés kiegészítők telepítése előtt
     .accesskey = F
 permissions-addon-exceptions =
     .label = Kivételek…
     .accesskey = K
-permissions-a11y-privacy-checkbox =
-    .label = Az akadálymentesítési szolgáltatások ne férjenek hozzá a böngészőhöz
-    .accesskey = a
-permissions-a11y-privacy-link = További tudnivalók
 
 ## Privacy Section - Data Collection
 
@@ -1140,10 +1055,6 @@ addon-recommendations-link = További tudnivalók
 # This message is displayed above disabled data sharing options in developer builds
 # or builds with no Telemetry support available.
 collection-health-report-disabled = Az adatjelentést letiltották ehhez a binárishoz
-collection-backlogged-crash-reports =
-    .label = A { -brand-short-name } a háttérben küldhet összeomlási jelentéseket az Ön nevében
-    .accesskey = j
-collection-backlogged-crash-reports-link = További tudnivalók
 collection-backlogged-crash-reports-with-link = Engedélyezés, hogy a { -brand-short-name } elküldje az elmaradt összeomlás-jelentéseket az Ön nevében <a data-l10n-name="crash-reports-link">További tudnivalók</a>
     .accesskey = o
 
@@ -1168,13 +1079,6 @@ security-block-uncommon-software =
 ## Privacy Section - Certificates
 
 certs-header = Tanúsítványok
-certs-personal-label = Ha a kiszolgáló elkéri a személyes tanúsítványt
-certs-select-auto-option =
-    .label = Automatikus választás
-    .accesskey = A
-certs-select-ask-option =
-    .label = Megerősítés minden alkalommal
-    .accesskey = M
 certs-enable-ocsp =
     .label = Az OCSP válaszoló kiszolgálók lekérdezése a tanúsítványok érvényességének megerősítéséhez
     .accesskey = C
@@ -1184,29 +1088,6 @@ certs-view =
 certs-devices =
     .label = Adatvédelmi eszközök…
     .accesskey = e
-space-alert-learn-more-button =
-    .label = További tudnivalók
-    .accesskey = T
-space-alert-over-5gb-pref-button =
-    .label =
-        { PLATFORM() ->
-            [windows] Beállítások megnyitása
-           *[other] Beállítások megnyitása
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] m
-           *[other] m
-        }
-space-alert-over-5gb-message =
-    { PLATFORM() ->
-        [windows] A { -brand-short-name } kezd kifogyni a lemezhelyből. A weboldalak tartalma nem feltétlenül jelenik meg helyesen. Az oldalak tárolt adatait a Beállítások > Adatvédelem és biztonság > Sütik és oldaladatok alatt törölheti.
-       *[other] A { -brand-short-name } kezd kifogyni a lemezhelyből. A weboldalak tartalma nem feltétlenül jelenik meg helyesen. Az oldalak tárolt adatait a Beállítások > Adatvédelem és biztonság > Sütik és oldaladatok alatt törölheti.
-    }
-space-alert-under-5gb-ok-button =
-    .label = Rendben, értem
-    .accesskey = R
-space-alert-under-5gb-message = A { -brand-short-name } kezd kifogyni a lemezhelyből. A weboldalak tartalma nem feltétlenül jelenik meg helyesen. A lemezhasználat optimalizálásával a böngészés simábbá tehető, olvassa el a „További tudnivalókat”.
 space-alert-over-5gb-settings-button =
     .label = Beállítások megnyitása
     .accesskey = m

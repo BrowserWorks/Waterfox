@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,9 +16,6 @@ safeb-palm-see-details-label = Se detaljer
 safeb-blocked-phishing-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> er blevet <a data-l10n-name='error_desc_link'>rapporteret som et vildledende websted</a>. Du kan <a data-l10n-name='report_detection'>rapportere, at dette er sket ved en fejl</a> eller <a data-l10n-name='ignore_warning_link'>ignorere risikoen</a> og fortsætte til det usikre websted.
 safeb-blocked-phishing-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> er blevet <a data-l10n-name='error_desc_link'>rapporteret som et vildledende websted</a>. Du kan <a data-l10n-name='report_detection'>rapportere, at dette er sket ved en fejl</a>.
 safeb-blocked-phishing-page-learn-more = Læs mere om vildledende websteder og phishing på <a data-l10n-name='learn_more_link'>www.antiphishing.org</a>. Læs mere om beskyttelse mod phishing og skadelig software i { -brand-short-name } på <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
-safeb-blocked-malware-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> er blevet <a data-l10n-name='error_desc_link'>rapporteret til at indeholde ondsindet software</a>. Du kan <a data-l10n-name='report_detection'>indrapportere, at dette er sket ved en fejl</a> eller <a data-l10n-name='ignore_warning_link'>ignorere risikoen</a> og fortsætte til det usikre websted.
-safeb-blocked-malware-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> er blevet <a data-l10n-name='error_desc_link'>rapporteret til at indeholde ondsindet software</a>. Du kan <a data-l10n-name='report_detection'>indrapportere, at dette er sket ved en fejl</a>.
-safeb-blocked-malware-page-learn-more = Læs mere om skadelig indhold på nettet inklusiv vira og anden skadelig software samt hvordan, du kan beskytte din computer på <a data-l10n-name='learn_more_link'>StopBadware.org</a>. Læs mere om beskyttelse mod phishing og skadelig software i { -brand-short-name } på <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
 safeb-blocked-malware-page-error-desc-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> er blevet <a data-l10n-name='error_desc_link'>rapporteret til at indeholde ondsindet software</a>. Du kan <a data-l10n-name='ignore_warning_link'>ignorere risikoen</a> og fortsætte til det usikre websted.
 safeb-blocked-malware-page-error-desc-no-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> er blevet <a data-l10n-name='error_desc_link'>rapporteret til at indeholde ondsindet software</a>.
 safeb-blocked-malware-page-learn-more-sumo = Læs mere om beskyttelse mod phishing og skadelig software i { -brand-short-name } på <a data-l10n-name='firefox_support'>support.mozilla.org</a>.

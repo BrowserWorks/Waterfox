@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -24,7 +24,7 @@
 <!ENTITY tablePadding.label               "Γέμισμα:">
 <!ENTITY tablePadding.accessKey           "Γ">
 <!ENTITY tablePxBetwCells.label           "εικονοστοιχεία μεταξύ κελιών">
-<!ENTITY tablePxBetwBrdrCellContent.label "εικονοστοιχεία μεταξύ πλαισίου κελιών και περιεχομένου">
+<!ENTITY tablePxBetwBrdrCellContent.label "pixel μεταξύ πλαισίου και περιεχομένου κελιού">
 <!ENTITY tableAlignment.label             "Στοίχιση πίνακα:">
 <!ENTITY tableAlignment.accessKey         "Χ">
 <!ENTITY tableCaption.label               "Λεζάντα:">
@@ -44,13 +44,13 @@
 <!ENTITY cellSelectNext.accessKey         "Ν">
 <!ENTITY cellSelectPrevious.label         "Προηγούμενο">
 <!ENTITY cellSelectPrevious.accessKey     "Μ">
-<!ENTITY applyBeforeChange.label          "Οι τρέχουσες αλλαγές θα εφαρμοστούν πριν την αλλαγή επιλογής.">
+<!ENTITY applyBeforeChange.label          "Οι τρέχουσες αλλαγές θα εφαρμοστούν πριν από την αλλαγή της επιλογής.">
 <!ENTITY cellContentAlignment.label       "Στοίχιση περιεχομένου">
 <!ENTITY cellHorizontal.label             "Οριζόντια:">
 <!ENTITY cellHorizontal.accessKey         "Ο">
 <!ENTITY cellVertical.label               "Κάθετη:">
 <!ENTITY cellVertical.accessKey           "Θ">
-<!ENTITY cellStyle.label                  "Στυλ κελιού:">
+<!ENTITY cellStyle.label                  "Μορφή κελιού:">
 <!ENTITY cellStyle.accessKey              "Υ">
 <!ENTITY cellNormal.label                 "Κανονικό">
 <!ENTITY cellHeader.label                 "Κεφαλίδα">

@@ -1,8 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY pref.locationBar.title "Barra degli indirizzi">
+
 <!ENTITY autoComplete.label "Autocompletamento">
 <!ENTITY autoCompleteMatchHistory.label "Suggerisci automaticamente i siti web dalla Cronologia">
 <!ENTITY autoCompleteMatchHistory.accesskey "u">
@@ -22,11 +23,13 @@
 <!ENTITY autoCompleteMatchStart "solo all'inizio dell'indirizzo o del titolo">
 <!ENTITY showInternetSearch.label "Mostra il motore di ricerca predefinito per Internet">
 <!ENTITY showInternetSearch.accesskey "M">
+
 <!ENTITY formatting.label "Formattazione">
 <!ENTITY domainFormatting.label "Evidenzia il dominio effettivo per i siti web e i server FTP">
 <!ENTITY domainFormatting.accesskey "d">
 <!ENTITY highlightSecure.label "Evidenzia pagine web con un livello di sicurezza della connessione alto">
 <!ENTITY highlightSecure.accesskey "E">
+
 <!ENTITY unknownLocations.label "Indirizzi sconosciuti">
 <!ENTITY domainGuessing.label "Aggiungi &quot;www.&quot; e &quot;.com&quot; all'indirizzo se la pagina web non viene trovata">
 <!ENTITY domainGuessing.accesskey "u">

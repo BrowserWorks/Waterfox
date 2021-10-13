@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,9 +17,6 @@
 
 <!ENTITY menu_securitySign.label "Chữ kí điện tử cho thư này">
 <!ENTITY menu_securitySign.accesskey "C">
-
-<!ENTITY menu_securityAttachMyKey.label "Đính kèm khóa công khai của tôi">
-<!ENTITY menu_securityAttachMyKey.accesskey "A">
 
 <!ENTITY menu_securityTech.label "Công nghệ mã hóa">
 <!ENTITY menu_securityTech.accesskey "T">

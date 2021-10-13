@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -27,9 +27,9 @@ graph-week-summary-private-window = Rastreadores bloqueados por { -brand-short-n
 
 protection-report-webpage-title = Panel de protecciones
 protection-report-page-content-title = Panel de protecciones
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } puede proteger su privacidad entre bastidores mientras navega. Este es un resumen personalizado de esas protecciones, incluidas las herramientas para tomar el control de su seguridad en línea.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } protege su privacidad entre bastidores mientras navega. Este es un resumen personalizado de esas protecciones, incluidas las herramientas para tomar el control de su seguridad en línea.
 
 protection-report-settings-link = Administrar su configuración de privacidad y seguridad
@@ -100,9 +100,6 @@ lockwise-scanned-text-no-breached-logins =
        *[other] Sus contraseñas se almacenan de forma segura.
     }
 lockwise-how-it-works-link = Cómo funciona
-
-turn-on-sync = Activar { -sync-brand-short-name }...
-    .title = Ir a las preferencias de sincronización
 
 monitor-title = Buscar filtraciones de datos
 monitor-link = Cómo funciona

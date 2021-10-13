@@ -1,22 +1,13 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
 <!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
 
-<!ENTITY appmenu.tooltip                     "Buka menu">
 <!ENTITY navbarOverflow.label                "Alat lainnya…">
 
 <!-- Tab context menu -->
-
-<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
-used as a metaphor for expressing the fact that these tabs are "pinned" to the
-left edge of the tabstrip. Really we just want the string to express the idea
-that this is a lightweight and reversible action that keeps your tab where you
-can reach it easily. -->
-<!ENTITY  pinTab.label                       "Sematkan Tab">
-<!ENTITY  unpinTab.label                     "Copot dari Tab Permanen">
 
 <!ENTITY  listAllTabs.label      "Daftar tab">
 
@@ -24,21 +15,12 @@ can reach it easily. -->
 <!ENTITY openFileCmd.label "Buka Berkas…">
 <!ENTITY printCmd.label "Cetak…">
 
-<!ENTITY taskManagerCmd.label "Pengelola Tugas">
-
 <!ENTITY menubarCmd.label "Bilah Menu">
 <!ENTITY menubarCmd.accesskey "M">
 <!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
 include the word "toolbar" or such, because screen readers already know that
 this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY navbar.accessibleLabel "Navigasi">
-<!ENTITY personalbarCmd.label "Bilah Alat Markah">
-<!ENTITY personalbarCmd.accesskey "B">
-<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
-include the word "toolbar" or such, because screen readers already know that
-this container is a toolbar. This avoids double-speaking. -->
-<!ENTITY personalbar.accessibleLabel "Markah">
-<!ENTITY bookmarksToolbarItem.label "Nama Markah">
 
 <!ENTITY fullScreenCmd.label "Layar Penuh">
 
@@ -46,54 +28,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY pictureInPictureHideToggle.label "Sembunyikan Sakelar Gambar-dalam-Gambar">
 <!ENTITY pictureInPictureHideToggle.accesskey "S">
 
-<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
-     followed by the user's email. -->
-<!ENTITY fxa.menu.syncSettings2.label "Setelan &syncBrand.shortName.label;">
-<!ENTITY fxa.menu.connectAnotherDevice2.label "Sambungkan Peranti Lain…">
-<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
 
 <!ENTITY fxa.menu.signin.label "Masuk ke &brandProductName;">
-<!ENTITY fxa.menu.turnOnSync.label "Aktifkan &syncBrand.shortName.label;">
-<!ENTITY fxa.menu.firefoxServices.label "Layanan &brandProductName;">
-<!ENTITY fxa.menu.account.label "Akun">
-<!ENTITY fxa.menu.settings.label "Setelan">
-<!ENTITY fxa.menu.accountSettings.label "Pengaturan Akun">
-<!ENTITY fxa.menu.manageAccount2.label "Kelola Akun">
-<!ENTITY fxa.menu.signOut.label "Keluar…">
-<!ENTITY fxa.menu.setupSync.label "Siapkan &syncBrand.shortName.label;…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "Kirim tab secara instan ke perangkat apa pun tempat Anda masuk.">
-
-<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
-     fullscreenWarning.afterDomain.label): these two strings are used
-     respectively before and after the domain requiring fullscreen.
-     Localizers can use one of them, or both, to better adapt this
-     sentence to their language. -->
-<!ENTITY fullscreenWarning.beforeDomain.label "">
-<!ENTITY fullscreenWarning.afterDomain.label "sekarang dalam layar penuh">
-<!ENTITY fullscreenWarning.generic.label "Sekarang dokumen ini dalam layar penuh">
-
-<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
-     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
-     is uppercase, while on Mac keyboards it is lowercase -->
-<!ENTITY exitDOMFullscreen.button "Keluar dari Layar Penuh (Esc)">
-<!ENTITY exitDOMFullscreenMac.button "Keluar dari Layar Penuh (esc)">
-
-<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
-     pointerlockWarning.afterDomain.label): these two strings are used
-     respectively before and after the domain requiring pointerlock.
-     Localizers can use one of them, or both, to better adapt this
-     sentence to their language. -->
-<!ENTITY pointerlockWarning.beforeDomain.label "">
-<!ENTITY pointerlockWarning.afterDomain.label "memiliki kendali atas penunjuk Anda. Tekan Esc untuk mengembalikan kendali.">
-<!ENTITY pointerlockWarning.generic.label "Dokumen ini memiliki kendali atas pointer Anda. Tekan Esc untuk mengambil kembali kendali.">
-
-<!ENTITY showAllBookmarks2.label "Tampilkan Semua Markah…">
-<!ENTITY recentBookmarks.label "Baru Saja Dibuat Markah">
-<!ENTITY bookmarksToolbarChevron.tooltip "Tampilkan markah lainnya">
 
 <!ENTITY printButton.label            "Cetak">
 <!ENTITY printButton.tooltip          "Cetak laman ini">
@@ -105,28 +45,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY homeButton.label             "Beranda">
 <!ENTITY homeButton.defaultPage.tooltip "Beranda &brandShortName;">
 
-<!ENTITY bookmarksButton.label          "Markah">
-
-<!ENTITY bookmarksSubview.label             "Markah">
-<!ENTITY bookmarksMenuButton2.label         "Menu Markah">
-<!ENTITY bookmarksMenuButton.other.label    "Markah Lain">
-<!ENTITY bookmarksMenuButton.mobile.label   "Markah Seluler">
-<!ENTITY viewBookmarksSidebar2.label        "Tampilkan Bilah Samping Markah">
-<!ENTITY hideBookmarksSidebar.label         "Sembunyikan Bilah Samping Markah">
-<!ENTITY viewBookmarksToolbar.label         "Tampilkan Bilah Alat Markah">
-<!ENTITY hideBookmarksToolbar.label         "Sembunyikan Bilah Alat Markah">
-<!ENTITY searchBookmarks.label              "Cari Markah">
-<!ENTITY bookmarkingTools.label             "Alat Pemarkahan">
-<!ENTITY addBookmarksMenu.label             "Tambahkan Menu Markah ke Bilah Alat">
-<!ENTITY removeBookmarksMenu.label          "Hapus Menu Markah dari Bilah Alat">
-
 <!ENTITY historyButton.label            "Riwayat">
 
 <!ENTITY downloads.label              "Unduhan">
 <!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
   -  downloads.label, but used in the Library panel. -->
 <!ENTITY libraryDownloads.label       "Unduhan">
-<!ENTITY addons.label                 "Pengaya">
 
 <!ENTITY webDeveloperMenu.label       "Pengembang Web">
 
@@ -142,25 +66,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY overflowCustomizeToolbar.accesskey   "U">
 
 <!ENTITY historyMenu.label "Riwayat">
-<!ENTITY historyUndoMenu.label "Tab yang Baru Saja Ditutup">
-<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
-<!ENTITY historyUndoWindowMenu.label "Jendela yang Baru Saja Ditutup">
 
-<!ENTITY appMenuHistory.showAll.label "Tampilkan Semua Riwayat">
-<!ENTITY appMenuHistory.clearRecent.label "Bersihkan Riwayat Terakhir">
-<!ENTITY appMenuHistory.restoreSession.label "Pulihkan Sesi Sebelumnya">
-<!ENTITY appMenuHistory.viewSidebar.label "Tampilkan Bilah Samping Riwayat">
-<!ENTITY appMenuHistory.hideSidebar.label "Sembunyikan Bilah Samping Riwayat">
-<!ENTITY appMenuHistory.recentHistory.label "Riwayat Terakhir">
 <!ENTITY appMenuHelp.label "Bantuan">
 
-<!ENTITY appMenuRemoteTabs.label "Tab yang Disinkronkan">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
      the name of a device when that device has no open tabs -->
 <!ENTITY appMenuRemoteTabs.notabs.label "Tak ada tab terbuka">
-<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
-     This is shown after the tabs list if we can display more tabs by clicking on the button -->
-<!ENTITY appMenuRemoteTabs.showMore.label "Tampilkan Lebih Banyak">
 <!ENTITY appMenuRemoteTabs.showMore.tooltip "Tampilkan lebih banyak dari perangkat ini">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
      This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
@@ -171,19 +82,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Aktifkan sinkronisasi tab untuk melihat daftar tab dari perangkat Anda lainnya.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Ingin melihat tab dari perangkat Anda yang lain di sini?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Buka Pengaturan Sinkronisasi">
 <!ENTITY appMenuRemoteTabs.welcome.label "Lihat daftar tab dari perangkat Anda lainnya.">
 <!ENTITY appMenuRemoteTabs.unverified.label "Akun Anda perlu diverifikasi.">
-<!ENTITY appMenuRemoteTabs.signintosync.label "Masuk ke &syncBrand.shortName.label;…">
-<!ENTITY appMenuRemoteTabs.turnonsync.label "Aktifkan &syncBrand.shortName.label;…">
-<!ENTITY appMenuRemoteTabs.managedevices.label "Kelola Perangkat…">
-<!ENTITY appMenuRemoteTabs.sidebar.label "Tampilkan Bilah Samping Tab yang Disinkronkan ">
-<!ENTITY appMenuRemoteTabs.hidesidebar.label "Sembunyikan Bilah Samping Tab yang Disinkronkan">
 <!ENTITY appMenuRemoteTabs.connectdevice.label "Sambungkan Perangkat Lainnya">
-
-<!ENTITY appMenuRecentHighlights.label "Sorotan Terkini">
 
 <!ENTITY customizeMenu.addToToolbar.label "Tambahkan ke Bilah Alat">
 <!ENTITY customizeMenu.addToToolbar.accesskey "T">
@@ -195,8 +99,6 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.label "Lepaskan dari Menu Luapan">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "L">
-<!ENTITY customizeMenu.removeFromToolbar.label "Hapus dari Bilah Alat">
-<!ENTITY customizeMenu.removeFromToolbar.accesskey "H">
 <!ENTITY customizeMenu.addMoreItems.label "Tambahkan Item Lainnya…">
 <!ENTITY customizeMenu.addMoreItems.accesskey "T">
 
@@ -214,13 +116,6 @@ this container is a toolbar. This avoids double-speaking. -->
 
 <!ENTITY openLinkCmdInTab.accesskey   "T">
 
-<!ENTITY pageAction.copyLink.label    "Salin Tautan">
-
-<!ENTITY saveToPocketCmd.label        "Simpan Laman ke Pocket">
-<!ENTITY pocketMenuitem.label         "Lihat Daftar Pocket">
-
-<!ENTITY emailPageCmd.label           "Surelkan Tautan…">
-
 <!-- Media (video/audio) controls -->
 
 <!-- LOCALIZATION NOTE :
@@ -232,13 +127,6 @@ you can use these alternative items. Otherwise, their values should be empty.  -
 <!ENTITY fullZoom.label                 "Perbesaran">
 
 <!ENTITY sidebarCloseButton.tooltip     "Tutup bilah samping">
-
-<!ENTITY quitApplicationCmdWin2.label       "Keluar">
-<!ENTITY quitApplicationCmdWin2.accesskey   "K">
-<!ENTITY quitApplicationCmdWin2.tooltip     "Keluar dari &brandShorterName;">
-<!ENTITY quitApplicationCmd.label       "Keluar">
-<!ENTITY quitApplicationCmd.accesskey   "K">
-<!ENTITY quitApplicationCmdMac2.label   "Keluar dari &brandShorterName;">
 
 <!ENTITY allowPopups.accesskey "i">
 <!-- On Windows we use the term "Options" to describe settings, but
@@ -259,10 +147,6 @@ you can use these alternative items. Otherwise, their values should be empty.  -
      The word "toolbar" is appended automatically and should not be contained below! -->
 <!ENTITY tabsToolbar.label "Tab peramban">
 
-<!ENTITY syncBrand.shortName.label    "Sync">
-
-<!ENTITY customizeMode.autoHideDownloadsButton.label "Sembunyi-otomatis">
-
 
 <!ENTITY uiTour.infoPanel.close "Tutup">
 
@@ -270,15 +154,7 @@ you can use these alternative items. Otherwise, their values should be empty.  -
 <!ENTITY panicButton.thankyou.msg2                "Hati-hati dalam Menjelajah!">
 <!ENTITY panicButton.thankyou.buttonlabel         "Trims!">
 
-<!ENTITY updateAvailable.panelUI.label "Unduh pemutakhiran &brandShorterName;">
-<!ENTITY updateManual.panelUI.label "Unduh salinan baru &brandShorterName;">
-<!ENTITY updateUnsupported.panelUI.label "Anda tidak dapat melakukan pembaruan lebih lanjut">
-<!ENTITY updateRestart.panelUI.label2 "Mulai ulang untuk memutakhirkan &brandShorterName;">
-
 <!ENTITY sendToDevice.syncNotReady.label "Menyinkronkan Peranti…">
-
-<!ENTITY pageAction.shareUrl.label "Bagikan">
-<!ENTITY pageAction.shareMore.label "Lainnya…">
 
 <!ENTITY libraryButton.tooltip "Lihat riwayat, markah tersimpan, dan lainnya">
 

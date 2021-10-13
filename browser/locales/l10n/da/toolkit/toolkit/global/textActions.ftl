@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -37,3 +37,20 @@ text-action-select-all-shortcut =
     .key = A
 text-action-spell-no-suggestions =
     .label = Ingen staveforslag
+text-action-spell-add-to-dictionary =
+    .label = Føj til ordbog
+    .accesskey = ø
+text-action-spell-undo-add-to-dictionary =
+    .label = Fortryd tilføjelse til ordbog
+    .accesskey = y
+text-action-spell-check-toggle =
+    .label = Stavekontrol
+    .accesskey = t
+text-action-spell-add-dictionaries =
+    .label = Tilføj ordbøger
+    .accesskey = o
+text-action-spell-dictionaries =
+    .label = Sprog
+    .accesskey = p
+text-action-search-text-box-clear =
+    .title = Ryd

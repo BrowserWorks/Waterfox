@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -27,9 +27,6 @@
 <!ENTITY useHtml.accesskey                    "S">
 <!ENTITY autoQuote.label                      "Citera automatiskt originalmeddelandet när du svarar">
 <!ENTITY autoQuote.accesskey                  "C">
-<!-- LOCALIZATION NOTE (then.label): This will concatenate with the 4 strings that follow. -->
-<!ENTITY then.label                           "Börja med ">
-<!ENTITY then.accesskey                       "ö">
 <!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
 <!ENTITY quoting.label                        "När du citerar,">
 <!ENTITY quoting.accesskey                    "N">

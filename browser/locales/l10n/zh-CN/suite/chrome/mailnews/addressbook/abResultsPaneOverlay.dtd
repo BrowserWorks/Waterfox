@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -30,8 +30,6 @@
 <!ENTITY HomePhone.accesskey                   "H">
 <!ENTITY WorkPhone.label                       "工作电话">
 <!ENTITY WorkPhone.accesskey                   "W">
-<!ENTITY ScreenName.label                      "显示名">
-<!ENTITY ScreenName.accesskey                  "S">
 <!ENTITY ChatName.label                        "聊天名称">
 <!ENTITY ChatName.accesskey                    "C">
 <!ENTITY sortAscending.label                   "升序">
@@ -40,7 +38,7 @@
 <!ENTITY sortDescending.accesskey              "D">
 
 <!-- context menu -->
-<!ENTITY composeEmail.label                    "编写邮件给">
+<!ENTITY composeEmail.label                    "撰写邮件给">
 <!ENTITY composeEmail.accesskey                "C">
 <!ENTITY copyAddress.label                     "复制邮件地址">
 <!ENTITY copyAddress.accesskey                 "A">

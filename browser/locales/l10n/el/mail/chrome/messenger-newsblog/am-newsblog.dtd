@@ -1,11 +1,11 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY biffAll.label                 "Ενεργοποίηση ενημερώσεων για όλες τις ροές">
 <!ENTITY biffAll.accesskey             "Ε">
 
-<!ENTITY newFeedSettings.label         "Προεπιλεγμένες ρυθμίσεις για ροές ειδήσεων">
+<!ENTITY newFeedSettings.label         "Προεπιλεγμένες ρυθμίσεις ροών ειδήσεων">
 
 <!ENTITY manageSubscriptions.label     "Διαχείριση συνδρομών…">
 <!ENTITY manageSubscriptions.accesskey "Δ">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,8 +17,6 @@
 <!ENTITY accountTypeMail.accesskey "c">
 <!ENTITY accountTypeNews.label "Cuenta de noticias">
 <!ENTITY accountTypeNews.accesskey "n">
-<!ENTITY accountTypeMovemail.label "Archivo de correo Unix (Movemail)">
-<!ENTITY accountTypeMovemail.accesskey "A">
 
 <!-- Entities for Identity page -->
 

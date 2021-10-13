@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -21,8 +21,8 @@
 
 <!-- LOCALIZATION NOTE (warningDesc.version): This is a warning about the experimental nature of Nightly builds. It is only shown in this version. -->
 <!ENTITY warningDesc.version        "Το &brandShortName; είναι πειραματικό και ενδεχομένως ασταθές.">
-<!-- LOCALIZATION NOTE (warningDesc.telemetryDesc): This is a notification that Nightly builds automatically send Telemetry data back to Mozilla. It is only shown in this version. "It" refers to brandShortName. -->
-<!ENTITY warningDesc.telemetryDesc  "Στέλνει αυτόματα πληροφορίες σχετικά με επιδόσεις, υλικό, χρήση και προσαρμογές στη &vendorShortName; για τη βελτίωση του &brandShortName;.">
+<!-- LOCALIZATION NOTE (warningDesc.telemetryDesc): This is a notification that Nightly builds automatically send Telemetry data back to Waterfox. It is only shown in this version. "It" refers to brandShortName. -->
+<!ENTITY warningDesc.telemetryDesc  "Στέλνει αυτόματα πληροφορίες σχετικά με τις επιδόσεις, το υλικό, τη χρήση και τις προσαρμογές στη &vendorShortName; για τη βελτίωση του &brandShortName;.">
 
 <!-- LOCALIZATION NOTE (community.exp.*) This paragraph is shown in "experimental" builds, i.e. Nightly builds, instead of the other "community.*" strings below. -->
 <!ENTITY community.exp.start        "">
@@ -36,7 +36,7 @@
 <!ENTITY community.start2           "Το &brandShortName; έχει σχεδιαστεί από τη ">
 <!-- LOCALIZATION NOTE (community.mozillaLink): This is a link title that links to https://www.mozilla.org/. -->
 <!ENTITY community.mozillaLink      "&vendorShortName;">
-<!ENTITY community.middle2          ", μία ">
+<!ENTITY community.middle2          ", μια ">
 <!-- LOCALIZATION NOTE (community.creditsLink): This is a link title that links to about:credits. -->
 <!ENTITY community.creditsLink      "παγκόσμια κοινότητα">
 <!ENTITY community.end3             " που συνεργάζεται για να διατηρήσει το διαδίκτυο ανοικτό, δημόσιο και προσβάσιμο σε όλους.">
@@ -61,18 +61,18 @@
 <!ENTITY bottomLinks.privacy        "Πολιτική απορρήτου">
 
 <!-- LOCALIZATION NOTE (update.checkingForUpdates): try to make the localized text short (see bug 596813 for screenshots). -->
-<!ENTITY update.checkingForUpdates  "Γίνεται έλεγχος για ενημερώσεις…">
+<!ENTITY update.checkingForUpdates  "Έλεγχος για ενημερώσεις…">
 <!-- LOCALIZATION NOTE (update.noUpdatesFound): try to make the localized text short (see bug 596813 for screenshots). -->
 <!ENTITY update.noUpdatesFound      "Το &brandShortName; είναι ενημερωμένο">
 <!-- LOCALIZATION NOTE (update.adminDisabled): try to make the localized text short (see bug 596813 for screenshots). -->
-<!ENTITY update.adminDisabled       "Οι ενημερώσεις έχουν απενεργοποιηθεί από το διαχειριστή του συστήματός σας">
+<!ENTITY update.adminDisabled       "Οι ενημερώσεις έχουν απενεργοποιηθεί από τον διαχειριστή του συστήματός σας">
 <!-- LOCALIZATION NOTE (update.otherInstanceHandlingUpdates): try to make the localized text short -->
-<!ENTITY update.otherInstanceHandlingUpdates "Το &brandShortName; ενημερώνεται μέσω άλλης συνεδρίας">
+<!ENTITY update.otherInstanceHandlingUpdates "Το &brandShortName; ενημερώνεται από άλλη διεργασία">
 
 <!-- LOCALIZATION NOTE (update.failed.start,update.failed.linkText,update.failed.end):
      update.failed.start, update.failed.linkText, and update.failed.end all go into
      one line with linkText being wrapped in an anchor that links to a site to download
-     the latest version of Firefox (e.g. https://www.firefox.com). As this is all in
+     the latest version of Waterfox (e.g. https://www.firefox.com). As this is all in
      one line, try to make the localized text short (see bug 596813 for screenshots). -->
 <!ENTITY update.failed.start        "Η ενημέρωση απέτυχε. ">
 <!ENTITY update.failed.linkText     "Κάντε λήψη της πιο πρόσφατης έκδοσης">
@@ -80,7 +80,7 @@
 
 <!-- LOCALIZATION NOTE (update.manual.start,update.manual.end): update.manual.start and update.manual.end
      all go into one line and have an anchor in between with text that is the same as the link to a site
-     to download the latest version of Firefox (e.g. https://www.firefox.com). As this is all in one line,
+     to download the latest version of Waterfox (e.g. https://www.firefox.com). As this is all in one line,
      try to make the localized text short (see bug 596813 for screenshots). -->
 <!ENTITY update.manual.start        "Κάντε λήψη της ">
 <!ENTITY update.manual.linkText     "πιο πρόσφατης έκδοσης">
@@ -104,13 +104,13 @@
 <!ENTITY update.downloading.start   "Λήψη ενημέρωσης — ">
 <!ENTITY update.downloading.end     "">
 
-<!ENTITY update.applying            "Γίνεται εφαρμογή της ενημέρωσης…">
+<!ENTITY update.applying            "Εφαρμογή ενημέρωσης…">
 <!ENTITY update.restarting          "Επανεκκίνηση…">
 
 <!-- LOCALIZATION NOTE (channel.description.start,channel.description.end): channel.description.start and
      channel.description.end create one sentence, with the current channel label inserted in between.
      example: You are currently on the _Stable_ update channel. -->
-<!ENTITY channel.description.start  "Βρίσκεστε στο κανάλι ενημερώσεων της έκδοσης ">
-<!ENTITY channel.description.end    " .">
+<!ENTITY channel.description.start  "Αυτήν τη στιγμή, βρίσκεστε στο κανάλι ενημερώσεων της έκδοσης ">
+<!ENTITY channel.description.end    ". ">
 
 <!ENTITY cmdCloseMac.commandKey "w">

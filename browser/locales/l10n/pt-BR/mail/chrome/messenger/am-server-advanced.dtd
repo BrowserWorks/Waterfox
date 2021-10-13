@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -6,11 +6,11 @@
 <!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
 <!ENTITY serverDirectory.label "Servidor de diretórios IMAP:">
 <!ENTITY serverDirectory.accesskey "I">
-<!ENTITY usingSubscription.label "Mostrar apenas pastas subscritas">
-<!ENTITY usingSubscription.accesskey "x">
+<!ENTITY usingSubscription.label "Mostrar somente pastas inscritas">
+<!ENTITY usingSubscription.accesskey "M">
 <!ENTITY dualUseFolders.label "O servidor suporta pastas que contêm subpastas e mensagens">
 <!ENTITY dualUseFolders.accesskey "s">
-<!ENTITY maximumConnectionsNumber.label "Número máximo de conexões cache para servidores:">
+<!ENTITY maximumConnectionsNumber.label "Número máximo de conexões com servidor a incluir no cache:">
 <!ENTITY maximumConnectionsNumber.accesskey "N">
 <!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
 <!ENTITY namespaceDesc.label "Estas preferências especificam os namespaces no servidor IMAP">

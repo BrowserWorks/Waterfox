@@ -1,18 +1,28 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
 <!ENTITY pref.advanced.title              "Speciális">
 
-<!ENTITY systemPref.caption               "Rendszerbeállítások">
-<!ENTITY systemPrefCheck.label            "Rendszerbeállítások használata">
-<!ENTITY systemPrefCheck.accesskey        "R">
-<!ENTITY systemPref.desc                  "Ha bejelöli ezt a négyzetet, akkor a &brandShortName; rendszerbeállításokat használja. A rendszerbeállítások felülbírálják a &brandShortName; beállításait.">
-
 <!ENTITY prefCheckDefault.caption         "Rendszer alapbeállításai">
 <!ENTITY prefCheckDefaultClient.label     "Alapértelmezett programok beállításának ellenőrzése induláskor">
 <!ENTITY prefCheckDefaultClient.accesskey "A">
+
+<!ENTITY defaultClientFor.description     "A &brandShortName; alapértelmezetté tétele a következőkhöz:">
+<!ENTITY setDefaultBrowser.label          "Böngésző">
+<!ENTITY setDefaultBrowser.accesskey      "B">
+<!ENTITY setDefaultMail.label             "Levelezés">
+<!ENTITY setDefaultMail.accesskey         "L">
+<!ENTITY setDefaultNews.label             "Hírek">
+<!ENTITY setDefaultNews.accesskey         "H">
+<!ENTITY setDefaultFeed.label             "Hírforrások">
+<!ENTITY setDefaultFeed.accesskey         "f">
+<!ENTITY useInternalSettings.description  "&brandShortName; Levelező és hírolvasó használata a hivatkozások böngészőben történő megnyitásakor:">
+<!ENTITY useInternalMail.label            "Levelezés (mailto:)">
+<!ENTITY useInternalMail.accesskey        "e">
+<!ENTITY useInternalNews.label            "Hírcsoportok (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "r">
 
 <!ENTITY printing.label                   "Nyomtatás">
 <!ENTITY useNativePrintDialog.label       "Natív nyomtatás párbeszédablak használata (ha támogatott)">

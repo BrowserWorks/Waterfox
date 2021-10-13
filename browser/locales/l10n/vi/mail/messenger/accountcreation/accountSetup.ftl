@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -41,11 +41,20 @@ account-provisioner-button = Tạo một địa chỉ email mới
     .accesskey = G
 account-setup-password-toggle =
     .title = Hiển thị/ẩn mật khẩu
+account-setup-password-toggle-show =
+    .title = Hiển thị mật khẩu dưới dạng văn bản rõ ràng
+account-setup-password-toggle-hide =
+    .title = Ẩn mật khẩu
 account-setup-remember-password = Ghi nhớ mật khẩu
     .accesskey = m
+account-setup-exchange-label = Thông tin đăng nhập của bạn
+    .accesskey = l
 #   YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows.
 account-setup-exchange-input =
     .placeholder = TENMIENCUABAN\tennguoidungcuaban
+#   Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network.
+account-setup-exchange-info-icon =
+    .title = Thông tin đăng nhập trong miền
 
 ## Action buttons
 
@@ -69,8 +78,8 @@ account-setup-looking-up-settings-guess = Đang tìm cấu hình: Đang thử c�
 account-setup-looking-up-settings-half-manual = Đang tìm cấu hình: Đang dò tìm máy chủ…
 account-setup-looking-up-disk = Đang tìm cấu hình: Bộ cài đặt { -brand-short-name }…
 account-setup-looking-up-isp = Đang tìm cấu hình: Nhà cung cấp dịch vụ email…
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-looking-up-db = Đang tìm cấu hình: Cơ sở dữ liệu Mozilla ISP…
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-looking-up-db = Đang tìm cấu hình: Cơ sở dữ liệu Waterfox ISP…
 account-setup-looking-up-mx = Đang tìm cấu hình: Tên miền thư đến…
 account-setup-looking-up-exchange = Đang tìm cấu hình: Máy chủ Exchange…
 account-setup-checking-password = Đang kiểm tra mật khẩu…
@@ -80,8 +89,8 @@ account-setup-success-guess = Cấu hình được tìm thấy bằng cách th�
 account-setup-success-guess-offline = Bạn hiện đang ngoại tuyến. Chúng tôi đã thử đoán một số cài đặt nhưng bạn sẽ cần nhập đúng cài đặt.
 account-setup-success-password = Mật khẩu OK
 account-setup-success-addon = Đã cài đặt thành công tiện ích mở rộng
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-success-settings-db = Cấu hình được tìm thấy trong cơ sở dữ liệu Mozilla ISP.
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-success-settings-db = Cấu hình được tìm thấy trong cơ sở dữ liệu Waterfox ISP.
 account-setup-success-settings-disk = Cấu hình được tìm thấy trong bộ cài đặt { -brand-short-name }.
 account-setup-success-settings-isp = Cấu hình được tìm thấy tại nhà cung cấp email.
 # Note: Microsoft Exchange is a product name.
@@ -99,12 +108,13 @@ account-setup-step4-image =
     .title = Lỗi kết nối
 account-setup-step5-image =
     .title = Đã tạo tài khoản
-account-setup-privacy-footnote = Thông tin đăng nhập của bạn sẽ được sử dụng theo <a data-l10n-name="privacy-policy-link">chính sách riêng tư</a> của chúng tôi và sẽ chỉ được lưu trữ cục bộ trên máy tính của bạn.
+account-setup-privacy-footnote2 = Thông tin đăng nhập của bạn sẽ chỉ được lưu trữ cục bộ trên máy tính của bạn.
 account-setup-selection-help = Không chắc chắn những gì để chọn?
 account-setup-selection-error = Cần trợ giúp?
 account-setup-success-help = Không chắc chắn về các bước tiếp theo của mình?
 account-setup-documentation-help = Tài liệu thiết lập
 account-setup-forum-help = Diễn đàn hỗ trợ
+account-setup-privacy-help = Chính sách riêng tư
 account-setup-getting-started = Bắt đầu
 
 ## Results area
@@ -123,7 +133,8 @@ account-setup-result-pop = POP3
 account-setup-result-pop-description = Giữ các thư mục và email của bạn trên máy tính của bạn
 # Note: Exchange is the name of a product.
 account-setup-result-exchange = Exchange
-account-setup-result-exchange-description = Máy chủ Microsoft Exchange
+# Note: Exchange, Office365 are the name of products.
+account-setup-result-exchange2-description = Sử dụng máy chủ Microsoft Exchange hoặc các dịch vụ đám mây Office365
 account-setup-incoming-title = Hộp thư đến
 account-setup-outgoing-title = Hộp thư đi
 account-setup-username-title = Tên người dùng
@@ -133,6 +144,10 @@ account-setup-result-no-encryption = Không mã hóa
 account-setup-result-ssl = SSL/TLS
 account-setup-result-starttls = STARTTLS
 account-setup-result-outgoing-existing = Sử dụng máy chủ gửi thư SMTP hiện tại
+# Variables:
+#  $incoming (String): The email/username used to log into the incoming server
+#  $outgoing (String): The email/username used to log into the outgoing server
+account-setup-result-username-different = Nhận thư: { $incoming }, Gửi thư: { $outgoing }
 
 ## Error messages
 
@@ -175,6 +190,8 @@ account-setup-advanced-setup-button = Cấu hình nâng cao
 ## Warning insecure server dialog
 
 account-setup-insecure-title = Cảnh báo!
+account-setup-insecure-incoming-title = Cài đặt nhận thư:
+account-setup-insecure-outgoing-title = Cài đặt gửi thư:
 # Variables:
 #  $server (String): The name of the hostname of the server the user was trying to connect to.
 account-setup-warning-cleartext = <b>{ $server }</b> không sử dụng mã hóa.
@@ -194,6 +211,17 @@ insecure-dialog-confirm-button = Xác nhận
 exchange-dialog-question = { -brand-short-name } đã tìm thấy thông tin thiết lập tài khoản của bạn trên { $domain }. Bạn có muốn tiếp tục và gửi thông tin đăng nhập của mình không?
 exchange-dialog-confirm-button = Đăng nhập
 exchange-dialog-cancel-button = Huỷ bỏ
+
+## Dismiss account creation dialog
+
+exit-dialog-title = Không có tài khoản email nào được cấu hình
+exit-dialog-description = Bạn có chắc chắn muốn hủy quá trình thiết lập không? Bạn vẫn có thể sử dụng { -brand-short-name } mà không cần tài khoản email nhưng nhiều tính năng sẽ không khả dụng.
+account-setup-no-account-checkbox = Sử dụng { -brand-short-name } mà không cần tài khoản email
+    .accesskey = U
+exit-dialog-cancel-button = Tiếp tục thiết lập
+    .accesskey = C
+exit-dialog-confirm-button = Thoát thiết lập
+    .accesskey = E
 
 ## Alert dialogs
 

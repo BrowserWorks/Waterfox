@@ -1,69 +1,81 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 permissions-window =
     .title = Exceptions
     .style = width: 45em
+
 permissions-close-key =
     .key = w
+
 permissions-address = Address of web site
     .accesskey = d
+
 permissions-block =
     .label = Block
     .accesskey = B
+
 permissions-session =
     .label = Allow for Session
     .accesskey = S
+
 permissions-allow =
     .label = Allow
     .accesskey = A
+
 permissions-button-off =
     .label = Turn Off
     .accesskey = O
+
 permissions-button-off-temporarily =
     .label = Turn Off Temporarily
     .accesskey = T
+
 permissions-site-name =
     .label = Web Site
+
 permissions-status =
     .label = Status
+
 permissions-remove =
     .label = Remove Web Site
     .accesskey = R
+
 permissions-remove-all =
     .label = Remove All Web Sites
     .accesskey = e
-permissions-button-cancel =
-    .label = Cancel
-    .accesskey = C
-permissions-button-ok =
-    .label = Save Changes
-    .accesskey = S
+
 permission-dialog =
     .buttonlabelaccept = Save Changes
     .buttonaccesskeyaccept = S
+
 permissions-autoplay-menu = Default for all web sites:
+
 permissions-searchbox =
     .placeholder = Search Web Site
+
 permissions-capabilities-autoplay-allow =
     .label = Allow Audio and Video
 permissions-capabilities-autoplay-block =
     .label = Block Audio
 permissions-capabilities-autoplay-blockall =
     .label = Block Audio and Video
+
 permissions-capabilities-allow =
     .label = Allow
 permissions-capabilities-block =
     .label = Block
 permissions-capabilities-prompt =
     .label = Always Ask
+
 permissions-capabilities-listitem-allow =
     .value = Allow
 permissions-capabilities-listitem-block =
     .value = Block
 permissions-capabilities-listitem-allow-session =
     .value = Allow for Session
+
 permissions-capabilities-listitem-off =
     .value = Off
 permissions-capabilities-listitem-off-temporarily =

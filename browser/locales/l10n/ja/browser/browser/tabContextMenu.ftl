@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -51,9 +51,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = タブをブックマーク
     .accesskey = B
-reopen-in-container =
-    .label = コンテナーで開きなおす
-    .accesskey = e
 tab-context-open-in-new-container-tab =
     .label = 新しいコンテナータブで開く
     .accesskey = e
@@ -69,21 +66,6 @@ move-to-new-window =
 tab-context-close-multiple-tabs =
     .label = 複数のタブを閉じる
     .accesskey = M
-tab-context-undo-close-tabs =
-    .label = 閉じたタブを元に戻す
-    .accesskey = U
-close-tab =
-    .label = タブを閉じる
-    .accesskey = c
-close-tabs =
-    .label = タブを閉じる
-    .accesskey = S
-move-tabs =
-    .label = タブを移動
-    .accesskey = v
-move-tab =
-    .label = タブを移動
-    .accesskey = v
 tab-context-share-url =
     .label = 共有
     .accesskey = h
@@ -99,6 +81,16 @@ tab-context-reopen-closed-tabs =
 tab-context-close-tabs =
     .label = タブを閉じる
     .accesskey = C
+tab-context-close-n-tabs =
+    .label =
+        { $tabCount ->
+            [1] タブを閉じる
+           *[other] { $tabCount } 個のタブを閉じる
+        }
+    .accesskey = C
 tab-context-move-tabs =
     .label = タブを移動
     .accesskey = v
+tab-context-send-tabs-to-device =
+    .label = { $tabCount } 個のタブを端末へ送信
+    .accesskey = n

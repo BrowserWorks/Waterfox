@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = Về quyền lợi của bạn
 rights-intro = { -brand-full-name } là phần mềm tự do mã nguồn mở, được xây dựng bởi một cộng đồng gồm hàng nghìn người trên khắp thế giới. Có vài điều mà bạn nên biết:
-rights-intro-point-1 = { -brand-short-name } cung cấp cho bạn theo điều khoản của <a data-l10n-name="mozilla-public-license-link">giấy phép công cộng Mozilla</a>. Điều này có nghĩa là bạn có thể sử dụng, sao chép và phân phối { -brand-short-name } đến người khác. Bạn cũng được hoan nghênh trong việc chỉnh sửa mã nguồn của { -brand-short-name } cho phù hợp với nhu cầu của mình. Giấy phép công cộng Mozilla cũng cho bạn quyền phân phối phiên bản được chỉnh sửa đó.
-rights-intro-point-2 = Bạn không được trao bất kì giấy phép hay quyền thương hiệu nào đối với thương hiệu của Tổ chức Mozilla hay tổ chức bất kì, bao gồm và không giới hạn tên hoặc logo Firefox. Thông tin thêm về thương hiệu có thể được tìm thấy <a data-l10n-name="mozilla-trademarks-link">tại đây</a>.
+rights-intro-point-1 = { -brand-short-name } cung cấp cho bạn theo điều khoản của <a data-l10n-name="mozilla-public-license-link">giấy phép công cộng Waterfox</a>. Điều này có nghĩa là bạn có thể sử dụng, sao chép và phân phối { -brand-short-name } đến người khác. Bạn cũng được hoan nghênh trong việc chỉnh sửa mã nguồn của { -brand-short-name } cho phù hợp với nhu cầu của mình. Giấy phép công cộng Waterfox cũng cho bạn quyền phân phối phiên bản được chỉnh sửa đó.
+rights-intro-point-2 = Bạn không được trao bất kì giấy phép hay quyền thương hiệu nào đối với thương hiệu của Tổ chức Waterfox hay tổ chức bất kì, bao gồm và không giới hạn tên hoặc logo Waterfox. Thông tin thêm về thương hiệu có thể được tìm thấy <a data-l10n-name="mozilla-trademarks-link">tại đây</a>.
 rights-intro-point-3 = Một số tính năng trong { -brand-short-name }, như Trình Báo Cáo Lỗi, cho bạn tùy chọn cung cấp phản hồi tới { -vendor-short-name }. Bằng việc chọn gửi phản hồi, bạn cho { -vendor-short-name } quyền sử dụng phản hồi đó để cải tiến sản phẩm, công bố phản hồi trên trang web, và phân phối phản hồi.
 rights-intro-point-4 = Cách chúng tôi dùng thông tin cá nhân của bạn và phản hồi được gửi tới { -vendor-short-name } thông qua { -brand-short-name } được mô tả trong <a data-l10n-name="mozilla-privacy-policy-link">chính sách riêng tư { -brand-short-name }</a>.
 rights-intro-point-4-unbranded = Bất kì chính sách riêng tư thích hợp nào cho sản phẩm này sẽ được liệt kê tại đây.

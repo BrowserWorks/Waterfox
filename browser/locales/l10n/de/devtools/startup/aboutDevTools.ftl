@@ -1,31 +1,31 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Über die Entwicklerwerkzeuge
-enable-title = Entwicklerwerkzeuge für Firefox aktivieren
-enable-inspect-element-title = Entwicklerwerkzeuge für Firefox aktivieren, um "Element untersuchen" zu verwenden
+enable-title = Entwicklerwerkzeuge für Waterfox aktivieren
+enable-inspect-element-title = Entwicklerwerkzeuge für Waterfox aktivieren, um "Element untersuchen" zu verwenden
 enable-inspect-element-message = Untersuchen und Bearbeiten von HTML und CSS mit dem Inspektor der Entwicklerwerkzeuge.
-enable-about-debugging-message = Entwickeln und Untersuchen von WebExtensions, Web-Workern, Service-Workern und mehr mit den Entwicklerwerkzeugen von Firefox.
+enable-about-debugging-message = Entwickeln und Untersuchen von WebExtensions, Web-Workern, Service-Workern und mehr mit den Entwicklerwerkzeugen von Waterfox.
 enable-key-shortcut-message = Sie haben eine Tastenkombination für eine Funktion der Entwicklerwerkzeuge verwendet. Falls dies unbeabsichtigt war, so können Sie diesen Tab schließen.
 enable-menu-message = Optimieren Sie HTML, CSS und JavaScript Ihrer Website mit Werkzeugen wie Inspektor und Debugger.
-enable-common-message = Die Entwicklerwerkzeuge von Firefox sind standardmäßig deaktiviert, um Ihnen mehr Kontrolle über Ihren Browser zu belassen.
+enable-common-message = Die Entwicklerwerkzeuge von Waterfox sind standardmäßig deaktiviert, um Ihnen mehr Kontrolle über Ihren Browser zu belassen.
 enable-learn-more-link = Weitere Informationen zu den Entwicklerwerkzeugen
 enable-enable-button = Entwicklerwerkzeuge aktivieren
 enable-close-button = Tab schließen
 
-welcome-title = Willkommen zu den Entwicklerwerkzeugen von Firefox!
-newsletter-title = Entwickler-Newsletter von Mozilla
+welcome-title = Willkommen zu den Entwicklerwerkzeugen von Waterfox!
+newsletter-title = Entwickler-Newsletter von Waterfox
 newsletter-message = Erhalten Sie Neuigkeiten, Tricks, Dokumentationen und Werkzeuge für Entwickler auf Englisch direkt in Ihren Posteingang.
 newsletter-email-placeholder =
     .placeholder = E-Mail-Adresse
-newsletter-privacy-label = Ich bin einverstanden mit dem Umgang Mozillas mit meinen Informationen wie in der <a data-l10n-name="privacy-policy">Datenschutzerklärung</a> beschrieben.
+newsletter-privacy-label = Ich bin einverstanden mit dem Umgang Waterfoxs mit meinen Informationen wie in der <a data-l10n-name="privacy-policy">Datenschutzerklärung</a> beschrieben.
 newsletter-subscribe-button = Abonnieren
 newsletter-thanks-title = Danke
-newsletter-thanks-message = Falls Sie bislang kein Abonnement eines Mozilla-Newsletters bestätigen mussten, so ist das eventuell jetzt notwendig. Bitte prüfen Sie den Posteingang und den Spamordner auf eine E-Mail von uns.
+newsletter-thanks-message = Falls Sie bislang kein Abonnement eines Waterfox-Newsletters bestätigen mussten, so ist das eventuell jetzt notwendig. Bitte prüfen Sie den Posteingang und den Spamordner auf eine E-Mail von uns.
 
 footer-title = Waterfox Developer Edition
-footer-message = Wollen Sie mehr als die Entwicklerwerkzeuge? Dann werfen Sie einen Blick auf den speziell für Entwickler entworfenen Firefox-Browser mit modernen Entwicklerabläufen.
+footer-message = Wollen Sie mehr als die Entwicklerwerkzeuge? Dann werfen Sie einen Blick auf den speziell für Entwickler entworfenen Waterfox-Browser mit modernen Entwicklerabläufen.
 footer-learn-more-link = Weitere Informationen
 
 features-learn-more = Weitere Informationen

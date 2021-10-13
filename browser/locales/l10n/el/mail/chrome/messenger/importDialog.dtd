@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -34,7 +34,7 @@ LOCALIZATION NOTE : Do not translate any of the occurrences of the word
 <!ENTITY importDescription2.label "Όταν ολοκληρωθεί η εισαγωγή, θα είναι δυνατή η πρόσβαση μέσω του &brandShortName;.">
 
 <!ENTITY selectDescription.label  "Επιλέξτε το πρόγραμμα από το οποίο επιθυμείτε να γίνει η εισαγωγή:">
-<!ENTITY selectDescriptionB.label "Επιλέξτε ένα υπάρχοντα λογαριασμό ή δημιουργήστε ένα νέο:">
+<!ENTITY selectDescriptionB.label "Παρακαλώ επιλέξτε έναν υπάρχοντα λογαριασμό ή δημιουργήστε έναν νέο:">
 <!ENTITY selectDescription.accesskey "ξ">
 <!ENTITY acctName.label           "Όνομα:">
 <!ENTITY acctName.accesskey       "ν">

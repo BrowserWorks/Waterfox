@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -35,6 +35,7 @@
 <!ENTITY tableCaptionRight.label "Dopo della tabella">
 <!ENTITY tableCaptionNone.label "Nessuna">
 <!ENTITY tableInheritColor.label "(Colore della pagina visibile in trasparenza)">
+
 <!ENTITY cellSelection.label "Selezione">
 <!ENTITY cellSelectCell.label "Cella">
 <!ENTITY cellSelectRow.label "Riga">
@@ -63,6 +64,7 @@
 <!ENTITY cellAlignJustify.label "Giustifica">
 <!ENTITY cellInheritColor.label "(Colore della tabella visibile in trasparenza)">
 <!ENTITY cellUseCheckboxHelp.label "Utilizza le caselle di spunta per determinare quali proprietà saranno applicate alle celle selezionate.">
+
 <!ENTITY size.label "Dimensioni">
 <!ENTITY pixels.label "pixel">
 <!ENTITY backgroundColor.label "Colore di sfondo:">

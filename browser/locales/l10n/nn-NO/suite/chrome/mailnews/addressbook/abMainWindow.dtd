@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -22,9 +22,9 @@
 <!ENTITY newIM.label                                    "IM">
 <!ENTITY printContactViewCmd.label                      "Skriv ut kontakt…">
 <!ENTITY printContactViewCmd.accesskey                  "k">
+<!ENTITY printContactViewCmd.key                        "P">
 <!ENTITY printPreviewContactViewCmd.label               "Utskriftsførehandsvising av kontakt">
 <!ENTITY printPreviewContactViewCmd.accesskey           "v">
-<!ENTITY printContactViewCmd.key                        "P">
 <!ENTITY printAddressBook.label                         "Skriv ut adressebok…"> 
 <!ENTITY printAddressBook.accesskey                     "a"> 
 <!ENTITY printPreviewAddressBook.label                  "Utskritsførehandsvisning av adressebok"> 
@@ -92,7 +92,6 @@
 <!ENTITY newmsgButton.tooltip                           "Send ein e-post"> 
 <!ENTITY newIM.tooltip                                  "Send ei melding eller chat"> 
 <!ENTITY deleteItemButton.tooltip                       "Slett valt element">
-<!ENTITY throbber.tooltip                               "Gå til &vendorShortName;s-heimesida">
 <!ENTITY advancedButton.tooltip                         "Avansert adressesøk">
 
 <!-- Dir Tree header -->

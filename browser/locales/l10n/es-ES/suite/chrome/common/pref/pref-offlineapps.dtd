@@ -1,11 +1,15 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- extracted from content/pref-offlineapps.xul -->
+
 <!ENTITY pref.offlineapps.title "Aplicaciones web sin conexión">
 <!ENTITY pref.offlineCache.caption "Contenido web y datos de usuario sin conexión">
+
 <!ENTITY clearOfflineAppCache.label "Limpiar">
 <!ENTITY clearOfflineAppCache.accesskey "L">
+
 <!ENTITY offlineAlwaysAllow.label "Permitir a todos los sitios web guardar datos para uso sin conexión">
 <!ENTITY offlineAlwaysAllow.accesskey "P">
 <!ENTITY offlineExplicit.label "Permitir únicamente sitios web con permiso expreso">
@@ -14,6 +18,7 @@
 <!ENTITY offlineNotifyAsk.accesskey "N">
 <!ENTITY offlineNotifyPermissions.label "Administrar permisos">
 <!ENTITY offlineNotifyPermissions.accesskey "d">
+
 <!ENTITY offlineAppsUsage.label "Los siguientes sitios web están usando almacenamiento sin conexión:">
 <!ENTITY offlineAppsListRemove.label "Limpiar datos…">
 <!ENTITY offlineAppsListRemove.accesskey "m">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,12 +13,3 @@
 <!ENTITY spellDictionaries.accesskey	"l">
 
 <!ENTITY searchTextBox.clear.label	"消去">
-
-<!ENTITY fillLoginMenu.label		"ログイン情報を入力">
-<!ENTITY fillLoginMenu.accesskey	"F">
-<!ENTITY fillPasswordMenu.label		"パスワードを入力">
-<!ENTITY fillPasswordMenu.accesskey	"F">
-<!ENTITY fillUsernameMenu.label		"ユーザー名を入力">
-<!ENTITY fillUsernameMenu.accesskey	"F">
-<!ENTITY noLoginSuggestions.label	"(ログイン情報の候補なし)">
-<!ENTITY viewSavedLogins.label		"保存されたログイン情報を表示">

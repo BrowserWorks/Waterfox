@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,14 +15,9 @@ view-fingerprint-button =
 otr-settings-title = OTR 설정
 otr-log =
     .label = 대화 로그에 OTR 암호화 메시지 포함
-otr-requireEncryption =
-    .label = 일대일 대화를 위해 종단 간 암호화 필요
+
 otr-require-encryption-info =
     종단간 암호화가 필요한 경우 일대일 대화의 메시지는 암호화 되지 않으면 
     전송되지 않습니다. 암호화되지 않은 메시지는 일반 대화의 일부로 
     표시되지 않으며 기록되지 않습니다.
-otr-verifyNudge =
-    .label = 확인되지 않은 연락처를 확인하도록 항상 알림
-
-otr-notYetAvailable = 아직 사용할 수 없음
 

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -24,6 +24,11 @@
 <!ENTITY restoreTabsAtATime.label "pestaña(s) a la vez">
 <!ENTITY restoreDeferred.label "Restaurar pestañas sólo cuando las necesite">
 <!ENTITY restoreDeferred.accesskey "i">
+<!ENTITY siteIcons.label "Iconos de sitios web">
+<!ENTITY useSiteIcons.label "Mostrar iconos de sitios web">
+<!ENTITY useSiteIcons.accesskey "M">
+<!ENTITY useFavIcons.label "Intentar usar el favicon del servidor cuando la página no defina uno propio">
+<!ENTITY useFavIcons.accesskey "f">
 <!ENTITY homePageIntro.label "Pulsar el botón Inicio le lleva a este grupo de páginas:">
 <!ENTITY useCurrent.label "Usar página actual">
 <!ENTITY useCurrent.accesskey "U">

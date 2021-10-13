@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -20,7 +20,7 @@
 <!ENTITY altText.label "Εναλλακτικό κείμενο:">
 <!ENTITY altText.accessKey "λ">
 <!ENTITY altTextEditField.tooltip "Εισάγετε κείμενο για εμφάνιση στη θέση της εικόνας">
-<!ENTITY noAltText.label "Να μην γίνεται χρήση εναλλακτικού κειμένου">
+<!ENTITY noAltText.label "Χωρίς χρήση εναλλακτικού κειμένου">
 <!ENTITY noAltText.accessKey "Ν">
 
 <!ENTITY previewBox.label "Προεπισκόπηση εικόνας">
@@ -69,7 +69,7 @@
 <!ENTITY showImageLinkBorder.accessKey "π">
 <!ENTITY LinkAdvancedEditButton.label "Σύνθετη επεξεργασία συνδέσμου…">
 <!ENTITY LinkAdvancedEditButton.accessKey "δ">
-<!ENTITY LinkAdvancedEditButton.tooltip "Προσθήκη ή τροποποίηση ιδιοτήτων στυλ, HTML και JavaScript">
+<!ENTITY LinkAdvancedEditButton.tooltip "Προσθήκη ή τροποποίηση ιδιοτήτων HTML, ιδιοτήτων στυλ και JavaScript">
 
 <!-- These tabs are currently used in the image input dialog -->
 <!ENTITY imageInputTab.label "Φόρμα">

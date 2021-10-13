@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,18 +6,21 @@
 about-performance-title = Gestione attività
 
 ## Column headers
+
 column-name = Nome
 column-type = Tipo
 column-energy-impact = Impatto energetico
 column-memory = Memoria
 
 ## Special values for the Name column
+
 ghost-windows = Schede chiuse di recente
 # Variables:
 #   $title (String) - the title of the preloaded page, typically 'New Tab'
 preloaded-tab = Precaricato: { $title }
 
 ## Values for the Type column
+
 type-tab = Scheda
 type-subframe = Subframe
 type-tracker = Tracker
@@ -31,6 +34,7 @@ type-other = Altro
 ## Variables:
 ##   $value (Number) - Value of the energy impact, eg. 0.25 (low),
 ##                     5.38 (medium), 105.38 (high)
+
 energy-impact-high = Alto ({ $value })
 energy-impact-medium = Medio ({ $value })
 energy-impact-low = Basso ({ $value })
@@ -39,11 +43,13 @@ energy-impact-low = Basso ({ $value })
 ##
 ## Variables:
 ##   $value (Number) - How much memory is used
+
 size-KB = { $value } kB
 size-MB = { $value } MB
 size-GB = { $value } GB
 
 ## Tooltips for the action buttons
+
 close-tab =
     .title = Chiudi scheda
 show-addon =

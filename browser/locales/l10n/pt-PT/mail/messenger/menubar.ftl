@@ -1,13 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ## View Menu
-
-menu-view-charset =
-    .label = Codificação de texto
-    .accesskey = C
 
 ## Tools Menu
 
@@ -16,6 +12,7 @@ menu-view-charset =
 menu-tools-preferences =
     .label = Preferências
     .accesskey = P
+
 menu-addons-and-themes =
     .label = Extras e temas
     .accesskey = x
@@ -25,9 +22,11 @@ menu-addons-and-themes =
 menu-help-enter-troubleshoot-mode =
     .label = Modo de diagnóstico…
     .accesskey = d
+
 menu-help-exit-troubleshoot-mode =
     .label = Desligar o modo de diagnóstico
     .accesskey = g
+
 menu-help-more-troubleshooting-info =
     .label = Mais informação para diagnóstico
     .accesskey = M
@@ -46,3 +45,10 @@ toolbar-delete-button =
 toolbar-undelete-button =
     .label = Anular eliminação
     .tooltiptext = Anular a eliminação das mensagens selecionadas
+
+## View
+
+## View / Layout
+
+## File
+

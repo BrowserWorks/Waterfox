@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -7,7 +7,7 @@
 <!ENTITY accountTitle.label "Ρυθμίσεις λογαριασμού">
 <!ENTITY accountName.label "Όνομα λογαριασμού:">
 <!ENTITY accountName.accesskey "ν">
-<!ENTITY identityTitle.label "Ταυτότητα">
+<!ENTITY identityTitle.label "Προεπιλεγμένη ταυτότητα">
 <!ENTITY identityDesc.label "Κάθε λογαριασμός έχει μια ταυτότητα, η οποία αποτελείται από πληροφορίες που βλέπουν οι αναγνώστες των μηνυμάτων σας.">
 <!ENTITY name.label "Το όνομά σας:">
 <!ENTITY name.accesskey "μ">
@@ -17,14 +17,14 @@
 <!ENTITY catchAll.accesskey "π">
 <!ENTITY replyTo.label "Διεύθυνση απάντησης:">
 <!ENTITY replyTo.accesskey "σ">
-<!ENTITY replyTo.placeholder "Οι παραλήπτες θα απαντούν σε αυτή τη διεύθυνση">
+<!ENTITY replyTo.placeholder "Οι παραλήπτες θα απαντούν σε αυτήν τη διεύθυνση">
 <!ENTITY organization.label "Οργανισμός:">
 <!ENTITY organization.accesskey "Ο">
 <!ENTITY signatureText.label "Κείμενο υπογραφής:">
 <!ENTITY signatureText.accesskey "μ">
 <!ENTITY signatureHtml.label "Χρήση HTML (π.χ. &lt;b&gt;bold&lt;/b&gt;)">
 <!ENTITY signatureHtml.accesskey "η">
-<!ENTITY signatureFile.label "Επισύναψη υπογραφής από αρχείο (κείμενο, HTML, ή εικόνα):">
+<!ENTITY signatureFile.label "Επισύναψη υπογραφής από αρχείο (κείμενο, HTML ή εικόνα):">
 <!ENTITY signatureFile.accesskey "ψ">
 <!ENTITY edit.label "Επεξεργασία…">
 <!ENTITY choose.label "Επιλογή…">

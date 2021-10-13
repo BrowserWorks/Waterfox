@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,15 +8,19 @@
 <!ENTITY newWindowRestriction.label "Cuando los scripts quieran abrir una ventana nueva:">
 <!ENTITY external.label "Enlaces de otras aplicaciones">
 <!ENTITY externalDescription.label "Abrir enlaces pasados desde otras aplicaciones en:">
+
 <!ENTITY openCurrent.label "La pestaña/ventana actual">
 <!ENTITY newWindowGroupCurrent.accesskey "L">
 <!ENTITY externalGroupCurrent.accesskey "a">
+
 <!ENTITY openTab.label "Una pestaña nueva en la ventana actual">
 <!ENTITY newWindowGroupTab.accesskey "t">
 <!ENTITY externalGroupTab.accesskey "n">
+
 <!ENTITY openWindow.label "Una ventana nueva">
 <!ENTITY newWindowGroupWindow.accesskey "v">
 <!ENTITY externalGroupWindow.accesskey "e">
+
 <!ENTITY divertAll.label "Convertir siempre ventanas en pestañas">
 <!ENTITY divertAll.accesskey "C">
 <!ENTITY divertNoFeatures.label "No convertir ventanas personalizadas en pestañas">

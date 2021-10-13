@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,10 +15,6 @@ webrtc-sharing-window = 他のプログラムのウィンドウを共有して�
 webrtc-sharing-browser-window = { -brand-short-name } を共有してます。
 webrtc-sharing-screen = 全画面を共有しています。
 webrtc-stop-sharing-button = 共有を停止
-webrtc-microphone-button =
-  .title = マイクが共有されています。クリックすると共有を制御します。
-webrtc-camera-button =
-  .title = カメラが共有されています。クリックすると共有を制御します。
 webrtc-microphone-unmuted =
   .title = マイクをオフにする
 webrtc-microphone-muted =

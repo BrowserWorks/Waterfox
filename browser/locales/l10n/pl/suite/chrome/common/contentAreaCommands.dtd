@@ -1,12 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!-- Context Menu -->
-<!ENTITY popupWindowRejectCmd.label "Blokuj wyświetlanie wyskakujących okien przez tę witrynę">
-<!ENTITY popupWindowRejectCmd.accesskey "o">
-<!ENTITY popupWindowAllowCmd.label "Zezwalaj na wyświetlanie wyskakujących okien przez tę witrynę">
-<!ENTITY popupWindowAllowCmd.accesskey "o">
 <!ENTITY openLinkCmdInTab.label "Otwórz odnośnik w nowej karcie">
 <!ENTITY openLinkCmdInTab.accesskey "k">
 <!ENTITY openLinkCmd.label "Otwórz odnośnik w nowym oknie">
@@ -153,6 +148,7 @@ items are mutually exclusive. -->
 <!ENTITY spellDictionaries.accesskey "S">
 <!ENTITY spellAddDictionaries.label "Pobierz więcej słowników…">
 <!ENTITY spellAddDictionaries.accesskey "P">
+
 <!-- Developer Tools -->
 <!ENTITY devtoolsInspect.label "Zbadaj element">
 <!ENTITY devtoolsInspect.accesskey "Z">

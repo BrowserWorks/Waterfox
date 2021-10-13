@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,11 @@
 experimental-features-css-masonry2 =
     .label = CSS: Masonry Layout
 experimental-features-css-masonry-description = Engedélyezi a kísérleti CSS Masonry Layout funkció támogatását. A funkció magas szintű leírásához lásd a <a data-l10n-name="explainer">magyarázót</a>. Visszajelzés küldéséhez szóljon hozzá <a data-l10n-name="w3c-issue">ehhez a GitHub jegyhez</a> vagy <a data-l10n-name="bug">ehhez a hibajegyhez</a>.
+# The title of the experiment should be kept in English as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS: kaszkádrétegek
+experimental-features-css-cascade-layers-description = Engedélyezi a CSS kaszkádrétegeket. A részletekért lásd a <a data-l10n-name="spec">folyamatban lévő specifikációt</a>. A funkcióval kapcsolatos hibákat jelentse a <a data-l10n-name="bugzilla">1699215-ös számú jegyet</a> blokkolóként.
 # The title of the experiment should be kept in English as it may be referenced
 # by various online articles and is technical in nature.
 experimental-features-web-gpu2 =
@@ -85,9 +90,6 @@ experimental-features-fission-description = A Fission (oldalelszigetelés) a { -
 experimental-features-multi-pip =
     .label = Több kép a képben megjelenítés támogatása
 experimental-features-multi-pip-description = Kísérleti támogatás több „kép a képben” ablak egyidejű használatához.
-experimental-features-http3 =
-    .label = HTTP/3 protokoll
-experimental-features-http3-description = A HTTP/3 protokoll kísérleti támogatása.
 # Search during IME
 experimental-features-ime-search =
     .label = Címsor: az eredmények megjelenítése az IME összeállítása alatt

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,10 +22,10 @@ graph-private-window = { -brand-short-name } 将继续在隐私窗口中拦截�
 graph-week-summary-private-window = 本周 { -brand-short-name } 所拦截跟踪器
 protection-report-webpage-title = 保护信息面板
 protection-report-page-content-title = 保护信息面板
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
-protection-report-page-summary = 当您上网时，{ -brand-short-name } 可在后台保护您的隐私。以下是这些保护的个性化摘要，以及能够用来保护在线安全的各种工具。
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
-protection-report-page-summary-default = 当您上网时，{ -brand-short-name } 可在后台保护您的隐私。以下是这些保护的个性化摘要，以及能够用来保护在线安全的各种工具。
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
+protection-report-page-summary = 当您上网时，{ -brand-short-name } 会在后台保护您的隐私。以下是这些保护的个性化摘要，以及能够用来保护在线安全的各种工具。
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
+protection-report-page-summary-default = 当您上网时，{ -brand-short-name } 会在后台保护您的隐私。以下是这些保护的个性化摘要，以及能够用来保护在线安全的各种工具。
 protection-report-settings-link = 管理您的隐私与安全设置
 etp-card-title-always = 增强型跟踪保护：始终开启
 etp-card-title-custom-not-blocking = 增强型跟踪保护：关闭
@@ -79,8 +79,6 @@ lockwise-scanned-text-no-breached-logins =
        *[other] 您的 { $count } 个密码皆已安全存放。
     }
 lockwise-how-it-works-link = 工作原理
-turn-on-sync = 开启{ -sync-brand-short-name }…
-    .title = 前往“同步”首选项
 monitor-title = 帮您关心数据泄露事故
 monitor-link = 工作原理
 monitor-header-content-no-account = 到 { -monitor-brand-name } 检测您是否处于已知数据外泄事件之中，并在有新外泄事件时收到警报。

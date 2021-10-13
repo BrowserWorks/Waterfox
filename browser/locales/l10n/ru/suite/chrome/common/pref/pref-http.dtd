@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,15 +15,10 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "з">
 <!ENTITY prefPara                            "С помощью этих параметров можно настроить HTTP-соединения так, чтобы увеличить их скорость и/или совместимость с серверами. Например, некоторые прокси-серверы требуют использования HTTP 1.0 (см. примечания к версии).">
 <!ENTITY prefUseragent.label                 "Строка User Agent">
-<!ENTITY prefFirefoxCompat.label             "Сообщать о совместимости с Firefox">
-<!ENTITY prefFirefoxCompat.accesskey         "м">
-<!ENTITY prefLightningShow.label             "Сообщать об установленном Lightning">
-<!ENTITY prefLightningShow.accesskey         "о">
-<!ENTITY prefCompatWarning                   "ПРЕДУПРЕЖДЕНИЕ: отключение этих параметров может привести к некорректной работе веб-сайтов или служб.">
-<!ENTITY prefFirefoxStrict.label             "Представляться как Firefox">
-<!ENTITY prefFirefoxStrict.accesskey         "е">
-<!ENTITY prefFirefoxNone.label               "Представляться как SeaMonkey">
-<!ENTITY prefFirefoxNone.accesskey           "я">
-<!ENTITY prefFirefoxCompat2.label            "Представляться как SeaMonkey и сообщать о совместимости с Firefox">
-<!ENTITY prefFirefoxCompat2.accesskey        "ь">
+<!ENTITY prefWaterfoxStrict.label             "Представляться как Waterfox">
+<!ENTITY prefWaterfoxStrict.accesskey         "е">
+<!ENTITY prefWaterfoxNone.label               "Представляться как SeaMonkey">
+<!ENTITY prefWaterfoxNone.accesskey           "я">
+<!ENTITY prefWaterfoxCompat2.label            "Представляться как SeaMonkey и сообщать о совместимости с Waterfox">
+<!ENTITY prefWaterfoxCompat2.accesskey        "ь">
 <!ENTITY prefCompatWarning2.desc             "ПРЕДУПРЕЖДЕНИЕ: изменение этого параметра может привести к неправильной работе веб-сайтов или служб.">

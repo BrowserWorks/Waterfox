@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,7 +17,7 @@
 <!ENTITY accountManager.close.commandkey     "a">
 <!-- This title must be short, displayed with a big font size -->
 <!ENTITY accountManager.noAccount.title      "Δεν έχει ρυθμιστεί ακόμη λογαριασμός">
-<!ENTITY accountManager.noAccount.description 'Κάντε κλικ στο κουμπί "&accountManager.newAccount.label;" και το &brandShortName; θα σας βοηθήσει να ρυθμίσετε έναν νέο.'>
+<!ENTITY accountManager.noAccount.description "Κάντε κλικ στο κουμπί «&accountManager.newAccount.label;» και το &brandShortName; θα σας βοηθήσει να ρυθμίσετε έναν νέο.">
 <!ENTITY account.autoSignOn.label     "Σύνδεση κατά την εκκίνηση">
 <!ENTITY account.autoSignOn.accesskey "Σ">
 <!ENTITY account.connect.label        "Σύνδεση">
@@ -32,9 +32,9 @@
 <!ENTITY account.movedown.label       "Μετακίνηση κάτω">
 <!ENTITY account.cancelReconnection.label         "Ακύρωση επανασύνδεσης">
 <!ENTITY account.cancelReconnection.accesskey     "Α">
-<!ENTITY account.copyDebugLog.label     "Αντιγραφή αρχείου εντοπισμού σφαλμάτων">
+<!ENTITY account.copyDebugLog.label     "Αντιγραφή αρχείου ελέγχου σφαλμάτων">
 <!ENTITY account.copyDebugLog.accesskey "Α">
-<!ENTITY account.showDebugLog.label     "Εμφάνιση αρχείου εντοπισμού σφαλμάτων">
+<!ENTITY account.showDebugLog.label     "Εμφάνιση αρχείου ελέγχου σφαλμάτων">
 <!ENTITY account.showDebugLog.accesskey "Μ">
 <!ENTITY account.connecting           "Σύνδεση…">
 <!ENTITY account.disconnecting        "Αποσύνδεση…">

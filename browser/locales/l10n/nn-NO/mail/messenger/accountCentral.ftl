@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -52,9 +52,6 @@ import-label = Importer
     .aria-label = Importer data frå andre program
 
 about-paragraph = Thunderbird er den leiande plattformuavhengige e-post- og kalenderklienten basert på open kjeldekode, gratis for bedrifter og personleg bruk. Vi ønskjer at han skal halde seg sikker og verte endå betre. Ein donasjon vil tillate oss å tilsetje utviklarar, betale for infrastruktur, og å fortsetje med forbetringane.
-
-about-paragraph-2 = ,<b>Thunderbird er finansiert av brukarar som deg! Dersom du likar Thunderbird, kan du vurdere å donere. /b> Den beste måten for deg å sikre at Thunderbird blir verande tilgjengeleg, er å
-about-donation = donere
 
 about-paragraph-consider-donation = <b>Thunderbird er finansiert av brukarar som deg! Om du likar Thunderbird, vurder å donere.</b> Den beste måten å sikre at Thunderbird framleis er tilgjengeleg er å <a data-l10n-name="donation-link">donere</a>.
 

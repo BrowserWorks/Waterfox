@@ -1,9 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- Event Menu -->
-<!ENTITY event.new.event                        "Sự kiện Mới…">
+<!ENTITY event.new.event                        "Sự kiện mới…">
 <!ENTITY event.new.event.accesskey              "S">
 
 <!ENTITY event.new.task                         "Nhiệm vụ mới…">
@@ -18,7 +18,7 @@
 <!ENTITY calendar.publish.label                 "Xuất bản…">
 <!ENTITY calendar.publish.accesskey             "b">
 
-<!ENTITY calendar.deletecalendar.label          "Xóa Lịch Đã Chọn…">
+<!ENTITY calendar.deletecalendar.label          "Xóa lịch đã chọn…">
 <!ENTITY calendar.deletecalendar.accesskey      "X">
 <!ENTITY calendar.unsubscribecalendar.label     "Hủy đăng ký lịch đã chọn…">
 <!ENTITY calendar.unsubscribecalendar.accesskey "U">
@@ -33,18 +33,18 @@
 <!ENTITY calendar.menu.customize.label          "Tùy biến…">
 <!ENTITY calendar.menu.customize.accesskey      "T">
 
-<!ENTITY showUnifinderCmd.label                 "Tìm Sự Kiện">
+<!ENTITY showUnifinderCmd.label                 "Tìm sự kiện">
 <!ENTITY showUnifinderCmd.accesskey             "m">
 <!ENTITY showUnifinderCmd.tooltip               "Chuyển đến khung tìm sự kiện">
 
-<!ENTITY calendar.displaytodos.checkbox.label       "Hiện các Tác vụ trong Lịch">
+<!ENTITY calendar.displaytodos.checkbox.label       "Hiển thị tác vụ trong lịch">
 <!ENTITY calendar.displaytodos.checkbox.accesskey   "v">
 
 <!ENTITY goTodayCmd.label                       "Hôm nay">
 <!ENTITY goTodayCmd.accesskey                   "H">
 
-<!ENTITY showCurrentView.label                  "Hiển thị Hiện tại">
+<!ENTITY showCurrentView.label                  "Chế độ xem hiện tại">
 <!ENTITY showCurrentView.accesskey              "H">
 
-<!ENTITY calendar.properties.label              "Thuộc tính Lịch…">
+<!ENTITY calendar.properties.label              "Thuộc tính lịch…">
 <!ENTITY calendar.properties.accesskey          "c">

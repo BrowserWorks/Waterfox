@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -35,6 +35,7 @@
 <!ENTITY tableCaptionRight.label "Po prawej stronie">
 <!ENTITY tableCaptionNone.label "Brak">
 <!ENTITY tableInheritColor.label "(pozostaw bez zaznaczenia, aby było widoczne tło strony)">
+
 <!ENTITY cellSelection.label "Zaznaczenie">
 <!ENTITY cellSelectCell.label "Komórka">
 <!ENTITY cellSelectRow.label "Wiersz">
@@ -63,6 +64,7 @@
 <!ENTITY cellAlignJustify.label "Wyjustowana">
 <!ENTITY cellInheritColor.label "(pozostaw bez zaznaczenia, aby było widoczne tło tabeli)">
 <!ENTITY cellUseCheckboxHelp.label "Użyj pól wyboru, aby wybrać, które z powyższych właściwości zostaną zastosowane do zaznaczonych komórek">
+
 <!ENTITY size.label "Rozmiar">
 <!ENTITY pixels.label "pikseli">
 <!ENTITY backgroundColor.label "Kolor tła:">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,8 +6,8 @@
 # $hostname (String) - Hostname of the website with cert error.
 cert-error-intro = { $hostname } は不正なセキュリティ証明書を使用しています。
 cert-error-mitm-intro = ウェブサイトは証明書で同一性を証明します。この証明書は証明書認証局により発行されます。
-cert-error-mitm-mozilla = { -brand-short-name } は完全にオープンな証明書認証局 (CA) ストアを運営している非営利組織の Mozilla により後援されています。CA ストアは、証明書認証局がユーザーセキュリティのためのベストプラクティスに確実に従うことを助けます。
-cert-error-mitm-connection = { -brand-short-name } はユーザーのオペレーティングシステムにより提供されている証明書ではなく、Mozilla CA ストアを使用して接続の安全性を検証します。そのため、ウイルス対策ソフトウェアやネットワークから Mozilla CA ストア以外の CA により発行されたセキュリティ証明書で接続に割り込まれた場合、その接続は危険とみなされます。
+cert-error-mitm-mozilla = { -brand-short-name } は完全にオープンな証明書認証局 (CA) ストアを運営している非営利組織の Waterfox により後援されています。CA ストアは、証明書認証局がユーザーセキュリティのためのベストプラクティスに確実に従うことを助けます。
+cert-error-mitm-connection = { -brand-short-name } はユーザーのオペレーティングシステムにより提供されている証明書ではなく、Waterfox CA ストアを使用して接続の安全性を検証します。そのため、ウイルス対策ソフトウェアやネットワークから Waterfox CA ストア以外の CA により発行されたセキュリティ証明書で接続に割り込まれた場合、その接続は危険とみなされます。
 cert-error-trust-unknown-issuer-intro = 誰かがこのサイトに偽装しようとしている可能性があります。続行しないでください。
 # Variables:
 # $hostname (String) - Hostname of the website with cert error.

@@ -1,9 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -53,18 +53,16 @@ policy-DisableDeveloperTools = Blocca accesso agli strumenti di sviluppo.
 
 policy-DisableFeedbackCommands = Disattiva i comandi per inviare feedback dal menu Aiuto (“Invia feedback…” e “Segnala un sito ingannevole…”).
 
-policy-DisableFirefoxAccounts = Disattiva i servizi basati sugli { -fxaccount-brand-name }, incluso Sync.
+policy-DisableWaterfoxAccounts = Disattiva i servizi basati sugli { -fxaccount-brand-name }, incluso Sync.
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Disattiva Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableWaterfoxScreenshots = Disattiva Waterfox Screenshots.
 
-policy-DisableFirefoxStudies = Impedisci a { -brand-short-name } di condurre studi.
+policy-DisableWaterfoxStudies = Impedisci a { -brand-short-name } di condurre studi.
 
 policy-DisableForgetButton = Impedisci accesso al pulsante “Dimentica”.
 
 policy-DisableFormHistory = Non conservare la cronologia delle ricerche e dei moduli.
-
-policy-DisableMasterPasswordCreation = Se impostato a “true” non è possibile impostare una password principale.
 
 policy-DisablePrimaryPasswordCreation = Se impostato a “true” non è possibile impostare una password principale.
 
@@ -108,7 +106,7 @@ policy-ExtensionSettings = Gestisci tutti gli aspetti connessi all’installazio
 
 policy-ExtensionUpdate = Attiva o disattiva l’aggiornamento automatico delle estensioni.
 
-policy-FirefoxHome = Configura Firefox Home.
+policy-WaterfoxHome = Configura pagina iniziale di Waterfox.
 
 policy-FlashPlugin = Consenti o nega l’utilizzo del plugin Flash.
 
@@ -135,8 +133,6 @@ policy-LocalFileLinks = Consenti a determinati siti web di usare link a file loc
 policy-ManagedBookmarks = Configura un elenco di segnalibri gestiti da un amministratore e non modificabili dall’utente.
 
 policy-ManualAppUpdateOnly = Consenti solo aggiornamenti manuali e non segnalare all’utente la disponibilità di aggiornamenti.
-
-policy-MasterPassword = Richiedi o impedisci l’utilizzo di una password principale.
 
 policy-PrimaryPassword = Richiedi o impedisci l’utilizzo di una password principale.
 

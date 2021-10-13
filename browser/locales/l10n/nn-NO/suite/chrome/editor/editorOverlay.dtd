@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,8 +11,6 @@
 <!ENTITY pasteNoFormatting.label "Lim inn utan formatering">
 <!ENTITY pasteNoFormatting.accesskey "o">
 <!ENTITY pasteNoFormatting.key "V">
-<!ENTITY pasteAs.label "Lim inn som">
-<!ENTITY pasteAs.accesskey "L">
 <!ENTITY pasteAsQuotationCmd.label "Lim inn som sitat">
 <!ENTITY pasteAsQuotationCmd.accesskey "s">
 <!ENTITY pasteAsQuotationCmd.key "o">
@@ -294,8 +292,6 @@
 <!ENTITY cutToolbarCmd.tooltip "Klipp ut">
 <!ENTITY copyToolbarCmd.tooltip "Kopier">
 <!ENTITY pasteToolbarCmd.tooltip "Lim inn">
-<!ENTITY printToolbarCmd.label "Skriv ut">
-<!ENTITY printToolbarCmd.tooltip "Skriv ut denne sida">
 <!ENTITY findToolbarCmd.label "Søk">
 <!ENTITY findToolbarCmd.tooltip "Søk etter tekst på sida">
 <!ENTITY spellToolbarCmd.label "Stavekontroll">
@@ -313,8 +309,6 @@
 <!ENTITY colorButtons.title "Fargar">
 <!ENTITY TextColorButton.tooltip "Vel tekstfarge">
 <!ENTITY BackgroundColorButton.tooltip "Vel bakgrunnsfarge">
-<!ENTITY throbber.tooltip "Gå til heimesida til &vendorShortName;">
-<!ENTITY throbber.tooltip2 "Gå til heimesida til &brandShortName;">
 <!ENTITY HighlightColorButton.label "Merkepenn">
 <!ENTITY HighlightColorButton.tooltip "Vel uthevingsfarge for tekst">
 

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -45,6 +45,10 @@
      - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Jelenleg csak azután engedélyezheti ezt a beállítást, ha úgy állította be a naptárat a tulajdonságok párbeszédablakon, hogy a kiszolgáló intézi az ütemezést.">
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Ez a beállítás csak akkor érhető el, ha a naptárkiszolgáló kezeli az ütemezést. Az engedélyezés után visszaáll szabványos e-mail alapú ütemezésre, ahelyett hogy a kiszolgálóra hagyná azt.">
+
+<!-- The notifications settings in the properties dialog -->
+<!ENTITY lightning.calendarproperties.notifications.label                   "Értesítések">
+<!ENTITY lightning.calendarproperties.globalNotifications.label             "Globális értesítési beállítások…">
 
 <!-- iMIP Bar (meeting support) -->
 <!ENTITY lightning.imipbar.btnAccept.label                                  "Elfogadás">

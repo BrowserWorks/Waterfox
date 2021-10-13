@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,8 +8,6 @@ third-party-intro =
     Esta página mostra os módulos de terceiros que foram injetados em seu
     { -brand-short-name }. Qualquer módulo que não seja assinado pela Microsoft ou
     pela { -vendor-short-name } é considerado um módulo de terceiros.
-third-party-header-module-list = Lista de módulos
-third-party-header-loading-events = Carregando eventos
 third-party-message-empty = Nenhum módulo de terceiros foi detectado.
 third-party-message-no-duration = Não gravado
 third-party-detail-version = Versão do arquivo
@@ -36,7 +34,7 @@ third-party-warning-icon =
 third-party-status-loaded = Carregado
 third-party-status-blocked = Bloqueado
 third-party-status-redirected = Redirecionado
-third-party-button-copy-to-clipboard = Copiar dados brutos para a área de transferência
+third-party-button-copy-to-clipboard = Copiar dados brutos para área de transferência
 third-party-button-reload = Recarregar com informações do sistema
     .title = Recarregar com informações do sistema
 third-party-button-open =

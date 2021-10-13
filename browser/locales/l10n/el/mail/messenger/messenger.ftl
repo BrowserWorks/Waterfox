@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,9 +22,6 @@ content-tab-security-broken-icon =
 
 ## Toolbar
 
-addons-and-themes-button =
-    .label = Πρόσθετα και θέματα
-    .tooltip = Διαχειριστείτε τα πρόσθετά σας
 addons-and-themes-toolbarbutton =
     .label = Πρόσθετα και θέματα
     .tooltiptext = Διαχείριση των προσθέτων σας
@@ -130,3 +127,9 @@ caret-browsing-prompt-check-text = Να μην γίνει ξανά ερώτησ�
 repair-text-encoding-button =
     .label = Επιδιόρθωση κωδικοποίησης κειμένου
     .tooltiptext = Υπόθεση σωστής κωδικοποίησης κειμένου από το περιεχόμενο του μηνύματος
+
+## no-reply handling
+
+no-reply-title = Δεν υποστηρίζεται απάντηση
+no-reply-message = Η διεύθυνση απάντησης ({ $email }) δεν φαίνεται να είναι εποπτεύεται. Τα μηνύματα σε αυτήν τη διεύθυνση πιθανότατα δεν θα διαβαστούν από κανέναν.
+no-reply-reply-anyway-button = Απάντηση ούτως ή άλλως

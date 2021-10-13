@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,14 +20,6 @@ toolbar-context-menu-bookmark-selected-tabs =
 toolbar-context-menu-select-all-tabs =
     .label = Selecionar todos os separadores
     .accesskey = S
-toolbar-context-menu-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] Reabrir separador fechado
-            [one] Reabrir separador fechado
-           *[other] Reabrir separadores fechados
-        }
-    .accesskey = b
 toolbar-context-menu-reopen-closed-tabs =
     .label =
         { $tabCount ->
@@ -43,7 +35,7 @@ toolbar-context-menu-remove-extension =
     .label = Remover extensão
     .accesskey = v
 # This label is used in the extensions toolbar buttons context menus,
-# a user can use this command to submit to Mozilla an abuse report
+# a user can use this command to submit to Waterfox an abuse report
 # related to that extension. "Report" is a verb.
 toolbar-context-menu-report-extension =
     .label = Reportar extensão
@@ -54,9 +46,6 @@ toolbar-context-menu-report-extension =
 toolbar-context-menu-pin-to-overflow-menu =
     .label = Afixar ao menu de excesso
     .accesskey = A
-toolbar-context-menu-auto-hide-downloads-button =
-    .label = Ocultar automaticamente na barra de ferramentas
-    .accesskey = a
 toolbar-context-menu-auto-hide-downloads-button-2 =
     .label = Ocultar botão quando vazio
     .accesskey = z
@@ -81,3 +70,6 @@ toolbar-context-menu-bookmarks-toolbar-on-new-tab-2 =
 toolbar-context-menu-bookmarks-show-other-bookmarks =
     .label = Mostrar outros marcadores
     .accesskey = r
+toolbar-context-menu-menu-bar-cmd =
+    .toolbarname = Barra de menu
+    .accesskey = m

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -6,14 +6,13 @@
 <!ENTITY readMsgsLink.label           "Ανάγνωση μηνυμάτων">
 <!ENTITY composeMsgLink.label         "Σύνταξη νέου μηνύματος">
 
-<!ENTITY newsSectionHdr.label         "Ομάδες συζήτησης">
-<!ENTITY subscribeNewsLink.label      "Διαχείριση συνδρομών ομάδων συζήτησης">
+<!ENTITY newsSectionHdr.label         "Ομάδες συζητήσεων">
+<!ENTITY subscribeNewsLink.label      "Διαχείριση συνδρομών ομάδων συζητήσεων">
 
 <!ENTITY feedsSectionHdr.label        "Ροές">
 <!ENTITY subscribeFeeds.label         "Διαχείριση συνδρομών">
 
 <!ENTITY chat.label                   "Συνομιλία">
-<!ENTITY movemail.label               "Movemail">
 
 <!ENTITY accountsSectionHdr.label     "Λογαριασμοί">
 <!ENTITY subscribeImapFolders.label   "Διαχείριση συνδρομών φακέλων">
@@ -23,5 +22,5 @@
 <!ENTITY advFeaturesSectionHdr.label  "Προηγμένες λειτουργίες">
 <!ENTITY searchMsgsLink.label         "Αναζήτηση μηνυμάτων">
 <!ENTITY filtersLink.label            "Διαχείριση φίλτρων μηνυμάτων">
-<!ENTITY junkSettings.label           "Ρυθμίσεις ανεπιθύμητης αλληλογραφίας">
-<!ENTITY offlineLink.label            "Ρυθμίσεις για εργασία χωρίς σύνδεση">
+<!ENTITY junkSettings.label           "Ρυθμίσεις ανεπιθύμητων email">
+<!ENTITY offlineLink.label            "Ρυθμίσεις εργασίας εκτός σύνδεσης">

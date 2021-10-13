@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -48,9 +48,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = علّم اللسان
     .accesskey = ع
-reopen-in-container =
-    .label = أعِد فتحه في الحاوية
-    .accesskey = ع
 tab-context-open-in-new-container-tab =
     .label = افتح في لسانٍ حاوٍ جديد
     .accesskey = س
@@ -75,30 +72,6 @@ tab-context-share-more =
 ## Variables:
 ##  $tabCount (Number): the number of tabs that are affected by the action.
 
-tab-context-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] أعِد فتح اللسان
-            [zero] أعِد فتح الألسنة
-            [one] أعِد فتح اللسان
-            [two] أعِد فتح اللسانين
-            [few] أعِد فتح الألسنة
-            [many] أعِد فتح الألسنة
-           *[other] أعِد فتح الألسنة
-        }
-    .accesskey = ع
-close-tab =
-    .label = أغلِق اللسان
-    .accesskey = غ
-close-tabs =
-    .label = أغلِق الألسنة
-    .accesskey = غ
-move-tabs =
-    .label = انقل الألسنة
-    .accesskey = ق
-move-tab =
-    .label = انقل اللسان
-    .accesskey = ق
 tab-context-reopen-closed-tabs =
     .label =
         { $tabCount ->
@@ -135,3 +108,15 @@ tab-context-move-tabs =
            *[other] انقل الألسنة
         }
     .accesskey = ن
+
+tab-context-send-tabs-to-device =
+    .label =
+        { $tabCount ->
+            [zero] لا تُرسل شيئا إلى الجهاز
+            [one] أرسِل اللسان إلى الجهاز
+            [two] أرسِل اللسانين إلى الجهاز
+            [few] أرسِل { $tabCount } ألسنة إلى الجهاز
+            [many] أرسِل { $tabCount } لسانا إلى الجهاز
+           *[other] أرسِل { $tabCount } لسان إلى الجهاز
+        }
+    .accesskey = س

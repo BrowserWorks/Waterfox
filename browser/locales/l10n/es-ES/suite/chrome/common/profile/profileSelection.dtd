@@ -1,27 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
 <!--
 
- This Source Code Form is subject to the terms of the Mozilla Public
+ This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowTitle.label "Seleccione un perfil de usuario">
 <!ENTITY profileManager.title "Administrador de perfiles de &brandShortName;">
+
 <!ENTITY manage.label "Administrar perfiles…">
 <!ENTITY manage.accesskey "M">
 <!ENTITY select.label "Usar perfil">
+
 <!ENTITY availableProfiles.label "Perfiles disponibles">
+
 <!ENTITY introStart.label "Para acceder a su perfil personal, que contiene sus mensajes guardados, configuración y otra información personalizada, elija su perfil de la lista y pulse &start.label; para iniciar su sesión.">
 <!ENTITY introSwitch.label "Para cambiar a otro perfil, que contiene mensajes guardados, configuración y otra información personalizada, elija ese perfil de la lista y pulse &select.label; para comenzar a usar ese perfil.">
 <!ENTITY profileManagerText.label "&brandShortName; guarda información sobre sus configuraciones, preferencias, marcadores, mensajes y otros elementos en su perfil de usuario.">
+
 <!ENTITY autoSelect.label "Usar este perfil como predeterminado">
 <!ENTITY autoSelect.accesskey "U">
+
 <!ENTITY start.label "Iniciar &brandShortName;">
 <!ENTITY exit.label "Salir">
+
 <!ENTITY newButton.label "Crear perfil…">
 <!ENTITY newButton.accesskey "C">
 <!ENTITY renameButton.label "Renombrar perfil…">
 <!ENTITY renameButton.accesskey "R">
 <!ENTITY deleteButton.label "Eliminar perfil…">
 <!ENTITY deleteButton.accesskey "E">
+
 <!ENTITY offlineState.label "Trabajar sin conexión">
 <!ENTITY offlineState.accesskey "T">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,6 @@ about-addressbook-title = Címjegyzék
 
 about-addressbook-toolbar-new-address-book =
     .label = Új címjegyzék
-about-addressbook-toolbar-new-carddav-address-book =
-    .label = Új CardDAV-címjegyzék
-about-addressbook-toolbar-new-ldap-address-book =
-    .label = Új LDAP-címjegyzék
 about-addressbook-toolbar-add-carddav-address-book =
     .label = CardDAV-címjegyzék hozzáadása
 about-addressbook-toolbar-add-ldap-address-book =
@@ -20,6 +16,8 @@ about-addressbook-toolbar-new-contact =
     .label = Új névjegy
 about-addressbook-toolbar-new-list =
     .label = Új lista
+about-addressbook-toolbar-import =
+    .label = Importálás
 
 ## Books
 
@@ -30,10 +28,14 @@ about-addressbook-books-context-synchronize =
     .label = Szinkronizálás
 about-addressbook-books-context-print =
     .label = Nyomtatás…
+about-addressbook-books-context-export =
+    .label = Exportálás…
 about-addressbook-books-context-delete =
     .label = Törlés
 about-addressbook-books-context-remove =
     .label = Eltávolítás
+about-addressbook-books-context-startup-default =
+    .label = Alapértelmezett indulási könyvtár
 about-addressbook-confirm-delete-book-title = Címjegyzék törlése
 # Variables:
 # $name (String) - Name of the address book to be deleted.
@@ -67,6 +69,8 @@ about-addressbook-sort-email-ascending =
     .label = Rendezés e-mail-cím szerint (A > Z)
 about-addressbook-sort-email-descending =
     .label = Rendezés e-mail-cím szerint (Z > A)
+about-addressbook-cards-context-write =
+    .label = Írás
 about-addressbook-confirm-delete-mixed-title = Névjegyek és listák törlése
 # Variables:
 # $count (Number) - The number of contacts and lists to be deleted. Always greater than 1.
@@ -128,3 +132,5 @@ about-addressbook-details-phone-numbers-header = Telefonszámok
 about-addressbook-details-home-address-header = Otthoni cím
 about-addressbook-details-work-address-header = Munkahelyi cím
 about-addressbook-details-other-info-header = Egyéb információk
+about-addressbook-prompt-to-save-title = Menti a változtatásokat?
+about-addressbook-prompt-to-save = Szeretné menteni a módosításokat?

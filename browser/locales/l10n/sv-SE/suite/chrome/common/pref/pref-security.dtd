@@ -1,9 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
-<!ENTITY pref.security.title                      "Integritet och säkerhet">
+<!ENTITY pref.security.title              "Integritet och säkerhet">
 
 <!ENTITY tracking.label                   "Spåra användare">
 <!ENTITY trackingIntro.label              "Webbplatser kan spåra hur du använder dem, och därmed påverka din integritet.">
@@ -14,7 +14,6 @@
 <!ENTITY trackProtect.accesskey           "h">
 <!ENTITY warnTrackContent.label           "Varna mig när kända spårningsåtgärder upptäcks">
 <!ENTITY warnTrackContent.accesskey       "V">
-
 
 <!ENTITY geoLocation.label                "Positionsberoende surfning">
 <!ENTITY geoIntro.label                   "Webbplatser kan be om mer information om din aktuella position.">
@@ -38,3 +37,6 @@
 
 <!ENTITY blockWebForgeries.label          "Blockera rapporterade webbförfalskningar (Phishing)">
 <!ENTITY blockWebForgeries.accesskey      "f">
+
+<!ENTITY blockAutoRefresh.label           "Varna när webbplatser försöker styra om eller hämta om sidan">
+<!ENTITY blockAutoRefresh.accesskey       "a">

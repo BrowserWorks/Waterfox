@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -30,6 +30,12 @@
 <!ENTITY restoreTabsAtATime.label       "aba(s) de cada vez">
 <!ENTITY restoreDeferred.label          "Apenas restaurar abas quando eu precisar delas">
 <!ENTITY restoreDeferred.accesskey      "A">
+
+<!ENTITY siteIcons.label                "Ícones de sites">
+<!ENTITY useSiteIcons.label             "Exibir ícones de sites">
+<!ENTITY useSiteIcons.accesskey         "x">
+<!ENTITY useFavIcons.label              "Tentar usar o favicon do servidor quando a página não define um ícone">
+<!ENTITY useFavIcons.accesskey          "T">
 
 <!ENTITY homePageIntro.label            "O comando Página Inicial abre esta página ou grupo de páginas.">
 <!ENTITY useCurrent.label               "Usar a página atual">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -32,7 +32,6 @@
 <!ENTITY DisplayName.label              "Weergave:">
 <!ENTITY DisplayName.accesskey          "g">
 <!ENTITY preferDisplayName.label        "Altijd weergavenaam boven berichtkop verkiezen">
-<!ENTITY preferDisplayName.accesskey    "z">
 <!ENTITY preferDisplayName2.accesskey   "z">
 <!ENTITY NickName.label                 "Bijnaam:">
 <!ENTITY NickName.accesskey             "B">
@@ -46,8 +45,6 @@
 <!ENTITY PlainText.label                "Platte tekst">
 <!ENTITY HTML.label                     "HTML">
 <!ENTITY Unknown.label                  "Onbekend">
-<!ENTITY ScreenName.label               "Schermnaam:">
-<!ENTITY ScreenName.accesskey           "S">
 
 <!ENTITY chatName.label                 "Chatnaam:">
 
@@ -145,7 +142,6 @@
 
 <!ENTITY Photo.tab                      "Foto">
 <!ENTITY Photo.accesskey                "F">
-<!ENTITY PhotoDesc.label                "Kies een van de volgende opties:">
 <!ENTITY GenericPhoto.label             "Algemene foto">
 <!ENTITY GenericPhoto.accesskey         "e">
 <!ENTITY DefaultPhoto.label             "Standaard">

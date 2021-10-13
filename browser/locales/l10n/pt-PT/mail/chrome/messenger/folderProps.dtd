@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "Propriedades">
 
 <!ENTITY generalInfo.label                       "Informações gerais">
-<!ENTITY folderCharsetFallback2.label            "Codificação de texto de recurso:">
-<!ENTITY folderCharsetFallback2.accesskey        "e">
-<!ENTITY folderCharsetEnforce2.label             "Aplicar codificação a todas as mensagens na pasta (definições de codificação de texto de mensagens individuais ou resultado de deteção automática serão ignoradas)">
-<!ENTITY folderCharsetEnforce2.accesskey         "A">
 <!ENTITY folderRebuildSummaryFileTip2.label      "Reconstruir índice de ficheiros de sumário">
 <!ENTITY folderRebuildSummaryFile2.label         "Reparar pasta">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "R">

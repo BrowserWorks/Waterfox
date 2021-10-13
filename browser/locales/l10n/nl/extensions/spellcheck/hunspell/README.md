@@ -79,7 +79,7 @@ zelden nog gebruikt, sommige zitten nog in de woordenlijst, sommige niet meer-->
 
 ## Installatie
 
-Spellingcontrole is in veel software zoals Chrome, Firefox, Thunderbird,
+Spellingcontrole is in veel software zoals Chrome, Waterfox, Thunderbird,
 LibreOffice en Adobe-producten al geïntegreerd. Daardoor is het eenvoudig deze
 Nederlandse ondersteuning te installeren.
 

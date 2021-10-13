@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,25 +12,30 @@ appmenuitem-update-banner3 =
     .label-update-unsupported = 更新不可 — システムの互換性なし
     .label-update-restart = 更新可能 — 今すぐ再起動
 appmenuitem-protection-dashboard-title = プライバシー保護ダッシュボード
-appmenuitem-customize-mode =
-    .label = カスタマイズ...
-
-## Zoom Controls
-
 appmenuitem-new-tab =
     .label = 新しいタブ
 appmenuitem-new-window =
     .label = 新しいウィンドウ
 appmenuitem-new-private-window =
     .label = 新しいプライベートウィンドウ
+appmenuitem-history =
+    .label = 履歴
+appmenuitem-downloads =
+    .label = ダウンロード
 appmenuitem-passwords =
     .label = パスワード
 appmenuitem-addons-and-themes =
     .label = アドオンとテーマ
+appmenuitem-print =
+    .label = 印刷...
 appmenuitem-find-in-page =
     .label = このページを検索...
+appmenuitem-zoom =
+    .value = ズーム
 appmenuitem-more-tools =
     .label = その他のツール
+appmenuitem-help =
+    .label = ヘルプ
 appmenuitem-exit2 =
     .label = 終了
 appmenu-menu-button-closed2 =
@@ -53,15 +58,31 @@ appmenuitem-zoom-reduce =
 appmenuitem-fullscreen =
     .label = 全画面表示
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
-fxa-toolbar-sync-now =
-    .label = 今すぐ同期
 appmenu-remote-tabs-sign-into-sync =
     .label = ログインして同期...
 appmenu-remote-tabs-turn-on-sync =
     .label = 同期をオンにする...
+# This is shown after the tabs list if we can display more tabs by clicking on the button
+appmenu-remote-tabs-showmore =
+    .label = さらにタブを表示
+    .tooltiptext = この端末からのタブをさらに表示します
+# This is shown beneath the name of a device when that device has no open tabs
+appmenu-remote-tabs-notabs = タブがありません
+# This is shown when Sync is configured but syncing tabs is disabled.
+appmenu-remote-tabs-tabsnotsyncing = タブの同期をオンにすると、あなたの他の端末のタブ一覧が表示されます。
+appmenu-remote-tabs-opensettings =
+    .label = 設定
+# This is shown when Sync is configured but this appears to be the only device attached to
+# the account. We also show links to download Waterfox for android/ios.
+appmenu-remote-tabs-noclients = 他の端末のタブを表示しますか？
+appmenu-remote-tabs-connectdevice =
+    .label = 他の端末を接続
+appmenu-remote-tabs-welcome = 他の端末のタブ一覧を表示する。
+appmenu-remote-tabs-unverified = あなたのアカウントは検証する必要があります。
 appmenuitem-fxa-toolbar-sync-now2 = 今すぐ同期
+appmenuitem-fxa-sign-in = { -brand-product-name } にログイン
 appmenuitem-fxa-manage-account = アカウントを管理
 appmenu-fxa-header2 = { -fxaccount-brand-name }
 # Variables
@@ -86,10 +107,13 @@ whatsnew-panel-footer-checkbox =
     .label = 新機能を通知する
     .accesskey = f
 
-## The Firefox Profiler – The popup is the UI to turn on the profiler, and record
+## The Waterfox Profiler – The popup is the UI to turn on the profiler, and record
 ## performance profiles. To enable it go to profiler.firefox.com and click
 ## "Enable Profiler Menu Button".
 
+profiler-popup-button-idle =
+    .label = プロファイラー
+    .tooltiptext = パフォーマンスプロファイルを記録します
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -98,10 +122,15 @@ profiler-popup-description-title =
     .value = 記録、分析、共有
 profiler-popup-description = プロファイルを公開してあなたのチームと共有し、パフォーマンス問題に協力しましょう。
 profiler-popup-learn-more = 詳細
+profiler-popup-learn-more-button =
+    .label = 詳細
 profiler-popup-settings =
     .value = 設定
 # This link takes the user to about:profiling, and is only visible with the Custom preset.
 profiler-popup-edit-settings = 設定を編集...
+# This link takes the user to about:profiling, and is only visible with the Custom preset.
+profiler-popup-edit-settings-button =
+    .label = 設定を編集...
 profiler-popup-disabled = プライベートウィンドウを開いているため、プロファイラーは現在無効です。
 profiler-popup-recording-screen = 記録中...
 # The profiler presets list is generated elsewhere, but the custom preset is defined
@@ -124,6 +153,15 @@ profiler-popup-capture-shortcut =
         [macos] ⌃⇧2
        *[other] Ctrl+Shift+2
     }
+
+## Profiler presets
+## They are shown in the popup's select box.
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
 
 ## History panel
 

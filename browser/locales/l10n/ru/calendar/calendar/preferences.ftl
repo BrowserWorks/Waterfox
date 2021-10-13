@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-title = Календарь
 calendar-title-reminder = Напоминания
+calendar-title-notification = Уведомления
 calendar-title-category = Категории
 dateformat-label =
     .value = Формат даты:
@@ -133,6 +134,9 @@ task-due-label =
 edit-intab-label =
     .label = Редактировать события и задачи во вкладке, а не в диалоговом окне.
     .accesskey = а
+prompt-delete-label =
+    .label = Запрашивать перед удалением событий и задач.
+    .accesskey = ш
 accessibility-legend = Специальные возможности
 accessibility-colors-label =
     .label = Оптимизировать цвета для людей с ограниченными возможностями
@@ -179,6 +183,7 @@ event-alarm-time-label =
 task-alarm-time-label =
     .value = Оповещать о задаче до её наступления за:
     .accesskey = ч
+calendar-notifications-customize-label = Уведомления можно настроить для каждого календаря в окне свойств календаря.
 category-new-label = Новая категория
 category-edit-label = Изменить категорию
 category-overwrite-title = Предупреждение: Одинаковые названия

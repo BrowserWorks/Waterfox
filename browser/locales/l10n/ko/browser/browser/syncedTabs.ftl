@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = 다른 기기에서도 여기에서 열
 synced-tabs-sidebar-intro = 다른 기기의 탭 목록을 봅니다.
 synced-tabs-sidebar-unverified = 계정 확인이 필요합니다.
 synced-tabs-sidebar-notabs = 열린 탭 없음
-synced-tabs-sidebar-openprefs = { -sync-brand-short-name } 설정 열기
 synced-tabs-sidebar-open-settings = Sync 설정 열기
 synced-tabs-sidebar-tabsnotsyncing = 다른 기기의 탭 목록을 보려면 탭 동기화를 켜세요.
 synced-tabs-sidebar-connect-another-device = 다른 기기 연결
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = 지금 동기화
     .accesskey = S
-fxa-sign-in = { -sync-brand-short-name }에 로그인
-turn-on-sync = { -sync-brand-short-name } 켜기
 synced-tabs-fxa-sign-in = Sync에 로그인
 synced-tabs-turn-on-sync = Sync 켜기

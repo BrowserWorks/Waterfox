@@ -1,8 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowTitle.label "Właściwości przycisku">
+
 <!ENTITY Settings.label    "Ustawienia">
 
 <!ENTITY ButtonType.label         "Typ">
@@ -10,6 +11,7 @@
 <!ENTITY submit.value             "Wyślij">
 <!ENTITY reset.value              "Zresetuj">
 <!ENTITY button.value             "Przycisk">
+
 <!ENTITY ButtonName.label         "Nazwa:">
 <!ENTITY ButtonName.accesskey     "N">
 <!ENTITY ButtonValue.label        "Wartość:">
@@ -20,5 +22,6 @@
 <!ENTITY ButtonDisabled.accesskey "y">
 <!ENTITY AccessKey.label          "Klawisz dostępu:">
 <!ENTITY AccessKey.accesskey      "K">
+
 <!ENTITY RemoveButton.label       "Usuń przycisk">
 <!ENTITY RemoveButton.accesskey   "U">

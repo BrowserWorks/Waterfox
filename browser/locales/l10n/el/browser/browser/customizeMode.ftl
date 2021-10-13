@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,9 +22,7 @@ customize-mode-uidensity-menu-touch =
     .accesskey = Α
     .tooltiptext = Αφή
 customize-mode-uidensity-auto-touch-mode-checkbox =
-    .label = Χρήση επιλογής "Αφή" για τη λειτουργία tablet
-customize-mode-extra-drag-space =
-    .label = Χώρος μεταφοράς
+    .label = Χρήση επιλογής «Αφή» για τη λειτουργία tablet
 customize-mode-lwthemes =
     .label = Θέματα
 customize-mode-overflow-list-description = Σύρετε και εναποθέστε στοιχεία εδώ για να τα έχετε πάντα κοντά, αλλά όχι στη γραμμή εργαλείων…
@@ -32,10 +30,6 @@ customize-mode-uidensity-menu-normal =
     .label = Κανονικό
     .accesskey = Κ
     .tooltiptext = Κανονικό
-customize-mode-uidensity-menu-compact =
-    .label = Πολύ πυκνό
-    .accesskey = Π
-    .tooltiptext = Πολύ πυκνό
 customize-mode-uidensity-menu-compact-unsupported =
     .label = Πολύ πυκνό (δεν υποστηρίζεται)
     .accesskey = Π
@@ -47,6 +41,7 @@ customize-mode-undo-cmd =
     .label = Αναίρεση
 customize-mode-lwthemes-my-themes =
     .value = Τα θέματά μου
+customize-mode-lwthemes-link = Διαχείριση θεμάτων
 customize-mode-touchbar-cmd =
     .label = Προσαρμογή γραμμής αφής…
 customize-mode-downloads-button-autohide =

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,9 +16,6 @@ safeb-palm-see-details-label = 詳細を見る
 safeb-blocked-phishing-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> は、<a data-l10n-name='error_desc_link'>詐欺サイトとして報告されています</a>。もしくは、<a data-l10n-name='report_detection'>誤検知を報告</a> または <a data-l10n-name='ignore_warning_link'>危険性を無視</a> して、この安全でないサイトを訪れることができます。
 safeb-blocked-phishing-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> は、<a data-l10n-name='error_desc_link'>詐欺サイトとして報告されています</a>。もしくは、<a data-l10n-name='report_detection'>誤検知を報告</a> できます。
 safeb-blocked-phishing-page-learn-more = 詐欺サイトとフィッシング詐欺についての詳細は、<a data-l10n-name='learn_more_link'>www.antiphishing.org</a> をご覧ください。{ -brand-short-name } のフィッシング詐欺とマルウェアからの保護機能についての詳細は、<a data-l10n-name='firefox_support'>support.mozilla.org</a> をご覧ください。
-safeb-blocked-malware-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> は、<a data-l10n-name='error_desc_link'>悪意のあるソフトウェアを配布するサイトとして報告されています</a>。もしくは、<a data-l10n-name='report_detection'>誤検知を報告</a> または <a data-l10n-name='ignore_warning_link'>危険性を無視</a> して、この安全でないサイトを訪れることができます。
-safeb-blocked-malware-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> は、<a data-l10n-name='error_desc_link'>悪意のあるソフトウェアを配布するサイトとして報告されています</a>。もしくは、<a data-l10n-name='report_detection'>誤検知を報告</a> できます。
-safeb-blocked-malware-page-learn-more = ウイルスや他の悪意のある有害なウェブコンテンツと、あなたのコンピューターを保護する方法の詳細は、<a data-l10n-name='learn_more_link'>StopBadware.org</a> をご覧ください。また、{ -brand-short-name } のフィッシング詐欺とマルウェアからの保護機能についての詳細は、<a data-l10n-name='firefox_support'>support.mozilla.org</a> をご覧ください。
 safeb-blocked-malware-page-error-desc-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> は、<a data-l10n-name='error_desc_link'>悪意のあるソフトウェアを配布するサイトとして報告されています</a>。<a data-l10n-name='ignore_warning_link'>危険性を無視</a> して、この安全でないサイトを訪れることができます。
 safeb-blocked-malware-page-error-desc-no-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> は、<a data-l10n-name='error_desc_link'>悪意のあるソフトウェアを配布するサイトとして報告されています</a>。
 safeb-blocked-malware-page-learn-more-sumo = { -brand-short-name } の偽装サイトとマルウェアからの防護機能の詳細は、<a data-l10n-name='firefox_support'>support.mozilla.org</a> をご覧ください。

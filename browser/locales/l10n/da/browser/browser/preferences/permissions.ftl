@@ -1,63 +1,85 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 permissions-window =
     .title = Undtagelser
     .style = width: 36em
+
 permissions-close-key =
     .key = w
+
 permissions-address = Adresse på websted
     .accesskey = d
+
 permissions-block =
     .label = Bloker
     .accesskey = B
+
 permissions-session =
     .label = Tillad for session
     .accesskey = s
+
 permissions-allow =
     .label = Tillad
     .accesskey = T
+
+permissions-button-off =
+    .label = Slå fra
+    .accesskey = S
+
+permissions-button-off-temporarily =
+    .label = Slå midlertidigt fra
+    .accesskey = m
+
 permissions-site-name =
     .label = Websted
+
 permissions-status =
     .label = Status
+
 permissions-remove =
     .label = Fjern websted
     .accesskey = F
+
 permissions-remove-all =
     .label = Fjern alle websteder
     .accesskey = a
-permissions-button-cancel =
-    .label = Fortryd
-    .accesskey = o
-permissions-button-ok =
-    .label = Gem ændringer
-    .accesskey = G
+
 permission-dialog =
     .buttonlabelaccept = Gem ændringer
     .buttonaccesskeyaccept = G
+
 permissions-autoplay-menu = Standard for alle websteder:
+
 permissions-searchbox =
     .placeholder = Søg efter websted
+
 permissions-capabilities-autoplay-allow =
     .label = Tillad lyd og video
 permissions-capabilities-autoplay-block =
     .label = Bloker lyd
 permissions-capabilities-autoplay-blockall =
     .label = Bloker lyd og video
+
 permissions-capabilities-allow =
     .label = Tillad
 permissions-capabilities-block =
     .label = Bloker
 permissions-capabilities-prompt =
     .label = Spørg altid
+
 permissions-capabilities-listitem-allow =
     .value = Tillad
 permissions-capabilities-listitem-block =
     .value = Bloker
 permissions-capabilities-listitem-allow-session =
     .value = Tillad for session
+
+permissions-capabilities-listitem-off =
+    .value = Fra
+permissions-capabilities-listitem-off-temporarily =
+    .value = Midlertidigt fra
 
 ## Invalid Hostname Dialog
 
@@ -77,6 +99,13 @@ permissions-exceptions-cookie-window =
     .title = Undtagelser - cookies og websteds-data
     .style = { permissions-window.style }
 permissions-exceptions-cookie-desc = Du kan angive, hvilke websteder der altid eller aldrig har tilladelse til at anvende cookies og websteds-data. Indtast adressen på webstedet, du ønsker at angive tilladelser for, og klik på Bloker, Tillad for sessionen eller Tillad
+
+## Exceptions - HTTPS-Only Mode
+
+permissions-exceptions-https-only-window =
+    .title = Undtagelser - Tilstanden Kun-HTTPS
+    .style = { permissions-window.style }
+permissions-exceptions-https-only-desc = Du kan slå tilstanden Kun-HTTPS fra for bestemte websteder. { -brand-short-name } vil ikke forsøge at opgradere til en sikker forbindelse for de valgte websteder. Undtagelser gælder ikke for private vinduer.
 
 ## Exceptions - Pop-ups
 

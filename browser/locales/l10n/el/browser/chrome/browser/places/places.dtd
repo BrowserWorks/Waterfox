@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -34,11 +34,11 @@
 <!ENTITY importOtherBrowser.label          "Εισαγωγή δεδομένων από άλλο φυλλομετρητή…">
 <!ENTITY importOtherBrowser.accesskey      "λ">
 
-<!ENTITY cmd.backup.label               "Αντίγραφο ασφαλείας...">
+<!ENTITY cmd.backup.label               "Αντίγραφο ασφαλείας…">
 <!ENTITY cmd.backup.accesskey           "φ">
 <!ENTITY cmd.restore2.label             "Επαναφορά">
 <!ENTITY cmd.restore2.accesskey         "π">
-<!ENTITY cmd.restoreFromFile.label      "Επιλογή αρχείου...">
+<!ENTITY cmd.restoreFromFile.label      "Επιλογή αρχείου…">
 <!ENTITY cmd.restoreFromFile.accesskey  "λ">
 
 <!ENTITY col.name.label          "Όνομα">
@@ -53,10 +53,10 @@
 
 <!ENTITY maintenance.label      "Εισαγωγή και αντίγραφο">
 <!ENTITY maintenance.accesskey  "ι">
-<!ENTITY maintenance.tooltip    "Εισαγωγή και αντίγραφα ασφαλείας σελιδοδεικτών">
+<!ENTITY maintenance.tooltip    "Εισαγωγή και δημιουργία αντιγράφου ασφαλείας σελιδοδεικτών">
 
 <!ENTITY backButton.tooltip  "Επιστροφή">
 
 <!ENTITY forwardButton.tooltip  "Μετάβαση μπροστά">
 
-<!ENTITY detailsPane.selectAnItemText.description "Επιλέξτε ένα στοιχείο για προβολή και επεξεργασία ιδιοτήτων">
+<!ENTITY detailsPane.selectAnItemText.description "Επιλέξτε ένα στοιχείο για να δείτε και να επεξεργαστείτε τις ιδιότητές του">

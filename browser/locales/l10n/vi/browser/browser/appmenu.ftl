@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,25 +12,30 @@ appmenuitem-update-banner3 =
     .label-update-unsupported = Không thể cập nhật — hệ thống không tương thích
     .label-update-restart = Đã có bản cập nhật — khởi động lại ngay
 appmenuitem-protection-dashboard-title = Bảng điều khiển bảo vệ
-appmenuitem-customize-mode =
-    .label = Tùy biến…
-
-## Zoom Controls
-
 appmenuitem-new-tab =
     .label = Thẻ mới
 appmenuitem-new-window =
     .label = Cửa sổ mới
 appmenuitem-new-private-window =
     .label = Cửa sổ riêng tư mới
+appmenuitem-history =
+    .label = Lịch sử
+appmenuitem-downloads =
+    .label = Tải xuống
 appmenuitem-passwords =
     .label = Mật khẩu
 appmenuitem-addons-and-themes =
     .label = Tiện ích mở rộng và chủ đề
+appmenuitem-print =
+    .label = In…
 appmenuitem-find-in-page =
     .label = Tìm trong trang…
+appmenuitem-zoom =
+    .value = Thu phóng
 appmenuitem-more-tools =
     .label = Thêm công cụ
+appmenuitem-help =
+    .label = Trợ giúp
 appmenuitem-exit2 =
     .label =
         { PLATFORM() ->
@@ -57,15 +62,31 @@ appmenuitem-zoom-reduce =
 appmenuitem-fullscreen =
     .label = Toàn màn hình
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
-fxa-toolbar-sync-now =
-    .label = Đồng bộ ngay
 appmenu-remote-tabs-sign-into-sync =
     .label = Đăng nhập để đồng bộ hóa…
 appmenu-remote-tabs-turn-on-sync =
     .label = Bật đồng bộ hóa…
+# This is shown after the tabs list if we can display more tabs by clicking on the button
+appmenu-remote-tabs-showmore =
+    .label = Hiển thị thêm các thẻ
+    .tooltiptext = Hiển thị các thẻ từ thiết bị này
+# This is shown beneath the name of a device when that device has no open tabs
+appmenu-remote-tabs-notabs = Không có thẻ đang mở
+# This is shown when Sync is configured but syncing tabs is disabled.
+appmenu-remote-tabs-tabsnotsyncing = Bật đồng bộ thẻ để xem danh sách thẻ từ các thiết bị khác của bạn.
+appmenu-remote-tabs-opensettings =
+    .label = Cài đặt
+# This is shown when Sync is configured but this appears to be the only device attached to
+# the account. We also show links to download Waterfox for android/ios.
+appmenu-remote-tabs-noclients = Muốn xem thẻ từ các thiết bị khác của bạn ở đây?
+appmenu-remote-tabs-connectdevice =
+    .label = Kết nối thiết bị khác
+appmenu-remote-tabs-welcome = Xem danh sách các thẻ từ các thiết bị khác của bạn.
+appmenu-remote-tabs-unverified = Tài khoản của bạn cần phải xác thực.
 appmenuitem-fxa-toolbar-sync-now2 = Đồng bộ ngay
+appmenuitem-fxa-sign-in = Đăng nhập vào { -brand-product-name }
 appmenuitem-fxa-manage-account = Quản lý tài khoản
 appmenu-fxa-header2 = { -fxaccount-brand-name }
 # Variables
@@ -90,10 +111,19 @@ whatsnew-panel-footer-checkbox =
     .label = Thông báo về các tính năng mới
     .accesskey = f
 
-## The Firefox Profiler – The popup is the UI to turn on the profiler, and record
+## The Waterfox Profiler – The popup is the UI to turn on the profiler, and record
 ## performance profiles. To enable it go to profiler.firefox.com and click
 ## "Enable Profiler Menu Button".
 
+profiler-popup-button-idle =
+    .label = Profiler
+    .tooltiptext = Ghi lại hồ sơ hiệu suất
+profiler-popup-button-recording =
+    .label = Profiler
+    .tooltiptext = Profiler đang ghi lại một hồ sơ
+profiler-popup-button-capturing =
+    .label = Profiler
+    .tooltiptext = Profiler đang ghi một hồ sơ
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -102,10 +132,15 @@ profiler-popup-description-title =
     .value = Ghi lại, phân tích, chia sẻ
 profiler-popup-description = Cộng tác về các vấn đề hiệu suất bằng cách xuất bản hồ sơ để chia sẻ với nhóm của bạn.
 profiler-popup-learn-more = Tìm hiểu thêm
+profiler-popup-learn-more-button =
+    .label = Tìm hiểu thêm
 profiler-popup-settings =
     .value = Cài đặt
 # This link takes the user to about:profiling, and is only visible with the Custom preset.
 profiler-popup-edit-settings = Chỉnh sửa cài đặt…
+# This link takes the user to about:profiling, and is only visible with the Custom preset.
+profiler-popup-edit-settings-button =
+    .label = Chỉnh sửa cài đặt…
 profiler-popup-disabled =
     Profiler hiện bị vô hiệu hóa, rất có thể do cửa sổ Duyệt web riêng tư
     đang mở.
@@ -130,6 +165,32 @@ profiler-popup-capture-shortcut =
         [macos] ⌃⇧2
        *[other] Ctrl+Shift+2
     }
+
+## Profiler presets
+## They are shown in the popup's select box.
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
+profiler-popup-presets-web-developer-description = Cài đặt trước được đề xuất cho hầu hết gỡ lỗi ứng dụng web, với chi phí thấp.
+profiler-popup-presets-web-developer-label =
+    .label = Web Developer
+profiler-popup-presets-firefox-platform-description = Cấu hình được đề xuất để gỡ lỗi nền tảng Waterfox nội bộ.
+profiler-popup-presets-firefox-platform-label =
+    .label = Waterfox Platform
+profiler-popup-presets-firefox-front-end-description = Cấu hình được đề xuất để gỡ lỗi giao diện người dùng nội bộ của Waterfox.
+profiler-popup-presets-firefox-front-end-label =
+    .label = Waterfox Front-End
+profiler-popup-presets-firefox-graphics-description = Cấu hình được đề xuất để điều tra hiệu suất đồ họa của Waterfox.
+profiler-popup-presets-firefox-graphics-label =
+    .label = Waterfox Graphics
+profiler-popup-presets-media-description = Cấu hình được đề xuất để chẩn đoán các vấn đề về âm thanh và video.
+profiler-popup-presets-media-label =
+    .label = Media
+profiler-popup-presets-custom-label =
+    .label = Tùy chỉnh
 
 ## History panel
 

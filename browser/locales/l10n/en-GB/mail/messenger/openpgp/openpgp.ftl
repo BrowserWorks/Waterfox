@@ -1,9 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 e2e-intro-description = To send encrypted or digitally signed messages, you need to configure an encryption technology, either OpenPGP or S/MIME.
+
 e2e-intro-description-more = Select your personal key to enable the use of OpenPGP, or your personal certificate to enable the use of S/MIME. For a personal key or certificate you own the corresponding secret key.
+
 e2e-advanced-section = Advanced settings
 e2e-attach-key =
     .label = Attach my public key when adding an OpenPGP digital signature
@@ -14,6 +17,7 @@ e2e-encrypt-subject =
 e2e-encrypt-drafts =
     .label = Store draft messages in encrypted format
     .accesskey = r
+
 openpgp-key-user-id-label = Account / User ID
 openpgp-keygen-title-label =
     .title = Generate OpenPGP Key
@@ -44,11 +48,15 @@ openpgp-generate-key =
 openpgp-advanced-prefs-button-label =
     .label = Advanced…
 openpgp-keygen-desc = <a data-l10n-name="openpgp-keygen-desc-link">NOTE: Key generation may take up to several minutes to complete.</a> Do not exit the application while key generation is in progress. Actively browsing or performing disk-intensive operations during key generation will replenish the 'randomness pool' and speed-up the process. You will be alerted when key generation is completed.
+
 openpgp-key-expiry-label =
     .label = Expiry
+
 openpgp-key-id-label =
     .label = Key ID
+
 openpgp-cannot-change-expiry = This is a key with a complex structure, changing its expiry date isn't supported.
+
 openpgp-key-man-title =
     .title = OpenPGP Key Manager
 openpgp-key-man-generate =
@@ -59,6 +67,7 @@ openpgp-key-man-gen-revoke =
     .accesskey = R
 openpgp-key-man-ctx-gen-revoke-label =
     .label = Generate & Save Revocation Certificate
+
 openpgp-key-man-file-menu =
     .label = File
     .accesskey = F
@@ -74,6 +83,7 @@ openpgp-key-man-generate-menu =
 openpgp-key-man-keyserver-menu =
     .label = Keyserver
     .accesskey = K
+
 openpgp-key-man-import-public-from-file =
     .label = Import Public Key(s) From File
     .accesskey = I
@@ -96,26 +106,29 @@ openpgp-key-man-send-keys =
 openpgp-key-man-backup-secret-keys =
     .label = Backup Secret Key(s) To File
     .accesskey = B
+
 openpgp-key-man-discover-cmd =
     .label = Discover Keys Online
     .accesskey = D
 openpgp-key-man-discover-prompt = To discover OpenPGP keys online, on keyservers or using the WKD protocol, enter either an email address or a key ID.
 openpgp-key-man-discover-progress = Searching…
+
 openpgp-key-copy-key =
     .label = Copy Public Key
     .accesskey = C
+
 openpgp-key-export-key =
     .label = Export Public Key To File
     .accesskey = E
+
 openpgp-key-backup-key =
     .label = Backup Secret Key To File
     .accesskey = B
+
 openpgp-key-send-key =
     .label = Send Public Key Via Email
     .accesskey = S
-openpgp-key-man-copy-to-clipbrd =
-    .label = Copy Public Key(s) To Clipboard
-    .accesskey = C
+
 openpgp-key-man-copy-key-ids =
     .label =
         { $count ->
@@ -123,6 +136,7 @@ openpgp-key-man-copy-key-ids =
            *[other] Copy Key IDs To Clipboard
         }
     .accesskey = K
+
 openpgp-key-man-copy-fprs =
     .label =
         { $count ->
@@ -130,6 +144,7 @@ openpgp-key-man-copy-fprs =
            *[other] Copy Fingerprints To Clipboard
         }
     .accesskey = F
+
 openpgp-key-man-copy-to-clipboard =
     .label =
         { $count ->
@@ -137,13 +152,14 @@ openpgp-key-man-copy-to-clipboard =
            *[other] Copy Public Keys To Clipboard
         }
     .accesskey = P
+
 openpgp-key-man-ctx-expor-to-file-label =
     .label = Export Keys To File
-openpgp-key-man-ctx-copy-to-clipbrd-label =
-    .label = Copy Public Keys To Clipboard
+
 openpgp-key-man-ctx-copy =
     .label = Copy
     .accesskey = C
+
 openpgp-key-man-ctx-copy-fprs =
     .label =
         { $count ->
@@ -151,6 +167,7 @@ openpgp-key-man-ctx-copy-fprs =
            *[other] Fingerprints
         }
     .accesskey = F
+
 openpgp-key-man-ctx-copy-key-ids =
     .label =
         { $count ->
@@ -158,6 +175,7 @@ openpgp-key-man-ctx-copy-key-ids =
            *[other] Key IDs
         }
     .accesskey = K
+
 openpgp-key-man-ctx-copy-public-keys =
     .label =
         { $count ->
@@ -165,6 +183,7 @@ openpgp-key-man-ctx-copy-public-keys =
            *[other] Public Keys
         }
     .accesskey = P
+
 openpgp-key-man-close =
     .label = Close
 openpgp-key-man-reload =
@@ -212,12 +231,15 @@ openpgp-key-man-nothing-found-tooltip =
     .label = No keys match your search terms
 openpgp-key-man-please-wait-tooltip =
     .label = Please wait while keys are being loaded…
+
 openpgp-key-man-filter-label =
     .placeholder = Search for keys
+
 openpgp-key-man-select-all-key =
     .key = A
 openpgp-key-man-key-details-key =
     .key = I
+
 openpgp-key-details-title =
     .title = Key Properties
 openpgp-key-details-signatures-tab =
@@ -269,6 +291,7 @@ openpgp-personal-no-label =
     .label = No, don't use it as my personal key.
 openpgp-personal-yes-label =
     .label = Yes, treat this key as a personal key.
+
 openpgp-copy-cmd-label =
     .label = Copy
 
@@ -282,58 +305,69 @@ openpgp-description =
         [one] Thunderbird found { $count } personal OpenPGP key associated with <b>{ $identity }</b>
        *[other] Thunderbird found { $count } personal OpenPGP keys associated with <b>{ $identity }</b>
     }
-#   $count (Number) - the number of configured keys associated with the current identity
-#   $key (String) - the currently selected OpenPGP key
-openpgp-selection-status =
-    { $count ->
-        [0] Select a valid key to enable the OpenPGP protocol.
-       *[other] Your current configuration uses key ID <b>{ $key }</b>
-    }
+
 #   $key (String) - the currently selected OpenPGP key
 openpgp-selection-status-have-key = Your current configuration uses key ID <b>{ $key }</b>
+
 #   $key (String) - the currently selected OpenPGP key
 openpgp-selection-status-error = Your current configuration uses the key <b>{ $key }</b>, which has expired.
+
 openpgp-add-key-button =
     .label = Add Key…
     .accesskey = A
+
 e2e-learn-more = Learn more
+
 openpgp-keygen-success = OpenPGP Key created successfully!
+
 openpgp-keygen-import-success = OpenPGP Keys imported successfully!
+
 openpgp-keygen-external-success = External GnuPG Key ID saved!
 
 ## OpenPGP Key selection area
 
 openpgp-radio-none =
     .label = None
+
 openpgp-radio-none-desc = Do not use OpenPGP for this identity.
+
 openpgp-radio-key-not-usable = This key is not usable as a personal key, because the secret key is missing!
 openpgp-radio-key-not-accepted = To use this key you must approve it as a personal key!
 openpgp-radio-key-not-found = This key could not be found! If you want to use it you must import it to { -brand-short-name }.
+
 #   $key (String) - the expiration date of the OpenPGP key
 openpgp-radio-key-expires = Expires on: { $date }
-openpgp-key-expires-image =
-    .tooltiptext = Key is expiring in less than 6 months
+
 #   $key (String) - the expiration date of the OpenPGP key
 openpgp-radio-key-expired = Expired on: { $date }
-openpgp-key-expired-image =
-    .tooltiptext = Key expired
+
 openpgp-key-expires-within-6-months-icon =
     .title = Key is expiring in less than 6 months
+
 openpgp-key-has-expired-icon =
     .title = Key expired
+
 openpgp-key-expand-section =
     .tooltiptext = More information
+
 openpgp-key-revoke-title = Revoke Key
+
 openpgp-key-edit-title = Change OpenPGP Key
+
 openpgp-key-edit-date-title = Extend Expiration Date
+
 openpgp-manager-description = Use the OpenPGP Key Manager to view and manage public keys of your correspondents and all other keys not listed above.
+
 openpgp-manager-button =
     .label = OpenPGP Key Manager
     .accesskey = K
+
 openpgp-key-remove-external =
     .label = Remove External Key ID
     .accesskey = E
+
 key-external-label = External GnuPG Key
+
 # Strings in keyDetailsDlg.xhtml
 key-type-public = public key
 key-type-primary = primary key
@@ -350,13 +384,16 @@ key-expired-simple = The key has expired
 key-revoked-simple = The key was revoked
 key-do-you-accept = Do you accept this key for verifying digital signatures and for encrypting messages?
 key-accept-warning = Avoid accepting a rogue key. Use a communication channel other than email to verify the fingerprint of your correspondent's key.
+
 # Strings enigmailMsgComposeOverlay.js
 cannot-use-own-key-because = Unable to send the message, because there is a problem with your personal key. { $problem }
 cannot-encrypt-because-missing = Unable to send this message with end-to-end encryption, because there are problems with the keys of the following recipients: { $problem }
 window-locked = Compose window is locked; send cancelled
+
 # Strings in mimeDecrypt.jsm
 mime-decrypt-encrypted-part-attachment-label = Encrypted message part
 mime-decrypt-encrypted-part-concealed-data = This is an encrypted message part. You need to open it in a separate window by clicking on the attachment.
+
 # Strings in keyserver.jsm
 keyserver-error-aborted = Aborted
 keyserver-error-unknown = An unknown error occurred
@@ -366,6 +403,7 @@ keyserver-error-unavailable = The keyserver is not available.
 keyserver-error-security-error = The keyserver does not support encrypted access.
 keyserver-error-certificate-error = The keyserver’s certificate is not valid.
 keyserver-error-unsupported = The keyserver is not supported.
+
 # Strings in mimeWkdHandler.jsm
 wkd-message-body-req =
     Your email provider processed your request to upload your public key to the OpenPGP Web Key Directory.
@@ -373,14 +411,17 @@ wkd-message-body-req =
 wkd-message-body-process =
     This is an email related to the automatic processing to upload your public key to the OpenPGP Web Key Directory.
     You do not need to take any manual action at this point.
+
 # Strings in persistentCrypto.jsm
 converter-decrypt-body-failed =
     Could not decrypt message with subject
     { $subject }.
     Do you want to retry with a different passphrase or do you want to skip the message?
+
 # Strings in gpg.jsm
 unknown-signing-alg = Unknown signing algorithm (ID: { $id })
 unknown-hash-alg = Unknown cryptographic hash (ID: { $id })
+
 # Strings in keyUsability.jsm
 expiry-key-expires-soon =
     Your key { $desc } will expire in less than { $days } days.
@@ -397,6 +438,7 @@ expiry-keys-missing-owner-trust =
     We recommend that you set "You rely on certifications" to "ultimate" in key properties.
 expiry-open-key-manager = Open OpenPGP Key Manager
 expiry-open-key-properties = Open Key Properties
+
 # Strings filters.jsm
 filter-folder-required = You must select a target folder.
 filter-decrypt-move-warn-experimental =
@@ -408,10 +450,12 @@ filter-key-not-found = Could not find an encryption key for '{ $desc }'.
 filter-warn-key-not-secret =
     Warning - the filter action "Encrypt to key" replaces the recipients.
     If you do not have the secret key for '{ $desc }' you will no longer be able to read the emails.
+
 # Strings filtersWrapper.jsm
 filter-decrypt-move-label = Decrypt permanently (OpenPGP)
 filter-decrypt-copy-label = Create decrypted Copy (OpenPGP)
 filter-encrypt-label = Encrypt to key (OpenPGP)
+
 # Strings in enigmailKeyImportInfo.js
 import-info-title =
     .title = Success! Keys imported
@@ -420,6 +464,7 @@ import-info-created = Created
 import-info-fpr = Fingerprint
 import-info-details = View Details and manage key acceptance
 import-info-no-keys = No keys imported.
+
 # Strings in enigmailKeyManager.js
 import-from-clip = Do you want to import some key(s) from clipboard?
 import-from-url = Download public key from this URL:
@@ -463,8 +508,10 @@ dlg-button-delete = &Delete
 
 openpgp-export-public-success = <b>Public Key successfully exported!</b>
 openpgp-export-public-fail = <b>Unable to export the selected public key!</b>
+
 openpgp-export-secret-success = <b>Secret Key successfully exported!</b>
 openpgp-export-secret-fail = <b>Unable to export the selected secret key!</b>
+
 # Strings in keyObj.jsm
 key-ring-pub-key-revoked = The key { $userId } (key ID { $keyId }) is revoked.
 key-ring-pub-key-expired = The key { $userId } (key ID { $keyId }) has expired.
@@ -475,47 +522,67 @@ key-ring-sign-sub-keys-revoked = All signing-subkeys of key { $userId } (key ID 
 key-ring-sign-sub-keys-expired = All signing-subkeys of key { $userId } (key ID { $keyId }) have expired.
 key-ring-enc-sub-keys-revoked = All encryption subkeys of key { $userId } (key ID { $keyId }) are revoked.
 key-ring-enc-sub-keys-expired = All encryption subkeys of key { $userId } (key ID { $keyId }) have expired.
+
 # Strings in gnupg-keylist.jsm
 keyring-photo = Photo
 user-att-photo = User attribute (JPEG image)
+
 # Strings in key.jsm
 already-revoked = This key has already been revoked.
+
 #   $identity (String) - the id and associated user identity of the key being revoked
 revoke-key-question =
     You are about to revoke the key '{ $identity }'.
     You will no longer be able to sign with this key, and once distributed, others will no longer be able to encrypt with that key. You can still use the key to decrypt old messages.
     Do you want to proceed?
+
 #   $keyId (String) - the id of the key being revoked
 revoke-key-not-present =
     You have no key (0x{ $keyId }) which matches this revocation certificate!
     If you have lost your key, you must import it (e.g. from a keyserver) before importing the revocation certificate!
+
 #   $keyId (String) - the id of the key being revoked
 revoke-key-already-revoked = The key 0x{ $keyId } has already been revoked.
+
 key-man-button-revoke-key = &Revoke Key
+
 openpgp-key-revoke-success = Key successfully revoked.
+
 after-revoke-info =
     The key has been revoked.
     Share this public key again, by sending it by email, or by uploading it to keyservers, to let others know that you revoked your key.
     As soon as the software used by other people learns about the revocation, it will stop using your old key.
     If you are using a new key for the same email address, and you attach the new public key to emails you send, then information about your revoked old key will be automatically included.
+
 # Strings in keyRing.jsm & decryption.jsm
 key-man-button-import = &Import
+
 delete-key-title = Delete OpenPGP Key
+
 delete-external-key-title = Remove the External GnuPG Key
+
 delete-external-key-description = Do you want to remove this External GnuPG key ID?
+
 key-in-use-title = OpenPGP Key currently in use
+
 delete-key-in-use-description = Unable to proceed! The Key you selected for deletion is currently being used by this identity. Select a different key, or select none, and try again.
+
 revoke-key-in-use-description = Unable to proceed! The Key you selected for revocation is currently being used by this identity. Select a different key, or select none, and try again.
+
 # Strings used in errorHandling.jsm
 key-error-key-spec-not-found = The email address '{ $keySpec }' cannot be matched to a key on your keyring.
 key-error-key-id-not-found = The configured key ID '{ $keySpec }' cannot be found on your keyring.
 key-error-not-accepted-as-personal = You have not confirmed that the key with ID '{ $keySpec }' is your personal key.
+
 # Strings used in enigmailKeyManager.js & windows.jsm
 need-online = The function you have selected is not available in offline mode. Please go online and try again.
+
 # Strings used in keyRing.jsm & keyLookupHelper.jsm
 no-key-found = We could not find any key matching the specified search criteria.
+
 # Strings used in keyRing.jsm & GnuPGCryptoAPI.jsm
 fail-key-extract = Error - key extraction command failed
+
 # Strings used in keyRing.jsm
 fail-cancel = Error - Key receive cancelled by user
 not-first-block = Error - First OpenPGP block not public key block
@@ -524,6 +591,7 @@ fail-key-import = Error - key importing failed
 file-write-failed = Failed to write to file { $output }
 no-pgp-block = Error - No valid armored OpenPGP data block found
 confirm-permissive-import = Import failed. The key you are trying to import might be corrupt or use unknown attributes. Would you like to attempt to import the parts that are correct? This might result in the import of incomplete and unusable keys.
+
 # Strings used in trust.jsm
 key-valid-unknown = unknown
 key-valid-invalid = invalid
@@ -535,6 +603,7 @@ key-trust-marginal = marginal
 key-trust-full = trusted
 key-trust-ultimate = ultimate
 key-trust-group = (group)
+
 # Strings used in commonWorkflows.js
 import-key-file = Import OpenPGP Key File
 import-rev-file = Import OpenPGP Revocation File
@@ -542,6 +611,7 @@ gnupg-file = GnuPG Files
 import-keys-failed = Importing the keys failed
 passphrase-prompt = Please enter the passphrase that unlocks the following key: { $key }
 file-to-big-to-import = This file is too big. Please don't import a large set of keys at once.
+
 # Strings used in enigmailKeygen.js
 save-revoke-cert-as = Create & Save Revocation Certificate
 revoke-cert-ok = The revocation certificate has been successfully created. You can use it to invalidate your public key, e.g. in case you would lose your secret key.
@@ -560,6 +630,7 @@ key-man-button-generate-key-continue = &Continue Key Generation
 
 failed-decrypt = Error - decryption failed
 fix-broken-exchange-msg-failed = Did not succeed to repair message.
+
 attachment-no-match-from-signature = Could not match signature file '{ $attachment }' to an attachment
 attachment-no-match-to-signature = Could not match attachment '{ $attachment }' to a signature file
 signature-verified-ok = The signature for attachment { $attachment } was successfully verified
@@ -569,6 +640,7 @@ decrypt-ok-no-sig =
     Decryption was successful, but the signature could not be verified correctly
 msg-ovl-button-cont-anyway = &Continue Anyway
 enig-content-note = *Attachments to this message have not been signed nor encrypted*
+
 # Strings used in enigmailMsgComposeOverlay.js
 msg-compose-button-send = &Send Message
 msg-compose-details-button-label = Details…
@@ -591,7 +663,6 @@ quoted-printable-warn =
 minimal-line-wrapping =
     You have set line wrapping to { $width } characters. For correct encryption and/or signing, this value needs to be at least 68.
     Do you wish to change line wrapping to 68 characters now?
-sending-hidden-rcpt = BCC (blind copy) recipients cannot be used when sending an encrypted message. To send this encrypted message, either remove the BCC recipients or move them to the CC field.
 sending-news =
     Encrypted send operation aborted.
     This message cannot be encrypted because there are newsgroup recipients. Please re-send the message without encryption.
@@ -606,6 +677,14 @@ no-temp-dir =
 possibly-pgp-mime = Possibly PGP/MIME encrypted or signed message; use 'Decrypt/Verify' function to verify
 cannot-send-sig-because-no-own-key = Cannot digitally sign this message, because you haven't yet configured end-to-end encryption for <{ $key }>
 cannot-send-enc-because-no-own-key = Cannot send this message encrypted, because you haven't yet configured end-to-end encryption for <{ $key }>
+
+compose-menu-attach-key =
+    .label = Attach My Public Key
+    .accesskey = A
+compose-menu-encrypt-subject =
+    .label = Subject Encryption
+    .accesskey = b
+
 # Strings used in decryption.jsm
 do-import-multiple =
     Import the following keys?
@@ -620,14 +699,18 @@ attachment-pgp-key =
     The attachment '{ $name }' you are opening appears to be an OpenPGP key file.
     Click 'Import' to import the keys contained or 'View' to view the file contents in a browser window
 dlg-button-view = &View
+
 # Strings used in enigmailMsgHdrViewOverlay.js
 decrypted-msg-with-format-error = Decrypted message (restored broken PGP email format probably caused by an old Exchange server, so that the result might not be perfect to read)
+
 # Strings used in encryption.jsm
 not-required = Error - no encryption required
+
 # Strings used in windows.jsm
 no-photo-available = No Photo available
 error-photo-path-not-readable = Photo path '{ $photo }' is not readable
 debug-log-title = OpenPGP Debug Log
+
 # Strings used in dialog.jsm
 repeat-prefix = This alert will repeat { $count }
 repeat-suffix-singular = more time.
@@ -642,11 +725,11 @@ enig-prompt = OpenPGP Prompt
 enig-confirm = OpenPGP Confirmation
 enig-alert = OpenPGP Alert
 enig-info = OpenPGP Information
+
 # Strings used in persistentCrypto.jsm
 dlg-button-retry = &Retry
 dlg-button-skip = &Skip
-# Strings used in enigmailCommon.js
-enig-error = OpenPGP Error
+
 # Strings used in enigmailMsgBox.js
 enig-alert-title =
     .title = OpenPGP Alert

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,16 +38,20 @@ menu-quit =
             [windows] อ
            *[other] อ
         }
+
 # This menu-quit-mac string is only used on macOS.
 menu-quit-mac =
     .label = ออกจาก { -brand-shorter-name }
+
 # This menu-quit-button string is only used on Linux.
 menu-quit-button =
     .label = { menu-quit.label }
+
 # This menu-quit-button-win string is only used on Windows.
 menu-quit-button-win =
     .label = { menu-quit.label }
     .tooltip = ออกจาก { -brand-shorter-name }
+
 menu-about =
     .label = เกี่ยวกับ { -brand-shorter-name }
     .accesskey = ก
@@ -71,7 +75,7 @@ menu-file-new-private-window =
     .accesskey = ส
 # "Open Location" is only displayed on macOS, and only on windows
 # that aren't main browser windows, or when there are no windows
-# but Firefox is still running.
+# but Waterfox is still running.
 menu-file-open-location =
     .label = เปิดตำแหน่งที่ตั้ง…
 menu-file-open-file =
@@ -89,6 +93,9 @@ menu-file-save-page =
 menu-file-email-link =
     .label = ส่งอีเมลลิงก์…
     .accesskey = ล
+menu-file-share-url =
+    .label = แบ่งปัน
+    .accesskey = h
 menu-file-print-setup =
     .label = ตั้งค่าหน้ากระดาษ…
     .accesskey = ร
@@ -110,9 +117,6 @@ menu-file-go-offline =
 menu-edit =
     .label = แก้ไข
     .accesskey = ก
-menu-edit-find-on =
-    .label = ค้นหาในหน้านี้…
-    .accesskey = ค
 menu-edit-find-in-page =
     .label = ค้นหาในหน้า…
     .accesskey = ค
@@ -131,9 +135,6 @@ menu-view =
 menu-view-toolbars-menu =
     .label = แถบเครื่องมือ
     .accesskey = ถ
-menu-view-customize-toolbar =
-    .label = ปรับแต่ง…
-    .accesskey = ป
 menu-view-customize-toolbar2 =
     .label = ปรับแต่งแถบเครื่องมือ…
     .accesskey = ป
@@ -170,8 +171,8 @@ menu-view-page-style-no-style =
 menu-view-page-basic-style =
     .label = ลักษณะหน้าพื้นฐาน
     .accesskey = ล
-menu-view-charset =
-    .label = รหัสอักขระ
+menu-view-repair-text-encoding =
+    .label = ซ่อมแซมรหัสอักขระข้อความ
     .accesskey = ร
 
 ## These should match what Safari and other Apple applications
@@ -223,10 +224,8 @@ menu-history-reopen-all-windows = เปิดหน้าต่างทั้�
 menu-bookmarks-menu =
     .label = ที่คั่นหน้า
     .accesskey = ท
-menu-bookmarks-show-all =
-    .label = แสดงที่คั่นหน้าทั้งหมด
-menu-bookmark-this-page =
-    .label = เพิ่มที่คั่นหน้าสำหรับหน้านี้
+menu-bookmarks-manage =
+    .label = จัดการที่คั่นหน้า
 menu-bookmark-current-tab =
     .label = เพิ่มที่คั่นหน้าแท็บปัจจุบัน
 menu-bookmark-edit =
@@ -248,21 +247,12 @@ menu-tools =
 menu-tools-downloads =
     .label = การดาวน์โหลด
     .accesskey = ด
-menu-tools-addons =
-    .label = ส่วนเสริม
-    .accesskey = ส
-menu-tools-fxa-sign-in =
-    .label = ลงชื่อเข้า { -brand-product-name }…
-    .accesskey = g
 menu-tools-addons-and-themes =
     .label = ส่วนเสริมและชุดตกแต่ง
     .accesskey = ส
 menu-tools-fxa-sign-in2 =
     .label = ลงชื่อเข้า
     .accesskey = ล
-menu-tools-turn-on-sync =
-    .label = เปิด { -sync-brand-short-name }…
-    .accesskey = n
 menu-tools-turn-on-sync2 =
     .label = เปิด Sync…
     .accesskey = เ
@@ -272,9 +262,6 @@ menu-tools-sync-now =
 menu-tools-fxa-re-auth =
     .label = เชื่อมต่อกับ { -brand-product-name }…
     .accesskey = R
-menu-tools-web-developer =
-    .label = นักพัฒนาเว็บ
-    .accesskey = พ
 menu-tools-browser-tools =
     .label = เครื่องมือสำหรับเบราว์เซอร์
     .accesskey = บ
@@ -293,17 +280,6 @@ menu-settings =
         { PLATFORM() ->
             [windows] ก
            *[other] า
-        }
-menu-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] ตัวเลือก
-           *[other] ค่ากำหนด
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] ต
-           *[other] ด
         }
 menu-tools-layout-debugger =
     .label = ตัวดีบั๊กเค้าโครง
@@ -330,26 +306,9 @@ menu-window-bring-all-to-front =
 menu-help =
     .label = ช่วยเหลือ
     .accesskey = ช
-menu-help-product =
-    .label = ความช่วยเหลือของ { -brand-shorter-name }
-    .accesskey = ช
-menu-help-show-tour =
-    .label = เที่ยวชม { -brand-shorter-name }
-    .accesskey = ท
-menu-help-import-from-another-browser =
-    .label = นำเข้าจากเบราว์เซอร์อื่น…
-    .accesskey = I
-menu-help-keyboard-shortcuts =
-    .label = แป้นพิมพ์ลัด
-    .accesskey = ล
 menu-get-help =
     .label = รับความช่วยเหลือ
     .accesskey = ช
-menu-help-troubleshooting-info =
-    .label = ข้อมูลการแก้ไขปัญหา
-    .accesskey = ป
-menu-help-taskmanager =
-    .label = ตัวจัดการงาน
 menu-help-more-troubleshooting-info =
     .label = ข้อมูลการแก้ไขปัญหาเพิ่มเติม
     .accesskey = ข
@@ -358,12 +317,6 @@ menu-help-report-site-issue =
 menu-help-feedback-page =
     .label = ส่งข้อคิดเห็น…
     .accesskey = ส
-menu-help-safe-mode-without-addons =
-    .label = เริ่มการทำงานใหม่พร้อมปิดใช้งานส่วนเสริม…
-    .accesskey = ร
-menu-help-safe-mode-with-addons =
-    .label = เริ่มการทำงานใหม่พร้อมเปิดใช้งานส่วนเสริม
-    .accesskey = ร
 menu-help-enter-troubleshoot-mode2 =
     .label = โหมดแก้ไขปัญหา…
     .accesskey = ห

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -93,9 +93,6 @@ no-proxy-label =
     .accesskey = x
 
 no-proxy-example = Contoh: .mozilla.org, .net.id, 192.168.1.0/24
-
-# Note: Do not translate localhost, 127.0.0.1 and ::1.
-no-proxy-localhost-label = Koneksi ke localhost, 127.0.0.1, dan ::1 tidak pernah diproksi.
 
 proxy-password-prompt =
     .label = Jangan tanyakan otentikasi jika sandinya disimpan

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -98,7 +98,7 @@ protections-panel-content-blocking-manage-settings =
 
 protections-panel-content-blocking-breakage-report-view =
     .title = Segnala problemi con il sito
-protections-panel-content-blocking-breakage-report-view-description = Il blocco di determinati elementi traccianti può creare problemi in alcuni siti web. Segnalando questi problemi contribuisci a migliorare { -brand-short-name } per tutti gli utenti. Questa segnalazione verrà inviata a Mozilla e include l’indirizzo del sito e informazioni sulle impostazioni del browser. <label data-l10n-name="learn-more">Ulteriori informazioni</label>
+protections-panel-content-blocking-breakage-report-view-description = Il blocco di determinati elementi traccianti può creare problemi in alcuni siti web. Segnalando questi problemi contribuisci a migliorare { -brand-short-name } per tutti gli utenti. Questa segnalazione verrà inviata a Waterfox e include l’indirizzo del sito e informazioni sulle impostazioni del browser. <label data-l10n-name="learn-more">Ulteriori informazioni</label>
 protections-panel-content-blocking-breakage-report-view-collection-url = Indirizzo
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = Indirizzo

@@ -1,8 +1,6 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!-- extracted from EdReplace.xul -->
 
 <!-- extracted from EdReplace.xhtml -->
 
@@ -17,8 +15,8 @@
 <!ENTITY wrapCheckbox.accesskey "U">
 <!ENTITY backwardsCheckbox.label "Pesquisar para trás">
 <!ENTITY backwardsCheckbox.accesskey "P">
-<!ENTITY findNextButton.label "Procurar próxima">
-<!ENTITY findNextButton.accesskey "L">
+<!ENTITY findNextButton.label "Procurar próximo">
+<!ENTITY findNextButton.accesskey "m">
 <!ENTITY replaceButton.label "Substituir">
 <!ENTITY replaceButton.accesskey "S">
 <!ENTITY replaceAndFindButton.label "Substituir e procurar">

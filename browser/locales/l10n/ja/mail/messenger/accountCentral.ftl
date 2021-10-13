@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -52,10 +52,7 @@ import-label = データをインポート
 
 about-paragraph = Thunderbird は、オープンソースでクロスプラットフォームを特徴とし、ビジネスでも個人でも無料で利用できる人気のメール・カレンダークライアントです。私たちはそのセキュリティを守りつつ、さらに改善していきたいと考えています。皆さんからの寄付によって、開発者の雇用、インフラストラクチャの購入、改良の継続が可能となります。
 
-about-paragraph-2 = <b>Thunderbird はあなたのようなユーザーに支えられています！ Thunderbird を気に入っていただけた方は寄付をご検討ください。</b> Thunderbird を存続可能にするため、あなたができる最善の方法は
-about-donation = 寄付をしていただくことです。
-
-about-paragraph-consider-donation = <b>Thunderbird はあなたのようなユーザーに支えられています！ Thunderbird を気に入っているなら、ぜひ寄付を検討してください。</b> Thunderbird を存続可能にするため、あなたができる最善の方法は<a data-l10n-name="donation-link">寄付をすること</a>です。
+about-paragraph-consider-donation = <b>Thunderbird はあなたのようなユーザーに支えられています！ Thunderbird を気に入っていただけた方は寄付をご検討ください。</b> Thunderbird を存続可能にするため、あなたができる最善の方法は<a data-l10n-name="donation-link">寄付をしていただくこと</a>です。
 
 explore-link = 機能紹介
 support-link = サポート

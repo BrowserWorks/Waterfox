@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,25 +12,30 @@ appmenuitem-update-banner3 =
     .label-update-unsupported = Kan niet bijwerken – systeem niet compatibel
     .label-update-restart = Update beschikbaar – nu herstarten
 appmenuitem-protection-dashboard-title = Beveiligingsdashboard
-appmenuitem-customize-mode =
-    .label = Aanpassen…
-
-## Zoom Controls
-
 appmenuitem-new-tab =
     .label = Nieuw tabblad
 appmenuitem-new-window =
     .label = Nieuw venster
 appmenuitem-new-private-window =
     .label = Nieuw privévenster
+appmenuitem-history =
+    .label = Geschiedenis
+appmenuitem-downloads =
+    .label = Downloads
 appmenuitem-passwords =
     .label = Wachtwoorden
 appmenuitem-addons-and-themes =
     .label = Add-ons en thema’s
+appmenuitem-print =
+    .label = Afdrukken…
 appmenuitem-find-in-page =
     .label = Zoeken op pagina…
+appmenuitem-zoom =
+    .value = Zoomen
 appmenuitem-more-tools =
     .label = Meer hulpmiddelen
+appmenuitem-help =
+    .label = Help
 appmenuitem-exit2 =
     .label =
         { PLATFORM() ->
@@ -57,15 +62,31 @@ appmenuitem-zoom-reduce =
 appmenuitem-fullscreen =
     .label = Volledig scherm
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
-fxa-toolbar-sync-now =
-    .label = Nu synchroniseren
 appmenu-remote-tabs-sign-into-sync =
     .label = Aanmelden bij Sync…
 appmenu-remote-tabs-turn-on-sync =
     .label = Synchronisatie inschakelen…
+# This is shown after the tabs list if we can display more tabs by clicking on the button
+appmenu-remote-tabs-showmore =
+    .label = Meer tabbladen tonen
+    .tooltiptext = Meer tabbladen van dit apparaat tonen
+# This is shown beneath the name of a device when that device has no open tabs
+appmenu-remote-tabs-notabs = Geen open tabbladen
+# This is shown when Sync is configured but syncing tabs is disabled.
+appmenu-remote-tabs-tabsnotsyncing = Zet tabbladsynchronisatie aan om een lijst van tabbladen van uw andere apparaten weer te geven.
+appmenu-remote-tabs-opensettings =
+    .label = Instellingen
+# This is shown when Sync is configured but this appears to be the only device attached to
+# the account. We also show links to download Waterfox for android/ios.
+appmenu-remote-tabs-noclients = Wilt u hier uw tabbladen van andere apparaten zien?
+appmenu-remote-tabs-connectdevice =
+    .label = Een ander apparaat verbinden
+appmenu-remote-tabs-welcome = Bekijk een lijst met tabbladen van uw overige apparaten.
+appmenu-remote-tabs-unverified = Uw account moet worden geverifieerd.
 appmenuitem-fxa-toolbar-sync-now2 = Nu synchroniseren
+appmenuitem-fxa-sign-in = Aanmelden bij { -brand-product-name }
 appmenuitem-fxa-manage-account = Account beheren
 appmenu-fxa-header2 = { -fxaccount-brand-name }
 # Variables
@@ -90,10 +111,19 @@ whatsnew-panel-footer-checkbox =
     .label = Berichten over nieuwe functies
     .accesskey = f
 
-## The Firefox Profiler – The popup is the UI to turn on the profiler, and record
+## The Waterfox Profiler – The popup is the UI to turn on the profiler, and record
 ## performance profiles. To enable it go to profiler.firefox.com and click
 ## "Enable Profiler Menu Button".
 
+profiler-popup-button-idle =
+    .label = Profiler
+    .tooltiptext = Neem een prestatieprofiel op
+profiler-popup-button-recording =
+    .label = Profiler
+    .tooltiptext = De profiler neemt een profiel op
+profiler-popup-button-capturing =
+    .label = Profiler
+    .tooltiptext = De profiler neemt een profiel op
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -102,10 +132,15 @@ profiler-popup-description-title =
     .value = Opnemen, analyseren, delen
 profiler-popup-description = Werk samen aan prestatieproblemen door profielen te publiceren om met uw team te delen.
 profiler-popup-learn-more = Meer info
+profiler-popup-learn-more-button =
+    .label = Meer info
 profiler-popup-settings =
     .value = Instellingen
 # This link takes the user to about:profiling, and is only visible with the Custom preset.
 profiler-popup-edit-settings = Instellingen bewerken…
+# This link takes the user to about:profiling, and is only visible with the Custom preset.
+profiler-popup-edit-settings-button =
+    .label = Instellingen bewerken…
 profiler-popup-disabled =
     De profiler is momenteel uitgeschakeld, waarschijnlijk omdat een privévenster
     is geopend.
@@ -130,6 +165,32 @@ profiler-popup-capture-shortcut =
         [macos] ⌃⇧2
        *[other] Ctrl+Shift+2
     }
+
+## Profiler presets
+## They are shown in the popup's select box.
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
+profiler-popup-presets-web-developer-description = Aanbevolen voorinstelling voor de meeste foutopsporing in web-apps, met lage overhead.
+profiler-popup-presets-web-developer-label =
+    .label = Webontwikkelaar
+profiler-popup-presets-firefox-platform-description = Aanbevolen voorinstelling voor interne foutopsporing in het Waterfox-platform.
+profiler-popup-presets-firefox-platform-label =
+    .label = Waterfox-platform
+profiler-popup-presets-firefox-front-end-description = Aanbevolen voorinstelling voor interne foutopsporing in het front-end van Waterfox.
+profiler-popup-presets-firefox-front-end-label =
+    .label = Waterfox-front-end
+profiler-popup-presets-firefox-graphics-description = Aanbevolen voorinstelling voor onderzoek naar grafische prestaties van Waterfox.
+profiler-popup-presets-firefox-graphics-label =
+    .label = Waterfox-grafisch
+profiler-popup-presets-media-description = Aanbevolen voorinstelling voor het analyseren van audio- en videoproblemen.
+profiler-popup-presets-media-label =
+    .label = Media
+profiler-popup-presets-custom-label =
+    .label = Aangepast
 
 ## History panel
 
@@ -192,6 +253,6 @@ appmenu-customizetoolbar =
     .label = Werkbalk aanpassen…
 appmenu-taskmanager =
     .label = Taakbeheerder
-appmenu-developer-tools-subheader = Browserhulpmidelen
+appmenu-developer-tools-subheader = Browserhulpmiddelen
 appmenu-developer-tools-extensions =
     .label = Extensies voor ontwikkelaars

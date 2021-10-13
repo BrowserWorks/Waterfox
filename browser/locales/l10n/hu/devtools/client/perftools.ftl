@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -95,8 +95,8 @@ perftools-thread-img-decoder =
     .title = Képdekódoló szálak
 perftools-thread-dns-resolver =
     .title = A DNS-feloldás ezen a szálon történik
-perftools-thread-js-helper =
-    .title = A JS motor háttérben futó feladatai, mint a főszálon kívüli fordítások
+perftools-thread-task-controller =
+    .title = TaskController thread pool szálak
 
 ##
 
@@ -108,9 +108,30 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Waterfox profilozó
 perftools-onboarding-message = <b>Új</b>: A { -profiler-brand-name } mostantól a Fejlesztői eszközökbe integrált. <a>Tudjon meg többet</a> erről a hatékony új eszközről.
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (Korlátozott ideig elérheti az eredeti Teljesítmény panelt is a <a>{ options-context-advanced-settings }</a> segítségévél)
 perftools-onboarding-close-button =
     .aria-label = A bemutató üzenet bezárása
+
+## Profiler presets
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# The same labels and descriptions are also defined in appmenu.ftl.
+
+perftools-presets-web-developer-label = Webfejlesztő
+perftools-presets-web-developer-description = Ajánlott előbeállítás a legtöbb webalkalmazás hibakereséséhez, alacsony pluszköltséggel.
+perftools-presets-firefox-platform-label = Waterfox platform
+perftools-presets-firefox-platform-description = Ajánlott előbeállítás a Waterfox platform belső hibakereséséhez.
+perftools-presets-firefox-front-end-label = Waterfox kezelőfelület
+perftools-presets-firefox-front-end-description = Ajánlott előbeállítás a Waterfox felületének belső hibakereséséhez.
+perftools-presets-firefox-graphics-label = Waterfox grafika
+perftools-presets-firefox-graphics-description = Ajánlott előbeállítás a Waterfox grafikus teljesítményének vizsgálatához.
+perftools-presets-media-label = Média
+perftools-presets-media-description = Ajánlott előbeállítás a hang- és videóproblémák diagnosztizálásához.
+perftools-presets-custom-label = Egyéni
+
+##
+

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -19,7 +19,12 @@
 <!ENTITY deniedPortAccess.longDesc "">
 
 <!ENTITY dnsNotFound.pageTitle "Nie odnaleziono serwera">
-<!ENTITY dnsNotFound.longDesc1 "<strong>Jeśli adres jest prawidłowy, można jeszcze spróbować:</strong><li>otworzyć stronę później</li><li>sprawdzić połączenie z Internetem</li><li>jeśli ten komputer jest chroniony przez zaporę sieciową, sprawdzić, czy &brandShortName; jest uprawniony do łączenia się z siecią.</li>">
+<!ENTITY dnsNotFound.longDesc1 "<strong>Jeśli adres jest prawidłowy, można jeszcze spróbować:</strong>
+<ul>
+<li>otworzyć stronę później</li>
+<li>sprawdzić połączenie z Internetem</li>
+<li>jeśli ten komputer jest chroniony przez zaporę sieciową, sprawdzić, czy &brandShortName; jest uprawniony do łączenia się z siecią.</li>
+</ul>">
 
 <!ENTITY fileNotFound.longDesc "<ul><li>Sprawdź wielkość liter oraz upewnij się, że nazwa pliku nie zawiera literówek lub innych błędów w pisowni.</li><li>Sprawdź, czy plik nie został przeniesiony, usunięty lub jego nazwa nie została zmieniona.</li></ul>">
 

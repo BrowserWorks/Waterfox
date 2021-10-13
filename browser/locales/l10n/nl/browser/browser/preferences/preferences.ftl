@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,26 +8,6 @@ do-not-track-option-default-content-blocking-known =
     .label = Alleen wanneer { -brand-short-name } is ingesteld om bekende trackers te blokkeren
 do-not-track-option-always =
     .label = Altijd
-pref-page-title =
-    { PLATFORM() ->
-        [windows] Opties
-       *[other] Voorkeuren
-    }
-# This is used to determine the width of the search field in about:preferences,
-# in order to make the entire placeholder string visible
-#
-# Please keep the placeholder string short to avoid truncation.
-#
-# Notice: The value of the `.style` attribute is a CSS string, and the `width`
-# is the name of the CSS property. It is intended only to adjust the element's width.
-# Do not translate.
-search-input-box =
-    .style = width: 15.4em
-    .placeholder =
-        { PLATFORM() ->
-            [windows] Zoeken in opties
-           *[other] Zoeken in voorkeuren
-        }
 settings-page-title = Instellingen
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
@@ -55,9 +35,6 @@ category-search =
 pane-privacy-title = Privacy & Beveiliging
 category-privacy =
     .tooltiptext = { pane-privacy-title }
-pane-sync-title2 = { -sync-brand-short-name }
-category-sync2 =
-    .tooltiptext = { pane-sync-title2 }
 pane-sync-title3 = Synchronisatie
 category-sync3 =
     .tooltiptext = { pane-sync-title3 }
@@ -96,21 +73,12 @@ restart-later = Later herstarten
 ## Variables:
 ##   $name (String): name of the extension
 
-# This string is shown to notify the user that their home page
-# is being controlled by an extension.
-extension-controlled-homepage-override = Een extensie, <img data-l10n-name="icon"/> { $name }, heeft beheer over uw startpagina.
-# This string is shown to notify the user that their new tab page
-# is being controlled by an extension.
-extension-controlled-new-tab-url = Een extensie, <img data-l10n-name="icon"/> { $name }, heeft beheer over uw nieuw-tabbladpagina.
 # This string is shown to notify the user that the password manager setting
 # is being controlled by an extension
 extension-controlled-password-saving = Een extensie, <img data-l10n-name="icon"/> { $name }, heeft beheer over deze instelling.
 # This string is shown to notify the user that their notifications permission
 # is being controlled by an extension.
 extension-controlled-web-notifications = Een extensie, <img data-l10n-name="icon"/> { $name }, heeft beheer over deze instelling.
-# This string is shown to notify the user that the default search engine
-# is being controlled by an extension.
-extension-controlled-default-search = Een extensie, <img data-l10n-name="icon"/> { $name }, heeft uw standaardzoekmachine ingesteld.
 # This string is shown to notify the user that Container Tabs
 # are being enabled by an extension.
 extension-controlled-privacy-containers = Een extensie, <img data-l10n-name="icon"/> { $name }, vereist containertabbladen.
@@ -131,25 +99,12 @@ extension-controlled-enable = Ga naar <img data-l10n-name="addons-icon"/> Add-on
 
 search-results-header = Zoekresultaten
 # `<span data-l10n-name="query"></span>` will be replaced by the search term.
-search-results-empty-message =
-    { PLATFORM() ->
-        [windows] Sorry! Er zijn geen resultaten in Opties voor ‘<span data-l10n-name="query"></span>’.
-       *[other] Sorry! Er zijn geen resultaten in Voorkeuren voor ‘<span data-l10n-name="query"></span>’.
-    }
-# `<span data-l10n-name="query"></span>` will be replaced by the search term.
 search-results-empty-message2 = Sorry! Er zijn geen resultaten in Instellingen voor ‘<span data-l10n-name="query"></span>’.
 search-results-help-link = Hulp nodig? Bezoek <a data-l10n-name="url">{ -brand-short-name } Support</a>
 
 ## General Section
 
 startup-header = Opstarten
-# { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
-separate-profile-mode =
-    .label = Tegelijkertijd uitvoeren van { -brand-short-name } en Firefox toestaan
-use-firefox-sync = Tip: dit gebruikt aparte profielen. Gebruik { -sync-brand-short-name } om gegevens ertussen te delen.
-get-started-not-logged-in = Aanmelden bij { -sync-brand-short-name }…
-get-started-configured = { -sync-brand-short-name }-voorkeuren openen
 always-check-default =
     .label = Altijd controleren of { -brand-short-name } uw standaardbrowser is
     .accesskey = c
@@ -160,6 +115,9 @@ set-as-my-default-browser =
     .accesskey = m
 startup-restore-previous-session =
     .label = Vorige sessie herstellen
+    .accesskey = s
+startup-restore-windows-and-tabs =
+    .label = Eerdere vensters en tabbladen openen
     .accesskey = s
 startup-restore-warn-on-quit =
     .label = Waarschuwen bij het afsluiten van de browser
@@ -175,12 +133,20 @@ open-new-link-as-tabs =
 warn-on-close-multiple-tabs =
     .label = Waarschuwen bij het sluiten van meerdere tabbladen
     .accesskey = m
+confirm-on-close-multiple-tabs =
+    .label = Bevestigen voor het sluiten van meerdere tabbladen
+    .accesskey = m
+# This string is used for the confirm before quitting preference.
+# Variables:
+#   $quitKey (String) - the quit keyboard shortcut, and formatted
+#                       in the same manner as it would appear,
+#                       for example, in the File menu.
+confirm-on-quit-with-key =
+    .label = Bevestigen voor afsluiten met { $quitKey }
+    .accesskey = v
 warn-on-open-many-tabs =
     .label = Waarschuwen als het openen van meerdere tabbladen { -brand-short-name } zou kunnen vertragen
     .accesskey = o
-switch-links-to-new-tabs =
-    .label = Als u een koppeling opent in een nieuw tabblad, er meteen naartoe gaan
-    .accesskey = w
 switch-to-new-tabs =
     .label = Als u een koppeling, afbeelding of media opent in een nieuw tabblad, er meteen naartoe gaan
     .accesskey = w
@@ -254,6 +220,7 @@ confirm-browser-language-change-button = Toepassen en herstarten
 translate-web-pages =
     .label = Webinhoud vertalen
     .accesskey = W
+fx-translate-web-pages = { -translations-brand-name }
 # The <img> element is replaced by the logo of the provider
 # used to provide machine translations for web pages.
 translate-attribution = Vertalingen door <img data-l10n-name="logo"/>
@@ -326,10 +293,6 @@ applications-manage-app =
     .label = Toepassingsdetails…
 applications-always-ask =
     .label = Altijd vragen
-applications-type-pdf = Portable Document Format (PDF)
-# Variables:
-#   $type (String) - the MIME type (e.g application/binary)
-applications-type-pdf-with-type = { applications-type-pdf } ({ $type })
 # Variables:
 #   $type-description (String) - Description of the type (e.g "Portable Document Format")
 #   $type (String) - the MIME type (e.g application/binary)
@@ -396,15 +359,6 @@ update-application-warning-cross-user-setting = Deze instelling is van toepassin
 update-application-use-service =
     .label = Een achtergrondservice gebruiken om updates te installeren
     .accesskey = a
-update-setting-write-failure-title = Fout bij opslaan updatevoorkeuren
-# Variables:
-#   $path (String) - Path to the configuration file
-# The newlines between the main text and the line containing the path is
-# intentional so the path is easier to identify.
-update-setting-write-failure-message =
-    { -brand-short-name } heeft een fout aangetroffen en heeft deze wijziging niet opgeslagen. Merk op dat voor het instellen van deze updatevoorkeur schrijfrechten voor onderstaand bestand benodigd zijn. U of uw systeembeheerder kan deze fout oplossen door de groep Gebruikers volledige toegang tot dit bestand te geven.
-    
-    Kon niet schrijven naar bestand: { $path }
 update-setting-write-failure-title2 = Fout bij opslaan update-instellingen
 # Variables:
 #   $path (String) - Path to the configuration file
@@ -521,10 +475,10 @@ choose-bookmark =
     .label = Bladwijzer gebruiken…
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Inhoud van Firefox-startpagina
-home-prefs-content-description = Kies welke inhoud u op uw Firefox-startscherm wilt laten weergeven.
+home-prefs-content-header = Inhoud van Waterfox-startpagina
+home-prefs-content-description = Kies welke inhoud u op uw Waterfox-startscherm wilt laten weergeven.
 home-prefs-search-header =
     .label = Zoeken op het web
 home-prefs-topsites-header =
@@ -610,10 +564,8 @@ search-show-suggestions-above-history-option =
     .label = Zoeksuggesties boven browsergeschiedenis tonen in adresbalkresultaten
 search-show-suggestions-private-windows =
     .label = Zoeksuggesties weergeven in privévensters
-suggestions-addressbar-settings-generic = Voorkeuren voor overige adresbalksuggesties wijzigen
 suggestions-addressbar-settings-generic2 = Instellingen voor overige adresbalksuggesties wijzigen
 search-suggestions-cant-show = Zoeksuggesties worden niet in locatiebalkresultaten getoond, omdat u { -brand-short-name } hebt geconfigureerd om nooit geschiedenis te onthouden.
-search-one-click-header = Eén-klik-zoekmachines
 search-one-click-header2 = Zoeksnelkoppelingen
 search-one-click-desc = Kies de alternatieve zoekmachines die onder de adresbalk en zoekbalk verschijnen als u een sleutelwoord begint in te voeren.
 search-choose-engine-column =
@@ -640,12 +592,6 @@ search-keyword-warning-bookmark = U hebt een sleutelwoord gekozen dat momenteel 
 
 ## Containers Section
 
-containers-back-button =
-    .aria-label =
-        { PLATFORM() ->
-            [windows] Terug naar Opties
-           *[other] Terug naar Voorkeuren
-        }
 containers-back-button2 =
     .aria-label = Terug naar Instellingen
 containers-header = Containertabbladen
@@ -655,21 +601,15 @@ containers-add-button =
 containers-new-tab-check =
     .label = Selecteer een container voor elk nieuw tabblad
     .accesskey = S
-containers-preferences-button =
-    .label = Voorkeuren
 containers-settings-button =
     .label = Instellingen
 containers-remove-button =
     .label = Verwijderen
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Waterfox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Neem uw web mee
-sync-signedout-description = Synchroniseer uw bladwijzers, geschiedenis, tabbladen, wachtwoorden, add-ons en voorkeuren op al uw apparaten.
-sync-signedout-account-signin2 =
-    .label = Aanmelden bij { -sync-brand-short-name }…
-    .accesskey = A
 sync-signedout-description2 = Synchroniseer uw bladwijzers, geschiedenis, tabbladen, wachtwoorden, add-ons en instellingen op al uw apparaten.
 sync-signedout-account-signin3 =
     .label = Aanmelden om te synchroniseren…
@@ -682,9 +622,9 @@ sync-signedout-account-signin3 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Download Firefox voor <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> of <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> om met uw mobiele apparaat te synchroniseren.
+sync-mobile-promo = Download Waterfox voor <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> of <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> om met uw mobiele apparaat te synchroniseren.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Profielafbeelding wijzigen
@@ -709,10 +649,6 @@ sync-sign-in =
 
 prefs-syncing-on = Synchroniseren: AAN
 prefs-syncing-off = Synchroniseren: UIT
-prefs-sync-setup =
-    .label = { -sync-brand-short-name } instellen…
-    .accesskey = s
-prefs-sync-offer-setup-label = Synchroniseer uw bladwijzers, geschiedenis, tabbladen, wachtwoorden, add-ons en voorkeuren op al uw apparaten.
 prefs-sync-turn-on-syncing =
     .label = Synchronisatie inschakelen…
     .accesskey = S
@@ -732,11 +668,6 @@ sync-currently-syncing-logins-passwords = Aanmeldingen en wachtwoorden
 sync-currently-syncing-addresses = Adressen
 sync-currently-syncing-creditcards = Creditcards
 sync-currently-syncing-addons = Add-ons
-sync-currently-syncing-prefs =
-    { PLATFORM() ->
-        [windows] Opties
-       *[other] Voorkeuren
-    }
 sync-currently-syncing-settings = Instellingen
 sync-change-options =
     .label = Wijzigen…
@@ -775,16 +706,8 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = Add-ons
-    .tooltiptext = Extensies en thema’s voor Firefox op desktops
+    .tooltiptext = Extensies en thema’s voor Waterfox op desktops
     .accesskey = A
-sync-engine-prefs =
-    .label =
-        { PLATFORM() ->
-            [windows] Opties
-           *[other] Voorkeuren
-        }
-    .tooltiptext = Algemene, privacy- en beveiligingsinstellingen die u hebt gewijzigd
-    .accesskey = O
 sync-engine-settings =
     .label = Instellingen
     .tooltiptext = Door u gewijzigde algemene, privacy- en beveiligingsinstellingen
@@ -834,9 +757,6 @@ forms-fill-logins-and-passwords =
 forms-saved-logins =
     .label = Opgeslagen aanmeldingen…
     .accesskey = m
-forms-master-pw-use =
-    .label = Een hoofdwachtwoord gebruiken
-    .accesskey = d
 forms-primary-pw-use =
     .label = Een hoofdwachtwoord gebruiken
     .accesskey = h
@@ -847,7 +767,6 @@ forms-primary-pw-learn-more-link = Meer info
 forms-master-pw-change =
     .label = Hoofdwachtwoord wijzigen…
     .accesskey = z
-forms-master-pw-fips-title = U bent momenteel in FIPS-modus. FIPS vereist een ingesteld hoofdwachtwoord.
 forms-primary-pw-change =
     .label = Hoofdwachtwoord wijzigen…
     .accesskey = H
@@ -857,20 +776,17 @@ forms-primary-pw-change =
 forms-primary-pw-former-name = { "" }
 forms-primary-pw-fips-title = U bent momenteel in FIPS-modus. FIPS vereist een ingesteld hoofdwachtwoord.
 forms-master-pw-fips-desc = Wachtwoordwijziging mislukt
+forms-windows-sso =
+    .label = Windows-single-sign-on toestaan voor Microsoft-, werk- en schoolaccounts
+forms-windows-sso-learn-more-link = Meer info
+forms-windows-sso-desc = Accounts beheren in uw apparaatinstellingen
 
 ## OS Authentication dialog
 
-# This message can be seen by trying to add a Master Password.
-master-password-os-auth-dialog-message-win = Voer uw aanmeldgegevens voor Windows in om een hoofdwachtwoord in te stellen. Hierdoor wordt de beveiliging van uw accounts beschermd.
-# This message can be seen by trying to add a Master Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
-# and includes subtitle of "Enter password for the user "xxx" to allow this." These
-# notes are only valid for English. Please test in your locale.
-master-password-os-auth-dialog-message-macosx = hoofdwachtwoord aanmaken
 # This message can be seen by trying to add a Primary Password.
 primary-password-os-auth-dialog-message-win = Voer uw aanmeldgegevens voor Windows in om een hoofdwachtwoord in te stellen. Hierdoor wordt de beveiliging van uw accounts beschermd.
 # This message can be seen by trying to add a Primary Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
+# The macOS strings are preceded by the operating system with "Waterfox is trying to "
 # and includes subtitle of "Enter password for the user "xxx" to allow this." These
 # notes are only valid for English. Please test in your locale.
 primary-password-os-auth-dialog-message-macosx = een hoofdwachtwoord aanmaken
@@ -882,12 +798,12 @@ history-header = Geschiedenis
 # This label is followed, on the same line, by a dropdown list of options
 # (Remember history, etc.).
 # In English it visually creates a full sentence, e.g.
-# "Firefox will" + "Remember history".
+# "Waterfox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
 #   - Simply as "Waterfox", moving the verb into each option.
 #     This will result in "Waterfox" + "Will remember history", etc.
-#   - As a stand-alone message, for example "Firefox history settings:".
+#   - As a stand-alone message, for example "Waterfox history settings:".
 history-remember-label = { -brand-short-name } zal
     .accesskey = z
 history-remember-option-all =
@@ -962,9 +878,6 @@ sitedata-clear =
 sitedata-settings =
     .label = Gegevens beheren…
     .accesskey = G
-sitedata-cookies-permissions =
-    .label = Toestemmingen beheren…
-    .accesskey = T
 sitedata-cookies-exceptions =
     .label = Uitzonderingen beheren…
     .accesskey = z
@@ -1109,16 +1022,18 @@ permissions-block-popups =
 permissions-block-popups-exceptions =
     .label = Uitzonderingen…
     .accesskey = U
+# "popup" is a misspelling that is more popular than the correct spelling of
+# "pop-up" so it's included as a search keyword, not displayed in the UI.
+permissions-block-popups-exceptions-button =
+    .label = Uitzonderingen…
+    .accesskey = U
+    .searchkeywords = pop-ups
 permissions-addon-install-warning =
     .label = Waarschuwen wanneer websites add-ons proberen te installeren
     .accesskey = W
 permissions-addon-exceptions =
     .label = Uitzonderingen…
     .accesskey = U
-permissions-a11y-privacy-checkbox =
-    .label = Toegang tot uw browser door toegankelijkheidsservices voorkomen
-    .accesskey = a
-permissions-a11y-privacy-link = Meer info
 
 ## Privacy Section - Data Collection
 
@@ -1140,10 +1055,6 @@ addon-recommendations-link = Meer info
 # This message is displayed above disabled data sharing options in developer builds
 # or builds with no Telemetry support available.
 collection-health-report-disabled = Gegevensrapportage is uitgeschakeld voor deze buildconfiguratie
-collection-backlogged-crash-reports =
-    .label = { -brand-short-name } toestaan om namens u achterstallige crashrapporten te verzenden
-    .accesskey = c
-collection-backlogged-crash-reports-link = Meer info
 collection-backlogged-crash-reports-with-link = { -brand-short-name } toestaan om namens u achterstallige crashrapporten te verzenden. <a data-l10n-name="crash-reports-link">Meer info</a>
     .accesskey = c
 
@@ -1168,13 +1079,6 @@ security-block-uncommon-software =
 ## Privacy Section - Certificates
 
 certs-header = Certificaten
-certs-personal-label = Wanneer een server om uw persoonlijke certificaat vraagt
-certs-select-auto-option =
-    .label = Er automatisch een selecteren
-    .accesskey = a
-certs-select-ask-option =
-    .label = Elke keer vragen
-    .accesskey = E
 certs-enable-ocsp =
     .label = OCSP-responderservers vragen om de huidige geldigheid van certificaten te bevestigen
     .accesskey = v
@@ -1184,29 +1088,6 @@ certs-view =
 certs-devices =
     .label = Beveiligingsapparaten…
     .accesskey = B
-space-alert-learn-more-button =
-    .label = Meer info
-    .accesskey = M
-space-alert-over-5gb-pref-button =
-    .label =
-        { PLATFORM() ->
-            [windows] Opties openen
-           *[other] Voorkeuren openen
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] o
-        }
-space-alert-over-5gb-message =
-    { PLATFORM() ->
-        [windows] { -brand-short-name } heeft bijna geen schijfruimte meer. Inhoud van websites wordt mogelijk niet goed weergegeven. U kunt opgeslagen gegevens wissen in Opties > Privacy & Beveiliging > Cookies en websitegegevens.
-       *[other] { -brand-short-name } heeft bijna geen schijfruimte meer. Inhoud van websites wordt mogelijk niet goed weergegeven. U kunt opgeslagen gegevens wissen in Voorkeuren > Privacy & Beveiliging > Cookies en websitegegevens.
-    }
-space-alert-under-5gb-ok-button =
-    .label = OK, begrepen
-    .accesskey = K
-space-alert-under-5gb-message = { -brand-short-name } heeft bijna geen schijfruimte meer. Inhoud van websites wordt mogelijk niet goed weergegeven. Bezoek ‘Meer info’ om uw schijfgebruik te optimaliseren voor betere prestaties.
 space-alert-over-5gb-settings-button =
     .label = Instellingen openen
     .accesskey = o

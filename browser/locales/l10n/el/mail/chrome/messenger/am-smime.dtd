@@ -1,8 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY e2eTitle.label "Κρυπτογράφηση από άκρο σε άκρο">
+<!ENTITY e2eTitle.label "Διατερματική κρυπτογράφηση">
 <!ENTITY e2eLearnMore.label "Μάθετε περισσότερα">
 
 <!ENTITY e2eEnc.description "Χωρίς κρυπτογράφηση από άκρο σε άκρο, τα περιεχόμενα των μηνυμάτων εκτίθενται εύκολα στον πάροχο ηλεκτρονικού ταχυδρομείου σας και σε μαζική παρακολούθηση.">
@@ -27,7 +27,6 @@
 <!ENTITY signingGroupTitle.label "Ψηφιακή υπογραφή">
 <!ENTITY signMessage2.label "Προσθήκη ψηφιακής υπογραφής από προεπιλογή">
 <!ENTITY signMessage.accesskey "Ψ">
-
 <!ENTITY signingCert2.message "Προσωπικό πιστοποιητικό για ψηφιακή υπογραφή:">
 
 <!ENTITY sendingDefaults.label "Προεπιλεγμένες ρυθμίσεις για αποστολή μηνυμάτων">

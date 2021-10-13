@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -164,7 +164,7 @@
 <!ENTITY heading6Cmd.accesskey "6">
 <!ENTITY paragraphAddressCmd.label "地址">
 <!ENTITY paragraphAddressCmd.accesskey "A">
-<!ENTITY paragraphPreformatCmd.label "预设格式">
+<!ENTITY paragraphPreformatCmd.label "默认格式">
 <!ENTITY paragraphPreformatCmd.accesskey "f">
 
 <!-- List menu items -->
@@ -186,7 +186,7 @@
 <!ENTITY ParagraphSelect.title "段落">
 <!ENTITY ParagraphSelect.tooltip "选择段落格式">
 <!-- Shared in Paragraph, and Toolbar menulist -->
-<!ENTITY bodyTextCmd.label "主体文本">
+<!ENTITY bodyTextCmd.label "正文">
 <!ENTITY bodyTextCmd.accesskey "T">
 <!-- isn't used in menu now, but may be added in future -->
 <!ENTITY advancedPropertiesCmd.label "高级属性">

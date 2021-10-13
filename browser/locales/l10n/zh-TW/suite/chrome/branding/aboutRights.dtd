@@ -1,7 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
 <!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
 <!ENTITY rights.locale-direction "ltr">
 <!ENTITY rights.pagetitle       "about:rights">
@@ -17,17 +17,12 @@
      Also note the leading/trailing whitespace in strings here, which is
      deliberate for formatting around the embedded links. -->
 <!ENTITY rights.intro-point1a "&brandShortName; 是依照 ">
-<!ENTITY rights.intro-point1b "Mozilla 公眾授權條款">
-<!ENTITY rights.intro-point1c "中的條件所提供給您的。這表示您可以使用、複製，或散布 &brandShortName; 給其他人。歡迎您自行修改 &brandShortName; 的原始碼以滿足您的需求；Mozilla 公眾授權條款也同時賦予您散佈修改版本的權利。">
-
-<!ENTITY rights.intro-point2a "SeaMonkey e.V 沒有授予您使用 SeaMonkey 商標與圖示的任何權利。您可以在">
+<!ENTITY rights.intro-point1b "Waterfox 公眾授權條款">
+<!ENTITY rights.intro-point1c "中的條件所提供給您的。這表示您可以使用、複製，或散布 &brandShortName; 給其他人。歡迎您自行修改 &brandShortName; 的原始碼以滿足您的需求；Waterfox 公眾授權條款也同時賦予您散佈修改版本的權利。">
 
 <!ENTITY rights.intro-point2aa "&vendorShortName; 沒有授予您使用「&brandFullName;」商標與圖示的任何權利。您可以在">
 <!ENTITY rights.intro-point2b "這裡">
 <!ENTITY rights.intro-point2c "找到更多關於商標的使用條款。">
-
-<!-- point 2d is technically point 3. in the list -->
-<!ENTITY rights.intro-point2d "&brandShortName; 當中的一些功能，像是程式錯誤回報員，將會讓您可以選擇是否要送出回饋給 &vendorShortName;。在送出回饋時，您必須授權 &vendorShortName; 使用您所送出的回饋內容以改善其產品、發布回饋內容於其網站，並散佈這些使用者回饋。">
 
 <!-- point 2da is technically point 3. in the list -->
 <!ENTITY rights.intro-point2da "&brandShortName; 當中的一些功能，像是程式錯誤回報員，將會讓您可以選擇是否要送出回饋給 &vendorShortName;。在送出回饋時，您必須授權 &vendorShortName; 使用您所送出的回饋內容以改善其產品、發布回饋內容於其網站，並散佈這些使用者回饋。">
@@ -48,8 +43,6 @@
      preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
      so that we can refer to text the user sees in the UI, without
      this page being forgotten every time those strings are updated.  -->
-<!-- intro paragraph for branded builds -->
-<!ENTITY rights3.webservices-a "&brandFullName; 將附加元件推薦及更新服務、安全瀏覽服務、位置感知瀏覽通知功能等選用服務（以下簡稱「服務」），透過此二進位版本的 &brandShortName; 提供給您使用。若您不想要使用這些「服務」或不接受以下的服務條款，可在">
 <!-- intro paragraph for branded builds -->
 <!ENTITY rights3.webservices-aa "&vendorShortName; 將附加元件推薦及更新服務、安全瀏覽服務、位置感知瀏覽通知功能等選用服務（以下簡稱「服務」），透過此二進位版本的 &brandShortName; 提供給您使用。若您不想要使用這些「服務」或不接受以下的服務條款，可在">
 <!ENTITY rights3.webservices-b "此處">
@@ -80,16 +73,11 @@
 <!ENTITY rights.locationawarebrowsing-term4 "位置感知瀏覽現已關閉">
 
 <!-- points 0-6 text for branded builds -->
-<!ENTITY rights.webservices-term0 "&vendorShortName;、Mozilla 與其貢獻者、授權者，及伙伴致力於提供最新最準確的服務。然而，我們無法保證此資訊足夠完善且沒有錯誤。舉例，Safe Browsing 服務可能無法偵測出某些有風險的網站，或是錯誤地把安全的網站辨識為有問題的網站；位置感知服務當中由我們的服務提供者所回傳的位置資訊僅為估計值，我們與我們的服務提供者皆不保證回傳的位置資訊的準確度。">
-
-<!-- points 0-6 text for branded builds -->
 <!ENTITY rights.webservices-term0a "&vendorShortName; 與其貢獻者、授權者及伙伴致力於提供最新最準確的服務。然而，我們無法保證此資訊足夠完善且沒有錯誤。舉例，Safe Browsing 服務可能無法偵測出某些有風險的網站，或是錯誤地把安全的網站辨識為有問題的網站；位置感知服務當中由我們的服務提供者所回傳的位置資訊僅為估計值，我們與我們的服務提供者皆不保證回傳的位置資訊的準確度。">
 <!ENTITY rights.webservices-term1 "&vendorShortName; 保留嗣後自行修改服務內容或是停止相關服務的權利。">
-<!ENTITY rights.webservices-term2 "服務的提供網站透過本聲明授權使用者經由隨附的 &brandShortName; 使用這些服務。唯 &vendorShortName; 及其授權人保留其他與此服務無直接相關的權利。本網站資訊服務聲明條款，並無意限制任何基於 &brandShortName; 所適用的開放源碼授權條款給予軟體使用者的權利，亦不干預 &brandShortName; 開放源碼版本依其授權條款所能被進行的利用方式。">
 <!ENTITY rights.webservices-term2a "服務的提供網站透過本聲明授權使用者經由隨附的 &brandShortName; 使用這些服務。唯 &vendorShortName; 及其授權人保留其他與此服務無直接相關的權利。本網站資訊服務聲明條款，並無意限制任何基於 &brandShortName; 所適用的開放源碼授權條款給予軟體使用者的權利，亦不干預 &brandShortName; 開放源碼版本依其授權條款所能被進行的利用方式。">
 <!ENTITY rights.webservices-term3 "這些「資訊服務」的內容依其現狀提供。&vendorShortName; 與其貢獻者、授權人、與散布者，並不提供任何明示或隱含的保證，不擔保的範圍包含且不限於「資訊服務」的可用性及其他任何特定目的的使用。這些「資訊服務」的品質與效能沒有擔保，您須自行擔負使用此「資訊服務」可能產生的任何風險。若您所處的司法管轄區域不容許聲明條款預先排除或限制隱含性的保證，那麼本聲明裡關於隱含性保證的預先排除規定便不適用於您。">
 <!ENTITY rights.webservices-term4 "除非法律要求，&vendorShortName;、它的貢獻者、授權人、與散布者不會對提供程式及「資訊服務」所造成的任何損害擔負責任，免責的範圍包含任何使用 &brandShortName; 與此「資訊服務」相關的，非直接的、特別的、偶發的、因果關係式的，以及示範性的懲罰性賠償金。如果法院就具體個案判定提供服務者仍需擔負上述的賠償責任，則各種損害賠償責任的總合須不逾美金五百元。若您所處的司法管轄區域不容許損害賠償責任的預先排除及限制，那麼本聲明裡關於損害賠償金的預先排除及限制規定便不適用於您。">
 <!ENTITY rights.webservices-term5 "&vendorShortName; 可在必要時更新聲明條款的內容。已公布聲明條款內容在沒有 &vendorShortName; 的書面同意下，任何人不得對其聲明內容進行修改或刪除。">
-<!ENTITY rights.webservices-term6 "本條款內容受德國法律所管轄，任何與本條款之相關爭訟，應由德國之管轄法院享有專屬管轄權。若此條款有任何部分為承審司法機構認定無效或是無法執行，其他部分則仍然保持有效。若此正體中文翻譯版本與英文原文版本在解釋上有所疑義，應以英文原文版本為準。">
 
 <!ENTITY rights.webservices-term6a "本條款內容受德國法律所管轄，任何與本條款之相關爭訟，應由德國之管轄法院享有專屬管轄權。若此條款有任何部分為承審司法機構認定無效或是無法執行，其他部分則仍然保持有效。若此正體中文翻譯版本與英文原文版本在解釋上有所疑義，應以英文原文版本為準。">

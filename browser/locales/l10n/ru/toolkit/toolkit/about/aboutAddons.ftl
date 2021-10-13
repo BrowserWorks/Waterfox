@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-addons-window =
-    .title = Управление дополнениями
 addons-page-title = Управление дополнениями
 search-header =
     .placeholder = Поиск на addons.mozilla.org
@@ -24,17 +22,6 @@ list-empty-button =
 help-button = Поддержка дополнений
 sidebar-help-button-title =
     .title = Поддержка дополнений
-preferences =
-    { PLATFORM() ->
-        [windows] Настройки { -brand-short-name }
-       *[other] Настройки { -brand-short-name }
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] Настройки { -brand-short-name }
-           *[other] Настройки { -brand-short-name }
-        }
 addons-settings-button = Настройки { -brand-short-name }
 sidebar-settings-button-title =
     .title = Настройки { -brand-short-name }
@@ -42,36 +29,6 @@ show-unsigned-extensions-button =
     .label = Некоторые расширения не могут быть проверены
 show-all-extensions-button =
     .label = Показать все расширения
-cmd-show-details =
-    .label = Подробнее
-    .accesskey = р
-cmd-find-updates =
-    .label = Найти обновления
-    .accesskey = а
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Настройки
-           *[other] Настройки
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] с
-           *[other] с
-        }
-cmd-enable-theme =
-    .label = Использовать тему
-    .accesskey = п
-cmd-disable-theme =
-    .label = Больше не использовать тему
-    .accesskey = п
-cmd-install-addon =
-    .label = Установить
-    .accesskey = н
-cmd-contribute =
-    .label = Внести вклад
-    .accesskey = т
-    .tooltiptext = Внести вклад в развитие этого дополнения
 detail-version =
     .label = Версия
 detail-last-updated =
@@ -96,16 +53,16 @@ detail-private-browsing-label = Запуск в приватных окнах
 # Some add-ons may elect to not run in private windows by setting incognito: not_allowed in the manifest.  This
 # cannot be overridden by the user.
 detail-private-disallowed-label = Не разрешено в приватных окнах
-detail-private-disallowed-description2 = Это расширение не будет работать в режиме приватного просмотра. <a data-l10n-name="learn-more">Подробнее</a>
+detail-private-disallowed-description2 = Это расширение не работает в приватном режиме. <a data-l10n-name="learn-more">Подробнее</a>
 # Some special add-ons are privileged, run in private windows automatically, and this permission can't be revoked
 detail-private-required-label = Требует доступа к приватным окнам
-detail-private-required-description2 = Это расширение имеет доступ к вашей активности в Интернете во время приватного просмотра. <a data-l10n-name="learn-more">Подробнее</a>
+detail-private-required-description2 = Это расширение имеет доступ к вашей активности в Интернете в приватном режиме. <a data-l10n-name="learn-more">Подробнее</a>
 detail-private-browsing-on =
     .label = Разрешить
-    .tooltiptext = Включать при приватном просмотре
+    .tooltiptext = Включать в приватном режиме
 detail-private-browsing-off =
     .label = Не разрешать
-    .tooltiptext = Отключать при приватном просмотре
+    .tooltiptext = Отключать в приватном режиме
 detail-home =
     .label = Домашняя страница
 detail-home-value =
@@ -151,8 +108,8 @@ legacy-extensions-description = Эти расширения не соответ�
 private-browsing-description2 =
     { -brand-short-name } изменяет работу расширений в приватном режиме. Любые новые расширения, которые вы добавите в
     { -brand-short-name }, не будут запускаться по умолчанию в приватных окнах. Если вы не разрешите этого в настройках,
-    расширение не будет работать во время приватного просмотра и не будет иметь доступа к вашей активности в Интернете.
-    Мы внесли это изменение, чтобы сделать ваш приватный просмотр по-настоящему приватным.
+    расширение не будет работать в приватном режиме и не будет иметь доступа к вашей активности в Интернете.
+    Мы внесли это изменение, чтобы сделать ваш приватный режим по-настоящему приватным.
     <label data-l10n-name="private-browsing-learn-more">Узнайте, как управлять настройками расширений.</label>
 addon-category-discover = Рекомендации
 addon-category-discover-title =
@@ -295,7 +252,8 @@ install-theme-button = Установить тему
 # The label of the button that appears after installing an add-on. Upon click,
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = Управление
-find-more-addons = Найти больше дополнений
+find-more-addons = Найти другие дополнения
+find-more-themes = Найти другие темы
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
 addon-options-button =
@@ -325,13 +283,14 @@ extension-enabled-heading = Включены
 extension-disabled-heading = Отключены
 theme-enabled-heading = Включены
 theme-disabled-heading = Отключены
+theme-monochromatic-heading = Расцветки
+theme-monochromatic-subheading = Яркие новые расцветки от { -brand-product-name }. Доступны в течение ограниченного времени.
 plugin-enabled-heading = Включены
 plugin-disabled-heading = Отключены
 dictionary-enabled-heading = Включены
 dictionary-disabled-heading = Отключены
 locale-enabled-heading = Включены
 locale-disabled-heading = Отключены
-ask-to-activate-button = Включать по запросу
 always-activate-button = Всегда включать
 never-activate-button = Никогда не включать
 addon-detail-author-label = Автор
@@ -378,7 +337,7 @@ install-update-button = Обновить
 addon-badge-private-browsing-allowed2 =
     .title = Разрешено в приватных окнах
     .aria-label = { addon-badge-private-browsing-allowed2.title }
-addon-detail-private-browsing-help = Когда разрешено, расширение будет иметь доступ к вашей активности в Интернете во время приватного просмотра. <a data-l10n-name="learn-more">Подробнее</a>
+addon-detail-private-browsing-help = Когда разрешено, расширение будет иметь доступ к вашей активности в Интернете в приватном режиме. <a data-l10n-name="learn-more">Подробнее</a>
 addon-detail-private-browsing-allow = Разрешить
 addon-detail-private-browsing-disallow = Не разрешать
 
@@ -388,10 +347,10 @@ addon-detail-private-browsing-disallow = Не разрешать
 addon-badge-recommended2 =
     .title = { -brand-product-name } рекомендует только те расширения, которые соответствуют нашим стандартам по безопасности и производительности
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Mozilla" in the string below because the extensions are built
-# by Mozilla and we don't want forks to display "by Fork".
+# We hard code "Waterfox" in the string below because the extensions are built
+# by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = Официальное расширение, созданное Mozilla. Соответствует стандартам безопасности и производительности.
+    .title = Официальное расширение, созданное Waterfox. Соответствует стандартам безопасности и производительности.
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = Это расширение было проверено на соответствие нашим стандартам безопасности и производительности
@@ -409,9 +368,9 @@ addon-permissions-optional = Необязательные разрешения �
 addon-permissions-learnmore = Узнать больше о разрешениях
 recommended-extensions-heading = Рекомендуемые расширения
 recommended-themes-heading = Рекомендуемые темы
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
-# list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Чувствуете прилив вдохновения? <a data-l10n-name="link">Создайте свою собственную тему с помощью Firefox Color.</a>
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
+# list view. The "Waterfox Color" name itself should not be translated.
+recommended-theme-1 = Чувствуете прилив вдохновения? <a data-l10n-name="link">Создайте свою собственную тему с помощью Waterfox Color.</a>
 
 ## Page headings
 

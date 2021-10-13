@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Cetak…">
 <!ENTITY printCmd.accesskey "C">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Pratinjau Cetak">
-<!ENTITY printPreviewCmd.accesskey "j">
-<!ENTITY printSetupCmd.label "Tata Laman…">
-<!ENTITY printSetupCmd.accesskey "L">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Hapus Pesan">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "T">
 <!ENTITY compactVersion.label "Tampilan Ringkas">
 <!ENTITY compactVersion.accesskey "C">
-<!ENTITY folderPaneBar.label "Bilah Panel Format">
-<!ENTITY folderPaneBar.accesskey "F">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Urut berdasar">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Buku Alamat">
 <!ENTITY addressBookCmd.accesskey "A">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Pengaya">
-<!ENTITY addons.accesskey "P">
-<!ENTITY addonPrefs.label "Pilihan Pengaya">
-<!ENTITY addonPrefs.accesskey "O">
-<!ENTITY addonPrefsUnix.label "Preferensi Pengaya">
-<!ENTITY addonPrefsUnix.accesskey "P">
 <!ENTITY addonNoPrefs.label "Pengaturan Pengaya tidak ditemukan">
 <!ENTITY activitymanager.label "Pengelola Aktivitas">
 <!ENTITY activitymanager.accesskey "v">
@@ -520,8 +508,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Pengaya Awakutu">
 <!ENTITY debugAddonsCmd.accesskey "A">
-<!ENTITY tabsDebugCmd.label "Debugger Bingkai Konten">
-<!ENTITY tabsDebugCmd.accesskey "C">
 <!ENTITY errorConsoleCmd.label "Konsol Kesalahan">
 <!ENTITY errorConsoleCmd.accesskey "K">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +531,11 @@
 <!ENTITY backButton1.label "Mundur">
 <!ENTITY goForwardButton1.label "Maju">
 <!ENTITY deleteItem.title "Hapus">
-<!ENTITY deleteButton.label "Hapus">
-<!ENTITY undeleteButton.label "Kembalikan">
 <!ENTITY markButton.label "Tandai">
 <!ENTITY printButton.label "Cetak">
 <!ENTITY stopButton.label "Berhenti">
 <!ENTITY throbberItem.title "Indikator Aktivitas">
 <!ENTITY junkItem.title "Junk">
-<!ENTITY junkButton.label "Junk">
-<!ENTITY notJunkButton.label "Bukan Junk">
 <!ENTITY addressBookButton.label "Buku Alamat">
 <!ENTITY chatButton.label "Ngobrol">
 <!ENTITY glodaSearch.title "Pencarian Global">
@@ -585,19 +567,14 @@
 <!ENTITY previousMsgButton.tooltip "Pindah ke pesan sebelumnya">
 <!ENTITY goForwardButton.tooltip "Maju satu pesan">
 <!ENTITY goBackButton.tooltip "Mundur satu pesan">
-<!ENTITY deleteButton.tooltip "Hapus pesan atau folder terpilih">
-<!ENTITY undeleteButton.tooltip "Kembalikan pesan yang dihapus">
 <!ENTITY markButton.tooltip "Tandai pesan">
 <!ENTITY printButton.tooltip "Cetak pesan ini">
 <!ENTITY stopButton.tooltip "Hentikan transfer yang berjalan">
-<!ENTITY junkButton.tooltip "Tandai pesan terpilih sebagai junk">
-<!ENTITY notJunkButton.tooltip "Tandai pesan terpilih sebagai bukan junk">
 <!ENTITY addressBookButton.tooltip "Buka buku alamat">
 <!ENTITY chatButton.tooltip "Tampilkan tab Ngobrol">
 <!ENTITY tagButton.tooltip "Tambahkan tag pada pesan">
 <!ENTITY compactButton.tooltip "Buang pesan yang dihapus pada folder terpilih">
 <!ENTITY appmenuButton1.tooltip "Tampilkan Menu &brandShortName;">
-<!ENTITY addonsButton.tooltip "Mengelola pengaya Anda">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Maju Sebaris">

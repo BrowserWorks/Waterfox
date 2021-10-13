@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,16 +38,20 @@ menu-quit =
             [windows] K
            *[other] K
         }
+
 # This menu-quit-mac string is only used on macOS.
 menu-quit-mac =
     .label = Keluar dari { -brand-shorter-name }
+
 # This menu-quit-button string is only used on Linux.
 menu-quit-button =
     .label = { menu-quit.label }
+
 # This menu-quit-button-win string is only used on Windows.
 menu-quit-button-win =
     .label = { menu-quit.label }
     .tooltip = Keluar dari { -brand-shorter-name }
+
 menu-about =
     .label = Tentang { -brand-shorter-name }
     .accesskey = T
@@ -71,7 +75,7 @@ menu-file-new-private-window =
     .accesskey = u
 # "Open Location" is only displayed on macOS, and only on windows
 # that aren't main browser windows, or when there are no windows
-# but Firefox is still running.
+# but Waterfox is still running.
 menu-file-open-location =
     .label = Buka Lokasi…
 menu-file-open-file =
@@ -110,9 +114,6 @@ menu-file-go-offline =
 menu-edit =
     .label = Edit
     .accesskey = E
-menu-edit-find-on =
-    .label = Cari di Laman Ini…
-    .accesskey = C
 menu-edit-find-in-page =
     .label = Temukan di Laman…
     .accesskey = T
@@ -131,9 +132,6 @@ menu-view =
 menu-view-toolbars-menu =
     .label = Bilah Alat
     .accesskey = t
-menu-view-customize-toolbar =
-    .label = Ubahsuai…
-    .accesskey = U
 menu-view-customize-toolbar2 =
     .label = Ubahsuai Bilah Alat…
     .accesskey = U
@@ -170,9 +168,7 @@ menu-view-page-style-no-style =
 menu-view-page-basic-style =
     .label = Gaya Standar Laman
     .accesskey = S
-menu-view-charset =
-    .label = Pengodean Teks
-    .accesskey = o
+
 menu-view-repair-text-encoding =
     .label = Memperbaiki Pengodean Teks
     .accesskey = k
@@ -218,6 +214,7 @@ menu-history-undo-menu =
     .label = Tab yang Baru Saja Ditutup
 menu-history-undo-window-menu =
     .label = Jendela yang Baru Saja Ditutup
+
 menu-history-reopen-all-tabs = Buka Ulang Semua Tab
 menu-history-reopen-all-windows = Buka Ulang Semua Jendela
 
@@ -226,10 +223,6 @@ menu-history-reopen-all-windows = Buka Ulang Semua Jendela
 menu-bookmarks-menu =
     .label = Markah
     .accesskey = M
-menu-bookmarks-show-all =
-    .label = Tampilkan Semua Markah…
-menu-bookmark-this-page =
-    .label = Markahi Laman ini
 menu-bookmarks-manage =
     .label = Kelola Markah
 menu-bookmark-current-tab =
@@ -253,15 +246,6 @@ menu-tools =
 menu-tools-downloads =
     .label = Unduhan
     .accesskey = U
-menu-tools-addons =
-    .label = Pengaya
-    .accesskey = P
-menu-tools-fxa-sign-in =
-    .label = Masuk ke { -brand-product-name }…
-    .accesskey = M
-menu-tools-turn-on-sync =
-    .label = Aktifkan { -sync-brand-short-name }…
-    .accesskey = A
 menu-tools-addons-and-themes =
     .label = Pengaya dan Tema
     .accesskey = P
@@ -277,9 +261,6 @@ menu-tools-sync-now =
 menu-tools-fxa-re-auth =
     .label = Sambungkan ulang ke { -brand-product-name }…
     .accesskey = S
-menu-tools-web-developer =
-    .label = Pengembang Web
-    .accesskey = W
 menu-tools-browser-tools =
     .label = Alat Peramban
     .accesskey = A
@@ -292,17 +273,6 @@ menu-tools-page-source =
 menu-tools-page-info =
     .label = Informasi Laman
     .accesskey = I
-menu-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Pengaturan…
-           *[other] Pengaturan
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] g
-           *[other] g
-        }
 menu-settings =
     .label = Pengaturan
     .accesskey =
@@ -335,21 +305,6 @@ menu-window-bring-all-to-front =
 menu-help =
     .label = Bantuan
     .accesskey = n
-menu-help-product =
-    .label = Bantuan { -brand-shorter-name }
-    .accesskey = B
-menu-help-show-tour =
-    .label = Tur { -brand-shorter-name }
-    .accesskey = u
-menu-help-import-from-another-browser =
-    .label = Impor dari Peramban Lain…
-    .accesskey = I
-menu-help-keyboard-shortcuts =
-    .label = Pintasan Papan Ketik
-    .accesskey = K
-menu-help-troubleshooting-info =
-    .label = Informasi Pemecahan Masalah…
-    .accesskey = M
 menu-get-help =
     .label = Dapatkan Bantuan
     .accesskey = B
@@ -361,12 +316,6 @@ menu-help-report-site-issue =
 menu-help-feedback-page =
     .label = Kirim Saran…
     .accesskey = S
-menu-help-safe-mode-without-addons =
-    .label = Mulai Ulang dengan Pengaya Dinonaktifkan…
-    .accesskey = n
-menu-help-safe-mode-with-addons =
-    .label = Mulai Ulang dengan Pengaya Diaktifkan
-    .accesskey = n
 menu-help-enter-troubleshoot-mode2 =
     .label = Mode Pemecahan Masalah…
     .accesskey = P

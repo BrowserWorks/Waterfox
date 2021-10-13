@@ -1,16 +1,16 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY pref.download.title "Hämtning av filer">
 
 <!ENTITY downloadBehavior.label "När en fil hämtas">
-<!ENTITY openDM.label "Öppna Filhämtaren">
-<!ENTITY openDM.accesskey "Ö">
-<!ENTITY openProgressDialog.label "Öppna ett förloppsfönster">
-<!ENTITY openProgressDialog.accesskey "f">
 <!ENTITY doNothing.label "Öppna inte någonting">
 <!ENTITY doNothing.accesskey "i">
+<!ENTITY openProgressDialog.label "Öppna ett förloppsfönster">
+<!ENTITY openProgressDialog.accesskey "f">
+<!ENTITY openDM.label "Öppna Filhämtaren">
+<!ENTITY openDM.accesskey "Ö">
 <!ENTITY flashWhenOpen.label            "Blinka filhämtaren om den redan är öppen">
 <!ENTITY flashWhenOpen.accesskey        "B">
 
@@ -22,18 +22,9 @@
 <!ENTITY alwaysAsk.label                "Fråga alltid var jag vill spara filerna">
 <!ENTITY alwaysAsk.accesskey            "A">
 
-<!ENTITY downloadHistory.label          "Behåll hämtningar">
-<!ENTITY removeEntries.label            "Ta bort hämtningar">
-<!ENTITY removeEntries.accesskey        "T">
-<!ENTITY whenCompleted.label            "När de är klara">
-<!ENTITY whenQuittingApp.label          "När &brandShortName; avslutas">
-<!ENTITY neverRemove.label              "Aldrig">
-
 <!ENTITY finishedBehavior.label         "När hämtningen är slutförd">
 <!ENTITY playSound.label                "Ge en ljudsignal">
 <!ENTITY playSound.accesskey            "l">
-<!ENTITY showAlert.label                "Visa ett meddelande">
-<!ENTITY showAlert.accesskey            "m">
 <!ENTITY browse.label                   "Välj…">
 <!ENTITY browse.accesskey               "ä">
 <!ENTITY playButton.label               "Spela">

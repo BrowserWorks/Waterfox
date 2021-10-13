@@ -1,69 +1,81 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 permissions-window =
     .title = Išimtys
     .style = width: 45em
+
 permissions-close-key =
     .key = w
+
 permissions-address = Svetainės adresas
     .accesskey = d
+
 permissions-block =
     .label = Neleisti
     .accesskey = N
+
 permissions-session =
     .label = Leisti vienam seansui
     .accesskey = s
+
 permissions-allow =
     .label = Leisti
     .accesskey = L
+
 permissions-button-off =
     .label = Išjungti
     .accesskey = g
+
 permissions-button-off-temporarily =
     .label = Išjungti laikinai
     .accesskey = k
+
 permissions-site-name =
     .label = Svetainė
+
 permissions-status =
     .label = Leidimas
+
 permissions-remove =
     .label = Pašalinti svetainę
     .accesskey = P
+
 permissions-remove-all =
     .label = Pašalinti visas svetaines
     .accesskey = v
-permissions-button-cancel =
-    .label = Atsisakyti
-    .accesskey = A
-permissions-button-ok =
-    .label = Įrašyti pakeitimus
-    .accesskey = r
+
 permission-dialog =
     .buttonlabelaccept = Įrašyti pakeitimus
     .buttonaccesskeyaccept = r
+
 permissions-autoplay-menu = Numatyta visoms svetainėms:
+
 permissions-searchbox =
     .placeholder = Ieškoti svetainėje
+
 permissions-capabilities-autoplay-allow =
     .label = Leisti garsus ir vaizdo įrašus
 permissions-capabilities-autoplay-block =
     .label = Blokuoti garsus
 permissions-capabilities-autoplay-blockall =
     .label = Blokuoti garsus ir vaizdo įrašus
+
 permissions-capabilities-allow =
     .label = Leisti
 permissions-capabilities-block =
     .label = Neleisti
 permissions-capabilities-prompt =
     .label = Visada klausti
+
 permissions-capabilities-listitem-allow =
     .value = Leisti
 permissions-capabilities-listitem-block =
     .value = Neleisti
 permissions-capabilities-listitem-allow-session =
     .value = Leisti vienam seansui
+
 permissions-capabilities-listitem-off =
     .value = Išjungta
 permissions-capabilities-listitem-off-temporarily =

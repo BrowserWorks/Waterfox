@@ -1,18 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-safe-mode-window =
-    .title =
-        Nouzový režim { -brand-short-name.gender ->
-            [masculine] { -brand-short-name(case: "gen") }
-            [feminine] { -brand-short-name(case: "gen") }
-            [neuter] { -brand-short-name(case: "gen") }
-           *[other] aplikace { -brand-short-name }
-        }
-    .style = max-width: 400px
-start-safe-mode =
-    .label = Spustit v nouzovém režimu
 troubleshoot-mode-window =
     .title =
         Chcete { -brand-short-name.gender ->
@@ -32,13 +21,6 @@ refresh-profile =
             [neuter] { -brand-short-name(case: "acc") }
            *[other] aplikaci { -brand-short-name }
         }
-safe-mode-description =
-    Nouzový režim je speciální režim { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "gen") }
-        [feminine] { -brand-short-name(case: "gen") }
-        [neuter] { -brand-short-name(case: "gen") }
-       *[other] aplikace { -brand-short-name }
-    }, který se používá při řešení potíží.
 troubleshoot-mode-description =
     Tento režim { -brand-short-name.gender ->
         [masculine] { -brand-short-name(case: "gen") }
@@ -46,20 +28,6 @@ troubleshoot-mode-description =
         [neuter] { -brand-short-name(case: "gen") }
        *[other] aplikace { -brand-short-name }
     } vám pomůže s diagnostikou problémů. Vaše rozšíření a uživatelská nastavení budou dočasně zakázána.
-safe-mode-description-details =
-    Vaše doplňky a vlastní nastavení budou dočasně zakázány a některé funkce { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "gen") }
-        [feminine] { -brand-short-name(case: "gen") }
-        [neuter] { -brand-short-name(case: "gen") }
-       *[other] aplikace { -brand-short-name }
-    } nemusí fungovat jako nyní.
-refresh-profile-instead =
-    Také můžete od hledání příčin potíží upustit a { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "acc") }
-        [feminine] { -brand-short-name(case: "acc") }
-        [neuter] { -brand-short-name(case: "acc") }
-       *[other] aplikaci { -brand-short-name }
-    } obnovit do výchozího nastavení.
 skip-troubleshoot-refresh-profile =
     Také můžete od hledání příčin problémů upustit a provést obnovu { -brand-short-name.gender ->
         [masculine] { -brand-short-name(case: "gen") }

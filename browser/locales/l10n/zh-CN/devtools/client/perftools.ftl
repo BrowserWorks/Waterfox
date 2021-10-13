@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -88,8 +88,8 @@ perftools-thread-img-decoder =
     .title = 图像解码线程
 perftools-thread-dns-resolver =
     .title = DNS 解析会发生在此线程
-perftools-thread-js-helper =
-    .title = JS 引擎的后台工作，例如非主线程编译
+perftools-thread-task-controller =
+    .title = TaskController 线程池中的线程
 
 ##
 
@@ -101,9 +101,30 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Waterfox 分析器
 perftools-onboarding-message = <b>新变化</b>：{ -profiler-brand-name }现已集成于开发者工具。<a>详细了解</a>这个功能强大的新工具。
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = （在短时间内，您仍可以通过<a>{ options-context-advanced-settings }</a>访问旧的“性能”面板）
 perftools-onboarding-close-button =
     .aria-label = 关闭导览消息
+
+## Profiler presets
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# The same labels and descriptions are also defined in appmenu.ftl.
+
+perftools-presets-web-developer-label = Web 开发者
+perftools-presets-web-developer-description = 推荐在对大部分 Web 应用程序调试时使用，开销较少。
+perftools-presets-firefox-platform-label = Waterfox 平台
+perftools-presets-firefox-platform-description = 推荐在 Waterfox 内部平台调试时使用。
+perftools-presets-firefox-front-end-label = Waterfox 前端
+perftools-presets-firefox-front-end-description = 推荐在 Waterfox 内部前端调试时使用。
+perftools-presets-firefox-graphics-label = Waterfox 图形
+perftools-presets-firefox-graphics-description = 推荐在检查 Waterfox 图形性能问题时使用。
+perftools-presets-media-label = 媒体
+perftools-presets-media-description = 推荐在诊断 Waterfox 音视频问题时使用。
+perftools-presets-custom-label = 自定义
+
+##
+

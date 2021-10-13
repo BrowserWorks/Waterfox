@@ -1,21 +1,18 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY reminderdialog.title                              "Thiết lập Nhắc việc">
+<!ENTITY reminderdialog.title                              "Thiết lập lời nhắc">
 <!ENTITY reminder.add.label                                "Thêm">
 <!ENTITY reminder.add.accesskey                            "T">
 <!ENTITY reminder.remove.label                             "Xóa">
 <!ENTITY reminder.remove.accesskey                         "X">
 
-<!ENTITY reminder.reminderDetails.label                    "Chi tiết Nhắc việc">
-<!ENTITY reminder.action.label                             "Chọn một Thao tác Nhắc việc">
+<!ENTITY reminder.reminderDetails.label                    "Chi tiết lời nhắc">
+<!ENTITY reminder.action.label                             "Chọn một hành động lời nhắc">
 
-<!ENTITY reminder.relation.before.label                    "trước" >
-<!ENTITY reminder.relation.after.label                     "sau" >
-
-<!ENTITY reminder.action.alert.label                       "Hiện một Cảnh báo">
-<!ENTITY reminder.action.email.label                       "Gửi một Email">
+<!ENTITY reminder.action.alert.label                       "Hiển thị một cảnh báo">
+<!ENTITY reminder.action.email.label                       "Gửi một e-mail">
 
 <!ENTITY alarm.units.minutes                               "phút" >
 <!ENTITY alarm.units.hours                                 "giờ" >

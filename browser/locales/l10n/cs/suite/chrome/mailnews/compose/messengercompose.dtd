@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -46,11 +46,6 @@
 <!ENTITY sendLaterCmd.label "Odeslat později">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "P">
-
-<!-- Edit menu items -->
-<!ENTITY editRewrapCmd.label "Zalomit">
-<!ENTITY editRewrapCmd.key "R">
-<!ENTITY editRewrapCmd.accesskey  "i">
 
 <!-- Edit menu items -->
 <!ENTITY accountManagerCmd.label "Nastavení účtu…">

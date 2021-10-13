@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -41,15 +41,6 @@ safeb-blocked-phishing-page-error-desc-override = Stránka <span data-l10n-name=
 safeb-blocked-phishing-page-error-desc-no-override = Stránka <span data-l10n-name='sitename'>{ $sitename }</span> byla <a data-l10n-name='error_desc_link'>nahlášena jako klamavá</a>. Můžete <a data-l10n-name='report_detection'>nahlásit chybu v detekci</a>.
 safeb-blocked-phishing-page-learn-more =
     Zjistěte více o klamavých stránkách a phishingu na <a data-l10n-name='learn_more_link'>www.antiphishing.org</a>. Zjistěte více ochraně proti phishingu a malwaru { -brand-short-name.gender ->
-        [masculine] ve { -brand-short-name(case: "loc") }
-        [feminine] v { -brand-short-name(case: "loc") }
-        [neuter] v { -brand-short-name(case: "loc") }
-       *[other] v aplikaci { -brand-short-name }
-    } na <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
-safeb-blocked-malware-page-error-desc-override = Stránka <span data-l10n-name='sitename'>{ $sitename }</span> byla <a data-l10n-name='error_desc_link'>nahlášena jako stránka s nebezpečným softwarem</a>. Můžete <a data-l10n-name='report_detection'>nahlásit chybu v detekci</a> nebo se rozhodnout <a data-l10n-name='ignore_warning_link'>ignorovat riziko</a> a pokračovat na tuto nebezpečnou stránku.
-safeb-blocked-malware-page-error-desc-no-override = Stránka <span data-l10n-name='sitename'>{ $sitename }</span> byla <a data-l10n-name='error_desc_link'>nahlášena jako stránka s nebezpečným softwarem</a>. Můžete <a data-l10n-name='report_detection'>nahlásit chybu v detekci</a>.
-safeb-blocked-malware-page-learn-more =
-    Zjistěte více o škodlivém webovém obsahu, včetně virů, malwaru a jak chránit svůj počítač na <a data-l10n-name='learn_more_link'>StopBadware.org</a>. Zjistěte více ochraně proti phishingu a malwaru { -brand-short-name.gender ->
         [masculine] ve { -brand-short-name(case: "loc") }
         [feminine] v { -brand-short-name(case: "loc") }
         [neuter] v { -brand-short-name(case: "loc") }

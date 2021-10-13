@@ -1,14 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-### Firefox Home / New Tab strings for about:home / about:newtab.
+### Waterfox Home / New Tab strings for about:home / about:newtab.
 
 newtab-page-title = Ny flik
 newtab-settings-button =
     .title = Anpassa sidan för Ny flik
-newtab-personalize-button-label = Anpassa
+newtab-personalize-icon-label =
     .title = Anpassa ny flik
     .aria-label = Anpassa ny flik
 newtab-personalize-dialog-label =
@@ -20,7 +20,6 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = Sök
     .aria-label = Sök
-newtab-search-box-search-the-web-text = Sök på webben
 # Variables
 #  $engine (String): the name of the user's default search engine
 newtab-search-box-handoff-text = Sök med { $engine } eller ange en adress
@@ -170,6 +169,11 @@ newtab-label-sponsored = { $sponsorOrSource } · Sponsrad
 # Variables:
 #  $sponsor (String): This is the name of a sponsor
 newtab-label-sponsored-by = Sponsrad av { $sponsor }
+# This string is used under the image of story cards to indicate source and time to read
+# Variables:
+#  $source (String): This is the name of a company or their domain
+#  $timeToRead (Number): This is the estimated number of minutes to read this story
+newtab-label-source-read-time = { $source } · { $timeToRead } min
 
 ## Section Menu: These strings are displayed in the section context menu and are
 ## meant as a call to action for the given section.
@@ -212,7 +216,7 @@ newtab-empty-section-topstories = Det finns inte fler. Kom tillbaka senare för 
 ## Empty Section (Content Discovery Experience). These show when there are no more stories or when some stories fail to load.
 
 newtab-discovery-empty-section-topstories-header = Du är ikapp!
-newtab-discovery-empty-section-topstories-content = Kom tillbaka senare för fler nyheter.
+newtab-discovery-empty-section-topstories-content = Kom tillbaka senare för fler berättelser.
 newtab-discovery-empty-section-topstories-try-again-button = Försök igen
 newtab-discovery-empty-section-topstories-loading = Laddar…
 # Displays when a layout in a section took too long to fetch articles.
@@ -222,10 +226,25 @@ newtab-discovery-empty-section-topstories-timed-out = Hoppsan! Vi laddade nästa
 
 # This is shown at the bottom of the trending stories section and precedes a list of links to popular topics.
 newtab-pocket-read-more = Populära ämnen:
+newtab-pocket-new-topics-title = Vill du ha fler berättelser? Se dessa populära ämnen från { -pocket-brand-name }
 newtab-pocket-more-recommendations = Fler rekommendationer
 newtab-pocket-learn-more = Läs mer
 newtab-pocket-cta-button = Hämta { -pocket-brand-name }
-newtab-pocket-cta-text = Spara de nyheter som du tycker är intressant i { -pocket-brand-name } och stimulera dina tankar med fascinerande läsmaterial.
+newtab-pocket-cta-text = Spara de historier som du tycker är intressant i { -pocket-brand-name } och stimulera dina tankar med fascinerande läsmaterial.
+newtab-pocket-pocket-firefox-family = { -pocket-brand-name } är en del av familjen { -brand-product-name }
+# A save to Pocket button that shows over the card thumbnail on hover.
+newtab-pocket-save-to-pocket = Spara till { -pocket-brand-name }
+newtab-pocket-saved-to-pocket = Sparad till { -pocket-brand-name }
+# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
+newtab-pocket-load-more-stories-button = Ladda fler berättelser
+
+## Pocket Final Card Section.
+## This is for the final card in the Pocket grid.
+
+newtab-pocket-last-card-title = Du är ikapp!
+newtab-pocket-last-card-desc = Kom tillbaka senare för mer.
+newtab-pocket-last-card-image =
+    .alt = Du är ikapp!
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -245,14 +264,8 @@ newtab-custom-row-selector =
 newtab-custom-sponsored-sites = Sponsrade genvägar
 newtab-custom-pocket-title = Rekommenderas av { -pocket-brand-name }
 newtab-custom-pocket-subtitle = Särskilt innehåll valt av { -pocket-brand-name }, en del av familjen { -brand-product-name }
-newtab-custom-pocket-sponsored = Sponsrade nyheter
+newtab-custom-pocket-sponsored = Sponsrade berättelser
 newtab-custom-recent-title = Senaste aktivitet
 newtab-custom-recent-subtitle = Ett urval av senaste webbplatser och innehåll
 newtab-custom-close-button = Stäng
-# For the "Snippets" feature traditionally on about:home.
-# Alternative translation options: "Small Note" or something that
-# expresses the idea of "a small message, shortened from something else,
-# and non-essential but also not entirely trivial and useless.
-newtab-custom-snippets-title = Kort information
-newtab-custom-snippets-subtitle = Tips och nyheter från { -vendor-short-name } och { -brand-product-name }
 newtab-custom-settings = Hantera fler inställningar

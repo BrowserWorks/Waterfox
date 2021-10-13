@@ -1,14 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-### Firefox Home / New Tab strings for about:home / about:newtab.
+### Waterfox Home / New Tab strings for about:home / about:newtab.
 
 newtab-page-title = Új lap
 newtab-settings-button =
     .title = Az Új lap oldal személyre szabása
-newtab-personalize-button-label = Testreszabás
+newtab-personalize-icon-label =
     .title = Új lap testreszabása
     .aria-label = Új lap testreszabása
 newtab-personalize-dialog-label =
@@ -20,7 +20,6 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = Keresés
     .aria-label = Keresés
-newtab-search-box-search-the-web-text = Keresés a weben
 # Variables
 #  $engine (String): the name of the user's default search engine
 newtab-search-box-handoff-text = Keressen a(z) { $engine } keresővel vagy adjon meg egy címet
@@ -170,6 +169,11 @@ newtab-label-sponsored = { $sponsorOrSource } · Szponzorált
 # Variables:
 #  $sponsor (String): This is the name of a sponsor
 newtab-label-sponsored-by = Szponzorálta: { $sponsor }
+# This string is used under the image of story cards to indicate source and time to read
+# Variables:
+#  $source (String): This is the name of a company or their domain
+#  $timeToRead (Number): This is the estimated number of minutes to read this story
+newtab-label-source-read-time = { $source } · { $timeToRead } perc
 
 ## Section Menu: These strings are displayed in the section context menu and are
 ## meant as a call to action for the given section.
@@ -222,10 +226,25 @@ newtab-discovery-empty-section-topstories-timed-out = Hoppá! Majdnem betöltöt
 
 # This is shown at the bottom of the trending stories section and precedes a list of links to popular topics.
 newtab-pocket-read-more = Népszerű témák:
+newtab-pocket-new-topics-title = Még több történetet szeretne? Nézze meg ezeket a népszerű témákat a { -pocket-brand-name }től.
 newtab-pocket-more-recommendations = További javaslatok
 newtab-pocket-learn-more = További tudnivalók
 newtab-pocket-cta-button = { -pocket-brand-name } beszerzése
 newtab-pocket-cta-text = Mentse az Ön által kedvelt történeteket a { -pocket-brand-name }be, és töltse fel elméjét lebilincselő olvasnivalókkal.
+newtab-pocket-pocket-firefox-family = A { -pocket-brand-name } a { -brand-product-name } család része
+# A save to Pocket button that shows over the card thumbnail on hover.
+newtab-pocket-save-to-pocket = Mentés a { -pocket-brand-name }be
+newtab-pocket-saved-to-pocket = Mentve a { -pocket-brand-name }be
+# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
+newtab-pocket-load-more-stories-button = További történetek betöltése
+
+## Pocket Final Card Section.
+## This is for the final card in the Pocket grid.
+
+newtab-pocket-last-card-title = Mindet megnézte.
+newtab-pocket-last-card-desc = Nézzen vissza később újabbakért.
+newtab-pocket-last-card-image =
+    .alt = Mindet megnézte.
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -249,10 +268,4 @@ newtab-custom-pocket-sponsored = Szponzorált történetek
 newtab-custom-recent-title = Legutóbbi tevékenység
 newtab-custom-recent-subtitle = Válogatás a legutóbbi webhelyekből és tartalmakból
 newtab-custom-close-button = Bezárás
-# For the "Snippets" feature traditionally on about:home.
-# Alternative translation options: "Small Note" or something that
-# expresses the idea of "a small message, shortened from something else,
-# and non-essential but also not entirely trivial and useless.
-newtab-custom-snippets-title = Töredékek
-newtab-custom-snippets-subtitle = Tippek és hírek a { -vendor-short-name } és a { -brand-product-name } felől
 newtab-custom-settings = További beállítások kezelése

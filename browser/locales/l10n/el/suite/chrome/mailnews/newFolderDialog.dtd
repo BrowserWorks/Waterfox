@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -6,7 +6,7 @@
 <!ENTITY newFolderDialog.title      "Νέος φάκελος">
 <!ENTITY name.label                 "Όνομα:">
 <!ENTITY name.accesskey             "ν">
-<!ENTITY description.label          "Δημιουργία ως υποφακέλου σε:">
+<!ENTITY description.label          "Δημιουργία ως υποφακέλου του:">
 <!ENTITY description.accesskey      "μ">
 <!ENTITY folderRestriction1.label   "Αυτός ο διακομιστής περιορίζει τους φακέλου σε δύο ειδικά είδη.">
 <!ENTITY folderRestriction2.label   "Να επιτρέπεται στον νέο φάκελο να περιέχει:">

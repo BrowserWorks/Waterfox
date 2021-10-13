@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "Novo">
 <!ENTITY newMenu.accesskey "N">
 <!ENTITY newMessage.label "Mensagem">
-<!ENTITY newMessage.key "m">
 <!ENTITY newMessageCmd2.key "n">
-<!ENTITY newMessage.accesskey "M">
 <!ENTITY newContact.label "Contato de catálogo de endereços…">
 <!ENTITY newContact.accesskey "C">
 <!ENTITY attachMenu.label "Anexar">
 <!ENTITY attachMenu.accesskey "n">
-<!ENTITY attachFileCmd.label "Arquivos…">
-<!ENTITY attachFileCmd.accesskey "A">
-<!ENTITY attachFileCmd.key "a">
 <!ENTITY attachCloudCmd.label "Anexo online">
 <!ENTITY attachCloudCmd.accesskey "l">
 <!ENTITY attachPageCmd.label "Página web…">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "Enviar mais tarde">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "d">
-<!ENTITY printSetupCmd.label "Configurar página…">
-<!ENTITY printSetupCmd.accesskey "C">
-<!ENTITY printPreviewCmd.label "Visualizar impressão">
-<!ENTITY printPreviewCmd.accesskey "z">
 <!ENTITY printCmd.label "Imprimir…">
 <!ENTITY printCmd.key "p">
 <!ENTITY printCmd.accesskey "I">
@@ -82,17 +73,15 @@
 <!ENTITY reorderAttachmentsCmd.label "Reordenar anexos…">
 <!ENTITY reorderAttachmentsCmd.accesskey "s">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "Painel de anexos">
-<!ENTITY toggleAttachmentPaneCmd.accesskey "x">
 <!ENTITY selectAllCmd.accesskey "S">
 <!ENTITY findBarCmd.label "Procurar…">
-<!ENTITY findBarCmd.accesskey "z">
-<!ENTITY findBarCmd.key "F">
+<!ENTITY findBarCmd.accesskey "P">
+<!ENTITY findBarCmd.key "P">
 <!ENTITY findReplaceCmd.label "Procurar e substituir…">
-<!ENTITY findReplaceCmd.accesskey "l">
-<!ENTITY findReplaceCmd.key "H">
-<!ENTITY findAgainCmd.label "Procurar próxima">
-<!ENTITY findAgainCmd.accesskey "L">
+<!ENTITY findReplaceCmd.accesskey "u">
+<!ENTITY findReplaceCmd.key "u">
+<!ENTITY findAgainCmd.label "Procurar novamente">
+<!ENTITY findAgainCmd.accesskey "n">
 <!ENTITY findAgainCmd.key "g">
 <!ENTITY findAgainCmd.key2 "VK_F3">
 <!ENTITY findPrevCmd.label "Procurar anterior">
@@ -102,11 +91,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "Reordenar anexos">
-<!ENTITY moveAttachmentTopPanelBtn.label "Mover para o início">
-<!ENTITY moveAttachmentUpPanelBtn.label "Mover para cima">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label "Mover junto">
-<!ENTITY moveAttachmentDownPanelBtn.label "Mover para baixo">
-<!ENTITY moveAttachmentBottomPanelBtn.label "Mover para o final">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -204,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "Configurações da conta">
 <!ENTITY accountManagerCmd2.accesskey "s">
 <!ENTITY accountManagerCmdUnix2.accesskey "S">
-<!ENTITY preferencesCmd2.label "Opções">
-<!ENTITY preferencesCmd2.accesskey "O">
-<!ENTITY preferencesCmdUnix.label "Preferências">
-<!ENTITY preferencesCmdUnix.accesskey "P">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "M">
@@ -220,7 +201,6 @@
 <!ENTITY sendButton.label "Enviar">
 <!ENTITY quoteButton.label "Citar">
 <!ENTITY addressButton.label "Contatos">
-<!ENTITY attachButton.label "Anexar">
 <!ENTITY spellingButton.label "Ortografia">
 <!ENTITY saveButton.label "Salvar">
 <!ENTITY printButton.label "Imprimir">
@@ -230,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "Enviar esta mensagem mais tarde">
 <!ENTITY quoteButton.tooltip "Citar a mensagem anterior">
 <!ENTITY addressButton.tooltip "Selecionar destinatários no catálogo de endereços">
-<!ENTITY attachButton.tooltip2 "Adicionar um anexo">
 <!ENTITY spellingButton.tooltip "Verificar ortografia da seleção ou de toda a mensagem">
 <!ENTITY saveButton.tooltip "Salvar a mensagem na pasta “Rascunhos”">
 <!ENTITY cutButton.tooltip              "Recortar">
@@ -245,9 +224,6 @@
 <!ENTITY extraRecipients.tooltip "Outros tipos de campos de endereçamento">
 <!ENTITY fromAddr2.label "De">
 <!ENTITY fromAddr.accesskey "D">
-<!ENTITY toAddr2.label "Para">
-<!ENTITY ccAddr2.label "Cc">
-<!ENTITY bccAddr2.label "Cco">
 <!ENTITY replyAddr2.label "Responder a">
 <!ENTITY newsgroupsAddr2.label "Grupo de notícias">
 <!ENTITY followupAddr2.label "Encaminhar para">
@@ -306,8 +282,6 @@
 <!ENTITY removeAllAttachments.accesskey "v">
 <!ENTITY selectAll.label "Selecionar tudo">
 <!ENTITY selectAll.accesskey "S">
-<!ENTITY attachFile.label "Anexar arquivos…">
-<!ENTITY attachFile.accesskey "n">
 <!ENTITY attachCloud.label "Anexo online…">
 <!ENTITY attachCloud.accesskey "l">
 <!ENTITY convertCloud.label "Converter para…">

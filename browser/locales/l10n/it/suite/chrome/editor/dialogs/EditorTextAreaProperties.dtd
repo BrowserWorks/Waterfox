@@ -1,9 +1,11 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowTitle.label "Proprietà campo di testo">
+
 <!ENTITY Settings.label "Impostazioni">
+
 <!ENTITY TextAreaName.label "Nome campo:">
 <!ENTITY TextAreaName.accessKey "N">
 <!ENTITY TextAreaRows.label "Righe:">
@@ -20,6 +22,7 @@
 <!ENTITY TextAreaAccessKey.accessKey "o">
 <!ENTITY InitialText.label "Testo iniziale:">
 <!ENTITY InitialText.accessKey "T">
+
 <!ENTITY TextAreaWrap.label "A capo:">
 <!ENTITY TextAreaWrap.accessKey "A">
 <!ENTITY WrapDefault.value "Predefinito">

@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "Eigenschaften">
 
 <!ENTITY generalInfo.label                       "Allgemein">
-<!ENTITY folderCharsetFallback2.label            "Textkodierung bei fehlgeschlagener Erkennung:">
-<!ENTITY folderCharsetFallback2.accesskey        "f">
-<!ENTITY folderCharsetEnforce2.label             "Textkodierung auf alle Nachrichten in diesem Ordner anwenden (die jeweilige eingestellte oder automatisch bestimmte Zeichenkodierung wird ignoriert).">
-<!ENTITY folderCharsetEnforce2.accesskey         "k">
 <!ENTITY folderRebuildSummaryFileTip2.label      "Zusammenfassungsdatei (*.msf) neu erstellen">
 <!ENTITY folderRebuildSummaryFile2.label         "Reparieren">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "R">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,16 +8,13 @@ auth-label = Verificar la identidad de su contacto
 reauth-label = Verificar de nuevo la identidad de su contacto
 
 auth-cancel = Cancelar
-auth-cancelAccessKey = C
 
 auth-error = Ha sucedido un error al verificar la identidad de su contacto.
 auth-success = Se ha completado correctamente la verificación de la identidad de su contacto.
-auth-successThem = Su contacto ha verificado correctamente la identidad de usted. Puede querer verificar su identidad también haciendo su propia pregunta.
 auth-fail = Ha fallado la verificación de la identidad de su contacto.
 auth-waiting = Esperando que el contacto complete la verificación…
 
 finger-verify = Verificar
-finger-verify-accessKey = V
 
 # Do not translate 'OTR' (name of an encryption protocol)
 buddycontextmenu-label = Añadir huella OTR
@@ -32,17 +29,11 @@ alert-refresh = Intentando refrescar la conversación cifrada con { $name }.
 
 # Variables:
 #   $name (String) - the screen name of a chat contact person
-alert-gone_insecure = La conversación cifrada con { $name } ha terminado.
-
-# Variables:
-#   $name (String) - the screen name of a chat contact person
 finger-unseen = La identidad de { $name } no se ha verificado aún. No es posible una infiltración por casualidad, pero con cierto esfuerzo alguien podría estar escuchando. Evite la vigilancia verificando la identidad de su contacto.
 
 # Variables:
 #   $name (String) - the screen name of a chat contact person
 finger-seen = { $name } está contactando con usted desde un equipo no reconocido. No es posible una infiltración por casualidad, pero con cierto esfuerzo alguien podría estar escuchando. Evite la vigilancia verificando la identidad de su contacto.
-
-state-not_private = La conversación actual no es privada.
 
 # Variables:
 #   $name (String) - the screen name of a chat contact person
@@ -56,7 +47,6 @@ state-private = La identidad de { $name } ha sido verificada. La conversación a
 #   $name (String) - the screen name of a chat contact person
 state-finished = { $name } ha finalizado su conversación privada con usted; debería hacer lo mismo.
 
-state-not_private-label = Insegura
 state-unverified-label = No verificada
 state-private-label = Privada
 state-finished-label = Finalizada
@@ -76,7 +66,6 @@ afterauth-unverified = La identidad de { $name } no ha sido verificada.
 verify-title = Verificar la identidad de su contacto
 error-title = Error
 success-title = Cifrado extremo a extremo
-successThem-title = Verificar la identidad de su contacto
 fail-title = No se puede verificar
 waiting-title = Solicitud de verificación enviada
 

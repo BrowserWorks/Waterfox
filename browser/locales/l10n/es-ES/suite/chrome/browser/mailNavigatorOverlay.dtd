@@ -1,14 +1,17 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY newMessageCmd.label "Mensaje">
 <!ENTITY newMessageCmd.accesskey "M">
 <!ENTITY newMessageCmd.key "M">
+
 <!ENTITY newContactCmd.label "Contacto…">
 <!ENTITY newContactCmd.accesskey "C">
+
 <!ENTITY sendPage.label "Enviar página…">
 <!ENTITY sendPage.accesskey "p">
+
 <!ENTITY contextSendThisPage.label "Enviar esta página…">
 <!ENTITY contextSendThisPage.accesskey "p">
 <!ENTITY contextSendThisLink.label "Enviar este enlace…">
@@ -21,5 +24,7 @@
 <!ENTITY contextSendAudio.accesskey "n">
 <!ENTITY contextSendFrame.label "Enviar marco…">
 <!ENTITY contextSendFrame.accesskey "n">
-<!ENTITY sendLinkCmd.label "Enviar enlace…">
+
+<!ENTITY sendLinkCmd.label "Enviar enlace…"> 
 <!ENTITY sendLinkCmd.accesskey "l">
+

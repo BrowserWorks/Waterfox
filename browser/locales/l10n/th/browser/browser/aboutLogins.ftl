@@ -1,23 +1,13 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
 
 about-logins-page-title = การเข้าสู่ระบบและรหัสผ่าน
-
-# "Google Play" and "App Store" are both branding and should not be translated
-
-login-app-promo-title = นำรหัสผ่านของคุณไปทุกที่
-login-app-promo-subtitle = รับแอป { -lockwise-brand-name } ฟรี
-login-app-promo-android =
-    .alt = รับบน Google Play
-login-app-promo-apple =
-    .alt = ดาวน์โหลดบน App Store
 login-filter =
     .placeholder = ค้นหาการเข้าสู่ระบบ
 create-login-button = สร้างการเข้าสู่ระบบใหม่
 fxaccounts-sign-in-text = รับรหัสผ่านของคุณบนอุปกรณ์อื่น ๆ ของคุณ
-fxaccounts-sign-in-button = ลงชื่อเข้า { -sync-brand-short-name }
 fxaccounts-sign-in-sync-button = ลงชื่อเข้าใช้เพื่อซิงค์
 fxaccounts-avatar-button =
     .title = จัดการบัญชี
@@ -37,8 +27,6 @@ menu-menuitem-preferences =
        *[other] ค่ากำหนด
     }
 about-logins-menu-menuitem-help = ช่วยเหลือ
-menu-menuitem-android-app = { -lockwise-brand-short-name } สำหรับ Android
-menu-menuitem-iphone-app = { -lockwise-brand-short-name } สำหรับ iPhone และ iPad
 
 ## Login List
 
@@ -51,6 +39,8 @@ login-list-count =
 login-list-sort-label-text = เรียงลำดับตาม:
 login-list-name-option = ชื่อตามตัวอักษร
 login-list-name-reverse-option = ชื่อ (Z-A)
+login-list-username-option = ชื่อผู้ใช้ (ก-ฮ)
+login-list-username-reverse-option = ชื่อผู้ใช้ (ฮ-ก)
 about-logins-login-list-alerts-option = การแจ้งเตือน
 login-list-last-changed-option = วันที่เปลี่ยนแปลงล่าสุด
 login-list-last-used-option = วันที่ใช้ครั้งล่าสุด
@@ -65,17 +55,18 @@ about-logins-list-item-breach-icon =
     .title = เว็บไซต์ที่มีการรั่วไหล
 about-logins-list-item-vulnerable-password-icon =
     .title = รหัสผ่านที่อ่อนแอ
+about-logins-list-section-breach = เว็บไซต์ที่มีการรั่วไหล
+about-logins-list-section-vulnerable = รหัสผ่านที่อ่อนแอ
+about-logins-list-section-nothing = ไม่มีการเตือน
+about-logins-list-section-today = วันนี้
+about-logins-list-section-yesterday = เมื่อวานนี้
+about-logins-list-section-week = 7 วันที่ผ่านมา
 
 ## Introduction screen
 
-login-intro-heading = กำลังมองหาการเข้าสู่ระบบที่บันทึกไว้ของคุณอยู่ใช่หรือไม่? ตั้งค่า { -sync-brand-short-name }
-about-logins-login-intro-heading-logged-out = กำลังมองหาการเข้าสู่ระบบที่บันทึกไว้ของคุณอยู่ใช่หรือไม่? ตั้งค่า { -sync-brand-short-name } หรือนำเข้าการเข้าสู่ระบบ
 about-logins-login-intro-heading-logged-out2 = กำลังมองหาการเข้าสู่ระบบที่คุณบันทึกไว้ใช่หรือไม่? เปิดการซิงค์หรือนำเข้า
 about-logins-login-intro-heading-logged-in = ไม่พบการเข้าสู่ระบบที่ซิงค์
 login-intro-description = หากคุณบันทึกการเข้าสู่ระบบของคุณไว้ที่ { -brand-product-name } บนอุปกรณ์อื่น ๆ คุณสามารถนำมาใช้บนอุปกรณ์นี้ได้ด้วยวิธีนี้:
-login-intro-instruction-fxa = สร้างหรือลงชื่อเข้าใช้ { -fxaccount-brand-name } ของคุณบนอุปกรณ์ที่บันทึกการเข้าสู่ระบบของคุณ
-login-intro-instruction-fxa-settings = ตรวจสอบให้แน่ใจว่าคุณได้เลือกกล่องกาเครื่องหมายการเข้าสู่ระบบในการตั้งค่า { -sync-brand-short-name }
-about-logins-intro-instruction-help = เยี่ยมชม<a data-l10n-name="help-link">ฝ่ายสนับสนุน { -lockwise-brand-short-name }</a> สำหรับวิธีใช้เพิ่มเติม
 login-intro-instructions-fxa = สร้างหรือลงชื่อเข้า { -fxaccount-brand-name } ของคุณบนอุปกรณ์ที่บันทึกการเข้าสู่ระบบของคุณ
 login-intro-instructions-fxa-settings = ไปที่ การตั้งค่า > Sync > เปิดการซิงค์… แล้วเลือกกล่องกาเครื่องหมาย การเข้าสู่ระบบและรหัสผ่าน
 login-intro-instructions-fxa-help = เยี่ยมชม<a data-l10n-name="help-link">ฝ่ายสนับสนุน { -lockwise-brand-short-name }</a> สำหรับวิธีใช้เพิ่มเติม
@@ -112,7 +103,7 @@ login-item-time-used = วันที่ใช้ครั้งล่าสุ
 
 about-logins-os-auth-dialog-caption = { -brand-full-name }
 
-## The macOS strings are preceded by the operating system with "Firefox is trying to "
+## The macOS strings are preceded by the operating system with "Waterfox is trying to "
 ## and includes subtitle of "Enter password for the user "xxx" to allow this." These
 ## notes are only valid for English. Please test in your respected locale.
 
@@ -131,10 +122,6 @@ about-logins-copy-password-os-auth-dialog-message-win = หากต้องก
 # This message can be seen when attempting to copy a password in about:logins
 # On MacOS, only provide the reason that account verification is needed. Do not put a complete sentence here.
 about-logins-copy-password-os-auth-dialog-message-macosx = คัดลอกรหัสผ่านที่บันทึกไว้
-
-## Master Password notification
-
-master-password-notification-message = โปรดป้อนรหัสผ่านหลักของคุณเพื่อดูการเข้าสู่ระบบและรหัสผ่านที่บันทึกไว้
 # This message can be seen when attempting to export a password in about:logins on Windows.
 about-logins-export-password-os-auth-dialog-message-win = หากต้องการส่งออกการเข้าสู่ระบบของคุณ ให้ป้อนข้อมูลประจำตัวการเข้าสู่ระบบ Windows ของคุณ ซึ่งจะช่วยปกป้องความปลอดภัยให้กับบัญชีต่าง ๆ ของคุณ
 # This message can be seen when attempting to export a password in about:logins
@@ -147,24 +134,6 @@ about-logins-primary-password-notification-message = โปรดป้อนร
 master-password-reload-button =
     .label = เข้าสู่ระบบ
     .accesskey = ข
-
-## Password Sync notification
-
-enable-password-sync-notification-message =
-    { PLATFORM() ->
-        [windows] ต้องการการเข้าสู่ระบบของคุณในทุกที่ที่คุณใช้ { -brand-product-name } หรือไม่? ไปที่ตัวเลือก { -sync-brand-short-name } ของคุณแล้วเลือกกล่องกาเครื่องหมาย การเข้าสู่ระบบ
-       *[other] ต้องการการเข้าสู่ระบบของคุณในทุกที่ที่คุณใช้ { -brand-product-name } หรือไม่? ไปที่ค่ากำหนด { -sync-brand-short-name } ของคุณแล้วเลือกกล่องกาเครื่องหมาย การเข้าสู่ระบบ
-    }
-enable-password-sync-preferences-button =
-    .label =
-        { PLATFORM() ->
-            [windows] เยี่ยมชมตัวเลือก { -sync-brand-short-name }
-           *[other] เยี่ยมชมค่ากำหนด { -sync-brand-short-name }
-        }
-    .accesskey = ย
-about-logins-enable-password-sync-dont-ask-again-button =
-    .label = ไม่ต้องถามฉันอีก
-    .accesskey = ม
 
 ## Dialogs
 
@@ -309,7 +278,6 @@ about-logins-import-dialog-error-unable-to-read-title = ไม่สามาร
 about-logins-import-dialog-error-unable-to-read-description = ตรวจสอบว่าคุณได้เลือกไฟล์ CSV หรือ TSV
 about-logins-import-dialog-error-no-logins-imported = ไม่มีการนำเข้าข้อมูลเข้าสู่ระบบ
 about-logins-import-dialog-error-learn-more = เรียนรู้เพิ่มเติม
-about-logins-import-dialog-error-try-again = ลองอีกครั้ง…
 about-logins-import-dialog-error-try-import-again = ลองนำเข้าอีกครั้ง…
 about-logins-import-dialog-error-cancel = ยกเลิก
 about-logins-import-report-title = สรุปการนำเข้า

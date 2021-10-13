@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -12,7 +12,7 @@
   -  toolkit/intl/languageNames.ftl file; for some locales it may not be in
   -  the correct grammar case to keep the same structure of the original
   -  sentence. -->
-<!ENTITY translation.thisPageIsIn.label         "Αυτή η σελίδα είναι στα">
+<!ENTITY translation.thisPageIsIn.label         "Η σελίδα είναι στα">
 <!ENTITY translation.translateThisPage.label    "Μετάφραση σελίδας;">
 <!ENTITY translation.translate.button           "Μετάφραση">
 <!ENTITY translation.notNow.button              "Όχι τώρα">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,16 +38,20 @@ menu-quit =
             [windows] t
            *[other] t
         }
+
 # This menu-quit-mac string is only used on macOS.
 menu-quit-mac =
     .label = Avslutt { -brand-shorter-name }
+
 # This menu-quit-button string is only used on Linux.
 menu-quit-button =
     .label = { menu-quit.label }
+
 # This menu-quit-button-win string is only used on Windows.
 menu-quit-button-win =
     .label = { menu-quit.label }
     .tooltip = Avslutt { -brand-shorter-name }
+
 menu-about =
     .label = Om { -brand-shorter-name }
     .accesskey = O
@@ -71,7 +75,7 @@ menu-file-new-private-window =
     .accesskey = v
 # "Open Location" is only displayed on macOS, and only on windows
 # that aren't main browser windows, or when there are no windows
-# but Firefox is still running.
+# but Waterfox is still running.
 menu-file-open-location =
     .label = Opne adresse…
 menu-file-open-file =
@@ -88,6 +92,9 @@ menu-file-save-page =
     .accesskey = a
 menu-file-email-link =
     .label = Send lenke på e-post…
+    .accesskey = e
+menu-file-share-url =
+    .label = Del
     .accesskey = e
 menu-file-print-setup =
     .label = Utskriftsformat…
@@ -110,9 +117,6 @@ menu-file-go-offline =
 menu-edit =
     .label = Rediger
     .accesskey = R
-menu-edit-find-on =
-    .label = Søk på denne sida…
-    .accesskey = S
 menu-edit-find-in-page =
     .label = Finn på sida…
     .accesskey = F
@@ -131,9 +135,6 @@ menu-view =
 menu-view-toolbars-menu =
     .label = Verktøylinjer
     .accesskey = V
-menu-view-customize-toolbar =
-    .label = Tilpass…
-    .accesskey = T
 menu-view-customize-toolbar2 =
     .label = Tilpass verktøylinje…
     .accesskey = T
@@ -170,9 +171,6 @@ menu-view-page-style-no-style =
 menu-view-page-basic-style =
     .label = Vanleg
     .accesskey = V
-menu-view-charset =
-    .label = Teiknkoding
-    .accesskey = T
 menu-view-repair-text-encoding =
     .label = Reparer tekstkoding
     .accesskey = e
@@ -226,10 +224,6 @@ menu-history-reopen-all-windows = Opne alle vindauge på nytt
 menu-bookmarks-menu =
     .label = Bokmerke
     .accesskey = B
-menu-bookmarks-show-all =
-    .label = Vis alle bokmerka
-menu-bookmark-this-page =
-    .label = Bokmerk denne sida
 menu-bookmarks-manage =
     .label = Handter bokmerke
 menu-bookmark-current-tab =
@@ -253,15 +247,6 @@ menu-tools =
 menu-tools-downloads =
     .label = Nedlastingar
     .accesskey = N
-menu-tools-addons =
-    .label = Tillegg
-    .accesskey = T
-menu-tools-fxa-sign-in =
-    .label = Logg inn på { -brand-product-name }…
-    .accesskey = g
-menu-tools-turn-on-sync =
-    .label = Slå på { -sync-brand-short-name }…
-    .accesskey = S
 menu-tools-addons-and-themes =
     .label = Tillegg og tema
     .accesskey = T
@@ -277,9 +262,6 @@ menu-tools-sync-now =
 menu-tools-fxa-re-auth =
     .label = Kople til { -brand-product-name } på nytt…
     .accesskey = K
-menu-tools-web-developer =
-    .label = Nettsideutvikling
-    .accesskey = N
 menu-tools-browser-tools =
     .label = Nettlesarverktøy
     .accesskey = N
@@ -292,17 +274,6 @@ menu-tools-page-source =
 menu-tools-page-info =
     .label = Sideinformasjon
     .accesskey = d
-menu-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Innstillingar
-           *[other] Innstillingar
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] I
-           *[other] I
-        }
 menu-settings =
     .label = Innstillingar
     .accesskey =
@@ -335,21 +306,6 @@ menu-window-bring-all-to-front =
 menu-help =
     .label = Hjelp
     .accesskey = H
-menu-help-product =
-    .label = { -brand-shorter-name } Hjelp
-    .accesskey = H
-menu-help-show-tour =
-    .label = Omvising i { -brand-shorter-name }
-    .accesskey = m
-menu-help-import-from-another-browser =
-    .label = Importer frå ein annan nettlesar…
-    .accesskey = I
-menu-help-keyboard-shortcuts =
-    .label = Tastatursnarvegar
-    .accesskey = T
-menu-help-troubleshooting-info =
-    .label = Feilsøking
-    .accesskey = e
 menu-get-help =
     .label = Få hjelp
     .accesskey = F
@@ -361,12 +317,6 @@ menu-help-report-site-issue =
 menu-help-feedback-page =
     .label = Gje tilbakemelding…
     .accesskey = G
-menu-help-safe-mode-without-addons =
-    .label = Start på nytt med avslåtte tillegg…
-    .accesskey = S
-menu-help-safe-mode-with-addons =
-    .label = Start på nytt med påslåtte tillegg
-    .accesskey = S
 menu-help-enter-troubleshoot-mode2 =
     .label = Feilsøkingsmodus…
     .accesskey = F

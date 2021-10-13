@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = О ваших правах
 rights-intro = { -brand-full-name } является бесплатной программой с открытым исходным кодом, созданной многотысячным сообществом людей со всего мира. Вот несколько вещей, о которых вам следует знать:
-rights-intro-point-1 = { -brand-short-name } предоставляется вам на условиях <a data-l10n-name="mozilla-public-license-link">Публичной лицензии Mozilla</a>. Это значит, что вы можете использовать, копировать и распространять { -brand-short-name }.  Вы также можете модифицировать исходный код { -brand-short-name } в соответствии со своими нуждами. Публичная лицензия Mozilla также даёт вам право распространять изменённые вами сборки.
-rights-intro-point-2 = Вам не предоставляются никакие права или лицензии на товарные знаки Mozilla Foundation или любой другой стороны, в том числе на название или логотип Thunderbird. Дополнительная информация о товарных знаках приведена по <a data-l10n-name="mozilla-trademarks-link">следующему адресу</a>.
+rights-intro-point-1 = { -brand-short-name } предоставляется вам на условиях <a data-l10n-name="mozilla-public-license-link">Публичной лицензии Waterfox</a>. Это значит, что вы можете использовать, копировать и распространять { -brand-short-name }.  Вы также можете модифицировать исходный код { -brand-short-name } в соответствии со своими нуждами. Публичная лицензия Waterfox также даёт вам право распространять изменённые вами сборки.
+rights-intro-point-2 = Вам не предоставляются никакие права или лицензии на товарные знаки Waterfox Foundation или любой другой стороны, в том числе на название или логотип Thunderbird. Дополнительная информация о товарных знаках приведена по <a data-l10n-name="mozilla-trademarks-link">следующему адресу</a>.
 rights-intro-point-3 = Некоторые функции { -brand-short-name }, такие как «Сообщения о падениях», позволяют вам отправлять отзывы в { -vendor-short-name }. Отправляя отзыв, вы разрешаете { -vendor-short-name } использовать отзыв для улучшения её продуктов, размещать отзыв на её веб-сайтах и распространять отзывы любыми другими способами.
 rights-intro-point-4 = То, как мы используем вашу персональную информацию и отзывы, отправленные в { -vendor-short-name } через { -brand-short-name }, описано в <a data-l10n-name="mozilla-privacy-policy-link">Политике приватности { -brand-short-name }</a>.
 rights-intro-point-4-unbranded = Любые применимые политики приватности для этого продукта должны быть перечислены здесь.

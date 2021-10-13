@@ -1,37 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-appmenu-update-available =
-    .label = Διατίθεται μια νέα ενημέρωση για το { -brand-shorter-name }.
-    .buttonlabel = Λήψη ενημέρωσης
-    .buttonaccesskey = Λ
-    .secondarybuttonlabel = Όχι τώρα
-    .secondarybuttonaccesskey = Ό
-appmenu-update-available-message = Ενημερώστε το { -brand-shorter-name } για ακόμα περισσότερη ταχύτητα και απόρρητο.
-appmenu-update-manual =
-    .label = Το { -brand-shorter-name } δεν μπορεί να ενημερωθεί στην πιο πρόσφατη έκδοση.
-    .buttonlabel = Λήψη του { -brand-shorter-name }
-    .buttonaccesskey = Λ
-    .secondarybuttonlabel = Όχι τώρα
-    .secondarybuttonaccesskey = Ό
-appmenu-update-manual-message = Κάντε λήψη μιας νέας έκδοσης του { -brand-shorter-name } και θα σας βοηθήσουμε να την εγκαταστήσετε.
-appmenu-update-whats-new =
-    .value = Δείτε τι νέο υπάρχει.
-appmenu-update-unsupported =
-    .label = Το { -brand-shorter-name } δεν μπορεί να ενημερωθεί στην πιο πρόσφατη έκδοση.
-    .buttonlabel = Μάθετε περισσότερα
-    .buttonaccesskey = Μ
-    .secondarybuttonlabel = Κλείσιμο
-    .secondarybuttonaccesskey = Κ
-appmenu-update-unsupported-message = Η πιο πρόσφατη έκδοση του { -brand-shorter-name } δεν υποστηρίζεται στο σύστημά σας.
-appmenu-update-restart =
-    .label = Επανεκκίνηση για ενημέρωση του { -brand-shorter-name }.
-    .buttonlabel = Επανεκκίνηση και επαναφορά
-    .buttonaccesskey = Ε
-    .secondarybuttonlabel = Όχι τώρα
-    .secondarybuttonaccesskey = Ό
-appmenu-update-restart-message = Μετά από μια γρήγορη επανεκκίνηση, το { -brand-shorter-name } θα ανακτήσει όλες τις ανοικτές καρτέλες και τα παράθυρα, που δεν είναι στη λειτουργία ιδιωτικής περιήγησης.
 appmenu-update-available2 =
     .label = Διαθέσιμη ενημέρωση
     .buttonlabel = Λήψη
@@ -67,30 +37,15 @@ appmenu-update-other-instance =
     .secondarybuttonlabel = Όχι τώρα
     .secondarybuttonaccesskey = Ό
 appmenu-update-other-instance-message = Μια νέα ενημέρωση του { -brand-shorter-name } είναι διαθέσιμη, αλλά δεν μπορεί να εγκατασταθεί επειδή εκτελείται ένα άλλο αντίγραφο του { -brand-shorter-name }. Κλείστε το για να συνεχίσετε την ενημέρωση, ή επιλέξετε να γίνει ούτως ή άλλως η ενημέρωση (το άλλο αντίγραφο δεν θα λειτουργεί σωστά μέχρι να το επανεκκινήσετε).
-appmenu-addon-private-browsing-installed =
-    .buttonlabel = Εντάξει, το 'πιασα
-    .buttonaccesskey = Ε
-appmenu-addon-post-install-message = Διαχειριστείτε τα πρόσθετά σας κάνοντας κλικ στο <image data-l10n-name='addon-install-icon'></image>, στο μενού <image data-l10n-name='addon-menu-icon'></image>.
+
 appmenu-addon-private-browsing-installed2 =
     .buttonlabel = Εντάξει
     .buttonaccesskey = Ε
-appmenu-addon-post-install-message2 = Διαχειριστείτε τις επεκτάσεις και τα θέματά σας από το μενού της εφαρμογής.
 appmenu-addon-post-install-message3 = Διαχειριστείτε τα πρόσθετα και τα θέματά σας από το μενού της εφαρμογής.
 appmenu-addon-post-install-incognito-checkbox =
     .label = Να επιτρέπεται η εκτέλεσή του σε ιδιωτικά παράθυρα
     .accesskey = Ν
-appmenu-new-tab-controlled =
-    .label = Η νέα σας καρτέλα έχει αλλάξει.
-    .buttonlabel = Διατήρηση αλλαγών
-    .buttonaccesskey = Δ
-    .secondarybuttonlabel = Απενεργοποίηση Επέκτασης
-    .secondarybuttonaccesskey = Α
-appmenu-homepage-controlled =
-    .label = Η αρχική σας σελίδα έχει αλλάξει.
-    .buttonlabel = Διατήρηση αλλαγών
-    .buttonaccesskey = Δ
-    .secondarybuttonlabel = Απενεργοποίηση επέκτασης
-    .secondarybuttonaccesskey = Α
+    
 appmenu-new-tab-controlled-changes =
     .label = Η νέα σας καρτέλα έχει αλλάξει.
     .buttonlabel = Διατήρηση αλλαγών

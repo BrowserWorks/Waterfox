@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,16 +38,20 @@ menu-quit =
             [windows] x
            *[other] Q
         }
+
 # This menu-quit-mac string is only used on macOS.
 menu-quit-mac =
     .label = 離開 { -brand-shorter-name }
+
 # This menu-quit-button string is only used on Linux.
 menu-quit-button =
     .label = { menu-quit.label }
+
 # This menu-quit-button-win string is only used on Windows.
 menu-quit-button-win =
     .label = { menu-quit.label }
     .tooltip = 結束 { -brand-shorter-name }
+
 menu-about =
     .label = 關於 { -brand-shorter-name }
     .accesskey = A
@@ -71,7 +75,7 @@ menu-file-new-private-window =
     .accesskey = W
 # "Open Location" is only displayed on macOS, and only on windows
 # that aren't main browser windows, or when there are no windows
-# but Firefox is still running.
+# but Waterfox is still running.
 menu-file-open-location =
     .label = 開啟網址…
 menu-file-open-file =
@@ -89,6 +93,9 @@ menu-file-save-page =
 menu-file-email-link =
     .label = 郵寄鏈結…
     .accesskey = E
+menu-file-share-url =
+    .label = 分享
+    .accesskey = h
 menu-file-print-setup =
     .label = 頁面設定…
     .accesskey = u
@@ -110,9 +117,6 @@ menu-file-go-offline =
 menu-edit =
     .label = 編輯
     .accesskey = E
-menu-edit-find-on =
-    .label = 尋找文字…
-    .accesskey = F
 menu-edit-find-in-page =
     .label = 在頁面中搜尋…
     .accesskey = F
@@ -131,9 +135,6 @@ menu-view =
 menu-view-toolbars-menu =
     .label = 工具列
     .accesskey = T
-menu-view-customize-toolbar =
-    .label = 自訂…
-    .accesskey = C
 menu-view-customize-toolbar2 =
     .label = 自訂工具列…
     .accesskey = C
@@ -170,9 +171,6 @@ menu-view-page-style-no-style =
 menu-view-page-basic-style =
     .label = 基本頁面樣式
     .accesskey = b
-menu-view-charset =
-    .label = 文字編碼
-    .accesskey = c
 menu-view-repair-text-encoding =
     .label = 修復文字編碼
     .accesskey = c
@@ -226,10 +224,6 @@ menu-history-reopen-all-windows = 回復所有視窗
 menu-bookmarks-menu =
     .label = 書籤
     .accesskey = B
-menu-bookmarks-show-all =
-    .label = 顯示所有書籤
-menu-bookmark-this-page =
-    .label = 將本頁加入書籤
 menu-bookmarks-manage =
     .label = 管理書籤
 menu-bookmark-current-tab =
@@ -253,15 +247,6 @@ menu-tools =
 menu-tools-downloads =
     .label = 下載
     .accesskey = D
-menu-tools-addons =
-    .label = 附加元件
-    .accesskey = A
-menu-tools-fxa-sign-in =
-    .label = 登入 { -brand-product-name }…
-    .accesskey = g
-menu-tools-turn-on-sync =
-    .label = 開啟 { -sync-brand-short-name }…
-    .accesskey = n
 menu-tools-addons-and-themes =
     .label = 附加元件與佈景主題
     .accesskey = A
@@ -277,9 +262,6 @@ menu-tools-sync-now =
 menu-tools-fxa-re-auth =
     .label = 重新連線到 { -brand-product-name }…
     .accesskey = R
-menu-tools-web-developer =
-    .label = 網頁開發者
-    .accesskey = W
 menu-tools-browser-tools =
     .label = 瀏覽器工具
     .accesskey = B
@@ -292,17 +274,6 @@ menu-tools-page-source =
 menu-tools-page-info =
     .label = 頁面資訊
     .accesskey = I
-menu-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] 選項
-           *[other] 偏好設定
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] n
-        }
 menu-settings =
     .label = 設定
     .accesskey =
@@ -335,21 +306,6 @@ menu-window-bring-all-to-front =
 menu-help =
     .label = 說明
     .accesskey = H
-menu-help-product =
-    .label = { -brand-shorter-name } 說明
-    .accesskey = H
-menu-help-show-tour =
-    .label = { -brand-shorter-name } 導覽
-    .accesskey = o
-menu-help-import-from-another-browser =
-    .label = 從另一套瀏覽器匯入…
-    .accesskey = I
-menu-help-keyboard-shortcuts =
-    .label = 快速鍵
-    .accesskey = K
-menu-help-troubleshooting-info =
-    .label = 疑難排解資訊
-    .accesskey = T
 menu-get-help =
     .label = 取得幫助
     .accesskey = H
@@ -361,12 +317,6 @@ menu-help-report-site-issue =
 menu-help-feedback-page =
     .label = 送出意見回饋…
     .accesskey = S
-menu-help-safe-mode-without-addons =
-    .label = 重新啟動但停用附加元件…
-    .accesskey = R
-menu-help-safe-mode-with-addons =
-    .label = 重新啟動並啟用附加元件
-    .accesskey = R
 menu-help-enter-troubleshoot-mode2 =
     .label = 疑難排解模式…
     .accesskey = M

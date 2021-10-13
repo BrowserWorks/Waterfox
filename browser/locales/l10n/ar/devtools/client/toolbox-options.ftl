@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -60,11 +60,6 @@ options-stylesheet-autocompletion-tooltip =
 
 # The heading
 options-screenshot-label = سلوك اللقطات
-
-# Label for the checkbox that toggles screenshot to clipboard feature
-options-screenshot-clipboard-label = خُذ اللقطات إلى الحافظة
-options-screenshot-clipboard-tooltip =
-    .title = لحفظ اللقطات مباشرة في الحافظة
 
 # Label for the checkbox that toggles the camera shutter audio for screenshot tool
 options-screenshot-audio-label = شغّل صوت غالِق الكمرة

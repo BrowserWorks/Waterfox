@@ -1,10 +1,12 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowTitle.label "Właściwości zestawu pól" >
+
 <!ENTITY Legend.label "Legenda" >
 <!ENTITY Legend.accesskey "L" >
+
 <!ENTITY EditLegendText.label "Edytuj legendę:" >
 <!ENTITY EditLegendText.accesskey "T" >
 <!ENTITY LegendAlign.label "Wyrównaj legendę:" >
@@ -13,5 +15,6 @@
 <!ENTITY AlignLeft.label "Do lewej" >
 <!ENTITY AlignCenter.label "Wycentrowany" >
 <!ENTITY AlignRight.label "Do prawej" >
+
 <!ENTITY RemoveFieldSet.label "Usuń zestaw pól" >
 <!ENTITY RemoveFieldSet.accesskey "U" >

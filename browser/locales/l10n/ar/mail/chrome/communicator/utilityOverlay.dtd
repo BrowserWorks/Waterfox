@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -18,10 +18,6 @@
 <!ENTITY redoCmd.accesskey          "ع">
 <!ENTITY deleteCmd.label          "احذف">
 <!ENTITY deleteCmd.accesskey        "ذ">
-<!ENTITY preferencesCmd2.label "الخيارات">
-<!ENTITY preferencesCmd2.accesskey "خ">
-<!ENTITY preferencesCmdUnix.label       "التفضيلات">
-<!ENTITY preferencesCmdUnix.accesskey     "ض">
 
 <!ENTITY viewMenu.label          "عرض">
 <!ENTITY viewMenu.accesskey        "ع">

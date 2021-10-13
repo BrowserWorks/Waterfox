@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,11 @@
 experimental-features-css-masonry2 =
     .label = CSS: Masonry Layout
 experimental-features-css-masonry-description = Cho phép hỗ trợ cho tính năng thử nghiệm CSS Masonry Layout. Xem <a data-l10n-name="explainer">giải thích</a> để biết mô tả cấp cao về tính năng. Để cung cấp phản hồi, vui lòng nhận xét trong <a data-l10n-name="w3c-su">GitHub issue này</a> hoặc <a data-l10n-name="bug">báo cáo lỗi này</a>.
+# The title of the experiment should be kept in English as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS: Cascade Layers
+experimental-features-css-cascade-layers-description = Bật hỗ trợ cho CSS Cascade Layers. Xem <a data-l10n-name="spec">đặc điểm kỹ thuật đang tiến hành</a> để biết thêm chi tiết. Hãy tạo báo cáo lỗi với <a data-l10n-name="bugzilla">bug 1699215</a> cho các lỗi liên quan đến tính năng này.
 # The title of the experiment should be kept in English as it may be referenced
 # by various online articles and is technical in nature.
 experimental-features-web-gpu2 =
@@ -85,9 +90,6 @@ experimental-features-fission-description = Fission (cách ly trang web) là m�
 experimental-features-multi-pip =
     .label = Hỗ trợ nhiều cửa sổ Hình-trong-hình
 experimental-features-multi-pip-description = Thử nghiệm cho phép hỗ trợ mở nhiều cửa sổ Hình-trong-hình cùng lúc.
-experimental-features-http3 =
-    .label = Giao thức HTTP/3
-experimental-features-http3-description = Hỗ trợ thử nghiệm cho giao thức HTTP/3.
 # Search during IME
 experimental-features-ime-search =
     .label = Thanh địa chỉ: hiển thị kết quả trong quá trình thành phần IME

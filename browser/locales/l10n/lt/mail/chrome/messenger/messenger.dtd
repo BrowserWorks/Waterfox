@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Spausdinti">
 <!ENTITY printCmd.accesskey "S">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Spaudinio peržiūra">
-<!ENTITY printPreviewCmd.accesskey "ž">
-<!ENTITY printSetupCmd.label "Puslapio nuostatos…">
-<!ENTITY printSetupCmd.accesskey "P">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Pašalinti laišką">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "N">
 <!ENTITY compactVersion.label "Rodyti glaustai">
 <!ENTITY compactVersion.accesskey "R">
-<!ENTITY folderPaneBar.label "Aplankų sąrašo priemonių juosta">
-<!ENTITY folderPaneBar.accesskey "A">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Rikiavimas ir grupavimas">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Adresų knyga">
 <!ENTITY addressBookCmd.accesskey "A">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Programos priedai">
-<!ENTITY addons.accesskey "d">
-<!ENTITY addonPrefs.label "Priedų parinktys">
-<!ENTITY addonPrefs.accesskey "O">
-<!ENTITY addonPrefsUnix.label "Priedo nuostatos">
-<!ENTITY addonPrefsUnix.accesskey "P">
 <!ENTITY addonNoPrefs.label "Nerasta jokių priedų nustatymų.">
 <!ENTITY activitymanager.label "Veiklų tvarkytuvė">
 <!ENTITY activitymanager.accesskey "V">
@@ -520,8 +508,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Derinti priedus">
 <!ENTITY debugAddonsCmd.accesskey "A">
-<!ENTITY tabsDebugCmd.label "Turinio derintuvė">
-<!ENTITY tabsDebugCmd.accesskey "T">
 <!ENTITY errorConsoleCmd.label "Klaidų pultas">
 <!ENTITY errorConsoleCmd.accesskey "u">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +531,11 @@
 <!ENTITY backButton1.label "Atgal">
 <!ENTITY goForwardButton1.label "Pirmyn">
 <!ENTITY deleteItem.title "Pašalinti">
-<!ENTITY deleteButton.label "Pašalinti">
-<!ENTITY undeleteButton.label "Grąžinti">
 <!ENTITY markButton.label "Pažymėti">
 <!ENTITY printButton.label "Spausdinti">
 <!ENTITY stopButton.label "Stabdyti">
 <!ENTITY throbberItem.title "Aktyvumo rodiklis">
 <!ENTITY junkItem.title "Brukalas">
-<!ENTITY junkButton.label "Brukalas">
-<!ENTITY notJunkButton.label "Ne brukalas">
 <!ENTITY addressBookButton.label "Adresai">
 <!ENTITY chatButton.label "Pokalbiai">
 <!ENTITY glodaSearch.title "Globali paieška">
@@ -585,19 +567,14 @@
 <!ENTITY previousMsgButton.tooltip "Pereiti prie ankstesnio laiško">
 <!ENTITY goForwardButton.tooltip "Eiti vienu laišku pirmyn">
 <!ENTITY goBackButton.tooltip "Eiti vienu laišku atgal">
-<!ENTITY deleteButton.tooltip "Pašalinti pažymėtus laiškus arba aplanką">
-<!ENTITY undeleteButton.tooltip "Atšaukti pažymėto laiško šalinimą">
 <!ENTITY markButton.tooltip "Pažymėti laiškus">
 <!ENTITY printButton.tooltip "Spausdinti šį laišką">
 <!ENTITY stopButton.tooltip "Stabdyti atsiuntimą">
-<!ENTITY junkButton.tooltip "Pažymėti išrinktus laiškus kaip brukalą">
-<!ENTITY notJunkButton.tooltip "Pažymėti, kad išrinkti laiškai nėra brukalas">
 <!ENTITY addressBookButton.tooltip "Eiti į adresų knygą">
 <!ENTITY chatButton.tooltip "Atverti pokalbių kortelę">
 <!ENTITY tagButton.tooltip "Priskirti gaires pažymėtiems laiškams">
 <!ENTITY compactButton.tooltip "Sunaikinti pašalintus laiškus iš pažymėto aplanko">
 <!ENTITY appmenuButton1.tooltip "Atverti programos „&brandShortName;“ meniu">
-<!ENTITY addonsButton.tooltip "Tvarkyti priedus">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Persiųsti tiesiogiai">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -21,10 +21,6 @@
 <!ENTITY savePageCmd.label "Save Page As…">
 <!ENTITY savePageCmd.accesskey "A">
 <!ENTITY savePageCmd.commandkey "S">
-<!ENTITY pageSetupCmd.label "Page Setup…">
-<!ENTITY pageSetupCmd.accesskey "u">
-<!ENTITY printPreviewCmd.label "Print Preview">
-<!ENTITY printPreviewCmd.accesskey "v">
 <!ENTITY printCmd.label "Print…">
 <!ENTITY printCmd.accesskey "P">
 <!ENTITY printCmd.commandkey "P">

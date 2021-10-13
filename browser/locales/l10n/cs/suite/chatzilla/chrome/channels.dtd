@@ -1,33 +1,33 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY window.title "Připojit ke kanálu">
+<!ENTITY window.title  "Připojit ke kanálu">
 
-<!ENTITY network.label "Síť:">
+<!ENTITY network.label     "Síť:">
 <!ENTITY network.accesskey "S">
 
-<!ENTITY channel.label "Kanál:">
+<!ENTITY channel.label     "Kanál:">
 <!ENTITY channel.accesskey "K">
 
-<!ENTITY topics.label "Vyhledat témata stejně jako jména kanálů">
+<!ENTITY topics.label     "Vyhledat témata stejně jako jména kanálů">
 <!ENTITY topics.accesskey "t">
 
-<!ENTITY join.label "Připojit">
+<!ENTITY join.label     "Připojit">
 <!ENTITY join.accesskey "P">
 
-<!ENTITY minusers.label "Minimální počet uživatelů:">
+<!ENTITY minusers.label     "Minimální počet uživatelů:">
 <!ENTITY minusers.accesskey "n">
 
-<!ENTITY maxusers.label "Maximální počet uživatelů:">
+<!ENTITY maxusers.label     "Maximální počet uživatelů:">
 <!ENTITY maxusers.accesskey "x">
 
-<!ENTITY refresh.label "Obnovit">
-<!ENTITY refresh.accesskey "">
+<!ENTITY refreshNow.label     "Obnovit">
+<!ENTITY refreshNow.accesskey "O">
 
 <!ENTITY network.hint.label "Vložte název sítě nebo serveru (možno i včetně portu) a kanál pro připojení.">
 
 <!ENTITY col.network "Síť">
-<!ENTITY col.name "Název">
+<!ENTITY col.name  "Název">
 <!ENTITY col.users "Uživatelé">
 <!ENTITY col.topic "Téma">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -27,9 +27,6 @@
 <!ENTITY useHtml.accesskey "T">
 <!ENTITY autoQuote.label "Podczas tworzenia odpowiedzi automatycznie cytuj oryginalną wiadomość">
 <!ENTITY autoQuote.accesskey "a">
-<!-- LOCALIZATION NOTE (then.label): This will concatenate with the 4 strings that follow. -->
-<!ENTITY then.label "a następnie">
-<!ENTITY then.accesskey "t">
 <!ENTITY aboveQuote.label "rozpocznij odpowiedź powyżej cytowanego tekstu">
 <!ENTITY belowQuote.label "rozpocznij odpowiedź poniżej cytowanego tekstu">
 <!ENTITY selectAndQuote.label "zaznacz zacytowany tekst">

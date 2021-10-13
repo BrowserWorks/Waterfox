@@ -1,16 +1,20 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 notifications-dialog-window =
     .title = Personalizar alerta de nova mensagem
-customize-alert-description = Selecione os campos que deseja mostrar no alerta:
+
+customize-alert-description = Selecione quais campos devem aparecer na notificação de alerta:
+
 preview-text-checkbox =
     .label = Amostra da mensagem
     .accesskey = m
+
 subject-checkbox =
     .label = Assunto
     .accesskey = A
+
 sender-checkbox =
     .label = Remetente
     .accesskey = R
@@ -24,5 +28,6 @@ sender-checkbox =
 open-time-label-before =
     .value = Mostrar alerta de novo email durante
     .accesskey = n
+
 open-time-label-after =
     .value = segundos

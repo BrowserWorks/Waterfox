@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,19 @@ connection-dialog-window =
         }
 connection-disable-extension =
     .label = Zakázat rozšíření
+disable-extension-button = Zakázat rozšíření
+# Variables:
+#   $name (String) - The extension that is controlling the proxy settings.
+#
+# The extension-icon is the extension's icon, or a fallback image. It should be
+# purely decoration for the actual extension name, with alt="".
+proxy-settings-controlled-by-extension =
+    Připojení { -brand-short-name.gender ->
+        [masculine] { -brand-short-name(case: "gen") }
+        [feminine] { -brand-short-name(case: "gen") }
+        [neuter] { -brand-short-name(case: "gen") }
+       *[other] aplikace { -brand-short-name }
+    } k internetu spravuje rozšíření <img data-l10n-name="extension-icon" alt="" /> { $name }.
 connection-proxy-legend = Nastavení proxy serverů pro přístup k internetu
 proxy-type-no =
     .label = Bez proxy serveru
@@ -73,8 +86,6 @@ no-proxy-label =
     .value = Nepoužívat pro:
     .accesskey = N
 no-proxy-example = Příklad: .mozilla.org, .net.nz, 192.168.1.0/24
-# Note: Do not translate localhost, 127.0.0.1 and ::1.
-no-proxy-localhost-label = Spojení na localhost, 127.0.0.1 a ::1 nikdy proxy servery nepoužívají.
 # Do not translate "localhost", "127.0.0.1/8" and "::1". (You can translate "and".)
 connection-proxy-noproxy-localhost-desc-2 = Spojení na localhost, 127.0.0.1/8 a ::1 nikdy proxy servery nepoužívají.
 proxy-password-prompt =

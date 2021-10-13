@@ -1,9 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY wizard.title             "Criar nova agenda" >
-<!ENTITY wizard.label             "Criar uma nova agenda" >
+<!ENTITY wizard.label             "Criar nova agenda" >
 <!ENTITY wizard.description       "Procurar sua agenda" >
 
 <!ENTITY initialpage.description    "Sua agenda pode ser armazenada no seu computador, ou em um servidor para acesso remoto ou compartilhamento com seus colegas ou amigos." >

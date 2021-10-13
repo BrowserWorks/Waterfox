@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -57,10 +57,6 @@
 <!ENTITY goButton.tooltip             "Írja be a weboldal címét a mezőbe, majd kattintson az Ugrás gombra">
 <!ENTITY printButton.label            "Nyomtatás">
 <!ENTITY printButton.tooltip          "Oldal kinyomtatása">
-
-<!ENTITY throbber.tooltip             "Ugrás a &vendorShortName; honlapjára">
-
-<!ENTITY throbber.tooltip2            "Ugrás a &brandShortName; honlapjára">
 
 <!ENTITY locationBar.tooltip          "Írja be a keresendő szót, a kulcsszót vagy a webcímet">
 <!ENTITY locationBar.accesskey        "e">

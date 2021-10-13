@@ -1,12 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY doNotDownloadPop3Movemail.label "Чтобы сэкономить дисковое пространство, не загружать:">
 <!ENTITY doNotDownloadNntp.label "Чтобы сэкономить дисковое пространство, не загружать для работы в автономном режиме:">
 <!ENTITY doNotDownloadImap.label "Чтобы сэкономить дисковое пространство, загрузка сообщений с сервера и хранение локальных копий может быть ограничена по их возрасту или размеру.">
-<!ENTITY allFoldersOffline.label "Хранить сообщения для этой учётной записи на этом компьютере">
-<!ENTITY allFoldersOffline.accesskey "н">
 <!ENTITY allFoldersOffline2.label "Хранить сообщения из всех папок для этой учётной записи на этом компьютере">
 <!ENTITY allFoldersOffline2.accesskey "н">
 <!ENTITY allFoldersOfflineNote.label "Примечание: Это изменение затронет все папки в этой учётной записи. Чтобы задать отдельные папки, используйте кнопку «Дополнительно…».">

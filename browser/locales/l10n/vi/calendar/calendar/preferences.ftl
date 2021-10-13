@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-title = Lịch
 calendar-title-reminder = Nhắc nhở
+calendar-title-notification = Thông báo
 calendar-title-category = Thể loại
 dateformat-label =
     .value = Định dạng văn bản ngày:
@@ -22,17 +23,17 @@ weekstart-label =
 day-1-name =
     .label = Chủ nhật
 day-2-name =
-    .label = Thứ Hai
+    .label = Thứ hai
 day-3-name =
-    .label = Thứ Ba
+    .label = Thứ ba
 day-4-name =
-    .label = Thứ Tư
+    .label = Thứ tư
 day-5-name =
-    .label = Thứ Năm
+    .label = Thứ năm
 day-6-name =
-    .label = Thứ Sáu
+    .label = Thứ sáu
 day-7-name =
-    .label = Thứ Bảy
+    .label = Thứ bảy
 show-weeknumber-label =
     .label = Hiển thị số tuần trong lượt xem và tháng nhỏ
     .accesskey = n
@@ -106,6 +107,9 @@ todaypane-legend = Bảng ngày hôm nay
 soon-label =
     .value = Phần sắp tới cho thấy:
     .accesskey = U
+agenda-days =
+    .value = Chương trình cho thấy:
+    .accesskey = g
 event-task-legend = Sự kiện và nhiệm vụ
 default-length-label =
     .value = Độ dài sự kiện và nhiệm vụ mặc định:
@@ -133,6 +137,9 @@ task-due-label =
 edit-intab-label =
     .label = Chỉnh sửa các sự kiện và tác vụ trong một thẻ thay vì trong cửa sổ hộp thoại.
     .accesskey = t
+prompt-delete-label =
+    .label = Nhắc trước khi xóa các sự kiện và tác vụ.
+    .accesskey = V
 accessibility-legend = Trợ năng
 accessibility-colors-label =
     .label = Tối ưu hóa màu sắc cho khả năng tiếp cận
@@ -179,8 +186,9 @@ event-alarm-time-label =
 task-alarm-time-label =
     .value = Thời gian mặc định một lời nhắc được đặt trước một tác vụ:
     .accesskey = o
+calendar-notifications-customize-label = Thông báo có thể được tùy chỉnh cho từng lịch trong cửa sổ thuộc tính của lịch.
 category-new-label = Phân mục mới
-category-edit-label = Chỉnh sửa Phân mục
+category-edit-label = Chỉnh sửa phân mục
 category-overwrite-title = Cảnh báo: Trùng tên
 category-overwrite = Đã tồn tại một phân mục có tên đó. Bạn có muốn ghi đè nó không?
 category-blank-warning = Bạn phải nhập một tên phân mục.

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,6 @@ about-addressbook-title = Ευρετήριο
 
 about-addressbook-toolbar-new-address-book =
     .label = Νέο ευρετήριο
-about-addressbook-toolbar-new-carddav-address-book =
-    .label = Νέο ευρετήριο CardDAV
-about-addressbook-toolbar-new-ldap-address-book =
-    .label = Νέο ευρετήριο LDAP
 about-addressbook-toolbar-add-carddav-address-book =
     .label = Προσθήκη ευρετηρίου CardDAV
 about-addressbook-toolbar-add-ldap-address-book =
@@ -20,6 +16,8 @@ about-addressbook-toolbar-new-contact =
     .label = Νέα επαφή
 about-addressbook-toolbar-new-list =
     .label = Νέα λίστα
+about-addressbook-toolbar-import =
+    .label = Εισαγωγή
 
 ## Books
 
@@ -30,14 +28,18 @@ about-addressbook-books-context-synchronize =
     .label = Συγχρονισμός
 about-addressbook-books-context-print =
     .label = Εκτύπωση…
+about-addressbook-books-context-export =
+    .label = Εξαγωγή…
 about-addressbook-books-context-delete =
     .label = Διαγραφή
 about-addressbook-books-context-remove =
     .label = Αφαίρεση
+about-addressbook-books-context-startup-default =
+    .label = Προεπιλεγμένος κατάλογος εκκίνησης
 about-addressbook-confirm-delete-book-title = Διαγραφή ευρετηρίου
 # Variables:
 # $name (String) - Name of the address book to be deleted.
-about-addressbook-confirm-delete-book = Θέλετε σίγουρα να διαγράψετε το { $name } και όλες τις επαφές του;
+about-addressbook-confirm-delete-book = Θέλετε σίγουρα να διαγράψετε το «{ $name }» και όλες τις επαφές του;
 about-addressbook-confirm-remove-remote-book-title = Αφαίρεση ευρετηρίου
 # Variables:
 # $name (String) - Name of the remote address book to be removed.
@@ -67,6 +69,8 @@ about-addressbook-sort-email-ascending =
     .label = Ταξινόμηση κατά διεύθυνση email (A > Z)
 about-addressbook-sort-email-descending =
     .label = Ταξινόμηση κατά διεύθυνση email (Z > A)
+about-addressbook-cards-context-write =
+    .label = Σύνταξη
 about-addressbook-confirm-delete-mixed-title = Διαγραφή επαφών και λιστών
 # Variables:
 # $count (Number) - The number of contacts and lists to be deleted. Always greater than 1.
@@ -126,5 +130,5 @@ about-addressbook-save-edit-contact-button = Αποθήκευση
 about-addressbook-details-email-addresses-header = Διευθύνσεις email
 about-addressbook-details-phone-numbers-header = Αριθμοί τηλεφώνου
 about-addressbook-details-home-address-header = Διεύθυνση οικίας
-about-addressbook-details-work-address-header = Διεύθυνση Εργασίας
+about-addressbook-details-work-address-header = Διεύθυνση εργασίας
 about-addressbook-details-other-info-header = Άλλες πληροφορίες

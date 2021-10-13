@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,6 @@ about-addressbook-title = Książka adresowa
 
 about-addressbook-toolbar-new-address-book =
     .label = Nowa książka adresowa
-about-addressbook-toolbar-new-carddav-address-book =
-    .label = Nowa książka adresowa CardDAV
-about-addressbook-toolbar-new-ldap-address-book =
-    .label = Nowa książka adresowa LDAP
 about-addressbook-toolbar-add-carddav-address-book =
     .label = Dodaj książkę adresową CardDAV
 about-addressbook-toolbar-add-ldap-address-book =
@@ -20,6 +16,8 @@ about-addressbook-toolbar-new-contact =
     .label = Nowy kontakt
 about-addressbook-toolbar-new-list =
     .label = Nowa lista
+about-addressbook-toolbar-import =
+    .label = Importuj
 
 ## Books
 
@@ -30,10 +28,14 @@ about-addressbook-books-context-synchronize =
     .label = Synchronizuj
 about-addressbook-books-context-print =
     .label = Drukuj…
+about-addressbook-books-context-export =
+    .label = Eksportuj…
 about-addressbook-books-context-delete =
     .label = Usuń
 about-addressbook-books-context-remove =
     .label = Usuń
+about-addressbook-books-context-startup-default =
+    .label = Domyślnie uruchamiany katalog
 about-addressbook-confirm-delete-book-title = Usuń książkę adresową
 # Variables:
 # $name (String) - Name of the address book to be deleted.
@@ -67,6 +69,8 @@ about-addressbook-sort-email-ascending =
     .label = Sortuj według adresów e-mail (A→Z)
 about-addressbook-sort-email-descending =
     .label = Sortuj według adresów e-mail (Z→A)
+about-addressbook-cards-context-write =
+    .label = Napisz
 about-addressbook-confirm-delete-mixed-title = Usuń kontakty i listy
 # Variables:
 # $count (Number) - The number of contacts and lists to be deleted. Always greater than 1.

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,16 +12,20 @@
 # $hostname (String) - Hostname of the website with SSL error.
 # $errorMessage (String) - Error message corresponding to the type of error we are experiencing.
 ssl-connection-error = Ha ocurrido un error al conectar con { $hostname }. { $errorMessage }
+
 # Variables:
 # $error (string) - NSS error code string that specifies type of cert error. e.g. unknown issuer, invalid cert, etc.
 cert-error-code-prefix = Código de error: { $error }
+
 psmerr-ssl-disabled = No se puede conectar de forma segura porque el protocolo SSL ha sido desactivado.
 psmerr-ssl2-disabled = No se puede conectar de forma segura porque el sitio usa una versión antigua e insegura del protocolo SSL.
+
 # This is a multi-line message.
 psmerr-hostreusedissuerandserial =
     Ha recibido un certificado no válido. Contacte con el administrador o dirección de correo electrónico de contacto del servidor y facilíteles la siguiente información:
     
     Su certificado contiene el mismo número de serie que otro certificado emitido por la autoridad de certificación. Obtenga un nuevo certificado que contenga un número de serie único.
+
 ssl-error-export-only-server = No es posible comunicar de forma segura. El otro extremo de la conexión no admite cifrado de grado alto.
 ssl-error-us-only-server = No es posible comunicar de forma segura. El otro extremo de la conexión requiere cifrado de grado alto que no está admitido.
 ssl-error-no-cypher-overlap = No se puede comunicar de forma segura con la otra parte: no hay algoritmos de cifrado comunes.

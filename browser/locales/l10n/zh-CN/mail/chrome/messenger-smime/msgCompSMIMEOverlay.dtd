@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,9 +17,6 @@
 
 <!ENTITY menu_securitySign.label "对此消息数字签名">
 <!ENTITY menu_securitySign.accesskey "M">
-
-<!ENTITY menu_securityAttachMyKey.label "附上我的公钥">
-<!ENTITY menu_securityAttachMyKey.accesskey "A">
 
 <!ENTITY menu_securityTech.label "加密技术">
 <!ENTITY menu_securityTech.accesskey "T">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,9 +9,6 @@ third-party-intro =
     Questa pagina mostra un elenco dei moduli di terze parti inseriti in
     { -brand-short-name }. Qualsiasi modulo non firmato da Microsoft o
     { -vendor-short-name } viene considerato un modulo di terze parti.
-
-third-party-header-module-list = Elenco dei moduli
-third-party-header-loading-events = Caricamento eventi
 
 third-party-message-empty = Non è stato rilevato alcun modulo di terze parti.
 third-party-message-no-duration = Non registrato

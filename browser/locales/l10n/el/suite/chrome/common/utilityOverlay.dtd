@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -141,8 +141,6 @@
 <!ENTITY openHelpCmd.accesskey            "β">
 <!ENTITY openHelpCmd.key                  "VK_F1">
 
-<!ENTITY helpForIEUsers.label               "Για χρήστες του Internet Explorer">
-<!ENTITY helpForIEUsers.accesskey           "I">
 <!ENTITY helpTroubleshootingInfo.label      "Πληροφορίες επίλυσης προβλημάτων">
 <!ENTITY helpTroubleshootingInfo.accesskey  "Π">
 <!ENTITY releaseCmd.label                   "Σημειώσεις έκδοσης">
@@ -180,7 +178,7 @@
 <!ENTITY customizeToolbarContext.label            "Προσαρμογή…">
 <!ENTITY customizeToolbarContext.accesskey        "Π">
 
-<!ENTITY customizeToolbar.toolbarmode.label       "Ρυθμίσεις για αυτήν τη γραμμή">
+<!ENTITY customizeToolbar.toolbarmode.label       "Ρυθμίσεις γραμμής εργαλείων">
 <!ENTITY customizeToolbar.toolbarmode.accesskey   "θ">
 <!ENTITY customizeToolbar.iconsAndText.label      "Εικονίδια και κείμενο">
 <!ENTITY customizeToolbar.iconsAndText.accesskey  "α">

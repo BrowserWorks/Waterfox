@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,9 +16,6 @@ safeb-palm-see-details-label = Išsamesnė informacija
 safeb-blocked-phishing-page-error-desc-override = Yra pranešta, jog <span data-l10n-name='sitename'>{ $sitename }</span> svetainė <a data-l10n-name='error_desc_link'>yra kenkėjiška</a>. Jūs galite <a data-l10n-name='report_detection'>pranešti apie aptikimo klaidą</a> arba <a data-l10n-name='ignore_warning_link'>nepaisyti įspėjimo</a> ir aplankyti šią nesaugią svetainę.
 safeb-blocked-phishing-page-error-desc-no-override = Yra pranešta, jog <span data-l10n-name='sitename'>{ $sitename }</span> svetainė <a data-l10n-name='error_desc_link'>yra apgaulinga</a>. Jūs galite <a data-l10n-name='report_detection'>pranešti apie aptikimo klaidą</a>.
 safeb-blocked-phishing-page-learn-more = Sužinokite daugiau apie apgaulingas svetaines ir sukčiavimą apsilankę <a data-l10n-name='learn_more_link'>www.antiphishing.org</a>. Sužinokite daugiau apie „{ -brand-short-name }“ apsaugą nuo sukčiavimo ir kenkėjiškų programų apsilankę <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
-safeb-blocked-malware-page-error-desc-override = Yra pranešta, jog <span data-l10n-name='sitename'>{ $sitename }</span> svetainė <a data-l10n-name='error_desc_link'>yra kenkėjiška</a>. Jūs galite <a data-l10n-name='report_detection'>pranešti apie aptikimo klaidą</a> arba <a data-l10n-name='ignore_warning_link'>nepaisyti įspėjimo</a> ir aplankyti šią nesaugią svetainę.
-safeb-blocked-malware-page-error-desc-no-override = Yra pranešta, jog <span data-l10n-name='sitename'>{ $sitename }</span> svetainė <a data-l10n-name='error_desc_link'>yra kenkėjiška</a>. Jūs galite <a data-l10n-name='report_detection'>pranešti apie aptikimo klaidą</a>.
-safeb-blocked-malware-page-learn-more = Sužinokite daugiau apie kenkėjišką turinį internete, įskaitant virusus ir kitas kenkėjiškas programas, taip pat kaip nuo jų apsaugoti savo kompiuterį, apsilankę <a data-l10n-name='learn_more_link'>StopBadware.org</a>. Sužinokite daugiau apie „{ -brand-short-name }“ apsaugą nuo sukčiavimo ir kenkėjiškų programų apsilankę <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
 safeb-blocked-malware-page-error-desc-override-sumo = Yra pranešta, jog svetainėje <span data-l10n-name='sitename'>{ $sitename }</span> <a data-l10n-name='error_desc_link'>yra kenkėjiškos programinės įrangos</a>. Jūs galite <a data-l10n-name='ignore_warning_link'>nepaisyti įspėjimo</a> ir aplankyti šią nesaugią svetainę.
 safeb-blocked-malware-page-error-desc-no-override-sumo = Yra pranešta, jog svetainėje <span data-l10n-name='sitename'>{ $sitename }</span> <a data-l10n-name='error_desc_link'>yra kenkėjiškos programinės įrangos</a>.
 safeb-blocked-malware-page-learn-more-sumo = Sužinokite daugiau apie „{ -brand-short-name }“ apsaugą nuo sukčiavimo ir kenkėjiškų programų apsilankę <a data-l10n-name='firefox_support'>support.mozilla.org</a>.

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,8 +11,6 @@
 <!ENTITY pasteNoFormatting.label "Įdėti be formatų">
 <!ENTITY pasteNoFormatting.accesskey "f">
 <!ENTITY pasteNoFormatting.key "V">
-<!ENTITY pasteAs.label "Įdėti kitaip">
-<!ENTITY pasteAs.accesskey "t">
 <!ENTITY pasteAsQuotationCmd.label "Įdėti kaip citatą">
 <!ENTITY pasteAsQuotationCmd.accesskey "c">
 <!ENTITY pasteAsQuotationCmd.key "o">
@@ -294,8 +292,6 @@
 <!ENTITY cutToolbarCmd.tooltip "Iškirpti">
 <!ENTITY copyToolbarCmd.tooltip "Kopijuoti">
 <!ENTITY pasteToolbarCmd.tooltip "Įdėti">
-<!ENTITY printToolbarCmd.label "Spausdinti">
-<!ENTITY printToolbarCmd.tooltip "Spausdinti šį tinklalapį">
 <!ENTITY findToolbarCmd.label "Ieškoti">
 <!ENTITY findToolbarCmd.tooltip "Ieškoti šiame tinklalapyje">
 <!ENTITY spellToolbarCmd.label "Rašyba">
@@ -313,7 +309,6 @@
 <!ENTITY colorButtons.title "Spalvos">
 <!ENTITY TextColorButton.tooltip "Pasirinkti teksto spalvą">
 <!ENTITY BackgroundColorButton.tooltip "Parinkti fono spalvą">
-<!ENTITY throbber.tooltip "Atverti „&vendorShortName;“ tinklalapį">
 <!ENTITY HighlightColorButton.label "Žymeklis">
 <!ENTITY HighlightColorButton.tooltip "Parinkti teksto žymėjimo spalvą">
 

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -22,18 +22,9 @@
 <!ENTITY alwaysAsk.label                "Perguntar-me sempre onde guardar os ficheiros">
 <!ENTITY alwaysAsk.accesskey            "P">
 
-<!ENTITY downloadHistory.label          "Histórico de transferências">
-<!ENTITY removeEntries.label            "Remover entradas de transferências">
-<!ENTITY removeEntries.accesskey        "R">
-<!ENTITY whenCompleted.label            "Quando concluídas">
-<!ENTITY whenQuittingApp.label          "Ao sair do &brandShortName;">
-<!ENTITY neverRemove.label              "Nunca">
-
 <!ENTITY finishedBehavior.label         "Ao terminar a transferência">
 <!ENTITY playSound.label                "Reproduzir um som">
 <!ENTITY playSound.accesskey            "p">
-<!ENTITY showAlert.label                "Mostrar um alerta">
-<!ENTITY showAlert.accesskey            "t">
 <!ENTITY browse.label                   "Navegar…">
 <!ENTITY browse.accesskey               "N">
 <!ENTITY playButton.label               "Reproduzir">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,10 +16,10 @@ about-debugging-page-title-runtime-page = Έλεγχος σφαλμάτων - Ε
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = { -brand-shorter-name }
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 # Sidebar heading for connecting to some remote source
@@ -48,12 +48,9 @@ about-debugging-sidebar-item-connect-button-connection-failed = Αποτυχία
 about-debugging-sidebar-item-connect-button-connection-not-responding = Η σύνδεση εκκρεμεί ακόμη, ελέγξτε για μηνύματα στο πρόγραμμα περιήγησης προορισμού
 # Text displayed as connection error in sidebar item when the connection has timed out.
 about-debugging-sidebar-item-connect-button-connection-timeout = Το χρονικό όριο σύνδεσης έληξε
-# Temporary text displayed in sidebar items representing remote runtimes after
-# successfully connecting to them. Temporary UI, do not localize.
-about-debugging-sidebar-item-connected-label = Συνδέθηκε
 # Text displayed in sidebar items for remote devices where a compatible browser (eg
-# Firefox) has not been detected yet. Typically, Android phones connected via USB with
-# USB debugging enabled, but where Firefox is not started.
+# Waterfox) has not been detected yet. Typically, Android phones connected via USB with
+# USB debugging enabled, but where Waterfox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = Αναμονή για το πρόγραμμα περιήγησης…
 # Text displayed in sidebar items for remote devices that have been disconnected from the
 # computer.
@@ -82,8 +79,8 @@ about-debugging-refresh-usb-devices-button = Ανανέωση συσκευών
 about-debugging-setup-title = Ρύθμιση
 # Introduction text in the Setup page to explain how to configure remote debugging.
 about-debugging-setup-intro = Ρυθμίστε τη μέθοδο σύνδεσης για απομακρυσμένο έλεγχο σφαλμάτων στη συσκευή σας.
-# Explanatory text in the Setup page about what the 'This Firefox' page is for
-about-debugging-setup-this-firefox2 = Χρησιμοποιήστε την επιλογή <a>{ about-debugging-this-firefox-runtime-name }</a> για να κάνετε έλεγχο σφαλμάτων στις επεκτάσεις και τα service workers σε αυτή την έκδοση του { -brand-shorter-name }.
+# Explanatory text in the Setup page about what the 'This Waterfox' page is for
+about-debugging-setup-this-firefox2 = Χρησιμοποιήστε την επιλογή <a>{ about-debugging-this-firefox-runtime-name }</a> για να κάνετε έλεγχο σφαλμάτων στις επεκτάσεις και τα service worker σε αυτή την έκδοση του { -brand-shorter-name }.
 # Title of the heading Connect section of the Setup page.
 about-debugging-setup-connect-heading = Σύνδεση συσκευής
 # USB section of the Setup page
@@ -105,9 +102,9 @@ about-debugging-setup-usb-status-updating = Ενημέρωση…
 # USB section step by step guide
 about-debugging-setup-usb-step-enable-dev-menu2 = Ενεργοποιήστε το μενού προγραμματιστών στην Android συσκευή σας.
 # USB section step by step guide
-about-debugging-setup-usb-step-enable-debug2 = Ενεργοποιήστε το "Εντοπισμός σφαλμάτων μέσω USB" στο μενού προγραμματιστή Android.
+about-debugging-setup-usb-step-enable-debug2 = Ενεργοποιήστε το «Εντοπισμός σφαλμάτων μέσω USB» στο μενού προγραμματιστή Android.
 # USB section step by step guide
-about-debugging-setup-usb-step-enable-debug-firefox2 = Ενεργοποιήστε τον έλεγχο σφαλμάτων μέσω USB στο Firefox της Android συσκευής σας.
+about-debugging-setup-usb-step-enable-debug-firefox2 = Ενεργοποιήστε τον έλεγχο σφαλμάτων μέσω USB στο Waterfox της Android συσκευής σας.
 # USB section step by step guide
 about-debugging-setup-usb-step-plug-device = Συνδέστε τη συσκευή Android στον υπολογιστή σας.
 # Text shown in the USB section of the setup page with a link to troubleshoot connection errors.
@@ -134,17 +131,17 @@ about-debugging-network-locations-remove-button = Αφαίρεση
 # Text used as error message if the format of the input value was invalid in the network locations form of the Setup page.
 # Variables:
 #   $host-value (string) - The input value submitted by the user in the network locations form
-about-debugging-network-location-form-invalid = Άκυρο host “{ $host-value }”. Η αναμενόμενη μορφή είναι “hostname:portnumber”.
+about-debugging-network-location-form-invalid = Μη έγκυρος κεντρικός υπολογιστής «{ $host-value }». Η αναμενόμενη μορφή είναι «όνομα-κεντρικού-υπολογιστή:αριθμός-θύρας».
 # Text used as error message if the input value was already registered in the network locations form of the Setup page.
 # Variables:
 #   $host-value (string) - The input value submitted by the user in the network locations form
-about-debugging-network-location-form-duplicate = Το host “{ $host-value }” έχει ήδη εγγραφεί
+about-debugging-network-location-form-duplicate = Ο κεντρικός υπολογιστής «{ $host-value }» έχει ήδη εγγραφεί
 
 # Runtime Page strings
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = Προσωρινές επεκτάσεις
 # Title of the extensions category.
@@ -155,13 +152,13 @@ about-debugging-runtime-tabs =
     .name = Καρτέλες
 # Title of the service workers category.
 about-debugging-runtime-service-workers =
-    .name = Service Workers
+    .name = Service worker
 # Title of the shared workers category.
 about-debugging-runtime-shared-workers =
-    .name = Shared Workers
+    .name = Shared worker
 # Title of the other workers category.
 about-debugging-runtime-other-workers =
-    .name = Άλλα workers
+    .name = Άλλα worker
 # Title of the processes category.
 about-debugging-runtime-processes =
     .name = Διεργασίες
@@ -171,24 +168,24 @@ about-debugging-runtime-profile-button2 = Επιδόσεις προφίλ
 # This string is displayed in the runtime page if the current configuration of the
 # target runtime is incompatible with service workers. "Learn more" points to MDN.
 # https://developer.mozilla.org/en-US/docs/Tools/about%3Adebugging#Service_workers_not_compatible
-about-debugging-runtime-service-workers-not-compatible = Οι ρυθμίσεις του προγράμματος περιήγησής σας δεν είναι συμβατές με τα service workers. <a>Μάθετε περισσότερα</a>
+about-debugging-runtime-service-workers-not-compatible = Οι ρυθμίσεις του προγράμματος περιήγησής σας δεν είναι συμβατές με τα service worker. <a>Μάθετε περισσότερα</a>
 # This string is displayed in the runtime page if the remote browser version is too old.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
-# { $minVersion } is the minimum version that is compatible with the current Firefox instance (same format)
+# { $minVersion } is the minimum version that is compatible with the current Waterfox instance (same format)
 about-debugging-browser-version-too-old = Το συνδεδεμένο πρόγραμμα περιήγησης έχει παλιά έκδοση ({ $runtimeVersion }). Η ελάχιστη υποστηριζόμενη έκδοση είναι ({ $minVersion }).  Πρόκειται για μη υποστηριζόμενη ρύθμιση και ενδέχεται να προκαλέσει αποτυχία του DevTools. Παρακαλούμε ενημερώστε το συνδεδεμένο πρόγραμμα περιήγησης. <a>Αντιμετώπιση προβλημάτων</a>
 # Dedicated message for a backward compatibility issue that occurs when connecting:
-# from Fx 70+ to the old Firefox for Android (aka Fennec) which uses Fx 68.
-about-debugging-browser-version-too-old-fennec = Αυτή η έκδοση του Firefox δεν μπορεί να χρησιμοποιηθεί για έλεγχο σφαλμάτων στο Firefox για Android (68). Προτείνουμε να εγκαταστήσετε το Firefox για Android Nightly στο τηλέφωνό σας για δοκιμή. <a>Περισσότερες λεπτομέρειες</a>
+# from Fx 70+ to the old Waterfox for Android (aka Fennec) which uses Fx 68.
+about-debugging-browser-version-too-old-fennec = Αυτή η έκδοση του Waterfox δεν μπορεί να χρησιμοποιηθεί για έλεγχο σφαλμάτων στο Waterfox για Android (68). Προτείνουμε να εγκαταστήσετε το Waterfox για Android Nightly στο τηλέφωνό σας για δοκιμή. <a>Περισσότερες λεπτομέρειες</a>
 # This string is displayed in the runtime page if the remote browser version is too recent.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeID } is the build ID of the remote browser (for instance "20181231", format is yyyyMMdd)
-# { $localID } is the build ID of the current Firefox instance (same format)
+# { $localID } is the build ID of the current Waterfox instance (same format)
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
 # { $localVersion } is the version of your current browser (same format)
-about-debugging-browser-version-too-recent = Το συνδεδεμένο πρόγραμμα περιήγησης είναι πιο πρόσφατο ({ $runtimeVersion }, buildID { $runtimeID }) από το { -brand-shorter-name } ({ $localVersion }, buildID { $localID }) σας. Πρόκειται για μη υποστηριζόμενη ρύθμιση και ενδέχεται να προκαλέσει αποτυχία του DevTools. Παρακαλούμε ενημερώστε το Firefox. <a>Αντιμετώπιση προβλημάτων</a>
+about-debugging-browser-version-too-recent = Το συνδεδεμένο πρόγραμμα περιήγησης είναι πιο πρόσφατο ({ $runtimeVersion }, buildID { $runtimeID }) από το { -brand-shorter-name } ({ $localVersion }, buildID { $localID }) σας. Πρόκειται για μη υποστηριζόμενη ρύθμιση και ενδέχεται να προκαλέσει αποτυχία του DevTools. Παρακαλούμε ενημερώστε το Waterfox. <a>Αντιμετώπιση προβλημάτων</a>
 # Displayed for runtime info in runtime pages.
-# { $name } is brand name such as "Firefox Nightly"
+# { $name } is brand name such as "Waterfox Nightly"
 # { $version } is version such as "64.0a1"
 about-debugging-runtime-name = { $name } ({ $version })
 # Text of a button displayed in Runtime pages for remote runtimes.
@@ -216,15 +213,15 @@ about-debugging-debug-target-list-empty = Τίποτα ακόμα.
 # button will open a DevTools toolbox that will allow inspecting the target.
 # A target can be an addon, a tab, a worker...
 about-debugging-debug-target-inspect-button = Επιθεώρηση
-# Text of a button displayed in the "This Firefox" page, in the Temporary Extension
+# Text of a button displayed in the "This Waterfox" page, in the Temporary Extension
 # section. Clicking on the button will open a file picker to load a temporary extension
 about-debugging-tmp-extension-install-button = Φόρτωση προσωρινού προσθέτου…
-# Text displayed when trying to install a temporary extension in the "This Firefox" page.
+# Text displayed when trying to install a temporary extension in the "This Waterfox" page.
 about-debugging-tmp-extension-install-error = Προέκυψε σφάλμα κατά την εγκατάσταση προσωρινού προσθέτου.
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = Ανανέωση
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = Αφαίρεση
 # Message displayed in the file picker that opens to select a temporary extension to load

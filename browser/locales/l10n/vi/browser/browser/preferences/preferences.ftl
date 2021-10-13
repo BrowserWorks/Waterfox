@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,26 +8,6 @@ do-not-track-option-default-content-blocking-known =
     .label = Chỉ khi { -brand-short-name } được đặt để chặn trình theo dõi đã biết
 do-not-track-option-always =
     .label = Luôn luôn
-pref-page-title =
-    { PLATFORM() ->
-        [windows] Tùy chọn
-       *[other] Tùy chỉnh
-    }
-# This is used to determine the width of the search field in about:preferences,
-# in order to make the entire placeholder string visible
-#
-# Please keep the placeholder string short to avoid truncation.
-#
-# Notice: The value of the `.style` attribute is a CSS string, and the `width`
-# is the name of the CSS property. It is intended only to adjust the element's width.
-# Do not translate.
-search-input-box =
-    .style = width: 15.4em
-    .placeholder =
-        { PLATFORM() ->
-            [windows] Tìm trong phần tùy chọn
-           *[other] Tìm trong phần tùy chỉnh
-        }
 settings-page-title = Cài đặt
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
@@ -55,9 +35,6 @@ category-search =
 pane-privacy-title = Riêng tư & bảo mật
 category-privacy =
     .tooltiptext = { pane-privacy-title }
-pane-sync-title2 = { -sync-brand-short-name }
-category-sync2 =
-    .tooltiptext = { pane-sync-title2 }
 pane-sync-title3 = Đồng bộ hóa
 category-sync3 =
     .tooltiptext = { pane-sync-title3 }
@@ -96,21 +73,12 @@ restart-later = Khởi động lại sau
 ## Variables:
 ##   $name (String): name of the extension
 
-# This string is shown to notify the user that their home page
-# is being controlled by an extension.
-extension-controlled-homepage-override = Một tiện ích mở rông, <img data-l10n-name="icon"/> { $name }, đang kiểm soát trang chủ của bạn.
-# This string is shown to notify the user that their new tab page
-# is being controlled by an extension.
-extension-controlled-new-tab-url = Một tiện ích mở rông, <img data-l10n-name="icon"/> { $name }, đang kiểm soát phần thẻ mới của bạn.
 # This string is shown to notify the user that the password manager setting
 # is being controlled by an extension
 extension-controlled-password-saving = Một tiện ích mở rộng, <img data-l10n-name="icon"/> { $name }, đang kiểm soát cài đặt này.
 # This string is shown to notify the user that their notifications permission
 # is being controlled by an extension.
 extension-controlled-web-notifications = Một tiện ích mở rộng, <img data-l10n-name="icon"/> { $name }, đang kiểm soát cài đặt này.
-# This string is shown to notify the user that the default search engine
-# is being controlled by an extension.
-extension-controlled-default-search = Một tiện ích mở rộng, <img data-l10n-name="icon"/> { $name }, đã cài đặt công cụ tìm kiếm mặc định của bạn.
 # This string is shown to notify the user that Container Tabs
 # are being enabled by an extension.
 extension-controlled-privacy-containers = Một tiện ích mở rộng, <img data-l10n-name="icon"/> { $name }, yêu cầu ngăn chứa thẻ.
@@ -131,25 +99,12 @@ extension-controlled-enable = Để kích hoạt tiện ích mở rộng hãy v�
 
 search-results-header = Kết quả tìm kiếm
 # `<span data-l10n-name="query"></span>` will be replaced by the search term.
-search-results-empty-message =
-    { PLATFORM() ->
-        [windows] Xin lỗi! Không có kết quả trong phần Tùy chọn cho “<span data-l10n-name="query"></span>”.
-       *[other] Xin lỗi! Không có kết quả trong phần Tùy chỉnh cho “<span data-l10n-name="query"></span>”.
-    }
-# `<span data-l10n-name="query"></span>` will be replaced by the search term.
-search-results-empty-message2 = Xin lỗi! Không có kết quả nào trong Cài đặt cho “<span data-l10n-name="query">”.
+search-results-empty-message2 = Xin lỗi! Không có kết quả nào trong Cài đặt cho “<span data-l10n-name="query"></span>”.
 search-results-help-link = Cần trợ giúp? Đi đến <a data-l10n-name="url">Hỗ trợ { -brand-short-name }</a>
 
 ## General Section
 
 startup-header = Khởi động
-# { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
-separate-profile-mode =
-    .label = Cho phép { -brand-short-name } và Firefox cùng chạy song song
-use-firefox-sync = Mẹo nhỏ: Việc này sử dụng các hồ sơ độc lập nhau. Bạn có thể dùng { -sync-brand-short-name } để đồng bộ giữa chúng.
-get-started-not-logged-in = Đăng nhập vào { -sync-brand-short-name }…
-get-started-configured = Mở tùy chỉnh của { -sync-brand-short-name }
 always-check-default =
     .label = Luôn kiểm tra xem { -brand-short-name } có phải trình duyệt mặc định không
     .accesskey = y
@@ -160,6 +115,9 @@ set-as-my-default-browser =
     .accesskey = D
 startup-restore-previous-session =
     .label = Khôi phục phiên làm việc trước
+    .accesskey = s
+startup-restore-windows-and-tabs =
+    .label = Mở các cửa sổ và thẻ trước đó
     .accesskey = s
 startup-restore-warn-on-quit =
     .label = Cảnh báo bạn khi thoát khỏi trình duyệt
@@ -175,12 +133,20 @@ open-new-link-as-tabs =
 warn-on-close-multiple-tabs =
     .label = Cảnh báo bạn khi đóng nhiều thẻ một lúc
     .accesskey = m
+confirm-on-close-multiple-tabs =
+    .label = Xác nhận trước khi đóng nhiều thẻ
+    .accesskey = m
+# This string is used for the confirm before quitting preference.
+# Variables:
+#   $quitKey (String) - the quit keyboard shortcut, and formatted
+#                       in the same manner as it would appear,
+#                       for example, in the File menu.
+confirm-on-quit-with-key =
+    .label = Xác nhận trước khi thoát bằng { $quitKey }
+    .accesskey = b
 warn-on-open-many-tabs =
     .label = Cảnh báo bạn khi mở nhiều thẻ có thể làm chậm { -brand-short-name }
     .accesskey = d
-switch-links-to-new-tabs =
-    .label = Khi bạn mở một liên kết trong thẻ mới, chuyển sang thẻ đó ngay lập tức
-    .accesskey = h
 switch-to-new-tabs =
     .label = Khi bạn mở một liên kết, hình ảnh hoặc phương tiện trong một thẻ mới, chuyển sang nó ngay lập tức
     .accesskey = h
@@ -242,6 +208,7 @@ confirm-browser-language-change-button = Áp dụng và Khởi động lại
 translate-web-pages =
     .label = Dịch nội dung web
     .accesskey = D
+fx-translate-web-pages = { -translations-brand-name }
 # The <img> element is replaced by the logo of the provider
 # used to provide machine translations for web pages.
 translate-attribution = Dịch bởi <img data-l10n-name="logo"/>
@@ -314,10 +281,6 @@ applications-manage-app =
     .label = Chi tiết ứng dụng…
 applications-always-ask =
     .label = Luôn hỏi
-applications-type-pdf = Định dạng tài liệu di động (PDF)
-# Variables:
-#   $type (String) - the MIME type (e.g application/binary)
-applications-type-pdf-with-type = { applications-type-pdf } ({ $type })
 # Variables:
 #   $type-description (String) - Description of the type (e.g "Portable Document Format")
 #   $type (String) - the MIME type (e.g application/binary)
@@ -384,15 +347,6 @@ update-application-warning-cross-user-setting = Cài đặt này sẽ áp dụng
 update-application-use-service =
     .label = Sử dụng dịch vụ chạy nền để cài đặt các cập nhật
     .accesskey = n
-update-setting-write-failure-title = Lỗi khi lưu tùy chọn cập nhật
-# Variables:
-#   $path (String) - Path to the configuration file
-# The newlines between the main text and the line containing the path is
-# intentional so the path is easier to identify.
-update-setting-write-failure-message =
-    { -brand-short-name } đã gặp lỗi và đã không lưu thay đổi này. Lưu ý rằng thiết lập tùy chọn cập nhật này yêu cầu quyền ghi vào tập tin bên dưới. Bạn hoặc quản trị viên hệ thống có thể giải quyết lỗi bằng cách cấp cho nhóm Người dùng toàn quyền kiểm soát tệp này.
-    
-    Không thể ghi vào tệp: { $path }
 update-setting-write-failure-title2 = Lỗi khi lưu cài đặt Cập nhật
 # Variables:
 #   $path (String) - Path to the configuration file
@@ -487,7 +441,7 @@ home-restore-defaults =
 # "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Trang chủ Firefox (Mặc định)
+    .label = Trang chủ Waterfox (Mặc định)
 home-mode-choice-custom =
     .label = Tùy chỉnh URL...
 home-mode-choice-blank =
@@ -509,10 +463,10 @@ choose-bookmark =
     .label = Sử dụng dấu trang…
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Nội dung trang chủ của Firefox
-home-prefs-content-description = Chọn nội dung mà bạn muốn thêm vào trang chủ của Firefox.
+home-prefs-content-header = Nội dung của Trang chủ Waterfox
+home-prefs-content-description = Chọn nội dung mà bạn muốn thêm vào Trang chủ Waterfox.
 home-prefs-search-header =
     .label = Tìm kiếm web
 home-prefs-topsites-header =
@@ -549,7 +503,7 @@ home-prefs-highlights-options-bookmarks =
 home-prefs-highlights-option-most-recent-download =
     .label = Tải xuống gần đây nhất
 home-prefs-highlights-option-saved-to-pocket =
-    .label = Trang đã được lưu vào { -pocket-brand-name }
+    .label = Đã lưu trang vào { -pocket-brand-name }
 home-prefs-recent-activity-header =
     .label = Hoạt động gần đây
 home-prefs-recent-activity-description = Tuyển chọn các trang và nội dung gần đây
@@ -594,10 +548,8 @@ search-show-suggestions-above-history-option =
     .label = Hiện những gợi ý tìm kiếm phía trước lịch sử duyệt web trong kết quả thanh địa chỉ
 search-show-suggestions-private-windows =
     .label = Hiển thị đề xuất tìm kiếm trong cửa sổ riêng tư
-suggestions-addressbar-settings-generic = Thay đổi tùy chọn cho các đề xuất trên thanh địa chỉ khác
 suggestions-addressbar-settings-generic2 = Thay đổi cài đặt cho các đề xuất khác trên thanh địa chỉ
 search-suggestions-cant-show = Gợi ý tìm kiếm sẽ không được hiện ở thanh địa chỉ vì bạn đã thiết lập { -brand-short-name } không bao giờ ghi nhớ lịch sử.
-search-one-click-header = Công cụ tìm kiếm với một lần nhấn
 search-one-click-header2 = Lối tắt tìm kiếm
 search-one-click-desc = Chọn các công cụ tìm kiếm thay thế xuất hiện bên dưới thanh địa chỉ và thanh tìm kiếm khi bạn bắt đầu nhập một từ khoá.
 search-choose-engine-column =
@@ -624,12 +576,6 @@ search-keyword-warning-bookmark = Bạn đã chọn một từ khóa hiện đan
 
 ## Containers Section
 
-containers-back-button =
-    .aria-label =
-        { PLATFORM() ->
-            [windows] Quay lại Tùy chọn
-           *[other] Quay lại Tùy chỉnh
-        }
 containers-back-button2 =
     .aria-label = Quay lại Cài đặt
 containers-header = Ngăn chứa thẻ
@@ -639,21 +585,15 @@ containers-add-button =
 containers-new-tab-check =
     .label = Chọn một ngăn chứa cho mỗi thẻ mới
     .accesskey = S
-containers-preferences-button =
-    .label = Tùy chỉnh
 containers-settings-button =
     .label = Cài đặt
 containers-remove-button =
     .label = Loại bỏ
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Waterfox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Mang trang web theo bạn
-sync-signedout-description = Đồng bộ dấu trang, lịch sử, thẻ, mật khẩu, tiện ích và tùy chỉnh tới tất cả các thiết bị của bạn.
-sync-signedout-account-signin2 =
-    .label = Đăng nhập vào { -sync-brand-short-name }…
-    .accesskey = i
 sync-signedout-description2 = Đồng bộ trang đánh dấu, lịch sử, thẻ, mật khẩu, tiện ích và cài đặt tới tất cả các thiết bị của bạn.
 sync-signedout-account-signin3 =
     .label = Đăng nhập để đồng bộ hóa…
@@ -666,9 +606,9 @@ sync-signedout-account-signin3 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Tải Firefox cho <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> hoặc <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> để đồng bị với thiết bị di động của bạn.
+sync-mobile-promo = Tải Waterfox cho <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> hoặc <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> để đồng bị với thiết bị di động của bạn.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Đổi hình hồ sơ
@@ -693,10 +633,6 @@ sync-sign-in =
 
 prefs-syncing-on = Đồng bộ hóa: BẬT
 prefs-syncing-off = Đồng bộ hóa: TẮT
-prefs-sync-setup =
-    .label = Thiết lập { -sync-brand-short-name }…
-    .accesskey = S
-prefs-sync-offer-setup-label = Đồng bộ dấu trang, lịch sử, thẻ, mật khẩu, tiện ích và tùy chỉnh tới tất cả các thiết bị của bạn.
 prefs-sync-turn-on-syncing =
     .label = Bật đồng bộ hóa…
     .accesskey = s
@@ -712,15 +648,10 @@ sync-currently-syncing-heading = Bạn hiện đang đồng bộ hóa các mục
 sync-currently-syncing-bookmarks = Dấu trang
 sync-currently-syncing-history = Lịch sử
 sync-currently-syncing-tabs = Các thẻ đang mở
-sync-currently-syncing-logins-passwords = Đăng nhập và mật khẩu
+sync-currently-syncing-logins-passwords = Thông tin đăng nhập và mật khẩu
 sync-currently-syncing-addresses = Địa chỉ
 sync-currently-syncing-creditcards = Thẻ tín dụng
 sync-currently-syncing-addons = Tiện ích
-sync-currently-syncing-prefs =
-    { PLATFORM() ->
-        [windows] Tùy chọn
-       *[other] Tùy chỉnh
-    }
 sync-currently-syncing-settings = Cài đặt
 sync-change-options =
     .label = Thay đổi…
@@ -746,7 +677,7 @@ sync-engine-tabs =
     .tooltiptext = Danh sách những trang web đang mở trên các thiết bị được đồng bộ
     .accesskey = t
 sync-engine-logins-passwords =
-    .label = Đăng nhập và mật khẩu
+    .label = Thông tin đăng nhập và mật khẩu
     .tooltiptext = Tên đăng nhập và mật khẩu bạn đã lưu
     .accesskey = L
 sync-engine-addresses =
@@ -759,16 +690,8 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = Tiện ích
-    .tooltiptext = Tiện ích mở rộng và chủ đề của Firefox dành cho máy tính
+    .tooltiptext = Tiện ích mở rộng và chủ đề của Waterfox dành cho máy tính
     .accesskey = A
-sync-engine-prefs =
-    .label =
-        { PLATFORM() ->
-            [windows] Tùy chọn
-           *[other] Tùy chỉnh
-        }
-    .tooltiptext = Các cài đặt chung, cài đặt về sự riêng tư, và bảo mật mà bạn đã thay đổi
-    .accesskey = s
 sync-engine-settings =
     .label = Cài đặt
     .tooltiptext = Cài đặt tổng quát, riêng tư và bảo mật mà bạn đã thay đổi
@@ -795,7 +718,7 @@ privacy-header = Duyệt web riêng tư
 ## Privacy Section - Logins and Passwords
 
 # The search keyword isn't shown to users but is used to find relevant settings in about:preferences.
-pane-privacy-logins-and-passwords-header = Đăng nhập & mật khẩu
+pane-privacy-logins-and-passwords-header = Thông tin đăng nhập & mật khẩu
     .searchkeywords = { -lockwise-brand-short-name }
 # Checkbox to control whether UI is shown to users to save or fill logins/passwords.
 forms-ask-to-save-logins =
@@ -818,9 +741,6 @@ forms-fill-logins-and-passwords =
 forms-saved-logins =
     .label = Đăng nhập đã lưu…
     .accesskey = L
-forms-master-pw-use =
-    .label = Dùng mật khẩu chính
-    .accesskey = U
 forms-primary-pw-use =
     .label = Sử dụng mật khẩu chính
     .accesskey = U
@@ -831,7 +751,6 @@ forms-primary-pw-learn-more-link = Tìm hiểu thêm
 forms-master-pw-change =
     .label = Thay đổi mật khẩu chính…
     .accesskey = M
-forms-master-pw-fips-title = Bạn đang ở chế độ FIPS. FIPS yêu cầu mật khẩu chính không được để trống.
 forms-primary-pw-change =
     .label = Thay đổi mật khẩu chính…
     .accesskey = P
@@ -841,20 +760,17 @@ forms-primary-pw-change =
 forms-primary-pw-former-name = { "" }
 forms-primary-pw-fips-title = Bạn hiện đang ở chế độ FIPS. FIPS yêu cầu tính năng mật khẩu chính.
 forms-master-pw-fips-desc = Thay đổi mật khẩu không thành công
+forms-windows-sso =
+    .label = Cho phép Windows đăng nhập một lần cho tài khoản Microsoft, cơ quan và trường học
+forms-windows-sso-learn-more-link = Tìm hiểu thêm
+forms-windows-sso-desc = Quản lý tài khoản trong cài đặt thiết bị của bạn
 
 ## OS Authentication dialog
 
-# This message can be seen by trying to add a Master Password.
-master-password-os-auth-dialog-message-win = Để tạo mật khẩu chính, hãy nhập thông tin đăng nhập Windows của bạn. Điều này giúp bảo vệ tính bảo mật của tài khoản của bạn.
-# This message can be seen by trying to add a Master Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
-# and includes subtitle of "Enter password for the user "xxx" to allow this." These
-# notes are only valid for English. Please test in your locale.
-master-password-os-auth-dialog-message-macosx = tạo một mật khẩu chính
 # This message can be seen by trying to add a Primary Password.
 primary-password-os-auth-dialog-message-win = Để tạo mật khẩu chính, hãy nhập thông tin đăng nhập Windows của bạn. Điều này giúp bảo vệ tính bảo mật của tài khoản của bạn.
 # This message can be seen by trying to add a Primary Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
+# The macOS strings are preceded by the operating system with "Waterfox is trying to "
 # and includes subtitle of "Enter password for the user "xxx" to allow this." These
 # notes are only valid for English. Please test in your locale.
 primary-password-os-auth-dialog-message-macosx = tạo một mật khẩu chính
@@ -866,12 +782,12 @@ history-header = Lịch sử
 # This label is followed, on the same line, by a dropdown list of options
 # (Remember history, etc.).
 # In English it visually creates a full sentence, e.g.
-# "Firefox will" + "Remember history".
+# "Waterfox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
 #   - Simply as "Waterfox", moving the verb into each option.
 #     This will result in "Waterfox" + "Will remember history", etc.
-#   - As a stand-alone message, for example "Firefox history settings:".
+#   - As a stand-alone message, for example "Waterfox history settings:".
 history-remember-label = { -brand-short-name } sẽ
     .accesskey = w
 history-remember-option-all =
@@ -946,9 +862,6 @@ sitedata-clear =
 sitedata-settings =
     .label = Quản lí dữ liệu...
     .accesskey = M
-sitedata-cookies-permissions =
-    .label = Quản lí các quyền...
-    .accesskey = P
 sitedata-cookies-exceptions =
     .label = Quản lý các ngoại lệ…
     .accesskey = x
@@ -1093,16 +1006,18 @@ permissions-block-popups =
 permissions-block-popups-exceptions =
     .label = Ngoại trừ…
     .accesskey = E
+# "popup" is a misspelling that is more popular than the correct spelling of
+# "pop-up" so it's included as a search keyword, not displayed in the UI.
+permissions-block-popups-exceptions-button =
+    .label = Ngoại trừ…
+    .accesskey = E
+    .searchkeywords = cửa sổ bật lên
 permissions-addon-install-warning =
     .label = Cảnh báo khi trang web cố gắng cài đặt tiện ích
     .accesskey = W
 permissions-addon-exceptions =
     .label = Ngoại trừ…
     .accesskey = E
-permissions-a11y-privacy-checkbox =
-    .label = Ngăn chặn khả năng tiếp cận dịch vụ truy cập vào trình duyệt của bạn
-    .accesskey = a
-permissions-a11y-privacy-link = Tìm hiểu thêm
 
 ## Privacy Section - Data Collection
 
@@ -1124,10 +1039,6 @@ addon-recommendations-link = Tìm hiểu thêm
 # This message is displayed above disabled data sharing options in developer builds
 # or builds with no Telemetry support available.
 collection-health-report-disabled = Dữ liệu báo cáo bị vô hiệu hóa với cấu hình này
-collection-backlogged-crash-reports =
-    .label = Cho phép { -brand-short-name } thay bạn gửi các báo cáo sự cố còn tồn đọng
-    .accesskey = c
-collection-backlogged-crash-reports-link = Tìm hiểu thêm
 collection-backlogged-crash-reports-with-link = Cho phép { -brand-short-name } thay mặt bạn gửi báo cáo sự cố tồn đọng <a data-l10n-name="crash-reports-link">Tìm hiểu thêm</a>
     .accesskey = c
 
@@ -1152,13 +1063,6 @@ security-block-uncommon-software =
 ## Privacy Section - Certificates
 
 certs-header = Chứng nhận
-certs-personal-label = Khi một máy chủ yêu cầu chứng thực cá nhân của bạn
-certs-select-auto-option =
-    .label = Tự động chọn một cái
-    .accesskey = S
-certs-select-ask-option =
-    .label = Luôn hỏi bạn
-    .accesskey = A
 certs-enable-ocsp =
     .label = Truy vấn máy chủ đáp ứng giao thức OCSP để xác minh hiệu lực của các chứng chỉ
     .accesskey = Q
@@ -1168,29 +1072,6 @@ certs-view =
 certs-devices =
     .label = Thiết bị bảo mật…
     .accesskey = D
-space-alert-learn-more-button =
-    .label = Tìm hiểu thêm
-    .accesskey = L
-space-alert-over-5gb-pref-button =
-    .label =
-        { PLATFORM() ->
-            [windows] Mở tùy chọn
-           *[other] Mở tùy chỉnh
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] O
-        }
-space-alert-over-5gb-message =
-    { PLATFORM() ->
-        [windows] Không đủ dung lượng đĩa cho { -brand-short-name }. Nội dung trang web có thể không hiển thị chính xác. Bạn có thể xóa dữ liệu được lưu trữ trong Tùy chọn > Riêng tư & Bảo mật > Cookie và Dữ liệu trang.
-       *[other] Không đủ dung lượng đĩa cho { -brand-short-name }. Nội dung trang web có thể không hiển thị chính xác. Bạn có thể xóa dữ liệu được lưu trữ trong Tùy chọn > Riêng tư & Bảo mật > Cookie và Dữ liệu trang.
-    }
-space-alert-under-5gb-ok-button =
-    .label = OK, đã hiểu
-    .accesskey = K
-space-alert-under-5gb-message = Không đủ dung lượng đĩa cho { -brand-short-name }. Nội dung trang web có thể không hiển thị chính xác. Truy cập “Tìm hiểu thêm” để tối ưu hóa việc sử dụng đĩa của bạn để có trải nghiệm duyệt web tốt hơn.
 space-alert-over-5gb-settings-button =
     .label = Mở Cài đặt
     .accesskey = O

@@ -1,14 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-### Firefox Home / New Tab strings for about:home / about:newtab.
+### Waterfox Home / New Tab strings for about:home / about:newtab.
 
 newtab-page-title = Νέα καρτέλα
 newtab-settings-button =
     .title = Προσαρμογή της σελίδας Νέας Καρτέλας
-newtab-personalize-button-label = Εξατομίκευση
+newtab-personalize-icon-label =
     .title = Εξατομίκευση νέας καρτέλας
     .aria-label = Εξατομίκευση νέας καρτέλας
 newtab-personalize-dialog-label =
@@ -20,7 +20,6 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = Αναζήτηση
     .aria-label = Αναζήτηση
-newtab-search-box-search-the-web-text = Αναζήτηση στο διαδίκτυο
 # Variables
 #  $engine (String): the name of the user's default search engine
 newtab-search-box-handoff-text = Αναζήτηση με { $engine } ή εισαγωγή διεύθυνσης
@@ -47,13 +46,13 @@ newtab-search-box-input =
 ## Top Sites - General form dialog.
 
 newtab-topsites-add-search-engine-header = Προσθήκη μηχανής αναζήτησης
-newtab-topsites-add-topsites-header = Νέα κορυφαία ιστοσελίδα
+newtab-topsites-add-topsites-header = Νέος κορυφαίος ιστότοπος
 newtab-topsites-add-shortcut-header = Νέα συντόμευση
-newtab-topsites-edit-topsites-header = Επεξεργασία κορυφαίας ιστοσελίδας
+newtab-topsites-edit-topsites-header = Επεξεργασία κορυφαίου ιστοτόπου
 newtab-topsites-edit-shortcut-header = Επεξεργασία συντόμευσης
 newtab-topsites-title-label = Τίτλος
 newtab-topsites-title-input =
-    .placeholder = Εισάγετε έναν τίτλο
+    .placeholder = Εισαγωγή τίτλου
 newtab-topsites-url-label = URL
 newtab-topsites-url-input =
     .placeholder = Εισαγωγή ή επικόλληση URL
@@ -72,7 +71,7 @@ newtab-topsites-add-button = Προσθήκη
 
 ## Top Sites - Delete history confirmation dialog.
 
-newtab-confirm-delete-history-p1 = Θέλετε σίγουρα να διαγράψετε κάθε παρουσία της σελίδας αυτής από το ιστορικό σας;
+newtab-confirm-delete-history-p1 = Θέλετε σίγουρα να διαγράψετε κάθε παρουσία της σελίδας από το ιστορικό σας;
 # "This action" refers to deleting a page from history.
 newtab-confirm-delete-history-p2 = Δεν είναι δυνατή η αναίρεση αυτής της ενέργειας.
 
@@ -98,8 +97,8 @@ newtab-menu-content-tooltip =
     .aria-label = Άνοιγμα μενού επιλογών για το { $title }
 # Tooltip on an empty topsite box to open the New Top Site dialog.
 newtab-menu-topsites-placeholder-tooltip =
-    .title = Επεξεργασία ιστοσελίδας
-    .aria-label = Επεξεργασία ιστοσελίδας
+    .title = Επεξεργασία ιστοτόπου
+    .aria-label = Επεξεργασία ιστοτόπου
 
 ## Context Menu: These strings are displayed in a context menu and are meant as a call to action for a given page.
 
@@ -170,6 +169,11 @@ newtab-label-sponsored = { $sponsorOrSource } · Χορηγία
 # Variables:
 #  $sponsor (String): This is the name of a sponsor
 newtab-label-sponsored-by = Χορηγία από { $sponsor }
+# This string is used under the image of story cards to indicate source and time to read
+# Variables:
+#  $source (String): This is the name of a company or their domain
+#  $timeToRead (Number): This is the estimated number of minutes to read this story
+newtab-label-source-read-time = { $source } · { $timeToRead } λεπ.
 
 ## Section Menu: These strings are displayed in the section context menu and are
 ## meant as a call to action for the given section.
@@ -179,7 +183,7 @@ newtab-section-menu-collapse-section = Σύμπτυξη ενότητας
 newtab-section-menu-expand-section = Επέκταση ενότητας
 newtab-section-menu-manage-section = Διαχείριση ενότητας
 newtab-section-menu-manage-webext = Διαχείριση επέκτασης
-newtab-section-menu-add-topsite = Προσθήκη κορυφαίας ιστοσελίδας
+newtab-section-menu-add-topsite = Προσθήκη κορυφαίου ιστοτόπου
 newtab-section-menu-add-search-engine = Προσθήκη μηχανής αναζήτησης
 newtab-section-menu-move-up = Μετακίνηση πάνω
 newtab-section-menu-move-down = Μετακίνηση κάτω
@@ -194,7 +198,7 @@ newtab-section-expand-section-label =
 
 ## Section Headers.
 
-newtab-section-header-topsites = Κορυφαίες ιστοσελίδες
+newtab-section-header-topsites = Κορυφαίοι ιστότοποι
 newtab-section-header-highlights = Κορυφαίες στιγμές
 newtab-section-header-recent-activity = Πρόσφατη δραστηριότητα
 # Variables:
@@ -222,10 +226,25 @@ newtab-discovery-empty-section-topstories-timed-out = Ωχ! Αυτή η ενότ
 
 # This is shown at the bottom of the trending stories section and precedes a list of links to popular topics.
 newtab-pocket-read-more = Δημοφιλή θέματα:
+newtab-pocket-new-topics-title = Θέλετε περισσότερα άρθρα; Δείτε αυτά τα δημοφιλή θέματα από το { -pocket-brand-name }
 newtab-pocket-more-recommendations = Περισσότερες προτάσεις
 newtab-pocket-learn-more = Μάθετε περισσότερα
 newtab-pocket-cta-button = Αποκτήστε το { -pocket-brand-name }
 newtab-pocket-cta-text = Αποθηκεύστε τις ιστορίες που αγαπάτε στο { -pocket-brand-name } και τροφοδοτήστε το μυαλό σας με εκπληκτικά κείμενα.
+newtab-pocket-pocket-firefox-family = Το { -pocket-brand-name } ανήκει στην οικογένεια του { -brand-product-name }
+# A save to Pocket button that shows over the card thumbnail on hover.
+newtab-pocket-save-to-pocket = Αποθήκευση στο { -pocket-brand-name }
+newtab-pocket-saved-to-pocket = Αποθηκεύτηκε στο { -pocket-brand-name }
+# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
+newtab-pocket-load-more-stories-button = Φόρτωση περισσότερων άρθρων
+
+## Pocket Final Card Section.
+## This is for the final card in the Pocket grid.
+
+newtab-pocket-last-card-title = Τελειώσατε!
+newtab-pocket-last-card-desc = Ελέγξτε ξανά αργότερα για περισσότερα.
+newtab-pocket-last-card-image =
+    .alt = Τελειώσατε!
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -236,7 +255,7 @@ newtab-error-fallback-refresh-link = Ανανεώστε τη σελίδα για
 ## Customization Menu
 
 newtab-custom-shortcuts-title = Συντομεύσεις
-newtab-custom-shortcuts-subtitle = Ιστοσελίδες από σελιδοδείκτες και ιστορικό
+newtab-custom-shortcuts-subtitle = Ιστότοποι από σελιδοδείκτες ή ιστορικό
 newtab-custom-row-selector =
     { $num ->
         [one] { $num } σειρά
@@ -247,12 +266,6 @@ newtab-custom-pocket-title = Προτείνεται από το { -pocket-brand-
 newtab-custom-pocket-subtitle = Εξαιρετικό περιεχόμενο από το { -pocket-brand-name }, μέρος της οικογένειας του { -brand-product-name }
 newtab-custom-pocket-sponsored = Χορηγούμενα άρθρα
 newtab-custom-recent-title = Πρόσφατη δραστηριότητα
-newtab-custom-recent-subtitle = Συλλογή πρόσφατων σελίδων και περιεχομένου
+newtab-custom-recent-subtitle = Συλλογή πρόσφατων ιστοτόπων και περιεχομένου
 newtab-custom-close-button = Κλείσιμο
-# For the "Snippets" feature traditionally on about:home.
-# Alternative translation options: "Small Note" or something that
-# expresses the idea of "a small message, shortened from something else,
-# and non-essential but also not entirely trivial and useless.
-newtab-custom-snippets-title = Αποσπάσματα
-newtab-custom-snippets-subtitle = Συμβουλές και νέα από τη { -vendor-short-name } και το { -brand-product-name }
 newtab-custom-settings = Διαχείριση περισσότερων ρυθμίσεων

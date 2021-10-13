@@ -1,25 +1,34 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY window.title "Preferencias de ChatZilla">
+
 <!ENTITY loading.label "Por favor, espere. Cargando...">
+
 <!ENTITY homepage.url "http://chatzilla.hacksrus.com/">
 <!ENTITY homepage.label "Página principal de ChatZilla">
+
 <!ENTITY object.add.label "Añadir...">
 <!ENTITY object.add.hint "Añadir una red, canal o usuario para poner preferencias">
 <!ENTITY object.add.accesskey "A">
+
 <!ENTITY object.del.label "Eliminar">
 <!ENTITY object.del.hint "Eliminar el objeto actual, y también sus preferencias">
 <!ENTITY object.del.accesskey "R">
+
 <!ENTITY object.reset.label "Restablecer">
 <!ENTITY object.reset.hint "Restaura las preferencias de este objeto a las predeterminadas">
 <!ENTITY object.reset.accesskey "s">
+
 <!ENTITY dialog.apply "Aplicar">
+
 <!ENTITY network "Red">
 <!ENTITY channel "Canal">
 <!ENTITY user "Usuario">
+
 <!ENTITY config.add.title "Añadir objeto de preferencia">
+
 <!ENTITY config.type.label "Tipo:">
 <!ENTITY config.type.hint "Tipo de objeto al que añadir preferencias">
 <!ENTITY config.type.accesskey "T">

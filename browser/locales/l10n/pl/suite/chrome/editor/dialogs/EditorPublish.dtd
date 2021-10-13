@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -19,11 +19,11 @@
 <!ENTITY docDirList.accesskey         "P">
 <!ENTITY docDirList.tooltip           "Wskaż lub wprowadź nazwę zdalnego podkatalogu dla tej strony">
 <!ENTITY publishImgCheckbox.label "Dołącz obrazy oraz inne pliki">
-<!ENTITY publishImgCheckbox.tooltip "Wraz ze stroną WWW opublikuj obrazy i inne powiązane pliki">
 <!ENTITY publishImgCheckbox.accesskey "c">
+<!ENTITY publishImgCheckbox.tooltip "Wraz ze stroną WWW opublikuj obrazy i inne powiązane pliki">
 <!ENTITY sameLocationRadio.label      "Użyj tej samej lokalizacji, co strona">
-<!ENTITY sameLocationRadio.tooltip    "Zachowaj pliki w tym samym katalogu co plik strony WWW">
 <!ENTITY sameLocationRadio.accesskey  "U">
+<!ENTITY sameLocationRadio.tooltip    "Zachowaj pliki w tym samym katalogu co plik strony WWW">
 <!ENTITY useSubdirRadio.label         "Użyj tego podkatalogu witryny:">
 <!ENTITY useSubdirRadio.accesskey     "o">
 <!ENTITY useSubdirRadio.tooltip       "Publikuj pliki we wskazanym zdalnym podkatalogu">
@@ -58,8 +58,8 @@
 <!ENTITY username.accesskey     "u">
 <!ENTITY username.tooltip       "Nazwa użytkownika używana podczas logowania się na ten serwer">
 <!ENTITY password.label         "Hasło:">
-<!ENTITY password.tooltip       "Hasło dostępu do serwera stron WWW bieżącego użytkownika">
 <!ENTITY password.accesskey     "H">
+<!ENTITY password.tooltip       "Hasło dostępu do serwera stron WWW bieżącego użytkownika">
 <!ENTITY savePassword.label "Zachowaj hasło">
-<!ENTITY savePassword.tooltip "Po zaznaczeniu tej opcji wprowadzone hasło zostanie zachowane w Menedżerze haseł">
 <!ENTITY savePassword.accesskey "s">
+<!ENTITY savePassword.tooltip "Po zaznaczeniu tej opcji wprowadzone hasło zostanie zachowane w Menedżerze haseł">

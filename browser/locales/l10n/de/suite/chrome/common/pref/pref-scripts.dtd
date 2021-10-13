@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -20,9 +20,13 @@
 <!ENTITY allowContextmenuDisable.label   "Kontextmenü einer Seite deaktivieren oder ersetzen">
 <!ENTITY allowHideStatusBar.label        "Statusleiste verstecken">
 
-<!ENTITY enableDrmMedia.label            "Digitales Rechte-Management aktivieren für">
-<!ENTITY enableEmeForSuite.label         "Inhalts-Entschlüsselungs-Module von Drittpartnern">
-<!ENTITY enableEmeForSuite.accesskey     "E">
+<!ENTITY debugging.label                  "JavaScript Debugeinstellungen">
+<!ENTITY debugEnableDump.label            "JavaScript dump() Ausgaben aktivieren">
+<!ENTITY debugEnableDump.accesskey        "U">
+<!ENTITY debugStrictJavascript.label      "Anzeige von strengen JavaScript Warnungen">
+<!ENTITY debugStrictJavascript.accesskey  "W">
+<!ENTITY debugConsoleJavascript.label     "Anzeige von Chrome JavaScript Fehlern und Warnungen">
+<!ENTITY debugConsoleJavascript.accesskey "J">
 
 <!ENTITY enablePlugins.label             "Plugins aktivieren für">
 <!ENTITY enablePluginForSuite.label      "Suite">

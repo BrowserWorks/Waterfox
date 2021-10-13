@@ -1147,11 +1147,11 @@ That's all there is to it!
      If You create or use a modified version of this License (which you may
      only do in order to apply it to code which is not already Covered Code
      governed by this License), You must (a) rename Your license so that
-     the phrases "Mozilla", "MOZILLAPL", "MOZPL", "Netscape",
+     the phrases "Waterfox", "MOZILLAPL", "MOZPL", "Netscape",
      "MPL", "NPL" or any confusingly similar phrase do not appear in your
      license (except to note that your license differs from this License)
      and (b) otherwise make it clear that Your version of the license
-     contains terms which differ from the Mozilla Public License and
+     contains terms which differ from the Waterfox Public License and
      Netscape Public License. (Filling in the name of the Initial
      Developer, Original Code or Contributor in the notice described in
      Exhibit A shall not of themselves be deemed to be modifications of
@@ -1286,9 +1286,9 @@ That's all there is to it!
      Your choice of the NPL or the alternative licenses, if any, specified
      by the Initial Developer in the file described in Exhibit A.
 
-EXHIBIT A -Mozilla Public License.
+EXHIBIT A -Waterfox Public License.
 
-     ``The contents of this file are subject to the Mozilla Public License
+     ``The contents of this file are subject to the Waterfox Public License
      Version 1.1 (the "License"); you may not use this file except in
      compliance with the License. You may obtain a copy of the License at
      http://www.mozilla.org/MPL/

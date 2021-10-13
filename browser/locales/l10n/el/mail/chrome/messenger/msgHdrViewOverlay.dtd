@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -12,15 +12,15 @@
 <!ENTITY subjectField4.label "Θέμα">
 <!ENTITY ccField4.label "Κοιν.">
 <!ENTITY bccField4.label "Κρυφή κοιν.">
-<!ENTITY newsgroupsField4.label "Ομάδες συζήτησης">
+<!ENTITY newsgroupsField4.label "Ομάδες συζητήσεων">
 <!ENTITY followupToField4.label "Σε συνέχεια του">
 <!ENTITY tagsHdr4.label "Ετικέτες">
 <!ENTITY dateField4.label "Ημερομηνία">
-<!ENTITY userAgentField4.label "User agent ">
+<!ENTITY userAgentField4.label "Παράγοντας χρήστη">
 <!ENTITY referencesField4.label "Αναφορές">
 <!ENTITY messageIdField4.label "ID μηνύματος ">
 <!ENTITY inReplyToField4.label "Σε απάντηση στο">
-<!ENTITY originalWebsite4.label "Ιστοσελίδα">
+<!ENTITY originalWebsite4.label "Ιστότοπος">
 
 <!ENTITY hdrArchiveButton1.label "Αρχειοθέτηση">
 <!ENTITY hdrArchiveButton1.tooltip "Αρχειοθέτηση μηνύματος">
@@ -90,9 +90,9 @@
 <!ENTITY deleteAllAttachmentsCmd.label    "Διαγραφή όλων…">
 <!ENTITY deleteAllAttachmentsCmd.accesskey    "φ">
 
-<!ENTITY openAttachment.tooltip "Άνοιγμα του επισυναπτόμενου αρχείου">
+<!ENTITY openAttachment.tooltip "Άνοιγμα του συνημμένου αρχείου">
 
-<!ENTITY detachedAttachmentFolder.show.label        "Άνοιγμα φακέλου αποθήκευσης">
+<!ENTITY detachedAttachmentFolder.show.label        "Άνοιγμα φακέλου λήψης">
 <!ENTITY detachedAttachmentFolder.show.accesskey    "φ">
 <!ENTITY detachedAttachmentFolder.showMac.label     "Εμφάνιση στο Finder">
 <!ENTITY detachedAttachmentFolder.showMac.accesskey "F">

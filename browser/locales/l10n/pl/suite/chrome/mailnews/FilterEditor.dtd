@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -57,6 +57,11 @@
 
 <!ENTITY addAction.tooltip "Dodaj nową czynność">
 <!ENTITY removeAction.tooltip "Usuń tę czynność">
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
 <!-- LOCALIZATION NOTE
   The values below are used to control the widths of the filter action widgets.
   Change the values only when the localized strings in the popup menus

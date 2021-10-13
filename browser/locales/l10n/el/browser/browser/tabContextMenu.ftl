@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -51,9 +51,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = Προσθήκη σελιδοδείκτη
     .accesskey = Π
-reopen-in-container =
-    .label = Άνοιγμα ξανά σε θεματική καρτέλα
-    .accesskey = ξ
 tab-context-open-in-new-container-tab =
     .label = Άνοιγμα σε νέα θεματική καρτέλα
     .accesskey = ι
@@ -69,26 +66,6 @@ move-to-new-window =
 tab-context-close-multiple-tabs =
     .label = Κλείσιμο πολλαπλών καρτελών
     .accesskey = π
-tab-context-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] Αναίρεση κλεισίματος καρτέλας
-            [one] Αναίρεση κλεισίματος καρτέλας
-           *[other] Αναίρεση κλεισίματος καρτελών
-        }
-    .accesskey = Α
-close-tab =
-    .label = Κλείσιμο καρτέλας
-    .accesskey = Κ
-close-tabs =
-    .label = Κλείσιμο καρτελών
-    .accesskey = ν
-move-tabs =
-    .label = Μετακίνηση καρτελών
-    .accesskey = ν
-move-tab =
-    .label = Μετακίνηση καρτέλας
-    .accesskey = ν
 tab-context-share-url =
     .label = Κοινή χρήση
     .accesskey = χ
@@ -112,6 +89,13 @@ tab-context-close-tabs =
            *[other] Κλείσιμο καρτελών
         }
     .accesskey = Κ
+tab-context-close-n-tabs =
+    .label =
+        { $tabCount ->
+            [1] Κλείσιμο καρτέλας
+           *[other] Κλείσιμο { $tabCount } καρτελών
+        }
+    .accesskey = Κ
 tab-context-move-tabs =
     .label =
         { $tabCount ->
@@ -119,3 +103,11 @@ tab-context-move-tabs =
            *[other] Μετακίνηση καρτελών
         }
     .accesskey = τ
+
+tab-context-send-tabs-to-device =
+    .label =
+        { $tabCount ->
+            [one] Αποστολή καρτέλας σε συσκευή
+           *[other] Αποστολή { $tabCount } καρτελών σε συσκευή
+        }
+    .accesskey = π

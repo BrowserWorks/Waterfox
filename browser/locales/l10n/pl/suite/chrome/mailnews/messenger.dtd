@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -14,6 +14,8 @@
 <!ENTITY tabmailAllTabs.tooltip "Pokaż wszystkie karty">
 
 <!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- menu items: the . means that the menu item isn't implemented yet -->
 
 <!-- File menu items -->
 <!ENTITY newMessage.label "Nowa wiadomość">
@@ -47,7 +49,6 @@
 <!ENTITY getNewMsgForCmd.accesskey "b">
 <!ENTITY getAllNewMsgCmdPopupMenu.label "Wszystkich kont">
 <!ENTITY getAllNewMsgCmdPopupMenu.accesskey "W">
-<!ENTITY getAllNewMsgCmd.label "Pobierz wszystkie nowe wiadomości">
 <!ENTITY getAllNewMsgCmd2.key "d">
 <!ENTITY getNextNMsgCmd.label "Pobierz następne 500 wiadomości">
 <!ENTITY getNextNMsgCmd.accesskey "t">
@@ -402,6 +403,7 @@
 
 <!-- Toolbar items -->
 <!ENTITY getMsgButton.label "Pobierz">
+<!ENTITY getAllNewMsgCmd.label "Pobierz wszystkie nowe wiadomości">
 <!ENTITY newMsgButton.label "Nowa">
 <!ENTITY newHTMLMessageCmd.label "Twórz w formacie HTML">
 <!ENTITY newHTMLMessageCmd.accesskey "H">
@@ -441,7 +443,6 @@
 <!ENTITY undeleteButton.tooltip "Przywróć usuniętą wiadomość">
 <!ENTITY markButton.tooltip "Oznacz wiadomości">
 <!ENTITY stopButton.tooltip "Zatrzymaj bieżący transfer">
-<!ENTITY throbber.tooltip "&vendorShortName;PL! Otwórz naszą stronę!">
 <!ENTITY junkButton.tooltip "Oznacz wybraną wiadomość jako niechcianą">
 <!ENTITY notJunkButton.tooltip "Oznacz wybraną wiadomość jako pożądaną">
 

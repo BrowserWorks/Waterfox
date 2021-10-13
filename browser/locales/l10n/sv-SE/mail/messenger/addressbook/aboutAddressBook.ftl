@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,6 @@ about-addressbook-title = Adressbok
 
 about-addressbook-toolbar-new-address-book =
     .label = Ny adressbok
-about-addressbook-toolbar-new-carddav-address-book =
-    .label = Ny CardDAV-adressbok
-about-addressbook-toolbar-new-ldap-address-book =
-    .label = Ny LDAP-adressbok
 about-addressbook-toolbar-add-carddav-address-book =
     .label = Lägg till CardDAV-adressbok
 about-addressbook-toolbar-add-ldap-address-book =
@@ -20,6 +16,8 @@ about-addressbook-toolbar-new-contact =
     .label = Ny kontakt
 about-addressbook-toolbar-new-list =
     .label = Ny lista
+about-addressbook-toolbar-import =
+    .label = Importera
 
 ## Books
 
@@ -30,10 +28,14 @@ about-addressbook-books-context-synchronize =
     .label = Synkronisera
 about-addressbook-books-context-print =
     .label = Skriv ut…
+about-addressbook-books-context-export =
+    .label = Exportera…
 about-addressbook-books-context-delete =
     .label = Ta bort
 about-addressbook-books-context-remove =
     .label = Ta bort
+about-addressbook-books-context-startup-default =
+    .label = Standardstartkatalog
 about-addressbook-confirm-delete-book-title = Ta bort adressbok
 # Variables:
 # $name (String) - Name of the address book to be deleted.
@@ -67,6 +69,8 @@ about-addressbook-sort-email-ascending =
     .label = Sortera efter e-postadress (A > Ö)
 about-addressbook-sort-email-descending =
     .label = Sortera efter e-postadress (Ö > A)
+about-addressbook-cards-context-write =
+    .label = Skriv meddelande
 about-addressbook-confirm-delete-mixed-title = Ta bort kontakter och listor
 # Variables:
 # $count (Number) - The number of contacts and lists to be deleted. Always greater than 1.
@@ -128,3 +132,5 @@ about-addressbook-details-phone-numbers-header = Telefonnummer
 about-addressbook-details-home-address-header = Hemadresser
 about-addressbook-details-work-address-header = Arbetsadress
 about-addressbook-details-other-info-header = Annan information
+about-addressbook-prompt-to-save-title = Spara ändringar?
+about-addressbook-prompt-to-save = Vill du spara dina ändringar?

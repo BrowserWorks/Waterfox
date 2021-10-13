@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -39,10 +39,6 @@
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "p">
 
-<!-- Edit menu items -->
-<!ENTITY editRewrapCmd.label "Zawiń wiersze">
-<!ENTITY editRewrapCmd.key "R">
-<!ENTITY editRewrapCmd.accesskey "Z">
 <!ENTITY accountManagerCmd.label "Konfiguracja kont…">
 <!ENTITY accountManagerCmd.accesskey "g">
 
@@ -99,6 +95,8 @@
 <!ENTITY fileCarbonCopyCmd.accesskey "h">
 <!ENTITY fileHereMenu.label "Zachowaj tutaj">
 
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
 <!ENTITY sendButton.label "Wyślij">
 <!ENTITY addressButton.label "Adres">
 <!ENTITY attachButton.label "Załącz">
@@ -106,6 +104,8 @@
 <!ENTITY saveButton.label "Zapisz jako">
 <!ENTITY stopButton.label "Zatrzymaj">
 
+<!--tooltips-->
+<!--tooltips-->
 <!ENTITY addressBar.tooltip "Pasek adresowania">
 <!ENTITY formatToolbar.tooltip "Pasek narzędzi formatowania">
 <!ENTITY sendButton.tooltip "Wyślij tę wiadomość">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "Ny">
 <!ENTITY newMenu.accesskey "N">
 <!ENTITY newMessage.label "Melding">
-<!ENTITY newMessage.key "M">
 <!ENTITY newMessageCmd2.key "N">
-<!ENTITY newMessage.accesskey "M">
 <!ENTITY newContact.label "Kontakt …">
 <!ENTITY newContact.accesskey "K">
 <!ENTITY attachMenu.label "Legg ved">
 <!ENTITY attachMenu.accesskey "v">
-<!ENTITY attachFileCmd.label "Filer …">
-<!ENTITY attachFileCmd.accesskey "F">
-<!ENTITY attachFileCmd.key "A">
 <!ENTITY attachCloudCmd.label "Filelink">
 <!ENTITY attachCloudCmd.accesskey "i">
 <!ENTITY attachPageCmd.label "Nettside …">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "Send seinare">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "e">
-<!ENTITY printSetupCmd.label "Utskriftsformat …">
-<!ENTITY printSetupCmd.accesskey "m">
-<!ENTITY printPreviewCmd.label "Førehandsvising">
-<!ENTITY printPreviewCmd.accesskey "v">
 <!ENTITY printCmd.label "Skriv ut…">
 <!ENTITY printCmd.key "P">
 <!ENTITY printCmd.accesskey "u">
@@ -82,8 +73,6 @@
 <!ENTITY reorderAttachmentsCmd.label "Omorganiser vedlegg…">
 <!ENTITY reorderAttachmentsCmd.accesskey "O">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "Vedleggspanel">
-<!ENTITY toggleAttachmentPaneCmd.accesskey "g">
 <!ENTITY selectAllCmd.accesskey "M">
 <!ENTITY findBarCmd.label "Finn …">
 <!ENTITY findBarCmd.accesskey "F">
@@ -102,11 +91,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "Omorganiser vedlegg">
-<!ENTITY moveAttachmentTopPanelBtn.label "Flytt til toppen">
-<!ENTITY moveAttachmentUpPanelBtn.label "Flytt opp">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label "Flytt ihop">
-<!ENTITY moveAttachmentDownPanelBtn.label "Flytt ned">
-<!ENTITY moveAttachmentBottomPanelBtn.label "Flytt til botnars">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -204,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "Kontoinnstillingar">
 <!ENTITY accountManagerCmd2.accesskey "K">
 <!ENTITY accountManagerCmdUnix2.accesskey "S">
-<!ENTITY preferencesCmd2.label "Innstillingar">
-<!ENTITY preferencesCmd2.accesskey "I">
-<!ENTITY preferencesCmdUnix.label "Innstillingar">
-<!ENTITY preferencesCmdUnix.accesskey "n">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "m">
@@ -220,7 +201,6 @@
 <!ENTITY sendButton.label "Send">
 <!ENTITY quoteButton.label "Siter">
 <!ENTITY addressButton.label "Adresser">
-<!ENTITY attachButton.label "Legg ved">
 <!ENTITY spellingButton.label "Staving">
 <!ENTITY saveButton.label "Lagre">
 <!ENTITY printButton.label "Skriv ut">
@@ -230,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "Send meldinga seinare">
 <!ENTITY quoteButton.tooltip "Siter føregåande melding">
 <!ENTITY addressButton.tooltip "Vel mottakar frå ei adressebok">
-<!ENTITY attachButton.tooltip2 "Legg til eit vedlegg">
 <!ENTITY spellingButton.tooltip "Kontroller staving av merkt tekst eller heile meldinga">
 <!ENTITY saveButton.tooltip "Lagre meldinga">
 <!ENTITY cutButton.tooltip              "Klipp ut">
@@ -245,9 +224,6 @@
 <!ENTITY extraRecipients.tooltip "Andre typar adressefelt">
 <!ENTITY fromAddr2.label "Frå">
 <!ENTITY fromAddr.accesskey "å">
-<!ENTITY toAddr2.label "Til">
-<!ENTITY ccAddr2.label "Kopi">
-<!ENTITY bccAddr2.label "Blindkopi">
 <!ENTITY replyAddr2.label "Svar-til">
 <!ENTITY newsgroupsAddr2.label "Temagruppe">
 <!ENTITY followupAddr2.label "Oppfølging-til">
@@ -306,8 +282,6 @@
 <!ENTITY removeAllAttachments.accesskey "v">
 <!ENTITY selectAll.label "Merk alt">
 <!ENTITY selectAll.accesskey "M">
-<!ENTITY attachFile.label "Legg ved filer …">
-<!ENTITY attachFile.accesskey "L">
 <!ENTITY attachCloud.label "Filelink…">
 <!ENTITY attachCloud.accesskey "i">
 <!ENTITY convertCloud.label "Konverter til …">

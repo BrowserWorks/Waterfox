@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -6,7 +6,7 @@
 <!ENTITY mailListWindow.title           "Λίστα αλληλογραφίας">
 
 <!-- Labels and Access Keys -->
-<!ENTITY addToAddressBook.label         "Προσθήκη σε:">
+<!ENTITY addToAddressBook.label         "Προσθήκη σε: ">
 <!ENTITY addToAddressBook.accesskey     "Π">
 <!ENTITY ListName.label                 "Όνομα λίστας:">
 <!ENTITY ListName.accesskey             "λ">

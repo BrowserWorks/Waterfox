@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-title = Kalender
 calendar-title-reminder = Påminningar
+calendar-title-notification = Varsel
 calendar-title-category = Kategoriar
 dateformat-label =
     .value = Datoformat:
@@ -133,6 +134,9 @@ task-due-label =
 edit-intab-label =
     .label = Rediger hendingar og oppgåver i ei fane i staden for i eit dialovindauge.
     .accesskey = f
+prompt-delete-label =
+    .label = Spør før du slettar hendingar og oppgåver.
+    .accesskey = p
 accessibility-legend = Tilgjenge
 accessibility-colors-label =
     .label = Optimaliser fargar for tilgjenge
@@ -179,6 +183,7 @@ event-alarm-time-label =
 task-alarm-time-label =
     .value = Standard varslingstid før ei oppgåve:
     .accesskey = g
+calendar-notifications-customize-label = Varsel kan tilpassast for kvar kalender i innstillingane til kalenderen.
 category-new-label = Ny kategori
 category-edit-label = Rediger kategori
 category-overwrite-title = Åtvaring: Duplikatnamn

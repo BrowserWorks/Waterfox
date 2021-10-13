@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,6 +17,8 @@ policy-AppUpdateURL = Anwendungsaktualisierung über benutzerdefinierte Adresse 
 
 policy-Authentication = Integrierte Authentifizierung für Websites, welche dies unterstützen, konfigurieren
 
+policy-BackgroundAppUpdate2 = Hintergrundaktualisierung aktivieren oder deaktivieren
+
 policy-BlockAboutAddons = Add-ons-Verwaltung-Seitenzugriff (about:addons) blockieren
 
 policy-BlockAboutConfig = about:config-Seitenzugriff (erweiterte Einstellungen ohne Dokumentation) blockieren
@@ -30,6 +32,8 @@ policy-CaptivePortal = Erkennung von Anmelde- oder Bestätigungspflicht für Int
 policy-CertificatesDescription = Zertifikate hinzufügen oder eingebaute Zertifikate verwenden
 
 policy-Cookies = Cookies setzen durch Websites erlauben oder verbieten
+
+policy-DisableBuiltinPDFViewer = Eingebauten PDF-Betrachter von { -brand-short-name } (PDF.js) deaktivieren
 
 policy-DisabledCiphers = Chiffren deaktivieren
 
@@ -59,7 +63,7 @@ policy-DisableSecurityBypass = Umgehen einiger Sicherheitswarnungen durch Benutz
 
 policy-DisableSystemAddonUpdate = Installieren und Aktualisieren von System-Add-ons durch { -brand-short-name } deaktivieren
 
-policy-DisableTelemetry = Datenerhebung zur Verbesserung von Firefox (Telemetrie) deaktivieren
+policy-DisableTelemetry = Datenerhebung zur Verbesserung von Waterfox (Telemetrie) deaktivieren
 
 policy-DisplayMenuBar = Menüleiste standardmäßig anzeigen
 
@@ -84,6 +88,8 @@ policy-ExtensionSettings = Alle Einstellungen für die Erweiterungsinstallation 
 
 policy-ExtensionUpdate = Automatische Add-on-Updates aktivieren oder deaktivieren
 
+policy-Handlers = Standardanwendungen für das Öffnen von Dateien, Protokollen und MIME-Typen festlegen
+
 policy-HardwareAcceleration = Hardwarebeschleunigung deaktiviert, falls false
 
 policy-InstallAddonsPermission = Add-on-Installation von festgelegten Websites erlauben
@@ -99,6 +105,8 @@ policy-LegacySameSiteCookieBehaviorEnabledForDomainList = Veraltetes Cookie-Verh
 ##
 
 policy-LocalFileLinks = Festgelegten Websites Zugriff auf lokale Dateien erlauben
+
+policy-ManualAppUpdateOnly = Nur manuelle Updates erlauben und den Benutzer nicht über Updates benachrichtigen
 
 policy-NetworkPrediction = Spekulative DNS-Abfragen für noch nicht angeforderte Ressourcen ("DNS-Prefetching") aktivieren oder deaktivieren
 
@@ -119,6 +127,8 @@ policy-Permissions2 = Berechtigungen für Kamera, Mikrofon, Standort, Benachrich
 
 policy-Preferences = Werte von bestimmten Einstellungen festlegen und Änderungen daran verhindern
 
+policy-PrimaryPassword = Benutzung eines Hauptpassworts erfordern oder verhindern
+
 policy-PromptForDownloadLocation = Für gestartete Downloads nach Speicherort fragen
 
 policy-Proxy = Proxy-Einstellungen festlegen
@@ -131,7 +141,7 @@ policy-SearchEngines = Suchmaschineneinstellungen anpassen. Diese Richtlinie ist
 
 policy-SearchSuggestEnabled = Suchvorschläge aktivieren oder deaktivieren
 
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = PKCS#11-Module installieren
 
 policy-SSLVersionMax = Höchste zu verwendende SSL-Version festlegen

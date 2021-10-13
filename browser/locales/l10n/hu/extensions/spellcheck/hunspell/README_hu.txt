@@ -19,7 +19,7 @@ License: MPLv2 and LesserGPLv3+
 
 The contents of this software may be used under the terms of
 the GNU Lesser General Public License Version 3 or later (the "LGPL",
-see COPYING.LGPL) or the Mozilla Public License Version 2.0 or later
+see COPYING.LGPL) or the Waterfox Public License Version 2.0 or later
 (the "MPL", see COPYING.MPL in the root folder of the source tree).
 
 Software distributed under these licenses is distributed on an "AS IS" basis,

@@ -1,9 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowTitle.label "Proprietà campo modulo">
 <!ENTITY windowTitleImage.label "Proprietà immagine modulo">
+
 <!ENTITY InputType.label "Tipo campo">
 <!ENTITY InputType.accesskey "T">
 <!ENTITY text.value "Testo">
@@ -16,6 +17,7 @@
 <!ENTITY hidden.value "Nascosto">
 <!ENTITY image.value "Immagine">
 <!ENTITY button.value "Pulsante">
+
 <!ENTITY InputSettings.label "Impostazioni campo">
 <!ENTITY InputName.label "Nome campo:">
 <!ENTITY InputName.accesskey "N">
@@ -43,5 +45,6 @@
 <!ENTITY AccessKey.accesskey "o">
 <!ENTITY Accept.label "Tipi accettati:">
 <!ENTITY Accept.accesskey "a">
+
 <!ENTITY ImageProperties.label "Proprietà immagine…">
 <!ENTITY ImageProperties.accesskey "m">

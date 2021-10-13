@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,11 @@
 experimental-features-css-masonry2 =
     .label = CSS: Layout Masonry
 experimental-features-css-masonry-description = Ativa o suporte ao recurso experimental de layout Masonry no CSS. Consulte a <a data-l10n-name="explainer">explicação</a> para obter uma descrição de alto nível do recurso. Para fornecer feedback, comente <a data-l10n-name="w3c-issue">este problema do GitHub</a> ou <a data-l10n-name="bug">este bug</a>.
+# The title of the experiment should be kept in English as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS: Camadas em cascata
+experimental-features-css-cascade-layers-description = Ativa o suporte para camadas em cascata do CSS. Consulte a especificação <a data-l10n-name="spec">em desenvolvimento</a> para detalhes. Submeta bugs bloqueantes do <a data-l10n-name="bugzilla">bug 1699215</a> para problemas relacionados com esta funcionalidade.
 # The title of the experiment should be kept in English as it may be referenced
 # by various online articles and is technical in nature.
 experimental-features-web-gpu2 =
@@ -85,9 +90,6 @@ experimental-features-fission-description = O Fission (isolamento de sites) é u
 experimental-features-multi-pip =
     .label = Suporte a múltiplos vídeos em janelas flutuantes
 experimental-features-multi-pip-description = Suporte experimental para permitir que múltiplos vídeos possam ser abertos em várias janelas flutuantes em simultâneo.
-experimental-features-http3 =
-    .label = Protocolo HTTP/3
-experimental-features-http3-description = Suporte experimental para o protocolo HTTP/3.
 # Search during IME
 experimental-features-ime-search =
     .label = Barra de endereços: mostrar resultados durante a composição do IME

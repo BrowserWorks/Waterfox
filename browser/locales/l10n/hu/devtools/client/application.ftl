@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -28,16 +28,6 @@ serviceworker-worker-unregister = Regisztráció törlése
 serviceworker-worker-debug = Hibakeresés
     .title = Csak a futó service workerekben lehet hibát keresni
 
-# Text for the debug link displayed for an already started Service Worker, when we
-# are in multi e10s mode, which effectively disables this link.
-serviceworker-worker-debug-forbidden = Hibakeresés
-    .title = A service workerekben csak akkor lehet hibát keresni, ha a többszálas e10s ki van kapcsolva
-
-# Text for the start link displayed for a registered but not running Service Worker.
-# Clicking on the link will attempt to start the service worker.
-serviceworker-worker-start2 = Indítás
-    .title = A service workerek csak akkor indíthatóak el, ha a többszálas e10s ki van kapcsolva
-
 # Alt text for the image icon displayed inside a debug link for a service worker.
 serviceworker-worker-inspect-icon =
     .alt = Vizsgálat
@@ -50,12 +40,6 @@ serviceworker-worker-start3 = Indítás
 # display the last update time of the service worker script.
 serviceworker-worker-updated = Frissítve: <time>{ DATETIME($date, month: "long", year: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric") }</time>
 
-# Text displayed next to the URL for the source of the service worker (e-g. "Source my/path/to/worker-js")
-serviceworker-worker-source = Forrás
-
-# Text displayed next to the current status of the service worker.
-serviceworker-worker-status = Állapot
-
 ## Service Worker status strings: all serviceworker-worker-status-* strings are also
 ## defined in aboutdebugging.properties and should be synchronized with them.
 
@@ -65,26 +49,6 @@ serviceworker-worker-status-running = Fut
 
 # Service Worker status. A stopped service worker is registered but not currently active.
 serviceworker-worker-status-stopped = Leállítva
-
-# Text displayed when no service workers are visible for the current page. Clicking on the
-# link will open https://developer-mozilla-org/docs/Web/API/Service_Worker_API/Using_Service_Workers
-serviceworker-empty-intro = Regisztrálnia kell a Service Workert, hogy itt vizsgálhassa. <a>További tudnivalók</a>
-
-# Text displayed when there are no Service Workers to display for the current page,
-# introducing hints to debug Service Worker issues.
-serviceworker-empty-suggestions = Ha a jelenlegi oldalon lennie kellene egy service workernek, akkor itt van néhány dolog amit megpróbálhat
-
-# Suggestion to check for errors in the Console to investigate why a service worker is not
-# registered. Clicking on the link opens the webconsole.
-serviceworker-empty-suggestions-console = Keressen hibát a konzolban. <a>Nyissa meg a konzolt</a>
-
-# Suggestion to use the debugger to investigate why a service worker is not registered.
-# Clicking on the link will switch from the Application panel to the debugger.
-serviceworker-empty-suggestions-debugger = Lépjen végig a Service Worker regisztráción, és keressen kivételeket. <a>Nyissa meg a hibakeresőt</a>
-
-# Suggestion to go to about:debugging in order to see Service Workers for all domains.
-# Clicking on the link will open about:debugging in a new tab.
-serviceworker-empty-suggestions-aboutdebugging = Vizsgálja meg a más tartományokból származó Service Workereket. <a>Nyissa meg az about:debugging oldalt</a>
 
 # Text displayed when no service workers are visible for the current page.
 serviceworker-empty-intro2 = Nem található service worker.
@@ -103,10 +67,6 @@ serviceworker-empty-suggestions-aboutdebugging2 = Más domainről származó ser
 
 # Header for the Manifest page when we have an actual manifest
 manifest-view-header = Alkalmazás-jegyzékfájl
-
-# Header for the Manifest page when there's no manifest to inspect
-# The link will open https://developer.mozilla.org/en-US/docs/Web/Manifest
-manifest-empty-intro = Meg kell adnia egy webalkalmazás jegyzékfájlt, hogy itt vizsgálhassa. <a>További tudnivalók</a>
 
 # Header for the Manifest page when there's no manifest to inspect
 manifest-empty-intro2 = Nem található webalkalmazás-leíró
@@ -136,7 +96,7 @@ manifest-loaded-ok = Jegyzékfájl betöltve.
 # load the manifest
 manifest-loaded-error = Hiba történt a jegyzékfájl betöltésekor:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
 manifest-loaded-devtools-error = Waterfox fejlesztői eszközök hiba
 

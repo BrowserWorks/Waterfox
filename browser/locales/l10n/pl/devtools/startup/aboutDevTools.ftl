@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -25,7 +25,7 @@ newsletter-thanks-title = Dziękujemy!
 newsletter-thanks-message = Jeśli jeszcze nigdy nie potwierdzono subskrypcji biuletynu Mozilli, to możesz musieć to zrobić. Sprawdź, czy w skrzynce odbiorczej lub niechcianych jest wiadomość od nas.
 
 footer-title = Waterfox Developer Edition
-footer-message = Szukasz czegoś więcej niż same narzędzia dla programistów? Wypróbuj przeglądarkę Firefox zbudowaną z myślą o programistach i nowoczesnych narzędziach.
+footer-message = Szukasz czegoś więcej niż same narzędzia dla programistów? Wypróbuj przeglądarkę Waterfox zbudowaną z myślą o programistach i nowoczesnych narzędziach.
 footer-learn-more-link = Więcej informacji
 
 features-learn-more = Więcej informacji

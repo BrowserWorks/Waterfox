@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "พิมพ์…">
 <!ENTITY printCmd.accesskey "พ">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "ตัวอย่างก่อนพิมพ์">
-<!ENTITY printPreviewCmd.accesskey "ว">
-<!ENTITY printSetupCmd.label "ตั้งค่าหน้ากระดาษ…">
-<!ENTITY printSetupCmd.accesskey "ง">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "ลบข้อความ">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "ล">
 <!ENTITY compactVersion.label "มุมมองแบบกะทัดรัด">
 <!ENTITY compactVersion.accesskey "ก">
-<!ENTITY folderPaneBar.label "แถบเครื่องมือบานหน้าต่างโฟลเดอร์">
-<!ENTITY folderPaneBar.accesskey "โ">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "เรียงตาม">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "สมุดรายชื่อ">
 <!ENTITY addressBookCmd.accesskey "ม">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "ส่วนเสริม">
-<!ENTITY addons.accesskey "ว">
-<!ENTITY addonPrefs.label "ตัวเลือกส่วนเสริม">
-<!ENTITY addonPrefs.accesskey "ต">
-<!ENTITY addonPrefsUnix.label "ค่ากำหนดส่วนเสริม">
-<!ENTITY addonPrefsUnix.accesskey "ค">
 <!ENTITY addonNoPrefs.label "ไม่พบการตั้งค่าส่วนเสริม">
 <!ENTITY activitymanager.label "ตัวจัดการกิจกรรม">
 <!ENTITY activitymanager.accesskey "ก">
@@ -520,8 +508,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "ดีบั๊กส่วนเสริม">
 <!ENTITY debugAddonsCmd.accesskey "ส">
-<!ENTITY tabsDebugCmd.label "ตัวดีบั๊กเฟรมเนื้อหา">
-<!ENTITY tabsDebugCmd.accesskey "น">
 <!ENTITY errorConsoleCmd.label "คอนโซลข้อผิดพลาด">
 <!ENTITY errorConsoleCmd.accesskey "ข">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +531,11 @@
 <!ENTITY backButton1.label "ย้อนกลับ">
 <!ENTITY goForwardButton1.label "เดินหน้า">
 <!ENTITY deleteItem.title "ลบ">
-<!ENTITY deleteButton.label "ลบ">
-<!ENTITY undeleteButton.label "เลิกลบ">
 <!ENTITY markButton.label "ทำเครื่องหมาย">
 <!ENTITY printButton.label "พิมพ์">
 <!ENTITY stopButton.label "หยุด">
 <!ENTITY throbberItem.title "ตัวบ่งชี้กิจกรรม">
 <!ENTITY junkItem.title "ขยะ">
-<!ENTITY junkButton.label "ขยะ">
-<!ENTITY notJunkButton.label "ไม่ใช่ขยะ">
 <!ENTITY addressBookButton.label "สมุดรายชื่อ">
 <!ENTITY chatButton.label "แชท">
 <!ENTITY glodaSearch.title "การค้นหาส่วนกลาง">
@@ -585,19 +567,14 @@
 <!ENTITY previousMsgButton.tooltip "ย้ายไปยังข้อความก่อนหน้า">
 <!ENTITY goForwardButton.tooltip "เดินหน้าไปหนึ่งข้อความ">
 <!ENTITY goBackButton.tooltip "ย้อนกลับไปหนึ่งข้อความ">
-<!ENTITY deleteButton.tooltip "ลบข้อความหรือโฟลเดอร์ที่เลือก">
-<!ENTITY undeleteButton.tooltip "เลิกลบข้อความที่เลือก">
 <!ENTITY markButton.tooltip "ทำเครื่องหมายข้อความ">
 <!ENTITY printButton.tooltip "พิมพ์ข้อความนี้">
 <!ENTITY stopButton.tooltip "หยุดการถ่ายโอนปัจจุบัน">
-<!ENTITY junkButton.tooltip "ทำเครื่องหมายข้อความที่เลือกว่าเป็นขยะ">
-<!ENTITY notJunkButton.tooltip "ทำเครื่องหมายข้อความที่เลือกว่าไม่เป็นขยะ">
 <!ENTITY addressBookButton.tooltip "ไปยังสมุดรายชื่อ">
 <!ENTITY chatButton.tooltip "แสดงแท็บแชท">
 <!ENTITY tagButton.tooltip "ติดป้ายกำกับข้อความ">
 <!ENTITY compactButton.tooltip "เอาข้อความที่ถูกลบออกจากโฟลเดอร์ที่เลือก">
 <!ENTITY appmenuButton1.tooltip "แสดงเมนู &brandShortName;">
-<!ENTITY addonsButton.tooltip "จัดการส่วนเสริมของคุณ">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "ส่งต่อแบบอินไลน์">

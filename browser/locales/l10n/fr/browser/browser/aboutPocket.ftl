@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -11,6 +11,7 @@
 # Placeholder text for tag input
 pocket-panel-saved-add-tags =
     .placeholder = Ajouter des étiquettes
+
 pocket-panel-saved-error-generic = Une erreur s’est produite lors de l’enregistrement dans { -pocket-brand-name }.
 pocket-panel-saved-error-tag-length = Les étiquettes sont limitées à 25 caractères
 pocket-panel-saved-error-only-links = Seuls les liens peuvent être enregistrés

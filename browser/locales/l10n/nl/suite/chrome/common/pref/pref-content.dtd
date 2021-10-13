@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -33,10 +33,11 @@
 <!ENTITY defaultZoom.label                      "Standaard zoom">
 <!ENTITY defaultZoom.accesskey                  "z">
 
-<!ENTITY siteSpecific.label                     "Zoomniveau op paginabasis onthouden">
-<!ENTITY siteSpecific.accesskey                 "o">
 <!ENTITY textZoomOnly.label                     "Alleen tekst zoomen in plaats van hele pagina’s">
 <!ENTITY textZoomOnly.accesskey                 "z">
+<!ENTITY siteSpecific.label                     "Zoomniveau op paginabasis onthouden">
+<!ENTITY siteSpecific.accesskey                 "o">
+<!ENTITY showZoomStatusPanel.label              "Zoombediening in de statusbalk tonen">
 <!ENTITY enableAutomaticImageResizing.label     "Formaat van grote afbeeldingen aanpassen aan browservenster">
 <!ENTITY enableAutomaticImageResizing.accesskey "F">
 
@@ -45,4 +46,3 @@
 <!ENTITY blockAutoRefresh.label                 "Mij waarschuwen wanneer websites proberen de pagina door te sturen of te herladen">
 <!ENTITY blockAutoRefresh.accesskey             "r">
 
-<!ENTITY showZoomStatusPanel.label              "Zoombediening in de statusbalk tonen">

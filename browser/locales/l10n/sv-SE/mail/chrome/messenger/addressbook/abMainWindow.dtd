@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,12 +31,6 @@
 <!ENTITY closeCmd.label                                 "Stäng">
 <!ENTITY closeCmd.key                                   "W">
 <!ENTITY closeCmd.accesskey                             "ä">
-<!ENTITY printSetupCmd.label                            "Utskriftsformat…">
-<!ENTITY printSetupCmd.accesskey                        "o">
-<!ENTITY printPreviewContactCmd.label                   "Förhandsgranska kontakt">
-<!ENTITY printPreviewContactCmd.accesskey               "h">
-<!ENTITY printPreviewAddressBook.label                  "Förhandsgranska adressbok">
-<!ENTITY printPreviewAddressBook.accesskey              "B">
 <!ENTITY printContactCmd.label                          "Skriv ut kontakt…">
 <!ENTITY printContactCmd.accesskey                      "u">
 <!ENTITY printContactCmd.key                            "P">
@@ -111,10 +105,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY importCmd.accesskey                            "m">
 <!ENTITY exportCmd.label                                "Exportera…">
 <!ENTITY exportCmd.accesskey                            "x">
-<!ENTITY preferencesCmd2.label                          "Inställningar">
-<!ENTITY preferencesCmd2.accesskey                      "n">
-<!ENTITY preferencesCmdUnix.label                       "Inställningar">
-<!ENTITY preferencesCmdUnix.accesskey                   "n">
 
 <!-- Address Book Toolbar and Context Menus -->
 <!ENTITY newContactButton.label                         "Ny kontakt">

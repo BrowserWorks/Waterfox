@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-addons-window =
-    .title = Tilläggshanterare
 addons-page-title = Tilläggshanterare
 search-header =
     .placeholder = Sök på addons.mozilla.org
@@ -24,17 +22,6 @@ list-empty-button =
 help-button = Support för tillägg
 sidebar-help-button-title =
     .title = Support för tillägg
-preferences =
-    { PLATFORM() ->
-        [windows] Inställningar för { -brand-short-name }
-       *[other] Inställningar för { -brand-short-name }
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] Inställningar för { -brand-short-name }
-           *[other] Inställningar för { -brand-short-name }
-        }
 addons-settings-button = { -brand-short-name }-inställningar
 sidebar-settings-button-title =
     .title = { -brand-short-name }-inställningar
@@ -42,36 +29,6 @@ show-unsigned-extensions-button =
     .label = Vissa utökningar kunde inte verifieras
 show-all-extensions-button =
     .label = Visa alla utökningar
-cmd-show-details =
-    .label = Visa mer information
-    .accesskey = V
-cmd-find-updates =
-    .label = Sök efter uppdateringar
-    .accesskey = S
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Inställningar
-           *[other] Inställningar
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] n
-           *[other] n
-        }
-cmd-enable-theme =
-    .label = Använd tema
-    .accesskey = ä
-cmd-disable-theme =
-    .label = Sluta använd tema
-    .accesskey = ä
-cmd-install-addon =
-    .label = Installera
-    .accesskey = I
-cmd-contribute =
-    .label = Bidra
-    .accesskey = B
-    .tooltiptext = Ge ett bidrag till utvecklingen av detta tillägg
 detail-version =
     .label = Version
 detail-last-updated =
@@ -107,7 +64,7 @@ detail-private-browsing-off =
     .label = Tillåt inte
     .tooltiptext = Aktivera inte i privat surfning
 detail-home =
-    .label = Webbplats
+    .label = Startsida
 detail-home-value =
     .value = { detail-home.label }
 detail-repository =
@@ -291,6 +248,7 @@ install-theme-button = Installera tema
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = Hantera
 find-more-addons = Hitta fler tillägg
+find-more-themes = Hitta fler teman
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
 addon-options-button =
@@ -320,19 +278,20 @@ extension-enabled-heading = Aktiverad
 extension-disabled-heading = Inaktiverad
 theme-enabled-heading = Aktiverad
 theme-disabled-heading = Inaktiverad
+theme-monochromatic-heading = Colorways
+theme-monochromatic-subheading = Levande nya colorways från { -brand-product-name }. Tillgängliga under en begränsad tid.
 plugin-enabled-heading = Aktiverad
 plugin-disabled-heading = Inaktiverad
 dictionary-enabled-heading = Aktiverad
 dictionary-disabled-heading = Inaktiverad
 locale-enabled-heading = Aktiverad
 locale-disabled-heading = Inaktiverad
-ask-to-activate-button = Fråga om aktivering
 always-activate-button = Aktivera alltid
 never-activate-button = Aktivera aldrig
 addon-detail-author-label = Utvecklare
 addon-detail-version-label = Version
 addon-detail-last-updated-label = Senast uppdaterad
-addon-detail-homepage-label = Hemsida
+addon-detail-homepage-label = Startsida
 addon-detail-rating-label = Betyg
 # Message for add-ons with a staged pending update.
 install-postponed-message = Detta tillägg kommer att uppdateras när { -brand-short-name } startar om.
@@ -382,10 +341,10 @@ addon-detail-private-browsing-disallow = Tillåt inte
 addon-badge-recommended2 =
     .title = { -brand-product-name } rekommenderar endast tillägg som uppfyller våra standarder för säkerhet och prestanda
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Mozilla" in the string below because the extensions are built
-# by Mozilla and we don't want forks to display "by Fork".
+# We hard code "Waterfox" in the string below because the extensions are built
+# by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = Officiellt tillägg byggt av Mozilla Firefox. Uppfyller säkerhets- och prestandastandarder
+    .title = Officiellt tillägg byggt av Waterfox Waterfox. Uppfyller säkerhets- och prestandastandarder
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = Denna tillägg har granskats för att uppfylla våra standarder för säkerhet och prestanda
@@ -403,9 +362,9 @@ addon-permissions-optional = Valfria behörigheter för extra funktionalitet:
 addon-permissions-learnmore = Läs mer om behörigheter
 recommended-extensions-heading = Rekommenderade tillägg
 recommended-themes-heading = Rekommenderade teman
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
-# list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Känner du dig kreativ? <a data-l10n-name="link">Skapa ditt egna tema med Firefox Color.</a>
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
+# list view. The "Waterfox Color" name itself should not be translated.
+recommended-theme-1 = Känner du dig kreativ? <a data-l10n-name="link">Skapa ditt egna tema med Waterfox Color.</a>
 
 ## Page headings
 

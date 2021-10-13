@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,25 +12,30 @@ appmenuitem-update-banner3 =
     .label-update-unsupported = Mise à jour impossible — système incompatible
     .label-update-restart = Mise à jour disponible — redémarrer maintenant
 appmenuitem-protection-dashboard-title = Tableau de bord des protections
-appmenuitem-customize-mode =
-    .label = Personnaliser…
-
-## Zoom Controls
-
 appmenuitem-new-tab =
     .label = Nouvel onglet
 appmenuitem-new-window =
     .label = Nouvelle fenêtre
 appmenuitem-new-private-window =
     .label = Nouvelle fenêtre privée
+appmenuitem-history =
+    .label = Historique
+appmenuitem-downloads =
+    .label = Téléchargements
 appmenuitem-passwords =
     .label = Mots de passe
 appmenuitem-addons-and-themes =
     .label = Extensions et thèmes
+appmenuitem-print =
+    .label = Imprimer…
 appmenuitem-find-in-page =
     .label = Rechercher dans la page…
+appmenuitem-zoom =
+    .value = Zoom
 appmenuitem-more-tools =
     .label = Outils supplémentaires
+appmenuitem-help =
+    .label = Aide
 appmenuitem-exit2 =
     .label = Quitter
 appmenu-menu-button-closed2 =
@@ -53,15 +58,31 @@ appmenuitem-zoom-reduce =
 appmenuitem-fullscreen =
     .label = Plein écran
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
-fxa-toolbar-sync-now =
-    .label = Synchroniser maintenant
 appmenu-remote-tabs-sign-into-sync =
     .label = Se connecter pour synchroniser…
 appmenu-remote-tabs-turn-on-sync =
     .label = Activer la synchronisation…
+# This is shown after the tabs list if we can display more tabs by clicking on the button
+appmenu-remote-tabs-showmore =
+    .label = Afficher davantage d’onglets
+    .tooltiptext = Afficher plus d’onglets de cet appareil
+# This is shown beneath the name of a device when that device has no open tabs
+appmenu-remote-tabs-notabs = Aucun onglet ouvert
+# This is shown when Sync is configured but syncing tabs is disabled.
+appmenu-remote-tabs-tabsnotsyncing = Activez la synchronisation des onglets pour afficher la liste des onglets de vos autres appareils.
+appmenu-remote-tabs-opensettings =
+    .label = Paramètres
+# This is shown when Sync is configured but this appears to be the only device attached to
+# the account. We also show links to download Waterfox for android/ios.
+appmenu-remote-tabs-noclients = Vous souhaitez afficher ici les onglets de vos autres appareils ?
+appmenu-remote-tabs-connectdevice =
+    .label = Connecter un autre appareil
+appmenu-remote-tabs-welcome = Afficher la liste des onglets de vos autres appareils.
+appmenu-remote-tabs-unverified = Votre compte doit être vérifié.
 appmenuitem-fxa-toolbar-sync-now2 = Synchroniser maintenant
+appmenuitem-fxa-sign-in = Se connecter à { -brand-product-name }
 appmenuitem-fxa-manage-account = Gestion du compte
 appmenu-fxa-header2 = { -fxaccount-brand-name(capitalization: "uppercase") }
 # Variables
@@ -86,10 +107,19 @@ whatsnew-panel-footer-checkbox =
     .label = M’avertir des nouvelles fonctionnalités
     .accesskey = M
 
-## The Firefox Profiler – The popup is the UI to turn on the profiler, and record
+## The Waterfox Profiler – The popup is the UI to turn on the profiler, and record
 ## performance profiles. To enable it go to profiler.firefox.com and click
 ## "Enable Profiler Menu Button".
 
+profiler-popup-button-idle =
+    .label = Profileur
+    .tooltiptext = Enregistrer un profil de performance
+profiler-popup-button-recording =
+    .label = Profileur
+    .tooltiptext = Enregistrement d’un profil en cours
+profiler-popup-button-capturing =
+    .label = Profileur
+    .tooltiptext = Capture d’un profil en cours
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -98,10 +128,15 @@ profiler-popup-description-title =
     .value = Enregistrer, analyser, partager
 profiler-popup-description = Collaborez sur les problèmes de performance en publiant des profils à partager avec votre équipe.
 profiler-popup-learn-more = En savoir plus
+profiler-popup-learn-more-button =
+    .label = En savoir plus
 profiler-popup-settings =
     .value = Paramètres
 # This link takes the user to about:profiling, and is only visible with the Custom preset.
 profiler-popup-edit-settings = Modifier les paramètres…
+# This link takes the user to about:profiling, and is only visible with the Custom preset.
+profiler-popup-edit-settings-button =
+    .label = Modifier les paramètres…
 profiler-popup-disabled =
     Le profileur est actuellement désactivé, probablement à cause d’une fenêtre de navigation privée
     ouverte.
@@ -126,6 +161,28 @@ profiler-popup-capture-shortcut =
         [macos] ⌃⇧2
        *[other] Ctrl+Maj+2
     }
+
+## Profiler presets
+## They are shown in the popup's select box.
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
+profiler-popup-presets-web-developer-label =
+    .label = Développement web
+profiler-popup-presets-firefox-platform-description = Réglage recommandé pour le débogage interne de la plateforme Waterfox.
+profiler-popup-presets-firefox-platform-label =
+    .label = Plateforme Waterfox
+profiler-popup-presets-firefox-graphics-description = Réglage recommandé pour l’étude des performances graphiques de Waterfox.
+profiler-popup-presets-firefox-graphics-label =
+    .label = Performances graphiques de Waterfox
+profiler-popup-presets-media-description = Réglage recommandé pour diagnostiquer les problèmes audio et vidéo.
+profiler-popup-presets-media-label =
+    .label = Multimédia
+profiler-popup-presets-custom-label =
+    .label = Personnalisés
 
 ## History panel
 

@@ -1,16 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-about-httpsonly-insecure-title = A biztonságos kapcsolat nem érhető el
-# Variables:
-#   $websiteUrl (String) - Url of the website that failed to load. Example: www.example.com
-about-httpsonly-insecure-explanation-unavailable = Csak HTTPS módban böngészik, és a(z) <em>{ $websiteUrl }</em> biztonságos HTTPS verziója nem érhető el.
-about-httpsonly-insecure-explanation-reasons = Valószínűleg a weboldal nem támogatja a HTTPS-t, de az is lehet, hogy egy támadó blokkolja a HTTPS-verziót.
-about-httpsonly-insecure-explanation-exception = Bár a biztonsági kockázat alacsony, ha úgy dönt, hogy felkeresi a weboldal HTTP verzióját, akkor ne adjon meg érzékeny információkat, mint jelszavakat, e-mail címeket vagy bankkártyaadatokat.
-about-httpsonly-button-make-exception = Kockázat elfogadása és továbblépés az oldalra
 about-httpsonly-title-alert = Csak HTTPS mód riasztás
 about-httpsonly-title-connection-not-available = A biztonságos kapcsolat nem érhető el
+about-httpsonly-title-site-not-available = Biztonságos webhely nem érhető el
 # Variables:
 #   $websiteUrl (String) - Url of the website that failed to load. Example: www.example.com
 about-httpsonly-explanation-unavailable2 = Engedélyezte a Csak-HTTPS módot a fokozott biztonság érdekében, és a <em>{ $websiteUrl }</em> HTTPS verziója nem érhető el.

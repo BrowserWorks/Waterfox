@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "In…">
 <!ENTITY printCmd.accesskey "P">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Xem trước khi in">
-<!ENTITY printPreviewCmd.accesskey "v">
-<!ENTITY printSetupCmd.label "Thiết lập trang…">
-<!ENTITY printSetupCmd.accesskey "u">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Xóa thư">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "R">
 <!ENTITY compactVersion.label "Chế độ xem gọn">
 <!ENTITY compactVersion.accesskey "C">
-<!ENTITY folderPaneBar.label "Thanh công cụ ngăn thư mục">
-<!ENTITY folderPaneBar.accesskey "F">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Sắp xếp theo">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Sổ địa chỉ">
 <!ENTITY addressBookCmd.accesskey "S">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Tiện ích">
-<!ENTITY addons.accesskey "T">
-<!ENTITY addonPrefs.label "Tùy chọn tiện ích">
-<!ENTITY addonPrefs.accesskey "O">
-<!ENTITY addonPrefsUnix.label "Tùy chỉnh tiện ích">
-<!ENTITY addonPrefsUnix.accesskey "P">
 <!ENTITY addonNoPrefs.label "Không tìm thấy cài đặt tiện ích.">
 <!ENTITY activitymanager.label "Trình quản lý hoạt động">
 <!ENTITY activitymanager.accesskey "Q">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "X">
 <!ENTITY importCmd.label "Nhập…">
 <!ENTITY importCmd.accesskey "N">
+<!ENTITY exportCmd.label "Xuất…">
+<!ENTITY exportCmd.accesskey "x">
 <!ENTITY clearRecentHistory.label "Xóa lịch sử gần đây…">
 <!ENTITY clearRecentHistory.accesskey "H">
 <!ENTITY accountManagerCmd2.label "Cài đặt tài khoản">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Gỡ lỗi tiện ích">
 <!ENTITY debugAddonsCmd.accesskey "A">
-<!ENTITY tabsDebugCmd.label "Trình gỡ lỗi khung nội dung">
-<!ENTITY tabsDebugCmd.accesskey "C">
 <!ENTITY errorConsoleCmd.label "Bảng kiểm soát lỗi">
 <!ENTITY errorConsoleCmd.accesskey "L">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Quay lại">
 <!ENTITY goForwardButton1.label "Tiến">
 <!ENTITY deleteItem.title "Xóa">
-<!ENTITY deleteButton.label "Xóa">
-<!ENTITY undeleteButton.label "Không xóa">
 <!ENTITY markButton.label "Đánh dấu">
 <!ENTITY printButton.label "In">
 <!ENTITY stopButton.label "Dừng">
 <!ENTITY throbberItem.title "Chỉ báo hoạt động">
 <!ENTITY junkItem.title "Thư rác">
-<!ENTITY junkButton.label "Thư rác">
-<!ENTITY notJunkButton.label "Không phải thư rác">
 <!ENTITY addressBookButton.label "Sổ địa chỉ">
 <!ENTITY chatButton.label "Trò chuyện">
 <!ENTITY glodaSearch.title "Tìm kiếm toàn bộ">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Di chuyển đến thư trước">
 <!ENTITY goForwardButton.tooltip "Đi tới một thư">
 <!ENTITY goBackButton.tooltip "Trở lại một thư">
-<!ENTITY deleteButton.tooltip "Xóa thư hoặc thư mục đã chọn">
-<!ENTITY undeleteButton.tooltip "Không xóa thư đã chọn">
 <!ENTITY markButton.tooltip "Đánh dấu thư">
 <!ENTITY printButton.tooltip "In thư này">
 <!ENTITY stopButton.tooltip "Dừng việc truyền tải hiện tại">
-<!ENTITY junkButton.tooltip "Đánh dấu thư đã chọn là thư rác">
-<!ENTITY notJunkButton.tooltip "Đánh dấu thư đã chọn không phải là thư rác">
 <!ENTITY addressBookButton.tooltip "Vào sổ địa chỉ">
 <!ENTITY chatButton.tooltip "Hiển thị thẻ trò chuyện">
 <!ENTITY tagButton.tooltip "Dán nhãn cho thư">
 <!ENTITY compactButton.tooltip "Dọn các thư bị xóa ra khỏi thư mục đã chọn">
 <!ENTITY appmenuButton1.tooltip "Hiển thị menu &brandShortName;">
-<!ENTITY addonsButton.tooltip "Quản lý tiện ích của bạn">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Chuyển tiếp ngay trong thư">
@@ -719,7 +698,6 @@
 <!ENTITY locationColumn.label "Địa chỉ">
 <!ENTITY idColumn.label "Thứ tự nhận được">
 <!ENTITY attachmentColumn.label "Đính kèm">
-
 <!ENTITY deleteColumn.label "Xóa">
 
 <!-- Thread Pane Tooltips -->
@@ -745,7 +723,6 @@
 <!ENTITY locationColumn2.tooltip "Sắp xếp theo địa chỉ">
 <!ENTITY idColumn2.tooltip "Sắp xếp theo thứ tự nhận được">
 <!ENTITY attachmentColumn2.tooltip "Sắp xếp theo đính kèm">
-
 <!ENTITY deleteColumn.tooltip "Xóa tin nhắn">
 
 <!-- Thread Pane Context Menu -->

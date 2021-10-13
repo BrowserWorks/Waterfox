@@ -1,15 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 # Addressing widget
 
-#   $type (String) - the type of the addressing row
-remove-address-row-type = Удалить поле { $type }
-#   $type (String) - the type of the addressing row
-remove-address-row-type-label =
-    .tooltiptext = Удалить поле { $type }
 #   $type (String) - the type of the addressing row
 remove-address-row-button =
     .title = Удалить поле { $type }
@@ -69,6 +64,10 @@ toolbar-button-add-attachment =
 add-attachment-notification-reminder =
     .label = Добавить вложение…
     .tooltiptext = { toolbar-button-add-attachment.tooltiptext }
+add-attachment-notification-reminder2 =
+    .label = Добавить вложение…
+    .accesskey = л
+    .tooltiptext = { toolbar-button-add-attachment.tooltiptext }
 menuitem-attach-files =
     .label = Файл(ы)…
     .accesskey = ы
@@ -87,22 +86,14 @@ attachment-bucket-count =
            *[many] { $count } вложений
         }
     .accesskey = в
-#   $count (Number) - the number of attachments in the attachment bucket
-attachments-placeholder-tooltip =
-    .tooltiptext =
-        { $count ->
-            [1] { $count } вложение
-            [one] { $count } вложение
-            [few] { $count } вложения
-           *[many] { $count } вложений
-        }
-#   { attachment-bucket-count.accesskey } - Do not localize this message.
-key-toggle-attachment-pane =
-    .key = { attachment-bucket-count.accesskey }
 expand-attachment-pane-tooltip =
     .tooltiptext = Показать панель вложений ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
 collapse-attachment-pane-tooltip =
     .tooltiptext = Скрыть панель вложений ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
+attachment-area-show =
+    .title = Показать панель вложений ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
+attachment-area-hide =
+    .title = Скрыть панель вложений ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
 drop-file-label-attachment =
     { $count ->
         [one] Добавить как вложение
@@ -129,8 +120,13 @@ move-attachment-last-panel-button =
 button-return-receipt =
     .label = Уведомление о прочтении
     .tooltiptext = Запросить уведомление о прочтении этого сообщения
-#   $count (Number) - the count of addresses in the "To" and "Cc" fields.
-consider-bcc-notification = { $count } адресата(ов) в полях «Кому» и «Копия» могут видеть адреса друг друга. Вы можете избежать раскрытия адресата(ов), используя вместо этого «Скрытую копию».
+
+# Encryption
+
+message-to-be-signed-icon =
+    .alt = Подписать сообщение
+message-to-be-encrypted-icon =
+    .alt = Зашифровать сообщение
 
 # Addressing Area
 
@@ -166,15 +162,89 @@ bcc-compose-show-address-row-label =
     .tooltiptext = Показать поле { bcc-compose-address-row-label.value } ({ bcc-compose-show-address-row-menuitem.acceltext })
 #   $count (Number) - the count of addresses in the "To" and "Cc" fields.
 many-public-recipients-info = { $count } адресата(ов) в полях «Кому» и «Копия» увидят адреса друг друга. Вы можете избежать раскрытия адресата(ов), используя вместо этого «Скрытую копию».
+to-address-row-label =
+    .value = Кому
+#   $key (String) - the shortcut key for this field
+show-to-row-main-menuitem =
+    .label = Поле «Кому»
+    .accesskey = м
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-to-row-button text.
+show-to-row-extra-menuitem =
+    .label = Кому
+    .accesskey = м
+#   $key (String) - the shortcut key for this field
+show-to-row-button = Кому
+    .title = Показать поле «Кому» ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+cc-address-row-label =
+    .value = Копия
+#   $key (String) - the shortcut key for this field
+show-cc-row-main-menuitem =
+    .label = Поле «Копия»
+    .accesskey = п
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-cc-row-button text.
+show-cc-row-extra-menuitem =
+    .label = Копия
+    .accesskey = п
+#   $key (String) - the shortcut key for this field
+show-cc-row-button = Копия
+    .title = Показать поле «Копия» ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+bcc-address-row-label =
+    .value = Скрытая копия
+#   $key (String) - the shortcut key for this field
+show-bcc-row-main-menuitem =
+    .label = Поле «Скрытая копия»
+    .accesskey = ы
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-bcc-row-button text.
+show-bcc-row-extra-menuitem =
+    .label = Скрытая копия
+    .accesskey = ы
+#   $key (String) - the shortcut key for this field
+show-bcc-row-button = Скрытая копия
+    .title = Показать поле «Скрытая копия» ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+extra-address-rows-menu-button =
+    .title = Другие отображаемые поля для адреса
+#   $count (Number) - the count of addresses in the "To" and "Cc" fields.
+many-public-recipients-notice =
+    { $count ->
+        [one] В вашем сообщении есть публичный адресат. Вы можете избежать раскрытия адресата, используя вместо этого «Скрытую копию».
+        [few] { $count } адресата в полях «Кому» и «Копия» увидят адреса друг друга. Вы можете избежать раскрытия адресатов, используя вместо этого «Скрытую копию».
+       *[many] { $count } адресатов в полях «Кому» и «Копия» увидят адреса друг друга. Вы можете избежать раскрытия адресатов, используя вместо этого «Скрытую копию».
+    }
 many-public-recipients-bcc =
     .label = Использовать «Скрытую копию»
     .accesskey = п
 many-public-recipients-ignore =
     .label = Позволить адресатам видеть адреса друг друга
     .accesskey = в
+many-public-recipients-prompt-title = Слишком много публичных адресатов
+#   $count (Number) - the count of addresses in the public recipients fields.
+many-public-recipients-prompt-msg =
+    { $count ->
+        [one] У вашего сообщения есть публичный адресат. Это может вызвать проблему с приватностью. Вы можете избежать раскрытия адресата, переместив его из «Кому»/«Копия» в «Скрытую копию».
+        [few] У вашего сообщения есть { $count } публичных адресата, которые смогут видеть адреса друг друга. Это может вызвать проблему с приватностью. Вы можете избежать раскрытия адресатов, переместив их из «Кому»/«Копия» в «Скрытую копию».
+       *[many] У вашего сообщения есть { $count } публичных адресатов, которые смогут видеть адреса друг друга. Это может вызвать проблему с приватностью. Вы можете избежать раскрытия адресатов, переместив их из «Кому»/«Копия» в «Скрытую копию».
+    }
+many-public-recipients-prompt-cancel = Отменить отправку
+many-public-recipients-prompt-send = Всё равно отправить
 
 ## Notifications
 
 # Variables:
 # $identity (string) - The name of the used identity, most likely an email address.
 compose-missing-identity-warning = Адрес электронной почты, соответствующий адресу в поле От:, не найден. Сообщение будет отправлено с использованием текущего адреса в поле От: и настроек адреса электронной почты { $identity }.
+encrypted-bcc-warning = При отправке зашифрованного сообщения получатели в поле «Скрытая копия» скрыты не полностью. Их могут идентифицировать все получатели.
+encrypted-bcc-ignore-button = Понятно
+
+## Editing
+
+
+# Tools
+
+compose-tool-button-remove-text-styling =
+    .tooltiptext = Удалить стиль текста

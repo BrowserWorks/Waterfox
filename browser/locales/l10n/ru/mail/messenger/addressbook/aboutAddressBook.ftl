@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,6 @@ about-addressbook-title = Адресная книга
 
 about-addressbook-toolbar-new-address-book =
     .label = Новая адресная книга
-about-addressbook-toolbar-new-carddav-address-book =
-    .label = Новая адресная книга CardDAV
-about-addressbook-toolbar-new-ldap-address-book =
-    .label = Новая адресная книга LDAP
 about-addressbook-toolbar-add-carddav-address-book =
     .label = Добавить адресную книгу CardDAV
 about-addressbook-toolbar-add-ldap-address-book =
@@ -67,6 +63,8 @@ about-addressbook-sort-email-ascending =
     .label = Сортировать по адресу эл. почты (от A до Z)
 about-addressbook-sort-email-descending =
     .label = Сортировать по адресу эл. почты (от Z до A)
+about-addressbook-cards-context-write =
+    .label = Записать
 about-addressbook-confirm-delete-mixed-title = Удаление контактов и списков
 # Variables:
 # $count (Number) - The number of contacts and lists to be deleted. Always greater than 1.

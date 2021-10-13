@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,6 +18,8 @@ policy-AppUpdateURL = Indtast brugerdefineret opdaterings-URL.
 
 policy-Authentication = Konfigurer integreret godkendelse for websteder, der understøtter dette.
 
+policy-BackgroundAppUpdate2 = Slå opdatering i baggrund til eller fra.
+
 policy-BlockAboutAddons = Bloker adgang til fanebladet Tilføjelser (about:addons).
 
 policy-BlockAboutConfig = Bloker adgang til about:config.
@@ -31,6 +33,8 @@ policy-CaptivePortal = Slå understøttelse af captive portal til eller fra.
 policy-CertificatesDescription = Tilføj certifikater eller brug indbyggede certifikater.
 
 policy-Cookies = Tillad eller nægt websteder at sætte cookies.
+
+policy-DisableBuiltinPDFViewer = Deaktiver PDF.js, den indbyggede PDF-viser i { -brand-short-name }.
 
 policy-DisabledCiphers = Deaktiver ciphers.
 
@@ -85,6 +89,8 @@ policy-ExtensionSettings = Håndter alle aspekter af udvidelsesinstallationer.
 
 policy-ExtensionUpdate = Slå automatisk opdatering af udvidelser til eller fra.
 
+policy-Handlers = Indstil håndtering af standard-applikationer.
+
 policy-HardwareAcceleration = False slår hardware-acceleration fra.
 
 policy-InstallAddonsPermission = Tillad bestemte websteder at installere tilføjelser.
@@ -100,6 +106,8 @@ policy-LegacySameSiteCookieBehaviorEnabledForDomainList = Gå tilbage til foræl
 ##
 
 policy-LocalFileLinks = Tillad specifikke websteder at linke til lokale filer.
+
+policy-ManualAppUpdateOnly = Tillad kun manuelle opdateringer, og giv ikke brugeren besked om opdateringer.
 
 policy-NetworkPrediction = Slå network prediction (DNS prefetching) til eller fra.
 
@@ -120,6 +128,8 @@ policy-Permissions2 = Indstil tilladelser for kamera, mikrofon, position, besked
 
 policy-Preferences = Indstil og lås værdien for en undergruppe af indstillingerne.
 
+policy-PrimaryPassword = Kræv eller forhindr brugen af en hovedadgangskode.
+
 policy-PromptForDownloadLocation = Spørg hvor hentede filer skal gemmes.
 
 policy-Proxy = Opsæt proxy-indstillinger.
@@ -132,7 +142,7 @@ policy-SearchEngines = Opsæt indstillinger for søgetjenester. Denne politik er
 
 policy-SearchSuggestEnabled = Slå søgeforslag til eller fra.
 
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = Installer PKCS #11-moduler.
 
 policy-SSLVersionMax = Angiv den højeste SSL-version.

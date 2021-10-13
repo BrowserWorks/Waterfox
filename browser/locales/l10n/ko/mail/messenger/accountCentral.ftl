@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -48,9 +48,6 @@ import-label = 가져오기
     .aria-label = 다른 프로그램에서 데이터 가져오기
 
 about-paragraph = Thunderbird는 오픈 소스 크로스 플랫폼으로 회사에서나 개인이 무료로 이용할 수있는 인기 높은 메일, 캘린더 클라이언트입니다. 저희는 보안을 지키면서 더욱 개선해 나가고자 합니다. 기부는 개발자 채용, 인프라 구축 및 개선 작업을 진행할 수 있게 해줍니다.
-
-about-paragraph-2 = <b>Thunderbird는 사용자에 의해서 자금을 지원 받습니다. Thunderbird를 좋아하신다면 기부를 해 주세요.</b> Thunderbird를 계속 사용할 수 있는 가장 좋은 방법은
-about-donation = 기부 하기
 
 about-paragraph-consider-donation = <b>Thunderbird는 여러분과 같은 사용자에 의해서 자금을 지원받습니다. Thunderbird를 좋아하신다면, 기부를 고려해주십시오.</b> Thunderbird를 계속 사용할 수 있도록 하는 가장 좋은 방법은 <a data-l10n-name="donation-link">기부하는 것입니다.</a>
 

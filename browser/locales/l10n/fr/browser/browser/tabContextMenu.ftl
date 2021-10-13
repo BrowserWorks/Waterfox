@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -51,9 +51,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = Ajouter l’onglet aux marque-pages
     .accesskey = M
-reopen-in-container =
-    .label = Rouvrir dans un onglet conteneur
-    .accesskey = O
 tab-context-open-in-new-container-tab =
     .label = Ouvrir dans un nouvel onglet conteneur
     .accesskey = e
@@ -69,25 +66,6 @@ move-to-new-window =
 tab-context-close-multiple-tabs =
     .label = Fermer plusieurs onglets
     .accesskey = l
-tab-context-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [one] Annuler la fermeture de l’onglet
-           *[other] Annuler la fermeture des onglets
-        }
-    .accesskey = n
-close-tab =
-    .label = Fermer l’onglet
-    .accesskey = F
-close-tabs =
-    .label = Fermer les onglets
-    .accesskey = S
-move-tabs =
-    .label = Déplacer les onglets
-    .accesskey = D
-move-tab =
-    .label = Déplacer l’onglet
-    .accesskey = D
 tab-context-share-url =
     .label = Partager
     .accesskey = P
@@ -112,6 +90,14 @@ tab-context-close-tabs =
            *[other] Fermer les onglets
         }
     .accesskey = F
+tab-context-close-n-tabs =
+    .label =
+        { $tabCount ->
+            [1] Fermer l’onglet
+            [one] Fermer l’onglet
+           *[other] Fermer { $tabCount } onglets
+        }
+    .accesskey = F
 tab-context-move-tabs =
     .label =
         { $tabCount ->
@@ -119,3 +105,11 @@ tab-context-move-tabs =
            *[other] Déplacer les onglets
         }
     .accesskey = c
+
+tab-context-send-tabs-to-device =
+    .label =
+        { $tabCount ->
+            [one] Envoyer l’onglet à un appareil
+           *[other] Envoyer { $tabCount } onglets à un appareil
+        }
+    .accesskey = v

@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY windowTitle2.label "Zapisz i zmień kodowanie tekstu">
-<!ENTITY documentTitleTitle.label "Tytuł strony">
-<!ENTITY documentCharsetTitle2.label "Kodowanie tekstu">
-<!ENTITY documentCharsetDesc2.label "Proszę wybrać kodowanie tekstu dla zapisywanego dokumentu:">
-<!ENTITY documentExportToText.label "Eksportuj do formatu tekstowego">

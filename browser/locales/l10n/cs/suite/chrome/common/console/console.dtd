@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -36,7 +36,7 @@
 <!ENTITY focus1.commandkey     "l">
 <!ENTITY focus2.commandkey     "d">
 
-<!ENTITY menuBar.tooltip       "Lišta nabídky">
+<!ENTITY menuBar.tooltip       "Hlavní nabídka">
 <!ENTITY modeToolbar.tooltip   "Lišta režimu">
 <!ENTITY entryToolbar.tooltip  "Lišta vstupu JavaScriptu">
 <!ENTITY toolbarsCmd.label     "Nástrojové lišty">

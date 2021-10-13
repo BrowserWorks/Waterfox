@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-addons-window =
-    .title = Gestione componenti aggiuntivi
 addons-page-title = Gestione componenti aggiuntivi
 
 search-header =
@@ -35,18 +33,6 @@ help-button = Supporto componenti aggiuntivi
 sidebar-help-button-title =
     .title = Supporto componenti aggiuntivi
 
-preferences =
-    { PLATFORM() ->
-        [windows] Opzioni di { -brand-short-name }
-       *[other] Preferenze di { -brand-short-name }
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] Opzioni di { -brand-short-name }
-           *[other] Preferenze di { -brand-short-name }
-        }
-
 addons-settings-button = Impostazioni di { -brand-short-name }
 sidebar-settings-button-title =
     .title = Impostazioni di { -brand-short-name }
@@ -56,43 +42,6 @@ show-unsigned-extensions-button =
 
 show-all-extensions-button =
     .label = Visualizza tutte le estensioni
-
-cmd-show-details =
-    .label = Visualizza ulteriori informazioni
-    .accesskey = V
-
-cmd-find-updates =
-    .label = Controlla aggiornamenti
-    .accesskey = C
-
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Opzioni
-           *[other] Preferenze
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] P
-        }
-
-cmd-enable-theme =
-    .label = Utilizza questo tema
-    .accesskey = t
-
-cmd-disable-theme =
-    .label = Abbandona questo tema
-    .accesskey = t
-
-cmd-install-addon =
-    .label = Installa
-    .accesskey = I
-
-cmd-contribute =
-    .label = Fai una donazione
-    .accesskey = F
-    .tooltiptext = Contribuisci allo sviluppo di questo componente aggiuntivo
 
 detail-version =
     .label = Versione
@@ -351,6 +300,7 @@ install-theme-button = Installa tema
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = Gestisci
 find-more-addons = Trova altri componenti aggiuntivi
+find-more-themes = Trova altri temi
 
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
@@ -383,6 +333,8 @@ theme-disabled-heading = Disattivati
 
 plugin-enabled-heading = Attivi
 plugin-disabled-heading = Disattivati
+theme-monochromatic-heading = Tonalità
+theme-monochromatic-subheading = Nuove vibranti tonalità da { -brand-product-name }. Disponibili per un periodo limitato.
 
 dictionary-enabled-heading = Attivi
 dictionary-disabled-heading = Disattivati
@@ -390,7 +342,6 @@ dictionary-disabled-heading = Disattivati
 locale-enabled-heading = Attive
 locale-disabled-heading = Disattivate
 
-ask-to-activate-button = Chiedi prima di attivare
 always-activate-button = Attiva sempre
 never-activate-button = Non attivare mai
 
@@ -437,12 +388,15 @@ addon-detail-private-browsing-help = Se viene garantito il permesso, l’estensi
 addon-detail-private-browsing-allow = Consenti
 addon-detail-private-browsing-disallow = Non consentire
 
+## This is the tooltip text for the recommended badges for an extension in about:addons. The
+## badge is a small icon displayed next to an extension when it is recommended on AMO.
+
 addon-badge-recommended2 =
     .title = Vengono consigliate solo estensioni che soddisfano i requisiti di sicurezza e prestazioni di { -brand-product-name }
     .aria-label = { addon-badge-recommended2.title }
 
 addon-badge-line3 =
-  .title = Estensione ufficiale realizzata da Mozilla. Rispetta gli standard in materia di sicurezza e prestazioni
+  .title = Estensione ufficiale realizzata da Waterfox. Rispetta gli standard in materia di sicurezza e prestazioni
   .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
   .title = Questa estensione è stata verificata per garantire il rispetto dei nostri standard in materia di sicurezza e prestazioni
@@ -457,6 +411,7 @@ release-notes-loading = Caricamento in corso…
 release-notes-error = Siamo spiacenti, si è verificato un errore durante il caricamento delle note di versione.
 
 addon-permissions-empty = Questa estensione non richiede alcun permesso
+
 addon-permissions-required = Permessi obbligatori per funzionalità principali:
 addon-permissions-optional = Permessi facoltativi per funzionalità aggiuntive:
 addon-permissions-learnmore = Ulteriori informazioni sui permessi
@@ -464,7 +419,7 @@ addon-permissions-learnmore = Ulteriori informazioni sui permessi
 recommended-extensions-heading = Estensioni consigliate
 recommended-themes-heading = Temi consigliati
 
-recommended-theme-1 = Ti senti creativo? <a data-l10n-name="link">Disegna il tuo tema con Firefox Color</a>.
+recommended-theme-1 = Ti senti creativo? <a data-l10n-name="link">Disegna il tuo tema con Waterfox Color</a>.
 
 ## Page headings
 

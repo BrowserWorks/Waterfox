@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -39,6 +39,10 @@ account-provisioner-button = Skapa en ny e-postadress
     .accesskey = S
 account-setup-password-toggle =
     .title = Visa/dölj lösenord
+account-setup-password-toggle-show =
+    .title = Visa lösenord i klartext
+account-setup-password-toggle-hide =
+    .title = Dölj lösenord
 account-setup-remember-password = Kom ihåg lösenord
     .accesskey = K
 account-setup-exchange-label = Din inloggning
@@ -72,8 +76,8 @@ account-setup-looking-up-settings-guess = Undersöker konfigurationen: Försöke
 account-setup-looking-up-settings-half-manual = Undersöker konfiguration: Avsöker server...
 account-setup-looking-up-disk = Undersöker konfiguration: { -brand-short-name } installation…
 account-setup-looking-up-isp = Undersöker konfiguration: E-postleverantör…
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-looking-up-db = Undersöker konfiguration: Mozilla ISP-databas…
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-looking-up-db = Undersöker konfiguration: Waterfox ISP-databas…
 account-setup-looking-up-mx = Undersöker konfiguration: Inkommande e-postdomän…
 account-setup-looking-up-exchange = Undersöker konfiguration: Exchange-server…
 account-setup-checking-password = Kontrollerar lösenord…
@@ -83,8 +87,8 @@ account-setup-success-guess = Konfiguration hittades genom att prova vanliga ser
 account-setup-success-guess-offline = Du är offline. Vi gissade några inställningar men du måste ange rätt inställningar.
 account-setup-success-password = Lösenord OK
 account-setup-success-addon = Tillägget har installerats
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-success-settings-db = Konfiguration hittades i Mozilla ISP-databas.
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-success-settings-db = Konfiguration hittades i Waterfox ISP-databas.
 account-setup-success-settings-disk = Konfiguration hittades vid installationen av { -brand-short-name }.
 account-setup-success-settings-isp = Konfigurationen hittades hos e-postleverantören.
 # Note: Microsoft Exchange is a product name.
@@ -102,12 +106,13 @@ account-setup-step4-image =
     .title = Anslutningsfel
 account-setup-step5-image =
     .title = Konto skapat
-account-setup-privacy-footnote = Dina uppgifter kommer att användas i enlighet med vår <a data-l10n-name="privacy-policy-link">sekretesspolicy</a> och lagras endast lokalt på din dator.
+account-setup-privacy-footnote2 = Dina uppgifter lagras endast lokalt på din dator.
 account-setup-selection-help = Är du inte säker på vad du ska välja?
 account-setup-selection-error = Behöver du hjälp?
 account-setup-success-help = Är du inte säker på ditt nästa steg?
 account-setup-documentation-help = Installationsdokumentation
 account-setup-forum-help = Supportforum
+account-setup-privacy-help = Sekretesspolicy
 account-setup-getting-started = Komma igång
 
 ## Results area
@@ -127,7 +132,8 @@ account-setup-result-pop = POP3
 account-setup-result-pop-description = Håll dina mappar och e-postmeddelanden på din dator
 # Note: Exchange is the name of a product.
 account-setup-result-exchange = Exchange
-account-setup-result-exchange-description = Microsoft Exchange Server
+# Note: Exchange, Office365 are the name of products.
+account-setup-result-exchange2-description = Använd Microsoft Exchange-servern eller Office365 molntjänster
 account-setup-incoming-title = Inkommande
 account-setup-outgoing-title = Utgående
 account-setup-username-title = Användarnamn
@@ -149,6 +155,7 @@ account-setup-credentials-incomplete = Autentisering misslyckades. Antingen är 
 account-setup-credentials-wrong = Autentisering misslyckades. Kontrollera användarnamnet och lösenordet
 account-setup-find-settings-failed = { -brand-short-name } misslyckades med att hitta inställningarna för ditt e-postkonto
 account-setup-exchange-config-unverifiable = Konfigurationen kunde inte verifieras. Om ditt användarnamn och lösenord är korrekt är det troligt att serveradministratören har inaktiverat den valda konfigurationen för ditt konto. Försök att välja ett annat protokoll.
+account-setup-provisioner-error = Ett fel uppstod när ditt nya konto skulle konfigureras i { -brand-short-name }. Försök att konfigurera ditt konto manuellt med dina  	autentiseringsuppgifter.
 
 ## Manual configuration area
 
@@ -204,6 +211,17 @@ insecure-dialog-confirm-button = Bekräfta
 exchange-dialog-question = { -brand-short-name } hittade din kontoinställningsinformation på { $domain }. Vill du fortsätta och skicka dina uppgifter?
 exchange-dialog-confirm-button = Inloggning
 exchange-dialog-cancel-button = Avbryt
+
+## Dismiss account creation dialog
+
+exit-dialog-title = Inget e-postkonto har konfigurerats
+exit-dialog-description = Är du säker på att du vill avbryta installationsprocessen? { -brand-short-name } kan fortfarande användas utan ett e-postkonto, men många funktioner är inte tillgängliga.
+account-setup-no-account-checkbox = Använd { -brand-short-name } utan ett e-postkonto
+    .accesskey = A
+exit-dialog-cancel-button = Fortsätt installationen
+    .accesskey = F
+exit-dialog-confirm-button = Avsluta installationen
+    .accesskey = A
 
 ## Alert dialogs
 

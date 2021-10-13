@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -20,10 +20,6 @@
 "Étroite intégration à la suite applicative &brandShortName;">
 <!ENTITY dict.title "Dictionnaires">
 <!ENTITY dict_intro.label "Les dictionnaires sont utilisés pour vérifier l’orthographe de vos messages.">
-<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
-<!ENTITY dict_info.label
-'D’autres dictionnaires peuvent être installés depuis la section
-<a id="dictURL" href="">Dictionnaires</a> sur <a href="http://addons.mozilla.org/">&brandShortName; Add-ons</a>.'>
 <!ENTITY dict_info.label2
 'Il est possible d’installer un grand nombre de langues supplémentaires depuis la section
 <a id="dictURL" href="">dictionnaires</a> des

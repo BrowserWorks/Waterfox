@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -14,11 +14,3 @@
 
 <!ENTITY searchTextBox.clear.label "Effacer">
 
-<!ENTITY fillLoginMenu.label          "Renseigner l’identifiant">
-<!ENTITY fillLoginMenu.accesskey      "R">
-<!ENTITY fillPasswordMenu.label       "Renseigner le mot de passe">
-<!ENTITY fillPasswordMenu.accesskey   "R">
-<!ENTITY fillUsernameMenu.label       "Renseigner le nom d’utilisateur">
-<!ENTITY fillUsernameMenu.accesskey   "R">
-<!ENTITY noLoginSuggestions.label     "(Aucun identifiant suggéré)">
-<!ENTITY viewSavedLogins.label        "Afficher les identifiants enregistrés">

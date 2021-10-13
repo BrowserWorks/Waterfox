@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -41,6 +41,7 @@ compatibility-issue-occurrences =
     { $number ->
        *[other] 遇到 { $number } 个
     }
+
 compatibility-no-issues-found = 未发现兼容性问题。
 compatibility-close-settings-button =
     .title = 关闭设置

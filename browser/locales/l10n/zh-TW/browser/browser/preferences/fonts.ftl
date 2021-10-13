@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -112,45 +112,6 @@ fonts-allow-own =
 ##
 ## Translate the encoding names as adjectives for an encoding, not as the name
 ## of the language.
-
-fonts-languages-fallback-header = 開啟老舊內容時使用的文字編碼
-fonts-languages-fallback-desc = 將會使用此編碼來開啟未正確宣告其編碼的老舊內容。
-
-fonts-languages-fallback-label = 備用字元編碼
-    .accesskey = T
-
-fonts-languages-fallback-name-auto =
-    .label = 目前語系的預設值
-fonts-languages-fallback-name-arabic =
-    .label = 阿拉伯文
-fonts-languages-fallback-name-baltic =
-    .label = 波羅的語系
-fonts-languages-fallback-name-ceiso =
-    .label = 中歐語系，ISO
-fonts-languages-fallback-name-cewindows =
-    .label = 中歐語系，Microsoft
-fonts-languages-fallback-name-simplified =
-    .label = 簡體中文
-fonts-languages-fallback-name-traditional =
-    .label = 正體中文
-fonts-languages-fallback-name-cyrillic =
-    .label = 俄文／西里爾文字
-fonts-languages-fallback-name-greek =
-    .label = 希臘文
-fonts-languages-fallback-name-hebrew =
-    .label = 希伯來文
-fonts-languages-fallback-name-japanese =
-    .label = 日文
-fonts-languages-fallback-name-korean =
-    .label = 韓文
-fonts-languages-fallback-name-thai =
-    .label = 泰文
-fonts-languages-fallback-name-turkish =
-    .label = 土耳其語
-fonts-languages-fallback-name-vietnamese =
-    .label = 越南文
-fonts-languages-fallback-name-other =
-    .label = 其他（包含西歐語系）
 
 # Variables:
 #   $name {string, "Arial"} - Name of the default font

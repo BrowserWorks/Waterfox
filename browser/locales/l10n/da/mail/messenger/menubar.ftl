@@ -1,13 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ## View Menu
-
-menu-view-charset =
-    .label = Tegnkodning
-    .accesskey = T
 
 ## Tools Menu
 
@@ -16,6 +12,7 @@ menu-view-charset =
 menu-tools-preferences =
     .label = Indstillinger
     .accesskey = n
+
 menu-addons-and-themes =
     .label = Tilføjelser og temaer
     .accesskey = T
@@ -25,9 +22,11 @@ menu-addons-and-themes =
 menu-help-enter-troubleshoot-mode =
     .label = Fejlsøgnings-tilstand…
     .accesskey = F
+
 menu-help-exit-troubleshoot-mode =
     .label = Slå fejlsøgnings-tilstand fra
     .accesskey = S
+
 menu-help-more-troubleshooting-info =
     .label = Mere teknisk information
     .accesskey = t
@@ -58,12 +57,18 @@ menu-view-repair-text-encoding =
 mail-uidensity-label =
     .label = Tæthed
     .accesskey = T
+
 mail-uidensity-compact =
     .label = Kompakt
     .accesskey = K
+
 mail-uidensity-normal =
     .label = Normal
     .accesskey = N
+
 mail-uidensity-touch =
     .label = Touch
     .accesskey = T
+
+## File
+

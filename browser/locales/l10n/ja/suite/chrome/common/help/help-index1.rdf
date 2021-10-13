@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -623,11 +623,6 @@
          nc:link="using_certs_help.xhtml#about_security_devices_and_modules"/>
      </rdf:li>
      <rdf:li>
-       <rdf:Description ID="DOM_Inspector"
-         nc:name="DOM Inspector"
-         nc:link="developer_tools.xhtml#inspector"/>
-     </rdf:li>
-     <rdf:li>
        <rdf:Description ID="Download_Manager"
          nc:name="Download Manager"
          nc:link="nav_help.xhtml#plugins_and_downloads"/>
@@ -799,7 +794,13 @@
      <rdf:li>
        <rdf:Description ID="HTML"
          nc:name="HTML"/>
-     </rdf:li><rdf:li>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="HTML_editor"
+         nc:name="HTML editor"
+         nc:link="composer_help.xhtml"/>
+     </rdf:li>
+     <rdf:li>
        <rdf:Description ID="HTTP_Networking"
          nc:name="HTTP Networking"
          nc:link="cs_nav_prefs_advanced.xhtml#http_networking"/>
@@ -2143,7 +2144,7 @@
      </rdf:li>
      <rdf:li>
        <rdf:Description ID="toolbar:personal_toolbar"
-         nc:name="personal toolbar"
+         nc:name="Bookmarks Toolbar"
          nc:link="customize_help.xhtml#personal_toolbar"/>
      </rdf:li></rdf:Seq>
    </nc:subheadings>

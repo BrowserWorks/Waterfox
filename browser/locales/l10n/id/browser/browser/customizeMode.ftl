@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,8 +23,6 @@ customize-mode-uidensity-menu-touch =
     .tooltiptext = Sentuh
 customize-mode-uidensity-auto-touch-mode-checkbox =
     .label = Gunakan Sentuhan untuk Mode Sabak
-customize-mode-extra-drag-space =
-    .label = Seret Ruang
 customize-mode-lwthemes =
     .label = Tema
 customize-mode-overflow-list-description = Seret dan lepas item ke sini untuk menjaganya dalam jangkau namun di luar bilah perkakas Anda…
@@ -32,10 +30,6 @@ customize-mode-uidensity-menu-normal =
     .label = Normal
     .accesskey = N
     .tooltiptext = Normal
-customize-mode-uidensity-menu-compact =
-    .label = Ringkas
-    .accesskey = R
-    .tooltiptext = Ringkas
 customize-mode-uidensity-menu-compact-unsupported =
     .label = Ringkas (tidak didukung)
     .accesskey = R

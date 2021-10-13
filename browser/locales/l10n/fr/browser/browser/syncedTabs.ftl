@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = Vous souhaitez afficher ici les onglets
 synced-tabs-sidebar-intro = Affichez la liste des onglets de vos autres appareils.
 synced-tabs-sidebar-unverified = Votre compte doit être vérifié.
 synced-tabs-sidebar-notabs = Aucun onglet ouvert
-synced-tabs-sidebar-openprefs = Ouvrir les préférences de { -sync-brand-short-name }
 synced-tabs-sidebar-open-settings = Ouvrir les paramètres de synchronisation
 synced-tabs-sidebar-tabsnotsyncing = Activez la synchronisation des onglets pour afficher la liste des onglets de vos autres appareils.
 synced-tabs-sidebar-connect-another-device = Connecter un autre appareil
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = Synchroniser maintenant
     .accesskey = S
-fxa-sign-in = Se connecter à { -sync-brand-short-name }
-turn-on-sync = Activer { -sync-brand-short-name }
 synced-tabs-fxa-sign-in = Se connecter pour synchroniser
 synced-tabs-turn-on-sync = Activer la synchronisation

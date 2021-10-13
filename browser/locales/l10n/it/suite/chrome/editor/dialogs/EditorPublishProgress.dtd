@@ -1,13 +1,15 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY siteUrl.label "URL sito:">
 <!ENTITY docSubdir.label "Percorso pagina:">
 <!ENTITY otherSubdir.label "Percorso immagini:">
+
 <!ENTITY status.label "Pubblicazione in corso…">
 <!ENTITY fileList.label "Stato pubblicazione">
 <!ENTITY succeeded.label "Riuscita">
 <!ENTITY failed.label "Non riuscita">
+
 <!ENTITY keepOpen "Mantieni aperta questa finestra anche a pubblicazione completata.">
 <!ENTITY closeButton.label "Chiudi">

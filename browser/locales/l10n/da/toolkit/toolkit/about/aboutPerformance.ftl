@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,6 +6,7 @@
 about-performance-title = Jobliste
 
 ## Column headers
+
 column-name = Navn
 column-type = Type
 column-energy-impact = Energi-forbrug
@@ -13,12 +14,14 @@ column-energy-impact = Energi-forbrug
 column-memory = Hukommelse
 
 ## Special values for the Name column
+
 ghost-windows = Nyligt lukkede faneblade
 # Variables:
 #   $title (String) - the title of the preloaded page, typically 'New Tab'
 preloaded-tab = Forhåndsindlæst: { $title }
 
 ## Values for the Type column
+
 type-tab = Faneblad
 type-subframe = Subframe
 type-tracker = Tracker
@@ -32,6 +35,7 @@ type-other = Andet
 ## Variables:
 ##   $value (Number) - Value of the energy impact, eg. 0.25 (low),
 ##                     5.38 (medium), 105.38 (high)
+
 energy-impact-high = Høj ({ $value })
 energy-impact-medium = Medium ({ $value })
 energy-impact-low = Lav ({ $value })
@@ -40,11 +44,13 @@ energy-impact-low = Lav ({ $value })
 ##
 ## Variables:
 ##   $value (Number) - How much memory is used
+
 size-KB = { $value } KB
 size-MB = { $value } MB
 size-GB = { $value } GB
 
 ## Tooltips for the action buttons
+
 close-tab =
     .title = Luk faneblad
 show-addon =

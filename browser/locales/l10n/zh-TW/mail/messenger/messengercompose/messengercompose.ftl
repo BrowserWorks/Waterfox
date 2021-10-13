@@ -1,15 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 # Addressing widget
 
-#   $type (String) - the type of the addressing row
-remove-address-row-type = 移除 { $type } 欄位
-#   $type (String) - the type of the addressing row
-remove-address-row-type-label =
-    .tooltiptext = 移除 { $type } 欄位
 #   $type (String) - the type of the addressing row
 remove-address-row-button =
     .title = 移除 { $type } 欄位
@@ -66,6 +61,10 @@ toolbar-button-add-attachment =
 add-attachment-notification-reminder =
     .label = 新增附件…
     .tooltiptext = { toolbar-button-add-attachment.tooltiptext }
+add-attachment-notification-reminder2 =
+    .label = 新增附件…
+    .accesskey = A
+    .tooltiptext = { toolbar-button-add-attachment.tooltiptext }
 menuitem-attach-files =
     .label = 檔案…
     .accesskey = F
@@ -82,20 +81,14 @@ attachment-bucket-count =
            *[other] { $count } 個附件
         }
     .accesskey = m
-#   $count (Number) - the number of attachments in the attachment bucket
-attachments-placeholder-tooltip =
-    .tooltiptext =
-        { $count ->
-            [0] 沒有附件
-           *[other] { $count } 個附件
-        }
-#   { attachment-bucket-count.accesskey } - Do not localize this message.
-key-toggle-attachment-pane =
-    .key = { attachment-bucket-count.accesskey }
 expand-attachment-pane-tooltip =
     .tooltiptext = 顯示附件窗格（{ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key }）
 collapse-attachment-pane-tooltip =
     .tooltiptext = 隱藏附件窗格（{ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key }）
+attachment-area-show =
+    .title = 顯示附件窗格（{ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key }）
+attachment-area-hide =
+    .title = 隱藏附件窗格（{ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key }）
 drop-file-label-attachment =
     { $count ->
        *[other] 新增為附件
@@ -118,6 +111,13 @@ move-attachment-last-panel-button =
 button-return-receipt =
     .label = 收件回執
     .tooltiptext = 要求對方收信後寄發回執
+
+# Encryption
+
+message-to-be-signed-icon =
+    .alt = 簽署訊息
+message-to-be-encrypted-icon =
+    .alt = 加密訊息
 
 # Addressing Area
 
@@ -153,12 +153,74 @@ bcc-compose-show-address-row-label =
     .tooltiptext = 顯示「{ bcc-compose-address-row-label.value }」欄位（{ bcc-compose-show-address-row-menuitem.acceltext }）
 #   $count (Number) - the count of addresses in the "To" and "Cc" fields.
 many-public-recipients-info = 「給」與「副本」收件者共有 { $count } 位，都可看到彼此的收件信箱。您可以改用「密件副本」來避免揭露收件者資訊。
+to-address-row-label =
+    .value = 給
+#   $key (String) - the shortcut key for this field
+show-to-row-main-menuitem =
+    .label = 「給」欄位
+    .accesskey = T
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-to-row-button text.
+show-to-row-extra-menuitem =
+    .label = 給
+    .accesskey = T
+#   $key (String) - the shortcut key for this field
+show-to-row-button = 給
+    .title = 顯示「給」欄位（{ ctrl-cmd-shift-pretty-prefix }{ $key }）
+cc-address-row-label =
+    .value = 副本
+#   $key (String) - the shortcut key for this field
+show-cc-row-main-menuitem =
+    .label = 「副本」欄位
+    .accesskey = C
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-cc-row-button text.
+show-cc-row-extra-menuitem =
+    .label = 副本
+    .accesskey = C
+#   $key (String) - the shortcut key for this field
+show-cc-row-button = 副本
+    .title = 顯示「副本」欄位（{ ctrl-cmd-shift-pretty-prefix }{ $key }）
+bcc-address-row-label =
+    .value = 密件副本
+#   $key (String) - the shortcut key for this field
+show-bcc-row-main-menuitem =
+    .label = 「密件副本」欄位
+    .accesskey = B
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-bcc-row-button text.
+show-bcc-row-extra-menuitem =
+    .label = 密件副本
+    .accesskey = B
+#   $key (String) - the shortcut key for this field
+show-bcc-row-button = 密件副本
+    .title = 顯示「密件副本」欄位（{ ctrl-cmd-shift-pretty-prefix }{ $key }）
+extra-address-rows-menu-button =
+    .title = 其他要顯示的地址欄位
+#   $count (Number) - the count of addresses in the "To" and "Cc" fields.
+many-public-recipients-notice =
+    { $count ->
+        [one] 您的訊息當中有公開的收件者，可以改用「密件副本」來避免揭露收件者資訊。
+       *[other] 「給」與「副本」收件者共有 { $count } 位，都可看到彼此的收件信箱。您可以改用「密件副本」來避免揭露收件者資訊。
+    }
 many-public-recipients-bcc =
     .label = 改為密件副本收件者
     .accesskey = U
 many-public-recipients-ignore =
     .label = 保持收件者名單公開
     .accesskey = K
+many-public-recipients-prompt-title = 太多公開收件者
+#   $count (Number) - the count of addresses in the public recipients fields.
+many-public-recipients-prompt-msg =
+    { $count ->
+        [one] 您的訊息包含公開的收件者，可能會造成隱私權疑慮。可以將他們移到「密件副本」來避免揭露收件者資訊。
+       *[other] 您的訊息當中有 { $count } 位公開的收件者，他們都能看到彼此的信箱，可能會造成隱私權疑慮。可以將他們移到「密件副本」來避免揭露收件者資訊。
+    }
+many-public-recipients-prompt-cancel = 取消傳送
+many-public-recipients-prompt-send = 還是要寄出
 
 ## Notifications
 
@@ -167,3 +229,11 @@ many-public-recipients-ignore =
 compose-missing-identity-warning = 找不到寄件地址對應的唯一識別資料。將使用目前的寄件者欄位資料，以及 { $identity } 身份的設定來寄信。
 encrypted-bcc-warning = 寄出加密郵件時，不會完全隱藏密件副本收件者。所有的收件者都可能識別出他們。
 encrypted-bcc-ignore-button = 知道了！
+
+## Editing
+
+
+# Tools
+
+compose-tool-button-remove-text-styling =
+    .tooltiptext = 刪除文字樣式

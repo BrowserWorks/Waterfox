@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -51,9 +51,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = 將分頁加入書籤
     .accesskey = B
-reopen-in-container =
-    .label = 使用容器開啟
-    .accesskey = e
 tab-context-open-in-new-container-tab =
     .label = 用新容器分頁開啟
     .accesskey = e
@@ -69,25 +66,6 @@ move-to-new-window =
 tab-context-close-multiple-tabs =
     .label = 關閉多個分頁
     .accesskey = M
-tab-context-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] 復原已關閉分頁
-           *[other] 復原已關閉分頁
-        }
-    .accesskey = U
-close-tab =
-    .label = 關閉分頁
-    .accesskey = c
-close-tabs =
-    .label = 關閉分頁
-    .accesskey = S
-move-tabs =
-    .label = 移動分頁
-    .accesskey = v
-move-tab =
-    .label = 移動分頁
-    .accesskey = v
 tab-context-share-url =
     .label = 分享
     .accesskey = h
@@ -110,9 +88,24 @@ tab-context-close-tabs =
            *[other] 關閉分頁
         }
     .accesskey = C
+tab-context-close-n-tabs =
+    .label =
+        { $tabCount ->
+            [1] 關閉分頁
+           *[other] 關閉 { $tabCount } 個分頁
+        }
+    .accesskey = C
 tab-context-move-tabs =
     .label =
         { $tabCount ->
            *[other] 移動分頁
         }
     .accesskey = v
+
+tab-context-send-tabs-to-device =
+    .label =
+        { $tabCount ->
+            [1] 將分頁傳送到其他裝置
+           *[other] 將 { $tabCount } 個分頁傳送到其他裝置
+        }
+    .accesskey = n

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,10 +17,6 @@
 <!ENTITY redoCmd.accesskey          "Ε">
 <!ENTITY deleteCmd.label          "Διαγραφή">
 <!ENTITY deleteCmd.accesskey        "Δ">
-<!ENTITY preferencesCmd2.label "Επιλογές">
-<!ENTITY preferencesCmd2.accesskey "ο">
-<!ENTITY preferencesCmdUnix.label       "Προτιμήσεις">
-<!ENTITY preferencesCmdUnix.accesskey     "ρ">
 <!ENTITY customizeCmd.label "Προσαρμογή">
 <!ENTITY customizeCmd.accesskey "σ">
 
@@ -39,8 +35,8 @@
 <!ENTITY quitApplicationCmd.key    "Q">
 <!ENTITY quitApplicationCmd.accesskey  "ξ">
 
-<!ENTITY quitApplicationCmdUnix.label  "Έξοδος">
-<!ENTITY quitApplicationCmdUnix.accesskey  "Έ">
+<!ENTITY quitApplicationCmdUnix.label  "Κλείσιμο">
+<!ENTITY quitApplicationCmdUnix.accesskey  "Κ">
 
-<!ENTITY quitApplicationCmdMac.label  "Κλείσιμο &brandShortName;">
+<!ENTITY quitApplicationCmdMac.label  "Κλείσιμο του &brandShortName;">
 <!ENTITY quitApplicationCmdMac.accesskey  "λ">

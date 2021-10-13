@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,8 +23,6 @@ customize-mode-uidensity-menu-touch =
     .tooltiptext = 觸控
 customize-mode-uidensity-auto-touch-mode-checkbox =
     .label = 在平板電腦模式中使用觸控大小
-customize-mode-extra-drag-space =
-    .label = 拖曳空間
 customize-mode-lwthemes =
     .label = 佈景主題
 customize-mode-overflow-list-description = 將項目拖曳到此處，方便使用又不佔空間…
@@ -32,10 +30,6 @@ customize-mode-uidensity-menu-normal =
     .label = 標準
     .accesskey = N
     .tooltiptext = 標準
-customize-mode-uidensity-menu-compact =
-    .label = 緊密
-    .accesskey = C
-    .tooltiptext = 緊密
 customize-mode-uidensity-menu-compact-unsupported =
     .label = 緊密（不支援）
     .accesskey = C
@@ -47,6 +41,7 @@ customize-mode-undo-cmd =
     .label = 復原
 customize-mode-lwthemes-my-themes =
     .value = 我的佈景主題
+customize-mode-lwthemes-link = 管理佈景主題
 customize-mode-touchbar-cmd =
     .label = 自訂觸控列…
 customize-mode-downloads-button-autohide =

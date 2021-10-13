@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -60,6 +60,7 @@ import-items-page-title = Oggetti da importare
 import-items-description = Selezionare gli oggetti da importare:
 
 import-permissions-page-title = Garantire a { -brand-short-name } i permessi necessari
+
 # Do not translate "Bookmarks.plist"; the file name is the same everywhere.
 import-permissions-description = In macOS è necessario garantire esplicitamente a { -brand-short-name } il permesso di accedere ai segnalibri in Safari. Fare clic su “Continua” e selezionare il file “Bookmarks.plist” nel pannello che verrà visualizzato.
 
@@ -92,7 +93,7 @@ source-name-chrome = Google Chrome
 source-name-chrome-beta = Google Chrome Beta
 source-name-chrome-dev = Google Chrome Dev
 source-name-chromium = Chromium
-source-name-firefox = Waterfox
+source-name-firefox = Waterfox Waterfox
 source-name-360se = 360 Secure Browser
 
 imported-safari-reading-list = Elenco lettura (da Safari)

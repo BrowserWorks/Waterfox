@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = Über Ihre Rechte
 rights-intro = { -brand-full-name } ist freie und quelloffene Software, entwickelt von einer Gemeinschaft tausender Gleichgesinnter, verteilt über die gesamte Welt. Es gibt da einige Dinge, die Sie wissen sollten:
-rights-intro-point-1 = { -brand-short-name } wird Ihnen unter den Bedingungen der <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a> zur Verfügung gestellt. Das bedeutet, Sie dürfen { -brand-short-name } verwenden, kopieren und an andere verteilen. Sie sind auch gerne eingeladen, den Quellcode von { -brand-short-name } zu verändern und an Ihre eigenen Bedürfnisse anzupassen. Die Mozilla Public License gibt Ihnen auch das Recht, Ihre veränderte Version an andere zu verteilen.
-rights-intro-point-2 = Mozilla gibt Ihnen keine Markenrechte oder Lizenzen an den Handelsmarken der Mozilla Foundation oder irgendeiner Partei, einschließlich ohne Einschränkungen am Namen "Waterfox" oder dem Firefox-Logo. Weitere Informationen zur Nutzung der Marken finden Sie <a data-l10n-name="mozilla-trademarks-link">hier</a>.
+rights-intro-point-1 = { -brand-short-name } wird Ihnen unter den Bedingungen der <a data-l10n-name="mozilla-public-license-link">Waterfox Public License</a> zur Verfügung gestellt. Das bedeutet, Sie dürfen { -brand-short-name } verwenden, kopieren und an andere verteilen. Sie sind auch gerne eingeladen, den Quellcode von { -brand-short-name } zu verändern und an Ihre eigenen Bedürfnisse anzupassen. Die Waterfox Public License gibt Ihnen auch das Recht, Ihre veränderte Version an andere zu verteilen.
+rights-intro-point-2 = Waterfox gibt Ihnen keine Markenrechte oder Lizenzen an den Handelsmarken der Waterfox Foundation oder irgendeiner Partei, einschließlich ohne Einschränkungen am Namen "Waterfox" oder dem Waterfox-Logo. Weitere Informationen zur Nutzung der Marken finden Sie <a data-l10n-name="mozilla-trademarks-link">hier</a>.
 rights-intro-point-3 = Manche Funktionen in { -brand-short-name }, wie z.B. der Absturzmelder, geben Ihnen die Möglichkeit, { -vendor-short-name } Feedback zu geben. Indem Sie das Feedback absenden, erteilen Sie { -vendor-short-name } die Erlaubnis, das Feedback zur Verbesserung von Produkten zu nutzen, es auf Webseiten zu veröffentlichen und es zu verteilen.
 rights-intro-point-4 = Wie wir Ihre über { -brand-short-name } an { -vendor-short-name } abgesendeten persönlichen Daten und Ihr Feedback nutzen, ist beschrieben in der <a data-l10n-name="mozilla-privacy-policy-link">{ -brand-short-name }-Datenschutzerklärung</a>.
 rights-intro-point-4-unbranded = Jegliche Datenschutzerklärungen, die für dieses Produkt gelten, sollten hier gelistet werden:

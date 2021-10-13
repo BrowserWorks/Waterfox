@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -37,6 +37,7 @@
 <!ENTITY saslOff.accesskey		   "E">
 <!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
 <!ENTITY saslGSSAPI.accesskey		   "K">
+
 <!-- Localization note: this is here because the width of the dialog 
      is determined by the width of the base DN box; and that is likely
      to vary somewhat with the language.

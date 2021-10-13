@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -42,7 +42,9 @@ perftools-range-interval-milliseconds = { NUMBER($interval, maxFractionalUnits: 
 
 # The size of the memory buffer used to store things in the profiler.
 perftools-range-entries-label = Размер буфера:
+
 perftools-custom-threads-label = Добавить собственные потоки по имени:
+
 perftools-devtools-interval-label = Интервал:
 perftools-devtools-threads-label = Потоки:
 perftools-devtools-settings-label = Настройки
@@ -50,7 +52,7 @@ perftools-devtools-settings-label = Настройки
 ## Various statuses that affect the current state of profiling, not typically displayed.
 
 perftools-status-private-browsing-notice =
-    Профайлер отключается, когда включён приватный просмотр.
+    Профайлер отключается, когда включён приватный режим.
     Закройте все приватные окна, чтобы заново включить профайлер
 perftools-status-recording-stopped-by-another-tool = Запись была остановлена другим инструментом.
 perftools-status-restart-required = Для включения этой функции необходимо перезапустить браузер.
@@ -95,12 +97,13 @@ perftools-thread-img-decoder =
     .title = Потоки декодирования изображений
 perftools-thread-dns-resolver =
     .title = В этом потоке происходит разрешение DNS
-perftools-thread-js-helper =
-    .title = Фоновая работа JS-движка, например компиляция вне основного потока
+perftools-thread-task-controller =
+    .title = Потоки пула потоков TaskController
 
 ##
 
 perftools-record-all-registered-threads = Игнорировать выбор выше и записывать все регистрируемые потоки
+
 perftools-tools-threads-input-label =
     .title = Эти имена потоков представляют собой список разделенный запятыми, который используется для включения профилирования потоков в профайлере. Имя может быть только частичным совпадением с именем потока, который будет включён. Это поле чувствительно к пробелам.
 
@@ -108,9 +111,10 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Профайлер Firefox
 perftools-onboarding-message = <b>Новое</b>:  В Инструменты разработчика теперь интегрирован { -profiler-brand-name }. <a>Узнайте больше</a> об этом новом, мощном инструменте.
+
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (В течение ограниченного периода времени вы сможете использовать старую панель Производительности, используя <a>{ options-context-advanced-settings }</a>)
+
 perftools-onboarding-close-button =
     .aria-label = Закрыть приветственное сообщение

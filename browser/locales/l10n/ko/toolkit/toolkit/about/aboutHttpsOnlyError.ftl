@@ -1,16 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-about-httpsonly-insecure-title = 보안 연결을 사용할 수 없음
-# Variables:
-#   $websiteUrl (String) - Url of the website that failed to load. Example: www.example.com
-about-httpsonly-insecure-explanation-unavailable = HTTPS 전용 모드로 탐색 중이며, <em>{ $websiteUrl }</em>의 보안 HTTPS 버전을 사용할 수 없습니다.
-about-httpsonly-insecure-explanation-reasons = 웹 사이트는 HTTPS를 지원하지 않지만, 공격자가 HTTPS 버전을 차단하고 있을 수도 있습니다.
-about-httpsonly-insecure-explanation-exception = 보안 위험은 낮지만 웹 사이트의 HTTP 버전을 방문하기로 결정한 경우, 비밀번호, 이메일 또는 신용 카드 세부 정보와 같은 민감한 정보는 입력하지 않아야 합니다.
-about-httpsonly-button-make-exception = 위험을 감수하고 사이트로 계속 진행
 about-httpsonly-title-alert = HTTPS 전용 모드 경고
 about-httpsonly-title-connection-not-available = 보안 연결을 사용할 수 없음
+about-httpsonly-title-site-not-available = 보안 사이트를 사용할 수 없음
 # Variables:
 #   $websiteUrl (String) - Url of the website that failed to load. Example: www.example.com
 about-httpsonly-explanation-unavailable2 = 보안 강화를 위해 HTTPS 전용 모드를 사용하도록 설정했으며 <em>{ $websiteUrl }</em>의 HTTPS 버전을 사용할 수 없습니다.

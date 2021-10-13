@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -147,7 +147,7 @@
 
 <!ENTITY securityOverride.exceptionButton1Label "Accetta il rischio e continua">
 
-<!ENTITY errorReporting.automatic2 "Segnala errori come questo per aiutare Mozilla a identificare e bloccare siti dannosi">
+<!ENTITY errorReporting.automatic2 "Segnala errori come questo per aiutare Waterfox a identificare e bloccare siti dannosi">
 <!ENTITY errorReporting.learnMore "Ulteriori informazioni…">
 
 <!ENTITY remoteXUL.longDesc "<p><ul><li>Contattare l’amministratore del sito web e segnalare il problema.</li></ul></p>">

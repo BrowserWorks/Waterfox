@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref-irc.window.title "ChatZilla">
+
+<!ENTITY pref-irc.open.title     "ChatZilla 偏好設定">
+<!ENTITY pref-irc.open.desc      "ChatZilla 的偏好設定太繁雜，無法於這個偏好設定視窗中完整顯示。您可以從此處開啟它自己的偏好設定視窗。">
+<!ENTITY pref-irc.open.label     "開啟 ChatZilla 偏好設定">
+<!ENTITY pref-irc.open.accesskey "O">
+<!ENTITY startup.chat.label "ChatZilla">
+<!ENTITY startup.chat.accesskey "Z">

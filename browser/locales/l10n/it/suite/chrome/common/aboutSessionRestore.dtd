@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,10 +8,12 @@
 <!ENTITY restorepage.remedies "Se &brandShortName; si chiude ripetutamente:">
 <!ENTITY restorepage.dueToChrome "Prova a disattivare tutte le estensioni aggiunte di recente nei Componenti aggiuntivi.">
 <!ENTITY restorepage.dueToContent "Prova a ripristinare la sessione senza le pagine web che potrebbero aver causato il problema:">
+
 <!ENTITY restorepage.restoreButton "Ripristina sessione precedente">
 <!ENTITY restorepage.restore.access "R">
 <!ENTITY restorepage.cancelButton "Avvia una nuova sessione">
 <!ENTITY restorepage.cancel.access "A">
+
 <!ENTITY restorepage.restoreHeader "Ripristina">
 <!ENTITY restorepage.listHeader "Finestre e schede">
 <!ENTITY restorepage.windowLabel "Finestra &#037;S">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -87,8 +87,6 @@
 
 <!ENTITY calendar.newevent.button.label			"新しい予定" >
 <!ENTITY calendar.newtask.button.label			"新しい ToDo" >
-<!ENTITY calendar.print.button.label			"印刷" >
-<!ENTITY calendar.print.button.accesskey		"P">
 
 <!ENTITY calendar.day.button.label			"日" >
 <!ENTITY calendar.week.button.label			"週" >
@@ -375,23 +373,6 @@
 
 <!-- Select Calendar Dialog -->
 <!ENTITY calendar.select.dialog.title			"カレンダーの選択">
-
-<!-- Calendar Printing -->
-<!ENTITY calendar.print.window.title			"カレンダーの印刷">
-<!ENTITY calendar.print.title.label			"件名:">
-<!ENTITY calendar.print.layout.label			"レイアウト:">
-<!ENTITY calendar.print.range.label			"印刷範囲">
-<!ENTITY calendar.print.currentView2.label		"現在の表示範囲">
-<!ENTITY calendar.print.selectedEventsAndTasks.label	"選択した予定/ToDo">
-<!ENTITY calendar.print.tasks.label			"ToDo">
-<!ENTITY calendar.print.events.label			"予定">
-<!ENTITY calendar.print.custom.label			"期間を指定:">
-<!ENTITY calendar.print.from.label			"開始日:">
-<!ENTITY calendar.print.to.label			"終了日:">
-<!ENTITY calendar.print.settingsGroup.label		"印刷設定">
-<!ENTITY calendar.print.optionsGroup.label		"オプション">
-<!ENTITY calendar.print.taskswithnoduedate.label	"締め切りのない ToDo">
-<!ENTITY calendar.print.completedtasks.label		"完了した ToDo">
 
 <!-- Error reporting -->
 <!ENTITY calendar.error.detail				"詳細...">

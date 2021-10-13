@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -29,14 +29,15 @@
 <!ENTITY maxZoom.label                          "till">
 <!ENTITY maxZoom.accesskey                      "i">
 <!ENTITY percent.label                          "&#37;">
-
 <!ENTITY defaultZoom.label                      "Standardzoom">
 <!ENTITY defaultZoom.accesskey                  "d">
 
-<!ENTITY siteSpecific.label                     "Kom ihåg vald zoomnivå för varje webbplats separat">
-<!ENTITY siteSpecific.accesskey                 "m">
 <!ENTITY textZoomOnly.label                     "Zooma bara text i stället för hela sidor">
 <!ENTITY textZoomOnly.accesskey                 "Z">
+<!ENTITY siteSpecific.label                     "Kom ihåg vald zoomnivå för varje webbplats separat">
+<!ENTITY siteSpecific.accesskey                 "m">
+<!ENTITY showZoomStatusPanel.label              "Visa zoomkontrollerna i statusfältet">
+<!ENTITY showZoomStatusPanel.accesskey          "s">
 <!ENTITY enableAutomaticImageResizing.label     "Förminska stora bilder så att de ryms i webbfönstret">
 <!ENTITY enableAutomaticImageResizing.accesskey "F">
 
@@ -45,4 +46,3 @@
 <!ENTITY blockAutoRefresh.label                 "Varna när webbplatsen försöker skicka vidare eller ladda om sidan">
 <!ENTITY blockAutoRefresh.accesskey             "V">
 
-<!ENTITY showZoomStatusPanel.label              "Visa zoomkontrollerna i statusfältet">

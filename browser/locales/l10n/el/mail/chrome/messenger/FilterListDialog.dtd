@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -12,8 +12,8 @@
 <!ENTITY editButton.label "Επεξεργασία…">
 <!ENTITY editButton.accesskey "Ε">
 <!ENTITY deleteButton.label "Διαγραφή">
-<!ENTITY deleteButton.accesskey "Δ">
-<!ENTITY reorderTopButton "Μετακίνηση στην κορυφή">
+<!ENTITY deleteButton.accesskey "φ">
+<!ENTITY reorderTopButton "Μετακίνηση στο πάνω μέρος">
 <!ENTITY reorderTopButton.accessKey "ο">
 <!ENTITY reorderTopButton.toolTip "Αναδιατάξτε το φίλτρο ώστε να εκτελείται πριν από τα άλλα">
 <!ENTITY reorderUpButton.label "Μετακίνηση πάνω">
@@ -22,8 +22,8 @@
 <!ENTITY reorderDownButton.accesskey "κ">
 <!ENTITY reorderBottomButton "Μετακίνηση στο κάτω μέρος">
 <!ENTITY reorderBottomButton.accessKey "μ">
-<!ENTITY reorderBottomButton.toolTip "Επανακατάταξη φίλτρου ώστε να εκτελείται μετά από όλα τα υπόλοιπα">
-<!ENTITY filterHeader.label "Τα ενεργοποιημένα φίλτρα θα εκτελούνται με την παρακάτω σειρά.">
+<!ENTITY reorderBottomButton.toolTip "Αναδιατάξτε το φίλτρο ώστε να εκτελείται μετά τα άλλα">
+<!ENTITY filterHeader.label "Τα ενεργά φίλτρα θα εκτελούνται αυτόματα με την παρακάτω σειρά.">
 <!ENTITY filtersForPrefix.label "Φίλτρα για:">
 <!ENTITY filtersForPrefix.accesskey "Φ">
 <!ENTITY viewLogButton.label "Αρχείο καταγραφής φίλτρου">

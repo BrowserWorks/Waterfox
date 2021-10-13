@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -32,13 +32,12 @@ policy-DisableBuiltinPDFViewer = Vô hiệu hóa PDF.js, trình xem PDF tích h�
 policy-DisableDefaultBrowserAgent = Ngăn chặn tác nhân người dùng trình duyệt mặc định làm bất cứ điều gì. Chỉ dành cho Windows, không có tác nhân người dùng nào khả dụng cho các nền tảng khác.
 policy-DisableDeveloperTools = Chặn truy cập đến công cụ nhà phát triển.
 policy-DisableFeedbackCommands = Tắt các lệnh để gửi phản hồi từ bảng chọn trợ giúp (gửi phản hồi và báo cáo trang web lừa đảo).
-policy-DisableFirefoxAccounts = Vô hiệu hóa { -fxaccount-brand-name } dựa trên các dịch vụ, bao gồm cả đồng bộ.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Vô hiệu hóa tính năng Firefox Screenshots.
-policy-DisableFirefoxStudies = Chặn { -brand-short-name } chạy các nghiên cứu.
+policy-DisableWaterfoxAccounts = Vô hiệu hóa { -fxaccount-brand-name } dựa trên các dịch vụ, bao gồm cả đồng bộ.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableWaterfoxScreenshots = Vô hiệu hóa tính năng Waterfox Screenshots.
+policy-DisableWaterfoxStudies = Chặn { -brand-short-name } chạy các nghiên cứu.
 policy-DisableForgetButton = Chặn truy cập vào nút Quên.
 policy-DisableFormHistory = Không lưu lịch sử tìm kiếm và biểu mẫu.
-policy-DisableMasterPasswordCreation = Nếu đúng, không thể tạo mật khẩu chính.
 policy-DisablePrimaryPasswordCreation = Nếu đúng, không thể tạo mật khẩu chính.
 policy-DisablePasswordReveal = Không cho phép mật khẩu được tiết lộ trong thông tin đăng nhập đã lưu.
 policy-DisablePocket = Tắt tính năng lưu trang web vào Pocket.
@@ -58,14 +57,14 @@ policy-DownloadDirectory = Đặt và khóa thư mục tải xuống.
 # “lock” means that the user won’t be able to change this setting
 policy-EnableTrackingProtection = Kích hoạt hoặc vô hiệu hóa chặn nội dung và tùy chọn khóa nó.
 # “lock” means that the user won’t be able to change this setting
-policy-EncryptedMediaExtensions = Bật hoặc tắt tiện ích mở rộng phương tiện được mã hóa và tùy chọn khóa nó.
+policy-EncryptedMediaExtensions = Kích hoạt hoặc vô hiệu hóa tiện ích mở rộng phương tiện được mã hóa và tùy chọn khóa nó.
 # A “locked” extension can’t be disabled or removed by the user. This policy
 # takes 3 keys (“Install”, ”Uninstall”, ”Locked”), you can either keep them in
 # English or translate them as verbs.
 policy-Extensions = Cài đặt, gỡ cài đặt hoặc khóa tiện ích mở rộng. Tùy chọn Cài đặt lấy URL hoặc đường dẫn làm tham số. Các tùy chọn Gỡ cài đặt và Khóa lấy ID tiện ích mở rộng.
 policy-ExtensionSettings = Quản lý các cài đặt cài đặt khác nhau cho tiện ích mở rộng.
 policy-ExtensionUpdate = Bật hoặc tắt cập nhật tiện ích mở rộng tự động.
-policy-FirefoxHome = Cấu hình trang chủ Firefox.
+policy-WaterfoxHome = Cấu hình trang chủ Waterfox.
 policy-FlashPlugin = Cho phép hoặc từ chối việc sử dụng phần bổ trợ Flash.
 policy-Handlers = Cấu hình trình xử lý ứng dụng mặc định.
 policy-HardwareAcceleration = Nếu không đúng, hãy tắt chế độ tăng tốc phần cứng.
@@ -83,7 +82,6 @@ policy-LegacySameSiteCookieBehaviorEnabledForDomainList = Hoàn nguyên hành vi
 
 policy-LocalFileLinks = Cho phép các trang web cụ thể để liên kết đến các tập tin cục bộ.
 policy-ManagedBookmarks = Định cấu hình danh sách các dấu trang do quản trị viên quản lý mà người dùng không thể thay đổi.
-policy-MasterPassword = Yêu cầu hoặc ngăn chặn sử dụng mật khẩu chính.
 policy-ManualAppUpdateOnly = Chỉ cho phép cập nhật thủ công và không thông báo cho người dùng về các bản cập nhật.
 policy-PrimaryPassword = Yêu cầu hoặc ngăn không sử dụng mật khẩu chính.
 policy-NetworkPrediction = Kích hoạt hoặc vô hiệu hóa dự đoán mạng (tìm nạp trước DNS).
@@ -107,7 +105,7 @@ policy-SanitizeOnShutdown2 = Xóa dữ liệu điều hướng khi tắt máy.
 policy-SearchBar = Đặt thanh tìm kiếm ở vị trí mặc định. Người dùng vẫn được phép tùy chỉnh nó.
 policy-SearchEngines = Cấu hình cài đặt công cụ tìm kiếm. Chính sách này chỉ có sẵn trên phiên bản phát hành hỗ trợ mở rộng (ESR).
 policy-SearchSuggestEnabled = Kích hoạt hoặc vô hiệu hóa các đề xuất tìm kiếm.
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = Cài đặt các mô-đun PKCS # 11.
 policy-ShowHomeButton = Hiển thị nút trang chủ trên thanh công cụ.
 policy-SSLVersionMax = Chỉnh phiên bản SSL tối đa.

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -14,60 +14,60 @@ fonts-langgroup-header = Γραμματοσειρές για
     .accesskey = Γ
 
 fonts-langgroup-arabic =
-    .label = Αραβική
+    .label = Αραβικά
 fonts-langgroup-armenian =
-    .label = Αρμενική
+    .label = Αρμενικά
 fonts-langgroup-bengali =
     .label = Μπενγκάλι
 fonts-langgroup-simpl-chinese =
-    .label = Απλοποιημένη Κινεζική
+    .label = Απλοποιημένα Κινεζικά
 fonts-langgroup-trad-chinese-hk =
-    .label = Παραδοσιακή Κινεζική (Χονγκ Κονγκ)
+    .label = Παραδοσιακά Κινεζικά (Χονγκ Κονγκ)
 fonts-langgroup-trad-chinese =
-    .label = Παραδοσιακή Κινεζική (Ταϊβάν)
+    .label = Παραδοσιακά Κινεζικά (Ταϊβάν)
 fonts-langgroup-cyrillic =
-    .label = Κυριλλική
+    .label = Κυριλλικά
 fonts-langgroup-devanagari =
-    .label = Ντεβανγκάρι
+    .label = Δεβαναγαρικά
 fonts-langgroup-ethiopic =
-    .label = Αιθιοπική
+    .label = Αιθιοπικά
 fonts-langgroup-georgian =
-    .label = Γεωργιανή
+    .label = Γεωργιανά
 fonts-langgroup-el =
-    .label = Ελληνική
+    .label = Ελληνικά
 fonts-langgroup-gujarati =
-    .label = Γκουαρατί
+    .label = Γκουτζαράτι
 fonts-langgroup-gurmukhi =
     .label = Γκουρμούχι
 fonts-langgroup-japanese =
-    .label = Ιαπωνική
+    .label = Ιαπωνικά
 fonts-langgroup-hebrew =
-    .label = Εβραϊκή
+    .label = Εβραϊκά
 fonts-langgroup-kannada =
-    .label = Κανναντα
+    .label = Κανάντα
 fonts-langgroup-khmer =
     .label = Χμερ
 fonts-langgroup-korean =
-    .label = Κορεάτικη
+    .label = Κορεατικά
 # Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language.
 fonts-langgroup-latin =
-    .label = Λατινική
+    .label = Λατινικά
 fonts-langgroup-malayalam =
-    .label = Μαλαισιανή
+    .label = Μαλαγιαλάμ
 fonts-langgroup-math =
     .label = Μαθηματικά
 fonts-langgroup-odia =
-    .label = Οντία
+    .label = Όντια
 fonts-langgroup-sinhala =
-    .label = Σινχάλα
+    .label = Σιναλεζικά
 fonts-langgroup-tamil =
     .label = Ταμίλ
 fonts-langgroup-telugu =
     .label = Τελούγκου
 fonts-langgroup-thai =
-    .label = Ταϊλανδική
+    .label = Ταϊλανδικά
 fonts-langgroup-tibetan =
-    .label = Θιβετιανή
+    .label = Θιβετιανά
 fonts-langgroup-canadian =
     .label = Ενοποιημένο καναδικό συλλαβάριο
 fonts-langgroup-other =
@@ -105,52 +105,13 @@ fonts-minsize-none =
     .label = Κανένα
 
 fonts-allow-own =
-    .label = Να επιτρέπεται στις ιστοσελίδες να επιλέγουν τις δικές τους γραμματοσειρές, αντί για τις παραπάνω
-    .accesskey = Ε
+    .label = Να επιτρέπεται στις σελίδες να επιλέγουν τις δικές τους γραμματοσειρές, αντί για τις παραπάνω
+    .accesskey = Ν
 
 ## Text Encodings
 ##
 ## Translate the encoding names as adjectives for an encoding, not as the name
 ## of the language.
-
-fonts-languages-fallback-header = Κωδικοποίηση κειμένου για συμβατότητα παλαιού περιεχόμενου
-fonts-languages-fallback-desc = Αυτή η κωδικοποίηση κειμένου χρησιμοποιείται για περιεχόμενο παλαιών σελίδων που δεν δηλώνουν την κωδικοποίηση τους.
-
-fonts-languages-fallback-label = Εφεδρική κωδικοποίηση κειμένου
-    .accesskey = Κ
-
-fonts-languages-fallback-name-auto =
-    .label = Προεπιλογή για την τρέχουσα γλώσσα
-fonts-languages-fallback-name-arabic =
-    .label = Αραβική
-fonts-languages-fallback-name-baltic =
-    .label = Βαλτική
-fonts-languages-fallback-name-ceiso =
-    .label = Κεντρική Ευρωπαϊκή, ISO
-fonts-languages-fallback-name-cewindows =
-    .label = Κεντρική Ευρωπαϊκή, Microsoft
-fonts-languages-fallback-name-simplified =
-    .label = Κινεζική, Απλοποιημένη
-fonts-languages-fallback-name-traditional =
-    .label = Κινεζική, Παραδοσιακή
-fonts-languages-fallback-name-cyrillic =
-    .label = Κυριλλική
-fonts-languages-fallback-name-greek =
-    .label = Ελληνική
-fonts-languages-fallback-name-hebrew =
-    .label = Εβραϊκή
-fonts-languages-fallback-name-japanese =
-    .label = Ιαπωνική
-fonts-languages-fallback-name-korean =
-    .label = Κορεάτικη
-fonts-languages-fallback-name-thai =
-    .label = Ταϊλανδέζικη
-fonts-languages-fallback-name-turkish =
-    .label = Τουρκική
-fonts-languages-fallback-name-vietnamese =
-    .label = Βιετναμέζικη
-fonts-languages-fallback-name-other =
-    .label = Άλλη (συμπ. Δυτικής Ευρωπαϊκής)
 
 # Variables:
 #   $name {string, "Arial"} - Name of the default font

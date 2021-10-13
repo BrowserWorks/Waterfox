@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = Over uw rechten
 rights-intro = { -brand-full-name } is vrije en opensourcesoftware, gebouwd door een gemeenschap van duizenden mensen over de hele wereld. Er zijn een paar zaken die u moet weten:
-rights-intro-point-1 = { -brand-short-name } wordt beschikbaar gesteld onder de voorwaarden van de <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a>. Dit betekent dat u { -brand-short-name } mag gebruiken, kopiëren en naar anderen mag distribueren. Ook mag u de broncode van { -brand-short-name } modificeren naar een vorm die aan uw eisen voldoet. De Mozilla Public License geeft u tevens het recht uw aangepaste versies te distribueren.
-rights-intro-point-2 = Er worden u geen rechten of licenties verleend op de handelsmerken van de Mozilla Foundation of enige andere partij, met inbegrip van en zonder beperking tot de naam of het logo van Firefox. Aanvullende informatie over handelsmerken is <a data-l10n-name="mozilla-trademarks-link">hier</a> te vinden.
+rights-intro-point-1 = { -brand-short-name } wordt beschikbaar gesteld onder de voorwaarden van de <a data-l10n-name="mozilla-public-license-link">Waterfox Public License</a>. Dit betekent dat u { -brand-short-name } mag gebruiken, kopiëren en naar anderen mag distribueren. Ook mag u de broncode van { -brand-short-name } modificeren naar een vorm die aan uw eisen voldoet. De Waterfox Public License geeft u tevens het recht uw aangepaste versies te distribueren.
+rights-intro-point-2 = Er worden u geen rechten of licenties verleend op de handelsmerken van de Waterfox Foundation of enige andere partij, met inbegrip van en zonder beperking tot de naam of het logo van Waterfox. Aanvullende informatie over handelsmerken is <a data-l10n-name="mozilla-trademarks-link">hier</a> te vinden.
 rights-intro-point-3 = Enkele onderdelen in { -brand-short-name }, zoals de Crashreporter, bieden u de mogelijkheid feedback aan { -vendor-short-name } te leveren. Door het indienen van feedback geeft u { -vendor-short-name } toestemming de feedback te gebruiken om zijn producten te verbeteren, de feedback op zijn websites te publiceren en de feedback te verspreiden.
 rights-intro-point-4 = Hoe we uw persoonlijke gegevens en feedback gebruiken die via { -brand-short-name } naar { -vendor-short-name } wordt verzonden, wordt beschreven in het <a data-l10n-name="mozilla-privacy-policy-link">{ -brand-short-name }-privacybeleid</a>.
 rights-intro-point-4-unbranded = Privacybeleidsregels die op dit product van toepassing zijn, dienen hier te worden vermeld.

@@ -1,5 +1,5 @@
 <!--
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
@@ -60,15 +60,11 @@
 <!ENTITY  mediaTab              "Įvairialypė terpė">
 
 
-<!ENTITY  mediaAlt              "Alternatyvusis tekstas:">
 <!ENTITY  mediaAltHeader        "Alternatyvus tekstas">
 
 
 <!ENTITY  mediaSize             "Dydis">
 <!ENTITY  mediaCount            "Kiekis">
-<!ENTITY  mediaDimensions       "Matmenys:">
-<!ENTITY  mediaPhysDimensions   "Fiziniai matmenys:">
-<!ENTITY  mediaTitle            "Antraštės požymis:">
 <!ENTITY  mediaLongdesc         "Ilgas aprašas:">
 
 <!ENTITY  mediaSaveAs           "Įrašyti kaip…">
@@ -83,18 +79,7 @@
 
 <!ENTITY  permTab               "Leidimai">
 
-<!ENTITY  permUseDefault        "Naudoti numatytąsias nuostatas">
-<!ENTITY  permAskAlways         "Visada klausti">
-<!ENTITY  permAllow             "Leisti">
-<!ENTITY  permAllowSession      "Leisti šį seansą">
-<!ENTITY  permBlock             "Neleisti">
 <!ENTITY  permissionsFor        "Leidimai:">
-<!ENTITY  permImage             "Paveikslėlių įkėlimas">
-<!ENTITY  permPopup             "Iškylančiųjų langų atvėrimas">
-<!ENTITY  permCookie            "Slapukų įrašymas">
-<!ENTITY  permNotifications     "Pranešimų rodymas">
-<!ENTITY  permInstall           "Plėtinių ir grafinių apvalkalų diegimas">
-<!ENTITY  permGeo               "Jūsų buvimo vietos nustatymas">
 
 <!ENTITY  securityTab           "Saugumas">
 

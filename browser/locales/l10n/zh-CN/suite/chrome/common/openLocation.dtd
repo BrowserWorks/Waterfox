@@ -1,8 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!-- extracted from content/openLocation.xul -->
 
+<!-- extracted from content/openLocation.xul -->
 
 <!ENTITY enter.label "输入网页地址（URL），或者指定要打开的本地文件：">
 <!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
@@ -15,7 +15,7 @@
 <!ENTITY newWindow.label "新建窗口">
 <!ENTITY newTab.label "新建标签页">
 <!ENTITY currentTab.label "当前浏览器标签页">
-<!ENTITY editNewWindow.label "新创作窗口">
+<!ENTITY editNewWindow.label "新建编辑窗口">
 <!ENTITY open.label "打开">
 <!ENTITY caption.label "打开网址">
 <!ENTITY openWhere.label "在…中打开">

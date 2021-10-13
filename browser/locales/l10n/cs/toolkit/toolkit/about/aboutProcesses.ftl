@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -14,43 +14,23 @@ about-processes-shutdown-process =
     .title = Zrušit načtení panelů a zabít proces
 about-processes-shutdown-tab =
     .title = Zavřít panel
+# Profiler icons
+# Variables:
+#    $duration (Number) The time in seconds during which the profiler will be running.
+#                       The value will be an integer, typically less than 10.
+about-processes-profile-process =
+    .title =
+        { $duration ->
+            [one] Profilovat všechna vlákna tohoto procesu po dobu jedné sekundy
+            [few] Profilovat všechna vlákna tohoto procesu po dobu { $duration } sekund
+           *[other] Profilovat všechna vlákna tohoto procesu po dobu { $duration } sekund
+        }
 
 ## Column headers
 
 about-processes-column-name = Název
 about-processes-column-memory-resident = Paměť
 about-processes-column-cpu-total = CPU
-
-## Process names
-## Variables:
-##    $pid (String) The process id of this process, assigned by the OS.
-##    $origin (String) The domain name for this process.
-##    $type (String) The raw type for this process. Used for unknown processes.
-
-about-processes-browser-process-name = { -brand-short-name } (proces { $pid })
-about-processes-web-process-name = Web (proces { $pid }, sdílené)
-about-processes-web-isolated-process-name = Web (proces { $pid }) pro { $origin }
-about-processes-web-large-allocation = Web (proces { $pid }, velký) pro { $origin }
-about-processes-with-coop-coep-process-name = Web (proces { $pid }, cross-origin izolace) pro { $origin }
-about-processes-file-process-name = Soubory (proces { $pid })
-about-processes-extension-process-name = Rozšíření (proces { $pid })
-about-processes-privilegedabout-process-name = About stránka (proces { $pid })
-about-processes-plugin-process-name = Zásuvný modul (proces { $pid })
-about-processes-privilegedmozilla-process-name = Web (proces { $pid }) pro stránky { -vendor-short-name(case: "gen") }
-about-processes-gmp-plugin-process-name = Mediální moduly jádra Gecko (proces { $pid })
-about-processes-gpu-process-name = GPU (proces { $pid })
-about-processes-vr-process-name = VR (proces { $pid })
-about-processes-rdd-process-name = Datový dekodér (proces { $pid })
-about-processes-socket-process-name = Síť (proces { $pid })
-about-processes-remote-sandbox-broker-process-name = Remote Sandbox Broker (proces { $pid })
-about-processes-fork-server-process-name = Fork Server (proces { $pid })
-about-processes-preallocated-process-name = Předalokováno (proces { $pid })
-about-processes-unknown-process-name = Jiný ({ $type }, proces { $pid })
-# Process
-# Variables:
-#   $name (String) The name assigned to the process.
-#   $pid (String) The process id of this process, assigned by the OS.
-about-processes-process-name = Proces { $pid }: { $name }
 
 ## Process names
 ## Variables:
@@ -91,17 +71,6 @@ about-processes-with-coop-coep-process-private = { $origin } — anonymní ({ $p
 
 ## Details within processes
 
-# Single-line summary of threads
-# Variables:
-#    $number (Number) The number of threads in the process. Typically larger
-#                     than 30. We don't expect to ever have processes with less
-#                     than 5 threads.
-about-processes-thread-summary = Vlákna ({ $number })
-# Thread details
-# Variables:
-#   $name (String) The name assigned to the thread.
-#   $tid (String) The thread id of this thread, assigned by the OS.
-about-processes-thread-name = Vlákno { $tid }: { $name }
 # Single-line summary of threads (non-idle process)
 # Variables:
 #    $number (Number) The number of threads in the process. Typically larger
@@ -161,14 +130,10 @@ about-processes-frame-name-many = Podrámy ({ $number }): { $shortUrl }
 ##                   of `duration-unit-*`.
 
 # Common case.
-about-processes-cpu-user-and-kernel = { NUMBER($percent, maximumSignificantDigits: 2, style: "percent") } ({ NUMBER($total, maximumFractionDigits: 0) }{ $unit })
-# Common case.
 about-processes-cpu = { NUMBER($percent, maximumSignificantDigits: 2, style: "percent") }
     .title = Celkový čas CPU: { NUMBER($total, maximumFractionDigits: 0) } { $unit }
 # Special case: data is not available yet.
 about-processes-cpu-user-and-kernel-not-ready = (probíhá měření)
-# Special case: process or thread is currently idle.
-about-processes-cpu-user-and-kernel-idle = neaktivní ({ NUMBER($total, maximumFractionDigits: 2) }{ $unit })
 # Special case: process or thread is currently idle.
 about-processes-cpu-idle = nečinný
     .title = Celkový čas CPU: { NUMBER($total, maximumFractionDigits: 2) } { $unit }
@@ -184,8 +149,6 @@ about-processes-cpu-idle = nečinný
 ##    $deltaUnit (String) The unit in which to display $delta. See the definitions
 ##                        of `memory-unit-*`.
 
-# Common case.
-about-processes-total-memory-size = { NUMBER($total, maximumFractionDigits: 0) }{ $totalUnit } ({ $deltaSign }{ NUMBER($delta, maximumFractionDigits: 0) }{ $deltaUnit })
 # Common case.
 about-processes-total-memory-size-changed = { NUMBER($total, maximumFractionDigits: 0) } { $totalUnit }
     .title = Průběh: { $deltaSign }{ NUMBER($delta, maximumFractionDigits: 0) } { $deltaUnit }

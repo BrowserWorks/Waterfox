@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -32,7 +32,6 @@
 <!ENTITY DisplayName.label "Wyświetlaj jako:">
 <!ENTITY DisplayName.accesskey "j">
 <!ENTITY preferDisplayName.label "Używaj nazwy kontaktu z książki adresowej zamiast nazwy podanej w wiadomości">
-<!ENTITY preferDisplayName.accesskey "j">
 <!ENTITY NickName.label "Pseudonim:">
 <!ENTITY NickName.accesskey "u">
 
@@ -45,8 +44,6 @@
 <!ENTITY PlainText.label "Tekstowy">
 <!ENTITY HTML.label "HTML">
 <!ENTITY Unknown.label "Nieznany">
-<!ENTITY ScreenName.label "Komunikator AIM:">
-<!ENTITY ScreenName.accesskey "A">
 
 <!ENTITY WorkPhone.label "Praca:">
 <!ENTITY WorkPhone.accesskey "P">
@@ -121,7 +118,6 @@
 
 <!ENTITY Photo.tab "Zdjęcie">
 <!ENTITY Photo.accesskey "Z">
-<!ENTITY PhotoDesc.label "">
 <!ENTITY GenericPhoto.label "Standardowy obraz">
 <!ENTITY GenericPhoto.accesskey "t">
 <!ENTITY DefaultPhoto.label "Domyślne">

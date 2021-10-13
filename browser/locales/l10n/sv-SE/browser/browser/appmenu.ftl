@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,25 +12,30 @@ appmenuitem-update-banner3 =
     .label-update-unsupported = Uppdatering misslyckades — systemet är inte kompatibelt
     .label-update-restart = Uppdatering tillgänglig — starta om nu
 appmenuitem-protection-dashboard-title = Säkerhetsöversikt
-appmenuitem-customize-mode =
-    .label = Anpassa…
-
-## Zoom Controls
-
 appmenuitem-new-tab =
     .label = Ny flik
 appmenuitem-new-window =
     .label = Nytt fönster
 appmenuitem-new-private-window =
     .label = Nytt privat fönster
+appmenuitem-history =
+    .label = Historik
+appmenuitem-downloads =
+    .label = Filhämtaren
 appmenuitem-passwords =
     .label = Lösenord
 appmenuitem-addons-and-themes =
     .label = Tillägg och teman
+appmenuitem-print =
+    .label = Skriv ut…
 appmenuitem-find-in-page =
     .label = Hitta på sidan…
+appmenuitem-zoom =
+    .value = Zoom
 appmenuitem-more-tools =
     .label = Fler verktyg
+appmenuitem-help =
+    .label = Hjälp
 appmenuitem-exit2 =
     .label =
         { PLATFORM() ->
@@ -57,15 +62,31 @@ appmenuitem-zoom-reduce =
 appmenuitem-fullscreen =
     .label = Helskärm
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
-fxa-toolbar-sync-now =
-    .label = Synka nu
 appmenu-remote-tabs-sign-into-sync =
     .label = Logga in för att synkronisera…
 appmenu-remote-tabs-turn-on-sync =
     .label = Aktivera synkronisering…
+# This is shown after the tabs list if we can display more tabs by clicking on the button
+appmenu-remote-tabs-showmore =
+    .label = Visa fler flikar
+    .tooltiptext = Visa flikar från denna enhet
+# This is shown beneath the name of a device when that device has no open tabs
+appmenu-remote-tabs-notabs = Inga öppna flikar
+# This is shown when Sync is configured but syncing tabs is disabled.
+appmenu-remote-tabs-tabsnotsyncing = Slå på fliksynkronisering för att visa en lista med flikar från dina andra enheter.
+appmenu-remote-tabs-opensettings =
+    .label = Inställningar
+# This is shown when Sync is configured but this appears to be the only device attached to
+# the account. We also show links to download Waterfox for android/ios.
+appmenu-remote-tabs-noclients = Vill du se dina flikar från andra enheter här?
+appmenu-remote-tabs-connectdevice =
+    .label = Anslut en annan enhet
+appmenu-remote-tabs-welcome = Visa en lista med flikar från dina andra enheter.
+appmenu-remote-tabs-unverified = Ditt konto behöver verifieras.
 appmenuitem-fxa-toolbar-sync-now2 = Synkronisera nu
+appmenuitem-fxa-sign-in = Logga in på { -brand-product-name }
 appmenuitem-fxa-manage-account = Hantera konto
 appmenu-fxa-header2 = { -fxaccount-brand-name }
 # Variables
@@ -90,10 +111,19 @@ whatsnew-panel-footer-checkbox =
     .label = Meddela om nya funktioner
     .accesskey = f
 
-## The Firefox Profiler – The popup is the UI to turn on the profiler, and record
+## The Waterfox Profiler – The popup is the UI to turn on the profiler, and record
 ## performance profiles. To enable it go to profiler.firefox.com and click
 ## "Enable Profiler Menu Button".
 
+profiler-popup-button-idle =
+    .label = Profiler
+    .tooltiptext = Spela in en prestationsprofil
+profiler-popup-button-recording =
+    .label = Profilerare
+    .tooltiptext = Profileraren spelar in en profil
+profiler-popup-button-capturing =
+    .label = Profilerare
+    .tooltiptext = Profileraren fångar en profil
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -102,10 +132,15 @@ profiler-popup-description-title =
     .value = Spela in, analysera, dela
 profiler-popup-description = Samarbeta om prestandafrågor genom att publicera profiler för att dela med ditt team.
 profiler-popup-learn-more = Läs mer
+profiler-popup-learn-more-button =
+    .label = Läs mer
 profiler-popup-settings =
     .value = Inställningar
 # This link takes the user to about:profiling, and is only visible with the Custom preset.
 profiler-popup-edit-settings = Redigera inställningar…
+# This link takes the user to about:profiling, and is only visible with the Custom preset.
+profiler-popup-edit-settings-button =
+    .label = Redigera inställningar…
 profiler-popup-disabled =
     Profilen är för närvarande inaktiverad, troligtvis på grund av att ett privat webbläsarfönster
     är öppet.
@@ -130,6 +165,32 @@ profiler-popup-capture-shortcut =
         [macos] ⌃⇧2
        *[other] Ctrl+Shift+2
     }
+
+## Profiler presets
+## They are shown in the popup's select box.
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
+profiler-popup-presets-web-developer-description = Rekommenderad förinställning för de flesta webbappfelsökningar, med lite pålägg.
+profiler-popup-presets-web-developer-label =
+    .label = Webbutvecklare
+profiler-popup-presets-firefox-platform-description = Rekommenderad förinställning för intern felsökning av plattformar i Waterfox.
+profiler-popup-presets-firefox-platform-label =
+    .label = Waterfox - Plattform
+profiler-popup-presets-firefox-front-end-description = Rekommenderad förinställning för intern felsökning av front-end i Waterfox.
+profiler-popup-presets-firefox-front-end-label =
+    .label = Waterfox - Front-End
+profiler-popup-presets-firefox-graphics-description = Rekommenderad förinställning för utredning av grafikprestanda i Waterfox.
+profiler-popup-presets-firefox-graphics-label =
+    .label = Waterfox - Grafik
+profiler-popup-presets-media-description = Rekommenderad förinställning för diagnos av ljud- och videoproblem.
+profiler-popup-presets-media-label =
+    .label = Media
+profiler-popup-presets-custom-label =
+    .label = Anpassad
 
 ## History panel
 

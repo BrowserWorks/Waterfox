@@ -1,131 +1,134 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 certmgr-title =
     .title = Certifikathanteraren
+
 certmgr-tab-mine =
     .label = Dina certifikat
+
 certmgr-tab-remembered =
     .label = Autentiseringsbeslut
+
 certmgr-tab-people =
     .label = Personer
+
 certmgr-tab-servers =
     .label = Servrar
+
 certmgr-tab-ca =
     .label = Utfärdare
+
 certmgr-mine = Du har certifikat från dessa organisationer som identifierar dig
 certmgr-remembered = Dessa certifikat används för att identifiera dig till webbplatser
 certmgr-people = Du har certifikat lagrade som identifierar dessa personer
-certmgr-servers = Du har certifikat lagrade som identifierar dessa servrar
 certmgr-server = Dessa poster identifierar undantag för servercertifikatfel
 certmgr-ca = Du har certifikat lagrade som identifierar dessa certifikatutfärdare
-certmgr-detail-general-tab-title =
-    .label = Allmänt
-    .accesskey = A
-certmgr-detail-pretty-print-tab-title =
-    .label = Detaljer
-    .accesskey = D
-certmgr-pending-label =
-    .value = Verifierar certifikat…
-certmgr-subject-label = Utfärdat till
-certmgr-issuer-label = Utfärdat av
-certmgr-period-of-validity = Giltighetstid
-certmgr-fingerprints = Fingeravtryck
-certmgr-cert-detail =
-    .title = Certifikatdetaljer
-    .buttonlabelaccept = Stäng
-    .buttonaccesskeyaccept = ä
-certmgr-cert-detail-commonname = Common Name (CN)
-certmgr-cert-detail-org = Organisation (O)
-certmgr-cert-detail-orgunit = Organisationsenhet (OU)
-certmgr-cert-detail-serial-number = Serienummer
-certmgr-cert-detail-sha-256-fingerprint = SHA-256 fingeravtryck
-certmgr-cert-detail-sha-1-fingerprint = SHA1-fingeravtryck
+
 certmgr-edit-ca-cert =
     .title = Redigera tillitsinställningarna för CA-certifikat
     .style = width: 48em;
+
 certmgr-edit-cert-edit-trust = Redigera tillitsinställningarna:
+
 certmgr-edit-cert-trust-ssl =
     .label = Detta certifikat får identifiera webbplatser.
+
 certmgr-edit-cert-trust-email =
     .label = Detta certifikat får identifiera e-postanvändare.
+
 certmgr-delete-cert =
     .title = Ta bort certifikat
     .style = width: 48em; height: 24em;
+
 certmgr-cert-host =
     .label = Värd
+
 certmgr-cert-name =
     .label = Certifikatnamn
+
 certmgr-cert-server =
     .label = Server
+
 certmgr-override-lifetime =
     .label = Livslängd
+
 certmgr-token-name =
     .label = Säkerhetsenhet
-certmgr-begins-on = Börjar på
+
 certmgr-begins-label =
     .label = Börjar på
-certmgr-expires-on = Förfaller
+
 certmgr-expires-label =
     .label = Förfaller
+
 certmgr-email =
     .label = E-postadress
+
 certmgr-serial =
     .label = Serienummer
+
 certmgr-view =
     .label = Visa…
     .accesskey = V
+
 certmgr-edit =
     .label = Redigera tillit…
     .accesskey = R
+
 certmgr-export =
     .label = Exportera…
     .accesskey = x
+
 certmgr-delete =
     .label = Ta bort…
     .accesskey = T
+
 certmgr-delete-builtin =
     .label = Ta bort eller misstro…
     .accesskey = T
+
 certmgr-backup =
     .label = Säkerhetskopiera…
     .accesskey = S
+
 certmgr-backup-all =
     .label = Säkerhetskopiera alla…
     .accesskey = a
+
 certmgr-restore =
     .label = Importera…
     .accesskey = m
-certmgr-details =
-    .value = Certifikatfält
-    .accesskey = e
-certmgr-fields =
-    .value = Fältvärde
-    .accesskey = F
-certmgr-hierarchy =
-    .value = Certifikathierarki
-    .accesskey = H
+
 certmgr-add-exception =
     .label = Lägg till undantag…
     .accesskey = ä
+
 exception-mgr =
     .title = Lägg till säkerhetsundantag
+
 exception-mgr-extra-button =
     .label = Bekräfta säkerhetsundantag
     .accesskey = B
+
 exception-mgr-supplemental-warning = Legitima banker, butiker och andra offentliga webbplatser kommer inte att be dig göra detta.
+
 exception-mgr-cert-location-url =
     .value = Adress:
+
 exception-mgr-cert-location-download =
     .label = Hämta certifikat
     .accesskey = H
+
 exception-mgr-cert-status-view-cert =
     .label = Visa…
     .accesskey = V
+
 exception-mgr-permanent =
     .label = Lagra detta undantag permanent
     .accesskey = L
+
 pk11-bad-password = Lösenordet som skrevs in är inkorrekt.
 pkcs12-decode-err = Kan inte avkoda filen.  Antingen har den inte PKCS #12-format, den är korrupt, eller så är lösenordet du skrev in inkorrekt.
 pkcs12-unknown-err-restore = Kan av okänd anledning inte återställa PKCS #12-filen.
@@ -158,22 +161,24 @@ delete-user-cert-title =
     .title = Ta bort certifikat
 delete-user-cert-confirm = Är du säker på att du vill ta bort dessa certifikat?
 delete-user-cert-impact = Om du tar bort ett av dina egna certifikat kan du inte längre använda det för att identifiera dig med det.
-delete-ssl-cert-title =
-    .title = Ta bort undantag för servercertifikat
-delete-ssl-cert-confirm = Är du säker på att du vill ta bort dessa serverundantag?
-delete-ssl-cert-impact = Om du tar bort ett serverundantag återställer du de normala säkerhetskontrollerna för servern och kräver att den använder ett giltigt certifikat.
+
+
 delete-ssl-override-title =
     .title = Ta bort undantag för servercertifikat
 delete-ssl-override-confirm = Är du säker på att du vill ta bort detta serverundantag?
 delete-ssl-override-impact = Om du tar bort ett serverundantag återställer du de vanliga säkerhetskontrollerna för den servern och kräver att den använder ett giltigt certifikat.
+
 delete-ca-cert-title =
     .title = Ta bort eller misstro CA-certifikat
 delete-ca-cert-confirm = Du försöker ta bort dessa CA-certifikat. För inbyggda certifikat som inte kan raderas kommer i stället all tillit att tas bort, vilket har samma effekt. Är du säker på att du vill ta bort eller misstro certifikaten?
 delete-ca-cert-impact = Om du tar bort eller misstror ett certifikat från en certifikatutfärdare (CA), kommer programmet inte längre att lita på certifikat som utfärdats av denna CA.
+
+
 delete-email-cert-title =
     .title = Ta bort e-postcertifikat
 delete-email-cert-confirm = Är du säker på att du vill ta bort dessa personers e-postcertifikat?
 delete-email-cert-impact = Om du tar bort en persons e-postcertifikat kommer du inte längre att kunna skicka krypterade e-postmeddelanden till den personen.
+
 # Used for semi-uniquely representing a cert.
 #
 # Variables:
@@ -183,40 +188,14 @@ cert-with-serial =
 
 ## Cert Viewer
 
-# Title used for the Certificate Viewer.
-#
-# Variables:
-#   $certificate : a string representative of the certificate being viewed.
-cert-viewer-title =
-    .title = Certifikatvisare: “{ $certName }”
-not-present =
-    .value = <Ej del av certifikat>
-# Cert verification
-cert-verified = Detta certifikat har verifierats för följande tillämpningar:
-# Add usage
-verify-ssl-client =
-    .value = SSL-klientcertifikat
-verify-ssl-server =
-    .value = SSL-servercertifikat
-verify-ssl-ca =
-    .value = SSL-certifikatutfärdare (CA)
-verify-email-signer =
-    .value = Signeringscertifikat för e-post
-verify-email-recip =
-    .value = Mottagarcertifikat för e-post
-# Cert verification
-cert-not-verified-cert-revoked = Kan inte verifiera detta certifikat eftersom det har dragits in.
-cert-not-verified-cert-expired = Kan inte verifiera detta certifikat eftersom det har förfallit.
-cert-not-verified-cert-not-trusted = Det går inte att verifiera detta certifikat eftersom det inte är tillförlitligt.
-cert-not-verified-issuer-not-trusted = Kan inte verifiera detta certifikat eftersom utfärdaren inte är tillförlitlig.
-cert-not-verified-issuer-unknown = Kan inte verifiera detta certifikat eftersom utfärdaren är okänd.
-cert-not-verified-ca-invalid = Kan inte verifiera detta certifikat eftersom CA-certifikatet är ogiltigt.
-cert-not-verified_algorithm-disabled = Kan inte verifiera detta certifikat eftersom det signerades med en signaturalgoritm som är inaktiverad på grund av att den är osäker.
-cert-not-verified-unknown = Kan inte verifiera detta certifikat av okänd anledning.
 # Used to indicate that the user chose not to send a client authentication certificate to a server that requested one in a TLS handshake.
 send-no-client-certificate = Skicka inget klientcertifikat
+
 # Used when no cert is stored for an override
 no-cert-stored-for-override = (Lagras ej)
+
+# When a certificate is unavailable (for example, it has been deleted or the token it exists on has been removed).
+certificate-not-available = (Otillgänglig)
 
 ## Used to show whether an override is temporary or permanent
 

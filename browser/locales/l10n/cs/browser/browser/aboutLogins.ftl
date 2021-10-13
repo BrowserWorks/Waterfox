@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
@@ -7,17 +7,12 @@ about-logins-page-title = Přihlašovací údaje
 
 # "Google Play" and "App Store" are both branding and should not be translated
 
-login-app-promo-title = Vezměte si svá hesla všude s sebou
-login-app-promo-subtitle = Získejte bezplatnou aplikaci { -lockwise-brand-name }
-login-app-promo-android =
-    .alt = Stáhnout z Google Play
-login-app-promo-apple =
-    .alt = Stáhnout z App Store
 login-filter =
     .placeholder = Hledat přihlašovací údaje
+
 create-login-button = Nové přihlašovací údaje
+
 fxaccounts-sign-in-text = Synchronizujte svá hesla i do ostatních zařízení
-fxaccounts-sign-in-button = Použít { -sync-brand-short-name(case: "acc") }
 fxaccounts-sign-in-sync-button = Přihlásit se k synchronizaci
 fxaccounts-avatar-button =
     .title = Správa účtu
@@ -37,8 +32,6 @@ menu-menuitem-preferences =
        *[other] Předvolby
     }
 about-logins-menu-menuitem-help = Nápověda
-menu-menuitem-android-app = { -lockwise-brand-short-name } pro Android
-menu-menuitem-iphone-app = { -lockwise-brand-short-name } pro iPhone a iPad
 
 ## Login List
 
@@ -57,6 +50,8 @@ login-list-count =
 login-list-sort-label-text = Seřadit podle:
 login-list-name-option = názvu (A-Z)
 login-list-name-reverse-option = názvu (Z-A)
+login-list-username-option = uživ. jména (A-Z)
+login-list-username-reverse-option = uživ. jména (Z-A)
 about-logins-login-list-alerts-option = upozornění
 login-list-last-changed-option = naposledy změněno
 login-list-last-used-option = naposledy použito
@@ -78,10 +73,15 @@ about-logins-list-item-breach-icon =
 about-logins-list-item-vulnerable-password-icon =
     .title = Zranitelné heslo
 
+about-logins-list-section-breach = Servery, kde došlo k úniku dat
+about-logins-list-section-vulnerable = Zranitelná hesla
+about-logins-list-section-nothing = Žádná upozornění
+about-logins-list-section-today = Dnes
+about-logins-list-section-yesterday = Včera
+about-logins-list-section-week = Posledních 7 dní
+
 ## Introduction screen
 
-login-intro-heading = Hledáte své uložené přihlašovací údaje? Přihlaste se k { -sync-brand-short-name(case: "dat") }.
-about-logins-login-intro-heading-logged-out = Hledáte své uložené přihlašovací údaje? Přihlaste se k { -sync-brand-short-name(case: "dat") } nebo je naimportujte.
 about-logins-login-intro-heading-logged-out2 = Hledáte své uložené přihlašovací údaje? Zapněte si synchronizaci nebo je naimportujte.
 about-logins-login-intro-heading-logged-in = Nenalezeny žádné synchronizované přihlašovací údaje.
 login-intro-description =
@@ -91,9 +91,6 @@ login-intro-description =
         [neuter] { -brand-product-name(case: "gen") }
        *[other] aplikace { -brand-product-name }
     }, ale na jiném zařízení, můžete je zde získat takto:
-login-intro-instruction-fxa = Vytvořte nebo se přihlaste k { -fxaccount-brand-name(case: "dat", capitalization: "lower") } na zařízení, kde máte přihlašovací údaje uložené
-login-intro-instruction-fxa-settings = V nastavení { -sync-brand-short-name(case: "gen") } na daném zařízení se ujistěte, že máte zapnutou synchronizaci přihlašovacích údajů
-about-logins-intro-instruction-help = Pro další pomoc navštivte <a data-l10n-name="help-link">nápovědu { -lockwise-brand-short-name(case: "gen") }</a>
 login-intro-instructions-fxa = Vytvořte nebo se přihlaste k { -fxaccount-brand-name(case: "dat", capitalization: "lower") } na zařízení, kde máte přihlašovací údaje uložené.
 login-intro-instructions-fxa-settings = Otevřete Nastavení > Synchronizace > Zapnout synchronizaci… a vyberte položku Přihlašovací údaje.
 login-intro-instructions-fxa-help = Pro další pomoc navštivte <a data-l10n-name="help-link">nápovědu { -lockwise-brand-short-name(case: "gen") }</a>.
@@ -130,7 +127,7 @@ login-item-time-used = Naposledy použito { DATETIME($timeUsed, day: "numeric", 
 
 about-logins-os-auth-dialog-caption = { -brand-full-name }
 
-## The macOS strings are preceded by the operating system with "Firefox is trying to "
+## The macOS strings are preceded by the operating system with "Waterfox is trying to "
 ## and includes subtitle of "Enter password for the user "xxx" to allow this." These
 ## notes are only valid for English. Please test in your respected locale.
 
@@ -139,11 +136,13 @@ about-logins-edit-login-os-auth-dialog-message-win = Pro úpravu přihlašovací
 # This message can be seen when attempting to edit a login in about:logins
 # On MacOS, only provide the reason that account verification is needed. Do not put a complete sentence here.
 about-logins-edit-login-os-auth-dialog-message-macosx = upravit uložené přihlašovací údaje
+
 # This message can be seen when attempting to reveal a password in about:logins on Windows.
 about-logins-reveal-password-os-auth-dialog-message-win = Pro zobrazení hesla prosím zadejte své přihlašovací údaje k systému Windows. Toto opatření pomáhá v zabezpečení vašich účtů.
 # This message can be seen when attempting to reveal a password in about:logins
 # On MacOS, only provide the reason that account verification is needed. Do not put a complete sentence here.
 about-logins-reveal-password-os-auth-dialog-message-macosx = zobrazit uložené heslo
+
 # This message can be seen when attempting to copy a password in about:logins on Windows.
 about-logins-copy-password-os-auth-dialog-message-win = Pro zkopírování hesla prosím zadejte své přihlašovací údaje k systému Windows. Toto opatření pomáhá v zabezpečení vašich účtů.
 # This message can be seen when attempting to copy a password in about:logins
@@ -152,7 +151,6 @@ about-logins-copy-password-os-auth-dialog-message-macosx = zkopírovat uložené
 
 ## Master Password notification
 
-master-password-notification-message = Pro zobrazení uložených přihlašovacích údajů prosím zadejte své hlavní heslo
 # This message can be seen when attempting to export a password in about:logins on Windows.
 about-logins-export-password-os-auth-dialog-message-win = Pro export přihlašovacích údajů prosím zadejte své přihlašovací údaje k systému Windows. Toto opatření pomáhá v zabezpečení vašich účtů.
 # This message can be seen when attempting to export a password in about:logins
@@ -168,35 +166,16 @@ master-password-reload-button =
 
 ## Password Sync notification
 
-enable-password-sync-notification-message =
-    Chcete svá hesla všude s sebou, kde používáte { -brand-product-name.gender ->
-        [masculine] { -brand-product-name(case: "acc") }
-        [feminine] { -brand-product-name(case: "acc") }
-        [neuter] { -brand-product-name(case: "acc") }
-       *[other] aplikaci { -brand-product-name }
-    }? Otevřete { PLATFORM() ->
-        [windows] možnosti
-       *[other] předvolby
-    } { -sync-brand-short-name(case: "gen") } a zaškrtněte předvolbu pro synchronizaci hesel.
-enable-password-sync-preferences-button =
-    .label =
-        Navštivte { PLATFORM() ->
-            [windows] Možnosti
-           *[other] Předvolby
-        } { -sync-brand-short-name(case: "gen") }
-    .accesskey = V
-about-logins-enable-password-sync-dont-ask-again-button =
-    .label = Příště se už neptat
-    .accesskey = n
-
 ## Dialogs
 
 confirmation-dialog-cancel-button = Zrušit
 confirmation-dialog-dismiss-button =
     .title = Zrušit
+
 about-logins-confirm-remove-dialog-title = Odstranit tyto přihlašovací údaje?
 confirm-delete-dialog-message = Tuto akci nelze vzít zpět.
 about-logins-confirm-remove-dialog-confirm-button = Odstranit
+
 about-logins-confirm-remove-all-dialog-confirm-button-label =
     { $count ->
         [1] Odstranit
@@ -204,7 +183,9 @@ about-logins-confirm-remove-all-dialog-confirm-button-label =
         [few] Odstranit vše
        *[other] Odstranit vše
     }
+
 about-logins-confirm-remove-all-dialog-checkbox-label = Ano, odstranit tyto přihlašovací údaje
+
 about-logins-confirm-remove-all-dialog-title =
     { $count ->
         [one] Odstranit jedny přihlašovací údaje
@@ -218,6 +199,7 @@ about-logins-confirm-remove-all-dialog-message =
         [neuter] v { -brand-short-name(case: "loc") }
        *[other] v aplikaci { -brand-short-name }
     } a také všechna zde zobrazovaná hlášení o únicích. Tuto akci nelze vzít zpět.
+
 about-logins-confirm-remove-all-sync-dialog-title =
     { $count ->
         [one] Odstranit jedny přihlašovací údaje ze všech zařízení
@@ -231,11 +213,14 @@ about-logins-confirm-remove-all-sync-dialog-message =
         [neuter] v { -brand-short-name(case: "loc") }
        *[other] v aplikaci { -brand-short-name }
     } na všech zařízeních synchronizovaných pomocí vašeho { -fxaccount-brand-name(case: "gen", capitalization: "lower") } a také všechna zde zobrazovaná hlášení o únicích. Tuto akci nelze vzít zpět.
+
 about-logins-confirm-export-dialog-title = Export přihlašovacích údajů
 about-logins-confirm-export-dialog-message = Vaše hesla budou uložena v čitelné podobě (např. Šp4tnéH3sl0) a kdokoliv otevře exportovaný soubor, bude si je moci přečíst.
 about-logins-confirm-export-dialog-confirm-button = Exportovat…
+
 about-logins-alert-import-title = Import byl dokončen
 about-logins-alert-import-message = Zobrazit podrobné shrnutí importu
+
 confirm-discard-changes-dialog-title = Zahodit neuložené změny?
 confirm-discard-changes-dialog-message = Všechny neuložené změny budou ztraceny.
 confirm-discard-changes-dialog-confirm-button = Zahodit
@@ -266,6 +251,7 @@ about-logins-vulnerable-alert-learn-more-link = Zjistit více
 # Variables:
 #   $loginTitle (String) - The title of the website associated with the login.
 about-logins-error-message-duplicate-login-with-link = Přihlašovací údaje pro { $loginTitle } se stejným uživatelským jménem už existují. <a data-l10n-name="duplicate-link">Chcete zobrazit stávající údaje?</a>
+
 # This is a generic error message.
 about-logins-error-message-default = Při ukládání hesla nastala chyba.
 
@@ -311,10 +297,13 @@ about-logins-import-file-picker-tsv-filter-title =
 
 about-logins-import-dialog-title = Import byl dokončen
 about-logins-import-dialog-items-added = <span>Nově přidané přihlašovací údaje:</span> <span data-l10n-name="count">{ $count }</span>
+
 about-logins-import-dialog-items-modified = <span>Aktualizované přihlašovací údaje:</span> <span data-l10n-name="count">{ $count }</span>
+
 about-logins-import-dialog-items-no-change = <span>Duplicitní přihlašovací údaje:</span> <span data-l10n-name="count">{ $count }</span> <span data-l10n-name="meta">(neimportováno)</span>
 about-logins-import-dialog-items-error = <span>Chyby:</span> <span data-l10n-name="count">{ $count }</span> <span data-l10n-name="meta">(neimportováno)</span>
 about-logins-import-dialog-done = Hotovo
+
 about-logins-import-dialog-error-title = Chyba při importu
 about-logins-import-dialog-error-conflicting-values-title = Více konfliktních hodnot pro jedno přihlášení
 about-logins-import-dialog-error-conflicting-values-description = Například: více uživatelských jmen, hesel, adres atd. pro jedno přihlášení.
@@ -326,9 +315,9 @@ about-logins-import-dialog-error-unable-to-read-title = Soubor nelze načíst
 about-logins-import-dialog-error-unable-to-read-description = Ujistěte se, že jste vybrali soubor typu CSV nebo TSV.
 about-logins-import-dialog-error-no-logins-imported = Nebyly naimportovány žádné přihlašovací údaje
 about-logins-import-dialog-error-learn-more = Zjistit více
-about-logins-import-dialog-error-try-again = Zkusit znovu
 about-logins-import-dialog-error-try-import-again = Zkusit importovat znovu…
 about-logins-import-dialog-error-cancel = Zrušit
+
 about-logins-import-report-title = Souhrn
 about-logins-import-report-description =
     Přihlašovací údaje importované do { -brand-short-name.gender ->
@@ -337,6 +326,7 @@ about-logins-import-report-description =
         [neuter] { -brand-short-name(case: "gen") }
        *[other] aplikace { -brand-short-name }
     }.
+
 #
 # Variables:
 #  $number (number) - The number of the row

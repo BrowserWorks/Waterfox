@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = Om rettane dine
 rights-intro = { -brand-full-name } er programvare basert på fri og open kjeldekode, som er bygd av eit fellesskap av tusenvis rundt om i heile verda. Det er nokre ting du bør vere merksam på:
-rights-intro-point-1 = { -brand-short-name } er gjort tilgjengeleg for deg under vilkåra i <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a>. Dette tyder at du kan bruke, kopiere og distribuere { -brand-short-name } til andre. Du kan også endre kjeldekoden til { -brand-short-name } som du vil, for å passe til dine behov. Mozilla Public License gjev deg også rett til å distribuere endra versjonar.
-rights-intro-point-2 = Du vert ikkje gjeve varemerkerettar eller lisensar til varemerke som tilhøyrer Mozilla Foundation eller andre, noko som òg gjeld Firefox-namnet og logoen. Meir informasjon om varemerke finn du  <a data-l10n-name="mozilla-trademarks-link">her</a>.
+rights-intro-point-1 = { -brand-short-name } er gjort tilgjengeleg for deg under vilkåra i <a data-l10n-name="mozilla-public-license-link">Waterfox Public License</a>. Dette tyder at du kan bruke, kopiere og distribuere { -brand-short-name } til andre. Du kan også endre kjeldekoden til { -brand-short-name } som du vil, for å passe til dine behov. Waterfox Public License gjev deg også rett til å distribuere endra versjonar.
+rights-intro-point-2 = Du vert ikkje gjeve varemerkerettar eller lisensar til varemerke som tilhøyrer Waterfox Foundation eller andre, noko som òg gjeld Waterfox-namnet og logoen. Meir informasjon om varemerke finn du  <a data-l10n-name="mozilla-trademarks-link">her</a>.
 rights-intro-point-3 = Nokre funksjonar i { -brand-short-name }, som til dømes krasjrapporteraren, gjev deg høve til å gje tilbakemelding til { -vendor-short-name }. Ved å sende tilbakemelding gjev du { -vendor-short-name } løyve til å bruke tilbakemeldingane for å forbetre produkta sine, publisere tilbakemeldingane på nettstadane sine, og å distribuere tilbakemeldingane.
 rights-intro-point-4 = Korleis vi brukar personleg informasjon og tilbakemeldingar som er sendt til { -vendor-short-name } gjennom { -brand-short-name } er skildra i <a data-l10n-name="mozilla-privacy-policy-link">{ -brand-short-name }s personvernpraksis</a>.
 rights-intro-point-4-unbranded = Eventuelle personvernpaksisar for dette produktet bør førast opp her.

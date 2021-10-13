@@ -1,12 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!-- Context Menu -->
-<!ENTITY popupWindowRejectCmd.label     "Tillåt inte webbplatsen att öppna extrafönster">
-<!ENTITY popupWindowRejectCmd.accesskey "i">
-<!ENTITY popupWindowAllowCmd.label      "Tillåt webbplatsen att öppna extrafönster">
-<!ENTITY popupWindowAllowCmd.accesskey  "e">
 <!ENTITY openLinkCmdInTab.label       "Öppna länken i en ny flik">
 <!ENTITY openLinkCmdInTab.accesskey   "f">
 <!ENTITY openLinkCmd.label            "Öppna länken i ett nytt fönster">

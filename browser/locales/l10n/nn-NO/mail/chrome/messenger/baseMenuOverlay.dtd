@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,12 +11,6 @@
 <!ENTITY helpMenuWin.accesskey "H">
 <!ENTITY aboutProduct2.label "Om &brandShorterName;">
 <!ENTITY aboutProduct2.accesskey "O">
-<!ENTITY helpTroubleshootingInfo.label     "Feilsøking">
-<!ENTITY helpTroubleshootingInfo.accesskey "F">
-<!ENTITY helpSafeMode.label     "Start på nytt utan tillegg…">
-<!ENTITY helpSafeMode.accesskey "S">
-<!ENTITY helpSafeMode.stop.label     "Start på nytt med påslåtte tillegg">
-<!ENTITY helpSafeMode.stop.accesskey "r">
 <!ENTITY productHelp.label "&brandShortName; Hjelp">
 <!ENTITY productHelp.accesskey "H">
 <!ENTITY productHelp.commandkey "VK_F1">

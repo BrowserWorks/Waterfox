@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -38,6 +38,7 @@
 <!ENTITY offlineImapAdvancedOffline.accesskey "d">
 <!ENTITY syncGroupTitle.label "Sincronización de mensajes">
 <!ENTITY diskspaceGroupTitle.label "Espacio en disco">
+
 <!ENTITY allAutosync.label "Sincronizar todos los mensajes localmente sin importar su antigüedad">
 <!ENTITY allAutosync.accesskey "u">
 <!ENTITY ageAutosyncBefore.label "Sincronizar los">

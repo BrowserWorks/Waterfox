@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,17 +20,23 @@ permission-dialog-description-host =
 permission-dialog-description-app =
   Consentire a questo sito di aprire un link di tipo { $scheme } con { $appName }?
 
+permission-dialog-description-host-app =
+  Consentire a { $host } di aprire un link di tipo { $scheme } con { $appName }?
+
 permission-dialog-description-file-app =
   Consentire a questo file di aprire un link di tipo { $scheme } con { $appName }?
 
-permission-dialog-description-host-app =
-  Consentire a { $host } di aprire un link di tipo { $scheme } con { $appName }?
+## Please keep the emphasis around the hostname and scheme (ie the
+## `<strong>` HTML tags). Please also keep the hostname as close to the start
+## of the sentence as your language's grammar allows.
 
 permission-dialog-remember =
   Consenti sempre a <strong>{ $host }</strong> di aprire link di tipo <strong>{ $scheme }</strong>
 
 permission-dialog-remember-file =
   Consenti sempre a questo file di aprire link di tipo <strong>{ $scheme }</strong>
+
+##
 
 permission-dialog-btn-open-link =
       .label = Apri link

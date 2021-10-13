@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -33,13 +33,14 @@ url-classifier-cache-ncache-expiry = Λήξη αρνητικής κρυφής μ
 url-classifier-cache-fullhash = Πλήρες hash
 url-classifier-cache-pcache-expiry = Λήξη θετικής κρυφής μνήμης
 url-classifier-debug-title = Έλεγχος σφαλμάτων
-url-classifier-debug-module-btn = Ορισμός μονάδων καταγραφής
+url-classifier-debug-module-btn = Ορισμός λειτουργικών μονάδων καταγραφής
 url-classifier-debug-file-btn = Ορισμός αρχείου καταγραφής
 url-classifier-debug-js-log-chk = Ορισμός καταγραφής JS
-url-classifier-debug-sb-modules = Μονάδες καταγραφής ασφαλούς περιήγησης
-url-classifier-debug-modules = Τρέχουσες μονάδες καταγραφής
+url-classifier-debug-sb-modules = Λειτουργικές μονάδες καταγραφής ασφαλούς περιήγησης
+url-classifier-debug-modules = Τρέχουσες λειτουργικές μονάδες καταγραφής
 url-classifier-debug-sbjs-modules = Αρχείο καταγραφής JS ασφαλούς περιήγησης
 url-classifier-debug-file = Τρέχον αρχείο καταγραφής
+
 url-classifier-trigger-update = Πρόκληση ενημέρωσης
 url-classifier-not-available = Μ/Δ
 url-classifier-disable-sbjs-log = Απενεργοποίηση αρχείου καταγραφής JS ασφαλούς περιήγησης

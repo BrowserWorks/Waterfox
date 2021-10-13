@@ -1,7 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
 <!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
 <!ENTITY rights.locale-direction "ltr">
 <!ENTITY rights.pagetitle       "about:rights">
@@ -17,17 +17,12 @@
      Also note the leading/trailing whitespace in strings here, which is
      deliberate for formatting around the embedded links. -->
 <!ENTITY rights.intro-point1a "A &brandShortName; a ">
-<!ENTITY rights.intro-point1b "Mozilla Public License">
-<!ENTITY rights.intro-point1c " feltételei szerint lett közreadva. Ez azt jelenti, hogy a  &brandShortName; használható, másolható és terjeszthető. A &brandShortName; forráskódjának igény szerinti módosítása szintén megengedett. A Mozilla Public License megadja a jogot a módosított verziók terjesztésére is.">
-
-<!ENTITY rights.intro-point2a "Ön nem kapott jogot vagy felhatalmazást a védjegyek használatára sem a Mozilla Foundationtől, sem mástól, beleértve – de nem csak erre korlátozva – a SeaMonkey nevet és logót. A védjegyekről további tudnivaló ">
+<!ENTITY rights.intro-point1b "Waterfox Public License">
+<!ENTITY rights.intro-point1c " feltételei szerint lett közreadva. Ez azt jelenti, hogy a  &brandShortName; használható, másolható és terjeszthető. A &brandShortName; forráskódjának igény szerinti módosítása szintén megengedett. A Waterfox Public License megadja a jogot a módosított verziók terjesztésére is.">
 
 <!ENTITY rights.intro-point2aa "A &vendorShortName; nem ad Önnek semmilyen jogot a &quot;&brandFullName;&quot; védjegyekhez vagy logókhoz. A védjegyekről további tudnivaló ">
 <!ENTITY rights.intro-point2b "itt">
 <!ENTITY rights.intro-point2c ".">
-
-<!-- point 2d is technically point 3. in the list -->
-<!ENTITY rights.intro-point2d "A &brandShortName; néhány funkciója, mint az Összeomlásjelentő lehetőséget ad visszajelzést adni a &vendorShortName; felé. A visszajelzés beküldésével engedélyt ad, hogy a &vendorShortName; és a Mozilla felhasználja az alkalmazásai javításához, közzétegye a visszajelzést a weblapján, és terjessze azt.">
 
 <!-- point 2da is technically point 3. in the list -->
 <!ENTITY rights.intro-point2da "A &brandShortName; néhány funkciója, mint az Összeomlás-jelentő lehetőséget ad visszajelzést adni a &vendorShortName; felé. A visszajelzés beküldésével engedélyt ad, hogy a &vendorShortName; felhasználja az alkalmazásai javításához, közzétegye a visszajelzést a weblapján, és terjessze azt.">
@@ -48,8 +43,6 @@
      preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
      so that we can refer to text the user sees in the UI, without
      this page being forgotten every time those strings are updated.  -->
-<!-- intro paragraph for branded builds -->
-<!ENTITY rights3.webservices-a "A &brandFullName; választható web-alapú szolgáltatásokat biztosít (&quot;Szolgáltatások&quot;), amelyek a &brandShortName; ezen bináris verziójában érhetőek el, a lent leírtak szerint. Néhány ilyen szolgáltatás (mint a Kiegészítő javaslat és a frissítési szolgáltatások, a Biztonságos böngészés szolgáltatás vagy a Helyfüggő értesítés funkció) alapból be van kapcsolva. Ha nem szeretné valamelyik Szolgáltatást használni, vagy a lenti feltételek nem elfogadhatóak, akkor a funkció vagy Szolgáltatás letiltásának leírása elérhető">
 <!-- intro paragraph for branded builds -->
 <!ENTITY rights3.webservices-aa "A &vendorShortName; választható web-alapú szolgáltatásokat biztosít (&quot;Szolgáltatások&quot;), amelyek a &brandShortName; ezen bináris verziójában érhetőek el, a lent leírtak szerint. Néhány ilyen szolgáltatás (mint a Kiegészítő javaslat és a frissítési szolgáltatások, a Biztonságos böngészés szolgáltatás vagy a Helyfüggő értesítés funkció) alapból be van kapcsolva. Ha nem szeretné valamelyik Szolgáltatást használni, vagy a lenti feltételek nem elfogadhatóak, akkor a funkció vagy Szolgáltatás letiltásának leírása elérhető ">
 <!ENTITY rights3.webservices-b "itt">
@@ -80,16 +73,11 @@
 <!ENTITY rights.locationawarebrowsing-term4 "A Helyfüggő böngészés mostantól le van tiltva">
 
 <!-- points 0-6 text for branded builds -->
-<!ENTITY rights.webservices-term0 "A &vendorShortName; és a Mozilla, a közreműködők, licencadók, és a partnerek azon dolgoznak, hogy a legpontosabb és naprakészebb szolgáltatást nyújtsák.  Azonban nem tudjuk garantálni, hogy ezek az információk átfogóak és hibamentesek.  Például a Biztonságos böngészés szolgáltatás lehet hogy nem azonosít néhány veszélyes webhelyet, és a Helyfüggő szolgáltatás által visszaadott helyek csak hozzávetőlegesek. Sem mi, sem a szolgáltatóink nem garantálják a helyek pontosságát.">
-
-<!-- points 0-6 text for branded builds -->
 <!ENTITY rights.webservices-term0a "A &vendorShortName;, a közreműködők, licencadók, és a partnerek azon dolgoznak, hogy a legpontosabb és naprakészebb szolgáltatást nyújtsák.  Azonban nem tudjuk garantálni, hogy ezek az információk átfogóak és hibamentesek.  Például a Biztonságos böngészés szolgáltatás lehet hogy nem azonosít néhány veszélyes webhelyet, és a Helyfüggő szolgáltatás által visszaadott helyek csak hozzávetőlegesek. Sem mi, sem a szolgáltatóink nem garantálják a helyek pontosságát.">
 <!ENTITY rights.webservices-term1 "A &vendorShortName; saját hatáskörében megszüntetheti vagy módosíthatja a Szolgáltatásokat.">
-<!ENTITY rights.webservices-term2 "Ön igénybe veheti ezeket a Szolgáltatásokat a &brandShortName; mellékelt verziójával, ehhez minden szükséges joga megvan. A &vendorShortName; és licencadói minden más jogot fenntartanak a Szolgáltatásokkal kapcsolatban. Ezek a feltételek nem korlátozzák a &brandShortName;re és a &brandShortName; forráskódjára alkalmazott nyílt forrású licencek által biztosított jogokat.">
 <!ENTITY rights.webservices-term2a "Ön igénybe veheti ezeket a Szolgáltatásokat a &brandShortName; mellékelt verziójával, ehhez minden szükséges joga megvan. A &vendorShortName; és licencadói minden más jogot fenntartanak a Szolgáltatásokkal kapcsolatban. Ezek a feltételek nem korlátozzák a &brandShortName;re és a &brandShortName; forráskódjára alkalmazott nyílt forrású licencek által biztosított jogokat.">
 <!ENTITY rights.webservices-term3 "A Szolgáltatások „olyanok, amilyenek”. A &vendorShortName;, a közreműködők, a licencadók és a terjesztők minden garanciát elutasítanak, legyen az kifejezett vagy vélelmezett, beleértve, de nem erre korlátozva azt, hogy a Szolgáltatások hasznosak és megfelelnek a felhasználó céljainak. Teljes egészében a felhasználó viseli annak kockázatát, hogy a Szolgáltatásokat saját céljára igénybe veszi, és hogy a Szolgáltatások az adott minőségben és teljesítménnyel működnek. Egyes jogrendszerek nem teszik lehetővé a vélelmezett garanciák kizárását vagy korlátozását, tehát ez az elutasítás lehet, hogy Önre nem vonatkozik.">
 <!ENTITY rights.webservices-term4 "Ha a törvény másképp nem rendelkezik, a &vendorShortName;, a közreműködők, a licencadók és a terjesztők nem felelnek semmilyen közvetlen, különleges, következményes, büntetőjogi vagy példamutató kárért, amely a &brandShortName; és a Szolgáltatások használatából következett, vagy azzal bármilyen módon összefüggésbe hozható. A kollektív felelősség ezen feltételek szerint nem haladja meg az 500 (ötszáz) USA-dollárt. Egyes jogrendszerek nem teszik lehetővé bizonyos károk kizárását vagy korlátozását, tehát ez a kizárás és korlátozás lehet, hogy Önre nem vonatkozik.">
 <!ENTITY rights.webservices-term5 " &vendorShortName; időről időre frissítheti ezeket a feltételeket, ha szükségesnek látja. Ezek a feltételek nem módosíthatók vagy érvényteleníthetők a &vendorShortName; írásos beleegyezése nélkül.">
-<!ENTITY rights.webservices-term6 "A feltételekre Kalifornia (USA) állam törvényei vonatkoznak, kivéve ha ütközik helyi jogszabályokkal. Ha a feltételek egyes részei érvénytelenek vagy nem kikényszeríthetők, a többi rész attól még teljes mértékben érvényes és hatályos. Ha a feltételek lefordított változata ellentmond az angol változatnak, akkor az angol változat az irányadó.">
 
 <!ENTITY rights.webservices-term6a "Ezeket a feltételeket a német törvények szabályozzák, és a Feltételekkel felmerülő vitás eseteket a megfelelő, kizárólag eljáró németországi bíróság felé kell beküldeni. Ha ezen feltételek bármely része érvénytelennek vagy nem betartathatónak bizonyul, akkor a fennmaradó részei továbbra is érvényben maradnak. Ha ellentmondás van a lefordított és az angol változat között, akkor az angol változat a mérvadó.">

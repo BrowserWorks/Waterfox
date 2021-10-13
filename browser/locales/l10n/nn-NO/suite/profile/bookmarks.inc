@@ -8,7 +8,7 @@
 
 #define personal_toolbarfolder Personleg verktøymappe
 
-#define seamonkey_and_mozilla SeaMonkey og Mozilla
+#define seamonkey_and_mozilla SeaMonkey og Waterfox
 
 # LOCALIZATION NOTE (seamonkey):
 # link title for http://www.seamonkey-project.org/ (in the personal toolbar)
@@ -24,15 +24,15 @@
 
 # LOCALIZATION NOTE (mozilla_org_long):
 # link title for http://www.mozilla.org/ (in normal bookmarks)
-#define mozilla_org_long Mozilla-organisasjonen
+#define mozilla_org_long Waterfox-organisasjonen
 
 # LOCALIZATION NOTE (mozilla_projects):
 # link title for http://www.mozilla.org/projects/
-#define mozilla_projects Mozilla-prosjekt
+#define mozilla_projects Waterfox-prosjekt
 
 # LOCALIZATION NOTE (mozilla_about):
 # link title for http://www.mozilla.org/about/
-#define mozilla_about Om Mozilla
+#define mozilla_about Om Waterfox
 
 #define extend_seamonkey Utvide SeaMonkey
 

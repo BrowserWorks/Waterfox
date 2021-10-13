@@ -1,69 +1,81 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 permissions-window =
     .title = Wyjątki
     .style = width: 35em
+
 permissions-close-key =
     .key = w
+
 permissions-address = Adres witryny:
     .accesskey = s
+
 permissions-block =
     .label = Blokuj
     .accesskey = B
+
 permissions-session =
     .label = Zezwalaj na czas sesji
     .accesskey = c
+
 permissions-allow =
     .label = Zezwalaj
     .accesskey = Z
+
 permissions-button-off =
     .label = Wyłącz
     .accesskey = W
+
 permissions-button-off-temporarily =
     .label = Wyłącz tymczasowo
     .accesskey = m
+
 permissions-site-name =
     .label = Witryna
+
 permissions-status =
     .label = Stan
+
 permissions-remove =
     .label = Usuń witrynę
     .accesskey = U
+
 permissions-remove-all =
     .label = Usuń wszystkie witryny
     .accesskey = w
-permissions-button-cancel =
-    .label = Anuluj
-    .accesskey = A
-permissions-button-ok =
-    .label = Zachowaj
-    .accesskey = h
+
 permission-dialog =
     .buttonlabelaccept = Zachowaj
     .buttonaccesskeyaccept = h
+
 permissions-autoplay-menu = Domyślne dla wszystkich witryn:
+
 permissions-searchbox =
     .placeholder = Szukaj witryn
+
 permissions-capabilities-autoplay-allow =
     .label = zezwalanie na dźwięk i wideo
 permissions-capabilities-autoplay-block =
     .label = blokowanie dźwięku
 permissions-capabilities-autoplay-blockall =
     .label = blokowanie dźwięku i wideo
+
 permissions-capabilities-allow =
     .label = zezwalaj
 permissions-capabilities-block =
     .label = blokuj
 permissions-capabilities-prompt =
     .label = zawsze pytaj
+
 permissions-capabilities-listitem-allow =
     .value = zezwalaj
 permissions-capabilities-listitem-block =
     .value = blokuj
 permissions-capabilities-listitem-allow-session =
     .value = zezwalaj na czas sesji
+
 permissions-capabilities-listitem-off =
     .value = wyłącz
 permissions-capabilities-listitem-off-temporarily =

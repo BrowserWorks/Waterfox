@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,12 +31,6 @@
 <!ENTITY closeCmd.label                                 "Fechar">
 <!ENTITY closeCmd.key                                   "w">
 <!ENTITY closeCmd.accesskey                             "F">
-<!ENTITY printSetupCmd.label                            "Configurar página…">
-<!ENTITY printSetupCmd.accesskey                        "C">
-<!ENTITY printPreviewContactCmd.label                   "Visualizar impressão do contato">
-<!ENTITY printPreviewContactCmd.accesskey               "z">
-<!ENTITY printPreviewAddressBook.label                  "Visualizar catálogo de endereços">
-<!ENTITY printPreviewAddressBook.accesskey              "V">
 <!ENTITY printContactCmd.label                          "Imprimir o contato…">
 <!ENTITY printContactCmd.accesskey                      "I">
 <!ENTITY printContactCmd.key                            "p">
@@ -111,10 +105,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY importCmd.accesskey                            "I">
 <!ENTITY exportCmd.label                                "Exportar…">
 <!ENTITY exportCmd.accesskey                            "x">
-<!ENTITY preferencesCmd2.label                          "Opções">
-<!ENTITY preferencesCmd2.accesskey                      "O">
-<!ENTITY preferencesCmdUnix.label                       "Preferências">
-<!ENTITY preferencesCmdUnix.accesskey                   "P">
 
 <!-- Address Book Toolbar and Context Menus -->
 <!ENTITY newContactButton.label                         "Novo contato">
@@ -175,13 +165,13 @@ because displayed names don't have the comma in between. -->
 <!ENTITY PrimaryEmail.label                             "Email">
 <!ENTITY PrimaryEmail.accesskey                         "E">
 <!ENTITY ChatName.label                                 "Nome da conversa">
-<!ENTITY ChatName.accesskey                             "B">
+<!ENTITY ChatName.accesskey                             "c">
 <!ENTITY Company.label                                  "Organização">
-<!ENTITY Company.accesskey                              "m">
+<!ENTITY Company.accesskey                              "O">
 <!ENTITY NickName.label                                 "Apelido">
 <!ENTITY NickName.accesskey                             "A">
 <!ENTITY SecondEmail.label                              "Email adicional">
-<!ENTITY SecondEmail.accesskey                          "v">
+<!ENTITY SecondEmail.accesskey                          "d">
 <!ENTITY Department.label                               "Setor">
 <!ENTITY Department.accesskey                           "S">
 <!ENTITY JobTitle.label                                 "Cargo">

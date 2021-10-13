@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -224,6 +224,9 @@ send-no-client-certificate = 送信するクライアント証明書がありま
 
 # Used when no cert is stored for an override
 no-cert-stored-for-override = (保存されていません)
+
+# When a certificate is unavailable (for example, it has been deleted or the token it exists on has been removed).
+certificate-not-available = (利用できません)
 
 ## Used to show whether an override is temporary or permanent
 

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,12 +17,6 @@
 <!ENTITY lightning.menupopup.new.task.accesskey "U">
 <!ENTITY lightning.menupopup.new.calendar.label "Kalender…">
 <!ENTITY lightning.menupopup.new.calendar.accesskey "K">
-
-<!-- Open menu popup in File menu -->
-<!ENTITY lightning.menupopup.open.label               "Öppna">
-<!ENTITY lightning.menupopup.open.accesskey           "Ö">
-<!ENTITY lightning.menupopup.open.message.label       "Sparade meddelanden…">
-<!ENTITY lightning.menupopup.open.message.accesskey   "m">
 
 <!-- Open menu popup in File menu -->
 <!ENTITY lightning.menupopup.open.calendar.label      "Kalenderfil…">
@@ -51,6 +45,10 @@
      - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "För tillfället, kan du endast aktivera detta efter att ha konfigurerat denna kalender i egenskapsdialogen om kalenderservern tar hand om schemaläggning.">
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Det här alternativet är endast tillgängligt om kalenderservern hanterar schemaläggning. Aktiveringen tillåter att återgå till standard e-postbaserad schemaläggning istället för att lämna den till servern.">
+
+<!-- The notifications settings in the properties dialog -->
+<!ENTITY lightning.calendarproperties.notifications.label                   "Aviseringar">
+<!ENTITY lightning.calendarproperties.globalNotifications.label             "Globala aviseringsinställningar…">
 
 <!-- iMIP Bar (meeting support) -->
 <!ENTITY lightning.imipbar.btnAccept.label                                  "Acceptera">

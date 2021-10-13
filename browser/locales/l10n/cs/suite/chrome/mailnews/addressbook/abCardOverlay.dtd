@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -32,7 +32,6 @@
 <!ENTITY DisplayName.label              "Zobrazované jméno:">
 <!ENTITY DisplayName.accesskey          "n">
 <!ENTITY preferDisplayName.label        "Vždy upřednostnit zobrazované jméno před hlavičkou zprávy">
-<!ENTITY preferDisplayName.accesskey    "u">
 <!ENTITY preferDisplayName2.accesskey   "u">
 <!ENTITY NickName.label                 "Přezdívka:">
 <!ENTITY NickName.accesskey             "e">
@@ -46,8 +45,6 @@
 <!ENTITY PlainText.label                "Prostý text">
 <!ENTITY HTML.label                     "HTML">
 <!ENTITY Unknown.label                  "Neznámý">
-<!ENTITY ScreenName.label               "Účet pro IM">
-<!ENTITY ScreenName.accesskey           "E">
 
 <!ENTITY chatName.label                 "Jméno v chatu:">
 
@@ -145,7 +142,6 @@
 
 <!ENTITY Photo.tab                      "Fotografie">
 <!ENTITY Photo.accesskey                "F">
-<!ENTITY PhotoDesc.label                "Zvolte jednu z následujících:">
 <!ENTITY GenericPhoto.label             "Obecná fotografie">
 <!ENTITY GenericPhoto.accesskey         "e">
 <!ENTITY DefaultPhoto.label             "Výchozí">

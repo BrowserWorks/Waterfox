@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,15 +15,10 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "H">
 <!ENTITY prefPara                            "Les connexions HTTP peuvent être ajustées en utilisant ces options pour améliorer la performance ou la compatibilité. Certains proxies, par exemple, nécessitent HTTP/1.0 (voir les notes de version pour les détails).">
 <!ENTITY prefUseragent.label                 "Chaîne d’agent utilisateur">
-<!ENTITY prefFirefoxCompat.label             "Mentionner la compatibilité avec Firefox">
-<!ENTITY prefFirefoxCompat.accesskey         "F">
-<!ENTITY prefLightningShow.label             "Annoncer l’installation de Lightning">
-<!ENTITY prefLightningShow.accesskey         "L">
-<!ENTITY prefCompatWarning                   "AVERTISSEMENT : désactiver ces paramètres peut empêcher certains services ou sites web de fonctionner correctement.">
-<!ENTITY prefFirefoxStrict.label             "S’identifier en tant que Firefox">
-<!ENTITY prefFirefoxStrict.accesskey         "i">
-<!ENTITY prefFirefoxNone.label               "S’identifier en tant que SeaMonkey">
-<!ENTITY prefFirefoxNone.accesskey           "M">
-<!ENTITY prefFirefoxCompat2.label            "S’identifier en tant que SeaMonkey et mentionner sa compatibilité avec Firefox">
-<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefWaterfoxStrict.label             "S’identifier en tant que Waterfox">
+<!ENTITY prefWaterfoxStrict.accesskey         "i">
+<!ENTITY prefWaterfoxNone.label               "S’identifier en tant que SeaMonkey">
+<!ENTITY prefWaterfoxNone.accesskey           "M">
+<!ENTITY prefWaterfoxCompat2.label            "S’identifier en tant que SeaMonkey et mentionner sa compatibilité avec Waterfox">
+<!ENTITY prefWaterfoxCompat2.accesskey        "F">
 <!ENTITY prefCompatWarning2.desc             "AVERTISSEMENT : la modification de ce paramètre peut empêcher certains services ou sites web de fonctionner correctement.">

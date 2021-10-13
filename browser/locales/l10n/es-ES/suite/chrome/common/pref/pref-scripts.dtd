@@ -1,10 +1,14 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- extracted from content/pref-scripts.xul -->
+
 <!ENTITY pref.scripts.title "Scripts y plugins">
+
 <!ENTITY navigator.label "Navegador">
 <!ENTITY navigator.accesskey "N">
+
 <!ENTITY enableJavaScript.label "Activar JavaScript para">
 <!ENTITY allowScripts.label "Permitir a los scripts:">
 <!ENTITY allowScripts.accesskey "P">
@@ -13,6 +17,7 @@
 <!ENTITY allowWindowStatusChange.label "Cambiar el texto de la barra de estado">
 <!ENTITY allowContextmenuDisable.label "Desactivar o reemplazar menús contextuales">
 <!ENTITY allowHideStatusBar.label "Esconder la barra de estado">
+
 <!ENTITY debugging.label "Depuración de JavaScript">
 <!ENTITY debugEnableDump.label "Activar la salida de dump() de JavaScript">
 <!ENTITY debugEnableDump.accesskey "S">
@@ -20,9 +25,11 @@
 <!ENTITY debugStrictJavascript.accesskey "M">
 <!ENTITY debugConsoleJavascript.label "Mostrar errores y advertencias de JavaScript para chrome.">
 <!ENTITY debugConsoleJavascript.accesskey "J">
+
 <!ENTITY enablePlugins.label "Activar plugins para">
 <!ENTITY enablePluginForSuite.label "Suite">
 <!ENTITY enablePluginForSuite.accesskey "u">
+
 <!ENTITY whenPageRequiresPlugins.label "Cuando una página necesita plugins">
 <!ENTITY activateAllPlugins.label "Activar todos los plugins de modo predeterminado">
 <!ENTITY activateAllPlugins.accesskey "A">

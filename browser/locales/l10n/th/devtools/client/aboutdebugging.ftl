@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,11 @@ about-debugging-page-title-runtime-page = การดีบั๊ก - รั�
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = { -brand-shorter-name } นี้
 
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 
@@ -61,13 +61,9 @@ about-debugging-sidebar-item-connect-button-connection-not-responding = กา�
 # Text displayed as connection error in sidebar item when the connection has timed out.
 about-debugging-sidebar-item-connect-button-connection-timeout = การเชื่อมต่อหมดเวลา
 
-# Temporary text displayed in sidebar items representing remote runtimes after
-# successfully connecting to them. Temporary UI, do not localize.
-about-debugging-sidebar-item-connected-label = เชื่อมต่อแล้ว
-
 # Text displayed in sidebar items for remote devices where a compatible browser (eg
-# Firefox) has not been detected yet. Typically, Android phones connected via USB with
-# USB debugging enabled, but where Firefox is not started.
+# Waterfox) has not been detected yet. Typically, Android phones connected via USB with
+# USB debugging enabled, but where Waterfox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = กำลังรอเบราว์เซอร์…
 
 # Text displayed in sidebar items for remote devices that have been disconnected from the
@@ -103,7 +99,7 @@ about-debugging-setup-title = ตั้งค่า
 # Introduction text in the Setup page to explain how to configure remote debugging.
 about-debugging-setup-intro = กำหนดค่าวิธีการเชื่อมต่อที่คุณต้องการดีบั๊กอุปกรณ์ของคุณจากระยะไกล
 
-# Explanatory text in the Setup page about what the 'This Firefox' page is for
+# Explanatory text in the Setup page about what the 'This Waterfox' page is for
 about-debugging-setup-this-firefox2 = ใช้ <a>{ about-debugging-this-firefox-runtime-name }</a> เพื่อดีบั๊กส่วนขยายและตัวทำงานบริการบน { -brand-shorter-name } รุ่นนี้
 
 # Title of the heading Connect section of the Setup page.
@@ -138,7 +134,7 @@ about-debugging-setup-usb-step-enable-dev-menu2 = เปิดใช้งาน
 about-debugging-setup-usb-step-enable-debug2 = เปิดใช้งานการดีบั๊ก USB ในเมนูนักพัฒนา Android
 
 # USB section step by step guide
-about-debugging-setup-usb-step-enable-debug-firefox2 = เปิดใช้งานการดีบั๊ก USB ใน Firefox ในอุปกรณ์ Android
+about-debugging-setup-usb-step-enable-debug-firefox2 = เปิดใช้งานการดีบั๊ก USB ใน Waterfox ในอุปกรณ์ Android
 
 # USB section step by step guide
 about-debugging-setup-usb-step-plug-device = เชื่อมต่ออุปกรณ์ Android กับคอมพิวเตอร์ของคุณ
@@ -185,7 +181,7 @@ about-debugging-network-location-form-duplicate = โฮสต์ “{ $host-val
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = ส่วนขยายชั่วคราว
 # Title of the extensions category.
@@ -219,23 +215,23 @@ about-debugging-runtime-service-workers-not-compatible = การกำหน�
 # This string is displayed in the runtime page if the remote browser version is too old.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
-# { $minVersion } is the minimum version that is compatible with the current Firefox instance (same format)
+# { $minVersion } is the minimum version that is compatible with the current Waterfox instance (same format)
 about-debugging-browser-version-too-old = เบราว์เซอร์ที่เชื่อมต่อมีรุ่นเก่า ({ $runtimeVersion }) รุ่นที่รองรับขั้นต่ำคือ ({ $minVersion }) นี่เป็นการตั้งค่าที่ไม่รองรับและอาจทำให้ DevTools ล้มเหลว โปรดอัปเดตเบราว์เซอร์ที่เชื่อมต่อ <a>การแก้ไขปัญหา</a>
 
 # Dedicated message for a backward compatibility issue that occurs when connecting:
-# from Fx 70+ to the old Firefox for Android (aka Fennec) which uses Fx 68.
-about-debugging-browser-version-too-old-fennec = Waterfox รุ่นนี้ไม่สามารถดีบั๊ก Firefox สำหรับ Android (68) ได้ เราแนะนำให้ติดตั้ง Firefox สำหรับ Android Nightly บนโทรศัพท์ของคุณเพื่อทำการทดสอบ <a>รายละเอียดเพิ่มเติม</a>
+# from Fx 70+ to the old Waterfox for Android (aka Fennec) which uses Fx 68.
+about-debugging-browser-version-too-old-fennec = Waterfox รุ่นนี้ไม่สามารถดีบั๊ก Waterfox สำหรับ Android (68) ได้ เราแนะนำให้ติดตั้ง Waterfox สำหรับ Android Nightly บนโทรศัพท์ของคุณเพื่อทำการทดสอบ <a>รายละเอียดเพิ่มเติม</a>
 
 # This string is displayed in the runtime page if the remote browser version is too recent.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeID } is the build ID of the remote browser (for instance "20181231", format is yyyyMMdd)
-# { $localID } is the build ID of the current Firefox instance (same format)
+# { $localID } is the build ID of the current Waterfox instance (same format)
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
 # { $localVersion } is the version of your current browser (same format)
-about-debugging-browser-version-too-recent = เบราว์เซอร์ที่เชื่อมต่อเป็นรุ่น ({ $runtimeVersion }, buildID { $runtimeID }) ซึ่งใหม่กว่า { -brand-shorter-name } ({ $localVersion }, buildID { $localID }) ซึ่งไม่รองรับและอาจทำให้ DevTools ทำงานล้มเหลวได้ โปรดอัปเดต Firefox <a>การแก้ไขปัญหา</a>
+about-debugging-browser-version-too-recent = เบราว์เซอร์ที่เชื่อมต่อเป็นรุ่น ({ $runtimeVersion }, buildID { $runtimeID }) ซึ่งใหม่กว่า { -brand-shorter-name } ({ $localVersion }, buildID { $localID }) ซึ่งไม่รองรับและอาจทำให้ DevTools ทำงานล้มเหลวได้ โปรดอัปเดต Waterfox <a>การแก้ไขปัญหา</a>
 
 # Displayed for runtime info in runtime pages.
-# { $name } is brand name such as "Firefox Nightly"
+# { $name } is brand name such as "Waterfox Nightly"
 # { $version } is version such as "64.0a1"
 about-debugging-runtime-name = { $name } ({ $version })
 
@@ -270,18 +266,18 @@ about-debugging-debug-target-list-empty = ยังไม่มีสิ่ง�
 # A target can be an addon, a tab, a worker...
 about-debugging-debug-target-inspect-button = ตรวจสอบ
 
-# Text of a button displayed in the "This Firefox" page, in the Temporary Extension
+# Text of a button displayed in the "This Waterfox" page, in the Temporary Extension
 # section. Clicking on the button will open a file picker to load a temporary extension
 about-debugging-tmp-extension-install-button = โหลดส่วนเสริมชั่วคราว…
 
-# Text displayed when trying to install a temporary extension in the "This Firefox" page.
+# Text displayed when trying to install a temporary extension in the "This Waterfox" page.
 about-debugging-tmp-extension-install-error = เกิดข้อผิดพลาดระหว่างติดตั้งส่วนเสริมแบบชั่วคราว
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = โหลดใหม่
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = เอาออก
 

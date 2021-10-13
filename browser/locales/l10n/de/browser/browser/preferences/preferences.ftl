@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,26 +8,6 @@ do-not-track-option-default-content-blocking-known =
     .label = Nur wenn { -brand-short-name } bekannte Elemente zur Aktivitätenverfolgung blockieren soll
 do-not-track-option-always =
     .label = Immer
-pref-page-title =
-    { PLATFORM() ->
-        [windows] Einstellungen
-       *[other] Einstellungen
-    }
-# This is used to determine the width of the search field in about:preferences,
-# in order to make the entire placeholder string visible
-#
-# Please keep the placeholder string short to avoid truncation.
-#
-# Notice: The value of the `.style` attribute is a CSS string, and the `width`
-# is the name of the CSS property. It is intended only to adjust the element's width.
-# Do not translate.
-search-input-box =
-    .style = width: 15.4em
-    .placeholder =
-        { PLATFORM() ->
-            [windows] In Einstellungen suchen
-           *[other] In Einstellungen suchen
-        }
 settings-page-title = Einstellungen
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
@@ -55,9 +35,6 @@ category-search =
 pane-privacy-title = Datenschutz & Sicherheit
 category-privacy =
     .tooltiptext = { pane-privacy-title }
-pane-sync-title2 = { -sync-brand-short-name }
-category-sync2 =
-    .tooltiptext = { pane-sync-title2 }
 pane-sync-title3 = Synchronisation
 category-sync3 =
     .tooltiptext = { pane-sync-title3 }
@@ -96,21 +73,12 @@ restart-later = Später neu starten
 ## Variables:
 ##   $name (String): name of the extension
 
-# This string is shown to notify the user that their home page
-# is being controlled by an extension.
-extension-controlled-homepage-override = Die Erweiterung "<img data-l10n-name="icon"/> { $name }" verwaltet die Startseite.
-# This string is shown to notify the user that their new tab page
-# is being controlled by an extension.
-extension-controlled-new-tab-url = Die Erweiterung "<img data-l10n-name="icon"/> { $name }" verwaltet die Startseite neuer Tabs.
 # This string is shown to notify the user that the password manager setting
 # is being controlled by an extension
 extension-controlled-password-saving = Die Erweiterung <img data-l10n-name="icon"/> { $name } kontrolliert diese Einstellung.
 # This string is shown to notify the user that their notifications permission
 # is being controlled by an extension.
 extension-controlled-web-notifications = Die Erweiterung <img data-l10n-name="icon"/> { $name } kontrolliert diese Einstellung.
-# This string is shown to notify the user that the default search engine
-# is being controlled by an extension.
-extension-controlled-default-search = Die Erweiterung "<img data-l10n-name="icon"/> { $name }" hat die Standardsuchmaschine festgelegt.
 # This string is shown to notify the user that Container Tabs
 # are being enabled by an extension.
 extension-controlled-privacy-containers = Die Erweiterung <img data-l10n-name="icon"/> { $name } verwaltet die Tab-Umgebungen.
@@ -131,25 +99,12 @@ extension-controlled-enable = Um die Erweiterung zu aktivieren, öffnen Sie das 
 
 search-results-header = Suchergebnisse
 # `<span data-l10n-name="query"></span>` will be replaced by the search term.
-search-results-empty-message =
-    { PLATFORM() ->
-        [windows] Keine Treffer in den Einstellungen für "<span data-l10n-name="query"></span>".
-       *[other] Keine Treffer in den Einstellungen für "<span data-l10n-name="query"></span>".
-    }
-# `<span data-l10n-name="query"></span>` will be replaced by the search term.
 search-results-empty-message2 = Keine Treffer in den Einstellungen für "<span data-l10n-name="query"></span>".
 search-results-help-link = Benötigen Sie Hilfe? Dann besuchen Sie die <a data-l10n-name="url">Hilfeseite für { -brand-short-name }</a>.
 
 ## General Section
 
 startup-header = Start
-# { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
-separate-profile-mode =
-    .label = Gleichzeitiges Ausführen von { -brand-short-name } und Firefox erlauben
-use-firefox-sync = Tipp: Dabei werden getrennte Profile verwendet. Verwenden Sie { -sync-brand-short-name }, um Daten zwischen diesen zu synchronisieren.
-get-started-not-logged-in = Bei { -sync-brand-short-name } anmelden…
-get-started-configured = { -sync-brand-short-name }-Einstellungen öffnen
 always-check-default =
     .label = Immer überprüfen, ob { -brand-short-name } der Standardbrowser ist
     .accesskey = p
@@ -160,6 +115,9 @@ set-as-my-default-browser =
     .accesskey = g
 startup-restore-previous-session =
     .label = Vorherige Sitzung wiederherstellen
+    .accesskey = o
+startup-restore-windows-and-tabs =
+    .label = Vorherige Fenster und Tabs öffnen
     .accesskey = o
 startup-restore-warn-on-quit =
     .label = Beim Beenden des Browsers warnen
@@ -175,12 +133,20 @@ open-new-link-as-tabs =
 warn-on-close-multiple-tabs =
     .label = Warnen, wenn mehrere Tabs geschlossen werden
     .accesskey = m
+confirm-on-close-multiple-tabs =
+    .label = Bestätigen, bevor mehrere Tabs geschlossen werden
+    .accesskey = m
+# This string is used for the confirm before quitting preference.
+# Variables:
+#   $quitKey (String) - the quit keyboard shortcut, and formatted
+#                       in the same manner as it would appear,
+#                       for example, in the File menu.
+confirm-on-quit-with-key =
+    .label = Bestätigen, bevor mit { $quitKey } beendet wird
+    .accesskey = B
 warn-on-open-many-tabs =
     .label = Warnen, wenn das gleichzeitige Öffnen mehrerer Tabs { -brand-short-name } verlangsamen könnte
     .accesskey = c
-switch-links-to-new-tabs =
-    .label = Tabs im Vordergrund öffnen
-    .accesskey = V
 switch-to-new-tabs =
     .label = Tabs im Vordergrund öffnen
     .accesskey = V
@@ -254,6 +220,7 @@ confirm-browser-language-change-button = Anwenden und neu starten
 translate-web-pages =
     .label = Web-Inhalte übersetzen
     .accesskey = z
+fx-translate-web-pages = { -translations-brand-name }
 # The <img> element is replaced by the logo of the provider
 # used to provide machine translations for web pages.
 translate-attribution = Übersetzung mittels <img data-l10n-name="logo"/>
@@ -326,10 +293,6 @@ applications-manage-app =
     .label = Anwendungsdetails…
 applications-always-ask =
     .label = Jedes Mal nachfragen
-applications-type-pdf = Portable Document Format (PDF)
-# Variables:
-#   $type (String) - the MIME type (e.g application/binary)
-applications-type-pdf-with-type = { applications-type-pdf } ({ $type })
 # Variables:
 #   $type-description (String) - Description of the type (e.g "Portable Document Format")
 #   $type (String) - the MIME type (e.g application/binary)
@@ -396,15 +359,6 @@ update-application-warning-cross-user-setting = Diese Einstellung betrifft alle 
 update-application-use-service =
     .label = Einen Hintergrunddienst verwenden, um Updates zu installieren
     .accesskey = g
-update-setting-write-failure-title = Fehler beim Speichern der Update-Einstellungen
-# Variables:
-#   $path (String) - Path to the configuration file
-# The newlines between the main text and the line containing the path is
-# intentional so the path is easier to identify.
-update-setting-write-failure-message =
-    { -brand-short-name } bemerkte einen Fehler und hat diese Änderung nicht gespeichert. Das Setzen dieser Update-Einstellung benötigt Schreibrechte für die unten genannte Datei. Sie oder ein Systemadministrator können das Problem eventuell beheben, indem Sie der Gruppe "Benutzer" vollständige Kontrolle über die Datei gewähren.
-    
-    Konnte folgende Datei nicht speichern: { $path }
 update-setting-write-failure-title2 = Fehler beim Speichern der Update-Einstellungen
 # Variables:
 #   $path (String) - Path to the configuration file
@@ -435,7 +389,7 @@ performance-allow-hw-accel =
 performance-limit-content-process-option = Maximale Anzahl an Inhaltsprozessen
     .accesskey = M
 performance-limit-content-process-enabled-desc = Mehr Inhaltsprozesse verbessern die Leistung bei Verwendung mehrerer Tabs, aber nutzen auch mehr Arbeitsspeicher.
-performance-limit-content-process-blocked-desc = Das Ändern der Anzahl der Inhaltsprozesse ist nur in { -brand-short-name } mit mehreren Prozessen möglich. <a data-l10n-name="learn-more">Wie Sie herausfinden, ob Firefox mit mehreren Prozessen ausgeführt wird</a>
+performance-limit-content-process-blocked-desc = Das Ändern der Anzahl der Inhaltsprozesse ist nur in { -brand-short-name } mit mehreren Prozessen möglich. <a data-l10n-name="learn-more">Wie Sie herausfinden, ob Waterfox mit mehreren Prozessen ausgeführt wird</a>
 # Variables:
 #   $num - default value of the `dom.ipc.processCount` pref.
 performance-default-content-process-count =
@@ -521,10 +475,10 @@ choose-bookmark =
     .label = Lesezeichen verwenden…
     .accesskey = L
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Inhalte des Firefox-Startbildschirms
-home-prefs-content-description = Wählen Sie, welche Inhalte auf Ihrem Firefox-Startbildschirm angezeigt werden sollen.
+home-prefs-content-header = Inhalte des Waterfox-Startbildschirms
+home-prefs-content-description = Wählen Sie, welche Inhalte auf Ihrem Waterfox-Startbildschirm angezeigt werden sollen.
 home-prefs-search-header =
     .label = Internetsuche
 home-prefs-topsites-header =
@@ -610,10 +564,8 @@ search-show-suggestions-above-history-option =
     .label = In Adressleiste Suchvorschläge vor Einträgen aus der Browser-Chronik anzeigen
 search-show-suggestions-private-windows =
     .label = Suchvorschläge in privaten Fenstern anzeigen
-suggestions-addressbar-settings-generic = Einstellungen für andere Vorschläge in der Adressleiste ändern
 suggestions-addressbar-settings-generic2 = Einstellungen für andere Vorschläge in der Adressleiste ändern
 search-suggestions-cant-show = Suchvorschläge werden nicht in der Adressleiste angezeigt, weil { -brand-short-name } angewiesen wurde, keine Chronik zu speichern.
-search-one-click-header = Ein-Klick-Suchmaschinen
 search-one-click-header2 = Suchmaschinen-Schlüsselwörter
 search-one-click-desc = Wählen Sie die Suchmaschinen, welche unterhalb der Adress- bzw. Suchleiste angezeigt werden, nachdem Sie den Suchbegriff eingegeben haben.
 search-choose-engine-column =
@@ -640,12 +592,6 @@ search-keyword-warning-bookmark = Sie haben ein Schlüsselwort ausgewählt, das 
 
 ## Containers Section
 
-containers-back-button =
-    .aria-label =
-        { PLATFORM() ->
-            [windows] Zurück zu den Einstellungen
-           *[other] Zurück zu den Einstellungen
-        }
 containers-back-button2 =
     .aria-label = Zurück zu den Einstellungen
 containers-header = Tab-Umgebungen
@@ -655,21 +601,15 @@ containers-add-button =
 containers-new-tab-check =
     .label = Tab-Umgebung für jeden neuen Tab wählen
     .accesskey = w
-containers-preferences-button =
-    .label = Einstellungen
 containers-settings-button =
     .label = Einstellungen
 containers-remove-button =
     .label = Löschen
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Waterfox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = So haben Sie das Web überall dabei.
-sync-signedout-description = Synchronisieren Sie Ihre Lesezeichen, Chronik, Tabs, Passwörter, Add-ons und Einstellungen zwischen allen Ihren Geräten.
-sync-signedout-account-signin2 =
-    .label = Bei { -sync-brand-short-name } anmelden…
-    .accesskey = B
 sync-signedout-description2 = Synchronisieren Sie Ihre Lesezeichen, Chronik, Tabs, Passwörter, Add-ons und Einstellungen zwischen allen Ihren Geräten.
 sync-signedout-account-signin3 =
     .label = Zum Synchronisieren anmelden…
@@ -684,7 +624,7 @@ sync-signedout-account-signin3 =
 # to your language, but should not be changed or translated.
 sync-mobile-promo = Waterfox für <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> oder <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> herunterladen, um mit Ihrem Handy zu synchronisieren.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Profilbild ändern
@@ -709,10 +649,6 @@ sync-sign-in =
 
 prefs-syncing-on = Synchronisation: EIN
 prefs-syncing-off = Synchronisation: AUS
-prefs-sync-setup =
-    .label = { -sync-brand-short-name } einrichten…
-    .accesskey = e
-prefs-sync-offer-setup-label = Synchronisieren Sie Ihre Lesezeichen, Chronik, Tabs, Passwörter, Add-ons und Einstellungen zwischen allen Ihren Geräten.
 prefs-sync-turn-on-syncing =
     .label = Synchronisation aktivieren…
     .accesskey = S
@@ -732,11 +668,6 @@ sync-currently-syncing-logins-passwords = Zugangsdaten und Passwörter
 sync-currently-syncing-addresses = Adressen
 sync-currently-syncing-creditcards = Kreditkarten
 sync-currently-syncing-addons = Add-ons
-sync-currently-syncing-prefs =
-    { PLATFORM() ->
-        [windows] Einstellungen
-       *[other] Einstellungen
-    }
 sync-currently-syncing-settings = Einstellungen
 sync-change-options =
     .label = Ändern…
@@ -775,16 +706,8 @@ sync-engine-creditcards =
     .accesskey = K
 sync-engine-addons =
     .label = Add-ons
-    .tooltiptext = Erweiterungen und Themes für Firefox für Desktops
+    .tooltiptext = Erweiterungen und Themes für Waterfox für Desktops
     .accesskey = A
-sync-engine-prefs =
-    .label =
-        { PLATFORM() ->
-            [windows] Einstellungen
-           *[other] Einstellungen
-        }
-    .tooltiptext = Durch Sie geänderte allgemeine, Datenschutz- und Sicherheitseinstellungen
-    .accesskey = E
 sync-engine-settings =
     .label = Einstellungen
     .tooltiptext = Durch Sie geänderte allgemeine, Datenschutz- und Sicherheitseinstellungen
@@ -834,9 +757,6 @@ forms-fill-logins-and-passwords =
 forms-saved-logins =
     .label = Gespeicherte Zugangsdaten…
     .accesskey = G
-forms-master-pw-use =
-    .label = Master-Passwort verwenden
-    .accesskey = v
 forms-primary-pw-use =
     .label = Hauptpasswort verwenden
     .accesskey = v
@@ -847,7 +767,6 @@ forms-primary-pw-learn-more-link = Weitere Informationen
 forms-master-pw-change =
     .label = Master-Passwort ändern…
     .accesskey = M
-forms-master-pw-fips-title = Sie sind derzeit im FIPS-Modus. FIPS benötigt ein nicht leeres Master-Passwort.
 forms-primary-pw-change =
     .label = Hauptpasswort ändern…
     .accesskey = H
@@ -857,20 +776,17 @@ forms-primary-pw-change =
 forms-primary-pw-former-name = Früher bekannt als Master-Passwort
 forms-primary-pw-fips-title = Sie sind derzeit im FIPS-Modus. FIPS benötigt ein nicht leeres Hauptpasswort.
 forms-master-pw-fips-desc = Ändern des Passworts fehlgeschlagen
+forms-windows-sso =
+    .label = Windows Single Sign-on für Microsoft-, Geschäfts- und Schulkonten erlauben
+forms-windows-sso-learn-more-link = Weitere Informationen
+forms-windows-sso-desc = Verwalten Sie Konten in Ihren Geräteeinstellungen.
 
 ## OS Authentication dialog
 
-# This message can be seen by trying to add a Master Password.
-master-password-os-auth-dialog-message-win = Um ein Master-Passwort zu erstellen, müssen die Anmeldedaten des Windows-Benutzerkontos eingegeben werden. Dies dient dem Schutz Ihrer Zugangsdaten.
-# This message can be seen by trying to add a Master Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
-# and includes subtitle of "Enter password for the user "xxx" to allow this." These
-# notes are only valid for English. Please test in your locale.
-master-password-os-auth-dialog-message-macosx = Master-Passwort festlegen
 # This message can be seen by trying to add a Primary Password.
 primary-password-os-auth-dialog-message-win = Um ein Hauptpasswort zu erstellen, müssen die Anmeldedaten des Windows-Benutzerkontos eingegeben werden. Dies dient dem Schutz Ihrer Zugangsdaten.
 # This message can be seen by trying to add a Primary Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
+# The macOS strings are preceded by the operating system with "Waterfox is trying to "
 # and includes subtitle of "Enter password for the user "xxx" to allow this." These
 # notes are only valid for English. Please test in your locale.
 primary-password-os-auth-dialog-message-macosx = Hauptpasswort festlegen
@@ -882,12 +798,12 @@ history-header = Chronik
 # This label is followed, on the same line, by a dropdown list of options
 # (Remember history, etc.).
 # In English it visually creates a full sentence, e.g.
-# "Firefox will" + "Remember history".
+# "Waterfox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
 #   - Simply as "Waterfox", moving the verb into each option.
 #     This will result in "Waterfox" + "Will remember history", etc.
-#   - As a stand-alone message, for example "Firefox history settings:".
+#   - As a stand-alone message, for example "Waterfox history settings:".
 history-remember-label = { -brand-short-name } wird eine Chronik
     .accesskey = F
 history-remember-option-all =
@@ -962,9 +878,6 @@ sitedata-clear =
 sitedata-settings =
     .label = Daten verwalten…
     .accesskey = v
-sitedata-cookies-permissions =
-    .label = Berechtigungen verwalten…
-    .accesskey = B
 sitedata-cookies-exceptions =
     .label = Ausnahmen verwalten…
     .accesskey = u
@@ -1109,16 +1022,18 @@ permissions-block-popups =
 permissions-block-popups-exceptions =
     .label = Ausnahmen…
     .accesskey = A
+# "popup" is a misspelling that is more popular than the correct spelling of
+# "pop-up" so it's included as a search keyword, not displayed in the UI.
+permissions-block-popups-exceptions-button =
+    .label = Ausnahmen…
+    .accesskey = A
+    .searchkeywords = popups
 permissions-addon-install-warning =
     .label = Warnen, wenn Websites versuchen, Add-ons zu installieren
     .accesskey = W
 permissions-addon-exceptions =
     .label = Ausnahmen…
     .accesskey = A
-permissions-a11y-privacy-checkbox =
-    .label = Externen Anwendungen den Zugriff auf den Dienst für Barrierefreiheit in Firefox verweigern
-    .accesskey = B
-permissions-a11y-privacy-link = Weitere Informationen
 
 ## Privacy Section - Data Collection
 
@@ -1140,10 +1055,6 @@ addon-recommendations-link = Weitere Informationen
 # This message is displayed above disabled data sharing options in developer builds
 # or builds with no Telemetry support available.
 collection-health-report-disabled = Datenübermittlung ist für diese Build-Konfiguration deaktiviert
-collection-backlogged-crash-reports =
-    .label = Nicht gesendete Absturzberichte automatisch von { -brand-short-name } senden lassen
-    .accesskey = g
-collection-backlogged-crash-reports-link = Weitere Informationen
 collection-backlogged-crash-reports-with-link = Nicht gesendete Absturzberichte automatisch von { -brand-short-name } senden lassen <a data-l10n-name="crash-reports-link">Weitere Informationen</a>
     .accesskey = g
 
@@ -1168,13 +1079,6 @@ security-block-uncommon-software =
 ## Privacy Section - Certificates
 
 certs-header = Zertifikate
-certs-personal-label = Wenn eine Website nach dem persönlichen Sicherheitszertifikat verlangt
-certs-select-auto-option =
-    .label = Automatisch eins wählen
-    .accesskey = w
-certs-select-ask-option =
-    .label = Jedes Mal fragen
-    .accesskey = J
 certs-enable-ocsp =
     .label = Aktuelle Gültigkeit von Zertifikaten durch Anfrage bei OCSP-Server bestätigen lassen
     .accesskey = G
@@ -1184,29 +1088,6 @@ certs-view =
 certs-devices =
     .label = Kryptographie-Module…
     .accesskey = K
-space-alert-learn-more-button =
-    .label = Weitere Informationen
-    .accesskey = W
-space-alert-over-5gb-pref-button =
-    .label =
-        { PLATFORM() ->
-            [windows] Einstellungen öffnen
-           *[other] Einstellungen öffnen
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] E
-           *[other] E
-        }
-space-alert-over-5gb-message =
-    { PLATFORM() ->
-        [windows] { -brand-short-name } hat nur noch wenig Speicherplatz zur Verfügung. Webinhalte werden eventuell nicht richtig angezeigt. Sie können gespeicherte Daten im Menü Einstellungen > Datenschutz & Sicherheit > Cookies und Website-Daten löschen.
-       *[other] { -brand-short-name } verfügt über nur noch wenig freien Speicherplatz. Website-Inhalte werden vielleicht nicht richtig angezeigt. Sie können gespeicherte Daten im Menü Einstellungen > Datenschutz & Sicherheit > Cookies und Website-Daten löschen.
-    }
-space-alert-under-5gb-ok-button =
-    .label = OK
-    .accesskey = O
-space-alert-under-5gb-message = { -brand-short-name } verfügt über nur noch wenig freien Speicherplatz. Website-Inhalte werden vielleicht nicht richtig angezeigt. Besuchen Sie "Weitere Informationen", um die Speichernutzung für ein besseres Weberlebnis zu optimieren.
 space-alert-over-5gb-settings-button =
     .label = Einstellungen öffnen
     .accesskey = E

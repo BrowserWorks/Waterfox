@@ -1,15 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 # Addressing widget
 
-#   $type (String) - the type of the addressing row
-remove-address-row-type = Remover o campo { $type }
-#   $type (String) - the type of the addressing row
-remove-address-row-type-label =
-    .tooltiptext = Remover o campo { $type }
 #   $type (String) - the type of the addressing row
 remove-address-row-button =
     .title = Remover o campo { $type }
@@ -67,9 +62,13 @@ toolbar-button-add-attachment =
 add-attachment-notification-reminder =
     .label = Adicionar anexo…
     .tooltiptext = { toolbar-button-add-attachment.tooltiptext }
+add-attachment-notification-reminder2 =
+    .label = Adicionar anexo…
+    .accesskey = A
+    .tooltiptext = { toolbar-button-add-attachment.tooltiptext }
 menuitem-attach-files =
     .label = Arquivos…
-    .accesskey = F
+    .accesskey = A
     .acceltext = { ctrl-cmd-shift-pretty-prefix }{ trigger-attachment-picker-key }
 context-menuitem-attach-files =
     .label = Anexar arquivos…
@@ -84,21 +83,14 @@ attachment-bucket-count =
            *[other] { $count } anexos
         }
     .accesskey = x
-#   $count (Number) - the number of attachments in the attachment bucket
-attachments-placeholder-tooltip =
-    .tooltiptext =
-        { $count ->
-            [1] { $count } anexo
-            [one] { $count } anexo
-           *[other] { $count } anexos
-        }
-#   { attachment-bucket-count.accesskey } - Do not localize this message.
-key-toggle-attachment-pane =
-    .key = { attachment-bucket-count.accesskey }
 expand-attachment-pane-tooltip =
     .tooltiptext = Exibir painel de anexos ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
 collapse-attachment-pane-tooltip =
     .tooltiptext = Ocultar painel de anexos ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
+attachment-area-show =
+    .title = Exibir painel de anexos ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
+attachment-area-hide =
+    .title = Ocultar painel de anexos ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
 drop-file-label-attachment =
     { $count ->
         [one] Adicionar como anexo
@@ -106,8 +98,8 @@ drop-file-label-attachment =
     }
 drop-file-label-inline =
     { $count ->
-        [one] Anexar dentro da mensagem
-       *[other] Anexar dentro da mensagem
+        [one] Inserir na mensagem
+       *[other] Inserir na mensagem
     }
 
 # Reorder Attachment Panel
@@ -123,6 +115,13 @@ move-attachment-last-panel-button =
 button-return-receipt =
     .label = Confirmação
     .tooltiptext = Solicitar uma confirmação de leitura desta mensagem
+
+# Encryption
+
+message-to-be-signed-icon =
+    .alt = Assinar mensagem
+message-to-be-encrypted-icon =
+    .alt = Criptografar mensagem
 
 # Addressing Area
 
@@ -158,12 +157,74 @@ bcc-compose-show-address-row-label =
     .tooltiptext = Exibir campo { bcc-compose-address-row-label.value } ({ bcc-compose-show-address-row-menuitem.acceltext })
 #   $count (Number) - the count of addresses in the "To" and "Cc" fields.
 many-public-recipients-info = Os { $count } destinatários em Para e Cc irão ver os endereços uns dos outros. Você pode evitar revelar destinatários usando Cco.
+to-address-row-label =
+    .value = Para
+#   $key (String) - the shortcut key for this field
+show-to-row-main-menuitem =
+    .label = Campo Para
+    .accesskey = P
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-to-row-button text.
+show-to-row-extra-menuitem =
+    .label = Para
+    .accesskey = P
+#   $key (String) - the shortcut key for this field
+show-to-row-button = Para
+    .title = Exibir o campo Para ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+cc-address-row-label =
+    .value = Cc
+#   $key (String) - the shortcut key for this field
+show-cc-row-main-menuitem =
+    .label = Campo Cc
+    .accesskey = C
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-cc-row-button text.
+show-cc-row-extra-menuitem =
+    .label = Cc
+    .accesskey = C
+#   $key (String) - the shortcut key for this field
+show-cc-row-button = Cc
+    .title = Exibir campo Cc ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+bcc-address-row-label =
+    .value = Cco
+#   $key (String) - the shortcut key for this field
+show-bcc-row-main-menuitem =
+    .label = Campo Cco
+    .accesskey = o
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-bcc-row-button text.
+show-bcc-row-extra-menuitem =
+    .label = Cco
+    .accesskey = o
+#   $key (String) - the shortcut key for this field
+show-bcc-row-button = Cco
+    .title = Exibir campo Cco ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+extra-address-rows-menu-button =
+    .title = Outros campos de endereçamento a exibir
+#   $count (Number) - the count of addresses in the "To" and "Cc" fields.
+many-public-recipients-notice =
+    { $count ->
+        [one] Sua mensagem tem um destinatário público. Você pode evitar revelar destinatários usando Cco em vez de Para ou Cc.
+       *[other] Os { $count } destinatários em Para e Cc irão ver os endereços uns dos outros. Você pode evitar revelar destinatários usando Cco.
+    }
 many-public-recipients-bcc =
     .label = Mudar para Cco (com cópia oculta)
     .accesskey = u
 many-public-recipients-ignore =
     .label = Manter públicos os destinatários
     .accesskey = M
+many-public-recipients-prompt-title = Destinatários públicos demais
+#   $count (Number) - the count of addresses in the public recipients fields.
+many-public-recipients-prompt-msg =
+    { $count ->
+        [one] Sua mensagem tem um destinatário público. Isso pode ser motivo de preocupação com privacidade. Você pode evitar movendo o destinatário de Para/Cc para Cco.
+       *[other] Sua mensagem tem { $count } destinatários públicos, que poderão ver os endereços uns dos outros. Isso pode ser motivo de preocupação com privacidade. Você pode evitar revelar destinatários movendo de Para/Cc para Cco.
+    }
+many-public-recipients-prompt-cancel = Cancelar envio
+many-public-recipients-prompt-send = Enviar assim mesmo
 
 ## Notifications
 
@@ -171,4 +232,12 @@ many-public-recipients-ignore =
 # $identity (string) - The name of the used identity, most likely an email address.
 compose-missing-identity-warning = Não foi encontrada uma identidade única correspondente ao endereço do remetente. A mensagem será enviada usando o campo De atual e as configurações da identidade { $identity }.
 encrypted-bcc-warning = Ao enviar uma mensagem criptografada, destinatários em Cco não ficam totalmente ocultos. Todos os destinatários podem conseguir identificá-los.
-encrypted-bcc-ignore-button = Entendido
+encrypted-bcc-ignore-button = Entendi
+
+## Editing
+
+
+# Tools
+
+compose-tool-button-remove-text-styling =
+    .tooltiptext = Remover estilo de texto

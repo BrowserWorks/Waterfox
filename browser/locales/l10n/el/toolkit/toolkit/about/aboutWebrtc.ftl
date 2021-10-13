@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -84,9 +84,9 @@ about-webrtc-debug-mode-msg-label = Λειτουργία ελέγχου σφαλ
 about-webrtc-debug-mode-off-state-label = Έναρξη λειτουργίας ελέγχου σφαλμάτων
 about-webrtc-debug-mode-on-state-label = Διακοπή λειτουργίας ελέγχου σφαλμάτων
 about-webrtc-stats-heading = Στατιστικά συνεδρίας
-about-webrtc-stats-clear = Εκκαθάριση ιστορικού
+about-webrtc-stats-clear = Απαλοιφή ιστορικού
 about-webrtc-log-heading = Αρχείο καταγραφής σύνδεσης
-about-webrtc-log-clear = Εκκαθάριση αρχείου καταγραφής
+about-webrtc-log-clear = Απαλοιφή αρχείου καταγραφής
 about-webrtc-log-show-msg = εμφάνιση αρχείου καταγραφής
     .title = κάντε κλικ για επέκταση ενότητας
 about-webrtc-log-hide-msg = απόκρυψη αρχείου καταγραφής

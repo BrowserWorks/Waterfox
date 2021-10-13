@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,7 +13,7 @@
 
 <!ENTITY performanceUI.bufferStatusTooltip "Le informazioni vengono salvate in un buffer circolare: una volta raggiunto il limite di registrazione, i dati sovrascrivono i campioni all’inizio della registrazione.">
 
-<!ENTITY performanceUI.disabledRealTime.disabledE10S "Attivare la modalità multiprocesso di Firefox nelle preferenze per effettuare la registrazione in tempo reale.">
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Attivare la modalità multiprocesso di Waterfox nelle preferenze per effettuare la registrazione in tempo reale.">
 
 <!ENTITY performanceUI.bufferStatusFull "Il buffer è pieno. I campioni più vecchi verranno sovrascritti.">
 

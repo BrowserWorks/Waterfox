@@ -1,7 +1,7 @@
-# Mozilla l10n-central - Czech (cs) localization
+# Waterfox l10n-central - Czech (cs) localization
 
-This repository contains Czech localization files for Mozilla desktop products
-(Firefox, Thunderbird, SeaMonkey). Other products and web applications have
+This repository contains Czech localization files for Waterfox desktop products
+(Waterfox, Thunderbird, SeaMonkey). Other products and web applications have
 their own repositories. You can find them all listed in our translation interface
 called [Pontoon](https://pontoon.mozilla.org/cs/).
 

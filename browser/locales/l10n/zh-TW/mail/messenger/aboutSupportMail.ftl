@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -14,5 +14,7 @@ accounts-conn-security = 連線安全性
 accounts-auth-method = 驗證方式
 accounts-default = 預設值？
 identity-name = 身份識別
+
 send-via-email = 透過電子郵件寄出
+
 app-basics-telemetry = Telemetry 資料

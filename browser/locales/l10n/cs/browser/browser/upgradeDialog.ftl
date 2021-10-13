@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,41 +17,12 @@ upgrade-dialog-new-title =
        *[other] nová aplikace { -brand-short-name }
     }
 upgrade-dialog-new-subtitle = Prohlížeč, který vás vezme, kam potřebujete, a rychle
-# The <span data-l10n-name="zap"></span> in this string allows a "zap" underline
-# style to be automatically added to the text inside it. { -brand-short-name }
-# should stay inside the span.
-upgrade-dialog-new-alt-subtitle =
-    { -brand-short-name.gender ->
-        [masculine] <span data-l10n-name="zap">{ -brand-short-name(case: "acc") }</span>
-        [feminine] <span data-l10n-name="zap">{ -brand-short-name(case: "acc") }</span>
-        [neuter] <span data-l10n-name="zap">{ -brand-short-name(case: "acc") }</span>
-       *[other] Aplikaci <span data-l10n-name="zap">{ -brand-short-name }</span>
-    } můžete mít na klik myší
 upgrade-dialog-new-item-menu-title = Nové lišty a nabídky pro snazší ovládání
 upgrade-dialog-new-item-menu-description = Dávají přednost důležitým věcem, takže najdete, co potřebujete.
 upgrade-dialog-new-item-tabs-title = Moderní vzhled panelů
 upgrade-dialog-new-item-tabs-description = Obsahuje ty správné informace, nevyrušuje a přizpůsobí se vašim potřebám.
 upgrade-dialog-new-item-icons-title = Svěží ikony a jasné popisky
 upgrade-dialog-new-item-icons-description = Pomohou vám najít, co potřebujete, i na dotykové obrazovce.
-upgrade-dialog-new-primary-primary-button =
-    Nastavit { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "acc") }
-        [feminine] { -brand-short-name(case: "acc") }
-        [neuter] { -brand-short-name(case: "acc") }
-       *[other] aplikaci { -brand-short-name }
-    } jako můj hlavní prohlížeč
-    .title =
-        Nastaví { -brand-short-name.gender ->
-            [masculine] { -brand-short-name(case: "acc") }
-            [feminine] { -brand-short-name(case: "acc") }
-            [neuter] { -brand-short-name(case: "acc") }
-           *[other] aplikaci { -brand-short-name }
-        } jako výchozí prohlížeč a připne { -brand-short-name.gender ->
-            [masculine] ho
-            [feminine] ji
-            [neuter] ho
-           *[other] ji
-        } na lištu
 upgrade-dialog-new-primary-default-button =
     Nastavit { -brand-short-name.gender ->
         [masculine] { -brand-short-name(case: "acc") }
@@ -59,21 +30,13 @@ upgrade-dialog-new-primary-default-button =
         [neuter] { -brand-short-name(case: "acc") }
        *[other] aplikaci { -brand-short-name }
     } jako můj výchozí prohlížeč
-upgrade-dialog-new-primary-pin-button =
-    Připnout { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "acc") }
-        [feminine] { -brand-short-name(case: "acc") }
-        [neuter] { -brand-short-name(case: "acc") }
-       *[other] aplikaci { -brand-short-name }
-    } na lištu
-upgrade-dialog-new-primary-pin-alt-button = Připnout na lištu
 upgrade-dialog-new-primary-theme-button = Vybrat vzhled
 upgrade-dialog-new-secondary-button = Teď ne
 # This string is only shown on Windows 7, where we intentionally suppress the
 # theme selection screen.
 upgrade-dialog-new-primary-win7-button = Ok, rozumím
 
-## Pin Firefox screen
+## Pin Waterfox screen
 ##
 ## These title, subtitle and button strings differ between platforms as they
 ## match the OS' application context menu item action where Windows uses "pin"
@@ -116,16 +79,6 @@ upgrade-dialog-pin-secondary-button = Teď ne
 ## Default browser screen
 
 # This title can be explicitly wrapped to control which words are on which line.
-upgrade-dialog-default-title =
-    Chcete { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "acc") }
-        [feminine] { -brand-short-name(case: "acc") }
-        [neuter] { -brand-short-name(case: "acc") }
-       *[other] aplikaci { -brand-short-name }
-    } nastavit jako svůj výchozí prohlížeč?
-upgrade-dialog-default-subtitle = Získejte rychlost, bezpečnost a soukromí pro své prohlížení.
-upgrade-dialog-default-primary-button = Nastavit jako výchozí prohlížeč
-# This title can be explicitly wrapped to control which words are on which line.
 upgrade-dialog-default-title-2 =
     Nastavit { -brand-short-name.gender ->
         [masculine] { -brand-short-name(case: "acc") }
@@ -140,13 +93,34 @@ upgrade-dialog-default-secondary-button = Teď ne
 ## Theme selection screen
 
 # This title can be explicitly wrapped to control which words are on which line.
-upgrade-dialog-theme-title =
-    Začněte s čistým
-    novým vzhledem
-# This title can be explicitly wrapped to control which words are on which line.
 upgrade-dialog-theme-title-2 = Začněte s čistým a novým vzhledem
 upgrade-dialog-theme-system = Podle systému
     .title = Vzhled s barevným tématem podle nastavení operačního systému.
+
+## Start screen
+
+# This title can be explicitly wrapped to control which words are on which line.
+upgrade-dialog-start-title = Život v barvách
+upgrade-dialog-start-subtitle = Nové palety barev dostupné po omezenou dobu.
+upgrade-dialog-start-primary-button = Vyzkoušet palety barev
+upgrade-dialog-start-secondary-button = Teď ne
+
+## Colorway screen
+
+# This title can be explicitly wrapped to control which words are on which line.
+upgrade-dialog-colorway-title = Vyberte si paletu
+upgrade-dialog-colorway-home-checkbox = Přepnout na domovskou stránku Waterfoxu s tématem na pozadí
+upgrade-dialog-colorway-primary-button = Uložit paletu barev
+upgrade-dialog-colorway-secondary-button = Ponechat předchozí vzhled
+upgrade-dialog-colorway-theme-tooltip =
+    .title = Vyzkoušet výchozí vzhledy
+# $colorwayName (String) - Name of colorway, e.g., Abstract, Cheers
+upgrade-dialog-colorway-colorway-tooltip =
+    .title = Vyzkoušet paletu barev { $colorwayName }
+upgrade-dialog-colorway-default-theme = Výchozí
+# "Auto" is short for "Automatic"
+upgrade-dialog-colorway-theme-auto = Automaticky
+    .title = Vzhled s barvami tlačítek, nabídek a oken podle nastavení operačního systému
 upgrade-dialog-theme-light = Světlý
     .title = Vzhled se světlým barevným tématem.
 upgrade-dialog-theme-dark = Tmavý
@@ -163,3 +137,18 @@ upgrade-dialog-theme-keep = Ponechat předchozí
         }
 upgrade-dialog-theme-primary-button = Uložit vzhled
 upgrade-dialog-theme-secondary-button = Teď ne
+upgrade-dialog-colorway-variation-soft = Jemná
+    .title = Použít tuto paletu barev
+upgrade-dialog-colorway-variation-balanced = Vyvážená
+    .title = Použít tuto paletu barev
+# "Bold" is used in the sense of bravery or courage, not in the sense of
+# emphasized text.
+upgrade-dialog-colorway-variation-bold = Výrazná
+    .title = Použít tuto paletu barev
+
+## Thank you screen
+
+# This title can be explicitly wrapped to control which words are on which line.
+upgrade-dialog-thankyou-title = Děkujeme, že jste si vybrali nás
+upgrade-dialog-thankyou-subtitle = { -brand-short-name } je nezávislý prohlížeč od neziskové organizace. Společně se snažíme udělat web bezpečnější, zdravější a s větším ohledem na soukromí.
+upgrade-dialog-thankyou-primary-button = Začít prohlížet

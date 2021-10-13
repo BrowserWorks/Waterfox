@@ -1,5 +1,5 @@
 <!--
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
@@ -61,8 +61,6 @@
 
 <!ENTITY  mediaTab              "Média">
 <!ENTITY  mediaTab.accesskey    "M">
-<!ENTITY  mediaURL              "URL:">
-<!ENTITY  mediaAlt              "Alternatív szöveg:">
 <!ENTITY  mediaLocation         "Hely:">
 <!ENTITY  mediaText             "Kapcsolódó szöveg:">
 <!ENTITY  mediaAltHeader        "Alternatív szöveg">
@@ -70,9 +68,6 @@
 <!ENTITY  mediaType             "Típus">
 <!ENTITY  mediaSize             "Méret">
 <!ENTITY  mediaCount            "Darab">
-<!ENTITY  mediaDimensions       "Megadott méretek:">
-<!ENTITY  mediaPhysDimensions   "Tényleges méretek:">
-<!ENTITY  mediaTitle            "Cím:">
 <!ENTITY  mediaDimension        "Méretek:">
 <!ENTITY  mediaLongdesc         "Hosszú leírás:">
 <!ENTITY  mediaBlockImage.accesskey "B">
@@ -88,18 +83,7 @@
 
 <!ENTITY  permTab               "Engedélyek">
 <!ENTITY  permTab.accesskey     "E">
-<!ENTITY  permUseDefault        "Alapértelmezés használata">
-<!ENTITY  permAskAlways         "Mindig megkérdez">
-<!ENTITY  permAllow             "Engedélyezés">
-<!ENTITY  permAllowSession      "Engedélyezés a munkamenetben">
-<!ENTITY  permBlock             "Tiltás">
 <!ENTITY  permissionsFor        "Engedélyezés:">
-<!ENTITY  permImage             "Képek betöltése">
-<!ENTITY  permPopup             "Felugró ablak megnyitása">
-<!ENTITY  permCookie            "Süti elhelyezése">
-<!ENTITY  permNotifications     "Értesítések megjelenítése">
-<!ENTITY  permInstall           "Kiterjesztés vagy téma telepítése">
-<!ENTITY  permGeo               "Földrajzi hely adatainak megosztása">
 
 <!ENTITY  securityTab           "Biztonság">
 <!ENTITY  securityTab.accesskey "s">

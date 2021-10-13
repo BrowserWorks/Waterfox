@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-title = Naptár
 calendar-title-reminder = Emlékeztetők
+calendar-title-notification = Értesítések
 calendar-title-category = Kategóriák
 dateformat-label =
     .value = Dátumszöveg formátuma:
@@ -106,6 +107,9 @@ todaypane-legend = Ma panel
 soon-label =
     .value = A várakozó szakaszban megjelenik:
     .accesskey = v
+agenda-days =
+    .value = A napirenden látható:
+    .accesskey = n
 event-task-legend = Események és feladatok
 default-length-label =
     .value = Alapértelmezett esemény- és a feladathossz:
@@ -133,6 +137,9 @@ task-due-label =
 edit-intab-label =
     .label = Események és feladatok szerkesztése ablak helyett lapon.
     .accesskey = m
+prompt-delete-label =
+    .label = Kérdés az események és feladatok törlése előtt.
+    .accesskey = K
 accessibility-legend = Kisegítő lehetőségek
 accessibility-colors-label =
     .label = Színek optimalizálása
@@ -179,6 +186,7 @@ event-alarm-time-label =
 task-alarm-time-label =
     .value = Értesítés bekapcsolása a feladat előtt:
     .accesskey = o
+calendar-notifications-customize-label = Minden naptár értesítése testreszabható a naptár tulajdonságai ablakban.
 category-new-label = Új kategória
 category-edit-label = Kategória szerkesztése
 category-overwrite-title = Figyelmeztetés: már van ilyen név

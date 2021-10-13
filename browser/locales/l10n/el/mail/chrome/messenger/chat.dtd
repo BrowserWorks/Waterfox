@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,11 +8,11 @@
 <!ENTITY searchResultConversation.label "Αποτέλεσμα αναζήτησης">
 <!ENTITY chat.noConv.title             "Οι συνομιλίες θα εμφανιστούν εδώ.">
 <!ENTITY chat.noConv.description       "Χρησιμοποιήστε τη λίστα επαφών στην αριστερή προβολή για έναρξη συνομιλίας.">
-<!ENTITY chat.noPreviousConv.description       "Το &brandShortName; δεν έχει επί του παρόντος προηγούμενες συνομιλίες αποθηκευμένες για αυτήν την επαφή.">
+<!ENTITY chat.noPreviousConv.description       "Το &brandShortName; δεν έχει αποθηκεύσει, προς το παρόν, προηγούμενες συνομιλίες για αυτήν την επαφή.">
 <!ENTITY chat.noAccount.title             "Δεν έχετε ρυθμίσει ακόμη κάποιον λογαριασμό συνομιλίας.">
-<!ENTITY chat.noAccount.description       "Αφήστε το &brandShortName; να σας καθοδηγήσει στη διαδικασία ρύθμισης του λογαριασμού συνομιλίας σας.">
+<!ENTITY chat.noAccount.description       "Αφήστε το &brandShortName; να σας καθοδηγήσει στη διαδικασία ρύθμισης του λογαριασμού συνομιλιών σας.">
 <!ENTITY chat.accountWizard.button       "Έναρξη">
-<!ENTITY chat.noConnectedAccount.title             "Οι λογαριασμοί συνομιλίας σας δεν είναι συνδεδεμένοι.">
+<!ENTITY chat.noConnectedAccount.title             "Οι λογαριασμοί συνομιλιών σας δεν είναι συνδεδεμένοι.">
 <!ENTITY chat.noConnectedAccount.description       "Μπορείτε να τους συνδέσετε από το παράθυρο 'Κατάσταση συνομιλίας':">
 <!ENTITY chat.showAccountManager.button       "Εμφάνιση κατάστασης συνομιλίας">
 

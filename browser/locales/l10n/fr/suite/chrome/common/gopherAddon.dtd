@@ -1,9 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY loadError.label        "Erreur de chargement de la page">
 <!ENTITY gopherAddon.title      "Protocole Gopher">
 <!ENTITY gopherAddon.shortDesc  "gopher n’est pas un protocole pris en charge.">
-<!ENTITY gopherAddon.longDesc   "L’adresse contient le protocole gopher mais celui-ci n’est plus pris en charge, rendant ainsi la connexion au site impossible par le navigateur. Vous pouvez accéder à ce serveur à l’aide d’un module complémentaire disponible sur Mozilla Add-ons.">
+<!ENTITY gopherAddon.longDesc   "L’adresse contient le protocole gopher mais celui-ci n’est plus pris en charge, rendant ainsi la connexion au site impossible par le navigateur. Vous pouvez accéder à ce serveur à l’aide d’un module complémentaire disponible sur Waterfox Add-ons.">
 <!ENTITY goToAddOn.label        "Ouvrir la page du module">

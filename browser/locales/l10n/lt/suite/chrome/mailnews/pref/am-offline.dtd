@@ -1,12 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY doNotDownloadPop3Movemail.label "Taupant vietą diske, neparsiųsti:">
 <!ENTITY doNotDownloadNntp.label "Taupant vietą diske, naudojimui neprisijungus prie tinklo neparsiųsti:">
 <!ENTITY doNotDownloadImap.label "Taupant vietą diske, galima apriboti laiškų, parsiunčiamų iš serverio ir laikomų diske naudojimui neprisijungus, amžių bei dydį.">
-<!ENTITY allFoldersOffline.label "Šios paskyros laiškus laikyti šiame kompiuteryje">
-<!ENTITY allFoldersOffline.accesskey "Š">
 <!ENTITY offlineNotDownload.label "laiškų, didesnių kaip">
 <!ENTITY offlineNotDownload.accesskey "d">
 <!ENTITY autosyncNotDownload.label "Neparsiųsti laiškų, didesnių kaip">

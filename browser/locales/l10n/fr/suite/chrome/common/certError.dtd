@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,11 +8,6 @@ by NSS/PSM via netError.xhtml. -->
 
 <!ENTITY certerror.pagetitle  "Connexion non certifiée">
 <!ENTITY certerror.longpagetitle "Cette connexion n’est pas certifiée">
-
-<!-- Localization note (certerror.introPara1) - The string "#1" will
-be replaced at runtime with the name of the server to which the user
-was trying to connect. -->
-<!ENTITY certerror.introPara1 "Vous avez demandé à &brandShortName; de se connecter de manière sécurisée à <b>#1</b>, mais nous ne pouvons pas confirmer que votre connexion est sécurisée.">
 
 <!-- Localization note (certerror.introPara1a) - The text content of the span
 tag will be replaced at runtime with the name of the server to which the user

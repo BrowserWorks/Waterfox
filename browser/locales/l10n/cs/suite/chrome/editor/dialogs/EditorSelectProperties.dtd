@@ -1,8 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowTitle.label "Vlastnosti výběrového seznamu">
+
 <!ENTITY Select.label "Výběr ze seznamu">
 <!ENTITY SelectName.label "Název seznamu:">
 <!ENTITY SelectName.accesskey "N">
@@ -14,11 +15,13 @@
 <!ENTITY SelectDisabled.accesskey "Z">
 <!ENTITY SelectTabIndex.label "Rejstřík pro tab:">
 <!ENTITY SelectTabIndex.accesskey "R">
+
 <!ENTITY OptGroup.label "Skupina voleb">
 <!ENTITY OptGroupLabel.label "Označení:">
 <!ENTITY OptGroupLabel.accesskey "n">
 <!ENTITY OptGroupDisabled.label "Zakázáno">
 <!ENTITY OptGroupDisabled.accesskey "Z">
+
 <!ENTITY Option.label "Volba">
 <!ENTITY OptionText.label "Text:">
 <!ENTITY OptionText.accesskey "T">
@@ -28,9 +31,11 @@
 <!ENTITY OptionSelected.accesskey "b">
 <!ENTITY OptionDisabled.label "Zakázáno">
 <!ENTITY OptionDisabled.accesskey "Z">
+
 <!ENTITY TextHeader.label "Text">
 <!ENTITY ValueHeader.label "Hodnota">
 <!ENTITY SelectedHeader.label "Vybráno">
+
 <!ENTITY AddOption.label "Přidat volbu">
 <!ENTITY AddOption.accesskey "o">
 <!ENTITY AddOptGroup.label "Přidat skupinu">

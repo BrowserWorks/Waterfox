@@ -1,12 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY doNotDownloadPop3Movemail.label "Pour économiser de l’espace disque, ne pas télécharger :">
 <!ENTITY doNotDownloadNntp.label "Pour économiser de l’espace disque, ne pas télécharger pour utilisation hors connexion :">
 <!ENTITY doNotDownloadImap.label "Pour économiser de l’espace disque, le téléchargement des messages depuis le serveur et la conservation des copies peuvent être restreints par âge et par taille.">
-<!ENTITY allFoldersOffline.label "Conserver les messages de ce compte sur cet ordinateur">
-<!ENTITY allFoldersOffline.accesskey "o">
 <!ENTITY allFoldersOffline2.label "Conserver les messages de tous les dossiers de ce compte sur cet ordinateur">
 <!ENTITY allFoldersOffline2.accesskey "o">
 <!ENTITY allFoldersOfflineNote.label "Remarque : cette modification affecte tous les dossiers de ce compte. Pour définir des dossiers individuels, utilisez le bouton Avancé…">

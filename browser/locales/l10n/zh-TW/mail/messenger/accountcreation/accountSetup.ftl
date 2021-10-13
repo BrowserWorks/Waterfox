@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -41,6 +41,10 @@ account-provisioner-button = 註冊新的電子郵件地址
     .accesskey = G
 account-setup-password-toggle =
     .title = 顯示/隱藏密碼
+account-setup-password-toggle-show =
+    .title = 顯示密碼明碼
+account-setup-password-toggle-hide =
+    .title = 隱藏密碼
 account-setup-remember-password = 記住密碼
     .accesskey = m
 account-setup-exchange-label = 您的登入資訊
@@ -74,8 +78,8 @@ account-setup-looking-up-settings-guess = 正在尋找設定: 嘗試使用常用
 account-setup-looking-up-settings-half-manual = 正在尋找設定: 偵測伺服器…
 account-setup-looking-up-disk = 正在尋找設定: { -brand-short-name } 安裝…
 account-setup-looking-up-isp = 正在尋找設定: 電子郵件服務供應商…
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-looking-up-db = 正在尋找設定: Mozilla ISP 資料庫…
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-looking-up-db = 正在尋找設定: Waterfox ISP 資料庫…
 account-setup-looking-up-mx = 正在尋找設定: 收件郵件網域…
 account-setup-looking-up-exchange = 正在尋找設定: Exchange 伺服器…
 account-setup-checking-password = 正在檢查密碼…
@@ -85,8 +89,8 @@ account-setup-success-guess = 嘗試使用常用的伺服器名稱後，找到�
 account-setup-success-guess-offline = 您目前離線。我們猜了一下，但您還是需要輸入正確的設定。
 account-setup-success-password = 密碼正確
 account-setup-success-addon = 已成功安裝附加元件
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-success-settings-db = 從 Mozilla ISP 資料庫找到設定
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-success-settings-db = 從 Waterfox ISP 資料庫找到設定
 account-setup-success-settings-disk = 在 { -brand-short-name } 安裝找到設定。
 account-setup-success-settings-isp = 從電子郵件服務供應商找到設定。
 # Note: Microsoft Exchange is a product name.
@@ -104,12 +108,13 @@ account-setup-step4-image =
     .title = 連線錯誤
 account-setup-step5-image =
     .title = 已建立帳號
-account-setup-privacy-footnote = 將依照我們的<a data-l10n-name="privacy-policy-link">隱私權保護政策</a>使用您的登入資訊，並且只會儲存於您本機電腦上。
+account-setup-privacy-footnote2 = 您的登入資訊只會儲存在您的本機電腦上。
 account-setup-selection-help = 不確定要怎麼選？
 account-setup-selection-error = 需要幫忙嗎？
 account-setup-success-help = 不確定接下來要做什麼嗎？
 account-setup-documentation-help = 設定文件
 account-setup-forum-help = 技術支援討論區
+account-setup-privacy-help = 隱私權保護政策
 account-setup-getting-started = 開始使用
 
 ## Results area
@@ -128,7 +133,8 @@ account-setup-result-pop = POP3
 account-setup-result-pop-description = 將您伺服器上的信件匣與郵件下載到電腦上
 # Note: Exchange is the name of a product.
 account-setup-result-exchange = Exchange
-account-setup-result-exchange-description = Microsoft Exchange Server
+# Note: Exchange, Office365 are the name of products.
+account-setup-result-exchange2-description = 使用 Microsoft Exchange 伺服器或 Office365 雲端服務
 account-setup-incoming-title = 收件
 account-setup-outgoing-title = 寄件
 account-setup-username-title = 使用者名稱
@@ -150,6 +156,7 @@ account-setup-credentials-incomplete = 驗證失敗。可能是輸入的登入�
 account-setup-credentials-wrong = 驗證失敗，請檢查輸入的使用者名稱與密碼是否正確
 account-setup-find-settings-failed = { -brand-short-name } 找不到您適用的郵件帳號設定
 account-setup-exchange-config-unverifiable = 無法確認設定方式。若您確定已經輸入正確使用者名稱與密碼的話，可能是伺服器管理員針對您的帳號停用了選擇的設定方式，請試著改用另一種通訊協定。
+account-setup-provisioner-error = 使用 { -brand-short-name } 設定您的新帳號時發生錯誤，請嘗試使用您的帳號密碼手動設定帳號。
 
 ## Manual configuration area
 
@@ -205,6 +212,17 @@ insecure-dialog-confirm-button = 確認
 exchange-dialog-question = { -brand-short-name } 找到您在 { $domain } 的帳號設定資訊。您想要繼續並送出登入資訊嗎？
 exchange-dialog-confirm-button = 登入
 exchange-dialog-cancel-button = 取消
+
+## Dismiss account creation dialog
+
+exit-dialog-title = 未設定電子郵件帳號
+exit-dialog-description = 您確定要取消設定過程嗎？不設定郵件帳號還是可以使用 { -brand-short-name }，但無法提供許多功能。
+account-setup-no-account-checkbox = 不設定電子郵件帳號，繼續使用 { -brand-short-name }
+    .accesskey = U
+exit-dialog-cancel-button = 繼續設定
+    .accesskey = C
+exit-dialog-confirm-button = 結束設定
+    .accesskey = E
 
 ## Alert dialogs
 

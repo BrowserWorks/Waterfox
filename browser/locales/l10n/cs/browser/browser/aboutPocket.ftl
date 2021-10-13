@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -11,6 +11,7 @@
 # Placeholder text for tag input
 pocket-panel-saved-add-tags =
     .placeholder = Přidat štítky
+
 pocket-panel-saved-error-generic = Při pokusu o uložení do { -pocket-brand-name(case: "gen") } došlo k chybě.
 pocket-panel-saved-error-tag-length = Štítky jsou omezeny na 25 znaků
 pocket-panel-saved-error-only-links = Ukládat můžete jenom odkazy

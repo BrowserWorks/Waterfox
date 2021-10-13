@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -21,7 +21,7 @@
 
 <!-- LOCALIZATION NOTE (warningDesc.version): This is a warning about the experimental nature of Nightly and Aurora builds. It is only shown in those versions. -->
 <!ENTITY warningDesc.version        "&brandShortName; ist experimentell und könnte instabil sein.">
-<!-- LOCALIZATION NOTE (warningDesc.telemetryDesc): This is a notification that Nightly/Aurora builds automatically send Telemetry data back to Mozilla. It is only shown in those versions. "It" refers to brandShortName. -->
+<!-- LOCALIZATION NOTE (warningDesc.telemetryDesc): This is a notification that Nightly/Aurora builds automatically send Telemetry data back to Waterfox. It is only shown in those versions. "It" refers to brandShortName. -->
 <!ENTITY warningDesc.telemetryDesc  "Um &brandShortName; verbessern zu können, werden automatisch Daten zu Performanz, Hardware-Eigenschaften, Feature-Nutzung und Anpassungen der Anwendung an &vendorShortName; gesendet.">
 
 <!-- LOCALIZATION NOTE (community.exp.*) This paragraph is shown in "experimental" builds, i.e. Nightly and Aurora builds, instead of the other "community.*" strings below. -->
@@ -72,7 +72,7 @@
 <!-- LOCALIZATION NOTE (update.failed.start,update.failed.linkText,update.failed.end):
      update.failed.start, update.failed.linkText, and update.failed.end all go into
      one line with linkText being wrapped in an anchor that links to a site to download
-     the latest version of Firefox (e.g. http://www.firefox.com). As this is all in
+     the latest version of Waterfox (e.g. http://www.firefox.com). As this is all in
      one line, try to make the localized text short (see bug 596813 for screenshots). -->
 <!ENTITY update.failed.start        "Update fehlgeschlagen. ">
 <!ENTITY update.failed.linkText     "Laden Sie die neueste Version herunter">
@@ -80,7 +80,7 @@
 
 <!-- LOCALIZATION NOTE (update.manual.start,update.manual.end): update.manual.start and update.manual.end
      all go into one line and have an anchor in between with text that is the same as the link to a site
-     to download the latest version of Firefox (e.g. http://www.firefox.com). As this is all in one line,
+     to download the latest version of Waterfox (e.g. http://www.firefox.com). As this is all in one line,
      try to make the localized text short (see bug 596813 for screenshots). -->
 <!ENTITY update.manual.start        "Die ">
 <!ENTITY update.manual.linkText     "aktuelle Version">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,7 +16,7 @@ menu-application-preferences =
 menu-application-services =
     .label = Υπηρεσίες
 menu-application-hide-this =
-    .label = Απόκρυψη { -brand-shorter-name }
+    .label = Απόκρυψη του { -brand-shorter-name }
 menu-application-hide-other =
     .label = Απόκρυψη άλλων
 menu-application-show-all =
@@ -38,16 +38,20 @@ menu-quit =
             [windows] ξ
            *[other] ξ
         }
+
 # This menu-quit-mac string is only used on macOS.
 menu-quit-mac =
     .label = Έξοδος από το { -brand-shorter-name }
+
 # This menu-quit-button string is only used on Linux.
 menu-quit-button =
     .label = { menu-quit.label }
+
 # This menu-quit-button-win string is only used on Windows.
 menu-quit-button-win =
     .label = { menu-quit.label }
     .tooltip = Έξοδος από το { -brand-shorter-name }
+
 menu-about =
     .label = Σχετικά με το { -brand-shorter-name }
     .accesskey = τ
@@ -61,8 +65,8 @@ menu-file-new-tab =
     .label = Νέα καρτέλα
     .accesskey = τ
 menu-file-new-container-tab =
-    .label = Νέα καρτέλα εντός περιβάλλοντος
-    .accesskey = β
+    .label = Νέα θεματική καρτέλα
+    .accesskey = θ
 menu-file-new-window =
     .label = Νέο παράθυρο
     .accesskey = Ν
@@ -71,7 +75,7 @@ menu-file-new-private-window =
     .accesskey = δ
 # "Open Location" is only displayed on macOS, and only on windows
 # that aren't main browser windows, or when there are no windows
-# but Firefox is still running.
+# but Waterfox is still running.
 menu-file-open-location =
     .label = Άνοιγμα τοποθεσίας…
 menu-file-open-file =
@@ -89,6 +93,9 @@ menu-file-save-page =
 menu-file-email-link =
     .label = Αποστολή συνδέσμου…
     .accesskey = λ
+menu-file-share-url =
+    .label = Κοινή χρήση
+    .accesskey = χ
 menu-file-print-setup =
     .label = Διαμόρφωση σελίδας…
     .accesskey = μ
@@ -102,17 +109,14 @@ menu-file-import-from-another-browser =
     .label = Εισαγωγή από άλλο φυλλομετρητή…
     .accesskey = Ε
 menu-file-go-offline =
-    .label = Εργασία χωρίς σύνδεση
-    .accesskey = χ
+    .label = Εργασία εκτός σύνδεσης
+    .accesskey = τ
 
 ## Edit Menu
 
 menu-edit =
     .label = Επεξεργασία
     .accesskey = Ε
-menu-edit-find-on =
-    .label = Εύρεση στη σελίδα…
-    .accesskey = ρ
 menu-edit-find-in-page =
     .label = Εύρεση στη σελίδα…
     .accesskey = Ε
@@ -131,15 +135,12 @@ menu-view =
 menu-view-toolbars-menu =
     .label = Γραμμές εργαλείων
     .accesskey = ρ
-menu-view-customize-toolbar =
-    .label = Προσαρμογή…
-    .accesskey = Π
 menu-view-customize-toolbar2 =
     .label = Προσαρμογή γραμμής εργαλείων…
     .accesskey = Π
 menu-view-sidebar =
-    .label = Πλευρική στήλη
-    .accesskey = ε
+    .label = Πλαϊνή γραμμή
+    .accesskey = ν
 menu-view-bookmarks =
     .label = Σελιδοδείκτες
 menu-view-history-button =
@@ -170,9 +171,6 @@ menu-view-page-style-no-style =
 menu-view-page-basic-style =
     .label = Βασική μορφοποίηση σελίδας
     .accesskey = Β
-menu-view-charset =
-    .label = Κωδικοποίηση κειμένου
-    .accesskey = κ
 menu-view-repair-text-encoding =
     .label = Επιδιόρθωση κωδικοποίησης κειμένου
     .accesskey = δ
@@ -193,7 +191,7 @@ menu-view-full-screen =
 ##
 
 menu-view-show-all-tabs =
-    .label = Προβολή όλων των καρτελών
+    .label = Εμφάνιση όλων των καρτελών
     .accesskey = λ
 menu-view-bidi-switch-page-direction =
     .label = Αλλαγή κατεύθυνσης σελίδας
@@ -205,9 +203,9 @@ menu-history =
     .label = Ιστορικό
     .accesskey = Ι
 menu-history-show-all-history =
-    .label = Προβολή όλου του ιστορικού
+    .label = Εμφάνιση πλήρους ιστορικού
 menu-history-clear-recent-history =
-    .label = Εκκαθάριση πρόσφατου ιστορικού…
+    .label = Απαλοιφή πρόσφατου ιστορικού…
 menu-history-synced-tabs =
     .label = Συγχρονισμένες καρτέλες
 menu-history-restore-last-session =
@@ -226,10 +224,6 @@ menu-history-reopen-all-windows = Επαναφορά όλων των παραθ�
 menu-bookmarks-menu =
     .label = Σελιδοδείκτες
     .accesskey = Σ
-menu-bookmarks-show-all =
-    .label = Προβολή όλων των σελιδοδεικτών
-menu-bookmark-this-page =
-    .label = Δημιουργία σελιδοδείκτη
 menu-bookmarks-manage =
     .label = Διαχείριση σελιδοδεικτών
 menu-bookmark-current-tab =
@@ -253,15 +247,6 @@ menu-tools =
 menu-tools-downloads =
     .label = Λήψεις
     .accesskey = ψ
-menu-tools-addons =
-    .label = Πρόσθετα
-    .accesskey = θ
-menu-tools-fxa-sign-in =
-    .label = Σύνδεση στο { -brand-product-name }…
-    .accesskey = δ
-menu-tools-turn-on-sync =
-    .label = Ενεργοποίηση { -sync-brand-short-name }…
-    .accesskey = ρ
 menu-tools-addons-and-themes =
     .label = Πρόσθετα και θέματα
     .accesskey = Π
@@ -277,9 +262,6 @@ menu-tools-sync-now =
 menu-tools-fxa-re-auth =
     .label = Επανασύνδεση στο { -brand-product-name }…
     .accesskey = Ε
-menu-tools-web-developer =
-    .label = Ανάπτυξη web
-    .accesskey = Α
 menu-tools-browser-tools =
     .label = Εργαλεία προγράμματος περιήγησης
     .accesskey = ρ
@@ -292,17 +274,6 @@ menu-tools-page-source =
 menu-tools-page-info =
     .label = Πληροφορίες σελίδας
     .accesskey = λ
-menu-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Επιλογές
-           *[other] Προτιμήσεις
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] Ε
-           *[other] μ
-        }
 menu-settings =
     .label = Ρυθμίσεις
     .accesskey =
@@ -335,21 +306,6 @@ menu-window-bring-all-to-front =
 menu-help =
     .label = Βοήθεια
     .accesskey = Β
-menu-help-product =
-    .label = Βοήθεια για το { -brand-shorter-name }
-    .accesskey = Β
-menu-help-show-tour =
-    .label = Ξενάγηση στο { -brand-shorter-name }
-    .accesskey = Ξ
-menu-help-import-from-another-browser =
-    .label = Εισαγωγή από άλλο φυλλομετρητή…
-    .accesskey = Ε
-menu-help-keyboard-shortcuts =
-    .label = Συντομεύσεις πληκτρολογίου
-    .accesskey = υ
-menu-help-troubleshooting-info =
-    .label = Πληροφορίες επίλυσης προβλημάτων
-    .accesskey = Π
 menu-get-help =
     .label = Λήψη βοήθειας
     .accesskey = Λ
@@ -357,16 +313,10 @@ menu-help-more-troubleshooting-info =
     .label = Πληροφορίες επίλυσης προβλημάτων
     .accesskey = Π
 menu-help-report-site-issue =
-    .label = Αναφορά ζητήματος ιστοσελίδας…
+    .label = Αναφορά ζητήματος ιστοτόπου…
 menu-help-feedback-page =
     .label = Υποβολή σχολίων…
     .accesskey = λ
-menu-help-safe-mode-without-addons =
-    .label = Επανεκκίνηση με ανενεργά πρόσθετα…
-    .accesskey = π
-menu-help-safe-mode-with-addons =
-    .label = Επανεκκίνηση με ενεργά πρόσθετα
-    .accesskey = π
 menu-help-enter-troubleshoot-mode2 =
     .label = Λειτουργία επίλυσης προβλημάτων…
     .accesskey = Λ
@@ -376,8 +326,8 @@ menu-help-exit-troubleshoot-mode =
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =
-    .label = Αναφορά παραπλανητικής σελίδας…
+    .label = Αναφορά παραπλανητικού ιστοτόπου…
     .accesskey = Α
 menu-help-not-deceptive =
-    .label = Αυτή δεν είναι παραπλανητική ιστοσελίδα…
+    .label = Αυτός δεν είναι παραπλανητικός ιστότοπος…
     .accesskey = δ

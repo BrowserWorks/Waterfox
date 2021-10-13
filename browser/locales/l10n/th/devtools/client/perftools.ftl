@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -42,7 +42,9 @@ perftools-range-interval-milliseconds = { NUMBER($interval, maxFractionalUnits: 
 
 # The size of the memory buffer used to store things in the profiler.
 perftools-range-entries-label = ขนาดบัฟเฟอร์:
+
 perftools-custom-threads-label = เพิ่มหัวข้อที่กำหนดเองตามชื่อ:
+
 perftools-devtools-interval-label = ช่วงเวลา:
 perftools-devtools-threads-label = เธรด:
 perftools-devtools-settings-label = การตั้งค่า
@@ -95,12 +97,11 @@ perftools-thread-img-decoder =
     .title = เธรดการถอดรหัสรูปภาพ
 perftools-thread-dns-resolver =
     .title = การแก้ปัญหา DNS เกิดขึ้นในเธรดนี้
-perftools-thread-js-helper =
-    .title = งานเบื้องหลังของโปรแกรม JS เช่น การคอมไพล์นอกเธรดหลัก
 
 ##
 
 perftools-record-all-registered-threads = ข้ามการเลือกด้านบนและบันทึกเธรดที่ลงทะเบียนทั้งหมด
+
 perftools-tools-threads-input-label =
     .title = ชื่อเธรดเหล่านี้เป็นรายการที่คั่นด้วยจุลภาคที่ใช้ในการเปิดใช้งานการสร้างโปรไฟล์ของเธรดในตัวสร้างโปรไฟล์ ชื่อจะต้องตรงกับชื่อเธรดที่จะรวมเพียงบางส่วนเท่านั้น โดยจะมีการเทียบช่องว่างด้วย
 
@@ -108,9 +109,10 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = ตัวสร้างโปรไฟล์ของ Firefox
 perftools-onboarding-message = <b>ใหม่</b>: { -profiler-brand-name } ถูกรวมเข้ากับเครื่องมือสำหรับนักพัฒนาแล้ว <a>เรียนรู้เพิ่มเติม</a>เกี่ยวกับเครื่องมือใหม่อันทรงพลังนี้
+
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (คุณสามารถเข้าถึงแผงประสิทธิภาพแบบเดิมได้ผ่านทาง <a>{ options-context-advanced-settings }</a> ในระยะเวลาจำกัด)
+
 perftools-onboarding-close-button =
     .aria-label = ปิดข้อความออนบอร์ด

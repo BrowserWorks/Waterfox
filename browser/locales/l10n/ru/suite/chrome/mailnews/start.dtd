@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -20,9 +20,6 @@
 "Тесная интеграция с &brandShortName; application suite">
 <!ENTITY dict.title "Словари проверки орфографии">
 <!ENTITY dict_intro.label "Словари используются для проверки орфографии в ваших почтовых сообщениях.">
-<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
-<!ENTITY dict_info.label
-'Множество словарей для разных языков могут быть установлены из раздела <a id="dictURL" href="">словарей</a> на веб-сайте <a href="https://addons.mozilla.org/seamonkey/">дополнений Mozilla</a>.'>
 <!ENTITY dict_info.label2
 'Множество словарей для разных языков могут быть установлены из
 раздела <a id="dictURL" href="">словарей</a> на сайте
@@ -30,4 +27,4 @@
 <!ENTITY info.title "Более подробная информация">
 <!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
 <!ENTITY info_bugs.label
-'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">Мы</a> с радостью примем ваши пожелания и замечания, но сначала прочитайте, пожалуйста, <a id="releaseNotesURL" href="">примечания к выпуску</a> и попробуйте поискать свою ошибку в <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a>.'>
+'<a href="https://developer.mozilla.org/docs/Waterfox/Projects/MailNews">Мы</a> с радостью примем ваши пожелания и замечания, но сначала прочитайте, пожалуйста, <a id="releaseNotesURL" href="">примечания к выпуску</a> и попробуйте поискать свою ошибку в <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a>.'>

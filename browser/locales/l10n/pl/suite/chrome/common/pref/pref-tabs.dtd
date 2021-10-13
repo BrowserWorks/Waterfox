@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,12 +13,6 @@
 <!ENTITY warnOnClose.accesskey "s">
 <!ENTITY relatedAfterCurrent.label "Otwórz powiązane karty obok obecnej karty">
 <!ENTITY relatedAfterCurrent.accesskey "t">
-
-<!ENTITY loadGroup.label "Podczas otwierania grupy zakładek">
-<!ENTITY loadGroupAppend.label "Otwieraj wszystkie jako nowe karty">
-<!ENTITY loadGroupAppend.accesskey "O">
-<!ENTITY loadGroupReplace.label "Otwieraj w bieżących kartach">
-<!ENTITY loadGroupReplace.accesskey "k">
 
 <!ENTITY openTabs.label "Otwieraj strony w nowej karcie zamiast w nowym oknie, jeżeli:">
 

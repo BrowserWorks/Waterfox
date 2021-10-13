@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,8 +11,6 @@
 <!ENTITY pasteNoFormatting.label "Einfügen ohne Formatierung">
 <!ENTITY pasteNoFormatting.accesskey "o">
 <!ENTITY pasteNoFormatting.key "V">
-<!ENTITY pasteAs.label "Einfügen als">
-<!ENTITY pasteAs.accesskey "a">
 <!ENTITY pasteAsQuotationCmd.label "Als Zitat einfügen">
 <!ENTITY pasteAsQuotationCmd.accesskey "Z">
 <!ENTITY pasteAsQuotationCmd.key "Z">
@@ -288,8 +286,6 @@
 <!ENTITY cutToolbarCmd.tooltip "Ausschneiden">
 <!ENTITY copyToolbarCmd.tooltip "Kopieren">
 <!ENTITY pasteToolbarCmd.tooltip "Einfügen">
-<!ENTITY printToolbarCmd.label "Drucken">
-<!ENTITY printToolbarCmd.tooltip "Diese Seite drucken">
 <!ENTITY findToolbarCmd.label "Suchen">
 <!ENTITY findToolbarCmd.tooltip "Zeichenkette in Seite suchen">
 <!ENTITY spellToolbarCmd.label "Rechtschr.">
@@ -306,7 +302,6 @@
 <!ENTITY anchorToolbarCmd.tooltip "Neuen Anker einfügen oder Eigenschaften des gewählten Ankers bearbeiten">
 <!ENTITY TextColorButton.tooltip "Farbe für Text auswählen">
 <!ENTITY BackgroundColorButton.tooltip "Farbe für Hintergrund auswählen">
-<!ENTITY throbber.tooltip "&vendorShortName;-Homepage aufrufen">
 <!ENTITY HighlightColorButton.tooltip "Farbe für hervorgehobenen Text wählen">
 
 <!-- Editor toolbar -->

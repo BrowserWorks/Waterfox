@@ -1,3 +1,7 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 <!ENTITY aboutDialog.title          "Over &brandFullName;">
 
 <!-- LOCALIZATION NOTE (update.*):
@@ -17,7 +21,7 @@
 
 <!-- LOCALIZATION NOTE (warningDesc.version): This is a warning about the experimental nature of Nightly builds. It is only shown in this version. -->
 <!ENTITY warningDesc.version        "&brandShortName; is experimenteel en kan onstabiel zijn.">
-<!-- LOCALIZATION NOTE (warningDesc.telemetryDesc): This is a notification that Nightly builds automatically send Telemetry data back to Mozilla. It is only shown in this version. "It" refers to brandShortName. -->
+<!-- LOCALIZATION NOTE (warningDesc.telemetryDesc): This is a notification that Nightly builds automatically send Telemetry data back to Waterfox. It is only shown in this version. "It" refers to brandShortName. -->
 <!ENTITY warningDesc.telemetryDesc  "Er worden automatisch gegevens over prestaties, hardware, gebruik en persoonlijke aanpassingen naar &vendorShortName; verzonden, zodat &brandShortName; kan worden verbeterd.">
 
 <!-- LOCALIZATION NOTE (community.exp.*) This paragraph is shown in "experimental" builds, i.e. Nightly builds, instead of the other "community.*" strings below. -->
@@ -68,7 +72,7 @@
 <!-- LOCALIZATION NOTE (update.failed.start,update.failed.linkText,update.failed.end):
      update.failed.start, update.failed.linkText, and update.failed.end all go into
      one line with linkText being wrapped in an anchor that links to a site to download
-     the latest version of Firefox (e.g. https://www.firefox.com). As this is all in
+     the latest version of Waterfox (e.g. https://www.firefox.com). As this is all in
      one line, try to make the localized text short (see bug 596813 for screenshots). -->
 <!ENTITY update.failed.start        "Update mislukt. ">
 <!ENTITY update.failed.linkText     "Download de nieuwste versie">
@@ -76,7 +80,7 @@
 
 <!-- LOCALIZATION NOTE (update.manual.start,update.manual.end): update.manual.start and update.manual.end
      all go into one line and have an anchor in between with text that is the same as the link to a site
-     to download the latest version of Firefox (e.g. https://www.firefox.com). As this is all in one line,
+     to download the latest version of Waterfox (e.g. https://www.firefox.com). As this is all in one line,
      try to make the localized text short (see bug 596813 for screenshots). -->
 <!ENTITY update.manual.start        "De ">
 <!ENTITY update.manual.linkText     "nieuwste versie">

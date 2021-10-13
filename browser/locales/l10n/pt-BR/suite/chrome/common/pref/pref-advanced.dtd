@@ -1,18 +1,28 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
 <!ENTITY pref.advanced.title              "Avançado">
 
-<!ENTITY systemPref.caption               "Preferências do Sistema">
-<!ENTITY systemPrefCheck.label            "Usar preferências do sistema">
-<!ENTITY systemPrefCheck.accesskey        "s">
-<!ENTITY systemPref.desc                  "Com esta opção, o &brandShortName; utiliza as preferências do sistema. Estas definições do sistema sobrepõem-se às preferências do &brandShortName;.">
-
 <!ENTITY prefCheckDefault.caption         "Integração com o sistema">
 <!ENTITY prefCheckDefaultClient.label     "Verificar configurações de aplicativos padrão ao iniciar">
 <!ENTITY prefCheckDefaultClient.accesskey "s">
+
+<!ENTITY defaultClientFor.description     "Definir o &brandShortName; como aplicativo padrão para:">
+<!ENTITY setDefaultBrowser.label          "Navegador">
+<!ENTITY setDefaultBrowser.accesskey      "v">
+<!ENTITY setDefaultMail.label             "Email">
+<!ENTITY setDefaultMail.accesskey         "E">
+<!ENTITY setDefaultNews.label             "Notícias">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "Feeds">
+<!ENTITY setDefaultFeed.accesskey         "F">
+<!ENTITY useInternalSettings.description  "Usar email e grupos de notícias do &brandShortName; ao abrir no navegador links de:">
+<!ENTITY useInternalMail.label            "Email (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "Servidor de notícias (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "e">
 
 <!ENTITY printing.label                   "Imprimindo">
 <!ENTITY useNativePrintDialog.label       "Usar diálogo de impressão nativo (onde for aceito)">

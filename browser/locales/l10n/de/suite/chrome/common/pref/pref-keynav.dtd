@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -18,3 +18,10 @@
 <!ENTITY browseWithCaretShortCut.accesskey "F">
 <!ENTITY browseWithCaretWarn.label "Eine Warnung anzeigen, bevor Textcursor-Browsing aktiviert wird">
 <!ENTITY browseWithCaretWarn.accesskey "W">
+
+<!ENTITY modifiers.label "Modifikatortasten">
+<!ENTITY acceleratorKey.label "Tastaturbeschleiniger:">
+<!ENTITY acceleratorKey.accesskey "a">
+<!ENTITY menuAccessKey.label "Zugriffstaste Menü:">
+<!ENTITY menuAccessKey.accesskey "M">
+<!ENTITY modifiersDesc.label "Hinweis: Ein Wert von 0 deaktiviert die Modifikationstaste.">

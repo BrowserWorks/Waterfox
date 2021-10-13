@@ -1,6 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 <!--LOCALIZATION NOTE : FILE The Appearance prefs dialog.  -->
 
 
@@ -23,8 +24,4 @@
 
 <!ENTITY pref.locales.title                     "Sąsajos kalba">
 <!ENTITY selectLocale.label                     "Pasirinkite „&brandShortName;“ sąsajos kalbą:">
-<!--LOCALIZATION NOTE (restartOnLangChange.label): Don't translate "&brandShortName;".
-    Place &brandShortName; in the phrase where the name of the application should appear
--->
-<!ENTITY restartOnLangChange.label              "Tam, kad atsirastų naujos kalbos užrašai dialogo languose, ant mygtukų ir kitur, reikia paleisti programą iš naujo.">
 

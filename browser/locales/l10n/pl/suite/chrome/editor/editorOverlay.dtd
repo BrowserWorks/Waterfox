@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,8 +11,6 @@
 <!ENTITY pasteNoFormatting.label "Wklej bez formatowania">
 <!ENTITY pasteNoFormatting.accesskey "f">
 <!ENTITY pasteNoFormatting.key "V">
-<!ENTITY pasteAs.label "Wklej jako">
-<!ENTITY pasteAs.accesskey "a">
 <!ENTITY pasteAsQuotationCmd.label "Wklej jako cytat">
 <!ENTITY pasteAsQuotationCmd.accesskey "y">
 <!ENTITY pasteAsQuotationCmd.key "o">
@@ -294,8 +292,6 @@
 <!ENTITY cutToolbarCmd.tooltip "Wytnij">
 <!ENTITY copyToolbarCmd.tooltip "Kopiuj">
 <!ENTITY pasteToolbarCmd.tooltip "Wklej">
-<!ENTITY printToolbarCmd.label "Drukuj">
-<!ENTITY printToolbarCmd.tooltip "Drukuj bieżącą stronę">
 <!ENTITY findToolbarCmd.label "Znajdź">
 <!ENTITY findToolbarCmd.tooltip "Znajdź tekst na stronie">
 <!ENTITY spellToolbarCmd.label "Pisownia">
@@ -313,8 +309,6 @@
 <!ENTITY colorButtons.title "Kolory">
 <!ENTITY TextColorButton.tooltip "Wybierz kolor dla tekstu">
 <!ENTITY BackgroundColorButton.tooltip "Wybierz kolor dla tła">
-<!ENTITY throbber.tooltip "Przejdź do strony organizacji &vendorShortName;">
-<!ENTITY throbber.tooltip2 "Przejdź do strony programu &brandShortName;">
 <!ENTITY HighlightColorButton.label "Podświetlenie">
 <!ENTITY HighlightColorButton.tooltip "Wybierz kolor podświetlenia dla tekstu">
 

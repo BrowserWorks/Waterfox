@@ -1,14 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-### Firefox Home / New Tab strings for about:home / about:newtab.
+### Waterfox Home / New Tab strings for about:home / about:newtab.
 
 newtab-page-title = Nauja kortelė
 newtab-settings-button =
     .title = Tinkinkite savo naujos kortelės puslapį
-newtab-personalize-button-label = Tinkinti
+newtab-personalize-icon-label =
     .title = Tinkinti naują kortelę
     .aria-label = Tinkinti naują kortelę
 newtab-personalize-dialog-label =
@@ -20,7 +20,6 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = Ieškoti
     .aria-label = Ieškoti
-newtab-search-box-search-the-web-text = Ieškokite saityne
 # Variables
 #  $engine (String): the name of the user's default search engine
 newtab-search-box-handoff-text = Įveskite adresą arba ieškokite per „{ $engine }“
@@ -39,6 +38,7 @@ newtab-search-box-search-the-web-input =
     .placeholder = Ieškokite saityne
     .title = Ieškokite saityne
     .aria-label = Ieškokite saityne
+newtab-search-box-text = Ieškokite saityne
 newtab-search-box-input =
     .placeholder = Ieškokite saityne
     .aria-label = Ieškokite saityne
@@ -169,6 +169,11 @@ newtab-label-sponsored = { $sponsorOrSource } · Rėmėjas
 # Variables:
 #  $sponsor (String): This is the name of a sponsor
 newtab-label-sponsored-by = Rėmėjas: „{ $sponsor }“
+# This string is used under the image of story cards to indicate source and time to read
+# Variables:
+#  $source (String): This is the name of a company or their domain
+#  $timeToRead (Number): This is the estimated number of minutes to read this story
+newtab-label-source-read-time = { $source } · { $timeToRead } min
 
 ## Section Menu: These strings are displayed in the section context menu and are
 ## meant as a call to action for the given section.
@@ -221,10 +226,25 @@ newtab-discovery-empty-section-topstories-timed-out = Oi! Mes beveik įkėlėme 
 
 # This is shown at the bottom of the trending stories section and precedes a list of links to popular topics.
 newtab-pocket-read-more = Populiarios temos:
+newtab-pocket-new-topics-title = Norite dar daugiau straipsnių? Peržvelkite šias populiarias temas iš „{ -pocket-brand-name }“
 newtab-pocket-more-recommendations = Daugiau rekomendacijų
 newtab-pocket-learn-more = Sužinoti daugiau
 newtab-pocket-cta-button = Gauti „{ -pocket-brand-name }“
 newtab-pocket-cta-text = Išsaugokite patinkančius straipsnius į „{ -pocket-brand-name }“, bei sužadinkite savo mintis stulbinančiomis istorijomis.
+newtab-pocket-pocket-firefox-family = „{ -pocket-brand-name }“ yra „{ -brand-product-name }“ šeimos dalis
+# A save to Pocket button that shows over the card thumbnail on hover.
+newtab-pocket-save-to-pocket = Įrašyti į „{ -pocket-brand-name }“
+newtab-pocket-saved-to-pocket = Įrašyta į „{ -pocket-brand-name }“
+# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
+newtab-pocket-load-more-stories-button = Įkelti daugiau straipsnių
+
+## Pocket Final Card Section.
+## This is for the final card in the Pocket grid.
+
+newtab-pocket-last-card-title = Viską perskaitėte!
+newtab-pocket-last-card-desc = Daugiau straipsnių atsiras vėliau.
+newtab-pocket-last-card-image =
+    .alt = Viską perskaitėte
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -249,10 +269,4 @@ newtab-custom-pocket-sponsored = Rėmėjų straipsniai
 newtab-custom-recent-title = Paskiausia veikla
 newtab-custom-recent-subtitle = Paskiausiai lankytos svetainės ir žiūrėtas turinys
 newtab-custom-close-button = Užverti
-# For the "Snippets" feature traditionally on about:home.
-# Alternative translation options: "Small Note" or something that
-# expresses the idea of "a small message, shortened from something else,
-# and non-essential but also not entirely trivial and useless.
-newtab-custom-snippets-title = Iškarpos
-newtab-custom-snippets-subtitle = Patarimai ir naujienos iš „{ -vendor-short-name }“ ir „{ -brand-product-name }“
 newtab-custom-settings = Keisti daugiau nuostatų

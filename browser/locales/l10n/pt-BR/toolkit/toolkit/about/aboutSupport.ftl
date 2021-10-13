@@ -1,8 +1,8 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-page-title = Informações para resolver problemas
+page-title = Informações técnicas
 page-subtitle =
     Esta página contém informações técnicas que podem ser úteis se você estiver
     tentando solucionar um problema. Se estiver procurando respostas para as dúvidas mais comuns
@@ -12,11 +12,6 @@ crashes-id = ID do relatório
 crashes-send-date = Envio
 crashes-all-reports = Todos os relatórios de travamento
 crashes-no-config = Este aplicativo não foi configurado para exibir relatórios de travamento.
-extensions-title = Extensões
-extensions-name = Nome
-extensions-enabled = Ativado
-extensions-version = Versão
-extensions-id = ID
 support-addons-title = Extensões
 support-addons-name = Nome
 support-addons-type = Tipo
@@ -62,6 +57,7 @@ app-basics-enabled-plugins = Plugins ativados
 app-basics-build-config = Configuração da compilação
 app-basics-user-agent = User Agent
 app-basics-os = Sistema operacional
+app-basics-os-theme = Tema do sistema operacional
 # Rosetta is Apple's translation process to run apps containing x86_64
 # instructions on Apple Silicon. This should remain in English.
 app-basics-rosetta = Traduzido pelo Rosetta
@@ -77,7 +73,7 @@ app-basics-remote-processes-count = Processos remotos
 app-basics-enterprise-policies = Diretivas empresariais
 app-basics-location-service-key-google = Chave do Serviço de Localização do Google
 app-basics-safebrowsing-key-google = Chave do Google Safebrowsing
-app-basics-key-mozilla = Chave do serviço de localização da Mozilla
+app-basics-key-mozilla = Chave do serviço de localização da Waterfox
 app-basics-safe-mode = Modo de segurança
 show-dir-label =
     { PLATFORM() ->
@@ -132,8 +128,6 @@ sandbox-sys-call-tid = TID
 sandbox-sys-call-proc-type = Tipo de processo
 sandbox-sys-call-number = Chamadas de sistema
 sandbox-sys-call-args = Argumentos
-safe-mode-title = Experimente o modo de segurança
-restart-in-safe-mode-label = Reiniciar com extensões desativadas…
 troubleshoot-mode-title = Diagnosticar problemas
 restart-in-troubleshoot-mode-label = Modo de solução de problemas…
 clear-startup-cache-title = Experimente limpar o cache de inicialização
@@ -178,7 +172,7 @@ intl-regional-prefs = Preferências regionais
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.
@@ -191,36 +185,6 @@ remote-debugging-url = URL
 
 ##
 
-support-third-party-modules-title = Módulos de terceiros
-support-third-party-modules-module = Arquivo do módulo
-support-third-party-modules-version = Versão do arquivo
-support-third-party-modules-vendor = Informações do fornecedor
-support-third-party-modules-occurrence = Ocorrência
-support-third-party-modules-process = Tipo e ID do processo
-support-third-party-modules-thread = Thread
-support-third-party-modules-base = Endereço do imagebase
-support-third-party-modules-uptime = Tempo de atividade do processo (ms)
-support-third-party-modules-duration = Duração do carregamento (ms)
-support-third-party-modules-status = Status
-support-third-party-modules-status-loaded = Carregado
-support-third-party-modules-status-blocked = Bloqueado
-support-third-party-modules-status-redirected = Redirecionado
-support-third-party-modules-empty = Nenhum módulo de terceiros foi carregado.
-support-third-party-modules-no-value = (sem valor)
-support-third-party-modules-button-open =
-    .title = Abrir local do arquivo…
-support-third-party-modules-expand =
-    .title = Mostrar informações detalhadas
-support-third-party-modules-collapse =
-    .title = Recolher informações detalhadas
-support-third-party-modules-unsigned-icon =
-    .title = Este módulo não está assinado
-support-third-party-modules-folder-icon =
-    .title = Abrir local do arquivo…
-support-third-party-modules-down-icon =
-    .title = Mostrar informações detalhadas
-support-third-party-modules-up-icon =
-    .title = Recolher informações detalhadas
 # Variables
 # $days (Integer) - Number of days of crashes to log
 report-crash-for-days =
@@ -256,8 +220,8 @@ pending-reports =
         [one] Todos os relatórios de travamento (incluindo { $reports } travamento pendente na faixa de tempo indicada)
        *[other] Todos os relatórios de travamento (incluindo { $reports } travamentos pendentes na faixa de tempo indicada)
     }
-raw-data-copied = Dados copiados para a área de transferência
-text-copied = Texto copiado para a área de transferência
+raw-data-copied = Dados copiados para área de transferência
+text-copied = Texto copiado para área de transferência
 
 ## The verb "blocked" here refers to a graphics feature such as "Direct2D" or "OpenGL layers".
 
@@ -307,10 +271,6 @@ webgl2-renderer = Renderizador do driver WebGL 2
 webgl2-version = Versão do driver WebGL 2
 webgl2-driver-extensions = Extensões do driver WebGL 2
 webgl2-extensions = Extensões WebGL 2
-blocklisted-bug = Bloqueado devido a problemas conhecidos
-# Variables
-# $bugNumber (string) - String of bug number from Bugzilla
-bug-link = bug { $bugNumber }
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = Incluído na lista de bloqueio devido a problemas conhecidos: <a data-l10n-name="bug-link">bug { $bugNumber }</a>
@@ -318,8 +278,6 @@ support-blocklisted-bug = Incluído na lista de bloqueio devido a problemas conh
 # $failureCode (string) - String that can be searched in the source tree.
 unknown-failure = Bloqueado; código de erro { $failureCode }
 d3d11layers-crash-guard = Compositor D3D11
-d3d11video-crash-guard = Decodificador de vídeo D3D11
-d3d9video-crash-guard = Decodificador de vídeo D3D9
 glcontext-crash-guard = OpenGL
 wmfvpxvideo-crash-guard = Decodificador de vídeo WMF VPX
 reset-on-next-restart = Redefinir na próxima reinicialização
@@ -359,14 +317,6 @@ launcher-process-status-unknown = Status desconhecido
 # $remoteWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows
 multi-process-windows = { $remoteWindows }/{ $totalWindows }
-multi-process-status-0 = Ativado pelo usuário
-multi-process-status-1 = Ativado por padrão
-multi-process-status-2 = Desativado
-multi-process-status-4 = Desativado por ferramentas de acessibilidade
-multi-process-status-6 = Desativado por entrada de texto não suportada
-multi-process-status-7 = Desativado por extensões
-multi-process-status-8 = Desativado à força
-multi-process-status-unknown = Status desconhecido
 # Variables
 # $fissionWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows

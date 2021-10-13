@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,10 +9,6 @@ by NSS/PSM via netError.xhtml. -->
 <!ENTITY certerror.pagetitle "Niezaufane połączenie">
 <!ENTITY certerror.longpagetitle "To połączenie jest niezaufane">
 
-<!-- Localization note (certerror.introPara1) - The string "#1" will
-be replaced at runtime with the name of the server to which the user
-was trying to connect. -->
-<!ENTITY certerror.introPara1 "Program &brandShortName; został poproszony o nawiązanie bezpiecznego połączenia z serwerem <b>#1</b>, ale nie można potwierdzić bezpieczeństwa tego połączenia.">
 <!ENTITY certerror.introPara2 "Zwykle podczas nawiązywania bezpiecznych połączeń witryny dostarczają zaufanych informacji o tożsamości, dowodząc w ten sposób, że użytkownik łączy się z właściwym serwerem. W przypadku tej strony tożsamość nie może być jednak zweryfikowana.">
 
 <!ENTITY certerror.whatShouldIDo.heading "Co teraz zrobić?">
@@ -26,3 +22,4 @@ was trying to connect. -->
 <!ENTITY certerror.addException.label "Dodaj wyjątek…">
 
 <!ENTITY certerror.technical.heading "Szczegóły techniczne">
+

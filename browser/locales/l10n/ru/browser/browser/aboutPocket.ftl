@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -11,11 +11,12 @@
 # Placeholder text for tag input
 pocket-panel-saved-add-tags =
     .placeholder = Добавить теги
+
 pocket-panel-saved-error-generic = При попытке сохранить в { -pocket-brand-name } произошла ошибка.
 pocket-panel-saved-error-tag-length = Длина тега не должна превышать 25 символов
 pocket-panel-saved-error-only-links = Можно сохранять только ссылки
 pocket-panel-saved-error-not-saved = Страница не сохранена
-pocket-panel-saved-error-no-internet = Чтобы сохранять в { -pocket-brand-name }, вы должны быть подключены к Интернету. Пожалуйста, подключитесь к Интернету, и попробуйте снова.
+pocket-panel-saved-error-no-internet = Чтобы сохранять в { -pocket-brand-name }, вы должны быть подключены к Интернету. Подключитесь к Интернету и попробуйте снова.
 pocket-panel-saved-page-removed = Страница удалена
 pocket-panel-saved-page-saved = Сохранено в { -pocket-brand-name }
 pocket-panel-saved-processing-remove = Удаление страницы…

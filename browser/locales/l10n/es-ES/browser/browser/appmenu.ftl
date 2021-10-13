@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,25 +12,30 @@ appmenuitem-update-banner3 =
     .label-update-unsupported = No se puede actualizar — sistema incompatible
     .label-update-restart = Actualización disponible — reiniciar ahora
 appmenuitem-protection-dashboard-title = Panel de protecciones
-appmenuitem-customize-mode =
-    .label = Personalizar…
-
-## Zoom Controls
-
 appmenuitem-new-tab =
     .label = Nueva pestaña
 appmenuitem-new-window =
     .label = Nueva ventana
 appmenuitem-new-private-window =
     .label = Nueva ventana privada
+appmenuitem-history =
+    .label = Historial
+appmenuitem-downloads =
+    .label = Descargas
 appmenuitem-passwords =
     .label = Contraseñas
 appmenuitem-addons-and-themes =
     .label = Complementos y temas
+appmenuitem-print =
+    .label = Imprimir…
 appmenuitem-find-in-page =
     .label = Buscar en la página…
+appmenuitem-zoom =
+    .value = Tamaño
 appmenuitem-more-tools =
     .label = Más herramientas
+appmenuitem-help =
+    .label = Ayuda
 appmenuitem-exit2 =
     .label =
         { PLATFORM() ->
@@ -57,15 +62,31 @@ appmenuitem-zoom-reduce =
 appmenuitem-fullscreen =
     .label = Pantalla completa
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
-fxa-toolbar-sync-now =
-    .label = Sincronizar ahora
 appmenu-remote-tabs-sign-into-sync =
     .label = Iniciar sesión en Sync…
 appmenu-remote-tabs-turn-on-sync =
     .label = Activar Sync…
+# This is shown after the tabs list if we can display more tabs by clicking on the button
+appmenu-remote-tabs-showmore =
+    .label = Mostrar más pestañas
+    .tooltiptext = Mostrar más pestañas de este dispositivo
+# This is shown beneath the name of a device when that device has no open tabs
+appmenu-remote-tabs-notabs = No hay pestañas abiertas
+# This is shown when Sync is configured but syncing tabs is disabled.
+appmenu-remote-tabs-tabsnotsyncing = Active la sincronización de pestañas para ver una lista de las mismas de sus otros dispositivos.
+appmenu-remote-tabs-opensettings =
+    .label = Ajustes
+# This is shown when Sync is configured but this appears to be the only device attached to
+# the account. We also show links to download Waterfox for android/ios.
+appmenu-remote-tabs-noclients = ¿Quiere ver sus pestañas de otros dispositivos aquí?
+appmenu-remote-tabs-connectdevice =
+    .label = Conectar otro dispositivo
+appmenu-remote-tabs-welcome = Ver una lista de pestañas de sus otros dispositivos.
+appmenu-remote-tabs-unverified = Su cuenta debe ser verificada.
 appmenuitem-fxa-toolbar-sync-now2 = Sincronizar ahora
+appmenuitem-fxa-sign-in = Iniciar sesión en { -brand-product-name }
 appmenuitem-fxa-manage-account = Administrar cuenta
 appmenu-fxa-header2 = { -fxaccount-brand-name }
 # Variables
@@ -90,10 +111,13 @@ whatsnew-panel-footer-checkbox =
     .label = Notificar sobre nuevas funciones
     .accesskey = f
 
-## The Firefox Profiler – The popup is the UI to turn on the profiler, and record
+## The Waterfox Profiler – The popup is the UI to turn on the profiler, and record
 ## performance profiles. To enable it go to profiler.firefox.com and click
 ## "Enable Profiler Menu Button".
 
+profiler-popup-button-idle =
+    .label = Analizador
+    .tooltiptext = Grabar un perfil de rendimiento
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -102,10 +126,15 @@ profiler-popup-description-title =
     .value = Grabar, analizar, compartir
 profiler-popup-description = Colabore en problemas de rendimiento publicando perfiles para compartirlos con su equipo.
 profiler-popup-learn-more = Saber más
+profiler-popup-learn-more-button =
+    .label = Saber más
 profiler-popup-settings =
     .value = Ajustes
 # This link takes the user to about:profiling, and is only visible with the Custom preset.
 profiler-popup-edit-settings = Editar ajustes…
+# This link takes the user to about:profiling, and is only visible with the Custom preset.
+profiler-popup-edit-settings-button =
+    .label = Editar ajustes…
 profiler-popup-disabled =
     El perfilador está actualmente desactivado, probablemente debido a una ventana de navegación privada
      abierta.
@@ -130,6 +159,15 @@ profiler-popup-capture-shortcut =
         [macos] ⌃⇧2
        *[other] Ctrl+Mayús+2
     }
+
+## Profiler presets
+## They are shown in the popup's select box.
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
 
 ## History panel
 

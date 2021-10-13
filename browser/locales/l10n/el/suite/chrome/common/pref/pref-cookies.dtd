@@ -1,8 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY pref.cookies.title             "Cookies">
+<!ENTITY pref.cookies.title             "Cookie">
 
 <!-- cookies -->
 
@@ -11,10 +11,10 @@
 <!ENTITY disableCookies.label           "Φραγή cookies">
 <!ENTITY disableCookies.accesskey       "Φ">
 
-<!ENTITY accNo3rdPartyCookies.label     "Αποδοχή cookies μόνο για την ιστοσελίδα προέλευσης (χωρίς cookies τρίτων)">
+<!ENTITY accNo3rdPartyCookies.label     "Αποδοχή cookies μόνο για τον ιστότοπο προέλευσης (χωρίς cookies τρίτων)">
 <!ENTITY accNo3rdPartyCookies.accesskey "ο">
 
-<!ENTITY acc3rdPartyVisited.label       "Αποδοχή cookies τρίτων μόνο για ιστοσελίδες που έχετε επισκεφθεί">
+<!ENTITY acc3rdPartyVisited.label       "Αποδοχή cookies τρίτων μόνο για ιστοτόπους που έχετε επισκεφθεί">
 <!ENTITY acc3rdPartyVisited.accesskey   "δ">
 
 <!ENTITY accAllCookies.label            "Αποδοχή όλων των cookies">
@@ -32,7 +32,7 @@
 <!ENTITY acceptforNDays.accesskey       "γ">
 <!ENTITY days.label                     "ημέρες">
 
-<!ENTITY manageCookies.label            "Διαχείριση cookies και ιστοσελίδων">
+<!ENTITY manageCookies.label            "Διαχείριση cookies και ιστοτόπων">
 <!ENTITY manageCookiesDescription.label "Σας επιτρέπει να δείτε και να διαχειριστείτε αποθηκευμένα cookies και ρυθμίσεις ανά ιστοσελίδα για αποδοχή και απόρριψη cookies. Οι ρυθμίσεις ανά ιστοσελίδα θα αντικαταστήσουν τις παραπάνω ρυθμίσεις.">
 
 <!ENTITY viewCookies.label              "Διαχείριση cookies">

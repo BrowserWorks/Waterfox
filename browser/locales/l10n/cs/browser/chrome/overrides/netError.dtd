@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -161,7 +161,7 @@ za chvíli.</li>
 
 <!ENTITY securityOverride.exceptionButton1Label "Beru na vědomí a chci pokračovat">
 
-<!ENTITY errorReporting.automatic2 "Hlásit chyby jako je tato a pomoci tak organizaci Mozilla identifikovat a blokovat škodlivé stránky">
+<!ENTITY errorReporting.automatic2 "Hlásit chyby jako je tato a pomoci tak organizaci Waterfox identifikovat a blokovat škodlivé stránky">
 <!ENTITY errorReporting.learnMore "Zjistit více…">
 
 <!ENTITY remoteXUL.longDesc "<p><ul><li>Kontaktujte prosím vlastníky webového serveru a informujte je o tomto problému.</li></ul></p>">

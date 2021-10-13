@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,8 +17,8 @@
 
 <!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
   -  is displayed as a message for why the real time overview graph is disabled
-  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
-<!ENTITY performanceUI.disabledRealTime.disabledE10S "เปิดใช้งาน Firefox แบบหลายกระบวนการในค่ากำหนดเพื่อเปิดใช้การแสดงผลข้อมูลการอัดบันทึกแบบเรียลไทม์">
+  -  when running on a build that can run multiprocess Waterfox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "เปิดใช้งาน Waterfox แบบหลายกระบวนการในค่ากำหนดเพื่อเปิดใช้การแสดงผลข้อมูลการอัดบันทึกแบบเรียลไทม์">
 
 <!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
   -  is displayed when the profiler's circular buffer has started to overlap. -->
@@ -27,7 +27,7 @@
 <!-- LOCALIZATION NOTE (performanceUI.unavailableNoticePB): This is the label shown
   -  in the details view while the profiler is unavailable, for example, while
   -  in Private Browsing mode. -->
-<!ENTITY performanceUI.unavailableNoticePB "การอัดบันทึกประวัติไม่พร้อมใช้งานในขณะนี้ โปรดปิดหน้าต่างการท่องเว็บแบบส่วนตัวทั้งหมดแล้วลองอีกครั้ง">
+<!ENTITY performanceUI.unavailableNoticePB "การอัดบันทึกประวัติไม่พร้อมใช้งานในขณะนี้ โปรดปิดหน้าต่างการเรียกดูแบบส่วนตัวทั้งหมดแล้วลองอีกครั้ง">
 
 <!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
   -  in the details view while loading a profile. -->
