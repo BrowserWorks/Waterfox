@@ -4,8 +4,6 @@ on:
   push:
     branches: [current]
 
-  workflow_dispatch:
-
 jobs:
   windows-x64:
     name: 🪟 Windows X64
