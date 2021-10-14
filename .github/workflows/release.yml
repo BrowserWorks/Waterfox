@@ -20,16 +20,13 @@ jobs:
           workflow: push.yml
           workflow_conclusion: success
           branch: actions
-      - name: Get directory name and version
+      - name: Get directory names
         run: |
-          # Loop through dirs in ., if Linux go to update.xml and extract version number
           for dir in */
           do
             if [[ $dir == *"Linux"* ]]
             then
               echo "linux_dir=$dir" >> $GITHUB_ENV
-              VERSION_DISPLAY=$(sed -n 3p "$dir/update/update.xml" | sed 's/.*displayVersion="\(.*\)".*/\1/')
-              echo "ver=$VERSION_DISPLAY" >> $GITHUB_ENV
             elif [[ $dir == *"macOS Artifacts"* ]]
             then
               echo "mac_dir=$dir" >> $GITHUB_ENV
@@ -44,8 +41,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.ver }}
-          release_name: ${{ env.ver }}
+          tag_name: ${{ github.event.inputs.version }}
+          release_name: ${{ github.event.inputs.version }}
           draft: false
           prerelease: false
 
@@ -55,8 +52,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.linux_dir }}obj-x86_64-pc-linux-gnu/dist/waterfox-${{ env.ver }}.en-US.linux-x86_64.tar.bz2
-          asset_name: waterfox-${{ env.ver }}.en-US.linux-x86_64.tar.bz2
+          asset_path: ${{ env.linux_dir }}obj-x86_64-pc-linux-gnu/dist/waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2
+          asset_name: waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2
+          asset_label: waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2
           asset_content_type: application/gzip
       - name: Upload macOS ARM64 dmg
         uses: actions/upload-release-asset@v1
@@ -64,8 +62,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.mac_dir }}obj-aarch64-apple-darwin/dist/waterfox/Waterfox ${{ env.ver }} Setup.dmg
-          asset_name: Waterfox ${{ env.ver }} Setup ARM64.dmg
+          asset_path: ${{ env.mac_dir }}obj-aarch64-apple-darwin/dist/waterfox/Waterfox ${{ github.event.inputs.version }} Setup.dmg
+          asset_name: Waterfox ${{ github.event.inputs.version }} ARM Setup.dmg
+          asset_label: Waterfox ${{ github.event.inputs.version }} ARM Setup.dmg
           asset_content_type: application/octet-stream
       - name: Upload macOS X64 dmg
         uses: actions/upload-release-asset@v1
@@ -73,8 +72,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.mac_dir }}obj-x86_64-apple-darwin/dist/waterfox/Waterfox ${{ env.ver }} Setup.dmg
-          asset_name: Waterfox ${{ env.ver }} Setup X64.dmg
+          asset_path: ${{ env.mac_dir }}obj-x86_64-apple-darwin/dist/waterfox/Waterfox ${{ github.event.inputs.version }} Setup.dmg
+          asset_name: Waterfox ${{ github.event.inputs.version }} Setup.dmg
+          asset_label: Waterfox ${{ github.event.inputs.version }} Setup.dmg
           asset_content_type: application/octet-stream
       - name: Upload Windows Installer
         uses: actions/upload-release-asset@v1
@@ -82,8 +82,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.mac_dir }}obj-x86_64-pc-mingw32/dist/install/sea/Waterfox ${{ env.ver }} Setup.exe
-          asset_name: Waterfox ${{ env.ver }} Setup.exe
+          asset_path: ${{ env.windows_dir }}obj-x86_64-pc-mingw32/dist/install/sea/Waterfox ${{ github.event.inputs.version }} Setup.exe
+          asset_name: Waterfox ${{ github.event.inputs.version }} Setup.exe
+          asset_label: Waterfox ${{ github.event.inputs.version }} Setup.exe
           asset_content_type: application/octet-stream
 
       - name: Rebuild website
@@ -95,6 +96,7 @@ jobs:
           -H "X-Auth-Email": ${{ secrets.CF_EMAIL }} \
           -H "X-Auth-Key": ${{ secrets.CF_API_KEY }} \
           https://api.cloudflare.com/client/v4/accounts/${{ secrets.CF_ACCT_ID }}/pages/projects/${{ secrets.CF_PROJECT_NAME }}/deployments
+          
   hard-release:
     name: Full Release
     needs: [soft-release]
@@ -117,9 +119,8 @@ jobs:
               fi
             done
             # grab the current version so we can create a new dir with a blank xml
-            VERSION=$(aws s3 cp $update_loc - | sed 's/.*displayVersion="\(.*\)".*/\1/')
             touch blank.xml
-            echo "<updates></updates>" >> blank.xml
+            echo "<?xml version="1.0"?><updates></updates>" >> blank.xml
             aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" blank.xml \
-              s3://aus.waterfox.net/update/Waterfox/$VERSION/default/$i/update.xml
+              s3://aus.waterfox.net/update/Waterfox/${{ github.event.inputs.version }}/default/$i/update.xml
           done
