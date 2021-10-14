@@ -94,7 +94,7 @@
 !define ARCH "x86"
 #endif
 
-!define MinSupportedCPU "SSE2"
+!define MinSupportedCPU "SSE4.2"
 
 #ifdef MOZ_MAINTENANCE_SERVICE
 !define MOZ_MAINTENANCE_SERVICE
