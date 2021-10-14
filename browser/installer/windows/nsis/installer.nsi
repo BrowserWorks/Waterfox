@@ -9,6 +9,8 @@
 #   http://nsis.sourceforge.net/ApplicationID_plug-in
 # CityHash
 #   http://searchfox.org/mozilla-central/source/other-licenses/nsis/Contrib/CityHash
+# CPUFeatures
+#   https://github.com/lordmulder/CPUFeaturesLib
 # nsJSON
 #   http://nsis.sourceforge.net/NsJSON_plug-in
 # ShellLink
@@ -94,6 +96,7 @@ Var PostSigningData
 !include defines.nsi
 !include common.nsh
 !include locales.nsi
+!include CPUFeatures.nsh
 
 VIAddVersionKey "FileDescription" "${BrandShortName} Installer"
 VIAddVersionKey "OriginalFilename" "setup.exe"
@@ -1799,10 +1802,9 @@ Function .onInit
   StrCpy $LANGUAGE 0
   ${SetBrandNameVars} "$EXEDIR\core\distribution\setup.ini"
 
-  ; Don't install on systems that don't support SSE2. The parameter value of
-  ; 10 is for PF_XMMI64_INSTRUCTIONS_AVAILABLE which will check whether the
-  ; SSE2 instruction set is available. Result returned in $R7.
-  System::Call "kernel32::IsProcessorFeaturePresent(i 10)i .R7"
+  ; Don't install on systems that don't support SSE4.2.
+  ; Result returned in $R7.
+  ${CPUFeatures.CheckFeature} "SSE4.2" $R7
 
   ; Windows NT 6.0 (Vista/Server 2008) and lower are not supported.
   ${Unless} ${AtLeastWin7}
@@ -1816,7 +1818,7 @@ Function .onInit
     Quit
   ${EndUnless}
 
-  ; SSE2 CPU support
+  ; SSE4.2 CPU support
   ${If} "$R7" == "0"
     MessageBox MB_OKCANCEL|MB_ICONSTOP "$(WARN_MIN_SUPPORTED_CPU_MSG)" IDCANCEL +2
     ExecShell "open" "${URLSystemRequirements}"
