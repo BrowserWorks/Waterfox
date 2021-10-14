@@ -151,7 +151,7 @@ jobs:
       - name: ♻️ Stage files
         run: |
           VERSION_DISPLAY=`cat browser/config/version_display.txt`
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./obj-${{ env.ARCH }}/dist/update/update.xml s3://aus.waterfox.net/update/staging/x86_64/Windows_NT/update.xml
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./obj-${{ env.ARCH }}/dist/update/update.xml s3://aus.waterfox.net/update/staging/Windows_NT_x86_64/update.xml
           rsync -rtvz --chmod=D2755,F644 --delete-before --progress {./obj-${{ env.ARCH }}/dist/install/sea/Waterfox\ $VERSION_DISPLAY\ Setup.exe,./obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.win64.complete.xz.mar} kontos@rsync.keycdn.com:waterfox/staging/x86_64/Windows_NT
 
   macos-x64:
@@ -276,7 +276,6 @@ jobs:
             ./obj-${{ env.ARCH }}/dist/waterfox/*.app
             ./obj-${{ env.ARCH }}/dist/host/bin/mar
 
-
   linux-x64:
     name: 🐧 Linux X64
     runs-on: [self-hosted, buildjet]
@@ -315,7 +314,6 @@ jobs:
           wget2 https://www.7-zip.org/a/7z2102-linux-x64.tar.xz
           tar xf 7z2102-linux-x64.tar.xz
           sudo mv 7zz /usr/local/bin/7z
-
 
       - name: 🏗 Build
         run: |
@@ -377,7 +375,7 @@ jobs:
       - name: ♻️ Stage files
         run: |
           VERSION_DISPLAY=`cat browser/config/version_display.txt`
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./update/update.xml s3://aus.waterfox.net/update/staging/x86_64/Linux/update.xml
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./update/update.xml s3://aus.waterfox.net/update/staging/Linux_x86_64/update.xml
           rsync -rtvz --chmod=D2755,F644 --delete-before --progress {./obj-${{ env.ARCH }}/dist/waterfox-$VERSION_DISPLAY.en-US.linux-x86_64.tar.bz2,./update/waterfox-$VERSION_DISPLAY.en-US.linux64.complete.xz.mar} kontos@rsync.keycdn.com:waterfox/staging/x86_64/Linux
 
   macos-x64-finish:
@@ -492,7 +490,7 @@ jobs:
       - name: ♻️ Stage files
         run: |
           VERSION_DISPLAY=`cat browser/config/version_display.txt`
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./obj-${{ env.ARCH }}/dist/update/update.xml s3://aus.waterfox.net/update/staging/x86_64/Darwin/update.xml
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./obj-${{ env.ARCH }}/dist/update/update.xml s3://aus.waterfox.net/update/staging/Darwin_x86_64/update.xml
           rsync -rtvz --chmod=D2755,F644 --delete-before --progress {obj-${{ env.ARCH }}/dist/waterfox/Waterfox\ ${VERSION_DISPLAY}\ Setup.dmg,obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.osx64.complete.xz.mar} kontos@rsync.keycdn.com:waterfox/staging/x86_64/Darwin
 
   macos-arm64-finish:
@@ -607,5 +605,5 @@ jobs:
       - name: ♻️ Stage files
         run: |
           VERSION_DISPLAY=`cat browser/config/version_display.txt`
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./obj-${{ env.ARCH }}/dist/update/update.xml s3://aus.waterfox.net/update/staging/aarch64/Darwin/update.xml
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./obj-${{ env.ARCH }}/dist/update/update.xml s3://aus.waterfox.net/update/staging/Darwin_aarch64/update.xml
           rsync -rtvz --chmod=D2755,F644 --delete-before --progress {obj-${{ env.ARCH }}/dist/waterfox/Waterfox\ ${VERSION_DISPLAY}\ ARM\ Setup.dmg,./obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.osx-arm64.complete.xz.mar} kontos@rsync.keycdn.com:waterfox/staging/aarch64/Darwin
