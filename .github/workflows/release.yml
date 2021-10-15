@@ -13,89 +13,35 @@ jobs:
     name: Soft Release
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifact
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          github_token: ${{secrets.GITHUB_TOKEN}}
-          workflow: push.yml
-          workflow_conclusion: success
-          branch: actions
-      - name: Get directory names
+      - name: Staging to Release
         run: |
-          for dir in */
-          do
-            if [[ $dir == *"Linux"* ]]
-            then
-              echo "linux_dir=$dir" >> $GITHUB_ENV
-            elif [[ $dir == *"macOS Artifacts"* ]]
-            then
-              echo "mac_dir=$dir" >> $GITHUB_ENV
-            elif [[ $dir == *"Windows"* ]]
-            then
-              echo "windows_dir=$dir" >> $GITHUB_ENV
-            fi
-          done
+          sudo apt install wget2
+          wget2 https://cdn.waterfox.net/staging/x86_64/Windows_NT/Waterfox\ ${{ github.event.inputs.version }}\ Setup.exe
+          wget2 https://cdn.waterfox.net/staging/x86_64/Linux/waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2
+          wget2 https://cdn.waterfox.net/staging/x86_64/Darwin/Waterfox\ ${{ github.event.inputs.version }}\ Setup.dmg
+          wget2 https://cdn.waterfox.net/staging/aarch64/Darwin/Waterfox\ ${{ github.event.inputs.version }}\ ARM\ Setup.dmg 
+
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: create-release
+        uses: softprops/action-gh-release@v1
         with:
+          name: ${{ github.event.inputs.version }}
           tag_name: ${{ github.event.inputs.version }}
-          release_name: ${{ github.event.inputs.version }}
-          draft: false
-          prerelease: false
+          files: |
+            Waterfox\ ${{ github.event.inputs.version }}\ Setup.exe
+            waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2
+            Waterfox\ ${{ github.event.inputs.version }}\ Setup.dmg
+            Waterfox\ ${{ github.event.inputs.version }}\ ARM\ Setup.dmg 
 
-      - name: Upload Linux tar
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.linux_dir }}obj-x86_64-pc-linux-gnu/dist/waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2
-          asset_name: waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2
-          asset_label: waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2
-          asset_content_type: application/gzip
-      - name: Upload macOS ARM64 dmg
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.mac_dir }}obj-aarch64-apple-darwin/dist/waterfox/Waterfox ${{ github.event.inputs.version }} Setup.dmg
-          asset_name: Waterfox ${{ github.event.inputs.version }} ARM Setup.dmg
-          asset_label: Waterfox ${{ github.event.inputs.version }} ARM Setup.dmg
-          asset_content_type: application/octet-stream
-      - name: Upload macOS X64 dmg
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.mac_dir }}obj-x86_64-apple-darwin/dist/waterfox/Waterfox ${{ github.event.inputs.version }} Setup.dmg
-          asset_name: Waterfox ${{ github.event.inputs.version }} Setup.dmg
-          asset_label: Waterfox ${{ github.event.inputs.version }} Setup.dmg
-          asset_content_type: application/octet-stream
-      - name: Upload Windows Installer
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.windows_dir }}obj-x86_64-pc-mingw32/dist/install/sea/Waterfox ${{ github.event.inputs.version }} Setup.exe
-          asset_name: Waterfox ${{ github.event.inputs.version }} Setup.exe
-          asset_label: Waterfox ${{ github.event.inputs.version }} Setup.exe
-          asset_content_type: application/octet-stream
-
-      - name: Rebuild website
-        run: |
-          # POST request to Cloudflare endpoint
-          curl \
-          -X POST \
-          -H "content-type": "application/json;charset=UTF-8" \
-          -H "X-Auth-Email": ${{ secrets.CF_EMAIL }} \
-          -H "X-Auth-Key": ${{ secrets.CF_API_KEY }} \
-          https://api.cloudflare.com/client/v4/accounts/${{ secrets.CF_ACCT_ID }}/pages/projects/${{ secrets.CF_PROJECT_NAME }}/deployments
+      # - name: Rebuild website
+      #   run: |
+      #     # POST request to Cloudflare endpoint
+      #     curl \
+      #     -X POST \
+      #     -H "content-type": "application/json;charset=UTF-8" \
+      #     -H "X-Auth-Email": ${{ secrets.CF_EMAIL }} \
+      #     -H "X-Auth-Key": ${{ secrets.CF_API_KEY }} \
+      #     https://api.cloudflare.com/client/v4/accounts/${{ secrets.CF_ACCT_ID }}/pages/projects/${{ secrets.CF_PROJECT_NAME }}/deployments
           
   hard-release:
     name: Full Release
@@ -103,24 +49,37 @@ jobs:
     environment: hard-release
     runs-on: ubuntu-latest
     steps:
-      - name: Copy update.xml
+      - name: 🔑 Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          known_hosts: ${{ secrets.SSH_HOST }}
+          if_key_exists: fail
+      # - name: Copy update.xml
+      #   run: |
+      #     os=(Windows_NT_x86_64 Linux_x86_64 Darwin_x86_64 Darwin_aarch64)
+      #     for i in ${os[@]}
+      #     do
+      #       update_loc='s3://aus.waterfox.net/update/staging/$i/update.xml'
+      #       for j in $(aws s3 ls s3://aus.waterfox.net/update/Waterfox/ | awk '{OFS=" "};{if ($1=="PRE") print $2}')
+      #       do
+      #         if [[ $j != '/' ]]
+      #         then
+      #         ver=$(echo $j | sed 's/\///g')
+      #         aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
+      #           s3://aus.waterfox.net/update/Waterfox/$ver/default/$i/update.xml
+      #         fi
+      #       done
+      #       # grab the current version so we can create a new dir with a blank xml
+      #       touch blank.xml
+      #       echo "<?xml version="1.0"?><updates></updates>" >> blank.xml
+      #       aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" blank.xml \
+      #         s3://aus.waterfox.net/update/Waterfox/${{ github.event.inputs.version }}/default/$i/update.xml
+      #     done
+      - name: Copy installers
         run: |
-          os=(Windows_NT_x86_64 Linux_x86_64 Darwin_x86_64 Darwin_aarch64)
-          for i in ${os[@]}
-          do
-            update_loc='s3://aus.waterfox.net/update/staging/$i/update.xml'
-            for j in $(aws s3 ls s3://aus.waterfox.net/update/Waterfox/ | awk '{OFS=" "};{if ($1=="PRE") print $2}')
-            do
-              if [[ $j != '/' ]]
-              then
-              ver=$(echo $j | sed 's/\///g')
-              aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
-                s3://aus.waterfox.net/update/Waterfox/$ver/default/$i/update.xml
-              fi
-            done
-            # grab the current version so we can create a new dir with a blank xml
-            touch blank.xml
-            echo "<?xml version="1.0"?><updates></updates>" >> blank.xml
-            aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" blank.xml \
-              s3://aus.waterfox.net/update/Waterfox/${{ github.event.inputs.version }}/default/$i/update.xml
-          done
+          rsync -vz --progress kontos@rsync.keycdn.com:waterfox/staging/x86_64/Windows_NT/Waterfox\ ${{ github.event.inputs.version }}\ Setup.exe kontos@rsync.keycdn.com:waterfox/releases/win64/installer/
+          rsync -vz --progress kontos@rsync.keycdn.com:waterfox/staging/x86_64/Linux/waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2 kontos@rsync.keycdn.com:waterfox/releases/linux64/installer/
+          rsync -vz --progress kontos@rsync.keycdn.com:waterfox/staging/x86_64/Darwin/Waterfox\ ${{ github.event.inputs.version }}\ Setup.dmg kontos@rsync.keycdn.com:waterfox/releases/osx64/installer/
+          rsync -vz --progress kontos@rsync.keycdn.com:waterfox/staging/aarch64/Darwin/Waterfox\ ${{ github.event.inputs.version }}\ ARM\ Setup.dmg kontos@rsync.keycdn.com:waterfox/releases/osx64/installer/
+
