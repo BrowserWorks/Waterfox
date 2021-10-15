@@ -302,8 +302,7 @@ const DEFAULT_PROTON_WELCOME_CONTENT = {
         },
         primary_button: {
           label: {
-            string_id:
-              "mr1-onboarding-search-primary-button-label",
+            string_id: "mr1-onboarding-search-primary-button-label",
           },
           action: {
             search: "startpage",
@@ -452,6 +451,9 @@ const RULES = [
     description: "Proton Default AW content",
     getDefaults(featureConfig) {
       if (featureConfig?.isProton) {
+        if (Services.prefs.getCharPref("distribution.source", "")) {
+          DEFAULT_PROTON_WELCOME_CONTENT.screens.pop();
+        }
         return DEFAULT_PROTON_WELCOME_CONTENT;
       }
       return null;
