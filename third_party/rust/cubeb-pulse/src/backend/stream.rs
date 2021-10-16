@@ -13,7 +13,7 @@ use std::{mem, ptr};
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_long, c_void};
 use std::slice;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicPtr, AtomicUsize, Ordering};
 use ringbuf::RingBuffer;
 
 use self::RingBufferConsumer::*;
@@ -267,7 +267,7 @@ pub struct PulseStream<'ctx> {
     input_stream: Option<pulse::Stream>,
     data_callback: ffi::cubeb_data_callback,
     state_callback: ffi::cubeb_state_callback,
-    drain_timer: *mut pa_time_event,
+    drain_timer: AtomicPtr<pa_time_event>,
     output_sample_spec: pulse::SampleSpec,
     input_sample_spec: pulse::SampleSpec,
     output_frame_count: AtomicUsize,
@@ -399,7 +399,7 @@ impl<'ctx> PulseStream<'ctx> {
             data_callback: data_callback,
             state_callback: state_callback,
             user_ptr: user_ptr,
-            drain_timer: ptr::null_mut(),
+            drain_timer: AtomicPtr::new(ptr::null_mut()),
             output_sample_spec: pulse::SampleSpec::default(),
             input_sample_spec: pulse::SampleSpec::default(),
             output_frame_count: AtomicUsize::new(0),
@@ -564,9 +564,10 @@ impl<'ctx> PulseStream<'ctx> {
         self.context.mainloop.lock();
         {
             if let Some(stm) = self.output_stream.take() {
-                if !self.drain_timer.is_null() {
+                let drain_timer = self.drain_timer.load(Ordering::Acquire);
+                if !drain_timer.is_null() {
                     /* there's no pa_rttime_free, so use this instead. */
-                    self.context.mainloop.get_api().time_free(self.drain_timer);
+                    self.context.mainloop.get_api().time_free(drain_timer);
                 }
                 stm.clear_state_callback();
                 stm.clear_write_callback();
@@ -626,7 +627,7 @@ impl<'ctx> StreamOps for PulseStream<'ctx> {
             self.context.mainloop.lock();
             self.shutdown = true;
             // If draining is taking place wait to finish
-            while !self.drain_timer.is_null() {
+            while !self.drain_timer.load(Ordering::Acquire).is_null() {
                 self.context.mainloop.wait();
             }
             self.context.mainloop.unlock();
@@ -974,11 +975,12 @@ impl<'ctx> PulseStream<'ctx> {
             u: *mut c_void,
         ) {
             let stm = unsafe { &mut *(u as *mut PulseStream) };
-            debug_assert_eq!(stm.drain_timer, e);
+            let drain_timer = stm.drain_timer.load(Ordering::Acquire);
+            debug_assert_eq!(drain_timer, e);
             stm.state_change_callback(ffi::CUBEB_STATE_DRAINED);
             /* there's no pa_rttime_free, so use this instead. */
-            a.time_free(stm.drain_timer);
-            stm.drain_timer = ptr::null_mut();
+            a.time_free(drain_timer);
+            stm.drain_timer.store(ptr::null_mut(), Ordering::Release);
             stm.context.mainloop.signal();
         }
 
@@ -1070,13 +1072,16 @@ impl<'ctx> PulseStream<'ctx> {
 
                             /* pa_stream_drain is useless, see PA bug# 866. this is a workaround. */
                             /* arbitrary safety margin: double the current latency. */
-                            debug_assert!(self.drain_timer.is_null());
+                            debug_assert!(self.drain_timer.load(Ordering::Acquire).is_null());
                             let stream_ptr = self as *const _ as *mut _;
                             if let Some(ref context) = self.context.context {
-                                self.drain_timer = context.rttime_new(
-                                    pulse::rtclock_now() + 2 * latency,
-                                    drained_cb,
-                                    stream_ptr,
+                                self.drain_timer.store(
+                                    context.rttime_new(
+                                        pulse::rtclock_now() + 2 * latency,
+                                        drained_cb,
+                                        stream_ptr,
+                                    ),
+                                    Ordering::Release,
                                 );
                             }
                             self.shutdown = true;
