@@ -11,7 +11,7 @@
 <!ENTITY prefEnableHTTP10.accesskey          "v">
 <!ENTITY prefEnableHTTP10Proxy.accesskey     "w">
 <!ENTITY prefEnableHTTP11.label              "HTTP 1.1 verwenden">
-<!ENTITY prefEnableHTTP11.accesskey          "H">
+<!ENTITY prefEnableHTTP11.accesskey          "e">
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
 <!ENTITY prefPara                            "HTTP-Verbindungen können mit diesen Optionen feineingestelt werden, um Geschwindigkeit oder Kompatibilität zu verbessern. Manche Proxy-Server zum Beispiel benötigen bekannterweise HTTP/1.0 (siehe Release Notes für Details).">
 <!ENTITY prefUseragent.label                 "User-Agent-String">

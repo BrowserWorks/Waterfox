@@ -17,3 +17,12 @@ prompt-to-install-no-button = Χωρίς εγκατάσταση
 
 install-failed-title = Αποτυχία εγκατάστασης του { -brand-short-name }.
 install-failed-message = Η εγκατάσταση του { -brand-short-name } απέτυχε, αλλά θα συνεχίσει να εκτελείται.
+
+## Strings for a dialog that recommends to the user to start an existing
+## installation of the app in the Applications directory if one is detected,
+## rather than the app that was double-clicked in a .dmg.
+
+prompt-to-launch-existing-app-title = Άνοιγμα υπάρχουσας εφαρμογής { -brand-short-name };
+prompt-to-launch-existing-app-message = Έχετε ήδη εγκαταστήσει το { -brand-short-name }. Χρησιμοποιήστε την εγκατεστημένη εφαρμογή για να παραμείνετε ενημερωμένοι και να αποτρέψετε την απώλεια δεδομένων.
+prompt-to-launch-existing-app-yes-button = Άνοιγμα υπάρχοντος
+prompt-to-launch-existing-app-no-button = Όχι, ευχαριστώ
