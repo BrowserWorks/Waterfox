@@ -113,6 +113,9 @@ places-remove-bookmark =
            *[other] Pašalinti įrašų
         }
     .accesskey = l
+places-show-in-folder =
+    .label = Rodyti aplanke
+    .accesskey = d
 # Variables:
 # $count (number) - The number of elements being selected for removal.
 places-delete-bookmark =

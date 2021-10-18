@@ -32,6 +32,7 @@
 <!ENTITY DisplayName.label              "Anzeigename:">
 <!ENTITY DisplayName.accesskey          "z">
 <!ENTITY preferDisplayName.label        "Anzeigename immer statt Namen aus dem Nachrichtenkopf verwenden">
+<!ENTITY preferDisplayName2.accesskey   "i">
 <!ENTITY NickName.label                 "Spitzname:">
 <!ENTITY NickName.accesskey             "S">
 
@@ -44,6 +45,7 @@
 <!ENTITY PlainText.label                "Reiner Text">
 <!ENTITY HTML.label                     "HTML">
 <!ENTITY Unknown.label                  "Unbekannt">
+<!ENTITY chatName.label                 "Chatname:">
 
 <!ENTITY WorkPhone.label                "Dienstlich:">
 <!ENTITY WorkPhone.accesskey            "h">
@@ -116,6 +118,27 @@
 <!ENTITY Notes.label                    "Anmerkungen:">
 <!ENTITY Notes.accesskey                "A">
 
+<!ENTITY Chat.tab                       "Chat">
+<!ENTITY Chat.accesskey                 "t">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM.accesskey                  "A">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "e">
+<!ENTITY QQ.label                       "QQ">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN.accesskey                  "M">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "Jabber-ID:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "IRC-Nickname:">
+<!ENTITY IRC.accesskey                  "R">
+
 <!ENTITY Photo.tab                      "Foto">
 <!ENTITY Photo.accesskey                "F">
 <!ENTITY GenericPhoto.label             "Generisches Foto">
@@ -130,3 +153,4 @@
 <!ENTITY PhotoURL.placeholder           "Fügen Sie die Web-Adresse eines Fotos ein oder geben Sie diese ein">
 <!ENTITY UpdatePhoto.label              "Aktualisieren">
 <!ENTITY UpdatePhoto.accesskey          "A">
+<!ENTITY PhotoDropTarget.label          "Neues Foto hierhin ziehen">

@@ -10,8 +10,9 @@
 <!ENTITY openProgressDialog.label       "Fortschritts-Dialog öffnen">
 <!ENTITY openProgressDialog.accesskey   "F">
 <!ENTITY openDM.label                   "Download-Verwaltung öffnen">
-<!ENTITY openDM.accesskey               "M">
-<!ENTITY flashWhenOpen.label            "Download-Verwaltung nur aufblinken lassen, wenn er schon offen ist">
+<!ENTITY openDM.accesskey               "l">
+<!ENTITY flashWhenOpen.label            "Download-Verwaltung nur aufblinken lassen, wenn Sie schon offen ist
+">
 <!ENTITY flashWhenOpen.accesskey        "u">
 
 <!ENTITY downloadLocation.label         "Speicherort von Dateien">

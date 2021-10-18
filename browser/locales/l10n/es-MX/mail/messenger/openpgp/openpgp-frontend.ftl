@@ -4,4 +4,6 @@
 
 openpgp-search-signature-key =
     .label = Descubrir…
+openpgp-broken-exchange-repair =
+    .label = Reparar mensaje
 openpgp-partial-verify-button = Verificar

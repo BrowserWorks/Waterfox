@@ -49,7 +49,7 @@
         [ins] Waterfoxem
     }
     .gender = masculine
--brand-full-name = Waterfox Waterfox
+-brand-full-name = Waterfox
 # This brand name can be used in messages where the product name needs to
 # remain unchanged across different versions (Nightly, Beta, etc.).
 -brand-product-name =

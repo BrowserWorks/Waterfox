@@ -110,6 +110,9 @@ places-remove-bookmark =
            *[other] Eliminar marcadores
         }
     .accesskey = e
+places-show-in-folder =
+    .label = Mostrar en carpeta
+    .accesskey = t
 # Variables:
 # $count (number) - The number of elements being selected for removal.
 places-delete-bookmark =

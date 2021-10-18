@@ -27,6 +27,8 @@ about-private-browsing-info-description-private-window = Приватное ок
 about-private-browsing-info-description-simplified = { -brand-short-name } удаляет историю поиска и посещений при закрытии всех приватных окон, но это не делает вас анонимными.
 about-private-browsing-learn-more-link = Подробнее
 about-private-browsing-hide-activity = Скрывайте свою активность и местоположение в любой части Интернета
+about-private-browsing-get-privacy = Получите защиту приватности в любой части Интернета
+about-private-browsing-hide-activity-1 = Скрывайте активность и местоположение в любой части Интернета с помощью { -mozilla-vpn-brand-name }. Одним щелчком мыши создавайте безопасное соединение, даже при использовании общедоступного Wi-Fi.
 about-private-browsing-prominent-cta = Сохраняйте приватность с { -mozilla-vpn-brand-name }
 # This string is the title for the banner for search engine selection
 # in a private window.

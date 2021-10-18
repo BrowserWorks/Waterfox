@@ -41,3 +41,29 @@ install-failed-message =
         [neuter] { -brand-short-name(case: "acc") }
        *[other] Aplikaci { -brand-short-name }
     } se nepodařilo nainstalovat, ale bude nadále fungovat.
+
+## Strings for a dialog that recommends to the user to start an existing
+## installation of the app in the Applications directory if one is detected,
+## rather than the app that was double-clicked in a .dmg.
+
+prompt-to-launch-existing-app-title =
+    Chcete otevřít nainstalovanou verzi { -brand-short-name.gender ->
+        [masculine] { -brand-short-name(case: "gen") }
+        [feminine] { -brand-short-name(case: "gen") }
+        [neuter] { -brand-short-name(case: "gen") }
+       *[other] aplikace { -brand-short-name }
+    }?
+prompt-to-launch-existing-app-message =
+    { -brand-short-name.gender ->
+        [masculine] { -brand-short-name(case: "acc") } už máte nainstalovaný
+        [feminine] { -brand-short-name(case: "acc") } už máte nainstalovanou
+        [neuter] { -brand-short-name(case: "acc") } už máte nainstalované
+       *[other] Aplikaci { -brand-short-name } už máte nainstalovanou
+    }. Aby nedošlo ke ztrátě dat, doporučujeme používat nainstalovanou verzi { -brand-short-name.gender ->
+        [masculine] { -brand-short-name(case: "gen") }
+        [feminine] { -brand-short-name(case: "gen") }
+        [neuter] { -brand-short-name(case: "gen") }
+       *[other] aplikace { -brand-short-name }
+    }.
+prompt-to-launch-existing-app-yes-button = Otevřít nainstalovanou verzi
+prompt-to-launch-existing-app-no-button = Ne, děkuji

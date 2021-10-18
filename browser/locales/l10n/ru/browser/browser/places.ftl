@@ -113,6 +113,9 @@ places-remove-bookmark =
            *[many] Удалить { $count } закладок
         }
     .accesskey = л
+places-show-in-folder =
+    .label = Показать в папке
+    .accesskey = з
 # Variables:
 # $count (number) - The number of elements being selected for removal.
 places-delete-bookmark =

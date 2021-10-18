@@ -29,7 +29,8 @@
 <!--LOCALIZATION NOTE (dateTimeFormatting.label): labels/accesskeys for
      radiobuttons are set dynamically from prefutilities.properties
 -->
-<!ENTITY dateTimeFormatting.label               "Datums- und Zeitformatierung">
+<!ENTITY dateTimeFormatting.label               "Datums- und Uhrzeitformat
+">
 
 <!--LOCALIZATION NOTE (restartOnLocaleChange.label): Don't translate "&brandShortName;".
     Place &brandShortName; in the phrase where the name of the application should appear

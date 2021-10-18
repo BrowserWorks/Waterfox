@@ -42,9 +42,7 @@ perftools-range-interval-milliseconds = { NUMBER($interval, maxFractionalUnits: 
 
 # The size of the memory buffer used to store things in the profiler.
 perftools-range-entries-label = Μέγεθος buffer:
-
 perftools-custom-threads-label = Προσθήκη προσαρμοσμένων νημάτων ανά όνομα:
-
 perftools-devtools-interval-label = Διάστημα:
 perftools-devtools-threads-label = Νήματα:
 perftools-devtools-settings-label = Ρυθμίσεις
@@ -103,7 +101,6 @@ perftools-thread-task-controller =
 ##
 
 perftools-record-all-registered-threads = Παράκαμψη των παραπάνω επιλογών και εγγραφή όλων των καταχωρημένων νημάτων
-
 perftools-tools-threads-input-label =
     .title = Αυτά τα ονόματα νημάτων είναι σε λίστα με διαχωρισμό με κόμματα όπου χρησιμοποιείται για την ενεργοποίηση της δημιουργίας προφίλ για νήματα στο εργαλείο προφίλ. Το όνομα θα πρέπει να περιέχει ένα μέρος του ονόματος του νήματος για αντιστοίχιση. Γίνεται διάκριση στο κενό διάστημα.
 
@@ -112,9 +109,22 @@ perftools-tools-threads-input-label =
 ## preferences are true.
 
 perftools-onboarding-message = <b>Νέο</b>: Το { -profiler-brand-name } έχει ενσωματωθεί στα Εργαλεία προγραμματιστών. <a>Μάθετε περισσότερα</a> σχετικά με αυτό το νέο ισχυρό εργαλείο.
-
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (Για περιορισμένο χρονικό διάστημα, μπορείτε να ανοίξετε το αρχικό παράθυρο "Επιδόσεις" από τις <a>{ options-context-advanced-settings }</a>)
-
 perftools-onboarding-close-button =
     .aria-label = Κλείσιμο μηνύματος υποδοχής
+
+## Profiler presets
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# The same labels and descriptions are also defined in appmenu.ftl.
+
+perftools-presets-web-developer-label = Ανάπτυξη web
+perftools-presets-firefox-platform-label = Πλατφόρμα Waterfox
+perftools-presets-firefox-graphics-label = Γραφικά Waterfox
+perftools-presets-media-label = Πολυμέσα
+
+##
+

@@ -9,6 +9,10 @@
 <!ENTITY autoHide.accesskey2 "e">
 <!ENTITY background.label "Přepnout na nový panel otevřený z odkazu">
 <!ENTITY background.accesskey "P">
+<!ENTITY diverted.label "Přepnout na nový panel otevřený z přesměrovaných odkazů">
+<!ENTITY diverted.accesskey "a">
+<!ENTITY browserFocus.label "Nastavit okna prohlížeče na odkazy otevřené na kartách z jiných aplikací">
+<!ENTITY browserFocus.accesskey "F">
 <!ENTITY warnOnClose.label "Varovat, pokud zavírám okno s více panely">
 <!ENTITY warnOnClose.accesskey "V">
 <!ENTITY relatedAfterCurrent.label "Otevírat související panely za aktuálním panelem">
