@@ -64,6 +64,32 @@ upgrade-dialog-default-secondary-button = Не сейчас
 upgrade-dialog-theme-title-2 = Начните с чистого листа со свежей темой
 upgrade-dialog-theme-system = Системная тема
     .title = Следовать теме операционной системы для кнопок, меню и окон
+
+## Start screen
+
+# This title can be explicitly wrapped to control which words are on which line.
+upgrade-dialog-start-title = Жизнь в цвете
+upgrade-dialog-start-subtitle = Яркие новые расцветки. Доступны в течение ограниченного времени.
+upgrade-dialog-start-primary-button = Просмотрите цветовые расцветки
+upgrade-dialog-start-secondary-button = Не сейчас
+
+## Colorway screen
+
+# This title can be explicitly wrapped to control which words are on which line.
+upgrade-dialog-colorway-title = Выберите свою палитру
+# This is shown to users with a custom home page, so they can switch to default.
+upgrade-dialog-colorway-home-checkbox = Смените расцветку фона Домашней страницы Waterfox
+upgrade-dialog-colorway-primary-button = Сохранить расцветку
+upgrade-dialog-colorway-secondary-button = Оставить предыдущую тему
+upgrade-dialog-colorway-theme-tooltip =
+    .title = Просмотрите стандартные темы
+# $colorwayName (String) - Name of colorway, e.g., Abstract, Cheers
+upgrade-dialog-colorway-colorway-tooltip =
+    .title = Просмотрите расцветку { $colorwayName }.
+upgrade-dialog-colorway-default-theme = По умолчанию
+# "Auto" is short for "Automatic"
+upgrade-dialog-colorway-theme-auto = Авто
+    .title = Следовать настройкам операционной системы для кнопок, меню и окон
 upgrade-dialog-theme-light = Светлая
     .title = Использовать светлую тему для кнопок, меню и окон
 upgrade-dialog-theme-dark = Тёмная
@@ -74,3 +100,18 @@ upgrade-dialog-theme-keep = Оставить предыдущую
     .title = Оставить тему, которую вы установили до обновления { -brand-short-name }
 upgrade-dialog-theme-primary-button = Выбрать тему
 upgrade-dialog-theme-secondary-button = Не сейчас
+upgrade-dialog-colorway-variation-soft = Мягкая
+    .title = Использовать эту расцветку
+upgrade-dialog-colorway-variation-balanced = Сбалансированная
+    .title = Использовать эту расцветку
+# "Bold" is used in the sense of bravery or courage, not in the sense of
+# emphasized text.
+upgrade-dialog-colorway-variation-bold = Выразительная
+    .title = Использовать эту расцветку
+
+## Thank you screen
+
+# This title can be explicitly wrapped to control which words are on which line.
+upgrade-dialog-thankyou-title = Спасибо, что выбрали нас
+upgrade-dialog-thankyou-subtitle = { -brand-short-name } 一 независимый браузер, поддерживаемый некоммерческой организацией. Вместе мы делаем Интернет более безопасным, здоровым и приватным.
+upgrade-dialog-thankyou-primary-button = Начать веб-сёрфинг

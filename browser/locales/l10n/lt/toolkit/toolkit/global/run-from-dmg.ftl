@@ -17,3 +17,12 @@ prompt-to-install-no-button = Neįdiegti
 
 install-failed-title = „{ -brand-short-name }“ įdiegimas nepavyko.
 install-failed-message = Nepavyko įdiegti „{ -brand-short-name }“, tačiau ji ir toliau veiks.
+
+## Strings for a dialog that recommends to the user to start an existing
+## installation of the app in the Applications directory if one is detected,
+## rather than the app that was double-clicked in a .dmg.
+
+prompt-to-launch-existing-app-title = Atverti esamą „{ -brand-short-name }“ programą?
+prompt-to-launch-existing-app-message = Jau turite įdiegę „{ -brand-short-name }“. Naudokite įdiegtą programą, norėdami gauti naujinimus ir išvengti duomenų praradimo.
+prompt-to-launch-existing-app-yes-button = Atverti esamą
+prompt-to-launch-existing-app-no-button = Ačiū, ne

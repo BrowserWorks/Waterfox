@@ -143,3 +143,5 @@ about-addressbook-details-phone-numbers-header = Telefonní čísla
 about-addressbook-details-home-address-header = Adresy domů
 about-addressbook-details-work-address-header = Adresy do zaměstnání
 about-addressbook-details-other-info-header = Další údaje
+about-addressbook-prompt-to-save-title = Uložit změny?
+about-addressbook-prompt-to-save = Chcete uložit provedené změny?
