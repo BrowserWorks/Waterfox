@@ -107,6 +107,9 @@ places-remove-bookmark =
            *[other] Αφαίρεση σελιδοδεικτών
         }
     .accesskey = λ
+places-show-in-folder =
+    .label = Εμφάνιση στον φάκελο
+    .accesskey = φ
 # Variables:
 # $count (number) - The number of elements being selected for removal.
 places-delete-bookmark =

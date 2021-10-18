@@ -118,6 +118,9 @@ whatsnew-panel-footer-checkbox =
 profiler-popup-button-idle =
     .label = Εργαλείο προφίλ
     .tooltiptext = Καταγραφή προφίλ επιδόσεων
+profiler-popup-button-capturing =
+    .label = Εργαλείο προφίλ
+    .tooltiptext = Το εργαλείο προφίλ καταγράφει ένα προφίλ
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -168,6 +171,14 @@ profiler-popup-capture-shortcut =
 # devtools/client/performance-new/popup/background.jsm.js
 # Please take care that the same values are also defined in devtools' perftools.ftl.
 
+profiler-popup-presets-web-developer-label =
+    .label = Ανάπτυξη web
+profiler-popup-presets-firefox-platform-label =
+    .label = Πλατφόρμα Waterfox
+profiler-popup-presets-firefox-graphics-label =
+    .label = Γραφικά Waterfox
+profiler-popup-presets-media-label =
+    .label = Πολυμέσα
 
 ## History panel
 
