@@ -352,7 +352,7 @@ addon-badge-recommended2 =
 # We hard code "Waterfox" in the string below because the extensions are built
 # by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = Officiële door Waterfox Waterfox gebouwde extensie. Voldoet aan beveiligings- en prestatienormen.
+    .title = Officiële door Waterfox gebouwde extensie. Voldoet aan beveiligings- en prestatienormen.
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = Deze extensie is beoordeeld en voldoet aan onze normen voor beveiliging en prestaties
