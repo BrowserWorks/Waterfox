@@ -18,7 +18,7 @@ for AB_CD in ar cs da de el en-GB es-ES es-MX fr hu id it ja ko lt nl nn-NO pl p
        else
          mv $OUT/browser/branding/official $OUT/browser/branding/waterfox
        fi
-       grep -rl 'Mozilla Firefox' $OUT | LC_ALL=C xargs sed -i '' 's/"Mozilla Firefox"/Waterfox/g'
+       grep -rl 'Mozilla Firefox' $OUT | LC_ALL=C xargs sed -i '' 's/Mozilla Firefox/Waterfox/g'
        grep -rl 'Firefox' $OUT | LC_ALL=C xargs sed -i '' 's/Firefox/Waterfox/g'
        grep -rl 'Mozilla' $OUT | LC_ALL=C xargs sed -i '' 's/Mozilla/Waterfox/g'
    done

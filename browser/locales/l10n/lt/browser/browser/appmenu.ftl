@@ -118,6 +118,12 @@ whatsnew-panel-footer-checkbox =
 profiler-popup-button-idle =
     .label = Profiliuoklė
     .tooltiptext = Įrašyti našumo profilį
+profiler-popup-button-recording =
+    .label = Profiliuoklė
+    .tooltiptext = Profiliuoklė įrašinėja profilį
+profiler-popup-button-capturing =
+    .label = Profiliuoklė
+    .tooltiptext = Profiliuoklė fiksuoja profilį
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -166,6 +172,23 @@ profiler-popup-capture-shortcut =
 # devtools/client/performance-new/popup/background.jsm.js
 # Please take care that the same values are also defined in devtools' perftools.ftl.
 
+profiler-popup-presets-web-developer-description = Rekomenduojamas nustatymas daugelio saityno programų derinimui, su nedidelėmis sąnaudomis.
+profiler-popup-presets-web-developer-label =
+    .label = Saityno kūrėjams
+profiler-popup-presets-firefox-platform-description = Rekomenduojamas nustatymas vidinės „Waterfox“ platformos derinimui.
+profiler-popup-presets-firefox-platform-label =
+    .label = „Waterfox“ platforma
+profiler-popup-presets-firefox-front-end-description = Rekomenduojamas nustatymas vidinio „Waterfox“ „front-end“ derinimui.
+profiler-popup-presets-firefox-front-end-label =
+    .label = „Waterfox“ front-end
+profiler-popup-presets-firefox-graphics-description = Rekomenduojamas nustatymas „Waterfox“ grafinio našumo tyrinėjimui.
+profiler-popup-presets-firefox-graphics-label =
+    .label = „Waterfox“ grafika
+profiler-popup-presets-media-description = Rekomenduojamas nustatymas garso ir vaizdo problemų diagnozavimui.
+profiler-popup-presets-media-label =
+    .label = Medija
+profiler-popup-presets-custom-label =
+    .label = Kitas
 
 ## History panel
 

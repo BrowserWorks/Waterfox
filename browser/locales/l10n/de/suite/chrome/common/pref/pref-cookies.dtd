@@ -36,5 +36,4 @@
 <!ENTITY manageCookiesDescription.label "Ermöglicht Ihnen, gespeicherte Cookies und Website-spezifische Einstellungen für das Akzeptieren von Cookies anzusehen und zu verwalten. Website-spezifische Einstellungen übergehen die obigen Einstellungen.">
 
 <!ENTITY viewCookies.label              "Cookie-Verwaltung">
-<!ENTITY viewCookies.accesskey          "M">
-
+<!ENTITY viewCookies.accesskey          "V">

@@ -17,6 +17,8 @@ account-setup-email-label = Dirección de correo electrónico
     .accesskey = D
 account-setup-email-input =
     .placeholder = john.doe@example.com
+account-setup-password-toggle-hide =
+    .title = Ocultar contraseña
 
 ## Action buttons
 

@@ -17,7 +17,7 @@ about-unloads-intro-1 =
 about-unloads-intro-2 =
     기존 탭은 { -brand-short-name }가 언로드할 다음 탭을 선택하는데 사용한 것과 
     동일한 순서로 아래 표에 표시됩니다. 프로세스 ID는 탭의 상단 프레임을 호스팅할 때 
-    <strong>굵게</strong> 표시되고, 프로세스가 다른 탭 간에 공유될 때 <em>이탤릭체</em>로 
+    <strong>굵게</strong> 표시되고, 프로세스가 다른 탭 간에 공유될 때 <em>기울임꼴</em>로 
     표시됩니다. 아래의 <em>언로드</em> 버튼을 클릭하여 탭 언로드를 수동으로 실행할 
     수 있습니다.
 about-unloads-intro =

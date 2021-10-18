@@ -21,6 +21,19 @@ about-unloads-intro-2 =
     e a <em>itálico</em> quando o processo é partilhado entre diferentes separadores. 
     Pode despoletar a suspensão de separadores de forma manual clicando no botão 
     <em>Suspender</em> abaixo.
+about-unloads-intro =
+    O { -brand-short-name } tem uma nova funcionalidade que suspende separadores automaticamente 
+    para impedir que a aplicação falhe devido à indisponibilidade de memória 
+    quando existe pouca memória disponível. O próximo separador a ser suspenso 
+    é selecionado com base em múltiplos atributos. Esta página mostra como 
+    o { -brand-short-name } prioriza separadores e que separador será suspenso
+    quando a suspensão de separadores for ativada. Pode despoletar a suspensão 
+    de separadores manualmente ativando o botão <em>Suspender</em> abaixo.
+# The link points to a Waterfox documentation page, only available in English,
+# with title "Tab Unloading"
+about-unloads-learn-more =
+    Consulte <a data-l10n-name="doc-link">Suspensão de separadores</a> para saber mais sobre
+    a funcionalidade e esta página.
 about-unloads-last-updated = Última atualização: { DATETIME($date, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric", hour12: "false") }
 about-unloads-button-unload = Suspender
     .title = Suspender o separador com a máxima prioridade

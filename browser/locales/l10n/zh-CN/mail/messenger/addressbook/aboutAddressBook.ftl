@@ -129,3 +129,5 @@ about-addressbook-details-phone-numbers-header = 手机号码
 about-addressbook-details-home-address-header = 家庭地址
 about-addressbook-details-work-address-header = 工作地址
 about-addressbook-details-other-info-header = 其他信息
+about-addressbook-prompt-to-save-title = 要保存更改吗？
+about-addressbook-prompt-to-save = 您要保存更改吗？
