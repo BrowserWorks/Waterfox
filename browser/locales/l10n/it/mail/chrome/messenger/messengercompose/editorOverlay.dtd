@@ -261,13 +261,14 @@
 <!ENTITY tableProperties.label "Proprietà tabella…">
 <!ENTITY tableProperties.accesskey "P">
 
+<!-- Toolbar-only items -->
 <!ENTITY imageToolbarCmd.label "Immagine">
 <!ENTITY imageToolbarCmd.tooltip "Modifica proprietà immagine selezionata o inseriscine una nuova">
 <!ENTITY hruleToolbarCmd.label "Separatore">
 <!ENTITY hruleToolbarCmd.tooltip "Modifica o inserisci un separatore orizzontale">
 <!ENTITY tableToolbarCmd.label "Tabella">
 <!ENTITY tableToolbarCmd.tooltip "Modifica tabella selezionata o inseriscine una nuova">
-<!ENTITY linkToolbarCmd.label "Collegamento">
+<!ENTITY linkToolbarCmd.label "Link">
 <!ENTITY linkToolbarCmd.tooltip "Modifica collegamento selezionato o inseriscine uno nuovo">
 <!ENTITY anchorToolbarCmd.label "Ancora">
 <!ENTITY anchorToolbarCmd.tooltip "Modifica ancora selezionata o inseriscine una nuova">

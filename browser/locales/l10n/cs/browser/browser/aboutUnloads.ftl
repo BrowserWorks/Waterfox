@@ -8,7 +8,11 @@
 
 about-unloads-page-title = Uvolňování panelů
 about-unloads-intro-1 = { -brand-short-name } obsahuje funkci, která automaticky uvolní zdroje panelů z paměti, aby kvůli jejímu nedostatku nedošlo k pádu. Panel k uvolnění je vždy vybrán na základě několika kritérií. Tato stránka ukazuje, jakou dává { -brand-short-name } prioritou jednotlivým panelům a který bude případně uvolněn jako další.
-about-unloads-intro-2 = V tabulce níže se zobrazují otevřené panely v pořadí podle toho, jak je bude { -brand-short-name } případně uvolňovat. Pokud v procesu běží panel na vrchu seznamu, je jeho ID zobrazeno <strong>tučně</strong>. Pokud je ID zobrazeno <em>kurzívou</em>, je proces sdílen mezi více panely. Uvolnění panelu můžete sputit ručně klepnutím na tlačítko <em>Uvolnit</em> níže.
+about-unloads-intro-2 = V tabulce níže se zobrazují otevřené panely v pořadí podle toho, jak je bude { -brand-short-name } případně uvolňovat. Pokud v procesu běží panel na vrchu seznamu, je jeho ID zobrazeno <strong>tučně</strong>. Pokud je ID zobrazeno <em>kurzívou</em>, je proces sdílen mezi více panely. Uvolnění panelu můžete spustit ručně klepnutím na tlačítko <em>Uvolnit</em> níže.
+about-unloads-intro = { -brand-short-name } obsahuje funkci, která automaticky uvolní zdroje panelů z paměti, aby kvůli jejímu nedostatku nedošlo k pádu. Panel k uvolnění je vždy vybrán na základě několika kritérií. Tato stránka ukazuje, jakou dává { -brand-short-name } prioritou jednotlivým panelům a který bude případně uvolněn jako další. Uvolnění panelu můžete spustit ručně klepnutím na tlačítko <em>Uvolnit</em> níže.
+# The link points to a Waterfox documentation page, only available in English,
+# with title "Tab Unloading"
+about-unloads-learn-more = Podrobnosti o této funkci najdete v dokumentaci <a data-l10n-name="doc-link">Tab Unloading</a>.
 about-unloads-last-updated = Poslední aktualizace: { DATETIME($date, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric", hour12: "false") }
 about-unloads-button-unload = Uvolnit
     .title = Uvolní panel s nejvyšší prioritou (na začátku seznamu)

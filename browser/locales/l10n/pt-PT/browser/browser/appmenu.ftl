@@ -118,6 +118,12 @@ whatsnew-panel-footer-checkbox =
 profiler-popup-button-idle =
     .label = Profiler
     .tooltiptext = Grave um perfil de desempenho
+profiler-popup-button-recording =
+    .label = Profiler
+    .tooltiptext = O profiler está a gravar um perfil
+profiler-popup-button-capturing =
+    .label = Profiler
+    .tooltiptext = O profiler está a capturar um perfil
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -168,6 +174,23 @@ profiler-popup-capture-shortcut =
 # devtools/client/performance-new/popup/background.jsm.js
 # Please take care that the same values are also defined in devtools' perftools.ftl.
 
+profiler-popup-presets-web-developer-description = Predefinição recomendada para a maioria das depurações de aplicações web, com pouca sobrecarga.
+profiler-popup-presets-web-developer-label =
+    .label = Programador web
+profiler-popup-presets-firefox-platform-description = Predefinição recomendada para a depuração da plataforma interna do Waterfox.
+profiler-popup-presets-firefox-platform-label =
+    .label = Plataforma Waterfox
+profiler-popup-presets-firefox-front-end-description = Predefinição recomendada para a depuração do front-end interno do Waterfox.
+profiler-popup-presets-firefox-front-end-label =
+    .label = Front-End do Waterfox
+profiler-popup-presets-firefox-graphics-description = Predefinição recomendada para a investigação de desempenho gráfico do Waterfox.
+profiler-popup-presets-firefox-graphics-label =
+    .label = Gráficos do Waterfox
+profiler-popup-presets-media-description = Predefinição recomendada para diagnosticar problemas de áudio e vídeo.
+profiler-popup-presets-media-label =
+    .label = Multimédia
+profiler-popup-presets-custom-label =
+    .label = Personalizada
 
 ## History panel
 

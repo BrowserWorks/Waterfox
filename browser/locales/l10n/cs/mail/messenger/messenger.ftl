@@ -71,9 +71,14 @@ folder-toolbar-toggle-folder-compact-view =
 redirect-msg-menuitem =
     .label = Přesměrovat
     .accesskey = m
+menu-file-save-as-file =
+    .label = Soubor…
+    .accesskey = S
 
 ## AppMenu
 
+appmenu-save-as-file =
+    .label = Soubor…
 # Since v89 we dropped the platforms distinction between Options or Preferences
 # and consolidated everything with Preferences.
 appmenu-preferences =

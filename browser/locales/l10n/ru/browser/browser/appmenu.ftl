@@ -118,6 +118,12 @@ whatsnew-panel-footer-checkbox =
 profiler-popup-button-idle =
     .label = Профайлер
     .tooltiptext = Записать профиль производительности
+profiler-popup-button-recording =
+    .label = Профайлер
+    .tooltiptext = Профайлер записывает профиль
+profiler-popup-button-capturing =
+    .label = Профайлер
+    .tooltiptext = Профайлер захватывает профиль
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -140,7 +146,7 @@ profiler-popup-recording-screen = Запись…
 # The profiler presets list is generated elsewhere, but the custom preset is defined
 # here only.
 profiler-popup-presets-custom =
-    .label = Пользовательские
+    .label = Персональный
 profiler-popup-start-recording-button =
     .label = Начать запись
 profiler-popup-discard-button =
@@ -166,6 +172,23 @@ profiler-popup-capture-shortcut =
 # devtools/client/performance-new/popup/background.jsm.js
 # Please take care that the same values are also defined in devtools' perftools.ftl.
 
+profiler-popup-presets-web-developer-description = Рекомендуемые настройки для отладки большинства веб-приложений с низкими накладными расходами.
+profiler-popup-presets-web-developer-label =
+    .label = Веб-разработка
+profiler-popup-presets-firefox-platform-description = Рекомендуемые настройки для внутренней отладки платформы Waterfox.
+profiler-popup-presets-firefox-platform-label =
+    .label = Платформа Waterfox
+profiler-popup-presets-firefox-front-end-description = Рекомендуемые настройки для внутренней отладки клиентской части Waterfox.
+profiler-popup-presets-firefox-front-end-label =
+    .label = Клиентская часть Waterfox
+profiler-popup-presets-firefox-graphics-description = Рекомендуемые настройки для исследования производительности графики Waterfox.
+profiler-popup-presets-firefox-graphics-label =
+    .label = Графика Waterfox
+profiler-popup-presets-media-description = Рекомендуемые настройки для диагностики проблем со звуком и видео.
+profiler-popup-presets-media-label =
+    .label = Медиа
+profiler-popup-presets-custom-label =
+    .label = Персональный
 
 ## History panel
 

@@ -29,7 +29,7 @@
 
 -brand-shorter-name = Waterfox
 -brand-short-name = Waterfox
--brand-full-name = Waterfox Waterfox
+-brand-full-name = Waterfox
 -brand-product-name = Waterfox
 -vendor-short-name = Waterfox
 trademarkInfo = Waterfox e i logo di Waterfox sono marchi registrati di Waterfox Foundation.

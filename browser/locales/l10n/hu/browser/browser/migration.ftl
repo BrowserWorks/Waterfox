@@ -93,7 +93,7 @@ source-name-chrome = Google Chrome
 source-name-chrome-beta = Google Chrome béta
 source-name-chrome-dev = Google Chrome fejlesztői
 source-name-chromium = Chromium
-source-name-firefox = Waterfox Waterfox
+source-name-firefox = Waterfox
 source-name-360se = 360 biztonságos böngésző
 
 imported-safari-reading-list = Olvasási lista (a Safariból)

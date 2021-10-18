@@ -7,7 +7,8 @@
 <!-- LOCALIZATION NOTE : FILE Media management prefs -->
 <!ENTITY pref.media.title               "Medien">
 <!ENTITY mediaHTML5Preferences.label    "Audio/Video">
-<!ENTITY allowMediaAutoplay.label       "Automatisches Abspielen von HTML5-Medieninhalten aktivieren">
+<!ENTITY allowMediaAutoplay.label       "Automatische Wiedergabe von HTML5 Medieninhalten aktiveren
+">
 <!ENTITY allowMediaAutoplay.accesskey   "A">
 
 <!ENTITY enableDrmMedia.label           "Digitales Rechte-Management aktivieren für">

@@ -6,7 +6,8 @@
 <!ENTITY pref.security.title              "Datenschutz &amp; Sicherheit">
 
 <!ENTITY tracking.label                   "Benutzerdaten-Aufzeichnung">
-<!ENTITY trackingIntro.label              "Websites könnten verfolgen, wie Sie sie verwenden, und damit Ihre Privatsphäre beeinflussen.">
+<!ENTITY trackingIntro.label              "Websites könnten verfolgen, wie Sie diese verwenden, und damit Ihre Privatsphäre beeinflussen.
+">
 
 <!ENTITY doNotTrack.label                 "Websites mitteilen, dass ich nicht verfolgt werden will">
 <!ENTITY doNotTrack.accesskey             "s">

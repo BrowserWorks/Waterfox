@@ -21,6 +21,19 @@ about-unloads-intro-2 =
     de la pestaña y en <em>itálica</em> cuando el proceso se comparte entre diferentes
     pestañas. Puede activar la descarga de pestañas de manera manual haciendo clic en el botón <em>Descargar</em>
     aquí debajo.
+about-unloads-intro =
+    { -brand-short-name } tiene una función que descarga automáticamente pestañas
+    para evitar que la aplicación falle por falta de memoria
+    cuando la memoria disponible en el sistema es baja. La siguiente pestaña que se descargará es
+    elegida en función de múltiples atributos. Esta página muestra cómo
+    { -brand-short-name } prioriza las pestañas y qué pestaña se descargará
+    cuando se active la descarga de pestañas. Puede descargar pestañas manualmente
+    haciendo clic en el botón <em>Descargar</em>.
+# The link points to a Waterfox documentation page, only available in English,
+# with title "Tab Unloading"
+about-unloads-learn-more =
+    Vea <a data-l10n-name="doc-link">Descarga de pestañas</a> para saber más sobre
+    la función y esta página.
 about-unloads-last-updated = Última actualización: { DATETIME($date, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric", hour12: "false") }
 about-unloads-button-unload = Descargar
     .title = Descargar la pestaña con la mayor prioridad

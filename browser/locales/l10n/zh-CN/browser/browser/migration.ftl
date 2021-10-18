@@ -93,7 +93,7 @@ source-name-chrome = Google Chrome
 source-name-chrome-beta = Google Chrome Beta
 source-name-chrome-dev = Google Chrome Dev
 source-name-chromium = Chromium
-source-name-firefox = Waterfox Waterfox
+source-name-firefox = Waterfox
 source-name-360se = 360 安全浏览器
 
 imported-safari-reading-list = 阅读列表（来自 Safari）

@@ -6,20 +6,13 @@
 <!ENTITY all.accesskey      "A">
 <!--LOCALIZATION NOTE (download.label):
     consider the download.label and headers.label as a single sentence
-	 with the number of headers to be downloaded inserted between them:
-	 EXAMPLE: "Download" <some number> "headers"
-	 Either label could be set to null ("") if required grammatically.
--->
-
-<!--LOCALIZATION NOTE (download.label):
-    consider the download.label and headers.label as a single sentence
     with the number of headers to be downloaded inserted between them:
     EXAMPLE: "Download" <some number> "headers"
     Either label could be set to null ("") if required grammatically.
 -->
 
 <!ENTITY download.label     "Herunterladen">
-<!ENTITY download.accesskey "H">
+<!ENTITY download.accesskey "l">
 <!--LOCALIZATION NOTE (headers.label): see note for download.label -->
 <!ENTITY headers.label      "Kopfzeilen">
 <!ENTITY headers.accesskey  "K">

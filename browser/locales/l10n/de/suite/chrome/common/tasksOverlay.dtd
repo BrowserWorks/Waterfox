@@ -44,7 +44,7 @@
 <!ENTITY passwordExpireCmd.accesskey "A">
 
 <!ENTITY downloadManagerCmd.label "Download-Verwaltung">
-<!ENTITY downloadManagerCmd.accesskey "M">
+<!ENTITY downloadManagerCmd.accesskey "l">
 <!ENTITY downloadManagerCmd.commandkey "j">
 
 <!ENTITY addOnsManagerCmd.label "Add-on-Verwaltung">

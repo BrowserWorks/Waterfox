@@ -59,7 +59,7 @@
 
 <!-- safe browsing points for branded builds -->
 <!ENTITY rights.safebrowsing-a "SafeBrowsing: ">
-<!ENTITY rights.safebrowsing-b "Das Deaktivieren von SafeBrowsing wird nicht empfohlen, da Sie auf unsichere Seiten stoßen könnten.  Wenn Sie diese Funktion komplett deaktivieren möchten, führen Sie bitte folgende Schritte aus:">
+<!ENTITY rights.safebrowsing-b "Das Deaktivieren von SafeBrowsing wird nicht empfohlen, da Sie auf unsichere Seiten stoßen könnten. Wenn Sie diese Funktion komplett deaktivieren möchten, führen Sie bitte folgende Schritte aus:">
 <!ENTITY rights.safebrowsing-term1 "Öffnen Sie die Anwendungseinstellungen">
 <!ENTITY rights.safebrowsing-term2 "Wählen Sie das Hauptpanel der Kategorie &quot;&security.label;&quot;">
 <!ENTITY rights.safebrowsing-term3 "Wählen Sie die Optionen &quot;&blockAttackSites.label;&quot; und &quot;&blockWebForgeries.label;&quot; ab.">

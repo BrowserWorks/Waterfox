@@ -4,3 +4,20 @@
 
 provisioner-searching-icon =
     .alt = Αναζήτηση…
+
+## Forms
+
+account-provisioner-search-button = Αναζήτηση
+account-provisioner-button-cancel = Ακύρωση
+account-provisioner-button-back = Επιστροφή
+
+## Notifications
+
+
+## Illustrations
+
+
+## Search results
+
+account-provisioner-free-account = Δωρεάν
+account-provision-price-per-year = { $price } ανά έτος

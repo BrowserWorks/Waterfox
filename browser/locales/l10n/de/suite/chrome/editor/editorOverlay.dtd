@@ -14,6 +14,9 @@
 <!ENTITY pasteAsQuotationCmd.label "Als Zitat einfügen">
 <!ENTITY pasteAsQuotationCmd.accesskey "Z">
 <!ENTITY pasteAsQuotationCmd.key "Z">
+<!ENTITY editRewrapCmd.label "Neu umbrechen">
+<!ENTITY editRewrapCmd.key "e">
+<!ENTITY editRewrapCmd.accesskey "b">
 <!ENTITY findBarCmd.label "Suchen…">
 <!ENTITY findReplaceCmd.label "Suchen und ersetzen…">
 <!ENTITY enableInlineSpellChecker.label "Sofort-Rechtschreibprüfung">
@@ -52,6 +55,7 @@
 <!ENTITY editLinkCmd.accesskey "b">
 
 <!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.title "Schriftart">
 <!ENTITY FontFaceSelect.tooltip "Schrift wählen">
 <!ENTITY fontfaceMenu.label "Schriftart">
 <!ENTITY fontfaceMenu.accesskey "a">
@@ -68,6 +72,7 @@
 <!ENTITY fontCourier.accesskey "C">
 
 <!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.title "Schriftgröße">
 <!ENTITY FontSizeSelect.tooltip "Schriftgröße wählen">
 <!ENTITY decreaseFontSize.label "Kleiner">
 <!ENTITY decreaseFontSize.accesskey "k">
@@ -178,6 +183,7 @@
 <!ENTITY listPropsCmd.label "Listeneigenschaften…">
 <!ENTITY listPropsCmd.accesskey "L">
 
+<!ENTITY ParagraphSelect.title "Absatzformat">
 <!ENTITY ParagraphSelect.tooltip "Absatzformat wählen">
 <!-- Shared in Paragraph, and Toolbar menulist -->
 <!ENTITY bodyTextCmd.label "Normaler Text">
@@ -203,8 +209,11 @@
 <!ENTITY alignJustify.tooltip "Im Blocksatz ausrichten">
 
 <!-- Layer toolbar items -->
+<!ENTITY absolutePosition.label "Absolute Positionierung">
 <!ENTITY layer.tooltip "Layer">
+<!ENTITY decreaseZIndex.label "In den Hintergrund stellen">
 <!ENTITY layerSendToBack.tooltip "In den Hintergrund stellen">
+<!ENTITY increaseZIndex.label "In den Vordergrund bringen">
 <!ENTITY layerBringToFront.tooltip "In den Vordergrund bringen">
 
 <!ENTITY increaseIndent.label "Einzug vergrößern">
@@ -300,26 +309,44 @@
 <!ENTITY linkToolbarCmd.tooltip "Neuen Link einfügen oder Eigenschaften des gewählten Links bearbeiten">
 <!ENTITY anchorToolbarCmd.label "Anker">
 <!ENTITY anchorToolbarCmd.tooltip "Neuen Anker einfügen oder Eigenschaften des gewählten Ankers bearbeiten">
+<!ENTITY colorButtons.title "Farben">
 <!ENTITY TextColorButton.tooltip "Farbe für Text auswählen">
 <!ENTITY BackgroundColorButton.tooltip "Farbe für Hintergrund auswählen">
+<!ENTITY HighlightColorButton.label "Highlighter">
 <!ENTITY HighlightColorButton.tooltip "Farbe für hervorgehobenen Text wählen">
 
 <!-- Editor toolbar -->
+<!ENTITY absoluteFontSize.label "Schriftgröße">
 <!ENTITY absoluteFontSizeToolbarCmd.tooltip "Schriftgröße setzen">
+<!ENTITY smaller.label "Kleiner">
 <!ENTITY decreaseFontSizeToolbarCmd.tooltip "Kleinere Schriftgröße">
+<!ENTITY larger.label "Größer">
 <!ENTITY increaseFontSizeToolbarCmd.tooltip "Größere Schriftgröße">
+<!ENTITY bold.label "Fett">
 <!ENTITY boldToolbarCmd.tooltip "Fett">
+<!ENTITY italic.label "Kursiv">
 <!ENTITY italicToolbarCmd.tooltip "Kursiv">
+<!ENTITY underline.label "Unterstrichen">
 <!ENTITY underlineToolbarCmd.tooltip "Unterstrichen">
+<!ENTITY bullets.label "Aufzählungszeichen">
 <!ENTITY bulletListToolbarCmd.tooltip "&quot;Unsortierte Liste&quot; anwenden oder entfernen">
+<!ENTITY numbers.label "Zahlen">
 <!ENTITY numberListToolbarCmd.tooltip "&quot;Nummerierte Liste&quot; anwenden oder entfernen">
+<!ENTITY outdent.label "Hinaus rücken">
 <!ENTITY outdentToolbarCmd.tooltip "Texteinzug verkleinern (nach links schieben)">
+<!ENTITY indent.label "Einrücken">
 <!ENTITY indentToolbarCmd.tooltip "Texteinzug vergrößern (nach rechts schieben)">
+<!ENTITY AlignPopupButton.label "Ausrichtung">
 <!ENTITY AlignPopupButton.tooltip "Ausrichtung des Textes einstellen">
+<!ENTITY InsertPopupButton.label "Element einfügen">
 <!ENTITY InsertPopupButton.tooltip "Einfügen eines Links, Ankers, einer Grafik, horizontalen Linie oder Tabelle">
+<!ENTITY alignLeftButton.label "Links">
 <!ENTITY alignLeftButton.tooltip "Text am linken Rand ausrichten">
+<!ENTITY alignCenterButton.label "Zentriert">
 <!ENTITY alignCenterButton.tooltip "Text zentriert ausrichten">
+<!ENTITY alignRightButton.label "Rechts">
 <!ENTITY alignRightButton.tooltip "Text am rechten Rand ausrichten">
+<!ENTITY alignJustifyButton.label "Mittig ausrichten">
 <!ENTITY alignJustifyButton.tooltip "Text an linkem und rechten Rand ausrichten">
 
 <!-- Structure Toolbar Context Menu items -->

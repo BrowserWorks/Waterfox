@@ -132,3 +132,5 @@ about-addressbook-details-phone-numbers-header = Números de telefone
 about-addressbook-details-home-address-header = Endereço residencial
 about-addressbook-details-work-address-header = Endereço comercial
 about-addressbook-details-other-info-header = Outras informações
+about-addressbook-prompt-to-save-title = Salvar alterações?
+about-addressbook-prompt-to-save = Quer salvar suas alterações?

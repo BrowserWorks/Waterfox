@@ -35,9 +35,7 @@ perftools-range-interval-milliseconds = { NUMBER($interval, maxFractionalUnits: 
 
 # The size of the memory buffer used to store things in the profiler.
 perftools-range-entries-label = Tamanho do buffer:
-
 perftools-custom-threads-label = Adicionar threads personalizados por nome:
-
 perftools-devtools-interval-label = Intervalo:
 perftools-devtools-threads-label = Threads:
 perftools-devtools-settings-label = Configurações
@@ -90,14 +88,12 @@ perftools-thread-img-decoder =
     .title = Threads de decodificação de imagens
 perftools-thread-dns-resolver =
     .title = A resolução de DNS acontece neste thread
-
 perftools-thread-task-controller =
     .title = Threads do conjunto de threads do TaskController
 
 ##
 
 perftools-record-all-registered-threads = Ignorar as seleções acima e gravar todos os threads registrados
-
 perftools-tools-threads-input-label =
     .title = Esses nomes de thread ficam numa lista separada por vírgulas, usada para ativar a gravação de profiles dos threads no profiler. O nome precisa ser apenas uma correspondência parcial do nome do thread a ser incluído. É sensível a espaços em branco.
 
@@ -106,9 +102,29 @@ perftools-tools-threads-input-label =
 ## preferences are true.
 
 perftools-onboarding-message = <b>Novo</b>: Agora o { -profiler-brand-name } é integrado nas ferramentas de desenvolvimento. <a>Saiba mais</a> sobre esta nova ferramenta poderosa.
-
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (por um tempo limitado, você pode acessar o painel Desempenho original via <a>{ options-context-advanced-settings }</a>)
-
 perftools-onboarding-close-button =
     .aria-label = Fechar a mensagem de integração
+
+## Profiler presets
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# The same labels and descriptions are also defined in appmenu.ftl.
+
+perftools-presets-web-developer-label = Desenvolvimento web
+perftools-presets-web-developer-description = Ajuste prévio recomendado para depuração da maioria dos aplicativos web, com pouca sobrecarga.
+perftools-presets-firefox-platform-label = Plataforma Waterfox
+perftools-presets-firefox-platform-description = Ajuste prévio recomendado para depuração de aspectos internos da plataforma Waterfox.
+perftools-presets-firefox-front-end-label = Interface do usuário do Waterfox
+perftools-presets-firefox-front-end-description = Ajuste prévio recomendado para depuração de aspectos internos da interface do usuário (front-end) do Waterfox.
+perftools-presets-firefox-graphics-label = Gráfico do Waterfox
+perftools-presets-firefox-graphics-description = Ajuste prévio recomendado para investigação de desempenho gráfico do Waterfox.
+perftools-presets-media-label = Mídia
+perftools-presets-media-description = Ajuste prévio recomendado para diagnosticar problemas de áudio e vídeo.
+perftools-presets-custom-label = Personalizado
+
+##
+

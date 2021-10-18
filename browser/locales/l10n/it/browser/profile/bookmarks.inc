@@ -16,7 +16,7 @@
 
 # LOCALIZATION NOTE (firefox_heading):
 # Waterfox links folder name
-#define firefox_heading Waterfox Waterfox
+#define firefox_heading Waterfox
 
 # LOCALIZATION NOTE (firefox_get_help):
 # link title for http://www.mozilla.com/firefox/help/
