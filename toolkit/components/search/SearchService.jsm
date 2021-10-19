@@ -898,7 +898,7 @@ SearchService.prototype = {
       return;
     }
 
-    const ptag = Services.prefs.getCharPref("browser.search.PTAG", "");
+    const ptag = Services.prefs.getCharPref("browser.search.ptag", "");
     if (ptag && engine.name == "Bing") {
       const mainURL = "https://www.bing.com/search?q={searchTerms}";
       engine.__searchForm = mainURL + "&PC=IS46&PTAG=" + ptag;
