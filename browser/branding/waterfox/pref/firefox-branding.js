@@ -4,9 +4,9 @@
 
 // This file contains branding-specific prefs.
 
-pref("startup.homepage_override_url", "https://www.waterfox.net/blog/waterfox-%VERSION%/?update");
+pref("startup.homepage_override_url", "https://www.waterfox.net/docs/releases/%DISPLAY_VERSION%/?update");
 pref("startup.homepage_welcome_url", "about:welcome");
-pref("startup.homepage_welcome_url.additional", "https://www.waterfox.net/blog/waterfox-%VERSION%/?new");
+pref("startup.homepage_welcome_url.additional", "https://www.waterfox.net/docs/releases/%DISPLAY_VERSION%/?new");
 // Interval: Time between checks for a new version (in seconds)
 pref("app.update.interval", 43200); // 12 hours
 // Give the user x seconds to react before showing the big UI. default=192 hours
@@ -18,8 +18,8 @@ pref("app.update.promptWaitTime", 691200);
 // wizard.
 pref("app.update.url.manual", "https://www.waterfox.net/download/");
 pref("app.update.url.details", "https://www.waterfox.net/blog/");
-pref("app.releaseNotesURL", "https://www.waterfox.net/blog/waterfox-%VERSION%/?utm_source=waterfox-browser&utm_medium=waterfox-browser&utm_campaign=whatsnew");
-pref("app.releaseNotesURL.aboutDialog", "https://www.waterfox.net/blog/waterfox-%VERSION%/?utm_source=waterfox-browser&utm_medium=waterfox-desktop&utm_campaign=about-dialog");
+pref("app.releaseNotesURL", "hhttps://www.waterfox.net/docs/releases/%DISPLAY_VERSION%/?utm_source=waterfox-browser&utm_medium=waterfox-browser&utm_campaign=whatsnew");
+pref("app.releaseNotesURL.aboutDialog", "https://www.waterfox.net/docs/releases/%DISPLAY_VERSION%/?utm_source=waterfox-browser&utm_medium=waterfox-desktop&utm_campaign=about-dialog");
 
 // The number of days a binary is permitted to be old
 // without checking for an update.  This assumes that
