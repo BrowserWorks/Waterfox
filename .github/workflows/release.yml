@@ -63,6 +63,28 @@ jobs:
           tag: ${{ github.event.inputs.version }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Dry run AUS
+        run: |
+          os=(Windows_NT_x86_64 Linux_x86_64 Darwin_x86_64 Darwin_aarch64)
+          for i in ${os[@]}
+          do
+            update_loc='s3://aus.waterfox.net/update/staging/$i/update.xml'
+            for j in $(AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 ls s3://aus.waterfox.net/update/Waterfox/ | awk '{OFS=" "};{if ($1=="PRE") print $2}')
+            do
+              if [[ $j != '/' ]]
+              then
+              ver=$(echo $j | sed 's/\///g')
+              AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --dryrun --content-type="text/xml" --metadata-directive="REPLACE" --region=us-west-2 $update_loc \
+                s3://aus.waterfox.net/update/Waterfox/$ver/default/$i/update.xml
+              fi
+            done
+            # grab the current version so we can create a new dir with a blank xml
+            touch blank.xml
+            echo "<?xml version="1.0"?><updates></updates>" >> blank.xml
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --dryrun --content-type="text/xml" --metadata-directive="REPLACE" --region=us-west-2 blank.xml \
+              s3://aus.waterfox.net/update/Waterfox/${{ github.event.inputs.version }}/default/$i/update.xml
+          done
+
       # - name: Rebuild website
       #   run: |
       #     # POST request to Cloudflare endpoint
@@ -79,37 +101,37 @@ jobs:
     environment: hard-release
     runs-on: ubuntu-latest
     steps:
-      - name: 🔑 Install SSH key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_KEY }}
-          known_hosts: ${{ secrets.SSH_HOST }}
-          if_key_exists: fail
-      # - name: Copy update.xml
+      # - name: Release AUS
       #   run: |
       #     os=(Windows_NT_x86_64 Linux_x86_64 Darwin_x86_64 Darwin_aarch64)
       #     for i in ${os[@]}
       #     do
       #       update_loc='s3://aus.waterfox.net/update/staging/$i/update.xml'
-      #       for j in $(aws s3 ls s3://aus.waterfox.net/update/Waterfox/ | awk '{OFS=" "};{if ($1=="PRE") print $2}')
+      #       for j in $(AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 ls s3://aus.waterfox.net/update/Waterfox/ | awk '{OFS=" "};{if ($1=="PRE") print $2}')
       #       do
       #         if [[ $j != '/' ]]
       #         then
       #         ver=$(echo $j | sed 's/\///g')
-      #         aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
+      #         AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" --region=us-west-2 $update_loc \
       #           s3://aus.waterfox.net/update/Waterfox/$ver/default/$i/update.xml
       #         fi
       #       done
       #       # grab the current version so we can create a new dir with a blank xml
       #       touch blank.xml
       #       echo "<?xml version="1.0"?><updates></updates>" >> blank.xml
-      #       aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" blank.xml \
+      #       AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" --region=us-west-2 blank.xml \
       #         s3://aus.waterfox.net/update/Waterfox/${{ github.event.inputs.version }}/default/$i/update.xml
       #     done
       - name: Move from staging
         run: |
-          sudo apt install ncftp
-          ncftpls -u ${{ secrets.FTP_USR }} -p ${{ secrets.FTP_PASS }} -W "RNFR FTPstaging/x86_64/Windows_NT/Waterfox ${{ github.event.inputs.version }} Setup.exe" -W "RNTO FTPreleases/win64/installer/Waterfox ${{ github.event.inputs.version }} Setup.exe" ftp://ftp.keycdn.com
-          ncftpls -u ${{ secrets.FTP_USR }} -p ${{ secrets.FTP_PASS }} -W "RNFR FTPstaging/x86_64/Darwin/Waterfox ${{ github.event.inputs.version }} Setup.dmg" -W "RNTO FTPreleases/osx64/installer/Waterfox ${{ github.event.inputs.version }} Setup.dmg" ftp://ftp.keycdn.com
-          ncftpls -u ${{ secrets.FTP_USR }} -p ${{ secrets.FTP_PASS }} -W "RNFR FTPstaging/x86_64/Darwin/Waterfox ${{ github.event.inputs.version }} ARM Setup.dmg" -W "RNTO FTPreleases/osx64/installer/Waterfox ${{ github.event.inputs.version }} ARM Setup.dmg" ftp://ftp.keycdn.com
-          ncftpls -u ${{ secrets.FTP_USR }} -p ${{ secrets.FTP_PASS }} -W "RNFR FTPstaging/x86_64/Linux/waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2" -W "RNTO FTPreleases/linux64/installer/waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2" ftp://ftp.keycdn.com
+          ftp -n -v ftp.keycdn.com << EOT
+          ascii
+          user ${{ secrets.FTP_USR }} ${{ secrets.FTP_PASS }}
+          prompt
+            rename staging/x86_64/Windows_NT/Waterfox\ ${{ github.event.inputs.version }}\ Setup.exe releases/win64/installer/Waterfox\ ${{ github.event.inputs.version }}\ Setup.exe
+            rename staging/x86_64/Windows_NT/waterfox-${{ github.event.inputs.version }}.en-US.win64.complete.xz.mar releases/win64/update/waterfox-${{ github.event.inputs.version }}.en-US.win64.complete.xz.mar
+            rename staging/x86_64/Linux/waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2 releases/linux64/installer/waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2
+            rename staging/x86_64/Linux/waterfox-${{ github.event.inputs.version }}.en-US.linux64.complete.xz.mar releases/linux64/update/waterfox-${{ github.event.inputs.version }}.en-US.linux64.complete.xz.mar
+            rename staging/x86_64/Darwin/waterfox-${{ github.event.inputs.version }}.en-US.osx64.complete.xz.mar releases/osx64/update/waterfox-${{ github.event.inputs.version }}.en-US.osx64.complete.xz.mar
+            rename staging/aarch64/Darwin/waterfox-${{ github.event.inputs.version }}.en-US.osx-arm64.complete.xz.mar releases/osx64/update/waterfox-${{ github.event.inputs.version }}.en-US.osx-arm64.complete.xz.mar
+          EOT
