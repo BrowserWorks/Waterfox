@@ -120,7 +120,7 @@ interface WindowGlobalParent : WindowContext {
    */
   [Throws]
   JSWindowActorParent getActor(UTF8String name);
-  JSWindowActorParent getExistingActor(UTF8String name);
+  JSWindowActorParent? getExistingActor(UTF8String name);
 
   /**
    * Renders a region of the frame into an image bitmap.
@@ -185,5 +185,5 @@ interface WindowGlobalChild {
    */
   [Throws]
   JSWindowActorChild getActor(UTF8String name);
-  JSWindowActorChild getExistingActor(UTF8String name);
+  JSWindowActorChild? getExistingActor(UTF8String name);
 };
