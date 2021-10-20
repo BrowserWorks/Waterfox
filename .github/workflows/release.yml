@@ -65,7 +65,7 @@ jobs:
 
       - name: Dry run AUS
         run: |
-          os=(Windows_NT_x86_64 Linux_x86_64 Darwin_x86_64 Darwin_aarch64)
+          os=(WINNT_x86_64 Linux_x86_64 Darwin_x86_64 Darwin_aarch64)
           for i in ${os[@]}
           do
             update_loc='s3://aus.waterfox.net/update/staging/$i/update.xml'
@@ -103,7 +103,7 @@ jobs:
     steps:
       # - name: Release AUS
       #   run: |
-      #     os=(Windows_NT_x86_64 Linux_x86_64 Darwin_x86_64 Darwin_aarch64)
+      #     os=(WINNT_x86_64 Linux_x86_64 Darwin_x86_64 Darwin_aarch64)
       #     for i in ${os[@]}
       #     do
       #       update_loc='s3://aus.waterfox.net/update/staging/$i/update.xml'
