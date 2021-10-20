@@ -3949,6 +3949,32 @@ BrowserGlue.prototype = {
     Services.prefs.setIntPref("browser.migration.version", UI_VERSION);
   },
 
+  async _setDefaultEng(value) {
+    try {
+      let searchInitializedPromise = new Promise(resolve => {
+        if (Services.search.isInitialized) {
+          resolve();
+        }
+        const SEARCH_SERVICE_TOPIC = "browser-search-service";
+        Services.obs.addObserver(function observer(subject, topic, data) {
+          if (data != "init-complete") {
+            return;
+          }
+          Services.obs.removeObserver(observer, SEARCH_SERVICE_TOPIC);
+          resolve();
+        }, SEARCH_SERVICE_TOPIC);
+      });
+      searchInitializedPromise.then(() => {
+        const nameMap = { bing: "Bing", yahoo: "Yahoo!" };
+        const engine = Services.search.getEngineByName(nameMap[value]);
+        Services.search.setDefault(engine);
+        Services.search.setDefaultPrivate(engine);
+      });
+    } catch (ex) {
+      // Minor issue, carry on
+    }
+  },
+
   async _setAttributionData() {
     // kick off async process to set attribution code preference
     try {
@@ -3967,10 +3993,7 @@ BrowserGlue.prototype = {
         if (key == "mtm_source") {
           Services.prefs.setCharPref("distribution.source", value);
         } else if (key == "engine" && ["bing", "yahoo"].includes(value)) {
-          const nameMap = { bing: "Bing", yahoo: "Yahoo!" };
-          const engine = Services.search.getEngineByName(nameMap[value]);
-          Services.search.setDefault(engine);
-          Services.search.setDefaultPrivate(engine);
+          this._setDefaultEng(value);
         }
         // only add to postSigningData if this hasn't been called previously
         attributionStr += `&${key}=${value}`;
