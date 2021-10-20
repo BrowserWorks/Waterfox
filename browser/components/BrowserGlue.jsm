@@ -1008,10 +1008,7 @@ BrowserGlue.prototype = {
   observe: async function BG_observe(subject, topic, data) {
     switch (topic) {
       case "app-startup":
-        const { BootstrapLoader } = ChromeUtils.import(
-          "resource:///modules/BootstrapLoader.jsm"
-        );
-        AddonManager.addExternalExtensionLoader(BootstrapLoader);
+        ChromeUtils.import('resource:///modules/BootstrapLoader.jsm');
         break;
       case "notifications-open-settings":
         this._openPreferences("privacy-permissions");
