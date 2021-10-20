@@ -393,6 +393,8 @@ var AttributionCode = {
     } catch (ex) {
       if (ex instanceof OS.File.Error && ex.becauseNoSuchFile) {
         // The file does not exist
+      } else if (ex instanceof TypeError) {
+        // this.attributionFile is null
       } else {
         throw ex; // Other error
       }
