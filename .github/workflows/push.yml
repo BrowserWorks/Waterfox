@@ -149,7 +149,7 @@ jobs:
       - name: ♻️ Stage files
         run: |
           VERSION_DISPLAY=`cat browser/config/version_display.txt`
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./obj-${{ env.ARCH }}/dist/update/update.xml s3://aus.waterfox.net/update/staging/Windows_NT_x86_64/update.xml
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./obj-${{ env.ARCH }}/dist/update/update.xml s3://aus.waterfox.net/update/staging/WINNT_x86_64/update.xml
           rsync -rtvz --chmod=D2755,F644 --delete-before --progress {./obj-${{ env.ARCH }}/dist/install/sea/Waterfox\ $VERSION_DISPLAY\ Setup.exe,./obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.win64.complete.xz.mar} kontos@rsync.keycdn.com:waterfox/staging/x86_64/Windows_NT
 
   macos-x64:
