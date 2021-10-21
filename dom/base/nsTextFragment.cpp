@@ -196,6 +196,11 @@ static inline int32_t FirstNon8Bit(const char16_t* str, const char16_t* end) {
 
 bool nsTextFragment::SetTo(const char16_t* aBuffer, int32_t aLength,
                            bool aUpdateBidi, bool aForce2b) {
+  if (MOZ_UNLIKELY(aLength < 0 || static_cast<uint32_t>(aLength) >
+                                      NS_MAX_TEXT_FRAGMENT_LENGTH)) {
+    return false;
+  }
+
   if (aForce2b && mState.mIs2b && !m2b->IsReadonly()) {
     uint32_t storageSize = m2b->StorageSize();
     uint32_t neededSize = aLength * sizeof(char16_t);
@@ -355,6 +360,9 @@ bool nsTextFragment::Append(const char16_t* aBuffer, uint32_t aLength,
   // This is a common case because some callsites create a textnode
   // with a value by creating the node and then calling AppendData.
   if (mState.mLength == 0) {
+    if (MOZ_UNLIKELY(aLength > INT32_MAX)) {
+      return false;
+    }
     return SetTo(aBuffer, aLength, aUpdateBidi, aForce2b);
   }
 
