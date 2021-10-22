@@ -2770,7 +2770,7 @@ dependencies = [
  "libc",
  "libloading 0.5.2",
  "lucet-module-wasmsbx",
- "memoffset",
+ "memoffset 0.5.6",
  "nix",
  "num-derive",
  "num-traits",
