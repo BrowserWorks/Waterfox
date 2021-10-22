@@ -60,11 +60,15 @@ upgrade-dialog-default-secondary-button = Not now
 # This title can be explicitly wrapped to control which words are on which line.
 upgrade-dialog-theme-title-2 =
     Get a clean start with a crisp theme
-upgrade-dialog-theme-lepton = Lepton
+upgrade-dialog-theme-lepton = Modern
     .title = Use the Lepton theme for buttons, menus, and windows
 upgrade-dialog-theme-light = Light
     .title = Use a light theme for buttons, menus, and windows
 upgrade-dialog-theme-dark = Dark
+    .title = Use a dark theme for buttons, menus, and windows
+upgrade-dialog-theme-australis-light = Classic (Light)
+    .title = Use a light theme for buttons, menus, and windows
+upgrade-dialog-theme-australis-dark = Classic (Dark)
     .title = Use a dark theme for buttons, menus, and windows
 upgrade-dialog-theme-keep = Keep previous
     .title = Use the theme you had installed before updating { -brand-short-name }
