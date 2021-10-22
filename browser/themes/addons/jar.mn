@@ -8,6 +8,14 @@ browser.jar:
   content/builtin-themes/alpenglow                 (alpenglow/*.svg)
   content/builtin-themes/alpenglow/manifest.json   (alpenglow/manifest.json)
 
+  content/builtin-themes/australis-dark                 (australis-dark/*.svg)
+  content/builtin-themes/australis-dark/experiment.css  (australis-dark/experiment.css)
+  content/builtin-themes/australis-dark/manifest.json   (australis-dark/manifest.json)
+
+  content/builtin-themes/australis-light                 (australis-light/*.svg)
+  content/builtin-themes/australis-light/experiment.css  (australis-light/experiment.css)
+  content/builtin-themes/australis-light/manifest.json   (australis-light/manifest.json)
+
   content/builtin-themes/dark                      (dark/*.svg)
   content/builtin-themes/dark                      (dark/*.css)
   content/builtin-themes/dark/manifest.json        (dark/manifest.json)
@@ -24,6 +32,8 @@ browser.jar:
 %  skin browser classic/1.0 %skin/classic/browser/
  skin/classic/browser/userChrome.css     (lepton/userChrome.css)
  skin/classic/browser/userContent.css    (lepton/userContent.css)
+ skin/classic/browser/australis-dark/userChrome.css     (australis-dark/userChrome.css)
+ skin/classic/browser/australis-light/userChrome.css   (australis-light/userChrome.css)
  # List generated from: ls | awk '{print "skin/classic/browser/lepton/"$0" (lepton/icons/"$0")"}'
  skin/classic/browser/lepton/arrow-repeat-all.svg (lepton/icons/arrow-repeat-all.svg)
  skin/classic/browser/lepton/arrow-sort-down-lines.svg (lepton/icons/arrow-sort-down-lines.svg)
