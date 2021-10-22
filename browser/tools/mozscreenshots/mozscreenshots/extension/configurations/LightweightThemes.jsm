@@ -18,7 +18,7 @@ var LightweightThemes = {
       selectors: [],
       async applyConfig() {
         let addon = await AddonManager.getAddonByID(
-          "default-theme@mozilla.org"
+          "lepton@waterfox.net"
         );
         await addon.enable();
       },
@@ -39,26 +39,6 @@ var LightweightThemes = {
       async applyConfig() {
         let addon = await AddonManager.getAddonByID(
           "firefox-compact-dark@mozilla.org"
-        );
-        await addon.enable();
-      },
-    },
-
-    alpenGlow: {
-      selectors: [],
-      async applyConfig() {
-        let addon = await AddonManager.getAddonByID(
-          "firefox-alpenglow@mozilla.org"
-        );
-        await addon.enable();
-      },
-    },
-
-    lepton: {
-      selectors: [],
-      async applyConfig() {
-        let addon = await AddonManager.getAddonByID(
-          "lepton@waterfox.net"
         );
         await addon.enable();
       },
