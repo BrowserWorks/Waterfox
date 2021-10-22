@@ -1383,16 +1383,19 @@ BrowserGlue.prototype = {
       "1.2",
       "resource://builtin-themes/dark/"
     );
-
     AddonManager.maybeInstallBuiltinAddon(
-      "firefox-alpenglow@mozilla.org",
-      "1.4",
-      "resource://builtin-themes/alpenglow/"
+      "australis-dark@waterfox.net",
+      "1.0",
+      "resource://builtin-themes/australis-dark/"
     );
-
+    AddonManager.maybeInstallBuiltinAddon(
+      "australis-light@waterfox.net",
+      "1.0",
+      "resource://builtin-themes/australis-light/"
+    );
     AddonManager.maybeInstallBuiltinAddon(
       "lepton@waterfox.net",
-      "2.2.3",
+      "4.0.0",
       "resource://builtin-themes/lepton/"
     );
 
