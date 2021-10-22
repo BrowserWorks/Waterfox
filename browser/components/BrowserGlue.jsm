@@ -3937,10 +3937,14 @@ BrowserGlue.prototype = {
         let activeTheme = themes.find(addon => addon.isActive);
         if (activeTheme) {
           let themeId = activeTheme.id;
-          if (["floe@waterfox.net", "abyss@waterfox.net"].includes(themeId)) {
-            AddonManager.getAddonByID(DEFAULT_THEME).then(addon =>
-              addon.enable()
-            );
+          if (themeId == "floe@waterfox.net") {
+            AddonManager.getAddonByID(
+              "australis-light@waterfox.net"
+            ).then(addon => addon.enable());
+          } else if (themeId == "abyss@waterfox.net") {
+            AddonManager.getAddonByID(
+              "australis-dark@waterfox.net"
+            ).then(addon => addon.enable());
           }
         } else {
           // If no activeTheme detected, set default.
