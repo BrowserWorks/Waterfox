@@ -7,7 +7,7 @@ on:
 jobs:
   windows-x64:
     name: 🪟 Windows X64
-    runs-on: [self-hosted, buildjet]
+    runs-on: [self-hosted, buildjet-32vcpu-ubuntu-2004]
     env:
       MOZCONFIG: ".mozconfig-x86_64-pc-windows-msvc"
       SHELL: /bin/sh
@@ -154,7 +154,7 @@ jobs:
 
   macos-x64:
     name: 🍎 macOS X64
-    runs-on: [self-hosted, buildjet]
+    runs-on: [self-hosted, buildjet-32vcpu-ubuntu-2004]
     env:
       shell: bash
       MOZCONFIG: ".mozconfig-x86_64-apple-darwin"
@@ -215,7 +215,7 @@ jobs:
 
   macos-arm64:
     name: 🍎 macOS ARM64
-    runs-on: [self-hosted, buildjet]
+    runs-on: [self-hosted, buildjet-32vcpu-ubuntu-2004]
     env:
       shell: bash
       MOZCONFIG: ".mozconfig-aarch64-apple-darwin"
@@ -276,7 +276,7 @@ jobs:
 
   linux-x64:
     name: 🐧 Linux X64
-    runs-on: [self-hosted, buildjet]
+    runs-on: [self-hosted, buildjet-32vcpu-ubuntu-2004]
     env:
       shell: bash
       MOZCONFIG: ".mozconfig-x86_64-pc-linux-gnu"
