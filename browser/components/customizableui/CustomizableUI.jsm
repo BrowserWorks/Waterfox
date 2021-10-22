@@ -45,7 +45,7 @@ XPCOMUtils.defineLazyPreferenceGetter(
   false
 );
 
-const kDefaultThemeID = "default-theme@mozilla.org";
+const kDefaultThemeID = "lepton@waterfox.net";
 
 const kSpecialWidgetPfx = "customizableui-special-";
 

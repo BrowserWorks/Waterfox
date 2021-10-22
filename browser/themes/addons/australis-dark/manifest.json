@@ -3,14 +3,14 @@
 
   "applications": {
     "gecko": {
-      "id": "firefox-compact-dark@mozilla.org"
+      "id": "australis-dark@waterfox.net"
     }
   },
 
-  "name": "Firefox Modern Dark",
-  "description": "A theme with a dark color scheme.",
-  "author": "Mozilla",
-  "version": "1.2",
+  "name": "Waterfox Australis Dark",
+  "description": "Classic curved tabs theme.",
+  "author": "wilfredwee",
+  "version": "1.0",
 
   "icons": {"32": "icon.svg"},
 

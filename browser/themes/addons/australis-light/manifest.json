@@ -3,14 +3,14 @@
 
   "applications": {
     "gecko": {
-      "id": "firefox-compact-light@mozilla.org"
+      "id": "australis-light@waterfox.net"
     }
   },
 
-  "name": "Firefox Modern Light",
-  "description": "A theme with a light color scheme.",
-  "author": "Mozilla",
-  "version": "1.2",
+  "name": "Waterfox Australis Light",
+  "description": "Classic curved tabs theme.",
+  "author": "wilfredwee",
+  "version": "1.0",
 
   "icons": {"32": "icon.svg"},
 
