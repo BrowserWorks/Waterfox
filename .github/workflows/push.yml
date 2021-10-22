@@ -7,7 +7,7 @@ on:
 jobs:
   windows-x64:
     name: 🪟 Windows X64
-    runs-on: [self-hosted, buildjet-32vcpu-ubuntu-2004]
+    runs-on: [buildjet-32vcpu-ubuntu-2004]
     env:
       MOZCONFIG: ".mozconfig-x86_64-pc-windows-msvc"
       SHELL: /bin/sh
@@ -40,8 +40,7 @@ jobs:
 
       - name: 💿 Setup rust
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          source $HOME/.cargo/env
+          rustup default 1.55.0-x86_64-unknown-linux-gnu
           rustup target add x86_64-pc-windows-msvc
 
       - name: 💿 Setup jsign
@@ -154,7 +153,7 @@ jobs:
 
   macos-x64:
     name: 🍎 macOS X64
-    runs-on: [self-hosted, buildjet-32vcpu-ubuntu-2004]
+    runs-on: [buildjet-32vcpu-ubuntu-2004]
     env:
       shell: bash
       MOZCONFIG: ".mozconfig-x86_64-apple-darwin"
@@ -177,8 +176,7 @@ jobs:
 
       - name: 💿 Build dependencies installation
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          source $HOME/.cargo/env
+          rustup default 1.55.0-x86_64-unknown-linux-gnu
           rustup target add ${{ env.ARCH }}
           sudo apt install nasm yasm wget2
           wget2 https://www.7-zip.org/a/7z2102-linux-x64.tar.xz
@@ -215,7 +213,7 @@ jobs:
 
   macos-arm64:
     name: 🍎 macOS ARM64
-    runs-on: [self-hosted, buildjet-32vcpu-ubuntu-2004]
+    runs-on: [buildjet-32vcpu-ubuntu-2004]
     env:
       shell: bash
       MOZCONFIG: ".mozconfig-aarch64-apple-darwin"
@@ -238,8 +236,7 @@ jobs:
 
       - name: 💿 Build dependencies installation
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          source $HOME/.cargo/env
+          rustup default 1.55.0-x86_64-unknown-linux-gnu
           rustup target add ${{ env.ARCH }}
           sudo apt install wget2
           wget2 https://www.7-zip.org/a/7z2102-linux-x64.tar.xz
@@ -276,7 +273,7 @@ jobs:
 
   linux-x64:
     name: 🐧 Linux X64
-    runs-on: [self-hosted, buildjet-32vcpu-ubuntu-2004]
+    runs-on: [buildjet-32vcpu-ubuntu-2004]
     env:
       shell: bash
       MOZCONFIG: ".mozconfig-x86_64-pc-linux-gnu"
@@ -298,8 +295,7 @@ jobs:
 
       - name: 💿 Setup Rust
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          source $HOME/.cargo/env
+          rustup default 1.55.0-x86_64-unknown-linux-gnu
 
       - name: 💿 Setup build packages
         run: |
