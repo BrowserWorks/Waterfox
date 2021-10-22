@@ -232,7 +232,13 @@ body {
         }
 
         &.lepton {
+          background-image: url('chrome://mozapps/content/extensions/default-theme.svg');
+        }
+        &.ausl{
           background-image: url('chrome://mozapps/content/extensions/firefox-compact-light.svg');
+        }
+        &.ausd {
+          background-image: url('chrome://mozapps/content/extensions/firefox-compact-dark.svg');
         }
       }
 
@@ -740,7 +746,15 @@ body {
         }
 
         &.lepton {
+          background-image: url('resource://default-theme/icon.svg');
+        }
+
+        &.ausl {
           background-image: url('resource://builtin-themes/light/icon.svg');
+        }
+
+        &.ausd {
+          background-image: url('resource://builtin-themes/dark/icon.svg');
         }
       }
     }
