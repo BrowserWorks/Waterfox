@@ -49,7 +49,7 @@ const AWTerminate = {
   ADDRESS_BAR_NAVIGATED: "address-bar-navigated",
 };
 const LIGHT_WEIGHT_THEMES = {
-  AUTOMATIC: "lepton@waterfox.net",
+  LEPTON: "lepton@waterfox.net",
   AUSD: "australis-dark@waterfox.net",
   AUSL: "australis-light@waterfox.net",
   DARK: "firefox-compact-dark@mozilla.org",
