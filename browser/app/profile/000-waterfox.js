@@ -90,7 +90,7 @@ pref("extensions.pocket.oAuthConsumerKey", "", locked);
 pref("extensions.pocket.showHome", false, locked);
 pref("extensions.webextensions.restrictedDomains", "accounts-static.cdn.mozilla.net,accounts.firefox.com,api.accounts.firefox.com,oauth.accounts.firefox.com,profile.accounts.firefox.com,sync.services.mozilla.com");
 pref("fission.autostart", true);
-pref("general.useragent.compatMode.firefox", true);
+// pref("general.useragent.compatMode.firefox", true);
 pref("geo.provider.network.url", "", locked);
 pref("image.avif.enabled", true);
 pref("image.jxl.enabled", true);
