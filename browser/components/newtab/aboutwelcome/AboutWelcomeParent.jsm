@@ -49,11 +49,11 @@ const AWTerminate = {
   ADDRESS_BAR_NAVIGATED: "address-bar-navigated",
 };
 const LIGHT_WEIGHT_THEMES = {
+  AUTOMATIC: "lepton@waterfox.net",
+  AUSD: "australis-dark@waterfox.net",
+  AUSL: "australis-light@waterfox.net",
   DARK: "firefox-compact-dark@mozilla.org",
   LIGHT: "firefox-compact-light@mozilla.org",
-  AUTOMATIC: "default-theme@mozilla.org",
-  ALPENGLOW: "firefox-alpenglow@mozilla.org",
-  LEPTON: "lepton@waterfox.net",
 };
 const DEFAULT_SEARCH_ENGINES = {
   BING: "Bing",
