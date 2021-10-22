@@ -81,7 +81,9 @@ onboarding-multistage-theme-label-light = Light
 onboarding-multistage-theme-label-dark = Dark
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
 onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
-onboarding-multistage-theme-label-light = Compact
+onboarding-multistage-theme-label-light = Modern
+onboarding-multistage-theme-label-australis-light = Classic (Light)
+onboarding-multistage-theme-label-australis-dark = Classic (Dark)
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -245,7 +247,9 @@ mr1-onboarding-theme-label-light = Light
 mr1-onboarding-theme-label-dark = Dark
 # "Alpenglow" here is the name of the theme, and should be kept in English.
 mr1-onboarding-theme-label-alpenglow = Alpenglow
-mr1-onboarding-theme-label-lepton = Compact
+mr1-onboarding-theme-label-lepton = Modern
+mr1-onboarding-theme-label-australis-light = Classic (Light)
+mr1-onboarding-theme-label-australis-dark = Classic (Dark)
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -310,4 +314,28 @@ mr1-onboarding-theme-tooltip-lepton =
 mr1-onboarding-theme-description-lepton =
   .aria-description =
     Use a compact theme for buttons,
+    menus, and windows.
+
+# Tooltip displayed on hover of Australis (Light) theme
+mr1-onboarding-theme-tooltip-australis-light =
+  .title =
+    Use a light theme for buttons,
+    menus, and windows.
+
+# Input description for Australis (Light) theme
+mr1-onboarding-theme-description-australis-light =
+  .aria-description =
+    Use a light theme for buttons,
+    menus, and windows.
+
+# Tooltip displayed on hover of Australis (Dark) theme
+mr1-onboarding-theme-tooltip-australis-dark =
+  .title =
+    Use a dark theme for buttons,
+    menus, and windows.
+
+# Input description for Australis (Dark) theme
+mr1-onboarding-theme-description-australis-dark =
+  .aria-description =
+    Use a dark theme for buttons,
     menus, and windows.
