@@ -105,69 +105,79 @@ const DEFAULT_WELCOME_CONTENT = {
         },
       },
     },
-    // {
-    //   id: "AW_CHOOSE_THEME",
-    //   order: 2,
-    //   content: {
-    //     zap: true,
-    //     title: {
-    //       string_id: "onboarding-multistage-theme-header",
-    //     },
-    //     subtitle: {
-    //       string_id: "onboarding-multistage-theme-subtitle",
-    //     },
-    //     tiles: {
-    //       type: "theme",
-    //       action: {
-    //         theme: "<event>",
-    //       },
-    //       data: [
-    //         {
-    //           theme: "automatic",
-    //           label: {
-    //             string_id: "onboarding-multistage-theme-label-automatic",
-    //           },
-    //           tooltip: {
-    //             string_id: "onboarding-multistage-theme-tooltip-automatic-2",
-    //           },
-    //           description: {
-    //             string_id:
-    //               "onboarding-multistage-theme-description-automatic-2",
-    //           },
-    //         },
-    //         {
-    //           theme: "lepton",
-    //           label: {
-    //             string_id: "onboarding-multistage-theme-label-lepton",
-    //           },
-    //           tooltip: {
-    //             string_id: "onboarding-multistage-theme-tooltip-lepton-2",
-    //           },
-    //           description: {
-    //             string_id: "onboarding-multistage-theme-description-lepton",
-    //           },
-    //         },
-    //       ],
-    //     },
-    //     primary_button: {
-    //       label: {
-    //         string_id: "onboarding-multistage-theme-primary-button-label2",
-    //       },
-    //       action: {
-    //         navigate: true,
-    //       },
-    //     },
-    //     secondary_button: {
-    //       label: {
-    //         string_id: "onboarding-multistage-theme-secondary-button-label",
-    //       },
-    //       action: {
-    //         theme: "automatic",
-    //         navigate: true,
-    //       },
-    //     },
-    //   },
-    // },
+    {
+      id: "AW_CHOOSE_THEME",
+      order: 2,
+      content: {
+        title: {
+          string_id: "onboarding-theme-header",
+        },
+        subtitle: {
+          string_id: "onboarding-theme-subtitle",
+        },
+        tiles: {
+          type: "theme",
+          action: {
+            theme: "<event>",
+          },
+          data: [
+            {
+              theme: "lepton",
+              label: {
+                string_id: "onboarding-theme-label-lepton",
+              },
+              tooltip: {
+                string_id: "onboarding-theme-tooltip-lepton",
+              },
+              description: {
+                string_id: "onboarding-theme-description-lepton",
+              },
+            },
+            {
+              theme: "ausl",
+              label: {
+                string_id: "onboarding-theme-label-australis-light",
+              },
+              tooltip: {
+                string_id: "onboarding-theme-tooltip-australis-light",
+              },
+              description: {
+                string_id: "onboarding-theme-description-australis-light",
+              },
+            },
+            {
+              theme: "ausd",
+              label: {
+                string_id: "onboarding-theme-label-australis-dark",
+              },
+              tooltip: {
+                string_id: "onboarding-theme-tooltip-australis-dark",
+              },
+              description: {
+                string_id: "onboarding-theme-description-australis-dark",
+              },
+            },
+          ],
+        },
+        primary_button: {
+          label: {
+            string_id: "onboarding-theme-primary-button-label",
+          },
+          action: {
+            navigate: true,
+          },
+        },
+        secondary_button: {
+          label: {
+            string_id: "onboarding-theme-secondary-button-label",
+          },
+          action: {
+            theme: "automatic",
+            navigate: true,
+          },
+        },
+      },
+    },
   ],
 };
 
@@ -285,8 +295,81 @@ const DEFAULT_PROTON_WELCOME_CONTENT = {
       },
     },
     {
-      id: "AW_DEFAULT_SEARCH",
+      id: "AW_CHOOSE_THEME",
       order: 3,
+      content: {
+        title: {
+          string_id: "mr1-onboarding-theme-header",
+        },
+        subtitle: {
+          string_id: "mr1-onboarding-theme-subtitle",
+        },
+        tiles: {
+          type: "theme",
+          action: {
+            theme: "<event>",
+          },
+          data: [
+            {
+              theme: "lepton",
+              label: {
+                string_id: "mr1-onboarding-theme-label-lepton",
+              },
+              tooltip: {
+                string_id: "mr1-onboarding-theme-tooltip-lepton",
+              },
+              description: {
+                string_id: "mr1-onboarding-theme-description-lepton",
+              },
+            },
+            {
+              theme: "ausl",
+              label: {
+                string_id: "mr1-onboarding-theme-label-australis-light",
+              },
+              tooltip: {
+                string_id: "mr1-onboarding-theme-tooltip-australis-light",
+              },
+              description: {
+                string_id: "mr1-onboarding-theme-description-australis-light",
+              },
+            },
+            {
+              theme: "ausd",
+              label: {
+                string_id: "mr1-onboarding-theme-label-australis-dark",
+              },
+              tooltip: {
+                string_id: "mr1-onboarding-theme-tooltip-australis-dark",
+              },
+              description: {
+                string_id: "mr1-onboarding-theme-description-australis-dark",
+              },
+            },
+          ],
+        },
+        primary_button: {
+          label: {
+            string_id: "mr1-onboarding-theme-primary-button-label",
+          },
+          action: {
+            navigate: true,
+          },
+        },
+        secondary_button: {
+          label: {
+            string_id: "mr1-onboarding-theme-secondary-button-label",
+          },
+          action: {
+            theme: "automatic",
+            navigate: true,
+          },
+        },
+      },
+    },
+    {
+      id: "AW_DEFAULT_SEARCH",
+      order: 4,
       content: {
         title: {
           string_id: "mr1-onboarding-search-header",
@@ -320,67 +403,6 @@ const DEFAULT_PROTON_WELCOME_CONTENT = {
         },
       },
     },
-    // {
-    //   id: "AW_CHOOSE_THEME",
-    //   order: 3,
-    //   content: {
-    //     title: {
-    //       string_id: "mr1-onboarding-theme-header",
-    //     },
-    //     subtitle: {
-    //       string_id: "mr1-onboarding-theme-subtitle",
-    //     },
-    //     tiles: {
-    //       type: "theme",
-    //       action: {
-    //         theme: "<event>",
-    //       },
-    //       data: [
-    //         {
-    //           theme: "automatic",
-    //           label: {
-    //             string_id: "mr1-onboarding-theme-label-system",
-    //           },
-    //           tooltip: {
-    //             string_id: "mr1-onboarding-theme-tooltip-system",
-    //           },
-    //           description: {
-    //             string_id: "mr1-onboarding-theme-description-system",
-    //           },
-    //         },
-    //         {
-    //           theme: "lepton",
-    //           label: {
-    //             string_id: "mr1-onboarding-theme-label-lepton",
-    //           },
-    //           tooltip: {
-    //             string_id: "mr1-onboarding-theme-tooltip-lepton",
-    //           },
-    //           description: {
-    //             string_id: "mr1-onboarding-theme-description-lepton",
-    //           },
-    //         },
-    //       ],
-    //     },
-    //     primary_button: {
-    //       label: {
-    //         string_id: "mr1-onboarding-theme-primary-button-label",
-    //       },
-    //       action: {
-    //         navigate: true,
-    //       },
-    //     },
-    //     secondary_button: {
-    //       label: {
-    //         string_id: "mr1-onboarding-theme-secondary-button-label",
-    //       },
-    //       action: {
-    //         theme: "automatic",
-    //         navigate: true,
-    //       },
-    //     },
-    //   },
-    // },
   ],
 };
 
