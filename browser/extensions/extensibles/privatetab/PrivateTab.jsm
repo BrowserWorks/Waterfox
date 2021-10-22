@@ -32,7 +32,7 @@ const PrivateTab = {
       container => container.name == aName
     );
     if (!this.container) {
-      ContextualIdentityService.create(aName, "private", "purple");
+      ContextualIdentityService.create(aName, "fingerprint", "purple");
       this.container = ContextualIdentityService._identities.find(
         container => container.name == aName
       );
