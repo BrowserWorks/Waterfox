@@ -418,16 +418,12 @@ nsXREDirProvider::GetFile(const char* aProperty, bool* aPersistent,
     if (NS_SUCCEEDED(rv)) {
 #  if defined(XP_MACOSX)
       rv = localDir->AppendNative("Mozilla"_ns);
-#  elif !defined(MOZ_WIDGET_GTK)
-      // this is needed for android
-      rv = localDir->AppendNative(".mozilla"_ns);
 #  else
-      // but not here. We already have the full
-      // path for Linux, no need to do anything else.
+      rv = localDir->AppendNative(".mozilla"_ns);
 #  endif
-      if (NS_SUCCEEDED(rv)) {
-        localDir.swap(file);
-      }
+    }
+    if (NS_SUCCEEDED(rv)) {
+      localDir.swap(file);
     }
   }
 #endif
@@ -1432,15 +1428,14 @@ nsresult nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile,
   NS_ENSURE_SUCCESS(rv, rv);
 
   rv = NS_NewLocalFile(path, true, getter_AddRefs(localDir));
-  NS_ENSURE_SUCCESS(rv, rv);
 #elif defined(XP_UNIX)
   const char* homeDir = getenv("HOME");
   if (!homeDir || !*homeDir) return NS_ERROR_FAILURE;
 
 #  ifdef ANDROID /* We want (ProfD == ProfLD) on Android. */
-  rv = NS_NewNativeLocalFile(nsDependentCString(homeDir), true,
-                             getter_AddRefs(localDir));
-#  else
+  aLocal = false;
+#  endif
+
   if (aLocal) {
     // If $XDG_CACHE_HOME is defined use it, otherwise use $HOME/.cache.
     const char* cacheHome = getenv("XDG_CACHE_HOME");
@@ -1453,43 +1448,9 @@ nsresult nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile,
       if (NS_SUCCEEDED(rv)) rv = localDir->AppendNative(".cache"_ns);
     }
   } else {
-    bool exists;
-    // check old config ~/.mozilla
     rv = NS_NewNativeLocalFile(nsDependentCString(homeDir), true,
                                getter_AddRefs(localDir));
-    NS_ENSURE_SUCCESS(rv, rv);
-    rv = localDir->AppendRelativeNativePath(nsDependentCString(".mozilla"));
-    NS_ENSURE_SUCCESS(rv, rv);
-    rv = localDir->Exists(&exists);
-    NS_ENSURE_SUCCESS(rv, rv);
-    // check if we force the use of ~/.mozilla
-    const char* legacyhomedir = getenv("MOZ_LEGACY_HOME");
-    if (legacyhomedir && *legacyhomedir) {
-      exists = true;
-    }
-    // otherwise, use new config
-    if (!exists) {
-      const char* xdghomedir = getenv("XDG_CONFIG_HOME");
-      if (!xdghomedir || !*xdghomedir) {
-        rv = NS_NewNativeLocalFile(nsDependentCString(homeDir), true,
-                                   getter_AddRefs(localDir));
-        NS_ENSURE_SUCCESS(rv, rv);
-        rv = localDir->AppendRelativeNativePath(nsDependentCString(".config"));
-        NS_ENSURE_SUCCESS(rv, rv);
-      } else {
-        rv = NS_NewNativeLocalFile(nsDependentCString(xdghomedir), true,
-                                   getter_AddRefs(localDir));
-      }
-      NS_ENSURE_SUCCESS(rv, rv);
-
-      rv = localDir->AppendRelativeNativePath(nsDependentCString("mozilla"));
-      NS_ENSURE_SUCCESS(rv, rv);
-
-      rv = EnsureDirectoryExists(localDir);
-      NS_ENSURE_SUCCESS(rv, rv);
-    }
   }
-#  endif  // ANDROID
 #else
 #  error "Don't know how to get product dir on your platform"
 #endif
@@ -1619,11 +1580,9 @@ nsresult nsXREDirProvider::AppendSysUserExtensionPath(nsIFile* aFile) {
 
 #elif defined(XP_UNIX)
 
-#  if !defined(MOZ_WIDGET_GTK)
   static const char* const sXR = ".mozilla";
   rv = aFile->AppendNative(nsDependentCString(sXR));
   NS_ENSURE_SUCCESS(rv, rv);
-#  endif
 
   static const char* const sExtensions = "extensions";
   rv = aFile->AppendNative(nsDependentCString(sExtensions));
@@ -1652,11 +1611,9 @@ nsresult nsXREDirProvider::AppendSysUserExtensionsDevPath(nsIFile* aFile) {
 
 #elif defined(XP_UNIX)
 
-#  if !defined(MOZ_WIDGET_GTK)
   static const char* const sXR = ".mozilla";
   rv = aFile->AppendNative(nsDependentCString(sXR));
   NS_ENSURE_SUCCESS(rv, rv);
-#  endif
 
   static const char* const sExtensions = "systemextensionsdev";
   rv = aFile->AppendNative(nsDependentCString(sExtensions));
@@ -1744,12 +1701,8 @@ nsresult nsXREDirProvider::AppendProfilePath(nsIFile* aFile, bool aLocal) {
       folder.Append(vendor);
       ToLowerCase(folder);
 
-      // Keep the 'mozilla' path for cache:
-      // Use ${XDG_CACHE_HOME:-$HOME/.cache}/mozilla/firefox
-      if (aLocal) {
-        rv = aFile->AppendNative(folder);
-        NS_ENSURE_SUCCESS(rv, rv);
-      }
+      rv = aFile->AppendNative(folder);
+      NS_ENSURE_SUCCESS(rv, rv);
 
       folder.Truncate();
     }
