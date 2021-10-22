@@ -56,6 +56,8 @@ const THEME_IDS = [
   "lepton@waterfox.net",
   "firefox-compact-light@mozilla.org",
   "firefox-compact-dark@mozilla.org",
+  "australis-dark@waterfox.net",
+  "australis-light@waterfox.net",
 ];
 
 // Callbacks to run when the dialog closes (both from this file or externally).

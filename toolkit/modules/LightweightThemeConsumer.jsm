@@ -6,10 +6,11 @@ var EXPORTED_SYMBOLS = ["LightweightThemeConsumer"];
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-const DEFAULT_THEME_ID = "default-theme@mozilla.org";
+const DEFAULT_THEME_ID = "lepton@waterfox.net";
 const LIGHT_THEME_ID = "firefox-compact-light@mozilla.org";
 const DARK_THEME_ID = "firefox-compact-dark@mozilla.org";
-const LEPTON_THEME_ID = "lepton@waterfox.net";
+const AUSD_THEME_ID = "australis-dark@waterfox.net";
+const AUSL_THEME_ID = "australis-light@waterfox.net";
 
 ChromeUtils.defineModuleGetter(
   this,
@@ -294,7 +295,8 @@ LightweightThemeConsumer.prototype = {
       theme.id == DEFAULT_THEME_ID ||
         theme.id == LIGHT_THEME_ID ||
         theme.id == DARK_THEME_ID ||
-        theme.id == LEPTON_THEME_ID
+        theme.id == AUSD_THEME_ID ||
+        theme.id == AUSL_THEME_ID
     );
     this._setExperiment(active, themeData.experiment, theme.experimental);
     _setImage(root, active, "--lwt-header-image", theme.headerURL);

@@ -87,7 +87,7 @@ const KEY_APP_GLOBAL = "app-global";
 const KEY_APP_PROFILE = "app-profile";
 const KEY_APP_TEMPORARY = "app-temporary";
 
-const DEFAULT_THEME_ID = "default-theme@mozilla.org";
+const DEFAULT_THEME_ID = "lepton@waterfox.net";
 
 // Properties to cache and reload when an addon installation is pending
 const PENDING_INSTALL_METADATA = [
