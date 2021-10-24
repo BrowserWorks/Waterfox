@@ -81,7 +81,7 @@ pref("devtools.webide.autoinstallADBExtension", false);
 pref("dom.security.unexpected_system_load_telemetry_enabled", false, locked);
 pref("extensions.activeThemeID", "lepton@waterfox.net");
 pref("extensions.allowPrivateBrowsingByDefault", true);
-pref("extensions.getAddons.cache.enabled", false, locked); // https://blog.mozilla.org/addons/how-to-opt-out-of-add-on-metadata-updates/
+pref("extensions.getAddons.cache.enabled", false); // https://blog.mozilla.org/addons/how-to-opt-out-of-add-on-metadata-updates/
 pref("extensions.getAddons.showPane", false, locked);
 pref("extensions.htmlaboutaddons.recommendations.enabled", false, locked);
 pref("extensions.pocket.api", "", locked);
