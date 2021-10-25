@@ -63,6 +63,7 @@ pref("browser.safebrowsing.downloads.remote.enabled", false);
 pref("browser.safebrowsing.downloads.remote.url", "", locked);
 pref("browser.safebrowsing.malware.enabled", false);
 pref("browser.send_pings", false, locked);
+pref("browser.tabs.duplicateTab", true);
 //pref("browser.tabs.remote.separatedMozillaDomains", "", locked);
 pref("browser.topsites.contile.enabled", false, locked);
 pref("browser.topsites.contile.endpoint", "", locked);
