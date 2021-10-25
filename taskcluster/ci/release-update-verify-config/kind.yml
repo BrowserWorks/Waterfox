@@ -61,8 +61,7 @@ job-defaults:
                         win64-aarch64.*: "67.0b2"
                         default: "56.0b3"
                 release(-rc)?: "72.0.2"
-                esr78: "68.0esr"
-                esr91: "91.0esr"
+                esr91: "68.0esr"
                 default: "default"
 
 jobs:
