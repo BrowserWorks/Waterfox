@@ -1351,7 +1351,7 @@ choose-download-folder-title = Choose Download Folder:
 save-files-to-cloud-storage =
     .label = Save files to { $service-name }
 
-# Waterfox
+# Waterfox - main
 tab-position-header = Tab Bar Position
 tab-bar-top-above =
     .label = Top above address bar
@@ -1387,3 +1387,19 @@ bookmarks-position-top =
     .label = Top
 bookmarks-position-bottom =
     .label = Bottom
+
+# Waterfox - privacy
+send-referrer-header-0 =
+    .label = Never send the referrer header
+send-referrer-header-1 =
+    .label = Send the referrer header only when clicking on links and similar elements
+send-referrer-header-2 =
+    .label = Send the referrer header on all requests (Default)
+enable-webrtc-p2p =
+    .label = Enable WebRTC peer connection
+load-images =
+    .label = Load images automatically
+enable-javascript =
+    .label = Enable JavaScript
+webrtc-header = WebRTC peer connection
+ref-header = HTTP Referrer Header
