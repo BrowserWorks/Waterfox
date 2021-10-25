@@ -3952,6 +3952,20 @@ BrowserGlue.prototype = {
       RemoteSettings.clearAll();
     }
 
+    if (currentUIVersion < 117) {
+      let activeTheme = themes.find(addon => addon.isActive);
+      if (activeTheme) {
+        let themeId = activeTheme.id;
+        if (["default-theme@mozilla.org", "firefox-alpenglow@mozilla.org"].includes(themeId)) {
+          AddonManager.getAddonByID(
+            "firefox-compact-light@mozilla.org"
+          ).then(addon => addon.enable());
+        } 
+      }
+      // Update private container icon
+      ContextualIdentityService._identities.find(container => container.name == 'Private').icon = 'fingerprint'
+    }
+
     // Update the migration version.
     Services.prefs.setIntPref("browser.migration.version", UI_VERSION);
   },
