@@ -43,7 +43,6 @@
       "privatetab/background.js",
       "statusbar/background.js",
       "tabfeatures/background.js",
-      "aboutpreferences/background.js",
       "addon-stores/cws.js",
       "addon-stores/ows.js"
     ]
@@ -61,8 +60,7 @@
           ["extensibles", "utils"],
           ["extensibles", "privatetab"],
           ["extensibles", "statusbar"],
-          ["extensibles", "tabfeatures"],
-          ["extensibles", "prefsext"]
+          ["extensibles", "tabfeatures"]
         ]
       }
     }

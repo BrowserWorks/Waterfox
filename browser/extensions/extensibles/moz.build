@@ -15,7 +15,6 @@ XPCOM_MANIFESTS += [
 ]
 
 EXTRA_JS_MODULES += [
-  'aboutpreferences/AboutPreferencesExtension.jsm',
   'content/AddonStores.jsm',
   'content/BrowserUtils.jsm',
   'content/PrefUtils.jsm',
@@ -29,10 +28,6 @@ FINAL_TARGET_FILES.features['extensibles@waterfox.net'] += [
   'api.js',
   'manifest.json',
   'schema.json',
-]
-
-FINAL_TARGET_FILES.features['extensibles@waterfox.net']['aboutpreferences'] += [
-  'aboutpreferences/background.js',
 ]
 
 FINAL_TARGET_FILES.features['extensibles@waterfox.net']['privatetab'] += [
