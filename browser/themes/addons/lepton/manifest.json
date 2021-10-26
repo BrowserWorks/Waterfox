@@ -9,7 +9,7 @@
   "description": "Improved Photon theme.",
   "author": "black7375",
   "homepage_url":  "https://github.com/black7375/Firefox-UI-Fix",
-  "version": "4.0.0",
+  "version": "4.2.2",
   "icons": {"32": "icon.svg"},
   "theme": {
     "colors": {
