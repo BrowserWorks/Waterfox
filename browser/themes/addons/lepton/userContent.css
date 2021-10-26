@@ -14,9 +14,16 @@
         0.5
       ) !important; /* Original: #B5D3FF, Better color-mix(in srgb, #B5D3FF 70%, transparent) */
       --newtab-focus-border-selected: rgba(0, 221, 255, 0.5) !important; /* Original: #B5D3FF */
+
+      /* For Nightly */
+      --newtab-primary-action-background: var(--newtab-focus-border) !important;
     }
 
     /** Activity Stream - Web Site Icon: full size ****************************/
+    .top-site-outer .tile {
+      overflow: hidden;
+    }
+
     .top-site-outer .tile .icon-wrapper {
       width: 100% !important; /* Original: 48px */
       height: 100% !important; /* Original: 48px */
@@ -33,7 +40,7 @@
       --newtab-element-hover-color: color-mix(in srgb, currentColor 9%, transparent) !important;
     }
 
-    @media (-moz-toolbar-prefers-color-scheme: dark) {
+    @media (prefers-color-scheme: dark) {
       #root {
         /* Default Dark Mode */
         --newtab-search-background-color: rgba(66, 65, 77, 1); /* Same as dark theme's --panel-background */
@@ -66,7 +73,7 @@
     }
 
     #contentSearchSettingsButton::before {
-      content: url(chrome://global/skin/icons/settings.svg) !important;
+      content: url("chrome://global/skin/icons/settings.svg") !important;
       display: -moz-inline-box;
 
       /* Color */
@@ -83,12 +90,40 @@
     #contentSearchSettingsButton {
       cursor: pointer;
     }
+
+    /*- Fix Color For Nightly ------------------------------------------------*/
+    .contentSearchSuggestionTable,
+    .contentSearchHeaderRow,
+    .contentSearchHeader {
+      color: var(--newtab-text-primary-color) !important;
+      background: var(--newtab-search-background-color) !important;
+    }
+
+    .contentSearchSuggestionTable .contentSearchSuggestionRow.selected,
+    .contentSearchSuggestionTable .contentSearchSettingsButton:hover {
+      color: var(--newtab-text-primary-color) !important;
+    }
+
+    .contentSearchSuggestionTable .contentSearchSuggestionRow.selected,
+    .contentSearchSuggestionTable .contentSearchSettingsButton:hover,
+    .contentSearchSuggestionTable .contentSearchOneOffItem.selected {
+      background: var(--newtab-element-hover-color) !important;
+    }
+
+    .contentSearchSuggestionTable .contentSearchSuggestionRow.selected:active,
+    .contentSearchSuggestionTable .contentSearchOneOffItem:active {
+      background: var(--newtab-element-active-color) !important;
+    }
+
+    .contentSearchSuggestionTable .contentSearchSuggestionRow.selected .historyIcon {
+      fill: var(--newtab-icon-secondary-color) !important;
+    }
   }
 
   /** Error Page - Restore illustrations **************************************/
   @-moz-document url-prefix("about:neterror"),
   url("about:restartrequired"), url("chrome://browser/content/aboutRestartRequired.xhtml"),
-  url("about:sessionrestore"),  url(chrome://browser/content/aboutSessionRestore.xhtml)
+  url("about:sessionrestore"),  url("chrome://browser/content/aboutSessionRestore.xhtml")
   {
     /* Illustrations Position */
     #errorPageContainer,
@@ -128,12 +163,12 @@
   url("about:restartrequired"), url("chrome://browser/content/aboutRestartRequired.xhtml")
   {
     #errorPageContainer {
-      background-image: url("chrome://browser/skin/lepton//error-connection-failure.svg");
+      background-image: url("chrome://browser/skin/lepton/error-connection-failure.svg");
     }
   }
   @-moz-document url-prefix("about:neterror?e=dnsNotFound") {
     #errorPageContainer {
-      background-image: url("chrome://browser/skin/lepton//error-server-not-found.svg");
+      background-image: url("chrome://browser/skin/lepton/error-server-not-found.svg");
     }
   }
   @-moz-document url-prefix("about:neterror?e=malformedURI") {
@@ -144,15 +179,15 @@
   @-moz-document url-prefix("about:neterror?e=clockSkewError"),
   url-prefix("about:neterror?e=nssFailure") {
     #errorPageContainer {
-      background-image: url("chrome://browser/skin/lepton//blue-berror.svg");
+      background-image: url("chrome://browser/skin/lepton/blue-berror.svg");
       background-size: 18.5em;
     }
   }
 
-  @-moz-document url("about:sessionrestore"), url(chrome://browser/content/aboutSessionRestore.xhtml)
+  @-moz-document url("about:sessionrestore"), url("chrome://browser/content/aboutSessionRestore.xhtml")
   {
     .description-wrapper {
-      background-image: url("chrome://browser/skin/lepton//error-session-restore.svg");
+      background-image: url("chrome://browser/skin/lepton/error-session-restore.svg");
     }
   }
 
@@ -186,7 +221,7 @@
   {
     @media (min-width: 970px) {
       .title {
-        background-image: url("chrome://browser/skin/lepton//welcome-back.svg") !important;
+        background-image: url("chrome://browser/skin/lepton/welcome-back.svg") !important;
       }
     }
   }
@@ -299,7 +334,7 @@
     --card-shadow-hover: var(--card-shadow), 0 0 0 5px var(--card-outline-color);
   }
 
-  @media (-moz-toolbar-prefers-color-scheme: dark) {
+  @media (prefers-color-scheme: dark) {
     :host,
     :root {
       /* Keep these in sync with layout/base/PresShell.cpp, and plaintext.css */
@@ -354,6 +389,7 @@
       /* Basic */
       .Page-content,
       .SecondaryHero,
+      body,
       main[aria-label="Content"] {
         color: var(--in-content-page-color) !important;
         background: var(--in-content-page-background) !important;
@@ -431,6 +467,8 @@
       .Paginate-page-number,
       .AddonSummaryCard-addonAverage,
       .AddonReviewCard-authorByLine,
+      .UserReview-byLine,
+      .UserReview-reply-header,
       .Home-heroHeader-subtitle,
       .blog-entry-date,
       .blogpost-breadcrumb *,
@@ -483,6 +521,7 @@
       .AddonsCard-list,
       .Card-footer,
       .StaticAddonCard,
+      .blogpost-nav,
       .blogpost-nav * {
         background: var(--in-content-table-background) !important;
       }
@@ -563,6 +602,7 @@
       :root {
         --color-blue-06: var(--in-content-link-color) !important;
         --color-blue-07: var(--in-content-link-color-hover) !important;
+        --color-blue-09: var(--in-content-link-color-active) !important;
 
         --page-bg: var(--in-content-page-background) !important;
         --color-white: var(--in-content-page-background) !important;
@@ -576,7 +616,7 @@
         --color-text-light: var(--in-content-deemphasized-text) !important;
         --color-link: var(--in-content-link-color) !important;
         --color-success: var(--green-70) !important;
-        --color-warning: var(--yellow-70) !important;
+        --color-warning: var(--yellow-80) !important;
         --color-error: var(--red-60) !important;
         --color-error-hover: var(--red-50) !important;
         --color-moz-heading: #fff;
@@ -584,6 +624,10 @@
         --focus-shadow: 0 0 0 4px color-mix(in srgb, var(--in-content-primary-button-background) 30%, transparent),
           0 0 0 2px var(--in-content-primary-button-background-active);
       }
+      .warning {
+        --color-link: rgb(55, 255, 255) !important;
+      }
+
       body,
       #main-content,
       #instant-search-content,
@@ -828,8 +872,7 @@
                  url-prefix("about:checkerboard"),
                  url-prefix("about:sync-log"),
                  url-prefix("about:memory"),
-                 regexp("^[file:///].*[^(html|svg|pdf|json)]$")
-  {
+                 regexp("^((file:\/\/\/)|(chrome:\/\/)).*\/$") {
     /* Base */
     html,
     body {
@@ -1058,10 +1101,10 @@
 
   /*= Directory View =========================================================*/
   @-moz-document url-prefix("about:sync-log"),
-                 regexp("^[file:///].*[^(html|svg|pdf|json)]$")
-  {
+                 regexp("^((file:\/\/\/)|(chrome:\/\/)).*\/$") {
     body {
       background-color: var(--in-content-box-background) !important;
+      margin: 4em auto !important; /* Override to default */
     }
     thead a {
       color: var(--in-content-page-color) !important;
