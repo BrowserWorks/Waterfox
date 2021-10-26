@@ -34,7 +34,7 @@ browser.jar:
  skin/classic/browser/userContent.css    (lepton/userContent.css)
  skin/classic/browser/australis-dark/userChrome.css     (australis-dark/userChrome.css)
  skin/classic/browser/australis-light/userChrome.css   (australis-light/userChrome.css)
- # List generated from: ls | awk '{print "skin/classic/browser/lepton/"$0" (lepton/icons/"$0")"}'
+ # List generated from: ls | awk '{print " skin/classic/browser/lepton/"$0" (lepton/icons/"$0")"}'
  skin/classic/browser/lepton/arrow-repeat-all.svg (lepton/icons/arrow-repeat-all.svg)
  skin/classic/browser/lepton/arrow-sort-down-lines.svg (lepton/icons/arrow-sort-down-lines.svg)
  skin/classic/browser/lepton/arrow-swap.svg (lepton/icons/arrow-swap.svg)
