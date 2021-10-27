@@ -149,3 +149,4 @@ pref("toolkit.telemetry.unified", false, locked);
 pref("toolkit.telemetry.updatePing.enabled", false, locked); // Make sure updater telemetry is disabled; see #25909.
 pref("trailhead.firstrun.branches", "", locked);
 pref("xpinstall.signatures.required", false);
+pref("privacy.resistFingerprinting.block_mozAddonManager", true); // This is set so that UA overrides work on AMO.
