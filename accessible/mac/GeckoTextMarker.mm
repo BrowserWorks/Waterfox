@@ -5,38 +5,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#import "GeckoTextMarker.h"
+
+#include "DocAccessible.h"
 #include "DocAccessibleParent.h"
 #include "AccAttributes.h"
 #include "AccessibleOrProxy.h"
 #include "nsCocoaUtils.h"
+#include "MOXAccessibleBase.h"
+#include "mozAccessible.h"
 
 #include "mozilla/a11y/DocAccessiblePlatformExtParent.h"
-
-#import "GeckoTextMarker.h"
-
-extern "C" {
-
-CFTypeID AXTextMarkerGetTypeID();
-
-AXTextMarkerRef AXTextMarkerCreate(CFAllocatorRef allocator, const UInt8* bytes,
-                                   CFIndex length);
-
-const UInt8* AXTextMarkerGetBytePtr(AXTextMarkerRef text_marker);
-
-size_t AXTextMarkerGetLength(AXTextMarkerRef text_marker);
-
-CFTypeID AXTextMarkerRangeGetTypeID();
-
-AXTextMarkerRangeRef AXTextMarkerRangeCreate(CFAllocatorRef allocator,
-                                             AXTextMarkerRef start_marker,
-                                             AXTextMarkerRef end_marker);
-
-AXTextMarkerRef AXTextMarkerRangeCopyStartMarker(
-    AXTextMarkerRangeRef text_marker_range);
-
-AXTextMarkerRef AXTextMarkerRangeCopyEndMarker(
-    AXTextMarkerRangeRef text_marker_range);
-}
 
 namespace mozilla {
 namespace a11y {
@@ -122,7 +101,7 @@ GeckoTextMarker GeckoTextMarker::MarkerFromIndex(const AccessibleOrProxy& aRoot,
   return GeckoTextMarker();
 }
 
-id GeckoTextMarker::CreateAXTextMarker() {
+AXTextMarkerRef GeckoTextMarker::CreateAXTextMarker() {
   if (!IsValid()) {
     return nil;
   }
@@ -144,7 +123,7 @@ id GeckoTextMarker::CreateAXTextMarker() {
       kCFAllocatorDefault, reinterpret_cast<const UInt8*>(&opaqueMarker),
       sizeof(OpaqueGeckoTextMarker));
 
-  return [static_cast<id>(cf_text_marker) autorelease];
+  return (__bridge AXTextMarkerRef)[(__bridge id)(cf_text_marker)autorelease];
 }
 
 bool GeckoTextMarker::operator<(const GeckoTextMarker& aPoint) const {
@@ -378,7 +357,7 @@ GeckoTextMarkerRange::GeckoTextMarkerRange(
   }
 }
 
-id GeckoTextMarkerRange::CreateAXTextMarkerRange() {
+AXTextMarkerRangeRef GeckoTextMarkerRange::CreateAXTextMarkerRange() {
   if (!IsValid()) {
     return nil;
   }
@@ -386,7 +365,9 @@ id GeckoTextMarkerRange::CreateAXTextMarkerRange() {
   AXTextMarkerRangeRef cf_text_marker_range =
       AXTextMarkerRangeCreate(kCFAllocatorDefault, mStart.CreateAXTextMarker(),
                               mEnd.CreateAXTextMarker());
-  return [static_cast<id>(cf_text_marker_range) autorelease];
+
+  return (__bridge AXTextMarkerRangeRef)[(__bridge id)(
+      cf_text_marker_range)autorelease];
 }
 
 NSString* GeckoTextMarkerRange::Text() const {
