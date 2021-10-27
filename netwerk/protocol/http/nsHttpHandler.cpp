@@ -348,7 +348,7 @@ nsresult nsHttpHandler::Init() {
   nsCOMPtr<nsIXULAppInfo> appInfo =
       do_GetService("@mozilla.org/xre/app-info;1");
 
-  mAppName.AssignLiteral("Firefox"); // Temporary AMO fix
+  mAppName.AssignLiteral(MOZ_APP_UA_NAME);
   if (mAppName.Length() == 0 && appInfo) {
     // Try to get the UA name from appInfo, falling back to the name
     appInfo->GetUAName(mAppName);
