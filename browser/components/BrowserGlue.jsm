@@ -4001,6 +4001,7 @@ BrowserGlue.prototype = {
           Services.prefs.setCharPref("distribution.source", value);
         } else if (key == "engine" && ["bing", "yahoo"].includes(value)) {
           this._setDefaultEng(value);
+          continue;
         }
         // only add to postSigningData if this hasn't been called previously
         attributionStr += `&${key}=${value}`;
