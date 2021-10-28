@@ -187,6 +187,7 @@ static const char sFloatPrefs[][37] = {
     "ui.SpellCheckerUnderlineRelativeSize",
     "ui.caretAspectRatio",
     "ui.textScaleFactor",
+    "ui.cursorScale",
 };
 
 static_assert(ArrayLength(sFloatPrefs) == size_t(LookAndFeel::FloatID::End),

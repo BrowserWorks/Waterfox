@@ -415,6 +415,9 @@ class LookAndFeel {
     // GTK text scale factor.
     TextScaleFactor,
 
+    // Mouse pointer scaling factor.
+    CursorScale,
+
     // Not an ID; used to define the range of valid IDs.  Must be last.
     End,
   };
