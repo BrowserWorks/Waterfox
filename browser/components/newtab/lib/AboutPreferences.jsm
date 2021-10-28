@@ -148,9 +148,8 @@ this.AboutPreferences = class AboutPreferences {
       sections = this.handleDiscoverySettings(sections);
     }
     // Remove topstories
-    sections.shift();
+    sections = sections.filter(x => x.id != "topstories");
     const featureConfig = NimbusFeatures.newtab.getValue() || {};
-
     this.renderPreferences(window, [
       ...PREFS_BEFORE_SECTIONS(featureConfig),
       ...sections,
