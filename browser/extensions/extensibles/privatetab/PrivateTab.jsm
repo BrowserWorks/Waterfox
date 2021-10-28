@@ -96,7 +96,7 @@ const PrivateTab = {
       "resource:///modules/CustomizableUI.jsm"
     );
     // if widget exists, don't attempt to create it again
-    if (!CustomizableUI.getPlacementOfWidget(privateTab.BTN_ID)) {
+    if (!CustomizableUI.getWidget(privateTab.BTN_ID)) {
       CustomizableUI.createWidget({
         id: privateTab.BTN_ID,
         type: "custom",
