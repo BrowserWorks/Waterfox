@@ -741,9 +741,27 @@ static void get_x11_ddx_info(Display* dpy) {
   XRRGETPROVIDERINFO XRRGetProviderInfo =
       cast<XRRGETPROVIDERINFO>(dlsym(libXrandr, "XRRGetProviderInfo"));
 
+  typedef Bool (*XRRQUERYEXTENSION)(Display*, int*, int*);
+  XRRQUERYEXTENSION XRRQueryExtension =
+      cast<XRRQUERYEXTENSION>(dlsym(libXrandr, "XRRQueryExtension"));
+
+  typedef int (*XRRQUERYVERSION)(Display*, int*, int*);
+  XRRQUERYVERSION XRRQueryVersion =
+      cast<XRRQUERYVERSION>(dlsym(libXrandr, "XRRQueryVersion"));
+
   if (!XRRGetProviderResources || !XRRGetScreenResourcesCurrent ||
-      !XRRGetProviderInfo) {
+      !XRRGetProviderInfo || !XRRQueryExtension || !XRRQueryVersion) {
     dlclose(libXrandr);
+    return;
+  }
+
+  // When running on remote X11 the xrandr version may be stuck on an ancient
+  // version. There are still setups using remote X11 out there, so make sure we
+  // don't crash.
+  int eventBase, errorBase, major, minor;
+  if (!XRRQueryExtension(dpy, &eventBase, &errorBase) ||
+      !XRRQueryVersion(dpy, &major, &minor) ||
+      !(major > 1 || (major == 1 && minor >= 4))) {
     return;
   }
 
