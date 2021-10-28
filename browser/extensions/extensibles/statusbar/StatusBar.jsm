@@ -2,8 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* global statusBar */
-
 const EXPORTED_SYMBOLS = ["StatusBar"];
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -77,7 +75,7 @@ const StatusBar = {
         StatusPanel.panel.firstChild.appendChild(StatusPanel._labelElement);
         StatusPanel.panel.firstChild.hidden = true;
       });
-    };
+    }
   },
 
   setStyle() {
@@ -123,7 +121,9 @@ const StatusBar = {
   },
 
   registerArea(aArea) {
-    CustomizableUI.registerArea(aArea, {});
+    if (!CustomizableUI.areas.includes("status-bar")) {
+      CustomizableUI.registerArea(aArea, {});
+    }
   },
 
   configureDummyBar(aWindow, aId) {
@@ -164,6 +164,7 @@ const StatusBar = {
   overrideStatusPanelLabel(aWindow) {
     let { StatusPanel, MousePosTracker } = aWindow;
     let window = aWindow;
+    // TODO: Should be able to do this with a WrappedJSObject instead
     eval(
       'Object.defineProperty(StatusPanel, "_label", {' +
         Object.getOwnPropertyDescriptor(StatusPanel, "_label")
