@@ -1695,7 +1695,10 @@ var gBrowserInit = {
     areas.splice(areas.indexOf(CustomizableUI.AREA_FIXED_OVERFLOW_PANEL), 1);
     for (let area of areas) {
       let node = document.getElementById(area);
-      CustomizableUI.registerToolbarNode(node);
+      // Node might not exist in case of status-bar, as it is loaded in and registered after this stage
+      if (node) {
+        CustomizableUI.registerToolbarNode(node);
+      }
     }
     BrowserSearch.initPlaceHolder();
 
