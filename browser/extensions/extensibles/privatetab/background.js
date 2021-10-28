@@ -128,7 +128,7 @@ const PrivateTab = {
         tag: "key",
         attrs: {
           id: "togglePrivateTab-key",
-          modifiers: "Alt Control",
+          modifiers: "alt control",
           key: "T",
           oncommand: "privateTab.togglePrivate(window)",
         },
@@ -138,7 +138,7 @@ const PrivateTab = {
         tag: "key",
         attrs: {
           id: "newPrivateTab-key",
-          modifiers: "Alt Control",
+          modifiers: "alt control",
           key: "P",
           oncommand: "privateTab.browserOpenTabPrivate(window)",
         },
