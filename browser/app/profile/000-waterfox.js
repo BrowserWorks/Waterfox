@@ -111,6 +111,7 @@ pref("network.trr.exclude-etc-hosts", false, locked);
 pref("network.trr.resolvers", "", locked);
 pref("plugin.state.flash", 0, locked); // Disable for defense-in-depth
 // pref("privacy.firstparty.isolate", true); // Always enforce first party isolation
+pref("privacy.resistFingerprinting.block_mozAddonManager", true); // This is set so that UA overrides work on AMO.
 pref("privacy.trackingprotection.origin_telemetry.enabled", false, locked);
 pref("security.app_menu.recordEventTelemetry", false, locked);
 pref("security.certerrors.mitm.priming.enabled", false, locked);
