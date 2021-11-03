@@ -41,13 +41,17 @@ const TabFeatures = {
   },
 
   setPrefs() {
-    PrefUtils.set(this.PREF_ACTIVETAB, false, true);
-    PrefUtils.set(this.PREF_REQUIRECONFIRM, true, true);
-    PrefUtils.set(this.PREF_PURGECACHE, true, true);
+    let activeTab = PrefUtils.get(this.PREF_ACTIVETAB, false);
+    let reqConfirm = PrefUtils.get(this.PREF_REQUIRECONFIRM, true);
+    let purgeCache = PrefUtils.get(this.PURGECACHE, true);
+    let toolbarPos = PrefUtils.get(this.TOOLBARPOS, "topabove");
+    PrefUtils.set(this.PREF_ACTIVETAB, activeTab, true);
+    PrefUtils.set(this.PREF_REQUIRECONFIRM, reqConfirm, true);
+    PrefUtils.set(this.PREF_PURGECACHE, purgeCache, true);
+    PrefUtils.set(this.PREF_TOOLBARPOS, toolbarPos, true);
   },
 
   initPrefListeners() {
-    PrefUtils.set(this.PREF_TOOLBARPOS, "topabove", true);
     // Set Tab toolbar position
     this.toolbarPositionListener = PrefUtils.addListener(
       this.PREF_TOOLBARPOS,
@@ -62,10 +66,10 @@ const TabFeatures = {
       this.PREF_BOOKMARKPOS,
       value => {
         TabFeatures.executeInAllWindows((doc, win) => {
-          TabFeatures.moveBookmarksBar(win, value)
-        })
+          TabFeatures.moveBookmarksBar(win, value);
+        });
       }
-    )
+    );
   },
 
   tabContext(aEvent) {
@@ -239,9 +243,7 @@ const TabFeatures = {
     let bottomTabs = aWindow.document.querySelector(
       "#browser-bottombox #TabsToolbar"
     );
-    let bookmarksBar = aWindow.document.querySelector(
-      "#PersonalToolbar"
-    );
+    let bookmarksBar = aWindow.document.querySelector("#PersonalToolbar");
 
     if (!aValue) {
       aValue = PrefUtils.get(this.PREF_BOOKMARKPOS);
