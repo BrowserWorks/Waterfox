@@ -33,8 +33,10 @@ const StatusBar = {
   },
 
   initPrefListeners() {
-    PrefUtils.set(this.PREF_ENABLED, false, true);
-    PrefUtils.set(this.PREF_STATUSTEXT, true, true);
+    let enabled = PrefUtils.get(this.PREF_ENABLED, false);
+    let text = PrefUtils.get(this.PREF_STATUSTEXT, true);
+    PrefUtils.set(this.PREF_ENABLED, enabled, true);
+    PrefUtils.set(this.PREF_STATUSTEXT, text, true);
     this.enabledListener = PrefUtils.addListener(
       this.PREF_ENABLED,
       isEnabled => {
