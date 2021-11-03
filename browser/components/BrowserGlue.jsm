@@ -3266,7 +3266,7 @@ BrowserGlue.prototype = {
   _migrateUI: function BG__migrateUI() {
     // Use an increasing number to keep track of the current migration state.
     // Completely unrelated to the current Firefox release number.
-    const UI_VERSION = 116;
+    const UI_VERSION = 117;
     const BROWSER_DOCURL = AppConstants.BROWSER_CHROME_URL;
 
     if (!Services.prefs.prefHasUserValue("browser.migration.version")) {
@@ -3969,10 +3969,25 @@ BrowserGlue.prototype = {
           }
         }
       });
-      // Update private container icon
-      ContextualIdentityService._identities.find(
-        container => container.name == "Private"
-      ).icon = "fingerprint";
+      // Migrate old bookmarks bar position pref
+      if (Services.prefs.prefHasUserValue("browser.bookmarksBar.position")) {
+        let oldPref = Services.prefs.getStringPref(
+          "browser.bookmarksBar.position",
+          "top"
+        );
+        let newPref;
+        if (oldPref == "top") {
+          newPref = "top";
+        } else {
+          newPref = "bottom";
+        }
+        Services.prefs.setStringPref(
+          "browser.bookmarks.toolbarposition",
+          newPref
+        );
+        //Then clear user pref
+        Services.prefs.clearUserPref("browser.bookmarksBar.position");
+      }
     }
 
     // Update the migration version.
