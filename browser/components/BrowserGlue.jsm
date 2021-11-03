@@ -3969,6 +3969,25 @@ BrowserGlue.prototype = {
           }
         }
       });
+      // Migrate old bookmarks bar position pref
+      if (Services.prefs.prefHasUserValue("browser.bookmarksBar.position")) {
+        let oldPref = Services.prefs.getStringPref(
+          "browser.bookmarksBar.position",
+          "top"
+        );
+        let newPref;
+        if (oldPref == "top") {
+          newPref = "top";
+        } else {
+          newPref = "bottom";
+        }
+        Services.prefs.setStringPref(
+          "browser.bookmarks.toolbarposition",
+          newPref
+        );
+        //Then clear user pref
+        Services.prefs.clearUserPref("browser.bookmarksBar.position");
+      }
     }
 
     // Update the migration version.
