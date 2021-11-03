@@ -109,3 +109,8 @@ path = "third_party/rust/failure"
 
 [patch.crates-io.prost-derive]
 path = "third_party/rust/prost-derive"
+
+# Pick upstream patch for GCC 11 on armhf linux.
+[patch.crates-io.cc]
+git = "https://github.com/alexcrichton/cc-rs/"
+rev = "b2f6b146b75299c444e05bbde50d03705c7c4b6e"
