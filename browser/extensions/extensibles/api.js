@@ -348,6 +348,7 @@ this.extensibles = class extends ExtensionAPI {
             if (!win.tabFeatures) {
               win.tabFeatures = TabFeatures;
               win.tabFeatures.setPrefs();
+              win.tabFeatures.initState();
               win.tabFeatures.initPrefListeners();
               win.tabFeatures.moveTabBar(win);
               BrowserUtils.setStyle(TabFeatures.style);

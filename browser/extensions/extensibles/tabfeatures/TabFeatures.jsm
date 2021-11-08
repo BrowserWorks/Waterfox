@@ -43,12 +43,14 @@ const TabFeatures = {
   setPrefs() {
     let activeTab = PrefUtils.get(this.PREF_ACTIVETAB, false);
     let reqConfirm = PrefUtils.get(this.PREF_REQUIRECONFIRM, true);
-    let purgeCache = PrefUtils.get(this.PURGECACHE, true);
-    let toolbarPos = PrefUtils.get(this.TOOLBARPOS, "topabove");
+    let purgeCache = PrefUtils.get(this.PREF_PURGECACHE, true);
+    let toolbarPos = PrefUtils.get(this.PREF_TOOLBARPOS, "topabove");
+    let bookmarkPos = PrefUtils.get(this.PREF_BOOKMARKPOS, "top");
     PrefUtils.set(this.PREF_ACTIVETAB, activeTab, true);
     PrefUtils.set(this.PREF_REQUIRECONFIRM, reqConfirm, true);
     PrefUtils.set(this.PREF_PURGECACHE, purgeCache, true);
     PrefUtils.set(this.PREF_TOOLBARPOS, toolbarPos, true);
+    PrefUtils.set(this.PREF_BOOKMARKPOS, bookmarkPos, true);
   },
 
   initPrefListeners() {
@@ -58,6 +60,14 @@ const TabFeatures = {
       value => {
         TabFeatures.executeInAllWindows((doc, win) => {
           TabFeatures.moveTabBar(win, value);
+          let titleBar = doc.getElementById("titlebar");
+          let menuBar = doc.getElementById("toolbar-menubar");
+          // Ensure that titlebar is hidden if tabs toolbar is not in default position
+          // and it's set to not show
+          PrefUtils.get(this.PREF_TOOLBARPOS) != "topabove" &&
+          menuBar.getAttribute("autohide") == "true"
+            ? (titleBar.style.appearance = "none")
+            : (titleBar.style.appearance = "-moz-window-titlebar");
         });
       }
     );
@@ -70,6 +80,46 @@ const TabFeatures = {
         });
       }
     );
+    // Hide tabs toolbar buttonbox if menubar displayed
+    TabFeatures.executeInAllWindows((doc, win) => {
+      let menuBar = doc.getElementById("toolbar-menubar");
+      let buttonBox = doc.querySelector(
+        "#TabsToolbar .titlebar-buttonbox-container"
+      );
+      var observer = new win.MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+          if (
+            mutation.type === "attributes" &&
+            mutation.attributeName == "autohide"
+          ) {
+            menuBar.getAttribute("autohide") == "false"
+              ? (buttonBox.style.display = "none")
+              : (buttonBox.style.display = "-moz-box");
+          }
+        });
+      });
+
+      observer.observe(menuBar, {
+        attributes: true, //configure it to listen to attribute changes
+      });
+    });
+  },
+
+  initState() {
+    // Set state for titlebar and titlebar-buttonbox visibility at startup
+    TabFeatures.executeInAllWindows((doc, win) => {
+      let menuBar = doc.getElementById("toolbar-menubar");
+      let buttonBox = doc.querySelector(
+        "#TabsToolbar .titlebar-buttonbox-container"
+      );
+      let titleBar = doc.getElementById("titlebar");
+      menuBar.getAttribute("autohide") == "false"
+        ? (buttonBox.style.display = "none")
+        : (buttonBox.style.display = "-moz-box");
+      PrefUtils.get(this.PREF_TOOLBARPOS) != "topabove"
+        ? (titleBar.style.appearance = "none")
+        : (titleBar.style.appearance = "-moz-window-titlebar");
+    });
   },
 
   tabContext(aEvent) {
