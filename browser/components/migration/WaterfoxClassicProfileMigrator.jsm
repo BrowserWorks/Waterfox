@@ -177,65 +177,113 @@ WaterfoxClassicProfileMigrator.prototype._getResourcesInternal = function(
     Services.prefs.savePrefFile(newPrefsFile);
   }
 
-  function convertBookmarks(rows) {
-    let unsortedItems = {};
-    let itemsToInsert = {};
-    // set up initial parent/child structure from unstructured data
+  function formatHistoryRows(rows) {
+    let pageInfos = [];
+    for (let row of rows) {
+      try {
+        // if having typed_count, we changes transition type to typed.
+        let transition = PlacesUtils.history.TRANSITIONS.LINK;
+        if (row.getResultByName("typed") > 0) {
+          transition = PlacesUtils.history.TRANSITIONS.TYPED;
+        }
+
+        pageInfos.push({
+          title: row.getResultByName("title"),
+          url: new URL(row.getResultByName("url")),
+          visits: [
+            {
+              transition,
+              date: row.getResultByName("last_visit_date"),
+            },
+          ],
+        });
+      } catch (ex) {
+        Cu.reportError(ex);
+      }
+    }
+    return pageInfos;
+  }
+
+  /**
+   * Format raw query results for bookmarks and folders.
+   * @param rows Raw query results from getRowsFromDBWithoutLocks()
+   * @returns Object containing guid: {item} mappings.
+   */
+  function formatBookmarkRows(rows) {
+    let unsortedRows = {};
     rows.forEach(row => {
+      let type = row.getResultByName("type");
       let item = {
-        type: row.getResultByName("type"),
-        url: row.getResultByName("url"),
+        type,
         parentGuid: row.getResultByName("parentGuid"),
         guid: row.getResultByName("guid"),
         title: row.getResultByName("title"),
       };
-      // set up folder item
-      if (item.type == PlacesUtils.bookmarks.TYPE_FOLDER) {
-        delete item.url;
-        // if folder has already been initialized (child in db before parent) then merge
-        if (unsortedItems[item.guid]) {
-          unsortedItems[item.guid] = {
-            ...unsortedItems[item.guid],
-            ...item,
-          };
-        } else {
-          item.children = [];
-          unsortedItems[item.guid] = item;
-        }
-      }
-      // set up bookmark item
-      if (
-        item.type == PlacesUtils.bookmarks.TYPE_BOOKMARK &&
-        unsortedItems[item.parentGuid]
-      ) {
-        // if the parent exists, add as a child
-        unsortedItems[item.parentGuid].children.push(item);
-      } else if (item.type == PlacesUtils.bookmarks.TYPE_BOOKMARK) {
-        // if parent doesn't exist yet, initialize
-        unsortedItems[item.parentGuid] = {
-          guid: item.parentGuid,
-          children: [item],
-        };
-      }
+      type == PlacesUtils.bookmarks.TYPE_BOOKMARK
+        ? (item.url = row.getResultByName("url"))
+        : null;
+      unsortedRows[item.guid] = item;
     });
-    // ensure correct heirarchy, separate for loop as the db rows are unstructured
-    Object.entries(unsortedItems).forEach(([guid, item]) => {
-      // don't import bookmarks with a parent that we cannot identify
-      if (item.parentGuid && unsortedItems[item.parentGuid]) {
-        unsortedItems[item.parentGuid].children.push(item);
-      } else if (!item.parentGuid) {
-        itemsToInsert[item.guid] = item;
-      }
-    });
+    return unsortedRows;
+  }
 
-    return itemsToInsert;
+  /**
+   * As folders can be created after bookmarks, and bookmarks moved inside these younger folders,
+   * we need to sequentially loop through items to ensure parents are added before children.
+   * @param unsortedRows A formattedRows Object returned from formatBookmarkRows()
+   * @param presentIds Array of item guids in unsortedRows
+   * @param nextLevelItems Array of items at the current level of nesting
+   * @param rowsToInsert Object of guid: {children: []} to be inserted with insertManyBookmarksWrapper()
+   * @returns rowsToInsert
+   */
+  function sortBookmarkRows(
+    unsortedRows,
+    presentIds,
+    nextLevelItems = [],
+    rowsToInsert = {}
+  ) {
+    // Top level items
+    if (Object.keys(rowsToInsert).length === 0) {
+      let parentIds = Object.values(unsortedRows)
+        .filter(item => !presentIds.includes(item.parentGuid))
+        .map(item => {
+          // Add top level, existing guids
+          item.parentGuid in rowsToInsert
+            ? rowsToInsert[item.parentGuid].children.push(item)
+            : (rowsToInsert[item.parentGuid] = { children: [item] });
+          // Assign children
+          return item.guid;
+        });
+      nextLevelItems = Object.values(unsortedRows).filter(item =>
+        parentIds.includes(item.parentGuid)
+      );
+    } else {
+      // Bottom level items
+      if (Array.isArray(nextLevelItems) && !nextLevelItems.length) {
+        return rowsToInsert;
+      }
+      // Mid level items
+      let nextLevelIds = nextLevelItems.map(item => {
+        if (unsortedRows[item.parentGuid].children) {
+          unsortedRows[item.parentGuid].children.push(item);
+        } else {
+          unsortedRows[item.parentGuid].children = [item];
+        }
+        return item.guid;
+      });
+      nextLevelItems = Object.values(unsortedRows).filter(item =>
+        nextLevelIds.includes(item.parentGuid)
+      );
+    }
+    return sortBookmarkRows(
+      unsortedRows,
+      presentIds,
+      nextLevelItems,
+      rowsToInsert
+    );
   }
 
   let types = MigrationUtils.resourceTypes;
-  let places = getFileResource(types.HISTORY, [
-    "places.sqlite",
-    "places.sqlite-wal",
-  ]);
   let favicons = getFileResource(types.HISTORY, [
     "favicons.sqlite",
     "favicons.sqlite-wal",
@@ -254,9 +302,37 @@ WaterfoxClassicProfileMigrator.prototype._getResourcesInternal = function(
     "formhistory.sqlite",
     "autofill-profiles.json",
   ]);
+
   let bookmarks;
+  let places;
   // don't try to import if places.sqlite doesn't exist
   if (this._getFileObject(sourceProfileDir, "places.sqlite")) {
+    places = {
+      name: "history",
+      type: types.HISTORY,
+      migrate: async aCallback => {
+        try {
+          // get history from places.sqlite
+          let sourceDir = sourceProfileDir.clone();
+          sourceDir.append("places.sqlite");
+          let query =
+            "SELECT url, title, last_visit_date, typed FROM moz_places WHERE hidden = 0";
+          let rows = await MigrationUtils.getRowsFromDBWithoutLocks(
+            sourceDir.path,
+            "history",
+            query
+          );
+          let formattedRows = formatHistoryRows(rows);
+          if (formattedRows.length) {
+            await MigrationUtils.insertVisitsWrapper(formattedRows);
+          }
+          aCallback(true);
+        } catch (ex) {
+          aCallback(false);
+        }
+      },
+    };
+
     bookmarks = {
       name: "bookmarks", // name is used only by tests.
       type: types.BOOKMARKS,
@@ -270,44 +346,50 @@ WaterfoxClassicProfileMigrator.prototype._getResourcesInternal = function(
             sourceDir.path,
             "bookmarks",
             `SELECT 
-                b.type, 
-                b.position, 
-                (SELECT guid FROM moz_bookmarks WHERE id = b.parent) as parentGuid, 
-                b.parent, 
-                b.title, 
-                b.guid,
-                p.url,
-                p.hidden
-              FROM moz_bookmarks b
-              LEFT JOIN moz_places p 
-              ON b.fk = p.id 
-              WHERE 
-                parentGuid != 'root________' AND (b.type == 2 OR (p.url IS NOT NULL AND p.hidden != 1));`
+              b.type,
+              b.position,
+              (SELECT guid FROM moz_bookmarks WHERE id = b.parent) as parentGuid, 
+              b.parent, 
+              b.title,
+              b.guid,
+              p.url,
+              p.hidden
+            FROM moz_bookmarks b
+            LEFT JOIN moz_places p
+            ON b.fk = p.id 
+            WHERE 
+              parentGuid != 'root________' AND (b.type == 2 OR (p.url IS NOT NULL AND p.hidden != 1));`
           );
-          let itemsToInsert = convertBookmarks(rows);
+          let formattedRows = formatBookmarkRows(rows);
+          let ids = Object.values(formattedRows).map(row => {
+            return row.guid;
+          });
+          let itemsToInsert = sortBookmarkRows(formattedRows, ids);
           // insert bookmarks
           Object.entries(itemsToInsert).forEach(
             async ([parentGuid, parent]) => {
               // do not attempt to insert if empty
-              if (parent.children.length) {
+              if (parent.children && parent.children.length) {
                 try {
                   await MigrationUtils.insertManyBookmarksWrapper(
                     parent.children,
                     parentGuid
                   );
                 } catch (ex) {
-                  // catching duplicate guid errors, in case people try to import the same profile multiple times
+                  Cu.reportError(ex);
                 }
               }
             }
           );
           aCallback(true);
         } catch (ex) {
+          Cu.reportError(ex);
           aCallback(false);
         }
       },
     };
   }
+
   let bookmarksBackups = getFileResource(types.OTHERDATA, [
     PlacesBackups.profileRelativeFolderPath,
   ]);
@@ -428,64 +510,6 @@ WaterfoxClassicProfileMigrator.prototype._getResourcesInternal = function(
     },
   };
 
-  // Telemetry related migrations.
-  let times = {
-    name: "times", // name is used only by tests.
-    type: types.OTHERDATA,
-    migrate: aCallback => {
-      let file = this._getFileObject(sourceProfileDir, "times.json");
-      if (file) {
-        file.copyTo(currentProfileDir, "");
-      }
-      // And record the fact a migration (ie, a reset) happened.
-      let recordMigration = async () => {
-        try {
-          let profileTimes = await ProfileAge(currentProfileDir.path);
-          await profileTimes.recordProfileReset();
-          aCallback(true);
-        } catch (e) {
-          aCallback(false);
-        }
-      };
-
-      recordMigration();
-    },
-  };
-  let telemetry = {
-    name: "telemetry", // name is used only by tests...
-    type: types.OTHERDATA,
-    migrate: aCallback => {
-      let createSubDir = name => {
-        let dir = currentProfileDir.clone();
-        dir.append(name);
-        dir.create(Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
-        return dir;
-      };
-
-      // If the 'datareporting' directory exists we migrate files from it.
-      let dataReportingDir = this._getFileObject(
-        sourceProfileDir,
-        "datareporting"
-      );
-      if (dataReportingDir && dataReportingDir.isDirectory()) {
-        // Copy only specific files.
-        let toCopy = ["state.json", "session-state.json"];
-
-        let dest = createSubDir("datareporting");
-        let enumerator = dataReportingDir.directoryEntries;
-        while (enumerator.hasMoreElements()) {
-          let file = enumerator.nextFile;
-          if (file.isDirectory() || !toCopy.includes(file.leafName)) {
-            continue;
-          }
-          file.copyTo(dest, "");
-        }
-      }
-
-      aCallback(true);
-    },
-  };
-
   return [
     places,
     cookies,
@@ -495,8 +519,6 @@ WaterfoxClassicProfileMigrator.prototype._getResourcesInternal = function(
     bookmarksBackups,
     session,
     sync,
-    times,
-    telemetry,
     favicons,
     bookmarks,
   ].filter(r => r);
