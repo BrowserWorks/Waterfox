@@ -864,6 +864,7 @@ AddonWrapper = class {
 
     if (addon.optionsType) {
       switch (parseInt(addon.optionsType, 10)) {
+        case AddonManager.OPTIONS_TYPE_DIALOG:
         case AddonManager.OPTIONS_TYPE_TAB:
         case AddonManager.OPTIONS_TYPE_INLINE_BROWSER:
           return hasOptionsURL ? addon.optionsType : null;

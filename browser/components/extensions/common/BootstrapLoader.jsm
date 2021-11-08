@@ -21,6 +21,74 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   Services: "resource://gre/modules/Services.jsm",
 });
 
+Services.obs.addObserver(doc => {
+  if (
+    doc.location.protocol + doc.location.pathname === "about:addons" ||
+    doc.location.protocol + doc.location.pathname ===
+      "chrome://mozapps/content/extensions/aboutaddons.html"
+  ) {
+    const win = doc.defaultView;
+    let handleEvent_orig = win.customElements.get("addon-card").prototype
+      .handleEvent;
+    win.customElements.get("addon-card").prototype.handleEvent = function(e) {
+      if (
+        e.type === "click" &&
+        e.target.getAttribute("action") === "preferences" &&
+        this.addon.optionsType == AddonManager.OPTIONS_TYPE_DIALOG
+      ) {
+        let windows = Services.wm.getEnumerator(null);
+        while (windows.hasMoreElements()) {
+          let win2 = windows.getNext();
+          if (win2.closed) {
+            continue;
+          }
+          if (win2.document.documentURI == this.addon.optionsURL) {
+            win2.focus();
+            return;
+          }
+        }
+        let features = "chrome,titlebar,toolbar,centerscreen";
+        let instantApply = Services.prefs.getBoolPref(
+          "browser.preferences.instantApply"
+        );
+        features += instantApply ? ",dialog=no" : "";
+        win.docShell.rootTreeItem.domWindow.openDialog(
+          this.addon.optionsURL,
+          this.addon.id,
+          features
+        );
+      } else {
+        handleEvent_orig.apply(this, arguments);
+      }
+    };
+    let update_orig = win.customElements.get("addon-options").prototype.update;
+    win.customElements.get("addon-options").prototype.update = function(
+      card,
+      addon
+    ) {
+      update_orig.apply(this, arguments);
+      if (addon.optionsType == AddonManager.OPTIONS_TYPE_DIALOG) {
+        this.querySelector('panel-item[action="preferences"]').hidden = false;
+      }
+    };
+  }
+}, "chrome-document-loaded");
+
+const Object = Cu.getGlobalForObject(Cu).Object;
+const { freeze } = Object;
+Object.freeze = obj => {
+  if (
+    Components.stack.caller.filename !=
+      "resource://gre/modules/AddonManager.jsm" ||
+    !obj.OPTIONS_TYPE_TAB
+  )
+    return freeze(obj);
+
+  obj.OPTIONS_TYPE_DIALOG = 1;
+  Object.freeze = freeze;
+  return freeze(obj);
+}
+
 XPCOMUtils.defineLazyGetter(this, "BOOTSTRAP_REASONS", () => {
   const { XPIProvider } = ChromeUtils.import(
     "resource://gre/modules/addons/XPIProvider.jsm"
@@ -76,6 +144,22 @@ function isXPI(filename) {
 }
 
 /**
+ * Creates a jar: URI for a file inside a ZIP file.
+ *
+ * @param {nsIFile} aJarfile
+ *        The ZIP file as an nsIFile
+ * @param {string} aPath
+ *        The path inside the ZIP file
+ * @returns {nsIURI}
+ *        An nsIURI for the file
+ */
+function buildJarURI(aJarfile, aPath) {
+  let uri = Services.io.newFileURI(aJarfile);
+  uri = "jar:" + uri.spec + "!/" + aPath;
+  return Services.io.newURI(uri);
+}
+
+/**
  * Gets an nsIURI for a file within another file, either a directory or an XPI
  * file. If aFile is a directory then this will return a file: URI, if it is an
  * XPI file then it will return a jar: URI.
@@ -100,22 +184,6 @@ function getURIForResourceInFile(aFile, aPath) {
   }
 
   return buildJarURI(aFile, aPath);
-}
-
-/**
- * Creates a jar: URI for a file inside a ZIP file.
- *
- * @param {nsIFile} aJarfile
- *        The ZIP file as an nsIFile
- * @param {string} aPath
- *        The path inside the ZIP file
- * @returns {nsIURI}
- *        An nsIURI for the file
- */
-function buildJarURI(aJarfile, aPath) {
-  let uri = Services.io.newFileURI(aJarfile);
-  uri = "jar:" + uri.spec + "!/" + aPath;
-  return Services.io.newURI(uri);
 }
 
 var BootstrapLoader = {
@@ -219,6 +287,7 @@ var BootstrapLoader = {
 
       if (
         addon.optionsType &&
+        addon.optionsType != AddonManager.OPTIONS_TYPE_DIALOG &&
         addon.optionsType != AddonManager.OPTIONS_TYPE_INLINE_BROWSER &&
         addon.optionsType != AddonManager.OPTIONS_TYPE_TAB
       ) {
