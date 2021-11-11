@@ -352,7 +352,7 @@ static NS_tchar* mstrtok(const NS_tchar* delims, NS_tchar** str) {
   return ret;
 }
 
-#if defined(TEST_UPDATER) || defined(XP_WIN) || defined(XP_MACOSX)
+#if defined(TEST_UPDATER) || defined(XP_WIN)
 static bool EnvHasValue(const char* name) {
   const char* val = getenv(name);
   return (val && *val);
