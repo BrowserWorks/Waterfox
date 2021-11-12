@@ -590,10 +590,10 @@ Result<RefPtr<Element>, nsresult> WhiteSpaceVisibilityKeeper::InsertBRElement(
   if (NS_WARN_IF(!textFragmentDataAtInsertionPoint.IsInitialized())) {
     return Err(NS_ERROR_FAILURE);
   }
-  const EditorDOMRange invisibleLeadingWhiteSpaceRangeOfNewLine =
+  EditorDOMRange invisibleLeadingWhiteSpaceRangeOfNewLine =
       textFragmentDataAtInsertionPoint
           .GetNewInvisibleLeadingWhiteSpaceRangeIfSplittingAt(aPointToInsert);
-  const EditorDOMRange invisibleTrailingWhiteSpaceRangeOfCurrentLine =
+  EditorDOMRange invisibleTrailingWhiteSpaceRangeOfCurrentLine =
       textFragmentDataAtInsertionPoint
           .GetNewInvisibleTrailingWhiteSpaceRangeIfSplittingAt(aPointToInsert);
   const Maybe<const VisibleWhiteSpacesData> visibleWhiteSpaces =
@@ -607,16 +607,29 @@ Result<RefPtr<Element>, nsresult> WhiteSpaceVisibilityKeeper::InsertBRElement(
           : PointPosition::NotInSameDOMTree;
 
   EditorDOMPoint pointToInsert(aPointToInsert);
-  {
-    // Some scoping for AutoTrackDOMPoint.  This will track our insertion
-    // point while we tweak any surrounding white-space
-    AutoTrackDOMPoint tracker(aHTMLEditor.RangeUpdaterRef(), &pointToInsert);
+  EditorDOMPoint atNBSPReplacableWithSP;
+  if (!invisibleLeadingWhiteSpaceRangeOfNewLine.IsPositioned() &&
+      (pointPositionWithVisibleWhiteSpaces == PointPosition::MiddleOfFragment ||
+       pointPositionWithVisibleWhiteSpaces == PointPosition::EndOfFragment)) {
+    atNBSPReplacableWithSP =
+        textFragmentDataAtInsertionPoint
+            .GetPreviousNBSPPointIfNeedToReplaceWithASCIIWhiteSpace(
+                pointToInsert);
+  }
 
+  {
     if (invisibleTrailingWhiteSpaceRangeOfCurrentLine.IsPositioned()) {
       if (!invisibleTrailingWhiteSpaceRangeOfCurrentLine.Collapsed()) {
         // XXX Why don't we remove all of the invisible white-spaces?
         MOZ_ASSERT(invisibleTrailingWhiteSpaceRangeOfCurrentLine.StartRef() ==
                    pointToInsert);
+        AutoTrackDOMPoint trackPointToInsert(aHTMLEditor.RangeUpdaterRef(),
+                                             &pointToInsert);
+        AutoTrackDOMPoint trackEndOfLineNBSP(aHTMLEditor.RangeUpdaterRef(),
+                                             &atNBSPReplacableWithSP);
+        AutoTrackDOMRange trackLeadingWhiteSpaceRange(
+            aHTMLEditor.RangeUpdaterRef(),
+            &invisibleLeadingWhiteSpaceRangeOfNewLine);
         nsresult rv = aHTMLEditor.DeleteTextAndTextNodesWithTransaction(
             invisibleTrailingWhiteSpaceRangeOfCurrentLine.StartRef(),
             invisibleTrailingWhiteSpaceRangeOfCurrentLine.EndRef(),
@@ -626,6 +639,9 @@ Result<RefPtr<Element>, nsresult> WhiteSpaceVisibilityKeeper::InsertBRElement(
               "HTMLEditor::DeleteTextAndTextNodesWithTransaction() failed");
           return Err(rv);
         }
+        // Don't refer the following variables anymore unless tracking the
+        // change.
+        invisibleTrailingWhiteSpaceRangeOfCurrentLine.Clear();
       }
     }
     // If new line will start with visible white-spaces, it needs to be start
@@ -648,6 +664,13 @@ Result<RefPtr<Element>, nsresult> WhiteSpaceVisibilityKeeper::InsertBRElement(
         if (!atPreviousCharOfNextCharOfInsertionPoint.IsSet() ||
             atPreviousCharOfNextCharOfInsertionPoint.IsEndOfContainer() ||
             !atPreviousCharOfNextCharOfInsertionPoint.IsCharASCIISpace()) {
+          AutoTrackDOMPoint trackPointToInsert(aHTMLEditor.RangeUpdaterRef(),
+                                               &pointToInsert);
+          AutoTrackDOMPoint trackEndOfLineNBSP(aHTMLEditor.RangeUpdaterRef(),
+                                               &atNBSPReplacableWithSP);
+          AutoTrackDOMRange trackLeadingWhiteSpaceRange(
+              aHTMLEditor.RangeUpdaterRef(),
+              &invisibleLeadingWhiteSpaceRangeOfNewLine);
           // We are at start of non-nbsps.  Convert to a single nbsp.
           EditorRawDOMPointInText endOfCollapsibleASCIIWhiteSpaces =
               textFragmentDataAtInsertionPoint
@@ -665,18 +688,20 @@ Result<RefPtr<Element>, nsresult> WhiteSpaceVisibilityKeeper::InsertBRElement(
                 "ReplaceTextAndRemoveEmptyTextNodes() failed");
             return Err(rv);
           }
+          // Don't refer the following variables anymore unless tracking the
+          // change.
+          invisibleTrailingWhiteSpaceRangeOfCurrentLine.Clear();
         }
       }
     }
 
     if (invisibleLeadingWhiteSpaceRangeOfNewLine.IsPositioned()) {
       if (!invisibleLeadingWhiteSpaceRangeOfNewLine.Collapsed()) {
+        AutoTrackDOMPoint trackPointToInsert(aHTMLEditor.RangeUpdaterRef(),
+                                             &pointToInsert);
         // XXX Why don't we remove all of the invisible white-spaces?
         MOZ_ASSERT(invisibleLeadingWhiteSpaceRangeOfNewLine.EndRef() ==
                    pointToInsert);
-        // XXX If the DOM tree has been changed above,
-        //     invisibleLeadingWhiteSpaceRangeOfNewLine may be invalid now.
-        //     So, we may do something wrong here.
         nsresult rv = aHTMLEditor.DeleteTextAndTextNodesWithTransaction(
             invisibleLeadingWhiteSpaceRangeOfNewLine.StartRef(),
             invisibleLeadingWhiteSpaceRangeOfNewLine.EndRef(),
@@ -687,22 +712,22 @@ Result<RefPtr<Element>, nsresult> WhiteSpaceVisibilityKeeper::InsertBRElement(
               "DeleteTextAndTextNodesWithTransaction() failed");
           return Err(rv);
         }
+        // Don't refer the following variables anymore unless tracking the
+        // change.
+        atNBSPReplacableWithSP.Clear();
+        invisibleLeadingWhiteSpaceRangeOfNewLine.Clear();
+        invisibleTrailingWhiteSpaceRangeOfCurrentLine.Clear();
       }
     }
     // If the `<br>` element is put immediately after an NBSP, it should be
     // replaced with an ASCII white-space.
-    else if (pointPositionWithVisibleWhiteSpaces ==
-                 PointPosition::MiddleOfFragment ||
-             pointPositionWithVisibleWhiteSpaces ==
-                 PointPosition::EndOfFragment) {
-      // XXX If the DOM tree has been changed above, pointToInsert` and/or
-      //     `visibleWhiteSpaces` may be invalid.  So, we may do
-      //     something wrong here.
-      EditorDOMPointInText atNBSPReplacedWithASCIIWhiteSpace =
-          textFragmentDataAtInsertionPoint
-              .GetPreviousNBSPPointIfNeedToReplaceWithASCIIWhiteSpace(
-                  pointToInsert);
-      if (atNBSPReplacedWithASCIIWhiteSpace.IsSet()) {
+    else if (atNBSPReplacableWithSP.IsInTextNode()) {
+      const EditorDOMPointInText atNBSPReplacedWithASCIIWhiteSpace =
+          atNBSPReplacableWithSP.AsInText();
+      if (!atNBSPReplacedWithASCIIWhiteSpace.IsEndOfContainer() &&
+          atNBSPReplacedWithASCIIWhiteSpace.IsCharNBSP()) {
+        AutoTrackDOMPoint trackPointToInsert(aHTMLEditor.RangeUpdaterRef(),
+                                             &pointToInsert);
         AutoTransactionsConserveSelection dontChangeMySelection(aHTMLEditor);
         nsresult rv = aHTMLEditor.ReplaceTextWithTransaction(
             MOZ_KnownLive(*atNBSPReplacedWithASCIIWhiteSpace.ContainerAsText()),
@@ -711,6 +736,11 @@ Result<RefPtr<Element>, nsresult> WhiteSpaceVisibilityKeeper::InsertBRElement(
           NS_WARNING("HTMLEditor::ReplaceTextWithTransaction() failed failed");
           return Err(rv);
         }
+        // Don't refer the following variables anymore unless tracking the
+        // change.
+        atNBSPReplacableWithSP.Clear();
+        invisibleLeadingWhiteSpaceRangeOfNewLine.Clear();
+        invisibleTrailingWhiteSpaceRangeOfCurrentLine.Clear();
       }
     }
   }

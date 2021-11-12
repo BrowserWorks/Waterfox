@@ -1089,6 +1089,10 @@ class EditorDOMRangeBase final {
     mStart = aStart;
     mEnd = aEnd;
   }
+  void Clear() {
+    mStart.Clear();
+    mEnd.Clear();
+  }
 
   const EditorDOMPointType& StartRef() const { return mStart; }
   const EditorDOMPointType& EndRef() const { return mEnd; }
