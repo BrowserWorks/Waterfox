@@ -7,7 +7,7 @@ const EXPORTED_SYMBOLS = ["PrefUtils"];
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 var PrefUtils = {
-  get(prefPath, def = false, valueIfUndefined, setDefault = true) {
+  get(prefPath, valueIfUndefined, def = false, setDefault = true) {
     let sPrefs = def ? Services.prefs.getDefaultBranch(null) : Services.prefs;
 
     try {
@@ -15,9 +15,8 @@ var PrefUtils = {
         case 0:
           if (valueIfUndefined != undefined) {
             return this.set(prefPath, valueIfUndefined, setDefault);
-          } else {
-            return undefined;
           }
+          return undefined;
         case 32:
           return sPrefs.getStringPref(prefPath);
         case 64:
@@ -28,7 +27,6 @@ var PrefUtils = {
     } catch (ex) {
       return undefined;
     }
-    return;
   },
 
   set(prefPath, value, def = false) {
@@ -42,7 +40,6 @@ var PrefUtils = {
       case "boolean":
         return sPrefs.setBoolPref(prefPath, value) || value;
     }
-    return;
   },
 
   lock(prefPath, value) {
