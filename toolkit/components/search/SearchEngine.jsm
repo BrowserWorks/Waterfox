@@ -993,7 +993,7 @@ class SearchEngine {
     if (typetag && hspart && hsimp && this._name == "Yahoo!") {
       const mainURL = "https://search.yahoo.com/yhs/search?q={searchTerms}";
       this.__searchForm =
-        mainURL + `&hspart=${hspart}&hsimp=${hsimp}&typetag=${typetag}`;
+        mainURL + `&hspart=${hspart}&hsimp=${hsimp}&type=${typetag}`;
       this._urls[0].params[0] = {
         name: this._urls[0].params[0].name,
         value: hspart,
@@ -1005,7 +1005,7 @@ class SearchEngine {
         purpose: undefined,
       };
       this._urls[0].params.unshift({
-        name: "typetag",
+        name: "type",
         value: typetag,
         purpose: undefined,
       });
