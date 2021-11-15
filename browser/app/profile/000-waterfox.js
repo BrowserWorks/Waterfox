@@ -73,7 +73,9 @@ pref("browser.uidensity", 1);
 pref("browser.urlbar.dnsResolveSingleWordsAfterSearch", 0, locked);
 pref("browser.urlbar.eventTelemetry.enabled", false, locked);
 pref("browser.urlbar.showSearchSuggestionsFirst", false);
+pref("browser.urlbar.speculativeConnect.enabled", false);
 pref("browser.urlbar.trimURLs", false);
+pref("browser.xul.error_pages.expert_bad_cert", true);
 pref("corroborator.enabled", false, locked);
 pref("datareporting.healthreport.uploadEnabled", false, locked);
 pref("datareporting.policy.dataSubmissionEnabled", false, locked);
@@ -82,6 +84,7 @@ pref("devtools.webide.autoinstallADBExtension", false);
 pref("dom.security.unexpected_system_load_telemetry_enabled", false, locked);
 pref("extensions.activeThemeID", "lepton@waterfox.net");
 pref("extensions.allowPrivateBrowsingByDefault", true);
+pref("extensions.experiments.enabled", true);
 pref("extensions.getAddons.cache.enabled", false); // https://blog.mozilla.org/addons/how-to-opt-out-of-add-on-metadata-updates/
 pref("extensions.getAddons.showPane", false, locked);
 pref("extensions.htmlaboutaddons.recommendations.enabled", false, locked);
@@ -109,17 +112,22 @@ pref("network.manage-offline-status", false);
 pref("network.trr.confirmation_telemetry_enabled", false, locked);
 pref("network.trr.exclude-etc-hosts", false, locked);
 pref("network.trr.resolvers", "", locked);
-pref("plugin.state.flash", 0, locked); // Disable for defense-in-depth
+pref("plugin.default.state", 1);
+pref("plugin.state.flash", 1); // Disable for defense-in-depth
 // pref("privacy.firstparty.isolate", true); // Always enforce first party isolation
 pref("privacy.resistFingerprinting.block_mozAddonManager", true); // This is set so that UA overrides work on AMO.
 pref("privacy.trackingprotection.origin_telemetry.enabled", false, locked);
+pref("privacy.userContext.enabled", true);
+pref("privacy.userContext.ui.enabled", true);
 pref("security.app_menu.recordEventTelemetry", false, locked);
 pref("security.certerrors.mitm.priming.enabled", false, locked);
 pref("security.certerrors.recordEventTelemetry", false, locked);
 pref("security.family_safety.mode", 0, locked);
 pref("security.identitypopup.recordEventTelemetry", false, locked);
+pref("security.insecure_connection_text.enabled", true);
 pref("security.pki.crlite_mode", 0, locked);
 pref("security.protectionspopup.recordEventTelemetry", false, locked);
+pref("security.secure_connection_icon_color_gray", false);
 pref("security.ssl.enable_false_start", true);
 pref("security.ssl.errorReporting.enabled", false, locked);
 pref("services.sync.engine.prefs", false); // Never sync prefs, addons, or tabs with other browsers
