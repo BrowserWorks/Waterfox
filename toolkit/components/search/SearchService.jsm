@@ -920,7 +920,7 @@ SearchService.prototype = {
     if (typetag && hspart && hsimp && engine.name == "Yahoo!") {
       const mainURL = "https://search.yahoo.com/yhs/search?q={searchTerms}";
       engine.__searchForm =
-        mainURL + `&hspart=${hspart}&hsimp=${hsimp}&typetag=${typetag}`;
+        mainURL + `&hspart=${hspart}&hsimp=${hsimp}&type=${typetag}`;
       engine._urls[0].params[0] = {
         name: engine._urls[0].params[0].name,
         value: hspart,
@@ -932,7 +932,7 @@ SearchService.prototype = {
         purpose: undefined,
       };
       engine._urls[0].params.unshift({
-        name: "typetag",
+        name: "type",
         value: typetag,
         purpose: undefined,
       });
