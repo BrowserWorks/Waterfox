@@ -65,6 +65,11 @@
   background: rgba(0, 0, 255, 1);
 }
 
+/* Avoids https://github.com/mozilla/pdf.js/issues/13840 in Chrome */
+.textLayer br::selection {
+  background: transparent;
+}
+
 .textLayer .endOfContent {
   display: block;
   position: absolute;
@@ -162,6 +167,14 @@
 .annotationLayer .choiceWidgetAnnotation select:focus {
   background: none;
   border: 1px solid transparent;
+}
+
+.annotationLayer .textWidgetAnnotation input :focus,
+.annotationLayer .textWidgetAnnotation textarea :focus,
+.annotationLayer .choiceWidgetAnnotation select :focus,
+.annotationLayer .buttonWidgetAnnotation.checkBox :focus,
+.annotationLayer .buttonWidgetAnnotation.radioButton :focus {
+  outline: auto;
 }
 
 .annotationLayer .buttonWidgetAnnotation.checkBox input:checked:before,
@@ -278,6 +291,37 @@
 
 :root {
   --unfocused-field-background: url("data:image/svg+xml;charset=UTF-8,<svg width='1px' height='1px' xmlns='http://www.w3.org/2000/svg'><rect width='100%' height='100%' style='fill:rgba(0, 54, 255, 0.13);'/></svg>");
+}
+
+.xfaLayer .highlight {
+  margin: -1px;
+  padding: 1px;
+  background-color: rgba(239, 203, 237, 1);
+  border-radius: 4px;
+}
+
+.xfaLayer .highlight.appended {
+  position: initial;
+}
+
+.xfaLayer .highlight.begin {
+  border-radius: 4px 0 0 4px;
+}
+
+.xfaLayer .highlight.end {
+  border-radius: 0 4px 4px 0;
+}
+
+.xfaLayer .highlight.middle {
+  border-radius: 0;
+}
+
+.xfaLayer .highlight.selected {
+  background-color: rgba(203, 223, 203, 1);
+}
+
+.xfaLayer ::selection {
+  background: rgba(0, 0, 255, 1);
 }
 
 .xfaPage {
@@ -418,7 +462,13 @@
 .xfaSelect:focus {
   background-image: none;
   background-color: transparent;
-  outline: none;
+  outline: auto;
+  outline-offset: -1px;
+}
+
+.xfaCheckbox:focus,
+.xfaRadio:focus {
+  outline: auto;
 }
 
 .xfaTextfield,
@@ -554,6 +604,7 @@
   --page-margin: 1px auto -8px;
   --page-border: 9px solid transparent;
   --spreadHorizontalWrapped-margin-LR: -3.5px;
+  --zoom-factor: 1;
 }
 
 @media screen and (forced-colors: active) {
@@ -687,6 +738,8 @@
   --sidebar-width: 200px;
   --sidebar-transition-duration: 200ms;
   --sidebar-transition-timing-function: ease;
+  --scale-select-container-width: 140px;
+  --scale-select-overflow: 22px;
   --loadingBar-end-offset: 0;
 
   --toolbar-icon-opacity: 0.7;
@@ -1549,7 +1602,7 @@ html[dir="rtl"] #toolbarViewerLeft > .toolbarButton:first-child {
 }
 
 .dropdownToolbarButton {
-  width: 140px;
+  width: var(--scale-select-container-width);
   padding: 0;
   overflow: hidden;
   background-color: var(--dropdown-btn-bg-color);
@@ -1569,7 +1622,9 @@ html[dir="rtl"] .dropdownToolbarButton::after {
 }
 
 .dropdownToolbarButton > select {
-  width: 162px;
+  width: calc(
+    var(--scale-select-container-width) + var(--scale-select-overflow)
+  );
   height: 28px;
   font-size: 12px;
   color: var(--main-color);
@@ -2461,7 +2516,7 @@ html[dir="rtl"] #documentPropertiesOverlay .row > * {
   }
 
   #printContainer > .xfaPrintedPage .xfaPage {
-    position: initial;
+    position: absolute;
   }
 
   #printContainer > .xfaPrintedPage {

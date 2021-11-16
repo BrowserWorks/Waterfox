@@ -51,7 +51,7 @@ exports.isDataScheme = isDataScheme;
 exports.isPdfFile = isPdfFile;
 exports.isValidFetchUrl = isValidFetchUrl;
 exports.loadScript = loadScript;
-exports.StatTimer = exports.RenderingCancelledException = exports.PDFDateString = exports.PageViewport = exports.LinkTarget = exports.DOMSVGFactory = exports.DOMStandardFontDataFactory = exports.DOMCMapReaderFactory = exports.DOMCanvasFactory = exports.DEFAULT_LINK_REL = void 0;
+exports.StatTimer = exports.RenderingCancelledException = exports.PixelsPerInch = exports.PDFDateString = exports.PageViewport = exports.LinkTarget = exports.DOMSVGFactory = exports.DOMStandardFontDataFactory = exports.DOMCMapReaderFactory = exports.DOMCanvasFactory = exports.DEFAULT_LINK_REL = void 0;
 
 var _util = __w_pdfjs_require__(2);
 
@@ -60,6 +60,16 @@ var _base_factory = __w_pdfjs_require__(5);
 const DEFAULT_LINK_REL = "noopener noreferrer nofollow";
 exports.DEFAULT_LINK_REL = DEFAULT_LINK_REL;
 const SVG_NS = "http://www.w3.org/2000/svg";
+const PixelsPerInch = {
+  CSS: 96.0,
+  PDF: 72.0,
+
+  get PDF_TO_CSS_UNITS() {
+    return (0, _util.shadow)(this, "PDF_TO_CSS_UNITS", this.CSS / this.PDF);
+  }
+
+};
+exports.PixelsPerInch = PixelsPerInch;
 
 class DOMCanvasFactory extends _base_factory.BaseCanvasFactory {
   constructor({
@@ -243,7 +253,7 @@ exports.PageViewport = PageViewport;
 
 class RenderingCancelledException extends _util.BaseException {
   constructor(msg, type) {
-    super(msg);
+    super(msg, "RenderingCancelledException");
     this.type = type;
   }
 
@@ -549,7 +559,7 @@ exports.stringToUTF8String = stringToUTF8String;
 exports.unreachable = unreachable;
 exports.utf8StringToString = utf8StringToString;
 exports.warn = warn;
-exports.VerbosityLevel = exports.Util = exports.UNSUPPORTED_FEATURES = exports.UnknownErrorException = exports.UnexpectedResponseException = exports.TextRenderingMode = exports.StreamType = exports.PermissionFlag = exports.PasswordResponses = exports.PasswordException = exports.PageActionEventType = exports.OPS = exports.MissingPDFException = exports.IsLittleEndianCached = exports.IsEvalSupportedCached = exports.InvalidPDFException = exports.ImageKind = exports.IDENTITY_MATRIX = exports.FormatError = exports.FontType = exports.FONT_IDENTITY_MATRIX = exports.DocumentActionEventType = exports.CMapCompressionType = exports.BaseException = exports.AnnotationType = exports.AnnotationStateModelType = exports.AnnotationReviewState = exports.AnnotationReplyType = exports.AnnotationMarkedState = exports.AnnotationFlag = exports.AnnotationFieldFlag = exports.AnnotationBorderStyleType = exports.AnnotationActionEventType = exports.AbortException = void 0;
+exports.VerbosityLevel = exports.Util = exports.UNSUPPORTED_FEATURES = exports.UnknownErrorException = exports.UnexpectedResponseException = exports.TextRenderingMode = exports.StreamType = exports.RenderingIntentFlag = exports.PermissionFlag = exports.PasswordResponses = exports.PasswordException = exports.PageActionEventType = exports.OPS = exports.MissingPDFException = exports.IsLittleEndianCached = exports.IsEvalSupportedCached = exports.InvalidPDFException = exports.ImageKind = exports.IDENTITY_MATRIX = exports.FormatError = exports.FontType = exports.FONT_IDENTITY_MATRIX = exports.DocumentActionEventType = exports.CMapCompressionType = exports.BaseException = exports.AnnotationType = exports.AnnotationStateModelType = exports.AnnotationReviewState = exports.AnnotationReplyType = exports.AnnotationMode = exports.AnnotationMarkedState = exports.AnnotationFlag = exports.AnnotationFieldFlag = exports.AnnotationBorderStyleType = exports.AnnotationActionEventType = exports.AbortException = void 0;
 
 __w_pdfjs_require__(3);
 
@@ -557,6 +567,23 @@ const IDENTITY_MATRIX = [1, 0, 0, 1, 0, 0];
 exports.IDENTITY_MATRIX = IDENTITY_MATRIX;
 const FONT_IDENTITY_MATRIX = [0.001, 0, 0, 0.001, 0, 0];
 exports.FONT_IDENTITY_MATRIX = FONT_IDENTITY_MATRIX;
+const RenderingIntentFlag = {
+  ANY: 0x01,
+  DISPLAY: 0x02,
+  PRINT: 0x04,
+  ANNOTATIONS_FORMS: 0x10,
+  ANNOTATIONS_STORAGE: 0x20,
+  ANNOTATIONS_DISABLE: 0x40,
+  OPLIST: 0x100
+};
+exports.RenderingIntentFlag = RenderingIntentFlag;
+const AnnotationMode = {
+  DISABLE: 0,
+  ENABLE: 1,
+  ENABLE_FORMS: 2,
+  ENABLE_STORAGE: 3
+};
+exports.AnnotationMode = AnnotationMode;
 const PermissionFlag = {
   PRINT: 0x04,
   MODIFY_CONTENTS: 0x08,
@@ -972,13 +999,13 @@ function shadow(obj, prop, value) {
 }
 
 const BaseException = function BaseExceptionClosure() {
-  function BaseException(message) {
+  function BaseException(message, name) {
     if (this.constructor === BaseException) {
       unreachable("Cannot initialize BaseException.");
     }
 
     this.message = message;
-    this.name = this.constructor.name;
+    this.name = name;
   }
 
   BaseException.prototype = new Error();
@@ -990,7 +1017,7 @@ exports.BaseException = BaseException;
 
 class PasswordException extends BaseException {
   constructor(msg, code) {
-    super(msg);
+    super(msg, "PasswordException");
     this.code = code;
   }
 
@@ -1000,7 +1027,7 @@ exports.PasswordException = PasswordException;
 
 class UnknownErrorException extends BaseException {
   constructor(msg, details) {
-    super(msg);
+    super(msg, "UnknownErrorException");
     this.details = details;
   }
 
@@ -1008,17 +1035,27 @@ class UnknownErrorException extends BaseException {
 
 exports.UnknownErrorException = UnknownErrorException;
 
-class InvalidPDFException extends BaseException {}
+class InvalidPDFException extends BaseException {
+  constructor(msg) {
+    super(msg, "InvalidPDFException");
+  }
+
+}
 
 exports.InvalidPDFException = InvalidPDFException;
 
-class MissingPDFException extends BaseException {}
+class MissingPDFException extends BaseException {
+  constructor(msg) {
+    super(msg, "MissingPDFException");
+  }
+
+}
 
 exports.MissingPDFException = MissingPDFException;
 
 class UnexpectedResponseException extends BaseException {
   constructor(msg, status) {
-    super(msg);
+    super(msg, "UnexpectedResponseException");
     this.status = status;
   }
 
@@ -1026,11 +1063,21 @@ class UnexpectedResponseException extends BaseException {
 
 exports.UnexpectedResponseException = UnexpectedResponseException;
 
-class FormatError extends BaseException {}
+class FormatError extends BaseException {
+  constructor(msg) {
+    super(msg, "FormatError");
+  }
+
+}
 
 exports.FormatError = FormatError;
 
-class AbortException extends BaseException {}
+class AbortException extends BaseException {
+  constructor(msg) {
+    super(msg, "AbortException");
+  }
+
+}
 
 exports.AbortException = AbortException;
 const NullCharactersRegExp = /\x00/g;
@@ -1623,7 +1670,7 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.getDocument = getDocument;
 exports.setPDFNetworkStreamFactory = setPDFNetworkStreamFactory;
-exports.version = exports.PDFWorker = exports.PDFPageProxy = exports.PDFDocumentProxy = exports.PDFDataRangeTransport = exports.LoopbackPort = exports.DefaultStandardFontDataFactory = exports.DefaultCMapReaderFactory = exports.DefaultCanvasFactory = exports.build = void 0;
+exports.version = exports.RenderTask = exports.PDFWorker = exports.PDFPageProxy = exports.PDFDocumentProxy = exports.PDFDocumentLoadingTask = exports.PDFDataRangeTransport = exports.LoopbackPort = exports.DefaultStandardFontDataFactory = exports.DefaultCMapReaderFactory = exports.DefaultCanvasFactory = exports.build = void 0;
 
 var _util = __w_pdfjs_require__(2);
 
@@ -1648,6 +1695,8 @@ var _metadata = __w_pdfjs_require__(14);
 var _optional_content_config = __w_pdfjs_require__(15);
 
 var _transport_stream = __w_pdfjs_require__(16);
+
+var _xfa_text = __w_pdfjs_require__(17);
 
 const DEFAULT_RANGE_CHUNK_SIZE = 65536;
 const RENDERING_CANCELLED_TIMEOUT = 100;
@@ -1849,9 +1898,9 @@ function getDocument(src) {
   return task;
 }
 
-function _fetchDocument(worker, source, pdfDataRangeTransport, docId) {
+async function _fetchDocument(worker, source, pdfDataRangeTransport, docId) {
   if (worker.destroyed) {
-    return Promise.reject(new Error("Worker was destroyed"));
+    throw new Error("Worker was destroyed");
   }
 
   if (pdfDataRangeTransport) {
@@ -1861,9 +1910,9 @@ function _fetchDocument(worker, source, pdfDataRangeTransport, docId) {
     source.contentDispositionFilename = pdfDataRangeTransport.contentDispositionFilename;
   }
 
-  return worker.messageHandler.sendWithPromise("GetDocRequest", {
+  const workerId = await worker.messageHandler.sendWithPromise("GetDocRequest", {
     docId,
-    apiVersion: '2.11.22',
+    apiVersion: '2.11.298',
     source: {
       data: source.data,
       url: source.url,
@@ -1883,52 +1932,52 @@ function _fetchDocument(worker, source, pdfDataRangeTransport, docId) {
     useSystemFonts: source.useSystemFonts,
     cMapUrl: source.useWorkerFetch ? source.cMapUrl : null,
     standardFontDataUrl: source.useWorkerFetch ? source.standardFontDataUrl : null
-  }).then(function (workerId) {
-    if (worker.destroyed) {
-      throw new Error("Worker was destroyed");
-    }
-
-    return workerId;
   });
-}
 
-const PDFDocumentLoadingTask = function PDFDocumentLoadingTaskClosure() {
-  let nextDocumentId = 0;
-
-  class PDFDocumentLoadingTask {
-    constructor() {
-      this._capability = (0, _util.createPromiseCapability)();
-      this._transport = null;
-      this._worker = null;
-      this.docId = "d" + nextDocumentId++;
-      this.destroyed = false;
-      this.onPassword = null;
-      this.onProgress = null;
-      this.onUnsupportedFeature = null;
-    }
-
-    get promise() {
-      return this._capability.promise;
-    }
-
-    destroy() {
-      this.destroyed = true;
-      const transportDestroyed = !this._transport ? Promise.resolve() : this._transport.destroy();
-      return transportDestroyed.then(() => {
-        this._transport = null;
-
-        if (this._worker) {
-          this._worker.destroy();
-
-          this._worker = null;
-        }
-      });
-    }
-
+  if (worker.destroyed) {
+    throw new Error("Worker was destroyed");
   }
 
-  return PDFDocumentLoadingTask;
-}();
+  return workerId;
+}
+
+class PDFDocumentLoadingTask {
+  static get idCounters() {
+    return (0, _util.shadow)(this, "idCounters", {
+      doc: 0
+    });
+  }
+
+  constructor() {
+    this._capability = (0, _util.createPromiseCapability)();
+    this._transport = null;
+    this._worker = null;
+    this.docId = `d${PDFDocumentLoadingTask.idCounters.doc++}`;
+    this.destroyed = false;
+    this.onPassword = null;
+    this.onProgress = null;
+    this.onUnsupportedFeature = null;
+  }
+
+  get promise() {
+    return this._capability.promise;
+  }
+
+  async destroy() {
+    this.destroyed = true;
+    await this._transport?.destroy();
+    this._transport = null;
+
+    if (this._worker) {
+      this._worker.destroy();
+
+      this._worker = null;
+    }
+  }
+
+}
+
+exports.PDFDocumentLoadingTask = PDFDocumentLoadingTask;
 
 class PDFDataRangeTransport {
   constructor(length, initialData, progressiveDone = false, contentDispositionFilename = null) {
@@ -2158,6 +2207,7 @@ class PDFPageProxy {
     this.cleanupAfterRender = false;
     this.pendingCleanup = false;
     this._intentStates = new Map();
+    this._annotationPromises = new Map();
     this.destroyed = false;
   }
 
@@ -2199,16 +2249,19 @@ class PDFPageProxy {
   }
 
   getAnnotations({
-    intent = null
+    intent = "display"
   } = {}) {
-    const renderingIntent = intent === "display" || intent === "print" ? intent : null;
+    const intentArgs = this._transport.getRenderingIntent(intent);
 
-    if (!this._annotationsPromise || this._annotationsIntent !== renderingIntent) {
-      this._annotationsPromise = this._transport.getAnnotations(this._pageIndex, renderingIntent);
-      this._annotationsIntent = renderingIntent;
+    let promise = this._annotationPromises.get(intentArgs.cacheKey);
+
+    if (!promise) {
+      promise = this._transport.getAnnotations(this._pageIndex, intentArgs.renderingIntent);
+
+      this._annotationPromises.set(intentArgs.cacheKey, promise);
     }
 
-    return this._annotationsPromise;
+    return promise;
   }
 
   getJSActions() {
@@ -2223,31 +2276,31 @@ class PDFPageProxy {
     canvasContext,
     viewport,
     intent = "display",
-    renderInteractiveForms = false,
+    annotationMode = _util.AnnotationMode.ENABLE,
     transform = null,
     imageLayer = null,
     canvasFactory = null,
     background = null,
-    includeAnnotationStorage = false,
     optionalContentConfigPromise = null
   }) {
     if (this._stats) {
       this._stats.time("Overall");
     }
 
-    const renderingIntent = intent === "print" ? "print" : "display";
+    const intentArgs = this._transport.getRenderingIntent(intent, annotationMode);
+
     this.pendingCleanup = false;
 
     if (!optionalContentConfigPromise) {
       optionalContentConfigPromise = this._transport.getOptionalContentConfig();
     }
 
-    let intentState = this._intentStates.get(renderingIntent);
+    let intentState = this._intentStates.get(intentArgs.cacheKey);
 
     if (!intentState) {
       intentState = Object.create(null);
 
-      this._intentStates.set(renderingIntent, intentState);
+      this._intentStates.set(intentArgs.cacheKey, intentState);
     }
 
     if (intentState.streamReaderCancelTimeout) {
@@ -2258,7 +2311,7 @@ class PDFPageProxy {
     const canvasFactoryInstance = canvasFactory || new DefaultCanvasFactory({
       ownerDocument: this._ownerDocument
     });
-    const annotationStorage = includeAnnotationStorage ? this._transport.annotationStorage.serializable : null;
+    const intentPrint = !!(intentArgs.renderingIntent & _util.RenderingIntentFlag.PRINT);
 
     if (!intentState.displayReadyCapability) {
       intentState.displayReadyCapability = (0, _util.createPromiseCapability)();
@@ -2272,18 +2325,13 @@ class PDFPageProxy {
         this._stats.time("Page Request");
       }
 
-      this._pumpOperatorList({
-        pageIndex: this._pageIndex,
-        intent: renderingIntent,
-        renderInteractiveForms: renderInteractiveForms === true,
-        annotationStorage
-      });
+      this._pumpOperatorList(intentArgs);
     }
 
     const complete = error => {
       intentState.renderTasks.delete(internalRenderTask);
 
-      if (this.cleanupAfterRender || renderingIntent === "print") {
+      if (this.cleanupAfterRender || intentPrint) {
         this.pendingCleanup = true;
       }
 
@@ -2294,7 +2342,7 @@ class PDFPageProxy {
 
         this._abortOperatorList({
           intentState,
-          reason: error
+          reason: error instanceof Error ? error : new Error(error)
         });
       } else {
         internalRenderTask.capability.resolve();
@@ -2321,7 +2369,7 @@ class PDFPageProxy {
       operatorList: intentState.operatorList,
       pageIndex: this._pageIndex,
       canvasFactory: canvasFactoryInstance,
-      useRequestAnimationFrame: renderingIntent !== "print",
+      useRequestAnimationFrame: !intentPrint,
       pdfBug: this._pdfBug
     });
     (intentState.renderTasks ||= new Set()).add(internalRenderTask);
@@ -2346,7 +2394,8 @@ class PDFPageProxy {
   }
 
   getOperatorList({
-    intent = "display"
+    intent = "display",
+    annotationMode = _util.AnnotationMode.ENABLE
   } = {}) {
     function operatorListChanged() {
       if (intentState.operatorList.lastChunk) {
@@ -2355,14 +2404,14 @@ class PDFPageProxy {
       }
     }
 
-    const renderingIntent = `oplist-${intent === "print" ? "print" : "display"}`;
+    const intentArgs = this._transport.getRenderingIntent(intent, annotationMode, true);
 
-    let intentState = this._intentStates.get(renderingIntent);
+    let intentState = this._intentStates.get(intentArgs.cacheKey);
 
     if (!intentState) {
       intentState = Object.create(null);
 
-      this._intentStates.set(renderingIntent, intentState);
+      this._intentStates.set(intentArgs.cacheKey, intentState);
     }
 
     let opListTask;
@@ -2382,10 +2431,7 @@ class PDFPageProxy {
         this._stats.time("Page Request");
       }
 
-      this._pumpOperatorList({
-        pageIndex: this._pageIndex,
-        intent: renderingIntent
-      });
+      this._pumpOperatorList(intentArgs);
     }
 
     return intentState.opListReadCapability.promise;
@@ -2413,6 +2459,12 @@ class PDFPageProxy {
   }
 
   getTextContent(params = {}) {
+    if (this._transport._htmlForXfa) {
+      return this.getXfa().then(xfa => {
+        return _xfa_text.XfaText.textContent(xfa);
+      });
+    }
+
     const readableStream = this.streamTextContent(params);
     return new Promise(function (resolve, reject) {
       function pump() {
@@ -2449,14 +2501,14 @@ class PDFPageProxy {
     this._transport.pageCache[this._pageIndex] = null;
     const waitOn = [];
 
-    for (const [intent, intentState] of this._intentStates) {
+    for (const intentState of this._intentStates.values()) {
       this._abortOperatorList({
         intentState,
         reason: new Error("Page was destroyed."),
         force: true
       });
 
-      if (intent.startsWith("oplist-")) {
+      if (intentState.opListReadCapability) {
         continue;
       }
 
@@ -2467,7 +2519,9 @@ class PDFPageProxy {
     }
 
     this.objs.clear();
-    this._annotationsPromise = null;
+
+    this._annotationPromises.clear();
+
     this._jsActionsPromise = null;
     this._structTreePromise = null;
     this.pendingCleanup = false;
@@ -2496,7 +2550,9 @@ class PDFPageProxy {
     this._intentStates.clear();
 
     this.objs.clear();
-    this._annotationsPromise = null;
+
+    this._annotationPromises.clear();
+
     this._jsActionsPromise = null;
     this._structTreePromise = null;
 
@@ -2508,8 +2564,8 @@ class PDFPageProxy {
     return true;
   }
 
-  _startRenderPage(transparency, intent) {
-    const intentState = this._intentStates.get(intent);
+  _startRenderPage(transparency, cacheKey) {
+    const intentState = this._intentStates.get(cacheKey);
 
     if (!intentState) {
       return;
@@ -2541,14 +2597,20 @@ class PDFPageProxy {
     }
   }
 
-  _pumpOperatorList(args) {
-    (0, _util.assert)(args.intent, 'PDFPageProxy._pumpOperatorList: Expected "intent" argument.');
-
-    const readableStream = this._transport.messageHandler.sendWithStream("GetOperatorList", args);
+  _pumpOperatorList({
+    renderingIntent,
+    cacheKey
+  }) {
+    const readableStream = this._transport.messageHandler.sendWithStream("GetOperatorList", {
+      pageIndex: this._pageIndex,
+      intent: renderingIntent,
+      cacheKey,
+      annotationStorage: renderingIntent & _util.RenderingIntentFlag.ANNOTATIONS_STORAGE ? this._transport.annotationStorage.serializable : null
+    });
 
     const reader = readableStream.getReader();
 
-    const intentState = this._intentStates.get(args.intent);
+    const intentState = this._intentStates.get(cacheKey);
 
     intentState.streamReader = reader;
 
@@ -2604,8 +2666,6 @@ class PDFPageProxy {
     reason,
     force = false
   }) {
-    (0, _util.assert)(reason instanceof Error || typeof reason === "object" && reason !== null, 'PDFPageProxy._abortOperatorList: Expected "reason" argument.');
-
     if (!intentState.streamReader) {
       return;
     }
@@ -2629,16 +2689,16 @@ class PDFPageProxy {
       }
     }
 
-    intentState.streamReader.cancel(new _util.AbortException(reason?.message));
+    intentState.streamReader.cancel(new _util.AbortException(reason.message)).catch(() => {});
     intentState.streamReader = null;
 
     if (this._transport.destroyed) {
       return;
     }
 
-    for (const [intent, curIntentState] of this._intentStates) {
+    for (const [curCacheKey, curIntentState] of this._intentStates) {
       if (curIntentState === intentState) {
-        this._intentStates.delete(intent);
+        this._intentStates.delete(curCacheKey);
 
         break;
       }
@@ -2764,283 +2824,267 @@ class LoopbackPort {
 }
 
 exports.LoopbackPort = LoopbackPort;
+const PDFWorkerUtil = {
+  isWorkerDisabled: false,
+  fallbackWorkerSrc: null,
+  fakeWorkerId: 0
+};
+;
 
-const PDFWorker = function PDFWorkerClosure() {
-  const pdfWorkerPorts = new WeakMap();
-  let isWorkerDisabled = false;
-  let fallbackWorkerSrc;
-  let nextFakeWorkerId = 0;
-  let fakeWorkerCapability;
+class PDFWorker {
+  static get _workerPorts() {
+    return (0, _util.shadow)(this, "_workerPorts", new WeakMap());
+  }
 
-  function getWorkerSrc() {
+  constructor({
+    name = null,
+    port = null,
+    verbosity = (0, _util.getVerbosityLevel)()
+  } = {}) {
+    if (port && PDFWorker._workerPorts.has(port)) {
+      throw new Error("Cannot use more than one PDFWorker per port.");
+    }
+
+    this.name = name;
+    this.destroyed = false;
+    this.postMessageTransfers = true;
+    this.verbosity = verbosity;
+    this._readyCapability = (0, _util.createPromiseCapability)();
+    this._port = null;
+    this._webWorker = null;
+    this._messageHandler = null;
+
+    if (port) {
+      PDFWorker._workerPorts.set(port, this);
+
+      this._initializeFromPort(port);
+
+      return;
+    }
+
+    this._initialize();
+  }
+
+  get promise() {
+    return this._readyCapability.promise;
+  }
+
+  get port() {
+    return this._port;
+  }
+
+  get messageHandler() {
+    return this._messageHandler;
+  }
+
+  _initializeFromPort(port) {
+    this._port = port;
+    this._messageHandler = new _message_handler.MessageHandler("main", "worker", port);
+
+    this._messageHandler.on("ready", function () {});
+
+    this._readyCapability.resolve();
+  }
+
+  _initialize() {
+    if (typeof Worker !== "undefined" && !PDFWorkerUtil.isWorkerDisabled && !PDFWorker._mainThreadWorkerMessageHandler) {
+      let workerSrc = PDFWorker.workerSrc;
+
+      try {
+        const worker = new Worker(workerSrc);
+        const messageHandler = new _message_handler.MessageHandler("main", "worker", worker);
+
+        const terminateEarly = () => {
+          worker.removeEventListener("error", onWorkerError);
+          messageHandler.destroy();
+          worker.terminate();
+
+          if (this.destroyed) {
+            this._readyCapability.reject(new Error("Worker was destroyed"));
+          } else {
+            this._setupFakeWorker();
+          }
+        };
+
+        const onWorkerError = () => {
+          if (!this._webWorker) {
+            terminateEarly();
+          }
+        };
+
+        worker.addEventListener("error", onWorkerError);
+        messageHandler.on("test", data => {
+          worker.removeEventListener("error", onWorkerError);
+
+          if (this.destroyed) {
+            terminateEarly();
+            return;
+          }
+
+          if (data) {
+            this._messageHandler = messageHandler;
+            this._port = worker;
+            this._webWorker = worker;
+
+            if (!data.supportTransfers) {
+              this.postMessageTransfers = false;
+            }
+
+            this._readyCapability.resolve();
+
+            messageHandler.send("configure", {
+              verbosity: this.verbosity
+            });
+          } else {
+            this._setupFakeWorker();
+
+            messageHandler.destroy();
+            worker.terminate();
+          }
+        });
+        messageHandler.on("ready", data => {
+          worker.removeEventListener("error", onWorkerError);
+
+          if (this.destroyed) {
+            terminateEarly();
+            return;
+          }
+
+          try {
+            sendTest();
+          } catch (e) {
+            this._setupFakeWorker();
+          }
+        });
+
+        const sendTest = () => {
+          const testObj = new Uint8Array([this.postMessageTransfers ? 255 : 0]);
+
+          try {
+            messageHandler.send("test", testObj, [testObj.buffer]);
+          } catch (ex) {
+            (0, _util.warn)("Cannot use postMessage transfers.");
+            testObj[0] = 0;
+            messageHandler.send("test", testObj);
+          }
+        };
+
+        sendTest();
+        return;
+      } catch (e) {
+        (0, _util.info)("The worker has been disabled.");
+      }
+    }
+
+    this._setupFakeWorker();
+  }
+
+  _setupFakeWorker() {
+    if (!PDFWorkerUtil.isWorkerDisabled) {
+      (0, _util.warn)("Setting up fake worker.");
+      PDFWorkerUtil.isWorkerDisabled = true;
+    }
+
+    PDFWorker._setupFakeWorkerGlobal.then(WorkerMessageHandler => {
+      if (this.destroyed) {
+        this._readyCapability.reject(new Error("Worker was destroyed"));
+
+        return;
+      }
+
+      const port = new LoopbackPort();
+      this._port = port;
+      const id = `fake${PDFWorkerUtil.fakeWorkerId++}`;
+      const workerHandler = new _message_handler.MessageHandler(id + "_worker", id, port);
+      WorkerMessageHandler.setup(workerHandler, port);
+      const messageHandler = new _message_handler.MessageHandler(id, id + "_worker", port);
+      this._messageHandler = messageHandler;
+
+      this._readyCapability.resolve();
+
+      messageHandler.send("configure", {
+        verbosity: this.verbosity
+      });
+    }).catch(reason => {
+      this._readyCapability.reject(new Error(`Setting up fake worker failed: "${reason.message}".`));
+    });
+  }
+
+  destroy() {
+    this.destroyed = true;
+
+    if (this._webWorker) {
+      this._webWorker.terminate();
+
+      this._webWorker = null;
+    }
+
+    PDFWorker._workerPorts.delete(this._port);
+
+    this._port = null;
+
+    if (this._messageHandler) {
+      this._messageHandler.destroy();
+
+      this._messageHandler = null;
+    }
+  }
+
+  static fromPort(params) {
+    if (!params?.port) {
+      throw new Error("PDFWorker.fromPort - invalid method signature.");
+    }
+
+    if (this._workerPorts.has(params.port)) {
+      return this._workerPorts.get(params.port);
+    }
+
+    return new PDFWorker(params);
+  }
+
+  static get workerSrc() {
     if (_worker_options.GlobalWorkerOptions.workerSrc) {
       return _worker_options.GlobalWorkerOptions.workerSrc;
     }
 
-    if (typeof fallbackWorkerSrc !== "undefined") {
+    if (PDFWorkerUtil.fallbackWorkerSrc !== null) {
       if (!_is_node.isNodeJS) {
         (0, _display_utils.deprecated)('No "GlobalWorkerOptions.workerSrc" specified.');
       }
 
-      return fallbackWorkerSrc;
+      return PDFWorkerUtil.fallbackWorkerSrc;
     }
 
     throw new Error('No "GlobalWorkerOptions.workerSrc" specified.');
   }
 
-  function getMainThreadWorkerMessageHandler() {
-    let mainWorkerMessageHandler;
-
+  static get _mainThreadWorkerMessageHandler() {
     try {
-      mainWorkerMessageHandler = globalThis.pdfjsWorker?.WorkerMessageHandler;
-    } catch (ex) {}
-
-    return mainWorkerMessageHandler || null;
+      return globalThis.pdfjsWorker?.WorkerMessageHandler || null;
+    } catch (ex) {
+      return null;
+    }
   }
 
-  function setupFakeWorkerGlobal() {
-    if (fakeWorkerCapability) {
-      return fakeWorkerCapability.promise;
-    }
-
-    fakeWorkerCapability = (0, _util.createPromiseCapability)();
-
-    const loader = async function () {
-      const mainWorkerMessageHandler = getMainThreadWorkerMessageHandler();
+  static get _setupFakeWorkerGlobal() {
+    const loader = async () => {
+      const mainWorkerMessageHandler = this._mainThreadWorkerMessageHandler;
 
       if (mainWorkerMessageHandler) {
         return mainWorkerMessageHandler;
       }
 
-      await (0, _display_utils.loadScript)(getWorkerSrc());
+      await (0, _display_utils.loadScript)(this.workerSrc);
       return window.pdfjsWorker.WorkerMessageHandler;
     };
 
-    loader().then(fakeWorkerCapability.resolve, fakeWorkerCapability.reject);
-    return fakeWorkerCapability.promise;
+    return (0, _util.shadow)(this, "_setupFakeWorkerGlobal", loader());
   }
 
-  function createCDNWrapper(url) {
-    const wrapper = "importScripts('" + url + "');";
-    return URL.createObjectURL(new Blob([wrapper]));
-  }
-
-  class PDFWorker {
-    constructor({
-      name = null,
-      port = null,
-      verbosity = (0, _util.getVerbosityLevel)()
-    } = {}) {
-      if (port && pdfWorkerPorts.has(port)) {
-        throw new Error("Cannot use more than one PDFWorker per port");
-      }
-
-      this.name = name;
-      this.destroyed = false;
-      this.postMessageTransfers = true;
-      this.verbosity = verbosity;
-      this._readyCapability = (0, _util.createPromiseCapability)();
-      this._port = null;
-      this._webWorker = null;
-      this._messageHandler = null;
-
-      if (port) {
-        pdfWorkerPorts.set(port, this);
-
-        this._initializeFromPort(port);
-
-        return;
-      }
-
-      this._initialize();
-    }
-
-    get promise() {
-      return this._readyCapability.promise;
-    }
-
-    get port() {
-      return this._port;
-    }
-
-    get messageHandler() {
-      return this._messageHandler;
-    }
-
-    _initializeFromPort(port) {
-      this._port = port;
-      this._messageHandler = new _message_handler.MessageHandler("main", "worker", port);
-
-      this._messageHandler.on("ready", function () {});
-
-      this._readyCapability.resolve();
-    }
-
-    _initialize() {
-      if (typeof Worker !== "undefined" && !isWorkerDisabled && !getMainThreadWorkerMessageHandler()) {
-        let workerSrc = getWorkerSrc();
-
-        try {
-          const worker = new Worker(workerSrc);
-          const messageHandler = new _message_handler.MessageHandler("main", "worker", worker);
-
-          const terminateEarly = () => {
-            worker.removeEventListener("error", onWorkerError);
-            messageHandler.destroy();
-            worker.terminate();
-
-            if (this.destroyed) {
-              this._readyCapability.reject(new Error("Worker was destroyed"));
-            } else {
-              this._setupFakeWorker();
-            }
-          };
-
-          const onWorkerError = () => {
-            if (!this._webWorker) {
-              terminateEarly();
-            }
-          };
-
-          worker.addEventListener("error", onWorkerError);
-          messageHandler.on("test", data => {
-            worker.removeEventListener("error", onWorkerError);
-
-            if (this.destroyed) {
-              terminateEarly();
-              return;
-            }
-
-            if (data) {
-              this._messageHandler = messageHandler;
-              this._port = worker;
-              this._webWorker = worker;
-
-              if (!data.supportTransfers) {
-                this.postMessageTransfers = false;
-              }
-
-              this._readyCapability.resolve();
-
-              messageHandler.send("configure", {
-                verbosity: this.verbosity
-              });
-            } else {
-              this._setupFakeWorker();
-
-              messageHandler.destroy();
-              worker.terminate();
-            }
-          });
-          messageHandler.on("ready", data => {
-            worker.removeEventListener("error", onWorkerError);
-
-            if (this.destroyed) {
-              terminateEarly();
-              return;
-            }
-
-            try {
-              sendTest();
-            } catch (e) {
-              this._setupFakeWorker();
-            }
-          });
-
-          const sendTest = () => {
-            const testObj = new Uint8Array([this.postMessageTransfers ? 255 : 0]);
-
-            try {
-              messageHandler.send("test", testObj, [testObj.buffer]);
-            } catch (ex) {
-              (0, _util.warn)("Cannot use postMessage transfers.");
-              testObj[0] = 0;
-              messageHandler.send("test", testObj);
-            }
-          };
-
-          sendTest();
-          return;
-        } catch (e) {
-          (0, _util.info)("The worker has been disabled.");
-        }
-      }
-
-      this._setupFakeWorker();
-    }
-
-    _setupFakeWorker() {
-      if (!isWorkerDisabled) {
-        (0, _util.warn)("Setting up fake worker.");
-        isWorkerDisabled = true;
-      }
-
-      setupFakeWorkerGlobal().then(WorkerMessageHandler => {
-        if (this.destroyed) {
-          this._readyCapability.reject(new Error("Worker was destroyed"));
-
-          return;
-        }
-
-        const port = new LoopbackPort();
-        this._port = port;
-        const id = "fake" + nextFakeWorkerId++;
-        const workerHandler = new _message_handler.MessageHandler(id + "_worker", id, port);
-        WorkerMessageHandler.setup(workerHandler, port);
-        const messageHandler = new _message_handler.MessageHandler(id, id + "_worker", port);
-        this._messageHandler = messageHandler;
-
-        this._readyCapability.resolve();
-
-        messageHandler.send("configure", {
-          verbosity: this.verbosity
-        });
-      }).catch(reason => {
-        this._readyCapability.reject(new Error(`Setting up fake worker failed: "${reason.message}".`));
-      });
-    }
-
-    destroy() {
-      this.destroyed = true;
-
-      if (this._webWorker) {
-        this._webWorker.terminate();
-
-        this._webWorker = null;
-      }
-
-      pdfWorkerPorts.delete(this._port);
-      this._port = null;
-
-      if (this._messageHandler) {
-        this._messageHandler.destroy();
-
-        this._messageHandler = null;
-      }
-    }
-
-    static fromPort(params) {
-      if (!params || !params.port) {
-        throw new Error("PDFWorker.fromPort - invalid method signature.");
-      }
-
-      if (pdfWorkerPorts.has(params.port)) {
-        return pdfWorkerPorts.get(params.port);
-      }
-
-      return new PDFWorker(params);
-    }
-
-    static getWorkerSrc() {
-      return getWorkerSrc();
-    }
-
-  }
-
-  return PDFWorker;
-}();
+}
 
 exports.PDFWorker = PDFWorker;
+;
 
 class WorkerTransport {
   constructor(messageHandler, loadingTask, networkStream, params) {
@@ -3081,6 +3125,57 @@ class WorkerTransport {
     return (0, _util.shadow)(this, "annotationStorage", new _annotation_storage.AnnotationStorage());
   }
 
+  getRenderingIntent(intent, annotationMode = _util.AnnotationMode.ENABLE, isOpList = false) {
+    let renderingIntent = _util.RenderingIntentFlag.DISPLAY;
+    let lastModified = "";
+
+    switch (intent) {
+      case "any":
+        renderingIntent = _util.RenderingIntentFlag.ANY;
+        break;
+
+      case "display":
+        break;
+
+      case "print":
+        renderingIntent = _util.RenderingIntentFlag.PRINT;
+        break;
+
+      default:
+        (0, _util.warn)(`getRenderingIntent - invalid intent: ${intent}`);
+    }
+
+    switch (annotationMode) {
+      case _util.AnnotationMode.DISABLE:
+        renderingIntent += _util.RenderingIntentFlag.ANNOTATIONS_DISABLE;
+        break;
+
+      case _util.AnnotationMode.ENABLE:
+        break;
+
+      case _util.AnnotationMode.ENABLE_FORMS:
+        renderingIntent += _util.RenderingIntentFlag.ANNOTATIONS_FORMS;
+        break;
+
+      case _util.AnnotationMode.ENABLE_STORAGE:
+        renderingIntent += _util.RenderingIntentFlag.ANNOTATIONS_STORAGE;
+        lastModified = this.annotationStorage.lastModified;
+        break;
+
+      default:
+        (0, _util.warn)(`getRenderingIntent - invalid annotationMode: ${annotationMode}`);
+    }
+
+    if (isOpList) {
+      renderingIntent += _util.RenderingIntentFlag.OPLIST;
+    }
+
+    return {
+      renderingIntent,
+      cacheKey: `${renderingIntent}_${lastModified}`
+    };
+  }
+
   destroy() {
     if (this.destroyCapability) {
       return this.destroyCapability.promise;
@@ -3113,6 +3208,7 @@ class WorkerTransport {
     Promise.all(waitOn).then(() => {
       this.commonObjs.clear();
       this.fontLoader.clear();
+      this._getFieldObjectsPromise = null;
       this._hasJSActionsPromise = null;
 
       if (this._networkStream) {
@@ -3271,11 +3367,9 @@ class WorkerTransport {
         case "UnknownErrorException":
           reason = new _util.UnknownErrorException(ex.message, ex.details);
           break;
-      }
 
-      if (!(reason instanceof Error)) {
-        const msg = "DocException - expected a valid Error.";
-        (0, _util.warn)(msg);
+        default:
+          (0, _util.unreachable)("DocException - expected a valid Error.");
       }
 
       loadingTask._capability.reject(reason);
@@ -3318,7 +3412,7 @@ class WorkerTransport {
 
       const page = this.pageCache[data.pageIndex];
 
-      page._startRenderPage(data.transparency, data.intent);
+      page._startRenderPage(data.transparency, data.cacheKey);
     });
     messageHandler.on("commonobj", data => {
       if (this.destroyed) {
@@ -3497,8 +3591,6 @@ class WorkerTransport {
   getPageIndex(ref) {
     return this.messageHandler.sendWithPromise("GetPageIndex", {
       ref
-    }).catch(function (reason) {
-      return Promise.reject(new Error(reason));
     });
   }
 
@@ -3521,7 +3613,7 @@ class WorkerTransport {
   }
 
   getFieldObjects() {
-    return this.messageHandler.sendWithPromise("GetFieldObjects", null);
+    return this._getFieldObjectsPromise ||= this.messageHandler.sendWithPromise("GetFieldObjects", null);
   }
 
   hasJSActions() {
@@ -3650,13 +3742,15 @@ class WorkerTransport {
       this.fontLoader.clear();
     }
 
+    this._getFieldObjectsPromise = null;
     this._hasJSActionsPromise = null;
   }
 
   get loadingParams() {
     const params = this._params;
     return (0, _util.shadow)(this, "loadingParams", {
-      disableAutoFetch: params.disableAutoFetch
+      disableAutoFetch: params.disableAutoFetch,
+      enableXfa: params.enableXfa
     });
   }
 
@@ -3730,181 +3824,181 @@ class RenderTask {
 
 }
 
-const InternalRenderTask = function InternalRenderTaskClosure() {
-  const canvasInRendering = new WeakSet();
+exports.RenderTask = RenderTask;
 
-  class InternalRenderTask {
-    constructor({
-      callback,
-      params,
-      objs,
-      commonObjs,
-      operatorList,
-      pageIndex,
-      canvasFactory,
-      useRequestAnimationFrame = false,
-      pdfBug = false
-    }) {
-      this.callback = callback;
-      this.params = params;
-      this.objs = objs;
-      this.commonObjs = commonObjs;
-      this.operatorListIdx = null;
-      this.operatorList = operatorList;
-      this._pageIndex = pageIndex;
-      this.canvasFactory = canvasFactory;
-      this._pdfBug = pdfBug;
-      this.running = false;
-      this.graphicsReadyCallback = null;
-      this.graphicsReady = false;
-      this._useRequestAnimationFrame = useRequestAnimationFrame === true && typeof window !== "undefined";
-      this.cancelled = false;
-      this.capability = (0, _util.createPromiseCapability)();
-      this.task = new RenderTask(this);
-      this._cancelBound = this.cancel.bind(this);
-      this._continueBound = this._continue.bind(this);
-      this._scheduleNextBound = this._scheduleNext.bind(this);
-      this._nextBound = this._next.bind(this);
-      this._canvas = params.canvasContext.canvas;
-    }
-
-    get completed() {
-      return this.capability.promise.catch(function () {});
-    }
-
-    initializeGraphics({
-      transparency = false,
-      optionalContentConfig
-    }) {
-      if (this.cancelled) {
-        return;
-      }
-
-      if (this._canvas) {
-        if (canvasInRendering.has(this._canvas)) {
-          throw new Error("Cannot use the same canvas during multiple render() operations. " + "Use different canvas or ensure previous operations were " + "cancelled or completed.");
-        }
-
-        canvasInRendering.add(this._canvas);
-      }
-
-      if (this._pdfBug && globalThis.StepperManager?.enabled) {
-        this.stepper = globalThis.StepperManager.create(this._pageIndex);
-        this.stepper.init(this.operatorList);
-        this.stepper.nextBreakPoint = this.stepper.getNextBreakPoint();
-      }
-
-      const {
-        canvasContext,
-        viewport,
-        transform,
-        imageLayer,
-        background
-      } = this.params;
-      this.gfx = new _canvas.CanvasGraphics(canvasContext, this.commonObjs, this.objs, this.canvasFactory, imageLayer, optionalContentConfig);
-      this.gfx.beginDrawing({
-        transform,
-        viewport,
-        transparency,
-        background
-      });
-      this.operatorListIdx = 0;
-      this.graphicsReady = true;
-
-      if (this.graphicsReadyCallback) {
-        this.graphicsReadyCallback();
-      }
-    }
-
-    cancel(error = null) {
-      this.running = false;
-      this.cancelled = true;
-
-      if (this.gfx) {
-        this.gfx.endDrawing();
-      }
-
-      if (this._canvas) {
-        canvasInRendering.delete(this._canvas);
-      }
-
-      this.callback(error || new _display_utils.RenderingCancelledException(`Rendering cancelled, page ${this._pageIndex + 1}`, "canvas"));
-    }
-
-    operatorListChanged() {
-      if (!this.graphicsReady) {
-        if (!this.graphicsReadyCallback) {
-          this.graphicsReadyCallback = this._continueBound;
-        }
-
-        return;
-      }
-
-      if (this.stepper) {
-        this.stepper.updateOperatorList(this.operatorList);
-      }
-
-      if (this.running) {
-        return;
-      }
-
-      this._continue();
-    }
-
-    _continue() {
-      this.running = true;
-
-      if (this.cancelled) {
-        return;
-      }
-
-      if (this.task.onContinue) {
-        this.task.onContinue(this._scheduleNextBound);
-      } else {
-        this._scheduleNext();
-      }
-    }
-
-    _scheduleNext() {
-      if (this._useRequestAnimationFrame) {
-        window.requestAnimationFrame(() => {
-          this._nextBound().catch(this._cancelBound);
-        });
-      } else {
-        Promise.resolve().then(this._nextBound).catch(this._cancelBound);
-      }
-    }
-
-    async _next() {
-      if (this.cancelled) {
-        return;
-      }
-
-      this.operatorListIdx = this.gfx.executeOperatorList(this.operatorList, this.operatorListIdx, this._continueBound, this.stepper);
-
-      if (this.operatorListIdx === this.operatorList.argsArray.length) {
-        this.running = false;
-
-        if (this.operatorList.lastChunk) {
-          this.gfx.endDrawing();
-
-          if (this._canvas) {
-            canvasInRendering.delete(this._canvas);
-          }
-
-          this.callback();
-        }
-      }
-    }
-
+class InternalRenderTask {
+  static get canvasInUse() {
+    return (0, _util.shadow)(this, "canvasInUse", new WeakSet());
   }
 
-  return InternalRenderTask;
-}();
+  constructor({
+    callback,
+    params,
+    objs,
+    commonObjs,
+    operatorList,
+    pageIndex,
+    canvasFactory,
+    useRequestAnimationFrame = false,
+    pdfBug = false
+  }) {
+    this.callback = callback;
+    this.params = params;
+    this.objs = objs;
+    this.commonObjs = commonObjs;
+    this.operatorListIdx = null;
+    this.operatorList = operatorList;
+    this._pageIndex = pageIndex;
+    this.canvasFactory = canvasFactory;
+    this._pdfBug = pdfBug;
+    this.running = false;
+    this.graphicsReadyCallback = null;
+    this.graphicsReady = false;
+    this._useRequestAnimationFrame = useRequestAnimationFrame === true && typeof window !== "undefined";
+    this.cancelled = false;
+    this.capability = (0, _util.createPromiseCapability)();
+    this.task = new RenderTask(this);
+    this._cancelBound = this.cancel.bind(this);
+    this._continueBound = this._continue.bind(this);
+    this._scheduleNextBound = this._scheduleNext.bind(this);
+    this._nextBound = this._next.bind(this);
+    this._canvas = params.canvasContext.canvas;
+  }
 
-const version = '2.11.22';
+  get completed() {
+    return this.capability.promise.catch(function () {});
+  }
+
+  initializeGraphics({
+    transparency = false,
+    optionalContentConfig
+  }) {
+    if (this.cancelled) {
+      return;
+    }
+
+    if (this._canvas) {
+      if (InternalRenderTask.canvasInUse.has(this._canvas)) {
+        throw new Error("Cannot use the same canvas during multiple render() operations. " + "Use different canvas or ensure previous operations were " + "cancelled or completed.");
+      }
+
+      InternalRenderTask.canvasInUse.add(this._canvas);
+    }
+
+    if (this._pdfBug && globalThis.StepperManager?.enabled) {
+      this.stepper = globalThis.StepperManager.create(this._pageIndex);
+      this.stepper.init(this.operatorList);
+      this.stepper.nextBreakPoint = this.stepper.getNextBreakPoint();
+    }
+
+    const {
+      canvasContext,
+      viewport,
+      transform,
+      imageLayer,
+      background
+    } = this.params;
+    this.gfx = new _canvas.CanvasGraphics(canvasContext, this.commonObjs, this.objs, this.canvasFactory, imageLayer, optionalContentConfig);
+    this.gfx.beginDrawing({
+      transform,
+      viewport,
+      transparency,
+      background
+    });
+    this.operatorListIdx = 0;
+    this.graphicsReady = true;
+
+    if (this.graphicsReadyCallback) {
+      this.graphicsReadyCallback();
+    }
+  }
+
+  cancel(error = null) {
+    this.running = false;
+    this.cancelled = true;
+
+    if (this.gfx) {
+      this.gfx.endDrawing();
+    }
+
+    if (this._canvas) {
+      InternalRenderTask.canvasInUse.delete(this._canvas);
+    }
+
+    this.callback(error || new _display_utils.RenderingCancelledException(`Rendering cancelled, page ${this._pageIndex + 1}`, "canvas"));
+  }
+
+  operatorListChanged() {
+    if (!this.graphicsReady) {
+      if (!this.graphicsReadyCallback) {
+        this.graphicsReadyCallback = this._continueBound;
+      }
+
+      return;
+    }
+
+    if (this.stepper) {
+      this.stepper.updateOperatorList(this.operatorList);
+    }
+
+    if (this.running) {
+      return;
+    }
+
+    this._continue();
+  }
+
+  _continue() {
+    this.running = true;
+
+    if (this.cancelled) {
+      return;
+    }
+
+    if (this.task.onContinue) {
+      this.task.onContinue(this._scheduleNextBound);
+    } else {
+      this._scheduleNext();
+    }
+  }
+
+  _scheduleNext() {
+    if (this._useRequestAnimationFrame) {
+      window.requestAnimationFrame(() => {
+        this._nextBound().catch(this._cancelBound);
+      });
+    } else {
+      Promise.resolve().then(this._nextBound).catch(this._cancelBound);
+    }
+  }
+
+  async _next() {
+    if (this.cancelled) {
+      return;
+    }
+
+    this.operatorListIdx = this.gfx.executeOperatorList(this.operatorList, this.operatorListIdx, this._continueBound, this.stepper);
+
+    if (this.operatorListIdx === this.operatorList.argsArray.length) {
+      this.running = false;
+
+      if (this.operatorList.lastChunk) {
+        this.gfx.endDrawing();
+
+        if (this._canvas) {
+          InternalRenderTask.canvasInUse.delete(this._canvas);
+        }
+
+        this.callback();
+      }
+    }
+  }
+
+}
+
+const version = '2.11.298';
 exports.version = version;
-const build = '4ad5c5d52';
+const build = 'd370a281c';
 exports.build = build;
 
 /***/ }),
@@ -4232,15 +4326,20 @@ var _util = __w_pdfjs_require__(2);
 class AnnotationStorage {
   constructor() {
     this._storage = new Map();
+    this._timeStamp = Date.now();
     this._modified = false;
     this.onSetModified = null;
     this.onResetModified = null;
   }
 
   getValue(key, defaultValue) {
-    const obj = this._storage.get(key);
+    const value = this._storage.get(key);
 
-    return obj !== undefined ? obj : defaultValue;
+    if (value === undefined) {
+      return defaultValue;
+    }
+
+    return Object.assign(defaultValue, value);
   }
 
   setValue(key, value) {
@@ -4256,12 +4355,14 @@ class AnnotationStorage {
         }
       }
     } else {
-      this._storage.set(key, value);
-
       modified = true;
+
+      this._storage.set(key, value);
     }
 
     if (modified) {
+      this._timeStamp = Date.now();
+
       this._setModified();
     }
   }
@@ -4298,6 +4399,10 @@ class AnnotationStorage {
     return this._storage.size > 0 ? this._storage : null;
   }
 
+  get lastModified() {
+    return this._timeStamp.toString();
+  }
+
 }
 
 exports.AnnotationStorage = AnnotationStorage;
@@ -4316,6 +4421,8 @@ exports.CanvasGraphics = void 0;
 var _util = __w_pdfjs_require__(2);
 
 var _pattern_helper = __w_pdfjs_require__(11);
+
+var _display_utils = __w_pdfjs_require__(1);
 
 const MIN_FONT_SIZE = 16;
 const MAX_FONT_SIZE = 100;
@@ -5059,6 +5166,22 @@ function composeSMask(ctx, smask, layerCtx) {
   ctx.drawImage(mask, 0, 0);
 }
 
+function getImageSmoothingEnabled(transform, interpolate) {
+  const scale = _util.Util.singularValueDecompose2dScale(transform);
+
+  scale[0] = Math.fround(scale[0]);
+  scale[1] = Math.fround(scale[1]);
+  const actualScale = Math.fround((globalThis.devicePixelRatio || 1) * _display_utils.PixelsPerInch.PDF_TO_CSS_UNITS);
+
+  if (interpolate !== undefined) {
+    return interpolate;
+  } else if (scale[0] <= actualScale || scale[1] <= actualScale) {
+    return true;
+  }
+
+  return false;
+}
+
 const LINE_CAP_STYLES = ["butt", "round", "square"];
 const LINE_JOIN_STYLES = ["miter", "round", "bevel"];
 const NORMAL_CLIP = {};
@@ -5290,6 +5413,7 @@ class CanvasGraphics {
 
     const scaled = this._scaleImage(maskCanvas.canvas, fillCtx.mozCurrentTransformInverse);
 
+    fillCtx.imageSmoothingEnabled = getImageSmoothingEnabled(fillCtx.mozCurrentTransform, img.interpolate);
     fillCtx.drawImage(scaled.img, 0, 0, scaled.img.width, scaled.img.height, 0, 0, width, height);
     fillCtx.globalCompositeOperation = "source-in";
 
@@ -6360,12 +6484,7 @@ class CanvasGraphics {
     this.groupLevel--;
     const groupCtx = this.ctx;
     this.ctx = this.groupStack.pop();
-
-    if (this.ctx.imageSmoothingEnabled !== undefined) {
-      this.ctx.imageSmoothingEnabled = false;
-    } else {
-      this.ctx.mozImageSmoothingEnabled = false;
-    }
+    this.ctx.imageSmoothingEnabled = false;
 
     if (group.smask) {
       this.tempSMask = this.smaskStack.pop();
@@ -6566,6 +6685,7 @@ class CanvasGraphics {
 
     const scaled = this._scaleImage(imgToPaint, ctx.mozCurrentTransformInverse);
 
+    ctx.imageSmoothingEnabled = getImageSmoothingEnabled(ctx.mozCurrentTransform, imgData.interpolate);
     ctx.drawImage(scaled.img, 0, 0, scaled.paintWidth, scaled.paintHeight, 0, -height, width, height);
 
     if (this.imageLayer) {
@@ -7318,7 +7438,8 @@ const StreamKind = {
 };
 
 function wrapReason(reason) {
-  if (typeof reason !== "object" || reason === null) {
+  if (!(reason instanceof Error || typeof reason === "object" && reason !== null)) {
+    (0, _util.warn)('wrapReason: Expected "reason" to be a (possibly cloned) Error.');
     return reason;
   }
 
@@ -7328,6 +7449,9 @@ function wrapReason(reason) {
 
     case "MissingPDFException":
       return new _util.MissingPDFException(reason.message);
+
+    case "PasswordException":
+      return new _util.PasswordException(reason.message, reason.code);
 
     case "UnexpectedResponseException":
       return new _util.UnexpectedResponseException(reason.message, reason.status);
@@ -7662,7 +7786,7 @@ class MessageHandler {
         this.streamSinks[streamId].desiredSize = data.desiredSize;
         const {
           onPull
-        } = this.streamSinks[data.streamId];
+        } = this.streamSinks[streamId];
         new Promise(function (resolve) {
           resolve(onPull && onPull());
         }).then(function () {
@@ -7734,7 +7858,7 @@ class MessageHandler {
 
         const {
           onCancel
-        } = this.streamSinks[data.streamId];
+        } = this.streamSinks[streamId];
         new Promise(function (resolve) {
           resolve(onCancel && onCancel(wrapReason(data.reason)));
         }).then(function () {
@@ -7934,6 +8058,15 @@ class OptionalContentConfig {
   }
 
   isVisible(group) {
+    if (this._groups.size === 0) {
+      return true;
+    }
+
+    if (!group) {
+      (0, _util.warn)("Optional content group not defined.");
+      return true;
+    }
+
     if (group.type === "OCG") {
       if (!this._groups.has(group.id)) {
         (0, _util.warn)(`Optional content group not found: ${group.id}`);
@@ -8398,6 +8531,70 @@ class PDFDataTransportStreamRangeReader {
 
 /***/ }),
 /* 17 */
+/***/ ((__unused_webpack_module, exports) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.XfaText = void 0;
+
+class XfaText {
+  static textContent(xfa) {
+    const items = [];
+    const output = {
+      items,
+      styles: Object.create(null)
+    };
+
+    function walk(node) {
+      if (!node) {
+        return;
+      }
+
+      let str = null;
+      const name = node.name;
+
+      if (name === "#text") {
+        str = node.value;
+      } else if (!XfaText.shouldBuildText(name)) {
+        return;
+      } else if (node?.attributes?.textContent) {
+        str = node.attributes.textContent;
+      } else if (node.value) {
+        str = node.value;
+      }
+
+      if (str !== null) {
+        items.push({
+          str
+        });
+      }
+
+      if (!node.children) {
+        return;
+      }
+
+      for (const child of node.children) {
+        walk(child);
+      }
+    }
+
+    walk(xfa);
+    return output;
+  }
+
+  static shouldBuildText(name) {
+    return !(name === "textarea" || name === "input" || name === "option" || name === "select");
+  }
+
+}
+
+exports.XfaText = XfaText;
+
+/***/ }),
+/* 18 */
 /***/ ((__unused_webpack_module, exports, __w_pdfjs_require__) => {
 
 
@@ -8413,7 +8610,10 @@ var _util = __w_pdfjs_require__(2);
 
 var _annotation_storage = __w_pdfjs_require__(9);
 
-var _scripting_utils = __w_pdfjs_require__(18);
+var _scripting_utils = __w_pdfjs_require__(19);
+
+const DEFAULT_TAB_INDEX = 1000;
+const GetElementsByNameSet = new WeakSet();
 
 class AnnotationElementFactory {
   static create(parameters) {
@@ -8514,11 +8714,12 @@ class AnnotationElement {
     this.linkService = parameters.linkService;
     this.downloadManager = parameters.downloadManager;
     this.imageResourcesPath = parameters.imageResourcesPath;
-    this.renderInteractiveForms = parameters.renderInteractiveForms;
+    this.renderForms = parameters.renderForms;
     this.svgFactory = parameters.svgFactory;
     this.annotationStorage = parameters.annotationStorage;
     this.enableScripting = parameters.enableScripting;
     this.hasJSActions = parameters.hasJSActions;
+    this._fieldObjects = parameters.fieldObjects;
     this._mouseState = parameters.mouseState;
 
     if (isRenderable) {
@@ -8657,6 +8858,69 @@ class AnnotationElement {
     (0, _util.unreachable)("Abstract method `AnnotationElement.render` called");
   }
 
+  _getElementsByName(name, skipId = null) {
+    const fields = [];
+
+    if (this._fieldObjects) {
+      const fieldObj = this._fieldObjects[name];
+
+      if (fieldObj) {
+        for (const {
+          page,
+          id,
+          exportValues
+        } of fieldObj) {
+          if (page === -1) {
+            continue;
+          }
+
+          if (id === skipId) {
+            continue;
+          }
+
+          const exportValue = typeof exportValues === "string" ? exportValues : null;
+          const domElement = document.getElementById(id);
+
+          if (domElement && !GetElementsByNameSet.has(domElement)) {
+            (0, _util.warn)(`_getElementsByName - element not allowed: ${id}`);
+            continue;
+          }
+
+          fields.push({
+            id,
+            exportValue,
+            domElement
+          });
+        }
+      }
+
+      return fields;
+    }
+
+    for (const domElement of document.getElementsByName(name)) {
+      const {
+        id,
+        exportValue
+      } = domElement;
+
+      if (id === skipId) {
+        continue;
+      }
+
+      if (!GetElementsByNameSet.has(domElement)) {
+        continue;
+      }
+
+      fields.push({
+        id,
+        exportValue,
+        domElement
+      });
+    }
+
+    return fields;
+  }
+
   static get platform() {
     const platform = typeof navigator !== "undefined" ? navigator.platform : "";
     return (0, _util.shadow)(this, "platform", {
@@ -8761,6 +9025,10 @@ class LinkAnnotationElement extends AnnotationElement {
         });
         return false;
       };
+    }
+
+    if (!link.onclick) {
+      link.onclick = () => false;
     }
 
     link.className = "internalLink";
@@ -8932,7 +9200,7 @@ class WidgetAnnotationElement extends AnnotationElement {
 
 class TextWidgetAnnotationElement extends WidgetAnnotationElement {
   constructor(parameters) {
-    const isRenderable = parameters.renderInteractiveForms || !parameters.data.hasAppearance && !!parameters.data.fieldValue;
+    const isRenderable = parameters.renderForms || !parameters.data.hasAppearance && !!parameters.data.fieldValue;
     super(parameters, {
       isRenderable
     });
@@ -8941,13 +9209,14 @@ class TextWidgetAnnotationElement extends WidgetAnnotationElement {
   setPropertyOnSiblings(base, key, value, keyInStorage) {
     const storage = this.annotationStorage;
 
-    for (const element of document.getElementsByName(base.name)) {
-      if (element !== base) {
-        element[key] = value;
-        const data = Object.create(null);
-        data[keyInStorage] = value;
-        storage.setValue(element.getAttribute("id"), data);
+    for (const element of this._getElementsByName(base.name, base.id)) {
+      if (element.domElement) {
+        element.domElement[key] = value;
       }
+
+      storage.setValue(element.id, {
+        [keyInStorage]: value
+      });
     }
   }
 
@@ -8957,7 +9226,7 @@ class TextWidgetAnnotationElement extends WidgetAnnotationElement {
     this.container.className = "textWidgetAnnotation";
     let element = null;
 
-    if (this.renderInteractiveForms) {
+    if (this.renderForms) {
       const storedData = storage.getValue(id, {
         value: this.data.fieldValue,
         valueAsString: this.data.fieldValue
@@ -8979,6 +9248,10 @@ class TextWidgetAnnotationElement extends WidgetAnnotationElement {
         element.setAttribute("value", textContent);
       }
 
+      GetElementsByNameSet.add(element);
+      element.disabled = this.data.readOnly;
+      element.name = this.data.fieldName;
+      element.tabIndex = DEFAULT_TAB_INDEX;
       elementData.userValue = textContent;
       element.setAttribute("id", id);
       element.addEventListener("input", event => {
@@ -9135,9 +9408,6 @@ class TextWidgetAnnotationElement extends WidgetAnnotationElement {
         element.addEventListener("blur", blurListener);
       }
 
-      element.disabled = this.data.readOnly;
-      element.name = this.data.fieldName;
-
       if (this.data.maxLen !== null) {
         element.maxLength = this.data.maxLen;
       }
@@ -9185,7 +9455,7 @@ class TextWidgetAnnotationElement extends WidgetAnnotationElement {
 class CheckboxWidgetAnnotationElement extends WidgetAnnotationElement {
   constructor(parameters) {
     super(parameters, {
-      isRenderable: parameters.renderInteractiveForms
+      isRenderable: parameters.renderForms
     });
   }
 
@@ -9206,29 +9476,38 @@ class CheckboxWidgetAnnotationElement extends WidgetAnnotationElement {
 
     this.container.className = "buttonWidgetAnnotation checkBox";
     const element = document.createElement("input");
+    GetElementsByNameSet.add(element);
     element.disabled = data.readOnly;
     element.type = "checkbox";
-    element.name = this.data.fieldName;
+    element.name = data.fieldName;
 
     if (value) {
       element.setAttribute("checked", true);
     }
 
     element.setAttribute("id", id);
-    element.addEventListener("change", function (event) {
-      const name = event.target.name;
+    element.setAttribute("exportValue", data.exportValue);
+    element.tabIndex = DEFAULT_TAB_INDEX;
+    element.addEventListener("change", event => {
+      const {
+        name,
+        checked
+      } = event.target;
 
-      for (const checkbox of document.getElementsByName(name)) {
-        if (checkbox !== event.target) {
-          checkbox.checked = false;
-          storage.setValue(checkbox.parentNode.getAttribute("data-annotation-id"), {
-            value: false
-          });
+      for (const checkbox of this._getElementsByName(name, id)) {
+        const curChecked = checked && checkbox.exportValue === data.exportValue;
+
+        if (checkbox.domElement) {
+          checkbox.domElement.checked = curChecked;
         }
+
+        storage.setValue(checkbox.id, {
+          value: curChecked
+        });
       }
 
       storage.setValue(id, {
-        value: event.target.checked
+        value: checked
       });
     });
 
@@ -9259,7 +9538,7 @@ class CheckboxWidgetAnnotationElement extends WidgetAnnotationElement {
 class RadioButtonWidgetAnnotationElement extends WidgetAnnotationElement {
   constructor(parameters) {
     super(parameters, {
-      isRenderable: parameters.renderInteractiveForms
+      isRenderable: parameters.renderForms
     });
   }
 
@@ -9280,6 +9559,7 @@ class RadioButtonWidgetAnnotationElement extends WidgetAnnotationElement {
     }
 
     const element = document.createElement("input");
+    GetElementsByNameSet.add(element);
     element.disabled = data.readOnly;
     element.type = "radio";
     element.name = data.fieldName;
@@ -9289,21 +9569,21 @@ class RadioButtonWidgetAnnotationElement extends WidgetAnnotationElement {
     }
 
     element.setAttribute("id", id);
-    element.addEventListener("change", function (event) {
+    element.tabIndex = DEFAULT_TAB_INDEX;
+    element.addEventListener("change", event => {
       const {
-        target
-      } = event;
+        name,
+        checked
+      } = event.target;
 
-      for (const radio of document.getElementsByName(target.name)) {
-        if (radio !== target) {
-          storage.setValue(radio.getAttribute("id"), {
-            value: false
-          });
-        }
+      for (const radio of this._getElementsByName(name, id)) {
+        storage.setValue(radio.id, {
+          value: false
+        });
       }
 
       storage.setValue(id, {
-        value: target.checked
+        value: checked
       });
     });
 
@@ -9311,18 +9591,21 @@ class RadioButtonWidgetAnnotationElement extends WidgetAnnotationElement {
       const pdfButtonValue = data.buttonValue;
       element.addEventListener("updatefromsandbox", jsEvent => {
         const actions = {
-          value(event) {
+          value: event => {
             const checked = pdfButtonValue === event.detail.value;
 
-            for (const radio of document.getElementsByName(event.target.name)) {
-              const radioId = radio.getAttribute("id");
-              radio.checked = radioId === id && checked;
-              storage.setValue(radioId, {
-                value: radio.checked
+            for (const radio of this._getElementsByName(event.target.name)) {
+              const curChecked = checked && radio.id === id;
+
+              if (radio.domElement) {
+                radio.domElement.checked = curChecked;
+              }
+
+              storage.setValue(radio.id, {
+                value: curChecked
               });
             }
           }
-
         };
 
         this._dispatchEventFromSandbox(actions, jsEvent);
@@ -9354,7 +9637,7 @@ class PushButtonWidgetAnnotationElement extends LinkAnnotationElement {
 class ChoiceWidgetAnnotationElement extends WidgetAnnotationElement {
   constructor(parameters) {
     super(parameters, {
-      isRenderable: parameters.renderInteractiveForms
+      isRenderable: parameters.renderForms
     });
   }
 
@@ -9365,10 +9648,22 @@ class ChoiceWidgetAnnotationElement extends WidgetAnnotationElement {
     storage.getValue(id, {
       value: this.data.fieldValue.length > 0 ? this.data.fieldValue[0] : undefined
     });
+    let {
+      fontSize
+    } = this.data.defaultAppearanceData;
+
+    if (!fontSize) {
+      fontSize = 9;
+    }
+
+    const fontSizeStyle = `calc(${fontSize}px * var(--zoom-factor))`;
     const selectElement = document.createElement("select");
+    GetElementsByNameSet.add(selectElement);
     selectElement.disabled = this.data.readOnly;
     selectElement.name = this.data.fieldName;
     selectElement.setAttribute("id", id);
+    selectElement.tabIndex = DEFAULT_TAB_INDEX;
+    selectElement.style.fontSize = `${fontSize}px`;
 
     if (!this.data.combo) {
       selectElement.size = this.data.options.length;
@@ -9382,6 +9677,10 @@ class ChoiceWidgetAnnotationElement extends WidgetAnnotationElement {
       const optionElement = document.createElement("option");
       optionElement.textContent = option.displayValue;
       optionElement.value = option.exportValue;
+
+      if (this.data.combo) {
+        optionElement.style.fontSize = fontSizeStyle;
+      }
 
       if (this.data.fieldValue.includes(option.exportValue)) {
         optionElement.setAttribute("selected", true);
@@ -10149,11 +10448,12 @@ class AnnotationLayer {
         linkService: parameters.linkService,
         downloadManager: parameters.downloadManager,
         imageResourcesPath: parameters.imageResourcesPath || "",
-        renderInteractiveForms: parameters.renderInteractiveForms !== false,
+        renderForms: parameters.renderForms !== false,
         svgFactory: new _display_utils.DOMSVGFactory(),
         annotationStorage: parameters.annotationStorage || new _annotation_storage.AnnotationStorage(),
         enableScripting: parameters.enableScripting,
         hasJSActions: parameters.hasJSActions,
+        fieldObjects: parameters.fieldObjects,
         mouseState: parameters.mouseState || {
           isDown: false
         }
@@ -10202,7 +10502,7 @@ class AnnotationLayer {
 exports.AnnotationLayer = AnnotationLayer;
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -10270,7 +10570,7 @@ class ColorConverters {
 exports.ColorConverters = ColorConverters;
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ ((__unused_webpack_module, exports, __w_pdfjs_require__) => {
 
 
@@ -10347,7 +10647,7 @@ function getAscent(fontFamily, ctx) {
 
 function appendText(task, geom, styles, ctx) {
   const textDiv = document.createElement("span");
-  const textDivProperties = {
+  const textDivProperties = task._enhanceTextSelection ? {
     angle: 0,
     canvasWidth: 0,
     hasText: geom.str !== "",
@@ -10358,6 +10658,11 @@ function appendText(task, geom, styles, ctx) {
     paddingRight: 0,
     paddingTop: 0,
     scale: 1
+  } : {
+    angle: 0,
+    canvasWidth: 0,
+    hasText: geom.str !== "",
+    hasEOL: geom.hasEOL
   };
 
   task._textDivs.push(textDiv);
@@ -10786,6 +11091,10 @@ class TextLayerRenderTask {
     this._bounds = [];
 
     this._capability.promise.finally(() => {
+      if (!this._enhanceTextSelection) {
+        this._textDivProperties = null;
+      }
+
       if (this._layoutTextCtx) {
         this._layoutTextCtx.canvas.width = 0;
         this._layoutTextCtx.canvas.height = 0;
@@ -10802,7 +11111,7 @@ class TextLayerRenderTask {
     this._canceled = true;
 
     if (this._reader) {
-      this._reader.cancel(new _util.AbortException("TextLayer task cancelled."));
+      this._reader.cancel(new _util.AbortException("TextLayer task cancelled.")).catch(() => {});
 
       this._reader = null;
     }
@@ -10864,8 +11173,13 @@ class TextLayerRenderTask {
       } = this._layoutTextCtx.measureText(textDiv.textContent);
 
       if (width > 0) {
-        textDivProperties.scale = textDivProperties.canvasWidth / width;
-        transform = `scaleX(${textDivProperties.scale})`;
+        const scale = textDivProperties.canvasWidth / width;
+
+        if (this._enhanceTextSelection) {
+          textDivProperties.scale = scale;
+        }
+
+        transform = `scaleX(${scale})`;
       }
     }
 
@@ -10934,7 +11248,7 @@ class TextLayerRenderTask {
       this._reader = this._textContentStream.getReader();
       pump();
     } else {
-      throw new Error('Neither "textContent" nor "textContentStream"' + " parameters specified.");
+      throw new Error('Neither "textContent" nor "textContentStream" parameters specified.');
     }
 
     capability.promise.then(() => {
@@ -11038,7 +11352,7 @@ function renderTextLayer(renderParameters) {
 }
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ ((__unused_webpack_module, exports, __w_pdfjs_require__) => {
 
 
@@ -11064,8 +11378,8 @@ exports.SVGGraphics = SVGGraphics;
 ;
 
 /***/ }),
-/* 21 */
-/***/ ((__unused_webpack_module, exports) => {
+/* 22 */
+/***/ ((__unused_webpack_module, exports, __w_pdfjs_require__) => {
 
 
 
@@ -11073,6 +11387,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.XfaLayer = void 0;
+
+var _xfa_text = __w_pdfjs_require__(17);
 
 class XfaLayer {
   static setupStorage(html, id, element, storage, intent) {
@@ -11101,6 +11417,8 @@ class XfaLayer {
         if (element.attributes.type === "radio" || element.attributes.type === "checkbox") {
           if (storedData.value === element.attributes.xfaOn) {
             html.setAttribute("checked", true);
+          } else if (storedData.value === element.attributes.xfaOff) {
+            html.removeAttribute("checked");
           }
 
           if (intent === "print") {
@@ -11109,7 +11427,7 @@ class XfaLayer {
 
           html.addEventListener("change", event => {
             storage.setValue(id, {
-              value: event.target.getAttribute("xfaOn")
+              value: event.target.checked ? event.target.getAttribute("xfaOn") : event.target.getAttribute("xfaOff")
             });
           });
         } else {
@@ -11198,6 +11516,7 @@ class XfaLayer {
     const transform = `matrix(${parameters.viewport.transform.join(",")})`;
     rootDiv.style.transform = transform;
     rootDiv.setAttribute("class", "xfaLayer xfaFont");
+    const textDivs = [];
 
     while (stack.length > 0) {
       const [parent, i, html] = stack[stack.length - 1];
@@ -11218,7 +11537,9 @@ class XfaLayer {
       } = child;
 
       if (name === "#text") {
-        html.appendChild(document.createTextNode(child.value));
+        const node = document.createTextNode(child.value);
+        textDivs.push(node);
+        html.appendChild(node);
         continue;
       }
 
@@ -11239,13 +11560,23 @@ class XfaLayer {
       if (child.children && child.children.length > 0) {
         stack.push([child, -1, childHtml]);
       } else if (child.value) {
-        childHtml.appendChild(document.createTextNode(child.value));
+        const node = document.createTextNode(child.value);
+
+        if (_xfa_text.XfaText.shouldBuildText(name)) {
+          textDivs.push(node);
+        }
+
+        childHtml.appendChild(node);
       }
     }
 
     for (const el of rootDiv.querySelectorAll(".xfaNonInteractive input, .xfaNonInteractive textarea")) {
       el.setAttribute("readOnly", true);
     }
+
+    return {
+      textDivs
+    };
   }
 
   static update(parameters) {
@@ -11343,46 +11674,22 @@ Object.defineProperty(exports, "PDFDateString", ({
     return _display_utils.PDFDateString;
   }
 }));
+Object.defineProperty(exports, "PixelsPerInch", ({
+  enumerable: true,
+  get: function () {
+    return _display_utils.PixelsPerInch;
+  }
+}));
 Object.defineProperty(exports, "RenderingCancelledException", ({
   enumerable: true,
   get: function () {
     return _display_utils.RenderingCancelledException;
   }
 }));
-Object.defineProperty(exports, "build", ({
+Object.defineProperty(exports, "AnnotationMode", ({
   enumerable: true,
   get: function () {
-    return _api.build;
-  }
-}));
-Object.defineProperty(exports, "getDocument", ({
-  enumerable: true,
-  get: function () {
-    return _api.getDocument;
-  }
-}));
-Object.defineProperty(exports, "LoopbackPort", ({
-  enumerable: true,
-  get: function () {
-    return _api.LoopbackPort;
-  }
-}));
-Object.defineProperty(exports, "PDFDataRangeTransport", ({
-  enumerable: true,
-  get: function () {
-    return _api.PDFDataRangeTransport;
-  }
-}));
-Object.defineProperty(exports, "PDFWorker", ({
-  enumerable: true,
-  get: function () {
-    return _api.PDFWorker;
-  }
-}));
-Object.defineProperty(exports, "version", ({
-  enumerable: true,
-  get: function () {
-    return _api.version;
+    return _util.AnnotationMode;
   }
 }));
 Object.defineProperty(exports, "CMapCompressionType", ({
@@ -11475,6 +11782,42 @@ Object.defineProperty(exports, "VerbosityLevel", ({
     return _util.VerbosityLevel;
   }
 }));
+Object.defineProperty(exports, "build", ({
+  enumerable: true,
+  get: function () {
+    return _api.build;
+  }
+}));
+Object.defineProperty(exports, "getDocument", ({
+  enumerable: true,
+  get: function () {
+    return _api.getDocument;
+  }
+}));
+Object.defineProperty(exports, "LoopbackPort", ({
+  enumerable: true,
+  get: function () {
+    return _api.LoopbackPort;
+  }
+}));
+Object.defineProperty(exports, "PDFDataRangeTransport", ({
+  enumerable: true,
+  get: function () {
+    return _api.PDFDataRangeTransport;
+  }
+}));
+Object.defineProperty(exports, "PDFWorker", ({
+  enumerable: true,
+  get: function () {
+    return _api.PDFWorker;
+  }
+}));
+Object.defineProperty(exports, "version", ({
+  enumerable: true,
+  get: function () {
+    return _api.version;
+  }
+}));
 Object.defineProperty(exports, "AnnotationLayer", ({
   enumerable: true,
   get: function () {
@@ -11508,24 +11851,24 @@ Object.defineProperty(exports, "XfaLayer", ({
 
 var _display_utils = __w_pdfjs_require__(1);
 
-var _api = __w_pdfjs_require__(6);
-
 var _util = __w_pdfjs_require__(2);
 
-var _annotation_layer = __w_pdfjs_require__(17);
+var _api = __w_pdfjs_require__(6);
+
+var _annotation_layer = __w_pdfjs_require__(18);
 
 var _worker_options = __w_pdfjs_require__(12);
 
 var _is_node = __w_pdfjs_require__(4);
 
-var _text_layer = __w_pdfjs_require__(19);
+var _text_layer = __w_pdfjs_require__(20);
 
-var _svg = __w_pdfjs_require__(20);
+var _svg = __w_pdfjs_require__(21);
 
-var _xfa_layer = __w_pdfjs_require__(21);
+var _xfa_layer = __w_pdfjs_require__(22);
 
-const pdfjsVersion = '2.11.22';
-const pdfjsBuild = '4ad5c5d52';
+const pdfjsVersion = '2.11.298';
+const pdfjsBuild = 'd370a281c';
 ;
 })();
 
