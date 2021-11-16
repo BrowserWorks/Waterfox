@@ -1,6 +1,6 @@
 # Targetting x64 builds
 
-X=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)
+X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN) * 3 / 2))
 
 if test $(uname -s) = Darwin; then
     # Use the mozbuild linker when building on macOS
