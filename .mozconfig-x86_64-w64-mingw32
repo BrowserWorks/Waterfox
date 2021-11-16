@@ -19,7 +19,7 @@ NASM="${TOOLTOOL_DIR}/nasm/nasm"
 RANLIB="${TOOLTOOL_DIR}/clang/bin/llvm-ranlib"
 WINCHECKSEC="${TOOLTOOL_DIR}/winchecksec/winchecksec"
 WINE="/usr/bin/wine64"
-X=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)
+X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN) * 3 / 2))
 
 if test "$WFX_RELEASE"; then
     ac_add_options --enable-lto
