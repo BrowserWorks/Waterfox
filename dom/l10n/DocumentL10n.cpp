@@ -105,6 +105,13 @@ void DocumentL10n::TriggerInitialTranslation() {
   if (mState >= DocumentL10nState::InitialTranslationTriggered) {
     return;
   }
+  if (!mReady) {
+    // If we don't have `mReady` it means that we are in shutdown mode.
+    // See bug 1687118 for details.
+    InitialTranslationCompleted(false);
+    return;
+  }
+
   mInitialTranslationStart = mozilla::TimeStamp::NowUnfuzzed();
 
   AutoAllowLegacyScriptExecution exemption;
