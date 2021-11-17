@@ -46,11 +46,11 @@ const TabFeatures = {
     let purgeCache = PrefUtils.get(this.PREF_PURGECACHE, true);
     let toolbarPos = PrefUtils.get(this.PREF_TOOLBARPOS, "topabove");
     let bookmarkPos = PrefUtils.get(this.PREF_BOOKMARKPOS, "top");
-    PrefUtils.set(this.PREF_ACTIVETAB, activeTab, true);
-    PrefUtils.set(this.PREF_REQUIRECONFIRM, reqConfirm, true);
-    PrefUtils.set(this.PREF_PURGECACHE, purgeCache, true);
-    PrefUtils.set(this.PREF_TOOLBARPOS, toolbarPos, true);
-    PrefUtils.set(this.PREF_BOOKMARKPOS, bookmarkPos, true);
+    PrefUtils.set(this.PREF_ACTIVETAB, activeTab);
+    PrefUtils.set(this.PREF_REQUIRECONFIRM, reqConfirm);
+    PrefUtils.set(this.PREF_PURGECACHE, purgeCache);
+    PrefUtils.set(this.PREF_TOOLBARPOS, toolbarPos);
+    PrefUtils.set(this.PREF_BOOKMARKPOS, bookmarkPos);
   },
 
   initPrefListeners() {
@@ -243,7 +243,6 @@ const TabFeatures = {
     if (!aValue) {
       aValue = PrefUtils.get(this.PREF_TOOLBARPOS);
     }
-
     switch (aValue) {
       case "topabove":
         titlebar.insertAdjacentElement("beforeend", tabsToolbar);

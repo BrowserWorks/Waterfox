@@ -347,10 +347,11 @@ this.extensibles = class extends ExtensionAPI {
             let win = this.mostRecentWindow;
             if (!win.tabFeatures) {
               win.tabFeatures = TabFeatures;
+              win.tabFeatures.initPrefListeners();
               win.tabFeatures.setPrefs();
               win.tabFeatures.initState();
-              win.tabFeatures.initPrefListeners();
               win.tabFeatures.moveTabBar(win);
+              win.tabFeatures.moveBookmarksBar(win);
               BrowserUtils.setStyle(TabFeatures.style);
             }
           },
