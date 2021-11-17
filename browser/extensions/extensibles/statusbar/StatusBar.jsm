@@ -35,16 +35,12 @@ const StatusBar = {
   initPrefListeners() {
     let enabled = PrefUtils.get(this.PREF_ENABLED, false);
     let text = PrefUtils.get(this.PREF_STATUSTEXT, true);
-    PrefUtils.set(this.PREF_ENABLED, enabled, true);
-    PrefUtils.set(this.PREF_STATUSTEXT, text, true);
+    PrefUtils.set(this.PREF_ENABLED, enabled);
+    PrefUtils.set(this.PREF_STATUSTEXT, text);
     this.enabledListener = PrefUtils.addListener(
       this.PREF_ENABLED,
       isEnabled => {
-        CustomizableUI.getWidget("status-dummybar").instances.forEach(
-          dummyBar => {
-            dummyBar.node.setAttribute("collapsed", !isEnabled);
-          }
-        );
+        this.setStatusBarVisibility(isEnabled);
         this.setStatusTextVisibility();
       }
     );
@@ -54,6 +50,12 @@ const StatusBar = {
         this.setStatusTextVisibility();
       }
     );
+  },
+
+  setStatusBarVisibility(isEnabled) {
+    CustomizableUI.getWidget("status-dummybar").instances.forEach(dummyBar => {
+      dummyBar.node.setAttribute("collapsed", !isEnabled);
+    });
   },
 
   setStatusTextVisibility() {
