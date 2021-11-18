@@ -1563,6 +1563,7 @@ var Policies = {
         "geo.",
         "gfx.",
         "intl.",
+        "keyword.enabled",
         "layers.",
         "layout.",
         "media.",
@@ -1572,6 +1573,7 @@ var Policies = {
         "print.",
         "signon.",
         "spellchecker.",
+        "toolkit.legacyUserProfileCustomizations.stylesheets",
         "ui.",
         "widget.",
       ];
