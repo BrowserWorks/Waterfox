@@ -189,14 +189,14 @@ already_AddRefed<DMABufSurface> DMABufSurface::CreateDMABufSurface(
 }
 
 void DMABufSurface::FenceDelete() {
-  if (!mGL) return;
-  const auto& gle = gl::GLContextEGL::Cast(mGL);
-  const auto& egl = gle->mEgl;
-
   if (mSyncFd > 0) {
     close(mSyncFd);
     mSyncFd = -1;
   }
+
+  if (!mGL) return;
+  const auto& gle = gl::GLContextEGL::Cast(mGL);
+  const auto& egl = gle->mEgl;
 
   if (mSync) {
     egl->fDestroySync(mSync);
