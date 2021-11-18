@@ -1062,10 +1062,6 @@ class PrintPreview extends MozElements.BaseControl {
     return this.sourceBrowsingContext;
   }
 
-  get canPrintSelectionOnly() {
-    return !!this.sourceBrowsingContext.currentRemoteType;
-  }
-
   get currentBrowsingContext() {
     return this.lastPreviewBrowser.browsingContext;
   }
@@ -1100,8 +1096,7 @@ class PrintPreview extends MozElements.BaseControl {
   }
 
   async _printPreview(settings, { sourceVersion, sourceURI }) {
-    let printSelectionOnly =
-      sourceVersion == "selection" && this.canPrintSelectionOnly;
+    let printSelectionOnly = sourceVersion == "selection";
     let simplifyPage = sourceVersion == "simplified";
     let selectionTypeBrowser;
     let previewBrowser;
