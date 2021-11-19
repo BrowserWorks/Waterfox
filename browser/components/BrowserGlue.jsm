@@ -1007,6 +1007,12 @@ BrowserGlue.prototype = {
   // nsIObserver implementation
   observe: async function BG_observe(subject, topic, data) {
     switch (topic) {
+      case "app-startup":
+        const { BootstrapLoader } = ChromeUtils.import(
+          "resource:///modules/BootstrapLoader.jsm"
+        );
+        AddonManager.addExternalExtensionLoader(BootstrapLoader);
+      break;
       case "notifications-open-settings":
         this._openPreferences("privacy-permissions");
         break;
@@ -1340,10 +1346,6 @@ BrowserGlue.prototype = {
   // runs on startup, before the first command line handler is invoked
   // (i.e. before the first window is opened)
   _beforeUIStartup: function BG__beforeUIStartup() {
-    const { BootstrapLoader } = ChromeUtils.import(
-      "resource:///modules/BootstrapLoader.jsm"
-    );
-    AddonManager.addExternalExtensionLoader(BootstrapLoader);
     SessionStartup.init();
 
     // check if we're in safe mode
