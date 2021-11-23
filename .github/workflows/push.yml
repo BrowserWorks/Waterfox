@@ -1,4 +1,4 @@
-name: Push Workflow
+name: 🔼 Push Workflow
 
 on:
   push:
@@ -104,7 +104,7 @@ jobs:
           xml=('<?xml version="1.0"?>'
           '<updates>'
           '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-VERSION_DISPLAY-release" displayVersion="VERSION_DISPLAY">'
-          '        <patch type="complete" URL="https://cdn.waterfox.net/releases/win64/update/waterfox-VERSION_DISPLAY.en-US.win64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
+          '        <patch type="complete" URL="https://cdn.waterfox.net/staging/x86_64/Windows_NT/waterfox-VERSION_DISPLAY.en-US.win64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
           '    </update>'
           '</updates>')
           for line in "${xml[@]}" ; do echo $line >> update/update.xml ; done
@@ -326,7 +326,7 @@ jobs:
           xml=('<?xml version="1.0"?>'
           '<updates>'
           '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-VERSION_DISPLAY" displayVersion="VERSION_DISPLAY">'
-          '        <patch type="complete" URL="https://cdn.waterfox.net/releases/linux64/update/waterfox-VERSION_DISPLAY.en-US.linux64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
+          '        <patch type="complete" URL="https://cdn.waterfox.net/staging/x86_64/Linux/waterfox-VERSION_DISPLAY.en-US.linux64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
           '    </update>'
           '</updates>')
 
@@ -443,7 +443,7 @@ jobs:
           xml=('<?xml version="1.0"?>'
           '<updates>'
           '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-VERSION_DISPLAY" displayVersion="VERSION_DISPLAY">'
-          '        <patch type="complete" URL="https://cdn.waterfox.net/releases/osx64/update/waterfox-VERSION_DISPLAY.en-US.osx64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
+          '        <patch type="complete" URL="https://cdn.waterfox.net/staging/x86_64/Darwin/waterfox-VERSION_DISPLAY.en-US.osx64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
           '    </update>'
           '</updates>')
           for line in "${xml[@]}" ; do echo $line >> ./obj-${{ env.ARCH }}/dist/update/update.xml ; done
@@ -558,7 +558,7 @@ jobs:
           xml=('<?xml version="1.0"?>'
           '<updates>'
           '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-VERSION_DISPLAY" displayVersion="VERSION_DISPLAY">'
-          '        <patch type="complete" URL="https://cdn.waterfox.net/releases/osx64/update/waterfox-VERSION_DISPLAY.en-US.osx-arm64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
+          '        <patch type="complete" URL="https://cdn.waterfox.net/staging/aarch64/Darwin/waterfox-VERSION_DISPLAY.en-US.osx-arm64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
           '    </update>'
           '</updates>')
           for line in "${xml[@]}" ; do echo $line >> ./obj-${{ env.ARCH }}/dist/update/update.xml ; done
