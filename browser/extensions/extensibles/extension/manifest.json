@@ -52,10 +52,10 @@
 
   "experiment_apis": {
     "extensibles": {
-      "schema": "schema.json",
+      "schema": "./experiment-apis/extensibles/schema.json",
       "parent": {
         "scopes": ["addon_parent"],
-        "script": "api.js",
+        "script": "./experiment-apis/extensibles/api.js",
         "paths": [
           ["extensibles", "utils"],
           ["extensibles", "privatetab"],

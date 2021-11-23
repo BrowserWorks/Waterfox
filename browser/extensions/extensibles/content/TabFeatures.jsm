@@ -311,7 +311,7 @@ const TabFeatures = {
     let bookmarksBar = aWindow.document.querySelector("#PersonalToolbar");
 
     if (!aValue) {
-      aValue = PrefUtils.get(this.PREF_BOOKMARKPOS);
+      aValue = PrefUtils.get(this.PREF_BOOKMARKPOS, "top");
     }
     // Don't move if already in correct position
     if (
