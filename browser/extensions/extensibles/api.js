@@ -347,7 +347,7 @@ this.extensibles = class extends ExtensionAPI {
             let win = this.mostRecentWindow;
             if (!win.tabFeatures) {
               win.tabFeatures = TabFeatures;
-              win.tabFeatures.initPrefListeners();
+              win.tabFeatures.initPrefListeners(this.document, win);
               win.tabFeatures.setPrefs();
               win.tabFeatures.initState();
               win.tabFeatures.moveTabBar(win);
