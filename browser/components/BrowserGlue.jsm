@@ -386,8 +386,8 @@ let JSWINDOWACTORS = {
     child: {
       moduleURI: "resource:///actors/ClickHandlerChild.jsm",
       events: {
-        click: { capture: true, mozSystemGroup: true },
-        auxclick: { capture: true, mozSystemGroup: true },
+        click: { capture: true, mozSystemGroup: true, wantUntrusted: true },
+        auxclick: { capture: true, mozSystemGroup: true, wantUntrusted: true },
       },
     },
 
