@@ -53,21 +53,45 @@ const TabFeatures = {
     PrefUtils.set(this.PREF_BOOKMARKPOS, bookmarkPos);
   },
 
-  initPrefListeners() {
+  styleButtonBox(doc) {
+    let menuBar = doc.getElementById("toolbar-menubar");
+    let buttonBox = doc.querySelector(
+      "#TabsToolbar .titlebar-buttonbox-container"
+    );
+    menuBar.getAttribute("autohide") == "false"
+      ? (buttonBox.style.display = "none")
+      : (buttonBox.style.display = "-moz-box");
+  },
+
+  styleMenuBar(doc, win) {
+    let menuBar = doc.getElementById("toolbar-menubar");
+    let titleBar = doc.getElementById("titlebar");
+    // Appearance should be none if windowed and menu-bar not displaying,
+    // should be none with padding-top: 6px if fullscreen and menu-bar not displaying,
+    // else should be ""
+    let fullscreen = win.windowState == win.STATE_MAXIMIZED;
+    if (
+      PrefUtils.get(this.PREF_TOOLBARPOS) != "topabove" &&
+      menuBar.getAttribute("autohide") == "true"
+    ) {
+      if (fullscreen) {
+        titleBar.setAttribute("style", "appearance: none; padding-top: 6px;");
+      } else {
+        titleBar.setAttribute("style", "appearance: none;");
+      }
+    } else {
+      titleBar.setAttribute("style", "");
+    }
+  },
+
+  initPrefListeners(aDocument, aWindow) {
     // Set Tab toolbar position
     this.toolbarPositionListener = PrefUtils.addListener(
       this.PREF_TOOLBARPOS,
       value => {
         TabFeatures.executeInAllWindows((doc, win) => {
           TabFeatures.moveTabBar(win, value);
-          let titleBar = doc.getElementById("titlebar");
-          let menuBar = doc.getElementById("toolbar-menubar");
-          // Ensure that titlebar is hidden if tabs toolbar is not in default position
-          // and it's set to not show
-          PrefUtils.get(this.PREF_TOOLBARPOS) != "topabove" &&
-          menuBar.getAttribute("autohide") == "true"
-            ? (titleBar.style.appearance = "none")
-            : (titleBar.style.appearance = "-moz-window-titlebar");
+          TabFeatures.styleMenuBar(doc, win);
         });
       }
     );
@@ -81,44 +105,36 @@ const TabFeatures = {
       }
     );
     // Hide tabs toolbar buttonbox if menubar displayed
-    TabFeatures.executeInAllWindows((doc, win) => {
-      let menuBar = doc.getElementById("toolbar-menubar");
-      let buttonBox = doc.querySelector(
-        "#TabsToolbar .titlebar-buttonbox-container"
-      );
-      var observer = new win.MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-          if (
-            mutation.type === "attributes" &&
-            mutation.attributeName == "autohide"
-          ) {
-            menuBar.getAttribute("autohide") == "false"
-              ? (buttonBox.style.display = "none")
-              : (buttonBox.style.display = "-moz-box");
-          }
-        });
-      });
-
-      observer.observe(menuBar, {
-        attributes: true, //configure it to listen to attribute changes
+    let menuBar = aDocument.getElementById("toolbar-menubar");
+    var observer = new aWindow.MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName == "autohide"
+        ) {
+          TabFeatures.styleButtonBox(aDocument);
+          TabFeatures.styleMenuBar(aDocument, aWindow);
+        }
       });
     });
+
+    observer.observe(menuBar, {
+      attributes: true, //configure it to listen to attribute changes
+    });
+    // Ensure menu bar/ nav bar not cut off when maximized in Windows
+    aWindow.addEventListener(
+      "sizemodechange",
+      function updateTitleBarStyling() {
+        this.tabFeatures.styleMenuBar(this.document, this.window);
+      }
+    );
   },
 
   initState() {
     // Set state for titlebar and titlebar-buttonbox visibility at startup
     TabFeatures.executeInAllWindows((doc, win) => {
-      let menuBar = doc.getElementById("toolbar-menubar");
-      let buttonBox = doc.querySelector(
-        "#TabsToolbar .titlebar-buttonbox-container"
-      );
-      let titleBar = doc.getElementById("titlebar");
-      menuBar.getAttribute("autohide") == "false"
-        ? (buttonBox.style.display = "none")
-        : (buttonBox.style.display = "-moz-box");
-      PrefUtils.get(this.PREF_TOOLBARPOS) != "topabove"
-        ? (titleBar.style.appearance = "none")
-        : (titleBar.style.appearance = "-moz-window-titlebar");
+      TabFeatures.styleButtonBox(doc);
+      TabFeatures.styleMenuBar(doc, win);
     });
   },
 
