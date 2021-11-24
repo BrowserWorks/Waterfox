@@ -2951,6 +2951,22 @@ class Langpack extends ExtensionData {
 
   async startup(reason) {
     this.chromeRegistryHandle = null;
+
+    // If this langpack overlaps with a packaged locale, then bail out of
+    // starting up this langpack. Registering the same locale multiple times
+    // wreaks havoc.
+    if (
+      this.startupData.languages.some(lang =>
+        Services.locale.packagedLocales.includes(lang)
+      )
+    ) {
+      Services.obs.notifyObservers(
+        { wrappedJSObject: { langpack: this } },
+        "webextension-langpack-startup-aborted"
+      );
+      return;
+    }
+
     if (this.startupData.chromeEntries.length) {
       const manifestURI = Services.io.newURI(
         "manifest.json",
