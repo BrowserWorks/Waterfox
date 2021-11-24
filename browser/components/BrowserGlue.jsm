@@ -1012,12 +1012,6 @@ BrowserGlue.prototype = {
           "resource:///modules/BootstrapLoader.jsm"
         );
         AddonManager.addExternalExtensionLoader(BootstrapLoader);
-        // Load extensibles early on to prevent UI changes after window open
-        AddonManager.maybeInstallBuiltinAddon(
-          "extensibles@waterfox.net",
-          "1.0.0",
-          "resource://builtin-addons/extensibles/"
-        );
         break;
       case "notifications-open-settings":
         this._openPreferences("privacy-permissions");
@@ -1378,6 +1372,13 @@ BrowserGlue.prototype = {
     listeners.init();
 
     SessionStore.init();
+
+    // Load extensibles early on to prevent UI changes after window open
+    AddonManager.maybeInstallBuiltinAddon(
+      "extensibles@waterfox.net",
+      "1.0.0",
+      "resource://builtin-addons/extensibles/"
+    );
 
     AddonManager.maybeInstallBuiltinAddon(
       "firefox-compact-light@mozilla.org",
