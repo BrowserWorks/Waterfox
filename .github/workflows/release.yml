@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_EC2_METADATA_DISABLED: true
+      AWS_REGION: us-west-2
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
       - name: Download assets
@@ -84,13 +86,13 @@ jobs:
                           j="Windows_NT"
                         fi
                           mkdir -p ./update/Waterfox/$ver/default/$j/
-                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" --region=us-west-2 $update_loc \
+                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
                           ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/x86_64\/Linux/releases\/linux64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/x86_64\/Windows_NT/releases\/win64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/x86_64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/aarch64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          aws s3 cp --dryrun --content-type="text/xml" --metadata-directive="REPLACE" --region=us-west-2 ./update/Waterfox/$ver/default/$j/update.xml \
+                          aws s3 cp --dryrun --content-type="text/xml" --metadata-directive="REPLACE" ./update/Waterfox/$ver/default/$j/update.xml \
                           s3://aus.waterfox.net/update/Waterfox/$ver/default/$j/update.xml
                       done
                   elif [[ $i == "G4"* ]]
@@ -100,13 +102,13 @@ jobs:
                       do
                           update_loc="s3://aus.waterfox.net/update/staging/$j/update.xml"
                           mkdir -p ./update/Waterfox/$ver/default/$j/
-                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" --region=us-west-2 $update_loc \
+                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
                           ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/x86_64\/Linux/releases\/linux64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/x86_64\/Windows_NT/releases\/win64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/x86_64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/aarch64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          aws s3 cp --dryrun --content-type="text/xml" --metadata-directive="REPLACE" --region=us-west-2 ./update/Waterfox/$ver/default/$j/update.xml \
+                          aws s3 cp --dryrun --content-type="text/xml" --metadata-directive="REPLACE" ./update/Waterfox/$ver/default/$j/update.xml \
                           s3://aus.waterfox.net/update/Waterfox/$ver/default/$j/update.xml
                       done
                   fi
@@ -119,6 +121,8 @@ jobs:
     environment: hard-release
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_EC2_METADATA_DISABLED: true
+      AWS_REGION: us-west-2
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     runs-on: ubuntu-latest
     steps:
@@ -140,13 +144,13 @@ jobs:
                           j="Windows_NT"
                         fi
                           mkdir -p ./update/Waterfox/$ver/default/$j/
-                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" --region=us-west-2 $update_loc \
+                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
                           ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/x86_64\/Linux/releases\/linux64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/x86_64\/Windows_NT/releases\/win64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/x86_64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/aarch64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" --region=us-west-2 ./update/Waterfox/$ver/default/$j/update.xml \
+                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./update/Waterfox/$ver/default/$j/update.xml \
                           s3://aus.waterfox.net/update/Waterfox/$ver/default/$j/update.xml
                       done
                   elif [[ $i == "G4"* ]]
@@ -156,13 +160,13 @@ jobs:
                       do
                           update_loc="s3://aus.waterfox.net/update/staging/$j/update.xml"
                           mkdir -p ./update/Waterfox/$ver/default/$j/
-                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" --region=us-west-2 $update_loc \
+                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
                           ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/x86_64\/Linux/releases\/linux64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/x86_64\/Windows_NT/releases\/win64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/x86_64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
                           sed -i 's/staging\/aarch64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" --region=us-west-2 ./update/Waterfox/$ver/default/$j/update.xml \
+                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./update/Waterfox/$ver/default/$j/update.xml \
                           s3://aus.waterfox.net/update/Waterfox/$ver/default/$j/update.xml
                       done
                   fi
