@@ -1929,7 +1929,7 @@ var Policies = {
                         newEngine.Method == "POST"
                           ? newEngine.PostData
                           : undefined,
-                      suggestUrlGetParams: newEngine.SuggestURLTemplate,
+                      suggest_url: newEngine.SuggestURLTemplate,
                     },
                   },
                 };
