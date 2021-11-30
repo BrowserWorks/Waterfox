@@ -313,6 +313,16 @@ const TabFeatures = {
     if (!aValue) {
       aValue = PrefUtils.get(this.PREF_BOOKMARKPOS);
     }
+    // Don't move if already in correct position
+    if (
+      (aValue == "top" &&
+        bookmarksBar.parentElement.id == "navigator-toolbox") ||
+      (aValue == "bottom" &&
+        bookmarksBar.parentElement.id == "browser-bottombox")
+    ) {
+      return;
+    }
+
     switch (aValue) {
       case "top":
         aWindow.document
