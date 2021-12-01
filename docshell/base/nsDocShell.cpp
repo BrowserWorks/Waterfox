@@ -12630,7 +12630,7 @@ nsresult nsDocShell::OnLinkClickSync(nsIContent* aContent,
             extProtService->IsExposedProtocol(scheme.get(), &isExposed);
         if (NS_SUCCEEDED(rv) && !isExposed) {
           return extProtService->LoadURI(aLoadState->URI(), triggeringPrincipal,
-                                         mBrowsingContext,
+                                         nullptr, mBrowsingContext,
                                          /* aTriggeredExternally */ false);
         }
       }
