@@ -10,6 +10,10 @@ XPCSHELL_TESTS_MANIFESTS += [
     'test/unit/xpcshell.ini',
 ]
 
+BROWSER_CHROME_MANIFESTS += [
+  'test/browser/browser.ini',
+]
+
 XPCOM_MANIFESTS += [
     'components.conf',
 ]
@@ -22,6 +26,7 @@ EXTRA_JS_MODULES += [
   'content/StatusBar.jsm',
   'content/StoreHandler.jsm',
   'content/TabFeatures.jsm',
+  'content/UICustomizations.jsm',
 ]
 
 JAR_MANIFESTS += ["jar.mn"]

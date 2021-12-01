@@ -4,7 +4,7 @@
 
 "use strict";
 
-/* globals ExtensionAPI Services */
+/* globals ExtensionAPI Services EventManager */
 
 const { AppConstants } = ChromeUtils.import(
   "resource://gre/modules/AppConstants.jsm"
@@ -42,6 +42,10 @@ ChromeUtils.defineModuleGetter(
   this,
   "TabFeatures",
   "resource:///modules/TabFeatures.jsm"
+);
+
+const { UICustomizations } = ChromeUtils.import(
+  "resource:///modules/UICustomizations.jsm"
 );
 
 ChromeUtils.defineModuleGetter(
@@ -176,7 +180,7 @@ this.extensibles = class extends ExtensionAPI {
             return returnObj;
           },
 
-          async addElementListener(aId, aEvent, aSubject) {
+          async addElementListener(aId, aEvent, aSubject, firstLoad) {
             let func;
             switch (aSubject) {
               case "places":
@@ -201,7 +205,12 @@ this.extensibles = class extends ExtensionAPI {
                 func = TabFeatures.tabContext;
                 break;
             }
-            this.document.getElementById(aId).addEventListener(aEvent, func);
+            if (firstLoad) {
+
+            } else {
+              this.document.getElementById(aId).addEventListener(aEvent, func);
+            }
+            
           },
 
           registerPref(aName, aValue) {
@@ -343,17 +352,46 @@ this.extensibles = class extends ExtensionAPI {
             return Services.wm.getMostRecentWindow("navigator:browser")
               .document;
           },
-          registerTabFeatures() {
-            let win = this.mostRecentWindow;
-            if (!win.tabFeatures) {
-              win.tabFeatures = TabFeatures;
-              win.tabFeatures.initPrefListeners(this.document, win);
-              win.tabFeatures.setPrefs();
-              win.tabFeatures.initState();
-              win.tabFeatures.moveTabBar(win);
-              win.tabFeatures.moveBookmarksBar(win);
-              BrowserUtils.setStyle(TabFeatures.style);
+
+          copyUrlCommand() {
+            let observer = (subject, topic, data) => {
+              TabFeatures.copyTabUrl(data, this.mostRecentWindow);
+            };
+            Services.obs.addObserver(observer, "menuitem-copyurl-extension");
+          },
+
+          copyAllUrlsCommand() {
+            let observer = (subject, topic, data) => {
+              TabFeatures.copyAllTabUrls(this.mostRecentWindow);
+            };
+            Services.obs.addObserver(
+              observer,
+              "menuitem-copyallurls-extension"
+            );
+          },
+
+          restartBrowserCommand() {
+            let observer = (subject, topic, data) => {
+              TabFeatures.restartBrowser();
             }
+            Services.obs.addObserver(
+              observer,
+              "restartbrowser-extension"
+            )
+          },
+
+          styleMenuBarCommand() {
+            let observer = (subject, topic, data) => {
+              UICustomizations.styleMenuBar(this.document, this.mostRecentWindow);
+            }
+            Services.obs.addObserver(
+              observer,
+              "style-menubar-extension"
+            )
+          },
+
+          initPrefObservers() {
+            UICustomizations.initPrefObservers();
           },
         },
         prefsext: {

@@ -37,14 +37,14 @@ const StatusBar = {
     let text = PrefUtils.get(this.PREF_STATUSTEXT, true);
     PrefUtils.set(this.PREF_ENABLED, enabled);
     PrefUtils.set(this.PREF_STATUSTEXT, text);
-    this.enabledListener = PrefUtils.addListener(
+    this.enabledListener = PrefUtils.addObserver(
       this.PREF_ENABLED,
       isEnabled => {
         this.setStatusBarVisibility(isEnabled);
         this.setStatusTextVisibility();
       }
     );
-    this.textListener = PrefUtils.addListener(
+    this.textListener = PrefUtils.addObserver(
       this.PREF_STATUSTEXT,
       isEnabled => {
         this.setStatusTextVisibility();

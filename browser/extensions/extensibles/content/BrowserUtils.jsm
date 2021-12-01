@@ -71,9 +71,6 @@ const BrowserUtils = {
     let windows = Services.wm.getEnumerator("navigator:browser");
     while (windows.hasMoreElements()) {
       let win = windows.getNext();
-      if (!win.statusBar) {
-        continue;
-      }
       let { document } = win;
       aFunc(document, win);
     }

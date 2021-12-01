@@ -1179,3 +1179,15 @@ function updateImportCommandEnabledState() {
       .setAttribute("disabled", "true");
   }
 }
+
+/**
+  ######## Waterfox Utility Functions ########
+ */
+
+function restartBrowser() {
+  Services.obs.notifyObservers(null, "restartbrowser-extension")
+}
+
+function styleMenuBar() {
+  Services.obs.notifyObservers(null, "style-menubar-extension")
+}
