@@ -788,15 +788,8 @@ nsUpdateProcessor::FixUpdateDirectoryPerms(bool aUseServiceOnFailure) {
   class FixUpdateDirectoryPermsRunnable final : public mozilla::Runnable {
    public:
     FixUpdateDirectoryPermsRunnable(const char* aName,
-                                    bool aUseServiceOnFailure,
                                     const nsAutoString& aInstallPath)
-        : Runnable(aName),
-          mState(State::Initializing)
-#  ifdef MOZ_MAINTENANCE_SERVICE
-          ,
-          mUseServiceOnFailure(aUseServiceOnFailure)
-#  endif
-    {
+        : Runnable(aName), mState(State::Initializing) {
       size_t installPathSize = aInstallPath.Length() + 1;
       mInstallPath = mozilla::MakeUnique<wchar_t[]>(installPathSize);
       if (mInstallPath) {
@@ -809,19 +802,6 @@ nsUpdateProcessor::FixUpdateDirectoryPerms(bool aUseServiceOnFailure) {
     }
 
     NS_IMETHOD Run() override {
-#  ifdef MOZ_MAINTENANCE_SERVICE
-      // These constants control how often and how many times we poll the
-      // maintenance service to see if it has stopped. If there is no delay in
-      // the event queue, this works out to 8 minutes of polling.
-      const unsigned int kMaxQueries = 2400;
-      const unsigned int kQueryIntervalMS = 200;
-      // These constants control how often and how many times we attempt to
-      // start the service. If there is no delay in the event queue, this works
-      // out to 5 seconds of polling.
-      const unsigned int kMaxStartAttempts = 50;
-      const unsigned int kStartAttemptIntervalMS = 100;
-#  endif
-
       if (mState == State::Initializing) {
         if (!mInstallPath) {
           LOG(
@@ -837,119 +817,9 @@ nsUpdateProcessor::FixUpdateDirectoryPerms(bool aUseServiceOnFailure) {
           LOG(("Successfully fixed permissions from within Firefox\n"));
           return NS_OK;
         }
-#  ifdef MOZ_MAINTENANCE_SERVICE
-        else if (!mUseServiceOnFailure) {
-          LOG(
-              ("Error: Unable to fix permissions within Firefox and "
-               "maintenance service is disabled\n"));
-          return ReportUpdateError();
-        }
-#  else
         LOG(("Error: Unable to fix permissions\n"));
         return ReportUpdateError();
-#  endif
-
-#  ifdef MOZ_MAINTENANCE_SERVICE
-        SC_HANDLE serviceManager =
-            OpenSCManager(nullptr, nullptr,
-                          SC_MANAGER_CONNECT | SC_MANAGER_ENUMERATE_SERVICE);
-        mServiceManager.own(serviceManager);
-        if (!serviceManager) {
-          LOG(
-              ("Error: Unable to get the service manager. Cannot fix "
-               "permissions.\n"));
-          return NS_ERROR_FAILURE;
-        }
-        SC_HANDLE service = OpenServiceW(serviceManager, MAINTENANCE_SVC_NAME,
-                                         SERVICE_QUERY_STATUS | SERVICE_START);
-        mService.own(service);
-        if (!service) {
-          LOG(
-              ("Error: Unable to get the maintenance service. Unable fix "
-               "permissions without it.\n"));
-          return NS_ERROR_FAILURE;
-        }
-
-        mStartServiceArgCount = mInstallPath ? 3 : 2;
-        mStartServiceArgs =
-            mozilla::MakeUnique<LPCWSTR[]>(mStartServiceArgCount);
-        mStartServiceArgs[0] = L"MozillaMaintenance";
-        mStartServiceArgs[1] = L"fix-update-directory-perms";
-        if (mInstallPath) {
-          mStartServiceArgs[2] = mInstallPath.get();
-        }
-
-        mState = State::WaitingToStart;
-        mCurrentTry = 1;
-#  endif
       }
-#  ifdef MOZ_MAINTENANCE_SERVICE
-      if (mState == State::WaitingToStart ||
-          mState == State::WaitingForFinish) {
-        SERVICE_STATUS_PROCESS ssp;
-        DWORD bytesNeeded;
-        BOOL success =
-            QueryServiceStatusEx(mService, SC_STATUS_PROCESS_INFO, (LPBYTE)&ssp,
-                                 sizeof(SERVICE_STATUS_PROCESS), &bytesNeeded);
-        if (!success) {
-          DWORD lastError = GetLastError();
-          // These 3 errors can occur when the service is not yet stopped but it
-          // is stopping. If we got another error, waiting will probably not
-          // help.
-          if (lastError != ERROR_INVALID_SERVICE_CONTROL &&
-              lastError != ERROR_SERVICE_CANNOT_ACCEPT_CTRL &&
-              lastError != ERROR_SERVICE_NOT_ACTIVE) {
-            LOG(
-                ("Error: Unable to query service when fixing permissions. Got "
-                 "an error that cannot be fixed by waiting: 0x%lx\n",
-                 lastError));
-            return NS_ERROR_FAILURE;
-          }
-          if (mCurrentTry >= kMaxQueries) {
-            LOG(
-                ("Error: Unable to query service when fixing permissions: "
-                 "Timed out after %u attempts.\n",
-                 mCurrentTry));
-            return NS_ERROR_FAILURE;
-          }
-          return RetryInMS(kQueryIntervalMS);
-        } else {  // We successfully queried the service
-          if (ssp.dwCurrentState != SERVICE_STOPPED) {
-            return RetryInMS(kQueryIntervalMS);
-          }
-          if (mState == State::WaitingForFinish) {
-            if (ssp.dwWin32ExitCode != NO_ERROR) {
-              LOG(
-                  ("Error: Maintenance Service was unable to fix update "
-                   "directory permissions\n"));
-              return ReportUpdateError();
-            }
-            LOG(
-                ("Maintenance service successully fixed update directory "
-                 "permissions\n"));
-            return NS_OK;
-          }
-          mState = State::Starting;
-          mCurrentTry = 1;
-        }
-      }
-      if (mState == State::Starting) {
-        BOOL success = StartServiceW(mService, mStartServiceArgCount,
-                                     mStartServiceArgs.get());
-        if (success) {
-          mState = State::WaitingForFinish;
-          mCurrentTry = 1;
-          return RetryInMS(kQueryIntervalMS);
-        } else if (mCurrentTry >= kMaxStartAttempts) {
-          LOG(
-              ("Error: Unable to fix permissions: Timed out after %u attempts "
-               "to start the maintenance service\n",
-               mCurrentTry));
-          return NS_ERROR_FAILURE;
-        }
-        return RetryInMS(kStartAttemptIntervalMS);
-      }
-#  endif
       // We should not have fallen through all three state checks above
       LOG(
           ("Error: Reached logically unreachable code when correcting update "
@@ -960,20 +830,6 @@ nsUpdateProcessor::FixUpdateDirectoryPerms(bool aUseServiceOnFailure) {
    private:
     State mState;
     mozilla::UniquePtr<wchar_t[]> mInstallPath;
-#  ifdef MOZ_MAINTENANCE_SERVICE
-    bool mUseServiceOnFailure;
-    unsigned int mCurrentTry;
-    nsAutoServiceHandle mServiceManager;
-    nsAutoServiceHandle mService;
-    DWORD mStartServiceArgCount;
-    mozilla::UniquePtr<LPCWSTR[]> mStartServiceArgs;
-
-    nsresult RetryInMS(unsigned int aDelayMS) {
-      ++mCurrentTry;
-      nsCOMPtr<nsIRunnable> runnable(this);
-      return NS_DelayedDispatchToCurrentThread(runnable.forget(), aDelayMS);
-    }
-#  endif
     nsresult ReportUpdateError() {
       return NS_DispatchToMainThread(NS_NewRunnableFunction(
           "nsUpdateProcessor::FixUpdateDirectoryPerms::"
@@ -1014,7 +870,7 @@ nsUpdateProcessor::FixUpdateDirectoryPerms(bool aUseServiceOnFailure) {
   NS_ENSURE_TRUE(eventTarget, NS_ERROR_FAILURE);
 
   nsCOMPtr<nsIRunnable> runnable = new FixUpdateDirectoryPermsRunnable(
-      "FixUpdateDirectoryPermsRunnable", aUseServiceOnFailure, installPath);
+      "FixUpdateDirectoryPermsRunnable", installPath);
   rv = eventTarget->Dispatch(runnable.forget());
   NS_ENSURE_SUCCESS(rv, rv);
 #endif
