@@ -1183,11 +1183,32 @@ function updateImportCommandEnabledState() {
 /**
   ######## Waterfox Utility Functions ########
  */
+ChromeUtils.defineModuleGetter(
+  this,
+  "PrivateTab",
+  "resource:///modules/PrivateTab.jsm"
+);
 
 function restartBrowser() {
-  Services.obs.notifyObservers(null, "restartbrowser-extension")
+  Services.obs.notifyObservers(null, "restartbrowser-extension");
 }
 
 function styleMenuBar() {
-  Services.obs.notifyObservers(null, "style-menubar-extension")
+  Services.obs.notifyObservers(null, "style-menubar-extension");
+}
+
+function openAllPrivate(event) {
+  PrivateTab.openAllPrivate(event);
+}
+
+function openPrivateTab(event) {
+  PrivateTab.openPrivateTab(event);
+}
+
+function browserOpenTabPrivate(window) {
+  PrivateTab.browserOpenTabPrivate(window);
+}
+
+function togglePrivate(window, tab) {
+  PrivateTab.togglePrivate(window, tab);
 }

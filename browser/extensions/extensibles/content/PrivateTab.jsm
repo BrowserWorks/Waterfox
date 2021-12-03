@@ -14,6 +14,14 @@ const { PlacesUIUtils } = ChromeUtils.import(
   "resource:///modules/PlacesUIUtils.jsm"
 );
 
+const { PrivateTabElements } = ChromeUtils.import(
+  "resource:///modules/PrivateTabElements.jsm"
+);
+
+const { BrowserUtils } = ChromeUtils.import(
+  "resource:///modules/BrowserUtils.jsm"
+);
+
 const PrivateTab = {
   config: {
     neverClearData: false, // TODO: change to pref controlled value; if you want to not record history but don"t care about other data, maybe even want to keep private logins
@@ -25,6 +33,53 @@ const PrivateTab = {
 
   BTN_ID: "privateTab-button",
   BTN2_ID: "newPrivateTab-button",
+
+  get style() {
+    return `
+    @-moz-document url('chrome://browser/content/browser.xhtml') {
+      #private-mask[enabled="true"] {
+        display: block !important;
+      }
+      .privatetab-icon {
+        list-style-image: url(chrome://browser/skin/privatebrowsing/favicon.svg) !important;
+      }
+      #${this.BTN_ID}, #${this.BTN2_ID} {
+        list-style-image: url(chrome://browser/skin/privateBrowsing.svg);
+      }
+      #tabbrowser-tabs[hasadjacentnewprivatetabbutton]:not([overflow="true"]) ~ #${this.BTN_ID},
+      #tabbrowser-tabs[overflow="true"] > #tabbrowser-arrowscrollbox > #${this.BTN2_ID},
+      #tabbrowser-tabs:not([hasadjacentnewprivatetabbutton]) > #tabbrowser-arrowscrollbox > #${this.BTN2_ID},
+      #TabsToolbar[customizing="true"] #${this.BTN2_ID} {
+        display: none;
+      }
+      .tabbrowser-tab[usercontextid="${this.container.userContextId}"] .tab-label {
+        text-decoration: underline !important;
+        text-decoration-color: -moz-nativehyperlinktext !important;
+        text-decoration-style: dashed !important;
+      }
+      .tabbrowser-tab[usercontextid="${this.container.userContextId}"][pinned] .tab-icon-image,
+      .tabbrowser-tab[usercontextid="${this.container.userContextId}"][pinned] .tab-throbber {
+        border-bottom: 1px dashed -moz-nativehyperlinktext !important;
+      }
+    }
+  `;
+  },
+
+  init(window) {
+    // Only init in a non-private window
+    if (!window.PrivateBrowsingUtils.isWindowPrivate(window)) {
+      this.initContainer("Private");
+      this.initElements(window);
+      this.initObservers(window);
+      this.initListeners(window);
+      this.registerInWindow(window);
+      this.initCustomFunctions(window);
+      this.overridePlacesUIUtils();
+      this.createPrivateWidget();
+      this.updatePrivateMaskId(window);
+      BrowserUtils.setStyle(this.style);
+    }
+  },
 
   initContainer(aName) {
     ContextualIdentityService.ensureDataReady();
@@ -52,72 +107,84 @@ const PrivateTab = {
     });
   },
 
-  setStyle(aWindow) {
-    let { privateTab } = aWindow;
-    let styleSheetService = Cc[
-      "@mozilla.org/content/style-sheet-service;1"
-    ].getService(Ci.nsIStyleSheetService);
-
-    let url = Services.io.newURI(
-      "data:text/css;charset=UTF-8," +
-        encodeURIComponent(`
-          @-moz-document url('chrome://browser/content/browser.xhtml') {
-            #private-mask[enabled="true"] {
-              display: block !important;
-            }
-            .privatetab-icon {
-              list-style-image: url(chrome://browser/skin/privatebrowsing/favicon.svg) !important;
-            }
-            #${privateTab.BTN_ID}, #${privateTab.BTN2_ID} {
-              list-style-image: url(chrome://browser/skin/privateBrowsing.svg);
-            }
-            #tabbrowser-tabs[hasadjacentnewprivatetabbutton]:not([overflow="true"]) ~ #${privateTab.BTN_ID},
-            #tabbrowser-tabs[overflow="true"] > #tabbrowser-arrowscrollbox > #${privateTab.BTN2_ID},
-            #tabbrowser-tabs:not([hasadjacentnewprivatetabbutton]) > #tabbrowser-arrowscrollbox > #${privateTab.BTN2_ID},
-            #TabsToolbar[customizing="true"] #${privateTab.BTN2_ID} {
-              display: none;
-            }
-            .tabbrowser-tab[usercontextid="${privateTab.container.userContextId}"] .tab-label {
-              text-decoration: underline !important;
-              text-decoration-color: -moz-nativehyperlinktext !important;
-              text-decoration-style: dashed !important;
-            }
-            .tabbrowser-tab[usercontextid="${privateTab.container.userContextId}"][pinned] .tab-icon-image,
-            .tabbrowser-tab[usercontextid="${privateTab.container.userContextId}"][pinned] .tab-throbber {
-              border-bottom: 1px dashed -moz-nativehyperlinktext !important;
-            }
-          }
-        `)
-    );
-    let type = styleSheetService.USER_SHEET;
-
-    styleSheetService.loadAndRegisterSheet(url, type);
+  initElements(window) {
+    PrivateTabElements.elements.forEach(item => {
+      const { tag, attrs, adjacentTo, position } = item;
+      BrowserUtils.createAndPositionElement(
+        window,
+        tag,
+        attrs,
+        adjacentTo,
+        position
+      );
+    });
+    PrivateTabElements.appendElements.forEach(item => {
+      const { tag, attrs, appendTo } = item;
+      BrowserUtils.createAndPositionElement(window, tag, attrs, appendTo);
+    });
   },
 
-  createPrivateWidget(aWindow, aAttrs) {
-    let { privateTab } = aWindow;
+  initObservers(aWindow) {
+    this.setPrivateObserver();
+  },
+
+  initListeners(aWindow) {
+    this.initPrivateTabListeners(aWindow);
+    aWindow.document
+      .getElementById("placesContext")
+      ?.addEventListener("popupshowing", this.placesContext);
+    aWindow.document
+      .getElementById("contentAreaContextMenu")
+      ?.addEventListener("popupshowing", this.contentContext);
+    aWindow.document
+      .getElementById("contentAreaContextMenu")
+      ?.addEventListener("popuphidden", this.hideContext);
+    aWindow.document
+      .getElementById("openLinkInPrivateTab")
+      ?.addEventListener("command", this.openLink);
+    aWindow.document
+      .getElementById("tabContextMenu")
+      ?.addEventListener("popupshowing", this.tabContext);
+    aWindow.document
+      .getElementById("newPrivateTab-button")
+      ?.addEventListener("click", this.toolbarClick);
+  },
+
+  registerInWindow(aWindow) {
+    aWindow.privateTab = PrivateTab;
+  },
+
+  createPrivateWidget() {
     let { CustomizableUI } = ChromeUtils.import(
       "resource:///modules/CustomizableUI.jsm"
     );
+    let attrs = PrivateTabElements.widgetElements;
     // if widget exists, don't attempt to create it again
-    if (!CustomizableUI.getWidget(privateTab.BTN_ID)) {
+    if (!CustomizableUI.getWidget(this.BTN_ID)) {
       CustomizableUI.createWidget({
-        id: privateTab.BTN_ID,
+        id: this.BTN_ID,
         type: "custom",
         defaultArea: null,
         showInPrivateBrowsing: false,
         onBuild: doc => {
           let el = doc.createXULElement("toolbarbutton");
-          for (let att in aAttrs) {
+          for (let att in attrs) {
             // don't set null attrs
-            if (aAttrs[att]) {
-              el.setAttribute(att, aAttrs[att]);
+            if (attrs[att]) {
+              el.setAttribute(att, attrs[att]);
             }
           }
           return el;
         },
       });
     }
+  },
+
+  async updatePrivateMaskId(aWindow) {
+    let privateMask = aWindow.document.getElementsByClassName(
+      "private-browsing-indicator"
+    )[0];
+    privateMask.id = "private-mask";
   },
 
   setPrivateObserver() {
@@ -303,6 +370,22 @@ const PrivateTab = {
     //   "return function " + openTabsetStr
     // )();
     // aWindow.PlacesUIUtils._openNodeIn = new Function("return " + openNodeStr)();
+  },
+
+  openAllPrivate(event) {
+    event.userContextId = this.container.userContextId;
+    PlacesUIUtils.openSelectionInTabs(event);
+  },
+
+  openPrivateTab(event) {
+    let view = event.target.parentElement._view;
+    PlacesUIUtils._openNodeIn(
+      view.selectedNode,
+      "tab",
+      view.ownerWindow,
+      false,
+      this.container.userContextId
+    );
   },
 
   togglePrivate(aWindow, aTab = aWindow.gBrowser.selectedTab) {

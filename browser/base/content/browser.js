@@ -60,6 +60,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   PluralForm: "resource://gre/modules/PluralForm.jsm",
   Pocket: "chrome://pocket/content/Pocket.jsm",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.jsm",
+  PrivateTab: "resource:///modules/PrivateTab.jsm",
   ProcessHangMonitor: "resource:///modules/ProcessHangMonitor.jsm",
   PromiseUtils: "resource://gre/modules/PromiseUtils.jsm",
   PromptUtils: "resource://gre/modules/SharedPromptUtils.jsm",
@@ -1919,6 +1920,7 @@ var gBrowserInit = {
     FullZoom.init();
     PanelUI.init(shouldSuppressPopupNotifications);
     TabFeatures.init(window);
+    PrivateTab.init(window);
 
     UpdateUrlbarSearchSplitterState();
 

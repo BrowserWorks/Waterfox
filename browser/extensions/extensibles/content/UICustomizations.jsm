@@ -6,8 +6,6 @@
 
 const EXPORTED_SYMBOLS = ["UICustomizations"];
 
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-
 const { PrefUtils } = ChromeUtils.import("resource:///modules/PrefUtils.jsm");
 
 const { BrowserUtils } = ChromeUtils.import(
@@ -15,7 +13,6 @@ const { BrowserUtils } = ChromeUtils.import(
 );
 
 const UICustomizations = {
-
   PREF_TOOLBARPOS: "browser.tabs.toolbarposition",
   PREF_BOOKMARKPOS: "browser.bookmarks.toolbarposition",
 
@@ -36,7 +33,6 @@ const UICustomizations = {
     this.moveBookmarksBar(window);
     this.initListeners(window);
     BrowserUtils.setStyle(this.style); // TODO: Move to extension/css and include in relevant css file
-
   },
 
   initPrefObservers() {
@@ -71,8 +67,8 @@ const UICustomizations = {
             mutation.type === "attributes" &&
             mutation.attributeName == "autohide"
           ) {
-            UICustomizations.styleButtonBox(aDocument);
-            UICustomizations.styleMenuBar(aDocument, aWindow);
+            UICustomizations.styleButtonBox(aWindow.document);
+            UICustomizations.styleMenuBar(aWindow.document, aWindow);
           }
         });
       });
@@ -80,7 +76,7 @@ const UICustomizations = {
       observer.observe(menuBar, {
         attributes: true, //configure it to listen to attribute changes
       });
-    };
+    }
     // Ensure menu bar/ nav bar not cut off when maximized in Windows
     aWindow.addEventListener(
       "sizemodechange",
@@ -213,7 +209,7 @@ const UICustomizations = {
         break;
     }
   },
-}
+};
 
 // Inherited props
 UICustomizations.executeInAllWindows = BrowserUtils.executeInAllWindows;

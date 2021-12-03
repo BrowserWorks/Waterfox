@@ -206,11 +206,9 @@ this.extensibles = class extends ExtensionAPI {
                 break;
             }
             if (firstLoad) {
-
             } else {
               this.document.getElementById(aId).addEventListener(aEvent, func);
             }
-            
           },
 
           registerPref(aName, aValue) {
@@ -373,21 +371,18 @@ this.extensibles = class extends ExtensionAPI {
           restartBrowserCommand() {
             let observer = (subject, topic, data) => {
               TabFeatures.restartBrowser();
-            }
-            Services.obs.addObserver(
-              observer,
-              "restartbrowser-extension"
-            )
+            };
+            Services.obs.addObserver(observer, "restartbrowser-extension");
           },
 
           styleMenuBarCommand() {
             let observer = (subject, topic, data) => {
-              UICustomizations.styleMenuBar(this.document, this.mostRecentWindow);
-            }
-            Services.obs.addObserver(
-              observer,
-              "style-menubar-extension"
-            )
+              UICustomizations.styleMenuBar(
+                this.document,
+                this.mostRecentWindow
+              );
+            };
+            Services.obs.addObserver(observer, "style-menubar-extension");
           },
 
           initPrefObservers() {

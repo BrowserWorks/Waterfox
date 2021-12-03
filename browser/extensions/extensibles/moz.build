@@ -23,6 +23,7 @@ EXTRA_JS_MODULES += [
   'content/BrowserUtils.jsm',
   'content/PrefUtils.jsm',
   'content/PrivateTab.jsm',
+  'content/PrivateTabElements.jsm',
   'content/StatusBar.jsm',
   'content/StoreHandler.jsm',
   'content/TabFeatures.jsm',

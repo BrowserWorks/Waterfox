@@ -12,8 +12,6 @@ const { AppConstants } = ChromeUtils.import(
   "resource://gre/modules/AppConstants.jsm"
 );
 
-const { PrefUtils } = ChromeUtils.import("resource:///modules/PrefUtils.jsm");
-
 const { BrowserUtils } = ChromeUtils.import(
   "resource:///modules/BrowserUtils.jsm"
 );
@@ -34,32 +32,35 @@ const TabFeatures = {
   },
   get updateItems() {
     return [
-    {
-      id: "context_duplicateTab",
-      attrs: {
-        class: "tabFeature",
-        preference: "browser.tabs.duplicateTab",
+      {
+        id: "context_duplicateTab",
+        attrs: {
+          class: "tabFeature",
+          preference: "browser.tabs.duplicateTab",
+        },
       },
-    },
-  ];
+    ];
   },
 
-
   init(window) {
-  // Add any attributes to required elements
+    // Add any attributes to required elements
     this.initAttributes(this.updateItems, window);
     this.initListeners(window);
   },
 
   initListeners(aWindow) {
-    aWindow.document.getElementById("tabContextMenu")?.addEventListener("popupshowing", this.tabContext);
+    aWindow.document
+      .getElementById("tabContextMenu")
+      ?.addEventListener("popupshowing", this.tabContext);
     if (AppConstants.platform == "macosx") {
-      aWindow.document.getElementById("file-menu")?.addEventListener("popupshowing", this.tabContext);
+      aWindow.document
+        .getElementById("file-menu")
+        ?.addEventListener("popupshowing", this.tabContext);
     } else {
-      aWindow.document.getElementById("appMenu-popup")?.addEventListener("popupshowing", this.tabContext);
+      aWindow.document
+        .getElementById("appMenu-popup")
+        ?.addEventListener("popupshowing", this.tabContext);
     }
-
-
   },
 
   initAttributes(aItems, aWindow) {
@@ -67,8 +68,7 @@ const TabFeatures = {
       let el = aWindow.document.getElementById(item.id);
       Object.entries(item.attrs).forEach(([id, val]) => {
         el?.setAttribute(id, val);
-        }
-      )
+      });
     });
   },
 
@@ -146,9 +146,7 @@ const TabFeatures = {
   restartBrowser() {
     try {
       if (Services.prefs.getBoolPref(this.PREF_REQUIRECONFIRM)) {
-        let brand = this.brandBundle.GetStringFromName(
-          "brandShortName"
-        );
+        let brand = this.brandBundle.GetStringFromName("brandShortName");
         let title = this.browserBundle.formatStringFromName(
           "restartPromptTitle",
           [brand],

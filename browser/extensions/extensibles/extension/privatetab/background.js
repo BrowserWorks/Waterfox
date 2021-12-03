@@ -1,333 +1,344 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+// /* This Source Code Form is subject to the terms of the Mozilla Public
+//  * License, v. 2.0. If a copy of the MPL was not distributed with this
+//  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* global browser Services window navigator privateTab */
+// /* global browser Services window navigator privateTab */
 
-const PrivateTab = {
-  openAll: "placesContext_openBookmarkContainer:tabs",
-  openAllLinks: "placesContext_openLinks:tabs",
-  openTab: "placesContext_open:newtab",
+// // Still make all elements with JS -> include a new ftl file/register in top level so we can keep translations local
+// // Because we have to make so many elements in so many different locations it doesn't make sense to include these
+// // in specific html files, it will get too complex
 
-  get privateTooltip() {
-    let key = "(Ctrl+Alt+P)"; // add a key getter to determine key based on OS
-    let tooltip = browser.i18n.getMessage("newPrivateTooltip") + key;
-    return tooltip;
-  },
 
-  get containerName() {
-    return browser.i18n.getMessage("containerName");
-  },
-  get widgetAttrs() {
-    return {
-      id: "privateTab-button",
-      label: browser.i18n.getMessage("newPrivateTab"),
-      tooltiptext: this.privateTooltip,
-      class: "toolbarbutton-1 chromeclass-toolbar-additional",
-      oncommand: "privateTab.browserOpenTabPrivate(window)",
-    };
-  },
+// // TODO: Include all elements, use JS to move the elements to the correct location, part of PrivateTab.init();
+// // Move all listeners to PrivateTab.init();
+// // Move some functions to observer based calls from utilityOverlay.js
 
-  async getPlacesContextAttrs() {
-    this.openAllOncommand = await browser.extensibles.utils.getElementAttr(
-      this.openAll,
-      "oncommand"
-    );
-    this.openAllOnclick = await browser.extensibles.utils.getElementAttr(
-      this.openAll,
-      "onclick"
-    );
-    this.openAllLinksOncommand = await browser.extensibles.utils.getElementAttr(
-      this.openAllLinks,
-      "oncommand"
-    );
-    this.openAllLinksOnclick = await browser.extensibles.utils.getElementAttr(
-      this.openAllLinks,
-      "onclick"
-    );
-  },
 
-  get placesContextItems() {
-    return [
-      {
-        tag: "menuitem",
-        attrs: {
-          id: "openAllPrivate",
-          label: browser.i18n.getMessage("openAllPrivate"),
-          accesskey: "v",
-          class: "menuitem-iconic privatetab-icon",
-          oncommand:
-            "event.userContextId = " +
-            this.container.userContextId +
-            "; " +
-            this.openAllOncommand,
-          onclick:
-            "event.userContextId = " +
-            this.container.userContextId +
-            "; " +
-            this.openAllOnclick,
-        },
-        adjacentTo: this.openAll,
-        position: "afterend",
-      },
-      {
-        tag: "menuitem",
-        attrs: {
-          id: "openAllLinksPrivate",
-          label: browser.i18n.getMessage("openAllPrivate"),
-          accesskey: "v",
-          class: "menuitem-iconic privatetab-icon",
-          oncommand:
-            "event.userContextId = " +
-            this.container.userContextId +
-            "; " +
-            this.openAllLinksOncommand,
-          onclick:
-            "event.userContextId = " +
-            this.container.userContextId +
-            "; " +
-            this.openAllLinksOnclick,
-        },
-        adjacentTo: this.openAllLinks,
-        position: "afterend",
-      },
-      {
-        tag: "menuitem",
-        attrs: {
-          id: "openPrivate",
-          label: browser.i18n.getMessage("openPrivateTab"),
-          accesskey: "v",
-          class: "menuitem-iconic privatetab-icon",
-          oncommand:
-            'let view = event.target.parentElement._view; PlacesUIUtils._openNodeIn(view.selectedNode, "tab", view.ownerWindow, false, ' +
-            this.container.userContextId +
-            ")",
-        },
-        adjacentTo: this.openTab,
-        position: "afterend",
-      },
-    ];
-  },
 
-  get keysetItems() {
-    return [
-      {
-        tag: "keyset",
-        attrs: {
-          id: "privateTab-keyset",
-        },
-        adjacentTo: "mainKeyset",
-        position: "afterend",
-      },
-    ];
-  },
+// const PrivateTab = {
+//   openAll: "placesContext_openBookmarkContainer:tabs",
+//   openAllLinks: "placesContext_openLinks:tabs",
+//   openTab: "placesContext_open:newtab",
 
-  get keyItems() {
-    return [
-      {
-        tag: "key",
-        attrs: {
-          id: "togglePrivateTab-key",
-          modifiers: "alt control",
-          key: "T",
-          oncommand: "privateTab.togglePrivate(window)",
-        },
-        appendTo: "privateTab-keyset",
-      },
-      {
-        tag: "key",
-        attrs: {
-          id: "newPrivateTab-key",
-          modifiers: "alt control",
-          key: "P",
-          oncommand: "privateTab.browserOpenTabPrivate(window)",
-        },
-        appendTo: "privateTab-keyset",
-      },
-    ];
-  },
+//   get privateTooltip() {
+//     let key = "(Ctrl+Alt+P)"; // add a key getter to determine key based on OS
+//     let tooltip = browser.i18n.getMessage("newPrivateTooltip") + key;
+//     return tooltip;
+//   },
 
-  get openLinkItems() {
-    return [
-      {
-        tag: "menuitem",
-        attrs: {
-          id: "menu_newPrivateTab",
-          label: browser.i18n.getMessage("newPrivateTab"),
-          accesskey: "v",
-          acceltext: "Ctrl+Alt+P", // TODO: change to key getter
-          class: "menuitem-iconic privatetab-icon",
-          oncommand: "privateTab.browserOpenTabPrivate(window)",
-        },
-        adjacentTo: "menu_newNavigatorTab",
-        position: "afterend",
-      },
-      {
-        tag: "menuitem",
-        attrs: {
-          id: "openLinkInPrivateTab",
-          label: browser.i18n.getMessage("openLinkPrivate"),
-          accesskey: "v",
-          class: "menuitem-iconic privatetab-icon",
-          hidden: true,
-        },
-        adjacentTo: "context-openlinkintab",
-        position: "afterend",
-      },
-    ];
-  },
+//   get containerName() {
+//     return browser.i18n.getMessage("containerName");
+//   },
+//   get widgetAttrs() {
+//     return {
+//       id: "privateTab-button",
+//       label: browser.i18n.getMessage("newPrivateTab"),
+//       tooltiptext: this.privateTooltip,
+//       class: "toolbarbutton-1 chromeclass-toolbar-additional",
+//       oncommand: "privateTab.browserOpenTabPrivate(window)",
+//     };
+//   },
 
-  get toggleItems() {
-    return [
-      {
-        tag: "menuitem",
-        attrs: {
-          id: "toggleTabPrivateState",
-          label: browser.i18n.getMessage("privateTab"),
-          class: "menuitem-iconic privatetab-icon",
-          accesskey: "v",
-          acceltext: "Ctrl+Alt+T", // TODO: change to key getter
-          oncommand:
-            "privateTab.togglePrivate(window, TabContextMenu.contextTab)",
-        },
-        adjacentTo: "context_pinTab",
-        position: "afterend",
-      },
-    ];
-  },
+//   async getPlacesContextAttrs() {
+//     this.openAllOncommand = await browser.extensibles.utils.getElementAttr(
+//       this.openAll,
+//       "oncommand"
+//     );
+//     this.openAllOnclick = await browser.extensibles.utils.getElementAttr(
+//       this.openAll,
+//       "onclick"
+//     );
+//     this.openAllLinksOncommand = await browser.extensibles.utils.getElementAttr(
+//       this.openAllLinks,
+//       "oncommand"
+//     );
+//     this.openAllLinksOnclick = await browser.extensibles.utils.getElementAttr(
+//       this.openAllLinks,
+//       "onclick"
+//     );
+//   },
 
-  get toolbarItems() {
-    return [
-      {
-        tag: "toolbarbutton",
-        attrs: {
-          id: "newPrivateTab-button",
-          label: browser.i18n.getMessage("newPrivateTab"),
-          tooltiptext: this.privateTooltip,
-          class: "toolbarbutton-1 chromeclass-toolbar-additional",
-        },
-        adjacentTo: "tabs-newtab-button",
-        position: "afterend",
-      },
-    ];
-  },
+//   get placesContextItems() {
+//     return [
+//       {
+//         tag: "menuitem",
+//         attrs: {
+//           id: "openAllPrivate",
+//           label: browser.i18n.getMessage("openAllPrivate"),
+//           accesskey: "v",
+//           class: "menuitem-iconic privatetab-icon",
+//           oncommand:
+//             "event.userContextId = " +
+//             this.container.userContextId +
+//             "; " +
+//             this.openAllOncommand,
+//           onclick:
+//             "event.userContextId = " +
+//             this.container.userContextId +
+//             "; " +
+//             this.openAllOnclick,
+//         },
+//         adjacentTo: this.openAll,
+//         position: "afterend",
+//       },
+//       {
+//         tag: "menuitem",
+//         attrs: {
+//           id: "openAllLinksPrivate",
+//           label: browser.i18n.getMessage("openAllPrivate"),
+//           accesskey: "v",
+//           class: "menuitem-iconic privatetab-icon",
+//           oncommand:
+//             "event.userContextId = " +
+//             this.container.userContextId +
+//             "; " +
+//             this.openAllLinksOncommand,
+//           onclick:
+//             "event.userContextId = " +
+//             this.container.userContextId +
+//             "; " +
+//             this.openAllLinksOnclick,
+//         },
+//         adjacentTo: this.openAllLinks,
+//         position: "afterend",
+//       },
+//       {
+//         tag: "menuitem",
+//         attrs: {
+//           id: "openPrivate",
+//           label: browser.i18n.getMessage("openPrivateTab"),
+//           accesskey: "v",
+//           class: "menuitem-iconic privatetab-icon",
+//           oncommand:
+//             'let view = event.target.parentElement._view; PlacesUIUtils._openNodeIn(view.selectedNode, "tab", view.ownerWindow, false, ' +
+//             this.container.userContextId +
+//             ")",
+//         },
+//         adjacentTo: this.openTab,
+//         position: "afterend",
+//       },
+//     ];
+//   },
 
-  async init() {
-    // init privatetab helper in window object
-    browser.extensibles.privatetab.registerPrivateTab(
-      this.containerName,
-      this.widgetAttrs
-    );
-    // init privatetab in window
-    if (browser.extensibles.utils.isTopWindowPrivate()) {
-      return;
-    }
-    this.container = await browser.extensibles.utils.getContainer(
-      this.containerName
-    );
-    // init placesContext
-    await this.getPlacesContextAttrs();
-    this.placesContextItems.forEach(item => {
-      this.createAdjacentElement(item);
-    });
+//   get keysetItems() {
+//     return [
+//       {
+//         tag: "keyset",
+//         attrs: {
+//           id: "privateTab-keyset",
+//         },
+//         adjacentTo: "mainKeyset",
+//         position: "afterend",
+//       },
+//     ];
+//   },
 
-    browser.extensibles.utils.addElementListener(
-      "placesContext",
-      "popupshowing",
-      "places"
-    );
+//   get keyItems() {
+//     return [
+//       {
+//         tag: "key",
+//         attrs: {
+//           id: "togglePrivateTab-key",
+//           modifiers: "alt control",
+//           key: "T",
+//           oncommand: "privateTab.togglePrivate(window)",
+//         },
+//         appendTo: "privateTab-keyset",
+//       },
+//       {
+//         tag: "key",
+//         attrs: {
+//           id: "newPrivateTab-key",
+//           modifiers: "alt control",
+//           key: "P",
+//           oncommand: "privateTab.browserOpenTabPrivate(window)",
+//         },
+//         appendTo: "privateTab-keyset",
+//       },
+//     ];
+//   },
 
-    if (!browser.extensibles.utils.windowIsChromeWindow()) {
-      return;
-    }
-    // init keyset
-    this.keysetItems.forEach(item => {
-      this.createAdjacentElement(item);
-    });
+//   get openLinkItems() {
+//     return [
+//       {
+//         tag: "menuitem",
+//         attrs: {
+//           id: "menu_newPrivateTab",
+//           label: browser.i18n.getMessage("newPrivateTab"),
+//           accesskey: "v",
+//           acceltext: "Ctrl+Alt+P", // TODO: change to key getter
+//           class: "menuitem-iconic privatetab-icon",
+//           oncommand: "privateTab.browserOpenTabPrivate(window)",
+//         },
+//         adjacentTo: "menu_newNavigatorTab",
+//         position: "afterend",
+//       },
+//       {
+//         tag: "menuitem",
+//         attrs: {
+//           id: "openLinkInPrivateTab",
+//           label: browser.i18n.getMessage("openLinkPrivate"),
+//           accesskey: "v",
+//           class: "menuitem-iconic privatetab-icon",
+//           hidden: true,
+//         },
+//         adjacentTo: "context-openlinkintab",
+//         position: "afterend",
+//       },
+//     ];
+//   },
 
-    this.keyItems.forEach(item => {
-      this.createAppendElement(item);
-    });
+//   get toggleItems() {
+//     return [
+//       {
+//         tag: "menuitem",
+//         attrs: {
+//           id: "toggleTabPrivateState",
+//           label: browser.i18n.getMessage("privateTab"),
+//           class: "menuitem-iconic privatetab-icon",
+//           accesskey: "v",
+//           acceltext: "Ctrl+Alt+T", // TODO: change to key getter
+//           oncommand:
+//             "privateTab.togglePrivate(window, TabContextMenu.contextTab)",
+//         },
+//         adjacentTo: "context_pinTab",
+//         position: "afterend",
+//       },
+//     ];
+//   },
 
-    // init openLink
-    this.openLinkItems.forEach(item => {
-      this.createAdjacentElement(item);
-    });
+//   get toolbarItems() {
+//     return [
+//       {
+//         tag: "toolbarbutton",
+//         attrs: {
+//           id: "newPrivateTab-button",
+//           label: browser.i18n.getMessage("newPrivateTab"),
+//           tooltiptext: this.privateTooltip,
+//           class: "toolbarbutton-1 chromeclass-toolbar-additional",
+//         },
+//         adjacentTo: "tabs-newtab-button",
+//         position: "afterend",
+//       },
+//     ];
+//   },
 
-    browser.extensibles.utils.addElementListener(
-      "contentAreaContextMenu",
-      "popupshowing",
-      "showContent"
-    );
-    browser.extensibles.utils.addElementListener(
-      "contentAreaContextMenu",
-      "popuphidden",
-      "hideContent"
-    );
-    browser.extensibles.utils.addElementListener(
-      "openLinkInPrivateTab",
-      "command",
-      "openLink"
-    );
+//   async init() {
+//     // init privatetab helper in window object
+//     browser.extensibles.privatetab.registerPrivateTab(
+//       this.containerName,
+//       this.widgetAttrs
+//     );
+//     // init privatetab in window
+//     if (browser.extensibles.utils.isTopWindowPrivate()) {
+//       return;
+//     }
+//     this.container = await browser.extensibles.utils.getContainer(
+//       this.containerName
+//     );
+//     // init placesContext
+//     await this.getPlacesContextAttrs();
+//     // this.placesContextItems.forEach(item => {
+//     //   this.createAdjacentElement(item);
+//     // });
 
-    // init toggleTab
-    this.toggleItems.forEach(item => {
-      this.createAdjacentElement(item);
-    });
+//     browser.extensibles.utils.addElementListener(
+//       "placesContext",
+//       "popupshowing",
+//       "places"
+//     );
 
-    browser.extensibles.utils.addElementListener(
-      "tabContextMenu",
-      "popupshowing",
-      "toggleTab"
-    );
+//     if (!browser.extensibles.utils.windowIsChromeWindow()) {
+//       return;
+//     }
+//     // init keyset
+//     this.keysetItems.forEach(item => {
+//       this.createAdjacentElement(item);
+//     });
 
-    // init privateMask
-    browser.extensibles.privatetab.updatePrivateMaskId("private-mask");
+//     this.keyItems.forEach(item => {
+//       this.createAppendElement(item);
+//     });
 
-    // init toolbarbutton
-    this.toolbarItems.forEach(item => {
-      this.createAdjacentElement(item);
-    });
+//     // init openLink
+//     this.openLinkItems.forEach(item => {
+//       this.createAdjacentElement(item);
+//     });
 
-    browser.extensibles.utils.addElementListener(
-      "newPrivateTab-button",
-      "click",
-      "toolbarClick"
-    );
+//     browser.extensibles.utils.addElementListener(
+//       "contentAreaContextMenu",
+//       "popupshowing",
+//       "showContent"
+//     );
+//     browser.extensibles.utils.addElementListener(
+//       "contentAreaContextMenu",
+//       "popuphidden",
+//       "hideContent"
+//     );
+//     browser.extensibles.utils.addElementListener(
+//       "openLinkInPrivateTab",
+//       "command",
+//       "openLink"
+//     );
 
-    // init privateTab listeners
-    browser.extensibles.privatetab.initPrivateTabListeners();
+//     // init toggleTab
+//     this.toggleItems.forEach(item => {
+//       this.createAdjacentElement(item);
+//     });
 
-    // register additional functions
-    browser.extensibles.privatetab.initCustomFunctions();
-  },
+//     browser.extensibles.utils.addElementListener(
+//       "tabContextMenu",
+//       "popupshowing",
+//       "toggleTab"
+//     );
 
-  createAdjacentElement(item) {
-    const { tag, attrs, adjacentTo, position } = item;
-    browser.extensibles.utils.createAndPositionElement(
-      tag,
-      attrs,
-      adjacentTo,
-      position
-    );
-  },
+//     // init privateMask
+//     browser.extensibles.privatetab.updatePrivateMaskId("private-mask");
 
-  createAppendElement(item) {
-    const { tag, attrs, appendTo } = item;
-    browser.extensibles.utils.createAndPositionElement(tag, attrs, appendTo);
-  },
-};
+//     // init toolbarbutton
+//     this.toolbarItems.forEach(item => {
+//       this.createAdjacentElement(item);
+//     });
 
-(async function() {
-  // init in primary window
-  await PrivateTab.init();
-  // init in window on created if not already initialized
-  browser.windows.onCreated.addListener(async windowId => {
-    if (
-      !(await browser.extensibles.utils.initialized("privateTab")) &&
-      windowId
-    ) {
-      await PrivateTab.init();
-    }
-  });
-})();
+//     browser.extensibles.utils.addElementListener(
+//       "newPrivateTab-button",
+//       "click",
+//       "toolbarClick"
+//     );
+
+//     // init privateTab listeners
+//     browser.extensibles.privatetab.initPrivateTabListeners();
+
+//     // register additional functions
+//     browser.extensibles.privatetab.initCustomFunctions();
+//   },
+
+//   createAdjacentElement(item) {
+//     const { tag, attrs, adjacentTo, position } = item;
+//     browser.extensibles.utils.createAndPositionElement(
+//       tag,
+//       attrs,
+//       adjacentTo,
+//       position
+//     );
+//   },
+
+//   createAppendElement(item) {
+//     const { tag, attrs, appendTo } = item;
+//     browser.extensibles.utils.createAndPositionElement(tag, attrs, appendTo);
+//   },
+// };
+
+// (async function() {
+//   // init in primary window
+//   await PrivateTab.init();
+//   // init in window on created if not already initialized
+//   browser.windows.onCreated.addListener(async windowId => {
+//     if (
+//       !(await browser.extensibles.utils.initialized("privateTab")) &&
+//       windowId
+//     ) {
+//       await PrivateTab.init();
+//     }
+//   });
+// })();
