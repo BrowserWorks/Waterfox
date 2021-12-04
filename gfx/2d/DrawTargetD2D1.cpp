@@ -1685,6 +1685,8 @@ void DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp,
       return;
     }
 
+    PushAllClips();
+
     conicGradientEffect->SetValue(
         CONIC_PROP_STOP_COLLECTION,
         static_cast<const GradientStopsD2D*>(pat->mStops.get())
@@ -1727,6 +1729,8 @@ void DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp,
                  << hexa(hr);
     return;
   }
+
+  PushAllClips();
 
   radialGradientEffect->SetValue(
       RADIAL_PROP_STOP_COLLECTION,
