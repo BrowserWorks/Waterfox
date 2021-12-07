@@ -1183,18 +1183,18 @@ function updateImportCommandEnabledState() {
 /**
   ######## Waterfox Utility Functions ########
  */
-ChromeUtils.defineModuleGetter(
-  this,
-  "PrivateTab",
-  "resource:///modules/PrivateTab.jsm"
-);
-
+XPCOMUtils.defineLazyModuleGetters(this, {
+  TabFeatures: "resource:///modules/TabFeatures.jsm",
+  UICustomizations: "resource:///modules/UICustomizations.jsm",
+  PrivateTab: "resource:///modules/PrivateTab.jsm",
+  StatusBar: "resource:///modules/StatusBar.jsm",
+});
 function restartBrowser() {
-  Services.obs.notifyObservers(null, "restartbrowser-extension");
+  TabFeatures.restartBrowser();
 }
 
 function styleMenuBar() {
-  Services.obs.notifyObservers(null, "style-menubar-extension");
+  UICustomizations.styleMenuBar();
 }
 
 function openAllPrivate(event) {

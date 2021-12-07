@@ -180,7 +180,7 @@ this.extensibles = class extends ExtensionAPI {
             return returnObj;
           },
 
-          async addElementListener(aId, aEvent, aSubject, firstLoad) {
+          async addElementListener(aId, aEvent, aSubject) {
             let func;
             switch (aSubject) {
               case "places":
@@ -205,10 +205,7 @@ this.extensibles = class extends ExtensionAPI {
                 func = TabFeatures.tabContext;
                 break;
             }
-            if (firstLoad) {
-            } else {
-              this.document.getElementById(aId).addEventListener(aEvent, func);
-            }
+            this.document.getElementById(aId).addEventListener(aEvent, func);
           },
 
           registerPref(aName, aValue) {
@@ -263,9 +260,9 @@ this.extensibles = class extends ExtensionAPI {
             let win = this.mostRecentWindow;
             if (!win.statusBar) {
               win.statusBar = StatusBar;
-              win.statusBar.initPrefListeners();
+              win.statusBar.initPrefListeners(); // done
               win.statusBar.setStyle();
-              win.statusBar.registerArea("status-bar");
+              win.statusBar.registerArea("status-bar"); //done
             }
           },
 
@@ -314,12 +311,12 @@ this.extensibles = class extends ExtensionAPI {
             if (!win.privateTab) {
               win.privateTab = PrivateTab;
               if (!win.privateTab.container) {
-                win.privateTab.container = win.privateTab.initContainer(aName);
+                win.privateTab.container = win.privateTab.initContainer(aName); //done
               }
-              win.privateTab.setStyle(win);
-              win.privateTab.overridePlacesUIUtils();
-              win.privateTab.createPrivateWidget(win, aAttrs);
-              win.privateTab.setPrivateObserver();
+              win.privateTab.setStyle(win); //done
+              win.privateTab.overridePlacesUIUtils(); //done
+              win.privateTab.createPrivateWidget(win, aAttrs); //done
+              win.privateTab.setPrivateObserver(); //done
             }
           },
 
@@ -331,11 +328,13 @@ this.extensibles = class extends ExtensionAPI {
           },
 
           async initPrivateTabListeners() {
+            //done
             let win = this.mostRecentWindow;
             win.privateTab.initPrivateTabListeners(win);
           },
 
           async initCustomFunctions() {
+            //done
             let win = this.mostRecentWindow;
             win.privateTab.initCustomFunctions(win);
           },
@@ -366,27 +365,6 @@ this.extensibles = class extends ExtensionAPI {
               observer,
               "menuitem-copyallurls-extension"
             );
-          },
-
-          restartBrowserCommand() {
-            let observer = (subject, topic, data) => {
-              TabFeatures.restartBrowser();
-            };
-            Services.obs.addObserver(observer, "restartbrowser-extension");
-          },
-
-          styleMenuBarCommand() {
-            let observer = (subject, topic, data) => {
-              UICustomizations.styleMenuBar(
-                this.document,
-                this.mostRecentWindow
-              );
-            };
-            Services.obs.addObserver(observer, "style-menubar-extension");
-          },
-
-          initPrefObservers() {
-            UICustomizations.initPrefObservers();
           },
         },
         prefsext: {

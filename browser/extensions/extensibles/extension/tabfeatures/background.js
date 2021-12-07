@@ -7,6 +7,3 @@
 // Init observers
 browser.extensibles.tabfeatures.copyUrlCommand();
 browser.extensibles.tabfeatures.copyAllUrlsCommand();
-browser.extensibles.tabfeatures.restartBrowserCommand();
-browser.extensibles.tabfeatures.styleMenuBarCommand();
-browser.extensibles.tabfeatures.initPrefObservers();

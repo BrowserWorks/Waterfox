@@ -14,8 +14,8 @@ const { PlacesUIUtils } = ChromeUtils.import(
   "resource:///modules/PlacesUIUtils.jsm"
 );
 
-const { PrivateTabElements } = ChromeUtils.import(
-  "resource:///modules/PrivateTabElements.jsm"
+const { ExtensiblesElements } = ChromeUtils.import(
+  "resource:///modules/ExtensiblesElements.jsm"
 );
 
 const { BrowserUtils } = ChromeUtils.import(
@@ -72,7 +72,6 @@ const PrivateTab = {
       this.initElements(window);
       this.initObservers(window);
       this.initListeners(window);
-      this.registerInWindow(window);
       this.initCustomFunctions(window);
       this.overridePlacesUIUtils();
       this.createPrivateWidget();
@@ -108,7 +107,7 @@ const PrivateTab = {
   },
 
   initElements(window) {
-    PrivateTabElements.elements.forEach(item => {
+    ExtensiblesElements.elements.forEach(item => {
       const { tag, attrs, adjacentTo, position } = item;
       BrowserUtils.createAndPositionElement(
         window,
@@ -118,7 +117,7 @@ const PrivateTab = {
         position
       );
     });
-    PrivateTabElements.appendElements.forEach(item => {
+    ExtensiblesElements.appendElements.forEach(item => {
       const { tag, attrs, appendTo } = item;
       BrowserUtils.createAndPositionElement(window, tag, attrs, appendTo);
     });
@@ -150,19 +149,15 @@ const PrivateTab = {
       ?.addEventListener("click", this.toolbarClick);
   },
 
-  registerInWindow(aWindow) {
-    aWindow.privateTab = PrivateTab;
-  },
-
   createPrivateWidget() {
     let { CustomizableUI } = ChromeUtils.import(
       "resource:///modules/CustomizableUI.jsm"
     );
-    let attrs = PrivateTabElements.widgetElements;
+    let attrs = ExtensiblesElements.widgetAttrs;
     // if widget exists, don't attempt to create it again
-    if (!CustomizableUI.getWidget(this.BTN_ID)) {
+    if (!CustomizableUI.getWidget(PrivateTab.BTN_ID)) {
       CustomizableUI.createWidget({
-        id: this.BTN_ID,
+        id: PrivateTab.BTN_ID,
         type: "custom",
         defaultArea: null,
         showInPrivateBrowsing: false,
@@ -246,13 +241,13 @@ const PrivateTab = {
     if (!win) {
       return;
     }
-    let { gContextMenu, gBrowser, privateTab } = win;
+    let { gContextMenu, gBrowser, PrivateTab } = win;
     let tab = gBrowser.getTabForBrowser(gContextMenu.browser);
     gContextMenu.showItem(
       "openLinkInPrivateTab",
       gContextMenu.onSaveableLink || gContextMenu.onPlainTextLink
     );
-    let isPrivate = privateTab.isPrivate(tab);
+    let isPrivate = PrivateTab.isPrivate(tab);
     if (isPrivate) {
       gContextMenu.showItem("context-openlinkincontainertab", false);
     }
@@ -272,13 +267,13 @@ const PrivateTab = {
     if (!win) {
       return;
     }
-    let { document, privateTab } = win;
+    let { document, PrivateTab } = win;
     document
       .getElementById("toggleTabPrivateState")
       .setAttribute(
         "checked",
         win.TabContextMenu.contextTab.userContextId ==
-          privateTab.container.userContextId
+          PrivateTab.container.userContextId
       );
   },
 
@@ -287,12 +282,12 @@ const PrivateTab = {
     if (!win) {
       return;
     }
-    let { gContextMenu, privateTab, document } = win;
+    let { gContextMenu, PrivateTab, document } = win;
     win.openLinkIn(
       gContextMenu.linkURL,
       "tab",
       gContextMenu._openLinkInParameters({
-        userContextId: privateTab.container.userContextId,
+        userContextId: PrivateTab.container.userContextId,
         triggeringPrincipal: document.nodePrincipal,
       })
     );
@@ -303,11 +298,11 @@ const PrivateTab = {
     if (!win) {
       return;
     }
-    let { privateTab, document } = win;
+    let { PrivateTab, document } = win;
     if (aEvent.button == 0) {
-      privateTab.browserOpenTabPrivate(win);
+      PrivateTab.browserOpenTabPrivate(win);
     } else if (aEvent.button == 2) {
-      document.popupNode = document.getElementById(privateTab.BTN_ID);
+      document.popupNode = document.getElementById(PrivateTab.BTN_ID);
       document
         .getElementById("toolbar-context-menu")
         .openPopup(this, "after_start", 14, -10, false, false);
@@ -452,10 +447,10 @@ const PrivateTab = {
       return;
     }
     let win = tab.ownerGlobal;
-    let { privateTab } = win;
+    let { PrivateTab } = win;
     let prevTab = aEvent.detail.previousTab;
     if (tab.userContextId != prevTab.userContextId) {
-      privateTab.toggleMask(win);
+      PrivateTab.toggleMask(win);
     }
   },
 
@@ -464,11 +459,11 @@ const PrivateTab = {
     if (!tab) {
       return;
     }
-    let { privateTab } = tab.ownerGlobal;
-    if (privateTab.isPrivate(tab)) {
-      privateTab.openTabs.delete(tab);
-      if (!privateTab.openTabs.size) {
-        privateTab.clearData();
+    let { PrivateTab } = tab.ownerGlobal;
+    if (PrivateTab.isPrivate(tab)) {
+      PrivateTab.openTabs.delete(tab);
+      if (!PrivateTab.openTabs.size) {
+        PrivateTab.clearData();
       }
     }
   },
@@ -500,17 +495,17 @@ const PrivateTab = {
   },
 
   initCustomFunctions(aWindow) {
-    let { MozElements, customElements, privateTab } = aWindow;
+    let { MozElements, customElements, PrivateTab } = aWindow;
     MozElements.MozTab.prototype.getAttribute = function(att) {
       if (att == "usercontextid" && this.isToggling) {
         delete this.isToggling;
         // If in private tab and we attempt to toggle, remove container, else convert to private tab
-        return privateTab.orig_getAttribute.call(this, att) ==
-          privateTab.container.userContextId
+        return PrivateTab.orig_getAttribute.call(this, att) ==
+          PrivateTab.container.userContextId
           ? 0
-          : privateTab.container.userContextId;
+          : PrivateTab.container.userContextId;
       }
-      return privateTab.orig_getAttribute.call(this, att);
+      return PrivateTab.orig_getAttribute.call(this, att);
     };
 
     aWindow.Object.defineProperty(
@@ -569,7 +564,7 @@ const PrivateTab = {
       };
 
       const kAttr = "hasadjacentnewtabbutton";
-      let adjacentNetTab = sibling("new-tab-button", privateTab.BTN_ID);
+      let adjacentNetTab = sibling("new-tab-button", PrivateTab.BTN_ID);
       if (adjacentNetTab) {
         this.setAttribute(kAttr, "true");
       } else {
@@ -577,7 +572,7 @@ const PrivateTab = {
       }
 
       const kAttr2 = "hasadjacentnewprivatetabbutton";
-      let adjacentPrivateTab = sibling(privateTab.BTN_ID, "new-tab-button");
+      let adjacentPrivateTab = sibling(PrivateTab.BTN_ID, "new-tab-button");
       if (adjacentPrivateTab) {
         this.setAttribute(kAttr2, "true");
       } else {
@@ -591,11 +586,11 @@ const PrivateTab = {
             .getElementById("tabs-newtab-button")
             .insertAdjacentElement(
               "afterend",
-              doc.getElementById(privateTab.BTN2_ID)
+              doc.getElementById(PrivateTab.BTN2_ID)
             );
         } else {
           doc
-            .getElementById(privateTab.BTN2_ID)
+            .getElementById(PrivateTab.BTN2_ID)
             .insertAdjacentElement(
               "afterend",
               doc.getElementById("tabs-newtab-button")

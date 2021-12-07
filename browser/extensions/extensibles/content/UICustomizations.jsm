@@ -32,6 +32,7 @@ const UICustomizations = {
     this.moveTabBar(window);
     this.moveBookmarksBar(window);
     this.initListeners(window);
+    this.initPrefObservers();
     BrowserUtils.setStyle(this.style); // TODO: Move to extension/css and include in relevant css file
   },
 
@@ -81,7 +82,7 @@ const UICustomizations = {
     aWindow.addEventListener(
       "sizemodechange",
       function updateTitleBarStyling() {
-        styleMenuBar(); // this is window.styleMenuBar defined in utilityOverlay.js
+        UICustomizations.styleMenuBar(aWindow.document, aWindow);
       }
     );
   },

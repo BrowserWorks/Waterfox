@@ -196,10 +196,9 @@
                      label="&appMenuHelp.label;"
                      closemenu="none"
                      oncommand="PanelUI.showSubView('PanelUI-helpView', this)"/>
-      <toolbarseparator/>
 #ifndef XP_MACOSX
-      #include ../../extensions/extensibles/extension/builtins/appmenu/restartbutton.inc
-#endif
+                     <toolbarseparator/>
+#include ../../extensions/extensibles/extension/builtins/appmenu/restartbutton.inc
       <toolbarbutton id="appMenu-quit-button"
                      class="subviewbutton subviewbutton-iconic"
 #ifdef XP_WIN
@@ -209,6 +208,7 @@
 #endif
                      key="key_quitApplication"
                      command="cmd_quitApplication"/>
+#endif
     </vbox>
   </panelview>
 
