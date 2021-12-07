@@ -82,6 +82,7 @@ HttpTransactionParent::HttpTransactionParent(bool aIsDocumentLoad)
 
 HttpTransactionParent::~HttpTransactionParent() {
   LOG(("Destroying HttpTransactionParent @%p\n", this));
+  mEventQ->NotifyReleasingOwner();
 }
 
 //-----------------------------------------------------------------------------
