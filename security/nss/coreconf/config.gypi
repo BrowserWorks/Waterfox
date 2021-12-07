@@ -369,6 +369,7 @@
               'linux',
               '_DEFAULT_SOURCE', # for <endian.h> functions, strdup, realpath, and getentropy
               '_BSD_SOURCE', # for the above in glibc <= 2.19
+              '_SVID_SOURCE', # for putenv in glibc <= 2.19
               '_POSIX_SOURCE', # for <signal.h>
               'SQL_MEASURE_USE_TEMP_DIR', # use tmpdir for the access calls
             ],
