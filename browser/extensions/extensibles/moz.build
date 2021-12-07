@@ -21,9 +21,9 @@ XPCOM_MANIFESTS += [
 EXTRA_JS_MODULES += [
   'content/AddonStores.jsm',
   'content/BrowserUtils.jsm',
+  'content/ExtensiblesElements.jsm',
   'content/PrefUtils.jsm',
   'content/PrivateTab.jsm',
-  'content/PrivateTabElements.jsm',
   'content/StatusBar.jsm',
   'content/StoreHandler.jsm',
   'content/TabFeatures.jsm',

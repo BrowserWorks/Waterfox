@@ -17,3 +17,6 @@ open-link-private =
 
 private-tab =
     .label = Private Tab
+
+status-bar =
+    .label = Status Bar

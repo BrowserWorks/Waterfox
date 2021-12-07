@@ -168,3 +168,5 @@ pref("browser.restart_menu.purgecache", false);
 pref("browser.restart_menu.requireconfirm", true);
 pref("browser.tabs.toolbarposition", "topabove");
 pref("browser.bookmarks.toolbarposition", "top");
+pref("browser.statusbar.appendStatusText", true);
+pref("browser.statusbar.enabled", false);

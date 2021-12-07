@@ -1,6 +1,6 @@
-const EXPORTED_SYMBOLS = ["PrivateTabElements"];
+const EXPORTED_SYMBOLS = ["ExtensiblesElements"];
 
-const PrivateTabElements = {
+const ExtensiblesElements = {
   get elements() {
     return [
       {
@@ -123,14 +123,46 @@ const PrivateTabElements = {
     ];
   },
 
-  get widgetElements() {
-    return [
-      {
-        id: "privateTab-button",
-        label: "new-private-tab",
-        class: "toolbarbutton-1 chromeclass-toolbar-additional",
-        oncommand: "browserOpenTabPrivate(window)",
+  get widgetAttrs() {
+    return {
+      id: "privateTab-button",
+      label: "new-private-tab",
+      class: "toolbarbutton-1 chromeclass-toolbar-additional",
+      oncommand: "browserOpenTabPrivate(window)",
+    };
+  },
+
+  get statusDummyBar() {
+    return {
+      tag: "toolbar",
+      attrs: {
+        id: "status-dummybar",
+        toolbarname: "Status Bar",
+        hidden: true,
       },
-    ];
+      appendTo: "gNavToolbox",
+    };
+  },
+
+  get statusBarElements() {
+    return {
+      bar: {
+        tag: "toolbar",
+        attrs: {
+          id: "status-bar",
+          customizable: "true",
+          context: "toolbar-context-menu",
+          mode: "icons",
+        },
+      },
+      item: {
+        tag: "toolbaritem",
+        attrs: {
+          id: "status-text",
+          flex: "1",
+          width: "100",
+        },
+      },
+    };
   },
 };

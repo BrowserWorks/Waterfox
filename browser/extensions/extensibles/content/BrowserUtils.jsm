@@ -55,27 +55,9 @@ const BrowserUtils = {
         pos.insertAdjacentElement(aPosition, el);
       }
     } else if (aAdjacentTo == "gNavToolbox") {
-      this.mostRecentWindow.gNavToolbox.appendChild(el);
+      aWindow.gNavToolbox.appendChild(el);
     } else {
       pos.appendChild(el);
-    }
-  },
-
-  createElementAs(aTag, aAttrs, aSetAs) {
-    let doc = this.document;
-    // create element
-    if (aSetAs == "win.statusbar.node") {
-      this.mostRecentWindow.statusbar.node = this.createElement(
-        doc,
-        aTag,
-        aAttrs
-      );
-    } else if (aSetAs == "win.statusbar.textNode") {
-      this.mostRecentWindow.statusbar.textNode = this.createElement(
-        doc,
-        aTag,
-        aAttrs
-      );
     }
   },
 

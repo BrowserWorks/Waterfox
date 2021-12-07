@@ -76,6 +76,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   SimpleServiceDiscovery: "resource://gre/modules/SimpleServiceDiscovery.jsm",
   SiteDataManager: "resource:///modules/SiteDataManager.jsm",
   SitePermissions: "resource:///modules/SitePermissions.jsm",
+  StatusBar: "resource:///modules/StatusBar.jsm",
   SubDialog: "resource://gre/modules/SubDialog.jsm",
   SubDialogManager: "resource://gre/modules/SubDialog.jsm",
   TabModalPrompt: "chrome://global/content/tabprompts.jsm",
@@ -1921,6 +1922,7 @@ var gBrowserInit = {
     PanelUI.init(shouldSuppressPopupNotifications);
     TabFeatures.init(window);
     PrivateTab.init(window);
+    StatusBar.init(window);
 
     UpdateUrlbarSearchSplitterState();
 
