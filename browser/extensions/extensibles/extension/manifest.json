@@ -40,8 +40,6 @@
 
   "background": {
     "scripts": [
-      "privatetab/background.js",
-      "statusbar/background.js",
       "tabfeatures/background.js",
       "addon-stores/cws.js",
       "addon-stores/ows.js"
