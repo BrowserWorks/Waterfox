@@ -27,6 +27,9 @@ def FirefoxBranding():
         FINAL_TARGET_FILES.chrome.icons.default += [
             'default128.png',
             'default16.png',
+            'default22.png',
+            'default24.png',
+            'default256.png',
             'default32.png',
             'default48.png',
             'default64.png',
