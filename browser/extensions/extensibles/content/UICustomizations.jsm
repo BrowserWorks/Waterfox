@@ -4,9 +4,7 @@
 
 /* global */
 
-const EXPORTED_SYMBOLS = ["TabFeatures"];
-
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const EXPORTED_SYMBOLS = ["UICustomizations"];
 
 const { PrefUtils } = ChromeUtils.import("resource:///modules/PrefUtils.jsm");
 
@@ -14,22 +12,10 @@ const { BrowserUtils } = ChromeUtils.import(
   "resource:///modules/BrowserUtils.jsm"
 );
 
-const TabFeatures = {
-  PREF_ACTIVETAB: "browser.tabs.copyurl.activetab",
-  PREF_REQUIRECONFIRM: "browser.restart_menu.requireconfirm",
-  PREF_PURGECACHE: "browser.restart_menu.purgecache",
+const UICustomizations = {
   PREF_TOOLBARPOS: "browser.tabs.toolbarposition",
   PREF_BOOKMARKPOS: "browser.bookmarks.toolbarposition",
-  get browserBundle() {
-    return Services.strings.createBundle(
-      "chrome://extensibles/locale/extensibles.properties"
-    );
-  },
-  get brandBundle() {
-    return Services.strings.createBundle(
-      "chrome://branding/locale/brand.properties"
-    );
-  },
+
   get style() {
     return `
            @-moz-document url('chrome://browser/content/browser.xhtml') {
@@ -40,17 +26,65 @@ const TabFeatures = {
           `;
   },
 
-  setPrefs() {
-    let activeTab = PrefUtils.get(this.PREF_ACTIVETAB, false);
-    let reqConfirm = PrefUtils.get(this.PREF_REQUIRECONFIRM, true);
-    let purgeCache = PrefUtils.get(this.PREF_PURGECACHE, true);
-    let toolbarPos = PrefUtils.get(this.PREF_TOOLBARPOS, "topabove");
-    let bookmarkPos = PrefUtils.get(this.PREF_BOOKMARKPOS, "top");
-    PrefUtils.set(this.PREF_ACTIVETAB, activeTab);
-    PrefUtils.set(this.PREF_REQUIRECONFIRM, reqConfirm);
-    PrefUtils.set(this.PREF_PURGECACHE, purgeCache);
-    PrefUtils.set(this.PREF_TOOLBARPOS, toolbarPos);
-    PrefUtils.set(this.PREF_BOOKMARKPOS, bookmarkPos);
+  init(window) {
+    this.styleButtonBox(window.document);
+    this.styleMenuBar(window.document, window);
+    this.moveTabBar(window);
+    this.moveBookmarksBar(window);
+    this.initListeners(window);
+    this.initPrefObservers();
+    BrowserUtils.setStyle(this.style); // TODO: Move to extension/css and include in relevant css file
+  },
+
+  initPrefObservers() {
+    // Set Tab toolbar position
+    this.toolbarPositionListener = PrefUtils.addObserver(
+      this.PREF_TOOLBARPOS,
+      value => {
+        UICustomizations.executeInAllWindows((doc, win) => {
+          UICustomizations.moveTabBar(win, value);
+          UICustomizations.styleMenuBar(doc, win);
+        });
+      }
+    );
+    // Set Bookmark bar position
+    this.bookmarkBarPositionListener = PrefUtils.addObserver(
+      this.PREF_BOOKMARKPOS,
+      value => {
+        UICustomizations.executeInAllWindows((doc, win) => {
+          UICustomizations.moveBookmarksBar(win, value);
+        });
+      }
+    );
+  },
+
+  initListeners(aWindow) {
+    // Hide tabs toolbar buttonbox if menubar displayed
+    if (aWindow.document) {
+      let menuBar = aWindow.document.getElementById("toolbar-menubar");
+      var observer = new aWindow.MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+          if (
+            mutation.type === "attributes" &&
+            mutation.attributeName == "autohide"
+          ) {
+            UICustomizations.styleButtonBox(aWindow.document);
+            UICustomizations.styleMenuBar(aWindow.document, aWindow);
+          }
+        });
+      });
+
+      observer.observe(menuBar, {
+        attributes: true, //configure it to listen to attribute changes
+      });
+    }
+    // Ensure menu bar/ nav bar not cut off when maximized in Windows
+    aWindow.addEventListener(
+      "sizemodechange",
+      function updateTitleBarStyling() {
+        UICustomizations.styleMenuBar(aWindow.document, aWindow);
+      }
+    );
   },
 
   styleButtonBox(doc) {
@@ -82,170 +116,6 @@ const TabFeatures = {
     } else {
       titleBar.setAttribute("style", "");
     }
-  },
-
-  initPrefListeners(aDocument, aWindow) {
-    // Set Tab toolbar position
-    this.toolbarPositionListener = PrefUtils.addListener(
-      this.PREF_TOOLBARPOS,
-      value => {
-        TabFeatures.executeInAllWindows((doc, win) => {
-          TabFeatures.moveTabBar(win, value);
-          TabFeatures.styleMenuBar(doc, win);
-        });
-      }
-    );
-    // Set Bookmark bar position
-    this.bookmarkBarPositionListener = PrefUtils.addListener(
-      this.PREF_BOOKMARKPOS,
-      value => {
-        TabFeatures.executeInAllWindows((doc, win) => {
-          TabFeatures.moveBookmarksBar(win, value);
-        });
-      }
-    );
-    // Hide tabs toolbar buttonbox if menubar displayed
-    let menuBar = aDocument.getElementById("toolbar-menubar");
-    var observer = new aWindow.MutationObserver(mutations => {
-      mutations.forEach(mutation => {
-        if (
-          mutation.type === "attributes" &&
-          mutation.attributeName == "autohide"
-        ) {
-          TabFeatures.styleButtonBox(aDocument);
-          TabFeatures.styleMenuBar(aDocument, aWindow);
-        }
-      });
-    });
-
-    observer.observe(menuBar, {
-      attributes: true, //configure it to listen to attribute changes
-    });
-    // Ensure menu bar/ nav bar not cut off when maximized in Windows
-    aWindow.addEventListener(
-      "sizemodechange",
-      function updateTitleBarStyling() {
-        this.tabFeatures.styleMenuBar(this.document, this.window);
-      }
-    );
-  },
-
-  initState() {
-    // Set state for titlebar and titlebar-buttonbox visibility at startup
-    TabFeatures.executeInAllWindows((doc, win) => {
-      TabFeatures.styleButtonBox(doc);
-      TabFeatures.styleMenuBar(doc, win);
-    });
-  },
-
-  tabContext(aEvent) {
-    let win = aEvent.view;
-    if (!win) {
-      win = Services.wm.getMostRecentWindow("navigator:browser");
-    }
-    let { document } = win;
-    let elements = document.getElementsByClassName("tabFeature");
-    for (let i = 0; i < elements.length; i++) {
-      let el = elements[i];
-      let pref = el.getAttribute("preference");
-      if (pref) {
-        let visible = Services.prefs.getBoolPref(pref);
-        el.hidden = !visible;
-      }
-    }
-  },
-
-  // Copies current tab url to clipboard
-  copyTabUrl(aUri, aWindow) {
-    const gClipboardHelper = Cc[
-      "@mozilla.org/widget/clipboardhelper;1"
-    ].getService(Ci.nsIClipboardHelper);
-    try {
-      Services.prefs.getBoolPref(this.PREF_ACTIVETAB)
-        ? gClipboardHelper.copyString(aWindow.gBrowser.currentURI.spec)
-        : gClipboardHelper.copyString(aUri);
-    } catch (e) {
-      throw new Error(
-        "We're sorry but something has gone wrong with 'CopyTabUrl' " + e
-      );
-    }
-  },
-
-  // Copies all tab urls to clipboard
-  copyAllTabUrls(aWindow) {
-    const gClipboardHelper = Cc[
-      "@mozilla.org/widget/clipboardhelper;1"
-    ].getService(Ci.nsIClipboardHelper);
-    //Get all urls
-    let urlArr = this._getAllUrls(aWindow);
-    try {
-      // Enumerate all urls in to a list.
-      let urlList = urlArr.join("\n");
-      // Send list to clipboard.
-      gClipboardHelper.copyString(urlList.trim());
-      // Clear url list after clipboard event
-      urlList = "";
-    } catch (e) {
-      throw new Error(
-        "We're sorry but something has gone wrong with 'copyAllTabUrls' " + e
-      );
-    }
-  },
-
-  // Get all the tab urls into an array.
-  _getAllUrls(aWindow) {
-    // We don't want to copy about uri's
-    let blocklist = /^about:.*/i;
-    let urlArr = [];
-    let tabCount = aWindow.gBrowser.browsers.length;
-    Array(tabCount)
-      .fill()
-      .map((_, i) => {
-        let spec = aWindow.gBrowser.getBrowserAtIndex(i).currentURI.spec;
-        if (!blocklist.test(spec)) {
-          urlArr.push(spec);
-        }
-      });
-    return urlArr;
-  },
-
-  restartBrowser(aWindow) {
-    try {
-      if (Services.prefs.getBoolPref(this.PREF_REQUIRECONFIRM)) {
-        let brand = aWindow.tabFeatures.brandBundle.GetStringFromName(
-          "brandShortName"
-        );
-        let title = aWindow.tabFeatures.browserBundle.formatStringFromName(
-          "restartPromptTitle",
-          [brand],
-          1
-        );
-        let question = aWindow.tabFeatures.browserBundle.formatStringFromName(
-          "restartPromptQuestion",
-          [brand],
-          1
-        );
-        if (Services.prompt.confirm(null, title, question)) {
-          // only restart if confirmation given
-          this._attemptRestart();
-        }
-      } else {
-        this._attemptRestart();
-      }
-    } catch (e) {
-      throw new Error(
-        "We're sorry but something has gone wrong with 'restartBrowser' " + e
-      );
-    }
-  },
-
-  _attemptRestart() {
-    if (Services.prefs.getBoolPref(this.PREF_PURGECACHE)) {
-      Services.appinfo.invalidateCachesOnRestart();
-    }
-    Services.startup.quit(
-      Services.startup.eRestart | Services.startup.eAttemptQuit
-    );
   },
 
   moveTabBar(aWindow, aValue) {
@@ -311,7 +181,7 @@ const TabFeatures = {
     let bookmarksBar = aWindow.document.querySelector("#PersonalToolbar");
 
     if (!aValue) {
-      aValue = PrefUtils.get(this.PREF_BOOKMARKPOS);
+      aValue = PrefUtils.get(this.PREF_BOOKMARKPOS, "top");
     }
     // Don't move if already in correct position
     if (
@@ -343,4 +213,4 @@ const TabFeatures = {
 };
 
 // Inherited props
-TabFeatures.executeInAllWindows = BrowserUtils.executeInAllWindows;
+UICustomizations.executeInAllWindows = BrowserUtils.executeInAllWindows;

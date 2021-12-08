@@ -12,6 +12,10 @@ const { CustomizableUI } = ChromeUtils.import(
   "resource:///modules/CustomizableUI.jsm"
 );
 
+const { PanelMultiView } = ChromeUtils.import(
+  "resource:///modules/PanelMultiView.jsm"
+);
+
 const BrowserUtils = {
   // internal functions/props
   get mostRecentWindow() {
@@ -34,36 +38,26 @@ const BrowserUtils = {
   },
 
   // api endpoints
-  createAndPositionElement(aTag, aAttrs, aAdjacentTo, aPosition) {
-    let doc = this.document;
+  createAndPositionElement(aWindow, aTag, aAttrs, aAdjacentTo, aPosition) {
+    let doc = aWindow.document;
     // Create element
     let el = this.createElement(doc, aTag, aAttrs);
     // Place it in certain location
     let pos = doc.getElementById(aAdjacentTo);
     if (aPosition) {
-      pos.insertAdjacentElement(aPosition, el);
+      // App Menu items are not retrieved successfully with doc.getElementById
+      if (!pos) {
+        pos = PanelMultiView.getViewNode(this.document, aAdjacentTo);
+      }
+      // If neither method to retrieve a positional element succeeded
+      // don't attempt to insert as it will fail
+      if (pos) {
+        pos.insertAdjacentElement(aPosition, el);
+      }
     } else if (aAdjacentTo == "gNavToolbox") {
-      this.mostRecentWindow.gNavToolbox.appendChild(el);
+      aWindow.gNavToolbox.appendChild(el);
     } else {
       pos.appendChild(el);
-    }
-  },
-
-  createElementAs(aTag, aAttrs, aSetAs) {
-    let doc = this.document;
-    // create element
-    if (aSetAs == "win.statusbar.node") {
-      this.mostRecentWindow.statusbar.node = this.createElement(
-        doc,
-        aTag,
-        aAttrs
-      );
-    } else if (aSetAs == "win.statusbar.textNode") {
-      this.mostRecentWindow.statusbar.textNode = this.createElement(
-        doc,
-        aTag,
-        aAttrs
-      );
     }
   },
 
@@ -71,9 +65,6 @@ const BrowserUtils = {
     let windows = Services.wm.getEnumerator("navigator:browser");
     while (windows.hasMoreElements()) {
       let win = windows.getNext();
-      if (!win.statusBar) {
-        continue;
-      }
       let { document } = win;
       aFunc(document, win);
     }
