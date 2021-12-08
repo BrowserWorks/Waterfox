@@ -4,10 +4,12 @@
 
 const EXPORTED_SYMBOLS = ["StatusBar"];
 
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-
 const { CustomizableUI } = ChromeUtils.import(
   "resource:///modules/CustomizableUI.jsm"
+);
+
+const { ExtensiblesElements } = ChromeUtils.import(
+  "resource:///modules/ExtensiblesElements.jsm"
 );
 
 const { PrefUtils } = ChromeUtils.import("resource:///modules/PrefUtils.jsm");
@@ -32,19 +34,77 @@ const StatusBar = {
     return this.enabled && this.showLinks;
   },
 
+  get style() {
+    return `
+    @-moz-document url('chrome://browser/content/browser.xhtml') {
+      #status-bar {
+          color: initial !important;
+          background-color: var(--toolbar-non-lwt-bgcolor) !important;
+        }
+        #status-text > #statuspanel-label {
+          border-top: 0 !important;
+          background-color: unset !important;
+          color: #444 !important;
+        }
+        #browser-bottombox:not([collapsed]) {
+          border-top: 1px solid var(--chrome-content-separator-color) !important;
+        }
+        #wrapper-status-text label::after {
+          content: "Status text" !important;
+          color: red !important;
+          border: 1px #aaa solid !important;
+          border-radius: 3px !important;
+          font-weight: bold !important;
+        }
+        #status-bar > #status-text {
+          display: flex !important;
+          justify-content: center !important;
+          align-content: center !important;
+          flex-direction: column !important;
+        }
+      }
+          `;
+  },
+
+  init(window) {
+    this.createStatusBar(window);
+    this.configureDummyBar(window, "status-dummybar");
+    this.configureStatusBar(window);
+    this.overrideStatusPanelLabel(window);
+    this.configureBottomBox(window);
+    this.initPrefListeners();
+    this.registerArea("status-bar");
+    BrowserUtils.setStyle(this.style);
+  },
+
+  createStatusBar(aWindow) {
+    BrowserUtils.createAndPositionElement(
+      aWindow,
+      ExtensiblesElements.statusDummyBar.tag,
+      ExtensiblesElements.statusDummyBar.attrs,
+      ExtensiblesElements.statusDummyBar.appendTo
+    );
+    aWindow.statusbar.node = BrowserUtils.createElement(
+      aWindow.document,
+      ExtensiblesElements.statusBarElements.bar.tag,
+      ExtensiblesElements.statusBarElements.bar.attrs
+    );
+    aWindow.statusbar.textNode = BrowserUtils.createElement(
+      aWindow.document,
+      ExtensiblesElements.statusBarElements.item.tag,
+      ExtensiblesElements.statusBarElements.item.attrs
+    );
+  },
+
   initPrefListeners() {
-    let enabled = PrefUtils.get(this.PREF_ENABLED, false);
-    let text = PrefUtils.get(this.PREF_STATUSTEXT, true);
-    PrefUtils.set(this.PREF_ENABLED, enabled);
-    PrefUtils.set(this.PREF_STATUSTEXT, text);
-    this.enabledListener = PrefUtils.addListener(
+    this.enabledListener = PrefUtils.addObserver(
       this.PREF_ENABLED,
       isEnabled => {
         this.setStatusBarVisibility(isEnabled);
         this.setStatusTextVisibility();
       }
     );
-    this.textListener = PrefUtils.addListener(
+    this.textListener = PrefUtils.addObserver(
       this.PREF_STATUSTEXT,
       isEnabled => {
         this.setStatusTextVisibility();
@@ -82,48 +142,6 @@ const StatusBar = {
     }
   },
 
-  setStyle() {
-    let styleSheetService = Cc[
-      "@mozilla.org/content/style-sheet-service;1"
-    ].getService(Ci.nsIStyleSheetService);
-
-    let url = Services.io.newURI(
-      "data:text/css;charset=UTF-8," +
-        encodeURIComponent(`
-           @-moz-document url('chrome://browser/content/browser.xhtml') {
-            #status-bar {
-                color: initial !important;
-                background-color: var(--toolbar-non-lwt-bgcolor) !important;
-              }
-              #status-text > #statuspanel-label {
-                border-top: 0 !important;
-                background-color: unset !important;
-                color: #444 !important;
-              }
-              #browser-bottombox:not([collapsed]) {
-                border-top: 1px solid var(--chrome-content-separator-color) !important;
-              }
-              #wrapper-status-text label::after {
-                content: "Status text" !important;
-                color: red !important;
-                border: 1px #aaa solid !important;
-                border-radius: 3px !important;
-                font-weight: bold !important;
-              }
-              #status-bar > #status-text {
-                display: flex !important;
-                justify-content: center !important;
-                align-content: center !important;
-                flex-direction: column !important;
-              }
-            }
-          `)
-    );
-    let type = styleSheetService.USER_SHEET;
-
-    styleSheetService.loadAndRegisterSheet(url, type);
-  },
-
   registerArea(aArea) {
     if (!CustomizableUI.areas.includes("status-bar")) {
       CustomizableUI.registerArea(aArea, {});
@@ -140,13 +158,13 @@ const StatusBar = {
       if (att == "collapsed") {
         let StatusPanel = aWindow.StatusPanel;
         if (value === true) {
-          PrefUtils.set(aWindow.statusBar.PREF_ENABLED, false);
+          PrefUtils.set(StatusBar.PREF_ENABLED, false);
           aWindow.statusbar.node.setAttribute("collapsed", true);
           StatusPanel.panel.firstChild.appendChild(StatusPanel._labelElement);
         } else {
-          PrefUtils.set(aWindow.statusBar.PREF_ENABLED, true);
+          PrefUtils.set(StatusBar.PREF_ENABLED, true);
           aWindow.statusbar.node.setAttribute("collapsed", false);
-          if (aWindow.statusBar.textInBar) {
+          if (StatusBar.textInBar) {
             aWindow.statusbar.textNode.appendChild(StatusPanel._labelElement);
           }
         }
