@@ -492,10 +492,38 @@
     "description": "API implementing additional tab features",
     "functions": [
       {
-        "name": "registerTabFeatures",
+        "name": "initPrefObservers",
         "type": "function",
         "async": false,
-        "description": "Register TabFeatures.jsm with the current top window.",
+        "description": "Register preference observers for tabfeatures/uicustomizations with the current top window.",
+        "parameters": []
+      },
+      {
+        "name": "copyUrlCommand",
+        "type": "function",
+        "async": true,
+        "description": "Add observer for menuitem-copyurl-extension topic.",
+        "parameters": []
+      },
+      {
+        "name": "copyAllUrlsCommand",
+        "type": "function",
+        "async": true,
+        "description": "Add observer for menuitem-copyallurls-extension topic.",
+        "parameters": []
+      },
+      {
+        "name": "restartBrowserCommand",
+        "type": "function",
+        "async": true,
+        "description": "Add observer for restartbrowser-extension topic.",
+        "parameters": []
+      },
+      {
+        "name": "styleMenuBarCommand",
+        "type": "function",
+        "async": true,
+        "description": "Add observer for style-menubar-extension topic.",
         "parameters": []
       }
     ]

@@ -4,7 +4,6 @@
 
 /* eslint no-unused-vars: ["error", {vars: "local", args: "none"}] */
 
-
 var { AppConstants } = ChromeUtils.import(
   "resource://gre/modules/AppConstants.jsm"
 );
@@ -84,49 +83,49 @@ ChromeUtils.defineModuleGetter(
   "resource://addonstores.js/StoreHandler.jsm"
 );
 
-  const ZipReader = Components.Constructor(
-    "@mozilla.org/libjar/zip-reader;1",
-    "nsIZipReader",
-    "open"
-  );
-  
-  const ReusableStreamInstance = Components.Constructor(
-    "@mozilla.org/scriptableinputstream;1",
-    "nsIScriptableInputStream",
-    "init"
-  );
-  
-  const FileStream = Components.Constructor(
-    "@mozilla.org/network/file-input-stream;1",
-    "nsIFileInputStream",
-    "init"
-  );
+const ZipReader = Components.Constructor(
+  "@mozilla.org/libjar/zip-reader;1",
+  "nsIZipReader",
+  "open"
+);
 
-  const {
-    createAppInfo,
-    createHttpServer,
-    createTempWebExtensionFile,
-    getFileForAddon,
-    manuallyInstall,
-    manuallyUninstall,
-    overrideBuiltIns,
-    promiseAddonEvent,
-    promiseCompleteAllInstalls,
-    promiseCompleteInstall,
-    promiseConsoleOutput,
-    promiseFindAddonUpdates,
-    promiseInstallAllFiles,
-    promiseInstallFile,
-    promiseRestartManager,
-    promiseSetExtensionModifiedTime,
-    promiseShutdownManager,
-    promiseStartupManager,
-    promiseWebExtensionStartup,
-    promiseWriteProxyFileToDir,
-    registerDirectory,
-    setExtensionModifiedTime,
-    writeFilesToZip,
-  } = AddonTestUtils;
+const ReusableStreamInstance = Components.Constructor(
+  "@mozilla.org/scriptableinputstream;1",
+  "nsIScriptableInputStream",
+  "init"
+);
+
+const FileStream = Components.Constructor(
+  "@mozilla.org/network/file-input-stream;1",
+  "nsIFileInputStream",
+  "init"
+);
+
+const {
+  createAppInfo,
+  createHttpServer,
+  createTempWebExtensionFile,
+  getFileForAddon,
+  manuallyInstall,
+  manuallyUninstall,
+  overrideBuiltIns,
+  promiseAddonEvent,
+  promiseCompleteAllInstalls,
+  promiseCompleteInstall,
+  promiseConsoleOutput,
+  promiseFindAddonUpdates,
+  promiseInstallAllFiles,
+  promiseInstallFile,
+  promiseRestartManager,
+  promiseSetExtensionModifiedTime,
+  promiseShutdownManager,
+  promiseStartupManager,
+  promiseWebExtensionStartup,
+  promiseWriteProxyFileToDir,
+  registerDirectory,
+  setExtensionModifiedTime,
+  writeFilesToZip,
+} = AddonTestUtils;
 
 // WebExtension wrapper for ease of testing
 ExtensionTestUtils.init(this);

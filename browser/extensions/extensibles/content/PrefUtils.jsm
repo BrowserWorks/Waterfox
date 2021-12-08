@@ -67,7 +67,7 @@ var PrefUtils = {
 
   clear: Services.prefs.clearUserPref,
 
-  addListener(aPrefPath, aCallback) {
+  addObserver(aPrefPath, aCallback) {
     this.observer = function(aSubject, aTopic, prefPath) {
       return aCallback(PrefUtils.get(prefPath), prefPath);
     };
@@ -79,7 +79,7 @@ var PrefUtils = {
     };
   },
 
-  removeListener(obs) {
+  removeObserver(obs) {
     Services.prefs.removeObserver(obs.prefPath, obs.observer);
   },
 };

@@ -1,0 +1,14 @@
+<menuitem
+    id="context_copyTabUrl"
+    class="tabFeature"
+    oncommand="TabContextMenu.copyTabUrl(TabContextMenu.contextTab.linkedBrowser.currentURI.spec);"
+    data-lazy-l10n-id="copy-url"
+    preference="browser.tabs.copyurl"
+/>
+<menuitem
+    id="context_copyAllTabUrls"
+    class="tabFeature"
+    oncommand="TabContextMenu.copyAllTabUrls();"
+    data-lazy-l10n-id="copy-all-urls"
+    preference="browser.tabs.copyallurls"
+/>
