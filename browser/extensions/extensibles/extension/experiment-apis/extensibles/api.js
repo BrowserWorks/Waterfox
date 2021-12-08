@@ -4,7 +4,7 @@
 
 "use strict";
 
-/* globals ExtensionAPI Services */
+/* globals ExtensionAPI Services EventManager */
 
 const { AppConstants } = ChromeUtils.import(
   "resource://gre/modules/AppConstants.jsm"
@@ -42,6 +42,10 @@ ChromeUtils.defineModuleGetter(
   this,
   "TabFeatures",
   "resource:///modules/TabFeatures.jsm"
+);
+
+const { UICustomizations } = ChromeUtils.import(
+  "resource:///modules/UICustomizations.jsm"
 );
 
 ChromeUtils.defineModuleGetter(
@@ -256,9 +260,9 @@ this.extensibles = class extends ExtensionAPI {
             let win = this.mostRecentWindow;
             if (!win.statusBar) {
               win.statusBar = StatusBar;
-              win.statusBar.initPrefListeners();
+              win.statusBar.initPrefListeners(); // done
               win.statusBar.setStyle();
-              win.statusBar.registerArea("status-bar");
+              win.statusBar.registerArea("status-bar"); //done
             }
           },
 
@@ -307,12 +311,12 @@ this.extensibles = class extends ExtensionAPI {
             if (!win.privateTab) {
               win.privateTab = PrivateTab;
               if (!win.privateTab.container) {
-                win.privateTab.container = win.privateTab.initContainer(aName);
+                win.privateTab.container = win.privateTab.initContainer(aName); //done
               }
-              win.privateTab.setStyle(win);
-              win.privateTab.overridePlacesUIUtils();
-              win.privateTab.createPrivateWidget(win, aAttrs);
-              win.privateTab.setPrivateObserver();
+              win.privateTab.setStyle(win); //done
+              win.privateTab.overridePlacesUIUtils(); //done
+              win.privateTab.createPrivateWidget(win, aAttrs); //done
+              win.privateTab.setPrivateObserver(); //done
             }
           },
 
@@ -324,11 +328,13 @@ this.extensibles = class extends ExtensionAPI {
           },
 
           async initPrivateTabListeners() {
+            //done
             let win = this.mostRecentWindow;
             win.privateTab.initPrivateTabListeners(win);
           },
 
           async initCustomFunctions() {
+            //done
             let win = this.mostRecentWindow;
             win.privateTab.initCustomFunctions(win);
           },
@@ -343,17 +349,22 @@ this.extensibles = class extends ExtensionAPI {
             return Services.wm.getMostRecentWindow("navigator:browser")
               .document;
           },
-          registerTabFeatures() {
-            let win = this.mostRecentWindow;
-            if (!win.tabFeatures) {
-              win.tabFeatures = TabFeatures;
-              win.tabFeatures.initPrefListeners(this.document, win);
-              win.tabFeatures.setPrefs();
-              win.tabFeatures.initState();
-              win.tabFeatures.moveTabBar(win);
-              win.tabFeatures.moveBookmarksBar(win);
-              BrowserUtils.setStyle(TabFeatures.style);
-            }
+
+          copyUrlCommand() {
+            let observer = (subject, topic, data) => {
+              TabFeatures.copyTabUrl(data, this.mostRecentWindow);
+            };
+            Services.obs.addObserver(observer, "menuitem-copyurl-extension");
+          },
+
+          copyAllUrlsCommand() {
+            let observer = (subject, topic, data) => {
+              TabFeatures.copyAllTabUrls(this.mostRecentWindow);
+            };
+            Services.obs.addObserver(
+              observer,
+              "menuitem-copyallurls-extension"
+            );
           },
         },
         prefsext: {

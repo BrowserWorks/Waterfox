@@ -60,6 +60,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   PluralForm: "resource://gre/modules/PluralForm.jsm",
   Pocket: "chrome://pocket/content/Pocket.jsm",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.jsm",
+  PrivateTab: "resource:///modules/PrivateTab.jsm",
   ProcessHangMonitor: "resource:///modules/ProcessHangMonitor.jsm",
   PromiseUtils: "resource://gre/modules/PromiseUtils.jsm",
   PromptUtils: "resource://gre/modules/SharedPromptUtils.jsm",
@@ -75,10 +76,13 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   SimpleServiceDiscovery: "resource://gre/modules/SimpleServiceDiscovery.jsm",
   SiteDataManager: "resource:///modules/SiteDataManager.jsm",
   SitePermissions: "resource:///modules/SitePermissions.jsm",
+  StatusBar: "resource:///modules/StatusBar.jsm",
   SubDialog: "resource://gre/modules/SubDialog.jsm",
   SubDialogManager: "resource://gre/modules/SubDialog.jsm",
   TabModalPrompt: "chrome://global/content/tabprompts.jsm",
   TabCrashHandler: "resource:///modules/ContentCrashHandlers.jsm",
+  UICustomizations: "resource:///modules/UICustomizations.jsm",
+  TabFeatures: "resource:///modules/TabFeatures.jsm",
   TelemetryEnvironment: "resource://gre/modules/TelemetryEnvironment.jsm",
   Translation: "resource:///modules/translation/TranslationParent.jsm",
   UITour: "resource:///modules/UITour.jsm",
@@ -1819,6 +1823,8 @@ var gBrowserInit = {
       // Clear the reference to the tab once its adoption has been completed.
       this._clearTabToAdopt();
     }
+    // Move UI elements before chrome painted
+    UICustomizations.init(window);
 
     // Wait until chrome is painted before executing code not critical to making the window visible
     this._boundDelayedStartup = this._delayedStartup.bind(this);
@@ -1914,6 +1920,9 @@ var gBrowserInit = {
     // apply full zoom settings to tabs restored by the session restore service.
     FullZoom.init();
     PanelUI.init(shouldSuppressPopupNotifications);
+    TabFeatures.init(window);
+    PrivateTab.init(window);
+    StatusBar.init(window);
 
     UpdateUrlbarSearchSplitterState();
 

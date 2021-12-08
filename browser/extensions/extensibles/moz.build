@@ -10,6 +10,10 @@ XPCSHELL_TESTS_MANIFESTS += [
     'test/unit/xpcshell.ini',
 ]
 
+BROWSER_CHROME_MANIFESTS += [
+  'test/browser/browser.ini',
+]
+
 XPCOM_MANIFESTS += [
     'components.conf',
 ]
@@ -17,36 +21,13 @@ XPCOM_MANIFESTS += [
 EXTRA_JS_MODULES += [
   'content/AddonStores.jsm',
   'content/BrowserUtils.jsm',
+  'content/ExtensiblesElements.jsm',
   'content/PrefUtils.jsm',
+  'content/PrivateTab.jsm',
+  'content/StatusBar.jsm',
   'content/StoreHandler.jsm',
-  'privatetab/PrivateTab.jsm',
-  'statusbar/StatusBar.jsm',
-  'tabfeatures/TabFeatures.jsm',
+  'content/TabFeatures.jsm',
+  'content/UICustomizations.jsm',
 ]
 
-FINAL_TARGET_FILES.features['extensibles@waterfox.net'] += [
-  'api.js',
-  'manifest.json',
-  'schema.json',
-]
-
-FINAL_TARGET_FILES.features['extensibles@waterfox.net']['privatetab'] += [
-  'privatetab/background.js',
-]
-
-FINAL_TARGET_FILES.features['extensibles@waterfox.net']['statusbar'] += [
-  'statusbar/background.js',
-]
-
-FINAL_TARGET_FILES.features['extensibles@waterfox.net']['tabfeatures'] += [
-  'tabfeatures/background.js',
-]
-
-FINAL_TARGET_FILES.features['extensibles@waterfox.net']['addon-stores'] += [
-  'addon-stores/cws.js',
-  'addon-stores/ows.js',
-]
-
-FINAL_TARGET_FILES.features['extensibles@waterfox.net']['_locales']['en'] += [
-  '_locales/en/messages.json',
-]
+JAR_MANIFESTS += ["jar.mn"]
