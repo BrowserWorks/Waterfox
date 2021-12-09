@@ -358,7 +358,7 @@ Tester.prototype = {
   async setupDefaultTheme() {
     // Developer Edition enables the wrong theme by default. Make sure
     // the ordinary default theme is enabled.
-    let theme = await AddonManager.getAddonByID("default-theme@mozilla.org");
+    let theme = await AddonManager.getAddonByID("lepton@waterfox.net");
     await theme.enable();
   },
 
