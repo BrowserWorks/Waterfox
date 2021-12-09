@@ -37,6 +37,8 @@ class DataOffer {
   nsTArray<GdkAtom> mTargetMIMETypes;
 };
 
+class nsWaylandDragContext;
+
 class WaylandDataOffer : public DataOffer {
  public:
   explicit WaylandDataOffer(wl_data_offer* aWaylandDataOffer);
