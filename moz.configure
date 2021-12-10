@@ -652,7 +652,6 @@ option(
 
 
 @depends(
-    "MOZ_PGO",
     build_project,
     target,
     "MOZ_AUTOMATION",
@@ -660,16 +659,13 @@ option(
     enable_tests,
     when="--enable-compile-environment",
 )
-def build_gtest(pgo, build_project, target, automation, enabled, enable_tests):
+def build_gtest(build_project, target, automation, enabled, enable_tests):
     if not enable_tests or not enabled:
         return None
     if (
         automation
         and build_project in ("browser", "comm/mail", "mobile/android")
-        and not (
-            (pgo and target.os == "WINNT")
-            or (target.os == "Android" and target.cpu != "x86_64")
-        )
+        and not (target.os == "Android" and target.cpu != "x86_64")
     ):
         return True
 
