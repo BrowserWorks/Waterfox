@@ -1348,6 +1348,12 @@
   value: "#551A8B"
   mirror: never
 
+- name: browser.tabs.pinnedIconOnly
+  type: RelaxedAtomicBool
+  value: true
+  mirror: always
+  rust: true
+
 #---------------------------------------------------------------------------
 # Prefs starting with "canvas."
 #---------------------------------------------------------------------------
