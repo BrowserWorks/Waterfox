@@ -1400,9 +1400,9 @@ BrowserGlue.prototype = {
       "resource://builtin-themes/australis-light/"
     );
     AddonManager.maybeInstallBuiltinAddon(
-      "lepton@waterfox.net",
-      "4.5.3",
-      "resource://builtin-themes/lepton/"
+      "default-theme@mozilla.org",
+      "1.2",
+      "resource://default-theme/"
     );
 
     if (AppConstants.MOZ_NORMANDY) {
