@@ -154,7 +154,8 @@ int32_t nsPlainTextSerializer::CurrentLine::FindWrapIndexForContent(
     if (mContent.IsEmpty() || aWrapColumn < prefixwidth) {
       goodSpace = NS_LINEBREAKER_NEED_MORE_TEXT;
     } else {
-      goodSpace = std::min(aWrapColumn - prefixwidth, mContent.Length() - 1);
+      goodSpace =
+          std::min<int32_t>(aWrapColumn - prefixwidth, mContent.Length() - 1);
       while (goodSpace >= 0 &&
              !nsCRT::IsAsciiSpace(mContent.CharAt(goodSpace))) {
         goodSpace--;

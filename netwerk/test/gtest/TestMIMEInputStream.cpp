@@ -120,7 +120,7 @@ TEST(TestNsMIMEInputStream, InputStreamLength)
   int64_t size;
   nsresult rv = qi->Length(&size);
   ASSERT_EQ(NS_OK, rv);
-  ASSERT_EQ(buf.Length(), size);
+  ASSERT_EQ(int64_t(buf.Length()), size);
 }
 
 TEST(TestNsMIMEInputStream, NegativeInputStreamLength)
@@ -185,7 +185,7 @@ TEST(TestNsMIMEInputStream, AsyncInputStreamLength)
   ASSERT_EQ(NS_OK, rv);
 
   MOZ_ALWAYS_TRUE(SpinEventLoopUntil([&]() { return callback->Called(); }));
-  ASSERT_EQ(buf.Length(), callback->Size());
+  ASSERT_EQ(int64_t(buf.Length()), callback->Size());
 }
 
 TEST(TestNsMIMEInputStream, NegativeAsyncInputStreamLength)

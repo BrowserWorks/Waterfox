@@ -3970,7 +3970,7 @@ nsresult Http2Session::OnWriteSegment(char* buf, uint32_t count,
       return NS_BASE_STREAM_CLOSED;
     }
 
-    count = std::min(
+    count = std::min<uint32_t>(
         count, mFlatHTTPResponseHeaders.Length() - mFlatHTTPResponseHeadersOut);
     memcpy(buf, mFlatHTTPResponseHeaders.get() + mFlatHTTPResponseHeadersOut,
            count);

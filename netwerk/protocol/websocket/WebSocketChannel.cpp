@@ -1045,8 +1045,8 @@ class OutboundMessage {
       // compression of the subsequent messages.
       LOG(
           ("WebSocketChannel::OutboundMessage: Not deflating message since the "
-           "deflated payload is larger than the original one [deflated=%d, "
-           "original=%d]",
+           "deflated payload is larger than the original one [deflated=%zd, "
+           "original=%zd]",
            temp.Length(), ref.mValue.Length()));
       return false;
     }
@@ -1634,7 +1634,7 @@ nsresult WebSocketChannel::ProcessInput(uint8_t* buffer, uint32_t count) {
           }
           LOG(
               ("WebSocketChannel:: message successfully inflated "
-               "[origLength=%d, newLength=%d]\n",
+               "[origLength=%d, newLength=%zd]\n",
                payloadLength, utf8Data.Length()));
         } else {
           if (!utf8Data.Assign((const char*)payload, payloadLength,
@@ -1766,7 +1766,7 @@ nsresult WebSocketChannel::ProcessInput(uint8_t* buffer, uint32_t count) {
           }
           LOG(
               ("WebSocketChannel:: message successfully inflated "
-               "[origLength=%d, newLength=%d]\n",
+               "[origLength=%d, newLength=%zd]\n",
                payloadLength, binaryData.Length()));
         } else {
           if (!binaryData.Assign((const char*)payload, payloadLength,
@@ -3508,7 +3508,7 @@ WebSocketChannel::SendMsg(const nsACString& aMsg) {
 
 NS_IMETHODIMP
 WebSocketChannel::SendBinaryMsg(const nsACString& aMsg) {
-  LOG(("WebSocketChannel::SendBinaryMsg() %p len=%d\n", this, aMsg.Length()));
+  LOG(("WebSocketChannel::SendBinaryMsg() %p len=%zu\n", this, aMsg.Length()));
   return SendMsgCommon(aMsg, true, aMsg.Length());
 }
 

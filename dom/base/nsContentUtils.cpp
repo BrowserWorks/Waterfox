@@ -10603,8 +10603,7 @@ nsContentUtils::GetSubresourceCacheValidationInfo(nsIRequest* aRequest) {
   return info;
 }
 
-nsCString nsContentUtils::TruncatedURLForDisplay(nsIURI* aURL,
-                                                 uint32_t aMaxLen) {
+nsCString nsContentUtils::TruncatedURLForDisplay(nsIURI* aURL, size_t aMaxLen) {
   nsCString spec;
   if (aURL) {
     aURL->GetSpec(spec);

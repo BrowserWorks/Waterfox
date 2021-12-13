@@ -10116,7 +10116,7 @@ nsresult nsTextFrame::GetFrameName(nsAString& aResult) const {
   int32_t totalContentLength;
   nsAutoCString tmp;
   ToCString(tmp, &totalContentLength);
-  tmp.SetLength(std::min(tmp.Length(), 50u));
+  tmp.SetLength(std::min<size_t>(tmp.Length(), 50u));
   aResult += u"\""_ns + NS_ConvertASCIItoUTF16(tmp) + u"\""_ns;
   return NS_OK;
 }

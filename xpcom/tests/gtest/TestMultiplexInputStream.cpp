@@ -90,7 +90,7 @@ TEST(MultiplexInputStream, Seek_SET)
   ASSERT_EQ((uint64_t)buf3.Length(), length);
   rv = seekStream->Tell(&tell);
   ASSERT_TRUE(NS_SUCCEEDED(rv));
-  ASSERT_EQ(tell, buf1.Length() + buf2.Length());
+  ASSERT_EQ(tell, int64_t(buf1.Length() + buf2.Length()));
 
   // Check read is correct
   rv = stream->Read(readBuf, 5, &count);
@@ -102,7 +102,7 @@ TEST(MultiplexInputStream, Seek_SET)
   ASSERT_EQ(0, strncmp(readBuf, "Foo b", count));
   rv = seekStream->Tell(&tell);
   ASSERT_TRUE(NS_SUCCEEDED(rv));
-  ASSERT_EQ(tell, buf1.Length() + buf2.Length() + 5);
+  ASSERT_EQ(tell, int64_t(buf1.Length() + buf2.Length() + 5));
 
   // Seek back to start of second stream (covers bug 1272371)
   rv = seekStream->Seek(nsISeekableStream::NS_SEEK_SET, buf1.Length());
@@ -112,7 +112,7 @@ TEST(MultiplexInputStream, Seek_SET)
   ASSERT_EQ((uint64_t)buf2.Length() + buf3.Length(), length);
   rv = seekStream->Tell(&tell);
   ASSERT_TRUE(NS_SUCCEEDED(rv));
-  ASSERT_EQ(tell, buf1.Length());
+  ASSERT_EQ(tell, int64_t(buf1.Length()));
 
   // Check read is correct
   rv = stream->Read(readBuf, 6, &count);
@@ -124,7 +124,7 @@ TEST(MultiplexInputStream, Seek_SET)
   ASSERT_EQ(0, strncmp(readBuf, "The qu", count));
   rv = seekStream->Tell(&tell);
   ASSERT_TRUE(NS_SUCCEEDED(rv));
-  ASSERT_EQ(tell, buf1.Length() + 6);
+  ASSERT_EQ(tell, int64_t(buf1.Length() + 6));
 }
 
 TEST(MultiplexInputStream, Seek_CUR)
@@ -268,7 +268,7 @@ TEST(MultiplexInputStream, Seek_END)
   ASSERT_EQ((uint64_t)0, length);
   rv = seekStream->Tell(&tell);
   ASSERT_TRUE(NS_SUCCEEDED(rv));
-  ASSERT_EQ(tell, buf1.Length() + buf2.Length() + buf3.Length());
+  ASSERT_EQ(tell, int64_t(buf1.Length() + buf2.Length() + buf3.Length()));
 
   // -1
   rv = seekStream->Seek(nsISeekableStream::NS_SEEK_END, -1);
@@ -278,7 +278,7 @@ TEST(MultiplexInputStream, Seek_END)
   ASSERT_EQ((uint64_t)1, length);
   rv = seekStream->Tell(&tell);
   ASSERT_TRUE(NS_SUCCEEDED(rv));
-  ASSERT_EQ(tell, buf1.Length() + buf2.Length() + buf3.Length() - 1);
+  ASSERT_EQ(tell, int64_t(buf1.Length() + buf2.Length() + buf3.Length() - 1));
 
   // Almost at the beginning
   tell = 1;
@@ -752,7 +752,7 @@ TEST(MultiplexInputStream, LengthInputStream)
   int64_t length;
   rv = fsis->Length(&length);
   ASSERT_TRUE(NS_SUCCEEDED(rv));
-  ASSERT_EQ(buf.Length() * 2, length);
+  ASSERT_EQ(int64_t(buf.Length() * 2), length);
 
   // An async LengthInputStream.
   RefPtr<testing::LengthInputStream> asyncLengthStream =
@@ -776,7 +776,7 @@ TEST(MultiplexInputStream, LengthInputStream)
   ASSERT_EQ(NS_OK, rv);
 
   MOZ_ALWAYS_TRUE(SpinEventLoopUntil([&]() { return callback->Called(); }));
-  ASSERT_EQ(buf.Length() * 3, callback->Size());
+  ASSERT_EQ(int64_t(buf.Length() * 3), callback->Size());
 
   // Now a negative stream
   lengthStream = new testing::LengthInputStream(buf, true, false, NS_OK, true);

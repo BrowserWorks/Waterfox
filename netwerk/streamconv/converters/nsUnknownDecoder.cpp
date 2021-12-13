@@ -446,7 +446,7 @@ void nsUnknownDecoder::DetermineContentType(nsIRequest* aRequest) {
     }
     if (!decodedData.IsEmpty()) {
       testData = decodedData.get();
-      testDataLen = std::min(decodedData.Length(), MAX_BUFFER_SIZE);
+      testDataLen = std::min<uint32_t>(decodedData.Length(), MAX_BUFFER_SIZE);
     }
   }
 
@@ -541,7 +541,8 @@ bool nsUnknownDecoder::SniffForHTML(nsIRequest* aRequest) {
     end = mBuffer + mBufferLen;
   } else {
     str = mDecodedData.get();
-    end = mDecodedData.get() + std::min(mDecodedData.Length(), MAX_BUFFER_SIZE);
+    end = mDecodedData.get() +
+          std::min<uint32_t>(mDecodedData.Length(), MAX_BUFFER_SIZE);
   }
 
   // skip leading whitespace
@@ -651,7 +652,7 @@ bool nsUnknownDecoder::LastDitchSniff(nsIRequest* aRequest) {
     testDataLen = std::min<uint32_t>(mBufferLen, MAX_BUFFER_SIZE);
   } else {
     testData = mDecodedData.get();
-    testDataLen = std::min(mDecodedData.Length(), MAX_BUFFER_SIZE);
+    testDataLen = std::min<uint32_t>(mDecodedData.Length(), MAX_BUFFER_SIZE);
   }
 
   // First, check for a BOM.  If we see one, assume this is text/plain

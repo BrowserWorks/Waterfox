@@ -265,7 +265,7 @@ TEST(TestPartiallySeekableInputStream, InputStreamLength)
   int64_t size;
   nsresult rv = qi->Length(&size);
   ASSERT_EQ(NS_OK, rv);
-  ASSERT_EQ(buf.Length(), size);
+  ASSERT_EQ(int64_t(buf.Length()), size);
 }
 
 TEST(TestPartiallySeekableInputStream, NegativeInputStreamLength)
@@ -310,7 +310,7 @@ TEST(TestPartiallySeekableInputStream, AsyncInputStreamLength)
   ASSERT_EQ(NS_OK, rv);
 
   MOZ_ALWAYS_TRUE(SpinEventLoopUntil([&]() { return callback->Called(); }));
-  ASSERT_EQ(buf.Length(), callback->Size());
+  ASSERT_EQ(int64_t(buf.Length()), callback->Size());
 }
 
 TEST(TestPartiallySeekableInputStream, NegativeAsyncInputStreamLength)
@@ -443,7 +443,7 @@ TEST(TestPartiallySeekableInputStream, AsyncLengthWaitAfterClosed)
   ASSERT_EQ(NS_OK, rv);
 
   MOZ_ALWAYS_TRUE(SpinEventLoopUntil([&]() { return callback->Called(); }));
-  ASSERT_EQ(buf.Length(), callback->Size());
+  ASSERT_EQ(int64_t(buf.Length()), callback->Size());
 
   ASSERT_EQ(NS_OK, psis->Close());
 
@@ -474,7 +474,7 @@ TEST(TestPartiallySeekableInputStream, AsyncLengthWaitAfterConsumed)
   ASSERT_EQ(NS_OK, rv);
 
   MOZ_ALWAYS_TRUE(SpinEventLoopUntil([&]() { return callback->Called(); }));
-  ASSERT_EQ(buf.Length(), callback->Size());
+  ASSERT_EQ(int64_t(buf.Length()), callback->Size());
 
   char rdbuf[bufsize] = {'\0'};
   uint32_t count;
