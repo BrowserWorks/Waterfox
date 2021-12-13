@@ -2474,7 +2474,7 @@ var XPIProvider = {
 
       this.maybeInstallBuiltinAddon(
         "lepton@waterfox.net",
-        "4.2.2",
+        "4.5.3",
         "resource://builtin-themes/lepton/"
       );
 
