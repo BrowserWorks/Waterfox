@@ -15,7 +15,7 @@ rev = "85551909b95a5cf553a85dbcddfa5f117cfbbe0e"
 [source."https://github.com/mozilla/mp4parse-rust"]
 git = "https://github.com/mozilla/mp4parse-rust"
 replace-with = "vendored-sources"
-rev = "62aa5d4e46289351ebfa2712668077ba8aa81064"
+rev = "c6ba5afd856c158d9cfc1a447165fcfaaf2b797c"
 
 [source."https://github.com/mozilla/cubeb-pulse-rs"]
 git = "https://github.com/mozilla/cubeb-pulse-rs"
