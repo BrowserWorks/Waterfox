@@ -619,8 +619,14 @@ PermissionManager::~PermissionManager() {
   }
 }
 
+/* static */
+StaticMutex PermissionManager::sCreationMutex;
+
 // static
 already_AddRefed<nsIPermissionManager> PermissionManager::GetXPCOMSingleton() {
+  // The lazy initialization could race.
+  StaticMutexAutoLock lock(sCreationMutex);
+
   if (gPermissionManager) {
     return do_AddRef(gPermissionManager);
   }
@@ -642,6 +648,9 @@ already_AddRefed<nsIPermissionManager> PermissionManager::GetXPCOMSingleton() {
 
 // static
 PermissionManager* PermissionManager::GetInstance() {
+  // TODO: There is a minimal chance that we can race here with a
+  // GetXPCOMSingleton call that did not yet set gPermissionManager.
+  // See bug 1745056.
   if (!gPermissionManager) {
     // Hand off the creation of the permission manager to GetXPCOMSingleton.
     nsCOMPtr<nsIPermissionManager> permManager = GetXPCOMSingleton();
