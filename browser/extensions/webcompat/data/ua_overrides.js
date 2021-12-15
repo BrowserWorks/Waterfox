@@ -46,14 +46,12 @@ const AVAILABLE_UA_OVERRIDES = [
     /*
      * Simply removing "Waterfox" from UA does not work for this site.
      */
-    id: "xfinity",
+    id: "waterfox-overrides-2",
     platform: "all",
-    domain: "xfinity.com",
-    bug: "0000000",
     config: {
-      matches: ["*://*.xfinity.com/*"],
+      matches: ["*://*.xfinity.com/*", "*://*.bloomberg.com/*"],
       uaTransformer: originalUA => {
-        return UAHelpers.getPrefix(originalUA) + " Gecko/20100101 Firefox/78.0";
+        return UAHelpers.getPrefix(originalUA) + " Gecko/20100101 Firefox/91.0";
       },
     },
   },
