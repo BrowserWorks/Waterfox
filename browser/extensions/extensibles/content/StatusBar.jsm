@@ -40,14 +40,12 @@ const StatusBar = {
       #status-bar {
           color: initial !important;
           background-color: var(--toolbar-non-lwt-bgcolor) !important;
+          border-top: 1px solid var(--chrome-content-separator-color) !important;
         }
         #status-text > #statuspanel-label {
           border-top: 0 !important;
           background-color: unset !important;
           color: #444 !important;
-        }
-        #browser-bottombox:not([collapsed]) {
-          border-top: 1px solid var(--chrome-content-separator-color) !important;
         }
         #wrapper-status-text label::after {
           content: "Status text" !important;
