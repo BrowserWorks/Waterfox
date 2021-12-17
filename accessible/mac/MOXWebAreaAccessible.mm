@@ -187,6 +187,7 @@ using namespace mozilla::a11y;
            mGeckoAccessible.AsProxy()->AsDoc()->IsTopLevel()) ||
           (mGeckoAccessible.IsAccessible() &&
            !mGeckoAccessible.AsAccessible()->IsRoot() &&
+           mGeckoAccessible.AsAccessible()->AsDoc()->ParentDocument() &&
            mGeckoAccessible.AsAccessible()
                ->AsDoc()
                ->ParentDocument()
