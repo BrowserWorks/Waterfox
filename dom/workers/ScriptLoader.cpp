@@ -2427,6 +2427,10 @@ void ReportLoadError(ErrorResult& aRv, nsresult aLoadResult,
       aRv.ThrowSecurityError(err);
       break;
 
+    case NS_ERROR_CORRUPTED_CONTENT:
+      aRv.Throw(NS_ERROR_DOM_NETWORK_ERR);
+      break;
+
     default:
       // For lack of anything better, go ahead and throw a NetworkError here.
       // We don't want to throw a JS exception, because for toplevel script
