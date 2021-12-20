@@ -36,6 +36,7 @@
 }
 
 %ifndef XP_MACOSX
+  /* Ensure that bottom positioned tabs are colored according to theme */
   #browser-bottombox {
     background-color: var(--lwt-accent-color);
   }
@@ -44,3 +45,8 @@
     appearance: auto !important;
   }
 %endif
+
+/* Ensure that bottom positioned tabs collapse when video's are fullscreen */
+:root[inDOMFullscreen] #browser-bottombox {
+  visibility: collapse;
+}
