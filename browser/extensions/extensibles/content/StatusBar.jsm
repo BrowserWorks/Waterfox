@@ -40,7 +40,6 @@ const StatusBar = {
       #status-bar {
           color: initial !important;
           background-color: var(--toolbar-non-lwt-bgcolor) !important;
-          border-top: 1px solid var(--chrome-content-separator-color) !important;
         }
         #status-text > #statuspanel-label {
           border-top: 0 !important;
@@ -59,6 +58,10 @@ const StatusBar = {
           justify-content: center !important;
           align-content: center !important;
           flex-direction: column !important;
+        }
+        /* Ensure text color of status bar widgets set correctly */
+        toolbar .toolbarbutton-1 {
+          color: var(--toolbarbutton-icon-fill) !important;
         }
       }
           `;
