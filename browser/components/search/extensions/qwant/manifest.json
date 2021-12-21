@@ -1,10 +1,11 @@
 {
   "name": "Qwant",
+  "description": "Qwant is a search engine that respects your privacy and ensure neutrality and impartiality.",
   "manifest_version": 2,
   "version": "1.1",
   "applications": {
     "gecko": {
-      "id": "qwant@search.mozilla.org"
+      "id": "qwant@search.waterfox.net"
     }
   },
   "hidden": true,
@@ -18,7 +19,7 @@
     "search_provider": {
       "name": "Qwant",
       "search_url": "https://www.qwant.com/",
-      "search_url_get_params": "client=brz-moz&q={searchTerms}",
+      "search_url_get_params": "q={searchTerms}",
       "suggest_url": "https://api.qwant.com/api/suggest/",
       "suggest_url_get_params": "client=opensearch&q={searchTerms}",
       "search_form": "https://www.qwant.com/"
