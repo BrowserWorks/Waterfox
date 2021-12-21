@@ -74,7 +74,7 @@ const StatusBar = {
     this.overrideStatusPanelLabel(window);
     this.configureBottomBox(window);
     this.initPrefListeners();
-    this.registerArea("status-bar");
+    this.registerArea(window, "status-bar");
     BrowserUtils.setStyle(this.style);
   },
 
@@ -143,9 +143,18 @@ const StatusBar = {
     }
   },
 
-  registerArea(aArea) {
+  registerArea(aWindow, aArea) {
     if (!CustomizableUI.areas.includes("status-bar")) {
-      CustomizableUI.registerArea(aArea, {});
+      CustomizableUI.registerArea(aArea, {
+        type: CustomizableUI.TYPE_TOOLBAR,
+        defaultPlacements: [
+          "screenshot-button",
+          "zoom-controls",
+          "fullscreen-button",
+        ],
+      });
+      let tb = aWindow.document.getElementById("status-dummybar");
+      CustomizableUI.registerToolbarNode(tb);
     }
   },
 
