@@ -1,11 +1,11 @@
 {
   "name": "Ecosia",
-  "description": "Search Ecosia",
+  "description": "Ecosia - the search engine that plants trees",
   "manifest_version": 2,
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "ecosia@search.mozilla.org"
+      "id": "ecosia@search.waterfox.net"
     }
   },
   "hidden": true,
@@ -20,7 +20,7 @@
       "name": "Ecosia",
       "search_url": "https://www.ecosia.org/search",
       "search_form": "https://www.ecosia.org/",
-      "search_url_get_params": "tt=mzl&q={searchTerms}",
+      "search_url_get_params": "q={searchTerms}",
       "suggest_url": "https://ac.ecosia.org/autocomplete",
       "suggest_url_get_params": "type=list&q={searchTerms}"
     }
