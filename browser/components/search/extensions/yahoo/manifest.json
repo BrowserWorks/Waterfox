@@ -1,0 +1,29 @@
+{
+    "name": "Yahoo!",
+    "description": "The search engine that helps you find exactly what you're looking for. Find the most relevant information, video, images, and answers from all across the Web.",
+    "manifest_version": 2,
+    "version": "1.0",
+    "applications": {
+        "gecko": {
+        "id": "yahoo@search.waterfox.net"
+        }
+    },
+    "hidden": true,
+    "icons": {
+        "16": "favicon.ico"
+    },
+    "web_accessible_resources": [
+        "favicon.ico"
+    ],
+    "chrome_settings_overrides": {
+        "search_provider": {
+            "keyword": "@yahoo",
+            "name": "Yahoo!",
+            "search_url": "https://search.yahoo.com/yhs/search",
+            "search_form": "https://search.yahoo.com/",
+            "search_url_get_params": "hspart=infospace&hsimp=yhs-waterfox&p={searchTerms}",
+            "suggest_url": "https://search.yahoo.com/sugg/os",
+            "suggest_url_get_params": "command={searchTerms}&output=fxjson&fr=opensearch"
+        }
+    }
+}
