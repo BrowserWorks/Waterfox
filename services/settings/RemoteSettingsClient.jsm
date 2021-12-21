@@ -351,7 +351,7 @@ class RemoteSettingsClient extends EventEmitter {
       filters = {},
       order = "", // not sorted by default.
       dumpFallback = true,
-      loadDumpIfNewer = false, // TODO bug 1718083: should default to true.
+      loadDumpIfNewer = true, // TODO bug 1718083: should default to true.
       syncIfEmpty = true,
     } = options;
     let { verifySignature = false } = options;
