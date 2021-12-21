@@ -1,11 +1,11 @@
 {
   "name": "Bing",
-  "description": "Microsoft Bing",
+  "description": "Bing helps you turn information into action, making it faster and easier to go from searching to doing.",
   "manifest_version": 2,
   "version": "1.3",
   "applications": {
     "gecko": {
-      "id": "bing@search.mozilla.org"
+      "id": "bing@search.waterfox.net"
     }
   },
   "hidden": true,
@@ -20,38 +20,38 @@
       "keyword": "@bing",
       "name": "Bing",
       "search_url": "https://www.bing.com/search",
-      "search_form": "https://www.bing.com/search?pc=MOZI&q={searchTerms}",
-      "search_url_get_params": "pc=MOZI&q={searchTerms}",
+      "search_form": "https://www.bing.com/search?PC=IS45&PTAG=SYS1000000&q={searchTerms}",
+      "search_url_get_params": "PC=IS45&PTAG=SYS1000000&q={searchTerms}",
       "params": [
         {
           "name": "form",
           "condition": "purpose",
           "purpose": "contextmenu",
-          "value": "MOZCON"
+          "value": "ISCHR1"
         },
         {
           "name": "form",
           "condition": "purpose",
           "purpose": "searchbar",
-          "value": "MOZSBR"
+          "value": "ISCHR1"
         },
         {
           "name": "form",
           "condition": "purpose",
           "purpose": "homepage",
-          "value": "MOZSPG"
+          "value": "ISCHR1"
         },
         {
           "name": "form",
           "condition": "purpose",
           "purpose": "keyword",
-          "value": "MOZLBR"
+          "value": "ISCHR1"
         },
         {
           "name": "form",
           "condition": "purpose",
           "purpose": "newtab",
-          "value": "MOZTSB"
+          "value": "ISCHR1"
         }
       ],
       "suggest_url": "https://www.bing.com/osjson.aspx",
