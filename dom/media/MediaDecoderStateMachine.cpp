@@ -3919,9 +3919,11 @@ void MediaDecoderStateMachine::ResumeMediaSink() {
   AUTO_PROFILER_LABEL("MediaDecoderStateMachine::ResumeMediaSink",
                       MEDIA_PLAYBACK);
   MOZ_ASSERT(OnTaskQueue());
-  mMediaSink = CreateMediaSink();
   mIsMediaSinkSuspended = false;
-  MaybeStartPlayback();
+  if (!mMediaSink->IsStarted()) {
+    mMediaSink = CreateMediaSink();
+    MaybeStartPlayback();
+  }
 }
 
 void MediaDecoderStateMachine::UpdateSecondaryVideoContainer() {
