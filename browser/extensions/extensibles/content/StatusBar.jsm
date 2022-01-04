@@ -44,7 +44,6 @@ const StatusBar = {
         #status-text > #statuspanel-label {
           border-top: 0 !important;
           background-color: unset !important;
-          color: #444 !important;
         }
         #wrapper-status-text label::after {
           content: "Status text" !important;

@@ -238,6 +238,7 @@ Preferences.addAll([
   // Status Bar
   { id: "browser.statusbar.enabled", type: "bool" },
   { id: "browser.statusbar.appendStatusText", type: "bool" },
+  { id: "browser.statusbar.contrastText", type: "bool" },
 
   // Bookmarks Toolbar Position
   { id: "browser.bookmarks.toolbarposition", type: "wstring" },

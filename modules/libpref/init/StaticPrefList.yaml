@@ -1354,6 +1354,12 @@
   mirror: always
   rust: true
 
+- name: browser.statusbar.contrastText
+  type: RelaxedAtomicBool
+  value: true
+  mirror: always
+  rust: true
+
 #---------------------------------------------------------------------------
 # Prefs starting with "canvas."
 #---------------------------------------------------------------------------

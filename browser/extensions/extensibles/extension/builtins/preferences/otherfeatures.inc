@@ -19,6 +19,7 @@
     <vbox id="statusBarContainer">
       <checkbox id="showStatusBar" preference="browser.statusbar.enabled" data-l10n-id="statusbar-enabled" />
       <checkbox id="showStatusLinks" preference="browser.statusbar.appendStatusText" data-l10n-id="statusbar-show-links" />
+      <checkbox id="contrastStatusText" preference="browser.statusbar.contrastText" data-l10n-id="statusbar-contrast-text" />
     </vbox>
   </groupbox>
 
