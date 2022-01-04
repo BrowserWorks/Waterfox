@@ -35,6 +35,16 @@
     }
 }
 
+@media (-wfx-status-contrast-text) {
+  #status-text > #statuspanel-label {
+    color: var(--lwt-toolbar-field-color) !important;
+  }
+}
+
+#status-text > #statuspanel-label {
+  color: var(--arrowpanel-border-color);
+}
+
 %ifndef XP_MACOSX
   /* Ensure that bottom positioned tabs are colored according to theme */
   #browser-bottombox {

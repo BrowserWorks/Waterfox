@@ -680,7 +680,7 @@ macro_rules! bool_pref_feature {
 /// to support new types in these entries and (2) ensuring that either
 /// nsPresContext::MediaFeatureValuesChanged is called when the value that
 /// would be returned by the evaluator function could change.
-pub static MEDIA_FEATURES: [MediaFeatureDescription; 61] = [
+pub static MEDIA_FEATURES: [MediaFeatureDescription; 62] = [
     feature!(
         atom!("width"),
         AllowsRanges::Yes,
@@ -929,4 +929,5 @@ pub static MEDIA_FEATURES: [MediaFeatureDescription; 61] = [
     bool_pref_feature!(atom!("-moz-proton"), "browser.proton.enabled"),
     bool_pref_feature!(atom!("-moz-proton-places-tooltip"), "browser.proton.places-tooltip.enabled"),
     bool_pref_feature!(atom!("-wfx-icon-only-pinned"), "browser.tabs.pinnedIconOnly"),
+    bool_pref_feature!(atom!("-wfx-status-contrast-text"), "browser.statusbar.contrastText"),
 ];

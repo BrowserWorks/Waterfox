@@ -432,6 +432,7 @@ static constexpr struct {
     {"browser.proton.enabled"_ns},
     {"browser.proton.places-tooltip.enabled"_ns},
     {"browser.tabs.pinnedIconOnly"_ns},
+    {"browser.statusbar.contrastText"_ns},
     // This affects not only the media query, but also the native theme, so we
     // need to re-layout.
     {"browser.theme.toolbar-theme"_ns, widget::ThemeChangeKind::AllBits},
