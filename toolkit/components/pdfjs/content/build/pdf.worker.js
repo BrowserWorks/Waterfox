@@ -125,7 +125,7 @@ class WorkerMessageHandler {
     const WorkerTasks = [];
     const verbosity = (0, _util.getVerbosityLevel)();
     const apiVersion = docParams.apiVersion;
-    const workerVersion = '2.11.298';
+    const workerVersion = '2.12.70';
 
     if (apiVersion !== workerVersion) {
       throw new Error(`The API version "${apiVersion}" does not match ` + `the Worker version "${workerVersion}".`);
@@ -1161,12 +1161,28 @@ function _isValidProtocol(url) {
   }
 }
 
-function createValidAbsoluteUrl(url, baseUrl) {
+function createValidAbsoluteUrl(url, baseUrl = null, options = null) {
   if (!url) {
     return null;
   }
 
   try {
+    if (options && typeof url === "string") {
+      if (options.addDefaultProtocol && url.startsWith("www.")) {
+        const dots = url.match(/\./g);
+
+        if (dots && dots.length >= 2) {
+          url = `http://${url}`;
+        }
+      }
+
+      if (options.tryConvertEncoding) {
+        try {
+          url = stringToUTF8String(url);
+        } catch (ex) {}
+      }
+    }
+
     const absoluteUrl = baseUrl ? new URL(url, baseUrl) : new URL(url);
 
     if (_isValidProtocol(absoluteUrl)) {
@@ -2962,7 +2978,6 @@ exports.ChunkedStreamManager = ChunkedStreamManager;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.addDefaultProtocolToUrl = addDefaultProtocolToUrl;
 exports.collectActions = collectActions;
 exports.encodeToXmlString = encodeToXmlString;
 exports.escapePDFName = escapePDFName;
@@ -2975,8 +2990,8 @@ exports.parseXFAPath = parseXFAPath;
 exports.readInt8 = readInt8;
 exports.readUint16 = readUint16;
 exports.readUint32 = readUint32;
+exports.recoverJsURL = recoverJsURL;
 exports.toRomanNumerals = toRomanNumerals;
-exports.tryConvertUrlEncoding = tryConvertUrlEncoding;
 exports.validateCSSFont = validateCSSFont;
 exports.XRefParseException = exports.XRefEntryException = exports.ParserEOFException = exports.MissingDataException = void 0;
 
@@ -3368,16 +3383,26 @@ function validateCSSFont(cssFontInfo) {
   return true;
 }
 
-function addDefaultProtocolToUrl(url) {
-  return url.startsWith("www.") ? `http://${url}` : url;
-}
+function recoverJsURL(str) {
+  const URL_OPEN_METHODS = ["app.launchURL", "window.open", "xfa.host.gotoURL"];
+  const regex = new RegExp("^\\s*(" + URL_OPEN_METHODS.join("|").split(".").join("\\.") + ")\\((?:'|\")([^'\"]*)(?:'|\")(?:,\\s*(\\w+)\\)|\\))", "i");
+  const jsUrl = regex.exec(str);
 
-function tryConvertUrlEncoding(url) {
-  try {
-    return (0, _util.stringToUTF8String)(url);
-  } catch (e) {
-    return url;
+  if (jsUrl && jsUrl[2]) {
+    const url = jsUrl[2];
+    let newWindow = false;
+
+    if (jsUrl[3] === "true" && jsUrl[1] === "app.launchURL") {
+      newWindow = true;
+    }
+
+    return {
+      url,
+      newWindow
+    };
   }
+
+  return null;
 }
 
 /***/ }),
@@ -3708,13 +3733,9 @@ class Page {
   }
 
   get xfaData() {
-    if (this.xfaFactory) {
-      return (0, _util.shadow)(this, "xfaData", {
-        bbox: this.xfaFactory.getBoundingBox(this.pageIndex)
-      });
-    }
-
-    return (0, _util.shadow)(this, "xfaData", null);
+    return (0, _util.shadow)(this, "xfaData", this.xfaFactory ? {
+      bbox: this.xfaFactory.getBoundingBox(this.pageIndex)
+    } : null);
   }
 
   save(handler, task, annotationStorage) {
@@ -4150,12 +4171,16 @@ class PDFDocument {
   }
 
   get numPages() {
+    let num = 0;
+
     if (this.xfaFactory) {
-      return (0, _util.shadow)(this, "numPages", this.xfaFactory.numberPages);
+      num = this.xfaFactory.numPages;
+    } else if (this.linearization) {
+      num = this.linearization.numPages;
+    } else {
+      num = this.catalog.numPages;
     }
 
-    const linearization = this.linearization;
-    const num = linearization ? linearization.numPages : this.catalog.numPages;
     return (0, _util.shadow)(this, "numPages", num);
   }
 
@@ -4255,24 +4280,21 @@ class PDFDocument {
   }
 
   get xfaFactory() {
+    let data;
+
     if (this.pdfManager.enableXfa && this.catalog.needsRendering && this.formInfo.hasXfa && !this.formInfo.hasAcroForm) {
-      const data = this.xfaData;
-      return (0, _util.shadow)(this, "xfaFactory", data ? new _factory.XFAFactory(data) : null);
+      data = this.xfaData;
     }
 
-    return (0, _util.shadow)(this, "xfaFaxtory", null);
+    return (0, _util.shadow)(this, "xfaFactory", data ? new _factory.XFAFactory(data) : null);
   }
 
   get isPureXfa() {
-    return this.xfaFactory && this.xfaFactory.isValid();
+    return this.xfaFactory ? this.xfaFactory.isValid() : false;
   }
 
   get htmlForXfa() {
-    if (this.xfaFactory) {
-      return this.xfaFactory.getPages();
-    }
-
-    return null;
+    return this.xfaFactory ? this.xfaFactory.getPages() : null;
   }
 
   async loadXfaImages() {
@@ -4444,11 +4466,7 @@ class PDFDocument {
   }
 
   async serializeXfaData(annotationStorage) {
-    if (this.xfaFactory) {
-      return this.xfaFactory.serializeData(annotationStorage);
-    }
-
-    return null;
+    return this.xfaFactory ? this.xfaFactory.serializeData(annotationStorage) : null;
   }
 
   get formInfo() {
@@ -4509,6 +4527,7 @@ class PDFDocument {
 
     const docInfo = {
       PDFFormatVersion: version,
+      Language: this.catalog.lang,
       IsLinearized: !!this.linearization,
       IsAcroFormPresent: this.formInfo.hasAcroForm,
       IsXFAPresent: this.formInfo.hasXfa,
@@ -5978,6 +5997,8 @@ var _default_appearance = __w_pdfjs_require__(23);
 
 var _primitives = __w_pdfjs_require__(5);
 
+var _bidi = __w_pdfjs_require__(59);
+
 var _catalog = __w_pdfjs_require__(64);
 
 var _colorspace = __w_pdfjs_require__(24);
@@ -6134,12 +6155,12 @@ class AnnotationFactory {
 
 exports.AnnotationFactory = AnnotationFactory;
 
-function getRgbColor(color) {
-  const rgbColor = new Uint8ClampedArray(3);
-
+function getRgbColor(color, defaultColor = new Uint8ClampedArray(3)) {
   if (!Array.isArray(color)) {
-    return rgbColor;
+    return defaultColor;
   }
+
+  const rgbColor = defaultColor || new Uint8ClampedArray(3);
 
   switch (color.length) {
     case 0:
@@ -6161,7 +6182,7 @@ function getRgbColor(color) {
       return rgbColor;
 
     default:
-      return rgbColor;
+      return defaultColor;
   }
 }
 
@@ -6229,6 +6250,7 @@ function getTransformMatrix(rect, bbox, matrix) {
 class Annotation {
   constructor(params) {
     const dict = params.dict;
+    this.setTitle(dict.get("T"));
     this.setContents(dict.get("Contents"));
     this.setModificationDate(dict.get("M"));
     this.setFlags(dict.get("F"));
@@ -6236,6 +6258,7 @@ class Annotation {
     this.setColor(dict.getArray("C"));
     this.setBorderStyle(dict);
     this.setAppearance(dict);
+    this.setBorderAndBackgroundColors(dict.get("MK"));
     this._streams = [];
 
     if (this.appearance) {
@@ -6246,7 +6269,9 @@ class Annotation {
       annotationFlags: this.flags,
       borderStyle: this.borderStyle,
       color: this.color,
-      contents: this.contents,
+      backgroundColor: this.backgroundColor,
+      borderColor: this.borderColor,
+      contentsObj: this._contents,
       hasAppearance: !!this.appearance,
       id: params.id,
       modificationDate: this.modificationDate,
@@ -6335,8 +6360,21 @@ class Annotation {
     return this._isPrintable(this.flags);
   }
 
+  _parseStringHelper(data) {
+    const str = typeof data === "string" ? (0, _util.stringToPDFString)(data) : "";
+    const dir = str && (0, _bidi.bidi)(str).dir === "rtl" ? "rtl" : "ltr";
+    return {
+      str,
+      dir
+    };
+  }
+
+  setTitle(title) {
+    this._title = this._parseStringHelper(title);
+  }
+
   setContents(contents) {
-    this.contents = (0, _util.stringToPDFString)(contents || "");
+    this._contents = this._parseStringHelper(contents);
   }
 
   setModificationDate(modificationDate) {
@@ -6361,6 +6399,15 @@ class Annotation {
 
   setColor(color) {
     this.color = getRgbColor(color);
+  }
+
+  setBorderAndBackgroundColors(mk) {
+    if (mk instanceof _primitives.Dict) {
+      this.borderColor = getRgbColor(mk.getArray("BC"), null);
+      this.backgroundColor = getRgbColor(mk.getArray("BG"), null);
+    } else {
+      this.borderColor = this.backgroundColor = null;
+    }
   }
 
   setBorderStyle(borderStyle) {
@@ -6476,6 +6523,8 @@ class Annotation {
         id: this.data.id,
         actions: this.data.actions,
         name: this.data.fieldName,
+        strokeColor: this.data.borderColor,
+        fillColor: this.data.backgroundColor,
         type: "",
         kidIds: this.data.kidIds,
         page: this.data.pageIndex
@@ -6654,9 +6703,10 @@ class MarkupAnnotation extends Annotation {
 
     if (this.data.replyType === _util.AnnotationReplyType.GROUP) {
       const parent = dict.get("IRT");
-      this.data.title = (0, _util.stringToPDFString)(parent.get("T") || "");
+      this.setTitle(parent.get("T"));
+      this.data.titleObj = this._title;
       this.setContents(parent.get("Contents"));
-      this.data.contents = this.contents;
+      this.data.contentsObj = this._contents;
 
       if (!parent.has("CreationDate")) {
         this.data.creationDate = null;
@@ -6681,7 +6731,7 @@ class MarkupAnnotation extends Annotation {
         this.data.color = this.color;
       }
     } else {
-      this.data.title = (0, _util.stringToPDFString)(dict.get("T") || "");
+      this.data.titleObj = this._title;
       this.setCreationDate(dict.get("CreationDate"));
       this.data.creationDate = this.creationDate;
       this.data.hasPopup = dict.has("Popup");
@@ -7318,6 +7368,8 @@ class TextWidgetAnnotation extends WidgetAnnotation {
       rect: this.data.rect,
       actions: this.data.actions,
       page: this.data.pageIndex,
+      strokeColor: this.data.borderColor,
+      fillColor: this.data.backgroundColor,
       type: "text"
     };
   }
@@ -7345,39 +7397,41 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
     }
   }
 
-  getOperatorList(evaluator, task, renderForms, annotationStorage) {
+  async getOperatorList(evaluator, task, renderForms, annotationStorage) {
     if (this.data.pushButton) {
       return super.getOperatorList(evaluator, task, false, annotationStorage);
     }
 
+    let value = null;
+
     if (annotationStorage) {
       const storageEntry = annotationStorage.get(this.data.id);
-      const value = storageEntry && storageEntry.value;
+      value = storageEntry ? storageEntry.value : null;
+    }
 
-      if (value === undefined) {
+    if (value === null) {
+      if (this.appearance) {
         return super.getOperatorList(evaluator, task, renderForms, annotationStorage);
       }
 
-      let appearance;
-
-      if (value) {
-        appearance = this.checkedAppearance;
+      if (this.data.checkBox) {
+        value = this.data.fieldValue === this.data.exportValue;
       } else {
-        appearance = this.uncheckedAppearance;
+        value = this.data.fieldValue === this.data.buttonValue;
       }
-
-      if (appearance) {
-        const savedAppearance = this.appearance;
-        this.appearance = appearance;
-        const operatorList = super.getOperatorList(evaluator, task, renderForms, annotationStorage);
-        this.appearance = savedAppearance;
-        return operatorList;
-      }
-
-      return Promise.resolve(new _operator_list.OperatorList());
     }
 
-    return super.getOperatorList(evaluator, task, renderForms, annotationStorage);
+    const appearance = value ? this.checkedAppearance : this.uncheckedAppearance;
+
+    if (appearance) {
+      const savedAppearance = this.appearance;
+      this.appearance = appearance;
+      const operatorList = super.getOperatorList(evaluator, task, renderForms, annotationStorage);
+      this.appearance = savedAppearance;
+      return operatorList;
+    }
+
+    return new _operator_list.OperatorList();
   }
 
   async save(evaluator, task, annotationStorage) {
@@ -7404,7 +7458,7 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
       return null;
     }
 
-    const defaultValue = this.data.fieldValue && this.data.fieldValue !== "Off";
+    const defaultValue = this.data.fieldValue === this.data.exportValue;
 
     if (defaultValue === value) {
       return null;
@@ -7523,6 +7577,51 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
     return newRefs;
   }
 
+  _getDefaultCheckedAppearance(params, type) {
+    const width = this.data.rect[2] - this.data.rect[0];
+    const height = this.data.rect[3] - this.data.rect[1];
+    const bbox = [0, 0, width, height];
+    const FONT_RATIO = 0.8;
+    const fontSize = Math.min(width, height) * FONT_RATIO;
+    let metrics, char;
+
+    if (type === "check") {
+      metrics = {
+        width: 0.755 * fontSize,
+        height: 0.705 * fontSize
+      };
+      char = "\x33";
+    } else if (type === "disc") {
+      metrics = {
+        width: 0.791 * fontSize,
+        height: 0.705 * fontSize
+      };
+      char = "\x6C";
+    } else {
+      (0, _util.unreachable)(`_getDefaultCheckedAppearance - unsupported type: ${type}`);
+    }
+
+    const xShift = (width - metrics.width) / 2;
+    const yShift = (height - metrics.height) / 2;
+    const appearance = `q BT /PdfJsZaDb ${fontSize} Tf 0 g ${xShift} ${yShift} Td (${char}) Tj ET Q`;
+    const appearanceStreamDict = new _primitives.Dict(params.xref);
+    appearanceStreamDict.set("FormType", 1);
+    appearanceStreamDict.set("Subtype", _primitives.Name.get("Form"));
+    appearanceStreamDict.set("Type", _primitives.Name.get("XObject"));
+    appearanceStreamDict.set("BBox", bbox);
+    appearanceStreamDict.set("Matrix", [1, 0, 0, 1, 0, 0]);
+    appearanceStreamDict.set("Length", appearance.length);
+    const resources = new _primitives.Dict(params.xref);
+    const font = new _primitives.Dict(params.xref);
+    font.set("PdfJsZaDb", this.fallbackFontDict);
+    resources.set("Font", font);
+    appearanceStreamDict.set("Resources", resources);
+    this.checkedAppearance = new _stream.StringStream(appearance);
+    this.checkedAppearance.dict = appearanceStreamDict;
+
+    this._streams.push(this.checkedAppearance);
+  }
+
   _processCheckBox(params) {
     const customAppearance = params.dict.get("AP");
 
@@ -7542,25 +7641,39 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
       this.data.fieldValue = asValue;
     }
 
+    const yes = this.data.fieldValue !== null && this.data.fieldValue !== "Off" ? this.data.fieldValue : "Yes";
     const exportValues = normalAppearance.getKeys();
 
-    if (!exportValues.includes("Off")) {
-      exportValues.push("Off");
+    if (exportValues.length === 0) {
+      exportValues.push("Off", yes);
+    } else if (exportValues.length === 1) {
+      if (exportValues[0] === "Off") {
+        exportValues.push(yes);
+      } else {
+        exportValues.unshift("Off");
+      }
+    } else if (exportValues.includes(yes)) {
+      exportValues.length = 0;
+      exportValues.push("Off", yes);
+    } else {
+      const otherYes = exportValues.find(v => v !== "Off");
+      exportValues.length = 0;
+      exportValues.push("Off", otherYes);
     }
 
     if (!exportValues.includes(this.data.fieldValue)) {
-      this.data.fieldValue = null;
+      this.data.fieldValue = "Off";
     }
 
-    if (exportValues.length !== 2) {
-      return;
-    }
-
-    this.data.exportValue = exportValues[0] === "Off" ? exportValues[1] : exportValues[0];
-    this.checkedAppearance = normalAppearance.get(this.data.exportValue);
+    this.data.exportValue = exportValues[1];
+    this.checkedAppearance = normalAppearance.get(this.data.exportValue) || null;
     this.uncheckedAppearance = normalAppearance.get("Off") || null;
 
-    this._streams.push(this.checkedAppearance);
+    if (this.checkedAppearance) {
+      this._streams.push(this.checkedAppearance);
+    } else {
+      this._getDefaultCheckedAppearance(params, "check");
+    }
 
     if (this.uncheckedAppearance) {
       this._streams.push(this.uncheckedAppearance);
@@ -7601,10 +7714,14 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
       }
     }
 
-    this.checkedAppearance = normalAppearance.get(this.data.buttonValue);
+    this.checkedAppearance = normalAppearance.get(this.data.buttonValue) || null;
     this.uncheckedAppearance = normalAppearance.get("Off") || null;
 
-    this._streams.push(this.checkedAppearance);
+    if (this.checkedAppearance) {
+      this._streams.push(this.checkedAppearance);
+    } else {
+      this._getDefaultCheckedAppearance(params, "disc");
+    }
 
     if (this.uncheckedAppearance) {
       this._streams.push(this.uncheckedAppearance);
@@ -7651,6 +7768,8 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
       hidden: this.data.hidden,
       actions: this.data.actions,
       page: this.data.pageIndex,
+      strokeColor: this.data.borderColor,
+      fillColor: this.data.backgroundColor,
       type
     };
   }
@@ -7715,6 +7834,8 @@ class ChoiceWidgetAnnotation extends WidgetAnnotation {
       actions: this.data.actions,
       items: this.data.options,
       page: this.data.pageIndex,
+      strokeColor: this.data.borderColor,
+      fillColor: this.data.backgroundColor,
       type
     };
   }
@@ -7834,8 +7955,10 @@ class PopupAnnotation extends Annotation {
       }
     }
 
-    this.data.title = (0, _util.stringToPDFString)(parentItem.get("T") || "");
-    this.data.contents = (0, _util.stringToPDFString)(parentItem.get("Contents") || "");
+    this.setTitle(parentItem.get("T"));
+    this.data.titleObj = this._title;
+    this.setContents(parentItem.get("Contents"));
+    this.data.contentsObj = this._contents;
   }
 
 }
@@ -7862,7 +7985,7 @@ class LineAnnotation extends MarkupAnnotation {
           interiorColor = parameters.dict.getArray("IC");
 
       if (interiorColor) {
-        interiorColor = getRgbColor(interiorColor);
+        interiorColor = getRgbColor(interiorColor, null);
         fillColor = interiorColor ? Array.from(interiorColor).map(c => c / 255) : null;
       }
 
@@ -7904,11 +8027,15 @@ class SquareAnnotation extends MarkupAnnotation {
           interiorColor = parameters.dict.getArray("IC");
 
       if (interiorColor) {
-        interiorColor = getRgbColor(interiorColor);
+        interiorColor = getRgbColor(interiorColor, null);
         fillColor = interiorColor ? Array.from(interiorColor).map(c => c / 255) : null;
       }
 
       const fillAlpha = fillColor ? strokeAlpha : null;
+
+      if (this.borderStyle.width === 0 && !fillColor) {
+        return;
+      }
 
       this._setDefaultAppearance({
         xref: parameters.xref,
@@ -7950,11 +8077,16 @@ class CircleAnnotation extends MarkupAnnotation {
       let interiorColor = parameters.dict.getArray("IC");
 
       if (interiorColor) {
-        interiorColor = getRgbColor(interiorColor);
+        interiorColor = getRgbColor(interiorColor, null);
         fillColor = interiorColor ? Array.from(interiorColor).map(c => c / 255) : null;
       }
 
       const fillAlpha = fillColor ? strokeAlpha : null;
+
+      if (this.borderStyle.width === 0 && !fillColor) {
+        return;
+      }
+
       const controlPointsDistance = 4 / 3 * Math.tan(Math.PI / (2 * 4));
 
       this._setDefaultAppearance({
@@ -9504,6 +9636,8 @@ var _parser = __w_pdfjs_require__(27);
 var _image_utils = __w_pdfjs_require__(58);
 
 var _stream = __w_pdfjs_require__(10);
+
+var _base_stream = __w_pdfjs_require__(6);
 
 var _bidi = __w_pdfjs_require__(59);
 
@@ -11370,6 +11504,8 @@ class PartialEvaluator {
     resources = resources || _primitives.Dict.empty;
     stateManager = stateManager || new StateManager(new TextState());
     const WhitespaceRegexp = /\s/g;
+    const DiacriticRegExp = new RegExp("^\\p{Mn}$", "u");
+    const NormalizedUnicodes = (0, _unicode.getNormalizedUnicodes)();
     const textContent = {
       items: [],
       styles: Object.create(null)
@@ -11382,21 +11518,20 @@ class PartialEvaluator {
       width: 0,
       height: 0,
       vertical: false,
-      lastCharSize: 0,
       prevTransform: null,
       textAdvanceScale: 0,
-      spaceWidth: 0,
       spaceInFlowMin: 0,
       spaceInFlowMax: 0,
       trackingSpaceMin: Infinity,
+      negativeSpaceMax: -Infinity,
       transform: null,
       fontName: null,
-      hasEOL: false,
-      isLastCharWhiteSpace: false
+      hasEOL: false
     };
-    const TRACKING_SPACE_FACTOR = 0.3;
-    const SPACE_IN_FLOW_MIN_FACTOR = 0.3;
-    const SPACE_IN_FLOW_MAX_FACTOR = 1.3;
+    const TRACKING_SPACE_FACTOR = 0.1;
+    const NEGATIVE_SPACE_FACTOR = -0.2;
+    const SPACE_IN_FLOW_MIN_FACTOR = 0.1;
+    const SPACE_IN_FLOW_MAX_FACTOR = 0.6;
     const self = this;
     const xref = this.xref;
     const showSpacedTextBuffer = [];
@@ -11455,19 +11590,10 @@ class PartialEvaluator {
       const scaleLineX = Math.hypot(textState.textLineMatrix[0], textState.textLineMatrix[1]);
       const scaleCtmX = Math.hypot(textState.ctm[0], textState.ctm[1]);
       textContentItem.textAdvanceScale = scaleCtmX * scaleLineX;
-      textContentItem.lastCharSize = textContentItem.lastCharSize || 0;
-      const spaceWidth = font.spaceWidth / 1000 * textState.fontSize;
-
-      if (spaceWidth) {
-        textContentItem.spaceWidth = spaceWidth;
-        textContentItem.trackingSpaceMin = spaceWidth * TRACKING_SPACE_FACTOR;
-        textContentItem.spaceInFlowMin = spaceWidth * SPACE_IN_FLOW_MIN_FACTOR;
-        textContentItem.spaceInFlowMax = spaceWidth * SPACE_IN_FLOW_MAX_FACTOR;
-      } else {
-        textContentItem.spaceWidth = 0;
-        textContentItem.trackingSpaceMin = Infinity;
-      }
-
+      textContentItem.trackingSpaceMin = textState.fontSize * TRACKING_SPACE_FACTOR;
+      textContentItem.negativeSpaceMax = textState.fontSize * NEGATIVE_SPACE_FACTOR;
+      textContentItem.spaceInFlowMin = textState.fontSize * SPACE_IN_FLOW_MIN_FACTOR;
+      textContentItem.spaceInFlowMax = textState.fontSize * SPACE_IN_FLOW_MAX_FACTOR;
       textContentItem.hasEOL = false;
       textContentItem.initialized = true;
       return textContentItem;
@@ -11539,38 +11665,69 @@ class PartialEvaluator {
       });
     }
 
-    function compareWithLastPosition(fontSize) {
+    function compareWithLastPosition() {
       if (!combineTextItems || !textState.font || !textContentItem.prevTransform) {
         return;
       }
 
       const currentTransform = getCurrentTextTransform();
-      const posX = currentTransform[4];
-      const posY = currentTransform[5];
-      const lastPosX = textContentItem.prevTransform[4];
-      const lastPosY = textContentItem.prevTransform[5];
+      let posX = currentTransform[4];
+      let posY = currentTransform[5];
+      let lastPosX = textContentItem.prevTransform[4];
+      let lastPosY = textContentItem.prevTransform[5];
 
       if (lastPosX === posX && lastPosY === posY) {
         return;
       }
 
-      const advanceX = (posX - lastPosX) / textContentItem.textAdvanceScale;
-      const advanceY = (posY - lastPosY) / textContentItem.textAdvanceScale;
-      const HALF_LAST_CHAR = -0.5 * textContentItem.lastCharSize;
+      let rotate = 0;
+
+      if (currentTransform[0] && currentTransform[1] === 0 && currentTransform[2] === 0) {
+        rotate = currentTransform[0] > 0 ? 0 : 180;
+      } else if (currentTransform[1] && currentTransform[0] === 0 && currentTransform[3] === 0) {
+        rotate += currentTransform[1] > 0 ? 90 : 270;
+      }
+
+      if (rotate !== 0) {
+        switch (rotate) {
+          case 90:
+            [posX, posY] = [posY, posX];
+            [lastPosX, lastPosY] = [lastPosY, lastPosX];
+            break;
+
+          case 180:
+            [posX, posY, lastPosX, lastPosY] = [-posX, -posY, -lastPosX, -lastPosY];
+            break;
+
+          case 270:
+            [posX, posY] = [-posY, -posX];
+            [lastPosX, lastPosY] = [-lastPosY, -lastPosX];
+            break;
+        }
+      }
 
       if (textState.font.vertical) {
-        if (Math.abs(advanceX) > textContentItem.width / textContentItem.textAdvanceScale) {
+        const advanceY = (lastPosY - posY) / textContentItem.textAdvanceScale;
+        const advanceX = posX - lastPosX;
+
+        if (advanceY < textContentItem.negativeSpaceMax) {
+          if (Math.abs(advanceX) > 0.5 * textContentItem.width) {
+            appendEOL();
+            return;
+          }
+
+          flushTextContentItem();
+          return;
+        }
+
+        if (Math.abs(advanceX) > textContentItem.height) {
           appendEOL();
           return;
         }
 
-        if (HALF_LAST_CHAR > advanceY) {
-          return;
-        }
-
-        if (advanceY > textContentItem.trackingSpaceMin) {
+        if (advanceY <= textContentItem.trackingSpaceMin) {
           textContentItem.height += advanceY;
-        } else if (!addFakeSpaces(advanceY, 0, textContentItem.prevTransform)) {
+        } else if (!addFakeSpaces(advanceY, textContentItem.prevTransform)) {
           if (textContentItem.str.length === 0) {
             textContent.items.push({
               str: " ",
@@ -11581,7 +11738,6 @@ class PartialEvaluator {
               fontName: textContentItem.fontName,
               hasEOL: false
             });
-            textContentItem.isLastCharWhiteSpace = true;
           } else {
             textContentItem.height += advanceY;
           }
@@ -11590,18 +11746,27 @@ class PartialEvaluator {
         return;
       }
 
-      if (Math.abs(advanceY) > textContentItem.height / textContentItem.textAdvanceScale) {
-        appendEOL();
+      const advanceX = (posX - lastPosX) / textContentItem.textAdvanceScale;
+      const advanceY = posY - lastPosY;
+
+      if (advanceX < textContentItem.negativeSpaceMax) {
+        if (Math.abs(advanceY) > 0.5 * textContentItem.height) {
+          appendEOL();
+          return;
+        }
+
+        flushTextContentItem();
         return;
       }
 
-      if (HALF_LAST_CHAR > advanceX) {
+      if (Math.abs(advanceY) > textContentItem.height) {
+        appendEOL();
         return;
       }
 
       if (advanceX <= textContentItem.trackingSpaceMin) {
         textContentItem.width += advanceX;
-      } else if (!addFakeSpaces(advanceX, 0, textContentItem.prevTransform)) {
+      } else if (!addFakeSpaces(advanceX, textContentItem.prevTransform)) {
         if (textContentItem.str.length === 0) {
           textContent.items.push({
             str: " ",
@@ -11612,7 +11777,6 @@ class PartialEvaluator {
             fontName: textContentItem.fontName,
             hasEOL: false
           });
-          textContentItem.isLastCharWhiteSpace = true;
         } else {
           textContentItem.width += advanceX;
         }
@@ -11621,8 +11785,7 @@ class PartialEvaluator {
 
     function buildTextContentItem({
       chars,
-      extraSpacing,
-      isFirstChunk
+      extraSpacing
     }) {
       const font = textState.font;
 
@@ -11633,87 +11796,73 @@ class PartialEvaluator {
           if (!font.vertical) {
             textState.translateTextMatrix(charSpacing * textState.textHScale, 0);
           } else {
-            textState.translateTextMatrix(0, charSpacing);
+            textState.translateTextMatrix(0, -charSpacing);
           }
         }
 
         return;
       }
 
-      const NormalizedUnicodes = (0, _unicode.getNormalizedUnicodes)();
       const glyphs = font.charsToGlyphs(chars);
       const scale = textState.fontMatrix[0] * textState.fontSize;
 
-      if (isFirstChunk) {
-        compareWithLastPosition(scale);
-      }
-
-      let textChunk = ensureTextContentItem();
-      let size = 0;
-      let lastCharSize = 0;
-
       for (let i = 0, ii = glyphs.length; i < ii; i++) {
         const glyph = glyphs[i];
-        let charSpacing = textState.charSpacing + (i === ii - 1 ? extraSpacing : 0);
-        let glyphUnicode = glyph.unicode;
+        let charSpacing = textState.charSpacing + (i + 1 === ii ? extraSpacing : 0);
+        let glyphWidth = glyph.width;
 
-        if (glyph.isSpace) {
-          charSpacing += textState.wordSpacing;
-          textChunk.isLastCharWhiteSpace = true;
-        } else {
-          glyphUnicode = NormalizedUnicodes[glyphUnicode] || glyphUnicode;
-          glyphUnicode = (0, _unicode.reverseIfRtl)(glyphUnicode);
-          textChunk.isLastCharWhiteSpace = false;
+        if (font.vertical) {
+          glyphWidth = glyph.vmetric ? glyph.vmetric[0] : -glyphWidth;
         }
 
-        textChunk.str.push(glyphUnicode);
-        const glyphWidth = font.vertical && glyph.vmetric ? glyph.vmetric[0] : glyph.width;
         let scaledDim = glyphWidth * scale;
+        let glyphUnicode = glyph.unicode;
+
+        if (glyphUnicode === " " && (i === 0 || i + 1 === ii || glyphs[i - 1].unicode === " " || glyphs[i + 1].unicode === " ")) {
+          if (!font.vertical) {
+            charSpacing += scaledDim + textState.wordSpacing;
+            textState.translateTextMatrix(charSpacing * textState.textHScale, 0);
+          } else {
+            charSpacing += -scaledDim + textState.wordSpacing;
+            textState.translateTextMatrix(0, -charSpacing);
+          }
+
+          continue;
+        }
+
+        compareWithLastPosition();
+        const textChunk = ensureTextContentItem();
+
+        if (DiacriticRegExp.test(glyph.unicode)) {
+          scaledDim = 0;
+        }
 
         if (!font.vertical) {
           scaledDim *= textState.textHScale;
           textState.translateTextMatrix(scaledDim, 0);
+          textChunk.width += scaledDim;
         } else {
           textState.translateTextMatrix(0, scaledDim);
           scaledDim = Math.abs(scaledDim);
+          textChunk.height += scaledDim;
         }
 
-        size += scaledDim;
+        if (scaledDim) {
+          textChunk.prevTransform = getCurrentTextTransform();
+        }
+
+        glyphUnicode = NormalizedUnicodes[glyphUnicode] || glyphUnicode;
+        glyphUnicode = (0, _unicode.reverseIfRtl)(glyphUnicode);
+        textChunk.str.push(glyphUnicode);
 
         if (charSpacing) {
           if (!font.vertical) {
-            charSpacing *= textState.textHScale;
-          }
-
-          scaledDim += charSpacing;
-          const wasSplit = charSpacing > textContentItem.trackingSpaceMin && addFakeSpaces(charSpacing, size);
-
-          if (!font.vertical) {
-            textState.translateTextMatrix(charSpacing, 0);
+            textState.translateTextMatrix(charSpacing * textState.textHScale, 0);
           } else {
-            textState.translateTextMatrix(0, charSpacing);
-          }
-
-          if (wasSplit) {
-            textChunk = ensureTextContentItem();
-            size = 0;
-          } else {
-            size += charSpacing;
+            textState.translateTextMatrix(0, -charSpacing);
           }
         }
-
-        lastCharSize = scaledDim;
       }
-
-      textChunk.lastCharSize = lastCharSize;
-
-      if (!font.vertical) {
-        textChunk.width += size;
-      } else {
-        textChunk.height += size;
-      }
-
-      textChunk.prevTransform = getCurrentTextTransform();
     }
 
     function appendEOL() {
@@ -11731,16 +11880,12 @@ class PartialEvaluator {
           hasEOL: true
         });
       }
-
-      textContentItem.isLastCharWhiteSpace = false;
-      textContentItem.lastCharSize = 0;
     }
 
-    function addFakeSpaces(width, size, transf = null) {
+    function addFakeSpaces(width, transf) {
       if (textContentItem.spaceInFlowMin <= width && width <= textContentItem.spaceInFlowMax) {
         if (textContentItem.initialized) {
           textContentItem.str.push(" ");
-          textContentItem.isLastCharWhiteSpace = true;
         }
 
         return false;
@@ -11748,29 +11893,19 @@ class PartialEvaluator {
 
       const fontName = textContentItem.fontName;
       let height = 0;
-      width *= textContentItem.textAdvanceScale;
 
-      if (!textContentItem.vertical) {
-        textContentItem.width += size;
-      } else {
-        textContentItem.height += size;
+      if (textContentItem.vertical) {
         height = width;
         width = 0;
       }
 
       flushTextContentItem();
-
-      if (textContentItem.isLastCharWhiteSpace) {
-        return true;
-      }
-
-      textContentItem.isLastCharWhiteSpace = true;
       textContent.items.push({
         str: " ",
         dir: "ltr",
         width,
         height,
-        transform: transf ? transf : getCurrentTextTransform(),
+        transform: transf || getCurrentTextTransform(),
         fontName,
         hasEOL: false
       });
@@ -11856,17 +11991,14 @@ class PartialEvaluator {
             return;
 
           case _util.OPS.setTextRise:
-            flushTextContentItem();
             textState.textRise = args[0];
             break;
 
           case _util.OPS.setHScale:
-            flushTextContentItem();
             textState.textHScale = args[0] / 100;
             break;
 
           case _util.OPS.setLeading:
-            flushTextContentItem();
             textState.leading = args[0];
             break;
 
@@ -11876,14 +12008,12 @@ class PartialEvaluator {
             break;
 
           case _util.OPS.setLeadingMoveText:
-            flushTextContentItem();
             textState.leading = -args[1];
             textState.translateTextLineMatrix(args[0], args[1]);
             textState.textMatrix = textState.textLineMatrix.slice();
             break;
 
           case _util.OPS.nextLine:
-            appendEOL();
             textState.carriageReturn();
             break;
 
@@ -11902,7 +12032,6 @@ class PartialEvaluator {
             break;
 
           case _util.OPS.beginText:
-            flushTextContentItem();
             textState.textMatrix = _util.IDENTITY_MATRIX.slice();
             textState.textLineMatrix = _util.IDENTITY_MATRIX.slice();
             break;
@@ -11915,7 +12044,6 @@ class PartialEvaluator {
 
             const spaceFactor = (textState.font.vertical ? 1 : -1) * textState.fontSize / 1000;
             const elements = args[0];
-            let isFirstChunk = true;
 
             for (let i = 0, ii = elements.length; i < ii - 1; i++) {
               const item = elements[i];
@@ -11927,13 +12055,8 @@ class PartialEvaluator {
                 showSpacedTextBuffer.length = 0;
                 buildTextContentItem({
                   chars: str,
-                  extraSpacing: item * spaceFactor,
-                  isFirstChunk
+                  extraSpacing: item * spaceFactor
                 });
-
-                if (str && isFirstChunk) {
-                  isFirstChunk = false;
-                }
               }
             }
 
@@ -11948,8 +12071,7 @@ class PartialEvaluator {
               showSpacedTextBuffer.length = 0;
               buildTextContentItem({
                 chars: str,
-                extraSpacing: 0,
-                isFirstChunk
+                extraSpacing: 0
               });
             }
 
@@ -11963,8 +12085,7 @@ class PartialEvaluator {
 
             buildTextContentItem({
               chars: args[0],
-              extraSpacing: 0,
-              isFirstChunk: true
+              extraSpacing: 0
             });
             break;
 
@@ -11974,13 +12095,10 @@ class PartialEvaluator {
               continue;
             }
 
-            textContentItem.hasEOL = true;
-            flushTextContentItem();
             textState.carriageReturn();
             buildTextContentItem({
               chars: args[0],
-              extraSpacing: 0,
-              isFirstChunk: true
+              extraSpacing: 0
             });
             break;
 
@@ -11990,15 +12108,12 @@ class PartialEvaluator {
               continue;
             }
 
-            textContentItem.hasEOL = true;
-            flushTextContentItem();
             textState.wordSpacing = args[0];
             textState.charSpacing = args[1];
             textState.carriageReturn();
             buildTextContentItem({
               chars: args[2],
-              extraSpacing: 0,
-              isFirstChunk: true
+              extraSpacing: 0
             });
             break;
 
@@ -12250,7 +12365,7 @@ class PartialEvaluator {
 
       const cidToGidMap = dict.get("CIDToGIDMap");
 
-      if ((0, _primitives.isStream)(cidToGidMap)) {
+      if (cidToGidMap instanceof _base_stream.BaseStream) {
         cidToGidBytes = cidToGidMap.getBytes();
       }
     }
@@ -12850,6 +12965,16 @@ class PartialEvaluator {
 
           hash.update(widthsBuf.join());
         }
+
+        const cidToGidMap = dict.getRaw("CIDToGIDMap") || baseDict.getRaw("CIDToGIDMap");
+
+        if (cidToGidMap instanceof _primitives.Name) {
+          hash.update(cidToGidMap.name);
+        } else if (cidToGidMap instanceof _primitives.Ref) {
+          hash.update(cidToGidMap.toString());
+        } else if (cidToGidMap instanceof _base_stream.BaseStream) {
+          hash.update(cidToGidMap.peekBytes());
+        }
       }
     }
 
@@ -12902,6 +13027,7 @@ class PartialEvaluator {
           loadedName: baseDict.loadedName,
           widths: metrics.widths,
           defaultWidth: metrics.defaultWidth,
+          isSimulatedFlags: true,
           flags,
           firstChar,
           lastChar,
@@ -15857,8 +15983,6 @@ class Lexer {
 
     if (strBuf.length > 127) {
       (0, _util.warn)(`Name token is longer than allowed by the spec: ${strBuf.length}`);
-    } else if (strBuf.length === 0) {
-      (0, _util.warn)("Name token is empty.");
     }
 
     return _primitives.Name.get(strBuf.join(""));
@@ -24516,8 +24640,8 @@ var _type1_font = __w_pdfjs_require__(53);
 
 const PRIVATE_USE_AREAS = [[0xe000, 0xf8ff], [0x100000, 0x10fffd]];
 const PDF_GLYPH_SPACE_UNITS = 1000;
-const EXPORT_DATA_PROPERTIES = ["ascent", "bbox", "black", "bold", "charProcOperatorList", "composite", "cssFontInfo", "data", "defaultVMetrics", "defaultWidth", "descent", "fallbackName", "fontMatrix", "fontType", "isMonospace", "isSerifFont", "isType3Font", "italic", "loadedName", "mimetype", "missingFile", "name", "remeasure", "subtype", "type", "vertical"];
-const EXPORT_DATA_EXTRA_PROPERTIES = ["cMap", "defaultEncoding", "differences", "isSymbolicFont", "seacMap", "toFontChar", "toUnicode", "vmetrics", "widths"];
+const EXPORT_DATA_PROPERTIES = ["ascent", "bbox", "black", "bold", "charProcOperatorList", "composite", "cssFontInfo", "data", "defaultVMetrics", "defaultWidth", "descent", "fallbackName", "fontMatrix", "fontType", "isType3Font", "italic", "loadedName", "mimetype", "missingFile", "name", "remeasure", "subtype", "type", "vertical"];
+const EXPORT_DATA_EXTRA_PROPERTIES = ["cMap", "defaultEncoding", "differences", "isMonospace", "isSerifFont", "isSymbolicFont", "seacMap", "toFontChar", "toUnicode", "vmetrics", "widths"];
 
 function adjustWidths(properties) {
   if (!properties.fontMatrix) {
@@ -24761,6 +24885,25 @@ function buildToFontChar(encoding, glyphsUnicodeMap, differences) {
   }
 
   return toFontChar;
+}
+
+function convertCidString(charCode, cid, shouldThrow = false) {
+  switch (cid.length) {
+    case 1:
+      return cid.charCodeAt(0);
+
+    case 2:
+      return cid.charCodeAt(0) << 8 | cid.charCodeAt(1);
+  }
+
+  const msg = `Unsupported CID string (charCode ${charCode}): "${cid}".`;
+
+  if (shouldThrow) {
+    throw new _util.FormatError(msg);
+  }
+
+  (0, _util.warn)(msg);
+  return cid;
 }
 
 function adjustMapping(charCodeToGlyphId, hasGlyph, newGlyphZeroId) {
@@ -25115,7 +25258,21 @@ class Font {
     this.cssFontInfo = properties.cssFontInfo;
     this._charsCache = Object.create(null);
     this._glyphCache = Object.create(null);
-    this.isSerifFont = !!(properties.flags & _fonts_utils.FontFlags.Serif);
+    let isSerifFont = !!(properties.flags & _fonts_utils.FontFlags.Serif);
+
+    if (!isSerifFont && !properties.isSimulatedFlags) {
+      const baseName = name.replace(/[,_]/g, "-").split("-")[0],
+            serifFonts = (0, _standard_fonts.getSerifFonts)();
+
+      for (const namePart of baseName.split("+")) {
+        if (serifFonts[namePart]) {
+          isSerifFont = true;
+          break;
+        }
+      }
+    }
+
+    this.isSerifFont = isSerifFont;
     this.isSymbolicFont = !!(properties.flags & _fonts_utils.FontFlags.Symbolic);
     this.isMonospace = !!(properties.flags & _fonts_utils.FontFlags.FixedPitch);
     let type = properties.type;
@@ -25155,7 +25312,7 @@ class Font {
       return;
     }
 
-    this.cidEncoding = properties.cidEncoding;
+    this.cidEncoding = properties.cidEncoding || "";
     this.vertical = !!properties.vertical;
 
     if (this.vertical) {
@@ -25618,6 +25775,54 @@ class Font {
         }
 
         hasShortCmap = true;
+      } else if (format === 2) {
+        const subHeaderKeys = [];
+        let maxSubHeaderKey = 0;
+
+        for (let i = 0; i < 256; i++) {
+          const subHeaderKey = file.getUint16() >> 3;
+          subHeaderKeys.push(subHeaderKey);
+          maxSubHeaderKey = Math.max(subHeaderKey, maxSubHeaderKey);
+        }
+
+        const subHeaders = [];
+
+        for (let i = 0; i <= maxSubHeaderKey; i++) {
+          subHeaders.push({
+            firstCode: file.getUint16(),
+            entryCount: file.getUint16(),
+            idDelta: signedInt16(file.getByte(), file.getByte()),
+            idRangePos: file.pos + file.getUint16()
+          });
+        }
+
+        for (let i = 0; i < 256; i++) {
+          if (subHeaderKeys[i] === 0) {
+            file.pos = subHeaders[0].idRangePos + 2 * i;
+            glyphId = file.getUint16();
+            mappings.push({
+              charCode: i,
+              glyphId
+            });
+          } else {
+            const s = subHeaders[subHeaderKeys[i]];
+
+            for (j = 0; j < s.entryCount; j++) {
+              const charCode = (i << 8) + j + s.firstCode;
+              file.pos = s.idRangePos + 2 * j;
+              glyphId = file.getUint16();
+
+              if (glyphId !== 0) {
+                glyphId = (glyphId + s.idDelta) % 65536;
+              }
+
+              mappings.push({
+                charCode,
+                glyphId
+              });
+            }
+          }
+        }
       } else if (format === 4) {
         const segCount = file.getUint16() >> 1;
         file.skip(6);
@@ -26670,6 +26875,10 @@ class Font {
       const cidToGidMap = properties.cidToGidMap || [];
       const isCidToGidMapEmpty = cidToGidMap.length === 0;
       properties.cMap.forEach(function (charCode, cid) {
+        if (typeof cid === "string") {
+          cid = convertCidString(charCode, cid, true);
+        }
+
         if (cid > 0xffff) {
           throw new _util.FormatError("Max size of CID is 65,535");
         }
@@ -26995,6 +27204,10 @@ class Font {
 
       if (this.composite && this.cMap.contains(glyphUnicode)) {
         charcode = this.cMap.lookup(glyphUnicode);
+
+        if (typeof charcode === "string") {
+          charcode = convertCidString(glyphUnicode, charcode);
+        }
       }
 
       if (!charcode && this.toUnicode) {
@@ -27022,6 +27235,10 @@ class Font {
 
     if (this.cMap && this.cMap.contains(charcode)) {
       widthCode = this.cMap.lookup(charcode);
+
+      if (typeof widthCode === "string") {
+        widthCode = convertCidString(charcode, widthCode);
+      }
     }
 
     width = this.widths[widthCode];
@@ -29315,6 +29532,7 @@ const getSerifFonts = (0, _core_utils.getLookupTableFactory)(function (t) {
   t.Joanna = true;
   t.Korinna = true;
   t.Lexicon = true;
+  t.LiberationSerif = true;
   t["Liberation Serif"] = true;
   t["Linux Libertine"] = true;
   t.Literaturnaya = true;
@@ -35897,7 +36115,7 @@ function createBidiText(str, isLTR, vertical = false) {
 const chars = [];
 const types = [];
 
-function bidi(str, startLevel, vertical) {
+function bidi(str, startLevel = -1, vertical = false) {
   let isLTR = true;
   const strLength = str.length;
 
@@ -40560,9 +40778,9 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.Catalog = void 0;
 
-var _core_utils = __w_pdfjs_require__(9);
-
 var _primitives = __w_pdfjs_require__(5);
+
+var _core_utils = __w_pdfjs_require__(9);
 
 var _util = __w_pdfjs_require__(2);
 
@@ -40608,21 +40826,19 @@ class Catalog {
   get version() {
     const version = this._catDict.get("Version");
 
-    if (!(0, _primitives.isName)(version)) {
-      return (0, _util.shadow)(this, "version", null);
-    }
+    return (0, _util.shadow)(this, "version", version instanceof _primitives.Name ? version.name : null);
+  }
 
-    return (0, _util.shadow)(this, "version", version.name);
+  get lang() {
+    const lang = this._catDict.get("Lang");
+
+    return (0, _util.shadow)(this, "lang", typeof lang === "string" ? (0, _util.stringToPDFString)(lang) : null);
   }
 
   get needsRendering() {
     const needsRendering = this._catDict.get("NeedsRendering");
 
-    if (!(0, _util.isBool)(needsRendering)) {
-      return (0, _util.shadow)(this, "needsRendering", false);
-    }
-
-    return (0, _util.shadow)(this, "needsRendering", needsRendering);
+    return (0, _util.shadow)(this, "needsRendering", typeof needsRendering === "boolean" ? needsRendering : false);
   }
 
   get collection() {
@@ -41925,13 +42141,32 @@ class Catalog {
       const actionName = actionType.name;
 
       switch (actionName) {
+        case "ResetForm":
+          const flags = action.get("Flags");
+          const include = (((0, _util.isNum)(flags) ? flags : 0) & 1) === 0;
+          const fields = [];
+          const refs = [];
+
+          for (const obj of action.get("Fields") || []) {
+            if ((0, _primitives.isRef)(obj)) {
+              refs.push(obj.toString());
+            } else if ((0, _util.isString)(obj)) {
+              fields.push((0, _util.stringToPDFString)(obj));
+            }
+          }
+
+          resultObj.resetForm = {
+            fields,
+            refs,
+            include
+          };
+          break;
+
         case "URI":
           url = action.get("URI");
 
-          if ((0, _primitives.isName)(url)) {
+          if (url instanceof _primitives.Name) {
             url = "/" + url.name;
-          } else if ((0, _util.isString)(url)) {
-            url = (0, _core_utils.addDefaultProtocolToUrl)(url);
           }
 
           break;
@@ -41995,24 +42230,16 @@ class Catalog {
             js = jsAction;
           }
 
-          if (js) {
-            const URL_OPEN_METHODS = ["app.launchURL", "window.open"];
-            const regex = new RegExp("^\\s*(" + URL_OPEN_METHODS.join("|").split(".").join("\\.") + ")\\((?:'|\")([^'\"]*)(?:'|\")(?:,\\s*(\\w+)\\)|\\))", "i");
-            const jsUrl = regex.exec((0, _util.stringToPDFString)(js));
+          const jsURL = js && (0, _core_utils.recoverJsURL)((0, _util.stringToPDFString)(js));
 
-            if (jsUrl && jsUrl[2]) {
-              url = jsUrl[2];
-
-              if (jsUrl[3] === "true" && jsUrl[1] === "app.launchURL") {
-                resultObj.newWindow = true;
-              }
-
-              break;
-            }
+          if (jsURL) {
+            url = jsURL.url;
+            resultObj.newWindow = jsURL.newWindow;
+            break;
           }
 
         default:
-          if (actionName === "JavaScript" || actionName === "ResetForm" || actionName === "SubmitForm") {
+          if (actionName === "JavaScript" || actionName === "SubmitForm") {
             break;
           }
 
@@ -42024,8 +42251,10 @@ class Catalog {
     }
 
     if ((0, _util.isString)(url)) {
-      url = (0, _core_utils.tryConvertUrlEncoding)(url);
-      const absoluteUrl = (0, _util.createValidAbsoluteUrl)(url, docBaseUrl);
+      const absoluteUrl = (0, _util.createValidAbsoluteUrl)(url, docBaseUrl, {
+        addDefaultProtocol: true,
+        tryConvertEncoding: true
+      });
 
       if (absoluteUrl) {
         resultObj.url = absoluteUrl.href;
@@ -45578,7 +45807,7 @@ class XFAFactory {
     return this.dims[pageIndex];
   }
 
-  get numberPages() {
+  get numPages() {
     if (!this.pages) {
       this._createPages();
     }
@@ -47946,6 +48175,14 @@ class Binder {
     return [occur.min, max];
   }
 
+  _setAndBind(formNode, dataNode) {
+    this._setProperties(formNode, dataNode);
+
+    this._bindItems(formNode, dataNode);
+
+    this._bindElement(formNode, dataNode);
+  }
+
   _bindElement(formNode, dataNode) {
     const uselessNodes = [];
 
@@ -47987,7 +48224,7 @@ class Binder {
       if (child.bind) {
         switch (child.bind.match) {
           case "none":
-            this._bindElement(child, dataNode);
+            this._setAndBind(child, dataNode);
 
             continue;
 
@@ -47999,7 +48236,7 @@ class Binder {
             if (!child.bind.ref) {
               (0, _util.warn)(`XFA - ref is empty in node ${child[_xfa_object.$nodeName]}.`);
 
-              this._bindElement(child, dataNode);
+              this._setAndBind(child, dataNode);
 
               continue;
             }
@@ -48032,7 +48269,7 @@ class Binder {
             match[_xfa_object.$consumed] = true;
           }
 
-          this._bindElement(child, match);
+          this._setAndBind(child, match);
 
           continue;
         } else {
@@ -48054,7 +48291,7 @@ class Binder {
         }
       } else {
         if (!child.name) {
-          this._bindElement(child, dataNode);
+          this._setAndBind(child, dataNode);
 
           continue;
         }
@@ -48087,11 +48324,7 @@ class Binder {
 
             dataNode[_xfa_object.$appendChild](match);
 
-            this._setProperties(child, match);
-
-            this._bindItems(child, match);
-
-            this._bindElement(child, match);
+            this._setAndBind(child, match);
 
             continue;
           }
@@ -48107,11 +48340,7 @@ class Binder {
       if (match) {
         this._bindOccurrences(child, match, picture);
       } else if (min > 0) {
-        this._setProperties(child, dataNode);
-
-        this._bindItems(child, dataNode);
-
-        this._bindElement(child, dataNode);
+        this._setAndBind(child, dataNode);
       } else {
         uselessNodes.push(child);
       }
@@ -48149,6 +48378,8 @@ var _util = __w_pdfjs_require__(2);
 
 var _fonts = __w_pdfjs_require__(83);
 
+var _core_utils = __w_pdfjs_require__(9);
+
 var _som = __w_pdfjs_require__(78);
 
 const TEMPLATE_NS_ID = _namespaces.NamespaceIds.template.id;
@@ -48157,7 +48388,7 @@ const MAX_ATTEMPTS_FOR_LRTB_LAYOUT = 2;
 const MAX_EMPTY_PAGES = 3;
 const DEFAULT_TAB_INDEX = 5000;
 const HEADING_PATTERN = /^H(\d+)$/;
-const MIMES = new Set(["image/gif", "image/jpeg", "image/jpg", "image/pjpeg", "image/png", "image/apng", "image/x-png", "image/bmp", "image/x-ms-bmp", "image/tiff", "image/tif"]);
+const MIMES = new Set(["image/gif", "image/jpeg", "image/jpg", "image/pjpeg", "image/png", "image/apng", "image/x-png", "image/bmp", "image/x-ms-bmp", "image/tiff", "image/tif", "application/octet-stream"]);
 const IMAGES_HEADERS = [[[0x42, 0x4d], "image/bmp"], [[0xff, 0xd8, 0xff], "image/jpeg"], [[0x49, 0x49, 0x2a, 0x00], "image/tiff"], [[0x4d, 0x4d, 0x00, 0x2a], "image/tiff"], [[0x47, 0x49, 0x46, 0x38, 0x39, 0x61], "image/gif"], [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], "image/png"]];
 
 function getBorderDims(node) {
@@ -48966,7 +49197,11 @@ class Button extends _xfa_object.XFAObject {
   }
 
   [_xfa_object.$toHTML](availableSpace) {
-    return _utils.HTMLResult.success({
+    const parent = this[_xfa_object.$getParent]();
+
+    const grandpa = parent[_xfa_object.$getParent]();
+
+    const htmlButton = {
       name: "button",
       attributes: {
         id: this[_xfa_object.$uid],
@@ -48974,7 +49209,39 @@ class Button extends _xfa_object.XFAObject {
         style: {}
       },
       children: []
-    });
+    };
+
+    for (const event of grandpa.event.children) {
+      if (event.activity !== "click" || !event.script) {
+        continue;
+      }
+
+      const jsURL = (0, _core_utils.recoverJsURL)(event.script[_xfa_object.$content]);
+
+      if (!jsURL) {
+        continue;
+      }
+
+      const href = (0, _html_utils.fixURL)(jsURL.url);
+
+      if (!href) {
+        continue;
+      }
+
+      htmlButton.children.push({
+        name: "a",
+        attributes: {
+          id: "link" + this[_xfa_object.$uid],
+          href,
+          newWindow: jsURL.newWindow,
+          class: ["xfaLink"],
+          style: {}
+        },
+        children: []
+      });
+    }
+
+    return _utils.HTMLResult.success(htmlButton);
   }
 
 }
@@ -50576,7 +50843,13 @@ class Field extends _xfa_object.XFAObject {
       ui.attributes.style = Object.create(null);
     }
 
+    let aElement = null;
+
     if (this.ui.button) {
+      if (ui.children.length === 1) {
+        [aElement] = ui.children.splice(0, 1);
+      }
+
       Object.assign(ui.attributes.style, borderStyle);
     } else {
       Object.assign(style, borderStyle);
@@ -50637,6 +50910,10 @@ class Field extends _xfa_object.XFAObject {
       } else {
         ui.children[0].attributes.style.height = "100%";
       }
+    }
+
+    if (aElement) {
+      ui.children.push(aElement);
     }
 
     if (!caption) {
@@ -52415,12 +52692,6 @@ class Subform extends _xfa_object.XFAObject {
       return false;
     }
 
-    const contentArea = this[_xfa_object.$getTemplateRoot]()[_xfa_object.$extra].currentContentArea;
-
-    if (this.overflow && this.overflow[_xfa_object.$getExtra]().target === contentArea) {
-      return false;
-    }
-
     if (this[_xfa_object.$extra]._isSplittable !== undefined) {
       return this[_xfa_object.$extra]._isSplittable;
     }
@@ -52541,12 +52812,7 @@ class Subform extends _xfa_object.XFAObject {
 
     const root = this[_xfa_object.$getTemplateRoot]();
 
-    const currentContentArea = root[_xfa_object.$extra].currentContentArea;
     const savedNoLayoutFailure = root[_xfa_object.$extra].noLayoutFailure;
-
-    if (this.overflow) {
-      root[_xfa_object.$extra].noLayoutFailure = root[_xfa_object.$extra].noLayoutFailure || this.overflow[_xfa_object.$getExtra]().target === currentContentArea;
-    }
 
     const isSplittable = this[_xfa_object.$isSplittable]();
 
@@ -53025,6 +53291,7 @@ class Template extends _xfa_object.XFAObject {
           overflowExtra.addLeader = overflowExtra.leader !== null;
           overflowExtra.addTrailer = overflowExtra.trailer !== null;
           flush(i);
+          const currentIndex = i;
           i = Infinity;
 
           if (target instanceof PageArea) {
@@ -53033,7 +53300,11 @@ class Template extends _xfa_object.XFAObject {
             const index = contentAreas.findIndex(e => e === target);
 
             if (index !== -1) {
-              i = index - 1;
+              if (index > currentIndex) {
+                i = index - 1;
+              } else {
+                startIndex = index;
+              }
             } else {
               targetPageArea = target[_xfa_object.$getParent]();
               startIndex = targetPageArea.contentArea.children.findIndex(e => e === target);
@@ -54355,6 +54626,7 @@ exports.computeBbox = computeBbox;
 exports.createWrapper = createWrapper;
 exports.fixDimensions = fixDimensions;
 exports.fixTextIndent = fixTextIndent;
+exports.fixURL = fixURL;
 exports.isPrintOnly = isPrintOnly;
 exports.layoutClass = layoutClass;
 exports.layoutNode = layoutNode;
@@ -54367,13 +54639,13 @@ exports.toStyle = toStyle;
 
 var _xfa_object = __w_pdfjs_require__(75);
 
+var _util = __w_pdfjs_require__(2);
+
 var _utils = __w_pdfjs_require__(76);
 
 var _fonts = __w_pdfjs_require__(83);
 
 var _text = __w_pdfjs_require__(84);
-
-var _util = __w_pdfjs_require__(2);
 
 function measureToString(m) {
   if (typeof m === "string") {
@@ -55010,6 +55282,14 @@ function setFontFamily(xfaFont, node, fontFinder, style) {
       style.lineHeight = Math.max(1.2, pdfFont.lineHeight);
     }
   }
+}
+
+function fixURL(str) {
+  const absoluteUrl = (0, _util.createValidAbsoluteUrl)(str, null, {
+    addDefaultProtocol: true,
+    tryConvertEncoding: true
+  });
+  return absoluteUrl ? absoluteUrl.href : null;
 }
 
 /***/ }),
@@ -58693,13 +58973,9 @@ var _xfa_object = __w_pdfjs_require__(75);
 
 var _namespaces = __w_pdfjs_require__(77);
 
-var _core_utils = __w_pdfjs_require__(9);
-
 var _html_utils = __w_pdfjs_require__(82);
 
 var _utils = __w_pdfjs_require__(76);
-
-var _util = __w_pdfjs_require__(2);
 
 const XHTML_NS_ID = _namespaces.NamespaceIds.xhtml.id;
 const VALID_STYLES = new Set(["color", "font", "font-family", "font-size", "font-stretch", "font-style", "font-weight", "margin", "margin-bottom", "margin-left", "margin-right", "margin-top", "letter-spacing", "line-height", "orphans", "page-break-after", "page-break-before", "page-break-inside", "tab-interval", "tab-stop", "text-align", "text-decoration", "text-indent", "vertical-align", "widows", "kerning-mode", "xfa-font-horizontal-scale", "xfa-font-vertical-scale", "xfa-spacerun", "xfa-tab-stops"]);
@@ -58935,19 +59211,7 @@ class XhtmlObject extends _xfa_object.XmlObject {
 class A extends XhtmlObject {
   constructor(attributes) {
     super(attributes, "a");
-    let href = "";
-
-    if (typeof attributes.href === "string") {
-      let url = (0, _core_utils.addDefaultProtocolToUrl)(attributes.href);
-      url = (0, _core_utils.tryConvertUrlEncoding)(url);
-      const absoluteUrl = (0, _util.createValidAbsoluteUrl)(url);
-
-      if (absoluteUrl) {
-        href = absoluteUrl.href;
-      }
-    }
-
-    this.href = href;
+    this.href = (0, _html_utils.fixURL)(attributes.href) || "";
   }
 
 }
@@ -60250,10 +60514,10 @@ class MessageHandler {
   }
 
   sendWithStream(actionName, data, queueingStrategy, transfers) {
-    const streamId = this.streamId++;
-    const sourceName = this.sourceName;
-    const targetName = this.targetName;
-    const comObj = this.comObj;
+    const streamId = this.streamId++,
+          sourceName = this.sourceName,
+          targetName = this.targetName,
+          comObj = this.comObj;
     return new ReadableStream({
       start: controller => {
         const startCapability = (0, _util.createPromiseCapability)();
@@ -60306,12 +60570,12 @@ class MessageHandler {
   }
 
   _createStreamSink(data) {
-    const self = this;
-    const action = this.actionHandler[data.action];
-    const streamId = data.streamId;
-    const sourceName = this.sourceName;
-    const targetName = data.sourceName;
-    const comObj = this.comObj;
+    const streamId = data.streamId,
+          sourceName = this.sourceName,
+          targetName = data.sourceName,
+          comObj = this.comObj;
+    const self = this,
+          action = this.actionHandler[data.action];
     const streamSink = {
       enqueue(chunk, size = 1, transfers) {
         if (this.isCancelled) {
@@ -60399,32 +60663,34 @@ class MessageHandler {
   }
 
   _processStreamMessage(data) {
-    const streamId = data.streamId;
-    const sourceName = this.sourceName;
-    const targetName = data.sourceName;
-    const comObj = this.comObj;
+    const streamId = data.streamId,
+          sourceName = this.sourceName,
+          targetName = data.sourceName,
+          comObj = this.comObj;
+    const streamController = this.streamControllers[streamId],
+          streamSink = this.streamSinks[streamId];
 
     switch (data.stream) {
       case StreamKind.START_COMPLETE:
         if (data.success) {
-          this.streamControllers[streamId].startCall.resolve();
+          streamController.startCall.resolve();
         } else {
-          this.streamControllers[streamId].startCall.reject(wrapReason(data.reason));
+          streamController.startCall.reject(wrapReason(data.reason));
         }
 
         break;
 
       case StreamKind.PULL_COMPLETE:
         if (data.success) {
-          this.streamControllers[streamId].pullCall.resolve();
+          streamController.pullCall.resolve();
         } else {
-          this.streamControllers[streamId].pullCall.reject(wrapReason(data.reason));
+          streamController.pullCall.reject(wrapReason(data.reason));
         }
 
         break;
 
       case StreamKind.PULL:
-        if (!this.streamSinks[streamId]) {
+        if (!streamSink) {
           comObj.postMessage({
             sourceName,
             targetName,
@@ -60435,16 +60701,13 @@ class MessageHandler {
           break;
         }
 
-        if (this.streamSinks[streamId].desiredSize <= 0 && data.desiredSize > 0) {
-          this.streamSinks[streamId].sinkCapability.resolve();
+        if (streamSink.desiredSize <= 0 && data.desiredSize > 0) {
+          streamSink.sinkCapability.resolve();
         }
 
-        this.streamSinks[streamId].desiredSize = data.desiredSize;
-        const {
-          onPull
-        } = this.streamSinks[streamId];
+        streamSink.desiredSize = data.desiredSize;
         new Promise(function (resolve) {
-          resolve(onPull && onPull());
+          resolve(streamSink.onPull && streamSink.onPull());
         }).then(function () {
           comObj.postMessage({
             sourceName,
@@ -60465,58 +60728,55 @@ class MessageHandler {
         break;
 
       case StreamKind.ENQUEUE:
-        (0, _util.assert)(this.streamControllers[streamId], "enqueue should have stream controller");
+        (0, _util.assert)(streamController, "enqueue should have stream controller");
 
-        if (this.streamControllers[streamId].isClosed) {
+        if (streamController.isClosed) {
           break;
         }
 
-        this.streamControllers[streamId].controller.enqueue(data.chunk);
+        streamController.controller.enqueue(data.chunk);
         break;
 
       case StreamKind.CLOSE:
-        (0, _util.assert)(this.streamControllers[streamId], "close should have stream controller");
+        (0, _util.assert)(streamController, "close should have stream controller");
 
-        if (this.streamControllers[streamId].isClosed) {
+        if (streamController.isClosed) {
           break;
         }
 
-        this.streamControllers[streamId].isClosed = true;
-        this.streamControllers[streamId].controller.close();
+        streamController.isClosed = true;
+        streamController.controller.close();
 
-        this._deleteStreamController(streamId);
+        this._deleteStreamController(streamController, streamId);
 
         break;
 
       case StreamKind.ERROR:
-        (0, _util.assert)(this.streamControllers[streamId], "error should have stream controller");
-        this.streamControllers[streamId].controller.error(wrapReason(data.reason));
+        (0, _util.assert)(streamController, "error should have stream controller");
+        streamController.controller.error(wrapReason(data.reason));
 
-        this._deleteStreamController(streamId);
+        this._deleteStreamController(streamController, streamId);
 
         break;
 
       case StreamKind.CANCEL_COMPLETE:
         if (data.success) {
-          this.streamControllers[streamId].cancelCall.resolve();
+          streamController.cancelCall.resolve();
         } else {
-          this.streamControllers[streamId].cancelCall.reject(wrapReason(data.reason));
+          streamController.cancelCall.reject(wrapReason(data.reason));
         }
 
-        this._deleteStreamController(streamId);
+        this._deleteStreamController(streamController, streamId);
 
         break;
 
       case StreamKind.CANCEL:
-        if (!this.streamSinks[streamId]) {
+        if (!streamSink) {
           break;
         }
 
-        const {
-          onCancel
-        } = this.streamSinks[streamId];
         new Promise(function (resolve) {
-          resolve(onCancel && onCancel(wrapReason(data.reason)));
+          resolve(streamSink.onCancel && streamSink.onCancel(wrapReason(data.reason)));
         }).then(function () {
           comObj.postMessage({
             sourceName,
@@ -60534,8 +60794,8 @@ class MessageHandler {
             reason: wrapReason(reason)
           });
         });
-        this.streamSinks[streamId].sinkCapability.reject(wrapReason(data.reason));
-        this.streamSinks[streamId].isCancelled = true;
+        streamSink.sinkCapability.reject(wrapReason(data.reason));
+        streamSink.isCancelled = true;
         delete this.streamSinks[streamId];
         break;
 
@@ -60544,10 +60804,8 @@ class MessageHandler {
     }
   }
 
-  async _deleteStreamController(streamId) {
-    await Promise.allSettled([this.streamControllers[streamId].startCall, this.streamControllers[streamId].pullCall, this.streamControllers[streamId].cancelCall].map(function (capability) {
-      return capability && capability.promise;
-    }));
+  async _deleteStreamController(streamController, streamId) {
+    await Promise.allSettled([streamController.startCall && streamController.startCall.promise, streamController.pullCall && streamController.pullCall.promise, streamController.cancelCall && streamController.cancelCall.promise]);
     delete this.streamControllers[streamId];
   }
 
@@ -60763,8 +61021,8 @@ Object.defineProperty(exports, "WorkerMessageHandler", ({
 
 var _worker = __w_pdfjs_require__(1);
 
-const pdfjsVersion = '2.11.298';
-const pdfjsBuild = 'd370a281c';
+const pdfjsVersion = '2.12.70';
+const pdfjsBuild = '86c9a8970';
 })();
 
 /******/ 	return __webpack_exports__;
