@@ -17,6 +17,7 @@ kind-dependencies:
 
 transforms:
     - taskgraph.transforms.startup_test:transforms
+    - taskgraph.transforms.release:run_on_releases
     - taskgraph.transforms.job:transforms
     - taskgraph.transforms.task:transforms
 
@@ -24,6 +25,7 @@ job-defaults:
     name: startup-test
     description: Check whether or not a product crashes on startup
     run-on-projects: ['mozilla-central']
+    run-on-releases: ['nightly', 'beta', 'release-rc']
     worker:
         max-run-time: 3600
     run:
