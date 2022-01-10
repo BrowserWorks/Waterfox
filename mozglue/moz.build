@@ -13,7 +13,7 @@ if CONFIG["MOZ_LINKER"] or CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
 if CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
     DIRS += ["android"]
 
-if CONFIG["OS_TARGET"] == "WINNT":
+if CONFIG["OS_TARGET"] == "WINNT" and not CONFIG["JS_STANDALONE"]:
     DIRS += ["dllservices"]
 
 DIRS += [
