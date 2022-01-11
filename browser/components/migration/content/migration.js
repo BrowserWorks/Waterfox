@@ -14,9 +14,6 @@ const { AppConstants } = ChromeUtils.import(
 const { MigrationUtils } = ChromeUtils.import(
   "resource:///modules/MigrationUtils.jsm"
 );
-const { RemoteSettings } = ChromeUtils.import(
-  "resource://services-settings/remote-settings.js"
-);
 
 /**
  * Map from data types that match Ci.nsIBrowserProfileMigrator's types to
@@ -44,7 +41,7 @@ var MigrationWizard = {
   _migrator: null,
   _autoMigrate: null,
   _receivedPermissions: new Set(),
-  _fileImport: false,
+  _importingFromDir: null,
 
   init() {
     let os = Services.obs;
@@ -151,11 +148,11 @@ var MigrationWizard = {
       .addEventListener("pageadvanced", function(e) {
         MigrationWizard.onImportPermissionsPageAdvanced(e);
       });
-    document.getElementById("importSource").addEventListener(
-      "pageadvanced",
-      // we need to be able to remove this listener if a user imports from file
-      MigrationWizard.onImportSourcePageAdvanced
-    );
+    document
+      .getElementById("importSource")
+      .addEventListener("pageadvanced", function(e) {
+        MigrationWizard.onImportSourcePageAdvanced(e);
+      });
 
     this.onImportSourcePageShow();
   },
@@ -274,19 +271,9 @@ var MigrationWizard = {
         ) {
           let el = document.getElementById("selectedProfileFromFile");
           el.hidden = true;
-          MigrationWizard._wiz.canAdvance = true;
-          // Add pageadvanced listener
-          document
-            .getElementById("importSource")
-            .addEventListener(
-              "pageadvanced",
-              MigrationWizard.onImportSourcePageAdvanced
-            );
-            // Set fileImport false so restart browser not triggered
-            this._fileImport = false;
         }
-      }.bind(this));
-    }.bind(this));
+      });
+    });
 
     observer.observe(element, {
       attributes: true, //configure it to listen to attribute changes
@@ -301,6 +288,10 @@ var MigrationWizard = {
   },
 
   onImportSourcePageAdvanced(event) {
+    // Don't execute if importing from selected directory
+    if (this._importingFromDir) {
+      return;
+    }
     var newSource = document.getElementById("importSourceGroup").selectedItem
       .id;
 
@@ -653,14 +644,6 @@ var MigrationWizard = {
     this._wiz.getButton("cancel").disabled = true;
     this._wiz.canRewind = false;
     this._listItems("doneItems");
-    if (this._fileImport) {
-      let el = document.getElementById("restartBrowserGroup");
-      el.style = "visibility:visible";
-      this._wiz.getButton("finish").disabled = true;
-      this._wiz.canAdvance = false;
-      // WFX-232
-      Services.prefs.setIntPref("browser.migration.version", 112);
-    }
   },
 
   reportDataRecencyTelemetry() {
@@ -757,19 +740,12 @@ var MigrationWizard = {
         this._wiz.canAdvance = true;
         this._wiz.canRewind = false;
         // Remove pageadvanced listener
-        document
-          .getElementById("importSource")
-          .removeEventListener(
-            "pageadvanced",
-            MigrationWizard.onImportSourcePageAdvanced
-          );
+        this._importingFromDir = true;
         // Show selected profile from dir.leafName
         let el = document.getElementById("selectedProfileFromFile");
         el.hidden = false;
         el.textContent = "Selected profile: " + name;
         el.style.color = "";
-        // set fileImport so we can trigger restart browser at the end of the flow.
-        this._fileImport = true;
       } else {
         // Show that the profile had no data to import
         this.showImportError(
@@ -779,35 +755,12 @@ var MigrationWizard = {
     });
   },
 
-  async restartBrowser() {
-  // Notify all windows that an application quit has been requested.
-  let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"].createInstance(
-    Ci.nsISupportsPRBool
-  );
-  Services.obs.notifyObservers(
-    cancelQuit,
-    "quit-application-requested",
-    "restart"
-  );
-  // Something aborted the quit process.
-  if (cancelQuit.data) {
-    return;
-  }
-  // If already in safe mode restart in safe mode.
-  if (Services.appinfo.inSafeMode) {
-    Services.startup.restartInSafeMode(Ci.nsIAppStartup.eAttemptQuit);
-  } else {
-    Services.startup.quit(
-      Ci.nsIAppStartup.eAttemptQuit | Ci.nsIAppStartup.eRestart
-    );
-  }
-  },
-
   showImportError(msg) {
     let el = document.getElementById("selectedProfileFromFile");
     el.hidden = false;
     el.textContent = msg;
     el.style.color = "red";
     this._wiz.canAdvance = false;
+    this._importingFromDir = false;
   },
 };
