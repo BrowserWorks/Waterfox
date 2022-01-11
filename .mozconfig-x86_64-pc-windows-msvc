@@ -2,7 +2,7 @@ CROSS_BUILD=1
 EXTRA_PATH="/mnt/MICROS~1/2019/Community/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64:"
 TOOLTOOL_DIR=$HOME/tooltool12
 FXC=${TOOLTOOL_DIR}/fxc2/bin/fxc2.exe
-X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN) * 3 / 2))
+X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)))
 
 export AR="${TOOLTOOL_DIR}/clang/bin/llvm-lib"
 export CC="${TOOLTOOL_DIR}/clang/bin/clang-cl"
