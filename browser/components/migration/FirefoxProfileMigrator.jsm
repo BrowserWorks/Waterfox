@@ -11,6 +11,9 @@
  * user's profile.  Data is only migrated where the benefits outweigh the
  * potential problems caused by importing undesired/invalid configurations
  * from the source profile.
+ * Caveats:
+ *  - Will fail to set currentProfileDir if current profile path doesn't match a
+ *    profile in the database, i.e. when browser being run from ./mach run
  */
 
 const { MigrationUtils, MigratorPrototype } = ChromeUtils.import(
@@ -40,13 +43,42 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/ProfileAge.jsm"
 );
 
+var { AppConstants } = ChromeUtils.import(
+  "resource://gre/modules/AppConstants.jsm"
+);
+
 function FirefoxProfileMigrator() {
   this.wrappedJSObject = this; // for testing...
+
+  this._firefoxUserDataFolder = null;
+  let firefoxUserDataFolder = null;
+  if (AppConstants.platform == "macosx") {
+    firefoxUserDataFolder = FileUtils.getDir(
+      "ULibDir",
+      ["Application Support", "Firefox"],
+      false
+    );
+  } else if (AppConstants.platform == "linux") {
+    firefoxUserDataFolder = FileUtils.getDir(
+      "Home",
+      [".mozilla", "firefox"],
+      false
+    );
+  } else if (AppConstants.platform == "win") {
+    firefoxUserDataFolder = FileUtils.getDir(
+      "AppData",
+      ["Mozilla", "Firefox"],
+      false
+    );
+  }
+  this._firefoxUserDataFolder = firefoxUserDataFolder.exists()
+    ? firefoxUserDataFolder
+    : null;
 }
 
 FirefoxProfileMigrator.prototype = Object.create(MigratorPrototype);
 
-FirefoxProfileMigrator.prototype._getAllProfiles = function() {
+function getAllProfilesNative() {
   let allProfiles = new Map();
   let profileService = Cc["@mozilla.org/toolkit/profile-service;1"].getService(
     Ci.nsIToolkitProfileService
@@ -54,14 +86,74 @@ FirefoxProfileMigrator.prototype._getAllProfiles = function() {
   for (let profile of profileService.profiles) {
     let rootDir = profile.rootDir;
 
-    if (
-      rootDir.exists() &&
-      rootDir.isReadable() &&
-      !rootDir.equals(MigrationUtils.profileStartup.directory)
-    ) {
+    if (rootDir.exists() && rootDir.isReadable()) {
       allProfiles.set(profile.name, rootDir);
     }
   }
+  return allProfiles;
+}
+
+FirefoxProfileMigrator.prototype._getAllProfiles = function() {
+  //return getAllProfilesNative();
+
+  let allProfiles = new Map();
+  let profileConfig = this._firefoxUserDataFolder.clone();
+  profileConfig.append("profiles.ini");
+  if (!profileConfig.exists()) {
+    Cu.reportError("'Profiles.ini' does not exist.");
+  }
+  if (!profileConfig.isReadable()) {
+    Cu.reportError("'Profiles.ini' could not be read.");
+  }
+  let profileConfigObj = Cc["@mozilla.org/xpcom/ini-parser-factory;1"]
+    .getService(Ci.nsIINIParserFactory)
+    .createINIParser(profileConfig);
+  let path = "";
+  if (profileConfigObj) {
+    path = profileConfigObj.getString("Profile0", "Path");
+  }
+  // get PathProfile default
+  let rootDir = this._firefoxUserDataFolder.clone();
+  let profileDefault = "";
+  let profileName = path;
+  let rootFolder = "";
+  if (path.split("/").length > 1) {
+    profileDefault = path.split("/");
+    profileName = profileDefault[profileDefault.length - 1];
+    rootFolder = profileDefault[0];
+  }
+
+  let folderProfile = [];
+  let sourceFolder = null;
+  if (AppConstants.platform == "macosx") {
+    if (rootFolder == "") {
+      folderProfile = ["Application Support", "Firefox", profileName];
+    } else {
+      folderProfile = [
+        "Application Support",
+        "Firefox",
+        rootFolder,
+        profileName,
+      ];
+    }
+    sourceFolder = FileUtils.getDir("ULibDir", folderProfile, false);
+  } else if (AppConstants.platform == "linux") {
+    if (rootFolder == "") {
+      folderProfile = [".mozilla", "firefox", profileName];
+    } else {
+      folderProfile = [".mozilla", "firefox", rootFolder, profileName];
+    }
+    sourceFolder = FileUtils.getDir("Home", folderProfile, false);
+  } else if (AppConstants.platform == "win") {
+    if (rootFolder == "") {
+      folderProfile = ["Mozilla", "Firefox", profileName];
+    } else {
+      folderProfile = ["Mozilla", "Firefox", rootFolder, profileName];
+    }
+    sourceFolder = FileUtils.getDir("AppData", folderProfile, false);
+  }
+
+  allProfiles.set(profileName, sourceFolder);
   return allProfiles;
 };
 
@@ -86,11 +178,7 @@ FirefoxProfileMigrator.prototype._getFileObject = function(dir, fileName) {
 };
 
 FirefoxProfileMigrator.prototype.getResources = function(aProfile) {
-  let sourceProfileDir = aProfile
-    ? this._getAllProfiles().get(aProfile.id)
-    : Cc["@mozilla.org/toolkit/profile-service;1"].getService(
-        Ci.nsIToolkitProfileService
-      ).defaultProfile.rootDir;
+  let sourceProfileDir = (aProfile = this._getAllProfiles().get(aProfile.id));
   if (
     !sourceProfileDir ||
     !sourceProfileDir.exists() ||
@@ -99,14 +187,17 @@ FirefoxProfileMigrator.prototype.getResources = function(aProfile) {
     return null;
   }
 
-  // Being a startup-only migrator, we can rely on
-  // MigrationUtils.profileStartup being set.
-  let currentProfileDir = MigrationUtils.profileStartup.directory;
+  let profile = Cc["@mozilla.org/toolkit/profile-service;1"].getService(
+    Ci.nsIToolkitProfileService
+  ).defaultProfile;
 
-  // Surely data cannot be imported from the current profile.
-  if (sourceProfileDir.equals(currentProfileDir)) {
-    return null;
+  if (profile == null) {
+    profile = Cc["@mozilla.org/toolkit/profile-service;1"].getService(
+      Ci.nsIToolkitProfileService
+    ).currentProfile;
   }
+
+  let currentProfileDir = profile.rootDir;
 
   return this._getResourcesInternal(sourceProfileDir, currentProfileDir);
 };
@@ -260,7 +351,7 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
           let data = JSON.parse(raw);
           if (data && data.accountData && data.accountData.email) {
             let username = data.accountData.email;
-            // copy the file itself.
+            // Copy the file itself.
             await OS.File.copy(
               oldPath,
               OS.Path.join(currentProfileDir.path, "signedInUser.json")
@@ -368,10 +459,6 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
     favicons,
   ].filter(r => r);
 };
-
-Object.defineProperty(FirefoxProfileMigrator.prototype, "startupOnlyMigrator", {
-  get: () => true,
-});
 
 FirefoxProfileMigrator.prototype.classDescription = "Firefox Profile Migrator";
 FirefoxProfileMigrator.prototype.contractID =
