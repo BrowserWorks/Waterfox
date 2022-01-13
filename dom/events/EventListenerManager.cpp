@@ -814,6 +814,8 @@ nsresult EventListenerManager::SetEventHandler(nsAtom* aName,
                                                bool aDeferCompilation,
                                                bool aPermitUntrustedEvents,
                                                Element* aElement) {
+  auto removeEventHandler = MakeScopeExit([&] { RemoveEventHandler(aName); });
+
   nsCOMPtr<Document> doc;
   nsCOMPtr<nsIScriptGlobalObject> global =
       GetScriptGlobalAndDocument(getter_AddRefs(doc));
@@ -872,6 +874,8 @@ nsresult EventListenerManager::SetEventHandler(nsAtom* aName,
   nsIScriptContext* context = global->GetScriptContext();
   NS_ENSURE_TRUE(context, NS_ERROR_FAILURE);
   NS_ENSURE_STATE(global->HasJSGlobal());
+
+  removeEventHandler.release();
 
   Listener* listener = SetEventHandlerInternal(aName, TypedEventHandler(),
                                                aPermitUntrustedEvents);
