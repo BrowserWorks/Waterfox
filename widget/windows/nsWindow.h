@@ -520,6 +520,7 @@ class nsWindow final : public nsWindowBase {
   bool DispatchTouchEventFromWMPointer(UINT msg, LPARAM aLParam,
                                        const WinPointerInfo& aPointerInfo,
                                        mozilla::MouseButton aButton);
+  void SetSizeModeInternal(nsSizeMode aMode, nsIScreen* aFullscreenTarget);
 
  protected:
 #endif  // MOZ_XUL
