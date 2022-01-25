@@ -348,8 +348,12 @@ mozilla::ipc::IPCResult StorageDBChild::RecvObserve(
     const nsCString& aOriginScope) {
   MOZ_ASSERT(!XRE_IsParentProcess());
 
-  StorageObserver::Self()->Notify(aTopic.get(), aOriginAttributesPattern,
-                                  aOriginScope);
+  StorageObserver* obs = StorageObserver::Self();
+  if (obs) {
+    obs->Notify(aTopic.get(), aOriginAttributesPattern,
+                aOriginScope);
+  }
+
   return IPC_OK();
 }
 
@@ -483,8 +487,12 @@ mozilla::ipc::IPCResult SessionStorageObserverChild::RecvObserve(
     const nsCString& aOriginScope) {
   AssertIsOnOwningThread();
 
-  StorageObserver::Self()->Notify(aTopic.get(), aOriginAttributesPattern,
-                                  aOriginScope);
+  StorageObserver* obs = StorageObserver::Self();
+  if (obs) {
+    obs->Notify(aTopic.get(), aOriginAttributesPattern,
+                aOriginScope);
+  }
+
   return IPC_OK();
 }
 
