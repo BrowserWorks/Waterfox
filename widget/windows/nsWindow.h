@@ -521,6 +521,8 @@ class nsWindow final : public nsWindowBase {
                                        const WinPointerInfo& aPointerInfo,
                                        mozilla::MouseButton aButton);
 
+  void SetSizeModeInternal(nsSizeMode aMode);
+
  protected:
 #endif  // MOZ_XUL
 
