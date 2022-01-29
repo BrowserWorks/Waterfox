@@ -1574,6 +1574,7 @@ const nsIFrame* nsDisplayListBuilder::FindReferenceFrameFor(
 
   if (aOffset) {
     *aOffset = aFrame->GetOffsetToCrossDoc(mReferenceFrame);
+    MaybeApplyAdditionalOffset();
   }
 
   return mReferenceFrame;
