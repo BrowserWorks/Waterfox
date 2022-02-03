@@ -4027,47 +4027,70 @@ BrowserGlue.prototype = {
   },
 
   async _setAttributionData() {
-    // kick off async process to set attribution code preference
+    // Kick off async process to set attribution code preference
     try {
       let attrData = await AttributionCode.getAttrDataAsync();
-      let attributionStr = "";
-      for (const [key, value] of Object.entries(attrData)) {
-        // if PTAG/TypeTag we only want to set the relevant pref
-        if (["PTAG", "hspart", "hsimp", "typetag"].includes(key)) {
-          Services.prefs.setCharPref(
-            "browser.search." + key.toLowerCase(),
-            value
-          );
-          continue;
+      if (attrData) {
+        let attributionStr = "";
+        for (const [key, value] of Object.entries(attrData)) {
+          // If PTAG/TypeTag we only want to set the relevant pref
+          if (["PTAG", "hspart", "hsimp", "typetag"].includes(key)) {
+            Services.prefs.setCharPref(
+              "browser.search." + key.toLowerCase(),
+              value
+            );
+            continue;
+          }
+          // If mtm_source we want to set the distribution source pref & attribution data
+          if (key == "mtm_source") {
+            Services.prefs.setCharPref("distribution.source", value);
+          } else if (key == "engine" && ["bing", "yahoo"].includes(value)) {
+            this._setDefaultEng(value);
+            continue;
+          }
+          // Only add to postSigningData if this hasn't been called previously
+          attributionStr += `&${key}=${value}`;
         }
-        // if mtm_source we want to set the distribution source pref & attribution data
-        if (key == "mtm_source") {
-          Services.prefs.setCharPref("distribution.source", value);
-        } else if (key == "engine" && ["bing", "yahoo"].includes(value)) {
-          this._setDefaultEng(value);
-          continue;
+        // Add install param
+        if (attributionStr != "") {
+          attributionStr += "&status=install";
         }
-        // only add to postSigningData if this hasn't been called previously
-        attributionStr += `&${key}=${value}`;
+        let additionalPage = Services.urlFormatter.formatURLPref(
+          "startup.homepage_welcome_url.additional"
+        );
+        Services.prefs.setCharPref(
+          "startup.homepage_welcome_url.additional",
+          additionalPage + attributionStr
+        );
+        let overridePage = Services.urlFormatter.formatURLPref(
+          "startup.homepage_override_url"
+        );
+        Services.prefs.setCharPref(
+          "startup.homepage_override_url",
+          overridePage + attributionStr
+        );
+        // Set cohort
+        function getDate() {
+          const d = new Date();
+          let month = "" + (d.getMonth() + 1);
+          let day = "" + d.getDate();
+          let year = d
+            .getFullYear()
+            .toString()
+            .slice(-2);
+
+          if (month.length < 2) {
+            month = "0" + month;
+          }
+          if (day.length < 2) {
+            day = "0" + day;
+          }
+
+          return [day, month, year].join("");
+        }
+
+        Services.prefs.setCharPref("browser.distribution.cohort", getDate());
       }
-      // add install param
-      if (attributionStr != "") {
-        attributionStr += "&status=install";
-      }
-      let additionalPage = Services.urlFormatter.formatURLPref(
-        "startup.homepage_welcome_url.additional"
-      );
-      Services.prefs.setCharPref(
-        "startup.homepage_welcome_url.additional",
-        additionalPage + attributionStr
-      );
-      let overridePage = Services.urlFormatter.formatURLPref(
-        "startup.homepage_override_url"
-      );
-      Services.prefs.setCharPref(
-        "startup.homepage_override_url",
-        overridePage + attributionStr
-      );
     } catch (ex) {
       Services.console.logStringMessage(ex + "error setting attr data");
     }
