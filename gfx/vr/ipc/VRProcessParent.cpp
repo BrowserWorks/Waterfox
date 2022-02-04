@@ -42,12 +42,6 @@ VRProcessParent::VRProcessParent(Listener* aListener)
 }
 
 VRProcessParent::~VRProcessParent() {
-  // Cancel all tasks. We don't want anything triggering after our caller
-  // expects this to go away.
-  {
-    MonitorAutoLock lock(mMonitor);
-    mTaskFactory.RevokeAll();
-  }
   MOZ_COUNT_DTOR(VRProcessParent);
 }
 
@@ -134,6 +128,13 @@ void VRProcessParent::Shutdown() {
 
 void VRProcessParent::DestroyProcess() {
   if (mLaunchThread) {
+    // Cancel all tasks. We don't want anything triggering after our caller
+    // expects this to go away.
+    {
+      MonitorAutoLock lock(mMonitor);
+      mTaskFactory.RevokeAll();
+    }
+
     mLaunchThread->Dispatch(NS_NewRunnableFunction("DestroyProcessRunnable",
                                                    [this] { Destroy(); }));
   }
