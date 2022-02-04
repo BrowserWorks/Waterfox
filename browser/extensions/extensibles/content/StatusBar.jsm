@@ -41,6 +41,9 @@ const StatusBar = {
           color: initial !important;
           background-color: var(--toolbar-non-lwt-bgcolor) !important;
         }
+        :root[customizing] #status-bar {
+          visibility: visible !important;
+        }
         #status-text > #statuspanel-label {
           border-top: 0 !important;
           background-color: unset !important;
