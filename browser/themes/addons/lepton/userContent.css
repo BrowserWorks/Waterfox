@@ -315,9 +315,13 @@
   --in-content-button-vertical-padding: 7px;
 
   --in-content-table-background: #f8f8fa;
-  --in-content-table-border-dark-color: #d1d1d1;
-  --in-content-table-header-background: #0a84ff;
-  --in-content-table-header-color: #ffffff;
+  --in-content-table-border-color: var(--in-content-box-border-color); /* Legacy: #d1d1d1; rgba(249, 249, 250, 0.2) */
+  --in-content-table-header-background: var(
+    --in-content-primary-button-background
+  ); /* Legacy: #0a84ff; rgb(5, 64, 150); */
+  --in-content-table-header-color: var(
+    --in-content-primary-button-text-color
+  ); /* Legacy: #ffffff; var(--in-content-page-color); */
   --in-content-sidebar-width: 240px;
 
   --dialog-warning-text-color: var(--red-60);
@@ -405,9 +409,7 @@
     --in-content-danger-button-background-active: #ffdfe7;
 
     --in-content-table-background: rgb(35, 34, 43);
-    --in-content-table-border-dark-color: rgba(249, 249, 250, 0.2);
-    --in-content-table-header-background: rgb(5, 64, 150);
-    --in-content-table-header-color: var(--in-content-page-color);
+    --in-content-table-border-dark-color: var(--in-content-box-border-color);
 
     --in-content-accent-color: var(--in-content-primary-button-background);
     --in-content-accent-color-active: var(--in-content-primary-button-background-hover);
@@ -634,6 +636,20 @@
     .blogpost-nav-arrow-right .cls-1 {
       stroke: var(--in-content-text-color) !important;
     }
+
+    /* /developers/ */
+    .DevHub-Navigation {
+      background: var(--in-content-page-background) !important;
+    }
+    .DevHub-Navigation.scheme-light ul li a,
+    .DevHub-content-copy h2,
+    .content p {
+      color: var(--in-content-page-color) !important;
+    }
+    .DevHub-callout-box {
+      background: var(--in-content-box-background) !important;
+      color: var(--in-content-page-color) !important;
+    }
   }
 
   /*= Support.org ============================================================*/
@@ -673,8 +689,26 @@
     #main-content,
     #instant-search-content,
     #mzp-c-menu-panel-help,
-    .mzp-c-navigation {
+    .mzp-c-navigation,
+    .kbox-container {
       color: var(--in-content-page-color) !important;
+      background: var(--in-content-page-background) !important;
+    }
+
+    #editor {
+      border: 2px solid var(--in-content-border-color) !important;
+    }
+
+    .CodeMirror-linenumbers {
+      background: var(--in-content-table-background);
+    }
+
+    .CodeMirror-lines {
+      color: var(--in-content-deemphasized-text) !important;
+      background: var(--in-content-page-background) !important;
+    }
+
+    .CodeMirror-scroll {
       background: var(--in-content-page-background) !important;
     }
 
@@ -685,7 +719,8 @@
     .mzp-c-menu-item .mzp-c-menu-item-list a,
     #doc-content .menu,
     .document--content .menu,
-    .forum--entry-content .menu {
+    .forum--entry-content .menu,
+    .tag-name a {
       color: var(--in-content-page-color) !important;
     }
 
@@ -710,10 +745,43 @@
       color: var(--in-content-deemphasized-text) !important;
     }
 
+    .tag-list a {
+      color: var(--color-marketing-gray-10) !important;
+    }
+    .tag-list a:hover,
+    .sidebar-nav a:hover {
+      color: var(--color-link) !important;
+    }
+    .tag-list li {
+      background: var(--in-content-page-color) !important;
+    }
+    .tag-list li:hover {
+      background: var(--in-content-deemphasized-text) !important;
+    }
+    #remaining-characters {
+      color: var(--in-content-page-color) !important;
+    }
+
     /* Background */
     .sidebar-nav.topics,
     .sidebar-nav.topics > li {
       background: var(--in-content-page-background) !important;
+    }
+    .mzp-c-menu-panel {
+      color: var(--in-content-page-color) !important;
+      background: var(--in-content-page-background) !important;
+    }
+    .mzp-c-menu-list-list,
+    .mzp-c-menu-list-list:hover {
+      color: var(--in-content-page-color) !important;
+      background: var(--in-content-box-background) !important;
+    }
+    .mzp-c-menu-list-item:focus,
+    .mzp-c-menu-list-item:hover {
+      background: var(--in-content-button-background-hover) !important;
+    }
+    .cm-bold {
+      color: var(--in-content-page-color) !important;
     }
 
     /* Fill */
@@ -731,6 +799,11 @@
     .icon-button > button,
     .search-button {
       filter: invert(95%) !important;
+    }
+    button.markup-toolbar-button,
+    .mzp-c-modal-close .mzp-c-modal-button-close {
+      /*using 0.5 because in middle*/
+      filter: invert(0.5) !important;
     }
 
     /* Others */
@@ -819,6 +892,9 @@
     }
 
     /* Background */
+    .flex .flex-wrap {
+      background: var(--in-content-page-background);
+    }
     .password-row .show-password-label {
       background-color: unset !important;
     }
@@ -842,6 +918,11 @@
     .bg-grey-50:hover,
     .hover\:bg-grey-100:hover {
       background: var(--in-content-button-background-hover) !important;
+    }
+    .text-blue-500 .cta-neutral,
+    .text-blue-500 .bg-grey-50,
+    .text-blue-500 .hover\:bg-grey-100 {
+      background: var(--in-content-button-background) !important;
     }
     .hover\:bg-grey-200:hover {
       background: var(--in-content-button-background-active) !important;
@@ -1124,7 +1205,7 @@
                  url-prefix("about:cache"),
                  url-prefix("about:checkerboard") {
   table {
-    border: 1px solid var(--in-content-border-color) !important;
+    border: 1px solid var(--in-content-table-border-color) !important;
     border-radius: 0 !important;
   }
 }
@@ -1132,7 +1213,7 @@
                  url-prefix("about:checkerboard") {
   th,
   td {
-    border: 1px solid var(--in-content-border-color) !important;
+    border: 1px solid var(--in-content-table-border-color) !important;
   }
   th {
     background-color: var(--in-content-table-header-background) !important;
@@ -1751,7 +1832,7 @@
       --organizer-pane-field-border-color: ThreeDShadow;
     }
 
-    @media not (prefers-contrast) {
+    @media not all and (prefers-contrast) {
       :root {
         --organizer-color: var(--in-content-page-color);
         --organizer-deemphasized-color: var(--in-content-deemphasized-text);

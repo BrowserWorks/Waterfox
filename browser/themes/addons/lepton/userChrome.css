@@ -3,18 +3,26 @@
 
 /** Default Thme - Contrast ***************************************************/
 /*= Lightmode - Color darker =================================================*/
-:root[lwtheme-mozlightdark]:not([lwthemetextcolor="bright"]) {
+:root[lwtheme-mozlightdark]:not([lwthemetextcolor="bright"]), /* Legacy */
+:root[style*="--lwt-accent-color: rgb(240, 240, 244); --lwt-text-color: rgba(21, 20, 26);"] {
   --lwt-accent-color: rgb(229, 229, 235) !important; /* Original: rgb(240, 240, 244) */
 }
-@media not all and ((-moz-os-version: windows-win7) or (-moz-os-version: windows-win8) or (-moz-gtk-csd-available)) {
-  /*  Level 4  */
-  :root[lwtheme-mozlightdark]:not([lwthemetextcolor="bright"]) #navigator-toolbox {
+@media (-moz-os-version: windows-win10) {
+  :root[lwtheme-mozlightdark]:not([lwthemetextcolor="bright"]) #navigator-toolbox,  /* Legacy */
+  :root[style*="--lwt-accent-color: rgb(240, 240, 244); --lwt-text-color: rgba(21, 20, 26);"] {
+    background-color: var(--lwt-accent-color) !important;
+  }
+}
+@supports -moz-bool-pref("layout.css.osx-font-smoothing.enabled") {
+  :root[lwtheme-mozlightdark]:not([lwthemetextcolor="bright"]) #navigator-toolbox,  /* Legacy */
+  :root[style*="--lwt-accent-color: rgb(240, 240, 244); --lwt-text-color: rgba(21, 20, 26);"] {
     background-color: var(--lwt-accent-color) !important;
   }
 }
 
 /*= Darkmode - Color lighter =================================================*/
-:root[lwtheme-mozlightdark][lwthemetextcolor="bright"] {
+:root[lwtheme-mozlightdark][lwthemetextcolor="bright"], /* Legacy */
+:root[style*="--lwt-accent-color: rgb(28, 27, 34); --lwt-text-color: rgba(251, 251, 254);"] {
   --toolbar-bgcolor: rgba(43, 42, 51, 5) !important; /* Original: rgba(43, 42, 51, 1) */
 }
 
@@ -24,6 +32,11 @@
 #allTabsMenu-hiddenTabsView .all-tabs-item {
   margin-inline: 8px;
   border-radius: 4px;
+}
+
+/*= Remote Tabs Panel's Bottom Padding =======================================*/
+#PanelUI-remotetabs #PanelUI-remotetabs-main {
+  margin-bottom: 6px;
 }
 
 /*= Identity Popup Icon Crop =================================================*/
@@ -44,6 +57,12 @@
        Default Color: rgb(0,97,224) -> rgb(0, 120, 215) for more light
      */
   --lwt-toolbarbutton-icon-fill-attention: var(--button-primary-bgcolor, rgb(0, 120, 215));
+}
+
+/*= Disabled menu background color ===========================================*/
+menuitem[disabled="true"],
+menu[disabled="true"] {
+  background-color: transparent !important;
 }
 
 /*= Remove Tab Border ========================================================*/
@@ -78,9 +97,7 @@
   }
 }
 :root[lwtheme-image] #navigator-toolbox:-moz-lwtheme {
-  background-image: var(
-    --lwt-additional-images
-  ) !important; /* Original: var(--lwt-header-image), var(--lwt-additional-images); */
+  background-image: var(--lwt-header-image), var(--lwt-additional-images) !important;
   background-repeat: var(--lwt-background-tiling) !important;
   background-position: var(--lwt-background-alignment) !important;
   background-color: unset !important; /* Original:  var(--lwt-accent-color) */
@@ -134,6 +151,12 @@
     background-color: color-mix(in srgb, currentColor 20%, transparent) !important; /* Original: -moz-menuhover */
   }
 
+  menulist > menupopup > menuitem[_moz-menuactive="true"],
+  menulist > menupopup > menu[_moz-menuactive="true"] {
+    background-color: higlight !important;
+    color: higlighttext !important;
+  }
+
   #PlacesToolbar menu,
   #PlacesToolbar menuitem,
   #BMB_bookmarksPopup menu,
@@ -185,12 +208,28 @@
   }
 }
 
-/*= Linux - Global Menubar Active Color ======================================*/
 @media (-moz-gtk-csd-available) {
+  /*= Linux - Global Menubar Active Color ====================================*/
   #main-menubar > menu[open="true"],
   #main-menubar > menu[_moz-menuactive="true"] {
     color: inherit !important; /* Original: -moz-menubarhovertext */
     background-color: color-mix(in srgb, currentColor 20%, transparent) !important; /* Original: -moz-menuhover */
+  }
+
+  /*= Linux - Titlebar button at lwtheme =====================================*/
+  .titlebar-button:-moz-lwtheme {
+    appearance: auto !important;
+  }
+  .titlebar-min:-moz-lwtheme,
+  .titlebar-max:-moz-lwtheme,
+  .titlebar-restore:-moz-lwtheme,
+  .titlebar-close:-moz-lwtheme {
+    list-style-image: none !important;
+  }
+  .titlebar-button:-moz-lwtheme:hover,
+  .titlebar-button:-moz-lwtheme:hover:active {
+    background-color: unset !important;
+    color: unset !important;
   }
 }
 
@@ -273,10 +312,12 @@
   :root:not(:-moz-lwtheme) {
     --win-text-color: rgba(0, 0, 0);
     --win-bgcolor: rgb(204, 204, 204);
-    --win-disabled-color: rgb(145, 145, 145); /* also button-active-color */
+    --win-disabled-color: rgb(145, 145, 145);
     --win-disabled-bgcolor: transparent;
-    --win-hover-bgcolor: rgb(218, 218, 218);
-    --win-hover-active-bgcolor: #c2c2c2; /* also button-bgcolor */
+    --win-hover-bgcolor: rgb(218, 218, 218); /* also button-bgcolor */
+    --win-hover-active-bgcolor: #c2c2c2; /* also button-hover-bgcolor */
+    --win-button-hover-bgcolor: rgba(218, 218, 218, 0.66);
+    --win-button-active-bgcolor: #aaaaaa;
     --win-field-bgcolor: #ffffff;
     --win-component-bgcolor: #f2f2f2;
     --win-border-color: #8a8a8a;
@@ -286,7 +327,6 @@
     --win-sidebar-button-hover-bgcolor: #b8b8b8;
     --win-sidebar-button-hover-active-bgcolor: #a3a3a3;
     --win-button-border: #747474;
-    --win-button-hover-bgcolor: rgba(145, 145, 145, 0.66);
     --win-shorcut-text-color: #757575;
     --win-error-color: #b31616;
     --win-red-border-color: #ff4343;
@@ -300,10 +340,12 @@
     :root[lwt-default-theme-in-dark-mode] {
       --win-text-color: #ffffff;
       --win-bgcolor: #2b2b2b;
-      --win-disabled-color: #747474; /* also button-active-color */
+      --win-disabled-color: #747474;
       --win-disabled-bgcolor: transparent;
-      --win-hover-bgcolor: #2e2e2e;
-      --win-hover-active-bgcolor: #454545; /* also button-bgcolor */
+      --win-hover-bgcolor: #2e2e2e; /* also button-bgcolor */
+      --win-hover-active-bgcolor: #454545; /* also button-active-color */
+      --win-button-hover-bgcolor: rgba(46, 46, 46, 0.66);
+      --win-button-active-bgcolor: #515151;
       --win-field-bgcolor: #373737;
       --win-component-bgcolor: #171717;
       --win-border-color: #5b5b5b;
@@ -313,7 +355,6 @@
       --win-sidebar-button-hover-bgcolor: #353535;
       --win-sidebar-button-hover-active-bgcolor: #4c4c4c;
       --win-button-border: #8f8f8f;
-      --win-button-hover-bgcolor: rgba(116, 116, 116, 0.66);
       --win-shorcut-text-color: #adadad;
       --win-error-color: #ffb900;
       --win-red-border-color: #ff4343;
@@ -345,7 +386,6 @@
 
     /* Text Disabled Color */
     --menu-disabled-color: var(--win-disabled-color) !important;
-    --button-active-bgcolor: var(--win-disabled-color) !important;
     --checkbox-unchecked-active-bgcolor: var(--win-disabled-color) !important;
     --panel-disabled-color: var(--win-disabled-color) !important;
     --download-progress-paused-color: var(--win-disabled-color) !important;
@@ -378,21 +418,24 @@
     --button-primary-color: var(--win-field-bgcolor) !important;
     --checkbox-checked-color: var(--win-field-bgcolor) !important;
 
-    /* Hover Background Color  */
+    /* Hover Background Color, Button Color  */
     --menuitem-hover-background-color: var(--win-hover-bgcolor) !important;
     --toolbarbutton-hover-background: var(--win-hover-bgcolor) !important;
-    --panel-banner-item-hover-bgcolor: var(--win-hover-bgcolor) !important;
+    --button-bgcolor: var(--win-hover-bgcolor) !important;
+    --panel-banner-item-background-color: var(--win-hover-bgcolor) !important;
 
-    /* Hover Active, Button Color */
-    --button-bgcolor: var(--win-hover-active-bgcolor) !important;
+    /* Hover Active, Button Hover Color */
     --checkbox-unchecked-bgcolor: var(--win-hover-active-bgcolor) !important;
-    --panel-banner-item-background-color: var(--win-hover-active-bgcolor) !important;
     --urlbar-box-bgcolor: var(--win-hover-active-bgcolor) !important;
     --urlbar-box-focus-bgcolor: var(--win-hover-active-bgcolor) !important;
-    --panel-banner-item-active-bgcolor: var(--win-hover-active-bgcolor) !important;
     --toolbarbutton-active-background: var(--win-hover-active-bgcolor) !important;
     --urlbar-box-active-bgcolor: var(--win-hover-active-bgcolor) !important;
     --autocomplete-popup-highlight-background: var(--win-hover-active-bgcolor) !important;
+    --panel-banner-item-hover-bgcolor: var(--win-hover-active-bgcolor) !important;
+
+    /* Button Hover Active Color */
+    --button-active-bgcolor: var(--win-button-active-bgcolor) !important;
+    --panel-banner-item-active-bgcolor: var(--win-button-active-bgcolor) !important;
 
     /* Disabled Background Color */
     --menuitem-disabled-hover-background-color: var(--win-disabled-bgcolor) !important;
@@ -499,17 +542,31 @@
     }
   }
 
+  /*- Panel ------------------------------------------------------------------*/
+  :root:not(:-moz-lwtheme) .subviewbutton,
+  :root[lwt-default-theme-in-dark-mode] .subviewbutton {
+    --button-hover-bgcolor: var(--win-hover-active-bgcolor) !important;
+    --button-active-bgcolor: var(--win-button-active-bgcolor) !important;
+  }
+
   :root:not(:-moz-lwtheme)
-    .subviewbutton:not(#appMenu-fxa-label2, #appMenu-zoomReduce-button2, #appMenu-zoomEnlarge-button2, #appMenu-fullscreen-button2),
+    toolbarbutton.subviewbutton:not([disabled], [open], :active, #appMenu-fxa-label2, #appMenu-zoomReduce-button2, #appMenu-zoomReset-button2, #appMenu-zoomEnlarge-button2, #appMenu-fullscreen-button2):is(:hover),
   :root[lwt-default-theme-in-dark-mode]
-    .subviewbutton:not(#appMenu-fxa-label2, #appMenu-zoomReduce-button2, #appMenu-zoomEnlarge-button2, #appMenu-fullscreen-button2) {
-    --button-hover-bgcolor: var(--win-hover-bgcolor) !important;
-    --button-active-bgcolor: var(--win-hover-active-bgcolor) !important;
+    toolbarbutton.subviewbutton:not([disabled], [open], :active, #appMenu-fxa-label2, #appMenu-zoomReduce-button2, #appMenu-zoomReset-button2, #appMenu-zoomEnlarge-button2, #appMenu-fullscreen-button2):is(:hover) {
+    background-color: var(--win-hover-bgcolor) !important;
+  }
+  :root:not(:-moz-lwtheme)
+    toolbarbutton.subviewbutton:not([disabled], #appMenu-fxa-label2, #appMenu-zoomReduce-button2, #appMenu-zoomReset-button2, #appMenu-zoomEnlarge-button2, #appMenu-fullscreen-button2):is([open], :hover:active),
+  :root[lwt-default-theme-in-dark-mode]
+    toolbarbutton.subviewbutton:not([disabled], #appMenu-fxa-label2, #appMenu-zoomReduce-button2, #appMenu-zoomReset-button2, #appMenu-zoomEnlarge-button2, #appMenu-fullscreen-button2):is([open], :hover:active) {
+    background-color: var(--win-hover-active-bgcolor) !important;
   }
 
   /*- Others -----------------------------------------------------------------*/
   /* For overwrite */
-  :root[lwtheme-mozlightdark]:not([lwthemetextcolor="bright"]):not(:-moz-lwtheme) {
+  :root[lwtheme-mozlightdark]:not([lwthemetextcolor="bright"]):not(:-moz-lwtheme), /* Legacy */
+  :root:not(:-moz-lwtheme) {
+    /* Light Theme */
     --lwt-accent-color: var(--win-bgcolor) !important;
   }
   @media (-moz-toolbar-prefers-color-scheme: dark), (prefers-color-scheme: dark) {
@@ -523,12 +580,18 @@
     > .tabbrowser-tab
     > .tab-stack
     > .tab-background[multiselected]:not([selected]):not(:-moz-lwtheme),
-  :root[lwtheme-mozlightdark]
+  :root[lwtheme-mozlightdark] /* Legacy */
     #tabbrowser-tabs:not([movingtab])
     > #tabbrowser-arrowscrollbox
     > .tabbrowser-tab
     > .tab-stack
-    > .tab-background[multiselected]:not([selected]) {
+    > .tab-background[multiselected]:not([selected]),
+  :root:is([style*="--lwt-accent-color: rgb(240, 240, 244); --lwt-text-color: rgba(21, 20, 26);"], [style*="--lwt-accent-color: rgb(28, 27, 34); --lwt-text-color: rgba(251, 251, 254);"])
+    #tabbrowser-tabs:not([movingtab])
+      > #tabbrowser-arrowscrollbox
+      > .tabbrowser-tab
+      > .tab-stack
+      > .tab-background[multiselected]:not([selected]) {
     background-image: linear-gradient(
         color-mix(in srgb, currentColor 11%, transparent),
         color-mix(in srgb, currentColor 11%, transparent)
@@ -733,7 +796,7 @@
   /*- Toolbar ----------------------------------------------------------------*/
   :root:not(:-moz-lwtheme) #navigator-toolbox,
   :root[lwt-default-theme-in-dark-mode] #navigator-toolbox {
-    appearance: auto !important;
+    background-color: var(--mac-bgcolor) !important;
   }
 
   :root:not(:-moz-lwtheme) #titlebar {
@@ -745,6 +808,9 @@
     --button-active-bgcolor: var(--mac-hover-bgcolor);
     --toolbarbutton-hover-background: var(--mac-hover-bgcolor);
     --toolbarbutton-active-background: var(--mac-hover-bgcolor);
+
+    /* Prevent transparent tabbar at fullscreen hover #312 */
+    background: var(--mac-bgcolor);
   }
 
   :root[lwt-default-theme-in-dark-mode] #urlbar {
@@ -787,7 +853,13 @@
   }
 
   /* Hard Coded */
-  :root[lwtheme-mozlightdark][lwt-default-theme-in-dark-mode]
+  :root[lwtheme-mozlightdark][lwt-default-theme-in-dark-mode] /* Legacy */
+    #tabbrowser-tabs:not([movingtab])
+    > #tabbrowser-arrowscrollbox
+    > .tabbrowser-tab
+    > .tab-stack
+    > .tab-background[selected="true"],
+  :root[style*="--lwt-accent-color: rgb(28, 27, 34); --lwt-text-color: rgba(251, 251, 254);"][lwt-default-theme-in-dark-mode]
     #tabbrowser-tabs:not([movingtab])
     > #tabbrowser-arrowscrollbox
     > .tabbrowser-tab
@@ -798,12 +870,8 @@
 
   :root:not([customizing="true"]):not(:-moz-lwtheme) tab[visuallyselected] > stack::before,
   :root:not([customizing="true"]):not(:-moz-lwtheme) tab[visuallyselected] > stack::after,
-  :root:not([customizing="true"])[lwtheme-mozlightdark][lwt-default-theme-in-dark-mode]
-    tab[visuallyselected]
-    > stack::before,
-  :root:not([customizing="true"])[lwtheme-mozlightdark][lwt-default-theme-in-dark-mode]
-    tab[visuallyselected]
-    > stack::after {
+  :root:not([customizing="true"])[lwt-default-theme-in-dark-mode] tab[visuallyselected] > stack::before,
+  :root:not([customizing="true"])[lwt-default-theme-in-dark-mode] tab[visuallyselected] > stack::after {
     fill: color-mix(in srgb, rgb(255, 255, 255) 15%, -moz-dialog) !important;
   }
 }
@@ -865,9 +933,13 @@
   --in-content-button-vertical-padding: 7px;
 
   --in-content-table-background: #f8f8fa;
-  --in-content-table-border-dark-color: #d1d1d1;
-  --in-content-table-header-background: #0a84ff;
-  --in-content-table-header-color: #ffffff;
+  --in-content-table-border-color: var(--in-content-box-border-color); /* Legacy: #d1d1d1; rgba(249, 249, 250, 0.2) */
+  --in-content-table-header-background: var(
+    --in-content-primary-button-background
+  ); /* Legacy: #0a84ff; rgb(5, 64, 150); */
+  --in-content-table-header-color: var(
+    --in-content-primary-button-text-color
+  ); /* Legacy: #ffffff; var(--in-content-page-color); */
   --in-content-sidebar-width: 240px;
 
   --dialog-warning-text-color: var(--red-60);
@@ -954,9 +1026,7 @@
     --in-content-danger-button-background-active: #ffdfe7;
 
     --in-content-table-background: rgb(35, 34, 43);
-    --in-content-table-border-dark-color: rgba(249, 249, 250, 0.2);
-    --in-content-table-header-background: rgb(5, 64, 150);
-    --in-content-table-header-color: var(--in-content-page-color);
+    --in-content-table-border-dark-color: var(--in-content-box-border-color);
 
     --in-content-accent-color: var(--in-content-primary-button-background);
     --in-content-accent-color-active: var(--in-content-primary-button-background-hover);
@@ -1019,8 +1089,10 @@ html#main-window menupopup {
 }
 
 /* Default theme color preservation */
-:root[lwtheme-mozlightdark] menupopup:not(#BMB_bookmarksPopup, [placespopup="true"]),
-:root[lwtheme-mozlightdark] menupopup:is(#goPopup, #historyMenuPopup, #bookmarksMenuPopup) {
+:root[lwtheme-mozlightdark] menupopup:not(#BMB_bookmarksPopup, [placespopup="true"]), /* Legacy */
+:root[lwtheme-mozlightdark] menupopup:is(#goPopup, #historyMenuPopup, #bookmarksMenuPopup), /* Legacy */
+:root:is([style*="--lwt-accent-color: rgb(240, 240, 244); --lwt-text-color: rgba(21, 20, 26);"], [style*="--lwt-accent-color: rgb(28, 27, 34); --lwt-text-color: rgba(251, 251, 254);"]) menupopup:not(#BMB_bookmarksPopup, [placespopup="true"]),
+:root:is([style*="--lwt-accent-color: rgb(240, 240, 244); --lwt-text-color: rgba(21, 20, 26);"], [style*="--lwt-accent-color: rgb(28, 27, 34); --lwt-text-color: rgba(251, 251, 254);"]) menupopup:is(#goPopup, #historyMenuPopup, #bookmarksMenuPopup) {
   --menu-color: var(--toolbar-color, var(--in-content-page-color)) !important;
   --arrowpanel-background: var(
     --toolbar-bgcolor,
@@ -1104,6 +1176,13 @@ body[lwt-sidebar] xul|search-textbox.tabsFilter[focused="true"] {
 body:not([lwt-sidebar]) xul|search-textbox.tabsFilter[focused="true"] {
   border-color: -moz-accent-color !important; /* Hard Coded */
   outline-color: -moz-accent-color !important;
+}
+
+/*= PopupSearchAutoComplete ========================================================*/
+
+/* Waterfox */
+.autocomplete-richlistitem:hover {
+  background-color: var(--arrowpanel-dimmed) !important;
 }
 
 /*= PopupAutoComplete ========================================================*/
@@ -1583,7 +1662,10 @@ browser[type="content"] > html {
     height: 12px !important;
   }
 
-  dropmarker::part(icon) {
+  /* dropmarker::part(icon)
+   * ::part is not apply chrome
+   */
+  dropmarker[exportparts="icon: dropmarker-icon"] {
     list-style-image: url("chrome://global/skin/icons/arrow-down.svg") !important;
     -moz-context-properties: fill !important;
     fill: currentColor !important;
@@ -1679,7 +1761,7 @@ browser[type="content"] > html {
     border-bottom-left-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
     padding-bottom: 1px !important;
-    box-shadow: inset 0 -1px var(--in-content-border-color) !important;
+    box-shadow: inset 0 -1px var(--in-content-table-border-color) !important;
     overflow: clip !important; /* Clip border-radius */
   }
 
@@ -1816,11 +1898,8 @@ browser[type="content"] > html {
 /*= Delete Cert ==============================================================*/
 @-moz-document url("chrome://pippki/content/deletecert.xhtml")
 {
-  :root {
-    --in-content-border-color: color-mix(in srgb, currentColor 41%, transparent) !important;
-  }
   #certlist {
-    border: 1px solid var(--in-content-border-color) !important;
+    border: 1px solid var(--in-content-table-border-color) !important;
     border-radius: 4px !important;
   }
 }
@@ -1828,9 +1907,6 @@ browser[type="content"] > html {
 /*= Cert Exeption Dialog =====================================================*/
 @-moz-document url("chrome://pippki/content/exceptionDialog.xhtml")
 {
-  :root {
-    --in-content-border-color: color-mix(in srgb, currentColor 41%, transparent) !important;
-  }
   #locationTextBox {
     appearance: none !important;
     border: 1px solid var(--in-content-box-border-color) !important;
@@ -1923,6 +1999,11 @@ browser[type="content"] > html {
     margin: 0 !important;
     padding: 0 6 !important;
   }
+  @supports -moz-bool-pref("layout.css.osx-font-smoothing.enabled") {
+    #viewGroup > radio > .radio-label-box {
+      padding-top: 32px !important; /* as -moz-image-region: rect(0px, 32px, 32px, 0px); */
+    }
+  }
 
   #mainDeck input {
     color: var(--in-content-page-color) !important;
@@ -1951,7 +2032,7 @@ browser[type="content"] > html {
     -moz-appearance: none !important;
     color: var(--in-content-table-header-color) !important;
     background: var(--in-content-table-header-background) !important;
-    border: 1px solid var(--in-content-border-color) !important;
+    border: 1px solid var(--in-content-table-border-color) !important;
     padding: 4px !important;
     border-spacing: 0;
 
@@ -1963,7 +2044,7 @@ browser[type="content"] > html {
     -moz-appearance: none !important;
     color: var(--in-content-text-color) !important;
     background-color: var(--in-content-table-background) !important;
-    border: 1px solid var(--in-content-border-color) !important;
+    border: 1px solid var(--in-content-table-border-color) !important;
   }
 
   treechildren::-moz-tree-row(odd) {
@@ -1979,7 +2060,7 @@ browser[type="content"] > html {
   }
 
   treechildren::-moz-tree-cell {
-    border-inline: 1px solid var(--in-content-border-color) !important;
+    border-inline: 1px solid var(--in-content-table-border-color) !important;
     border-spacing: 0 !important;
     padding: 4px !important;
     margin: 0 !important;
@@ -2010,7 +2091,7 @@ browser[type="content"] > html {
   #topBar,
   #imagecontainerbox,
   #permList {
-    border-color: var(--in-content-border-color) !important;
+    border-color: var(--in-content-table-border-color) !important;
   }
 }
 
@@ -2043,7 +2124,7 @@ browser[type="content"] > html {
       --organizer-pane-field-border-color: ThreeDShadow;
     }
 
-    @media not (prefers-contrast) {
+    @media not all and (prefers-contrast) {
       :root {
         --organizer-color: var(--in-content-page-color);
         --organizer-deemphasized-color: var(--in-content-deemphasized-text);
@@ -2473,8 +2554,8 @@ menuitem.openintabs-menuitem,
 #downloadsListBox .download-state[exists],
 #downloadsListBox .download-state[exists] .downloadDetails,
 #downloadsHistory,
-#protections-popup-settings-button,
-#protections-popup-show-report-button,
+#protections-popup-footer .protections-popup-footer-button,
+#protections-popup-multiView .panel-subview-footer-button,
 #identity-popup-clear-sitedata-button,
 #identity-popup-more-info {
   cursor: pointer !important;
@@ -2527,6 +2608,8 @@ menuitem.openintabs-menuitem,
     /* -moz-box-flex may be caused #tabbrowser-tabs[closebuttons] */
     transition: -moz-box-flex 0.2s var(--animation-easing-function),
       margin-inline-start 0.2s var(--animation-easing-function), min-width 0.1s ease-out, max-width 0.1s ease-out !important;
+    /* Waterfox */
+    /* max-width: var(--tab-max-width, 240px); */
   }
   #tabbrowser-tabs:not([movingtab]) .tabbrowser-tab[pinned] {
     transition: -moz-box-flex 0.2s var(--animation-easing-function),
@@ -2784,21 +2867,15 @@ menuitem.openintabs-menuitem,
 }
 
 /* Toolbar Height */
-:root:not([uidensity="touch"]) #TabsToolbar {
-  --toolbarbutton-inner-padding: 9px; /* Original: calc((var(--tab-min-height) - 16px) / 2) = 10px */
-}
-
-.toolbar-items,
-.tabbrowser-tab {
+#tabbrowser-arrowscrollbox {
   --tabbar-max-height: 38px;
   max-height: calc(var(--tabbar-max-height) + var(--space-above-tabbar));
 }
-:root[uidensity="compact"] .toolbar-items,
-:root[uidensity="compact"] .tabbrowser-tab {
-  --tabbar-max-height: 36px;
+
+:root[uidensity="compact"] #tabbrowser-arrowscrollbox {
+  --tabbar-max-height: 32px;
 }
-:root[uidensity="touch"] .toolbar-items,
-:root[uidensity="touch"] .tabbrowser-tab {
+:root[uidensity="touch"] #tabbrowser-arrowscrollbox {
   --tabbar-max-height: 45px;
 }
 
@@ -2948,6 +3025,11 @@ menupopup:not(.in-menulist) > menuitem,
 menupopup > menu {
   /* Original: 0.5em */
   padding-block: var(--menu-padding) !important;
+}
+
+#ContentSelectDropdown > menupopup > menucaption,
+#ContentSelectDropdown > menupopup > menuitem {
+  padding-block: 0 !important;
 }
 
 @supports not -moz-bool-pref("layout.css.osx-font-smoothing.enabled") {
@@ -3166,6 +3248,47 @@ menupopup > menu {
   box-shadow: 0 0 1px color-mix(in srgb, var(--toolbar-color) 80%, transparent) !important;
 }
 
+/* Consider 0 0 4px rgba(128,128,142,0.9) -> 0 0 4px rgba(0,0,0,.4) new default */
+#TabsToolbar:not([brighttext])
+  #tabbrowser-tabs:not([noshadowfortests])
+  .tabbrowser-tab:is([visuallyselected="true"], [multiselected])
+  > .tab-stack
+  > .tab-background {
+  box-shadow: 0 0 1px var(--tab-line-color, var(--lwt-tab-line-color, rgba(128, 128, 142, 0.9))),
+    0 0 4px rgba(128, 128, 142, 0.5) !important;
+}
+
+#TabsToolbar[brighttext]
+  #tabbrowser-tabs:not([noshadowfortests])
+  .tabbrowser-tab:is([visuallyselected="true"], [multiselected])
+  > .tab-stack
+  > .tab-background:-moz-lwtheme {
+  box-shadow: 0 0 1px var(--tab-line-color, var(--lwt-tab-line-color, rgba(128, 128, 142, 0.9))) !important;
+}
+
+/* For themes outside of Light and Dark (which are curated by Mozilla), show a thicker border
+   around the tab to help themes that are dependent on tab_line to show the selected tab. */
+:root:not([lwtheme-mozlightdark], [style*="--lwt-accent-color: rgb(240, 240, 244); --lwt-text-color: rgba(21, 20, 26);"])
+  #TabsToolbar:not([brighttext])
+  #tabbrowser-tabs:not([noshadowfortests])
+  .tabbrowser-tab:is([visuallyselected="true"], [multiselected])
+  > .tab-stack
+  > .tab-background:-moz-lwtheme {
+  box-shadow: 0 0 0 1px
+      var(--tab-line-color, var(--lwt-tab-line-color, var(--tabs-border-color, rgba(128, 128, 142, 0.9)))),
+    0 0 4px rgba(128, 128, 142, 0.5) !important;
+}
+
+:root:not([lwtheme-mozlightdark], [style*="--lwt-accent-color: rgb(28, 27, 34); --lwt-text-color: rgba(251, 251, 254);"])
+  #TabsToolbar[brighttext]
+  #tabbrowser-tabs:not([noshadowfortests])
+  .tabbrowser-tab:is([visuallyselected="true"], [multiselected])
+  > .tab-stack
+  > .tab-background:-moz-lwtheme {
+  box-shadow: 0 0 0 1px
+    var(--tab-line-color, var(--lwt-tab-line-color, var(--tabs-border-color, rgba(128, 128, 142, 0.9)))) !important;
+}
+
 /* Pinned Tab - tabbrowser-arrowscrollbox overflowing */
 #tabbrowser-tabs[positionpinnedtabs] > #tabbrowser-arrowscrollbox > .tabbrowser-tab[pinned] {
   z-index: 0 !important;
@@ -3193,7 +3316,10 @@ menupopup > menu {
 
   /* Color */
   fill: var(--toolbar-bgcolor) !important;
-  stroke: var(--tab-line-color, var(--tabs-border-color, rgba(128, 128, 142, 0.9))) !important;
+  stroke: var(
+    --tab-line-color,
+    var(--lwt-tab-line-color, var(--tabs-border-color, rgba(128, 128, 142, 0.9)))
+  ) !important;
   -moz-context-properties: fill, stroke !important;
 
   /* Image */
@@ -3201,8 +3327,17 @@ menupopup > menu {
   background-repeat: no-repeat;
   background-position-y: bottom;
 }
-:root:not([customizing="true"]) #TabsToolbar[brighttext] tab[visuallyselected] > stack::before,
-:root:not([customizing="true"]) #TabsToolbar[brighttext] tab[visuallyselected] > stack::after {
+
+:root:not([customizing="true"]):is([lwtheme-mozlightdark], [style*="--lwt-accent-color: rgb(28, 27, 34); --lwt-text-color: rgba(251, 251, 254);"])
+  #TabsToolbar[brighttext]
+  #tabbrowser-tabs:not([noshadowfortests])
+  tab[visuallyselected]
+  > stack:-moz-lwtheme::before,
+:root:not([customizing="true"]):is([lwtheme-mozlightdark], [style*="--lwt-accent-color: rgb(28, 27, 34); --lwt-text-color: rgba(251, 251, 254);"])
+  #TabsToolbar[brighttext]
+  #tabbrowser-tabs:not([noshadowfortests])
+  tab[visuallyselected]
+  > stack:-moz-lwtheme::after {
   /* As Selected Tab - Box Shadow */
   stroke: var(--toolbar-color) !important;
 }
@@ -4291,7 +4426,8 @@ panelMenuBookmarkThisPage[starred] {
   margin-inline-end: 1em;
 }
 
-#protections-popup-settings-button > .protections-popup-settings-icon {
+#protections-popup-settings-button > .protections-popup-settings-icon,
+#protections-popup-multiView .panel-subview-footer-button {
   list-style-image: url("chrome://global/skin/icons/settings.svg");
 }
 
@@ -5002,7 +5138,7 @@ menuitem.viewCustomizeToolbar {
   --menuitem-image: url("chrome://devtools/skin/images/tool-accessibility.svg");
 }
 #context-inspect {
-  --menuitem-image: url("chrome://devtools/skin/images/command-pick.svg");
+  --menuitem-image: url("chrome://browser/skin/lepton/command-pick.svg");
 }
 
 #context-media-eme-learnmore {
