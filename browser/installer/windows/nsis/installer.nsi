@@ -73,7 +73,7 @@ Var PostSigningData
 ; are a member of the Administrators group.
 !define NONADMIN_ELEVATE
 
-!define AbortSurveyURL "http://www.kampyle.com/feedback_form/ff-feedback-form.php?site_code=8166124&form_id=12116&url="
+!define AbortSurveyURL "https://waterfox.typeform.com/to/qcwbvO"
 
 ; Other included files may depend upon these includes!
 ; The following includes are provided by NSIS.
