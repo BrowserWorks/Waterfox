@@ -15,6 +15,9 @@ INSTALLER_FILES = \
 	app.tag \
 	nsis/content/installing.html \
 	nsis/content/installing.js \
+	nsis/content/pre_installing.css \
+	nsis/content/pre_installing.html \
+	nsis/content/pre_installing.js \
 	nsis/content/profile_cleanup.html \
 	nsis/content/profile_cleanup.js \
 	nsis/content/stub_common.css \
