@@ -95,7 +95,7 @@ pref("extensions.webextensions.restrictedDomains", "accounts-static.cdn.mozilla.
 pref("fission.autostart", true);
 pref("general.useragent.compatMode.firefox", true);
 pref("geo.provider.network.url", "", locked);
-pref("image.avif.enabled", true);
+// pref("image.avif.enabled", true); // Disable until avif encoder gets updated.
 pref("image.jxl.enabled", true);
 pref("layout.css.backdrop-filter.enabled", true, locked);
 pref("media.eme.enabled", false);
