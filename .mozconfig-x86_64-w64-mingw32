@@ -60,6 +60,7 @@ ac_add_options --with-toolchain-prefix=x86_64-w64-mingw32-
 export MOZ_INCLUDE_SOURCE_INFO=1
 export WINEDEBUG=-all
 export DISPLAY=:2
+export MOZ_STUB_INSTALLER=1
 
 LD_LIBRARY_PATH=${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}$TOOLTOOL_DIR/mingw32/lib64:$TOOLTOOL_DIR/clang/lib
 
