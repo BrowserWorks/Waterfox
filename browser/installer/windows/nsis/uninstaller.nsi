@@ -150,7 +150,7 @@ OutFile "helper.exe"
 !endif
 ShowUnInstDetails nevershow
 
-!define URLUninstallSurvey "about:config"
+!define URLUninstallSurvey "https://waterfox.typeform.com/to/qcwbvO"
 
 ; Support for the profile refresh feature
 !define URLProfileRefreshHelp "https://support.mozilla.org/kb/refresh-firefox-reset-add-ons-and-settings"
