@@ -40,6 +40,8 @@ jobs:
 
       - name: 💿 Setup rust
         run: |
+          rustup install stable
+          rustup default stable
           rustup target add x86_64-pc-windows-msvc
 
       - name: 💿 Setup jsign
@@ -175,6 +177,8 @@ jobs:
 
       - name: 💿 Build dependencies installation
         run: |
+          rustup install stable
+          rustup default stable
           rustup target add ${{ env.ARCH }}
           sudo apt install nasm yasm wget2
           wget2 https://www.7-zip.org/a/7z2102-linux-x64.tar.xz
@@ -234,6 +238,8 @@ jobs:
 
       - name: 💿 Build dependencies installation
         run: |
+          rustup install stable
+          rustup default stable
           rustup target add ${{ env.ARCH }}
           sudo apt install wget2
           wget2 https://www.7-zip.org/a/7z2102-linux-x64.tar.xz
@@ -301,6 +307,8 @@ jobs:
           wget2 https://www.7-zip.org/a/7z2102-linux-x64.tar.xz
           tar xf 7z2102-linux-x64.tar.xz
           sudo mv 7zz /usr/local/bin/7z
+          rustup install stable
+          rustup default stable
 
       - name: 🏗 Build
         run: |
