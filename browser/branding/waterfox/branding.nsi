@@ -19,16 +19,16 @@
 ; Beta since they share the same branding when building with other branches that
 ; set the update channel to beta.
 !define OFFICIAL
-!define URLStubDownloadX86 "https://cdn.waterfox.net/releases/"
-!define URLStubDownloadAMD64 "https://cdn.waterfox.net/releases/"
-!define URLStubDownloadAArch64 "https://cdn.waterfox.net/releases/"
+!define URLStubDownloadX86 ""
+!define URLStubDownloadAMD64 "https://github.com/WaterfoxCo/Waterfox/releases/latest/download/Waterfox.${AppVersion}.Setup.exe"
+!define URLStubDownloadAArch64 ""
 !define URLManualDownload "https://www.waterfox.net/download/"
-!define URLSystemRequirements "https://www.mozilla.org/download/system-requirements/"
+!define URLSystemRequirements "https://www.waterfox.net/download/"
 !define Channel "release"
 
 # The installer's certificate name and issuer expected by the stub installer
-!define CertNameDownload   "Mozilla Corporation"
-!define CertIssuerDownload "DigiCert SHA2 Assured ID Code Signing CA"
+!define CertNameDownload   "WATERFOX LIMITED"
+!define CertIssuerDownload "GlobalSign GCC R45 EV CodeSigning CA 2020"
 
 # Dialog units are used so the UI displays correctly with the system's DPI
 # settings. These are tweaked to look good with the en-US strings; ideally
