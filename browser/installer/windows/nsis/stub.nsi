@@ -231,11 +231,11 @@ Var ArchToInstall
 !undef URLStubDownloadX86
 !undef URLStubDownloadAMD64
 !undef URLStubDownloadAArch64
-!define URLStubDownloadX86 "https://download.mozilla.org/?os=win&lang=${AB_CD}&product=firefox-beta-latest"
-!define URLStubDownloadAMD64 "https://download.mozilla.org/?os=win64&lang=${AB_CD}&product=firefox-beta-latest"
-!define URLStubDownloadAArch64 "https://download.mozilla.org/?os=win64-aarch64&lang=${AB_CD}&product=firefox-beta-latest"
+!define URLStubDownloadX86 ""
+!define URLStubDownloadAMD64 "https://github.com/WaterfoxCo/Waterfox/releases/latest/download/Waterfox.${AppVersion}.Setup.exe"
+!define URLStubDownloadAArch64 ""
 !undef URLManualDownload
-!define URLManualDownload "https://www.mozilla.org/${AB_CD}/firefox/installer-help/?channel=beta&installer_lang=${AB_CD}"
+!define URLManualDownload ""
 !undef Channel
 !define Channel "beta"
 !endif
@@ -276,6 +276,7 @@ ChangeUI IDD_INST "nsisui.exe"
 
 Caption "$(INSTALLER_WIN_CAPTION)"
 
+Page custom preInstallingPage
 Page custom createProfileCleanup
 Page custom createInstall ; Download / Installation page
 
@@ -314,11 +315,11 @@ Function .onInit
   ${EndIf}
 
   Call GetArchToInstall
-  ${If} $ArchToInstall == ${ARCH_AARCH64}
-  ${OrIf} $ArchToInstall == ${ARCH_AMD64}
+  ${If} $ArchToInstall == ${ARCH_AMD64}
     StrCpy $INSTDIR "${DefaultInstDir64bit}"
   ${Else}
-    StrCpy $INSTDIR "${DefaultInstDir32bit}"
+    MessageBox MB_OKCANCEL|MB_ICONSTOP "$(WARN_MIN_SUPPORTED_OSVER_MSG)" IDCANCEL +2
+    ExecShell "open" "${URLSystemRequirements}"
   ${EndIf}
 
   ; Require elevation if the user can elevate
@@ -523,7 +524,7 @@ Function .onUserAbort
       Call StartDownload
     ${EndIf}
   ${Else}
-    Call SendPing
+    SendMessage $HWNDPARENT "0x408" "120" ""
   ${EndIf}
 
   ; Aborting the abort will allow SendPing to hide the installer window and
@@ -547,6 +548,9 @@ FunctionEnd
 
   GetFunctionAddress $0 gotoInstallPage
   WebBrowser::RegisterCustomFunction $0 "gotoInstallPage"
+
+  GetFunctionAddress $0 openLink
+  WebBrowser::RegisterCustomFunction $0 "openLink"
 
   GetFunctionAddress $0 getProgressBarPercent
   WebBrowser::RegisterCustomFunction $0 "getProgressBarPercent"
@@ -581,6 +585,14 @@ Function getProgressBarPercent
   IntOp $0 $ProgressCompleted * 100
   IntOp $0 $0 / ${PROGRESS_BAR_TOTAL_STEPS}
   Push $0
+FunctionEnd
+
+Function openLink
+  ; This function receives the value of external.openLink
+  ; and we open it in whatever the default browser currently
+  ; is.
+  Pop $0
+  ExecShell "open" "$0"
 FunctionEnd
 
 Function getTextDirection
@@ -636,6 +648,15 @@ Function getUIString
     ${Default}
       Push ""
   ${EndSelect}
+FunctionEnd
+
+Function preInstallingPage
+  ${RegisterAllCustomFunctions}
+
+  File /oname=$PLUGINSDIR\pre_installing.html "pre_installing.html"
+  File /oname=$PLUGINSDIR\pre_installing.css "pre_installing.css"
+  File /oname=$PLUGINSDIR\pre_installing.js "pre_installing.js"
+  WebBrowser::ShowPage "$PLUGINSDIR\pre_installing.html"
 FunctionEnd
 
 Function createProfileCleanup
@@ -1150,7 +1171,7 @@ Function SendPing
 
 !ifdef STUB_DEBUG
     MessageBox MB_OK "${BaseURLStubPing} \
-                      $\nStub URL Version = ${StubURLVersion}${StubURLVersionAppend} \
+                      $\nStub URL Version = ${URLStubDownloadAMD64} \
                       $\nBuild Channel = ${Channel} \
                       $\nUpdate Channel = ${UpdateChannel} \
                       $\nLocale = ${AB_CD} \
@@ -1193,10 +1214,6 @@ Function SendPing
     SetAutoClose true
     StrCpy $R9 "2"
     Call RelativeGotoPage
-!else
-    ${StartTimer} ${DownloadIntervalMS} OnPing
-    InetBgDL::Get "${BaseURLStubPing}/${StubURLVersion}${StubURLVersionAppend}/${Channel}/${UpdateChannel}/${AB_CD}/$R0/$R1/$5/$6/$7/$8/$9/$ExitCode/$FirefoxLaunchCode/$DownloadRetryCount/$DownloadedBytes/$DownloadSizeBytes/$IntroPhaseSeconds/$OptionsPhaseSeconds/$0/$1/$DownloadFirstTransferSeconds/$2/$3/$4/$InitialInstallRequirementsCode/$OpenedDownloadPage/$ExistingProfile/$ExistingVersion/$ExistingBuildID/$R5/$R6/$R7/$R8/$R2/$R3/$DownloadServerIP/$PostSigningData/$ProfileCleanupPromptType/$CheckboxCleanupProfile" \
-                  "$PLUGINSDIR\_temp" /END
 !endif
   ${Else}
     ${If} "$IsDownloadFinished" == "false"
