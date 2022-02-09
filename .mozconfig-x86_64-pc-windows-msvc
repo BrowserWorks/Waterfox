@@ -39,7 +39,6 @@ mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
 ac_add_options --disable-bits-download
 ac_add_options --disable-crashreporter
 ac_add_options --disable-debug
-ac_add_options --disable-default-browser-agent
 ac_add_options --disable-dmd
 ac_add_options --disable-geckodriver
 ac_add_options --disable-maintenance-service
