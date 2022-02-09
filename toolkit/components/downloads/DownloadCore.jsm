@@ -598,10 +598,7 @@ Download.prototype = {
           new FileUtils.File(this.target.path)
         );
       } else if (
-        Services.prefs.getBoolPref("browser.helperApps.deleteTempFileOnExit") &&
-        !Services.prefs.getBoolPref(
-          "browser.download.improvements_to_download_panel"
-        )
+        Services.prefs.getBoolPref("browser.helperApps.deleteTempFileOnExit")
       ) {
         gExternalAppLauncher.deleteTemporaryFileOnExit(
           new FileUtils.File(this.target.path)
