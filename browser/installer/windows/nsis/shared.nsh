@@ -474,7 +474,7 @@ ${RemoveDefaultBrowserAgentShortcut}
   StrCpy $0 "SOFTWARE\Classes"
   StrCpy $2 "$\"$8$\" -osint -url $\"%1$\""
 
-  ; Associate the file handlers with FirefoxHTML, if they aren't already.
+  ; Associate the file handlers with WaterfoxHTML, if they aren't already.
   ReadRegStr $6 SHCTX "$0\.htm" ""
   ${WordFind} "$6" "-" "+1{" $6
   ${If} "$6" != "WaterfoxHTML"
@@ -515,7 +515,7 @@ ${RemoveDefaultBrowserAgentShortcut}
   ${AddAssociationIfNoneExist} ".svg" "WaterfoxHTML$5"
   ${AddAssociationIfNoneExist} ".webp"  "WaterfoxHTML$5"
 
-  ; An empty string is used for the 5th param because FirefoxHTML is not a
+  ; An empty string is used for the 5th param because WaterfoxHTML is not a
   ; protocol handler
   ${AddDisabledDDEHandlerValues} "WaterfoxHTML$5" "$2" "$8,1" \
                                  "${AppRegName} HTML Document" ""
@@ -749,12 +749,12 @@ ${RemoveDefaultBrowserAgentShortcut}
 !macroend
 !define Set32to64DidMigrateReg "!insertmacro Set32to64DidMigrateReg"
 
-; The IconHandler reference for FirefoxHTML can end up in an inconsistent state
+; The IconHandler reference for WaterfoxHTML can end up in an inconsistent state
 ; due to changes not being detected by the IconHandler for side by side
 ; installs (see bug 268512). The symptoms can be either an incorrect icon or no
 ; icon being displayed for files associated with Firefox (does not use SHCTX).
 !macro FixShellIconHandler RegKey
-  ; Find the correct key to update, either FirefoxHTML or FirefoxHTML-[PathHash]
+  ; Find the correct key to update, either WaterfoxHTML or WaterfoxHTML-[PathHash]
   StrCpy $3 "WaterfoxHTML-$AppUserModelID"
   ClearErrors
   ReadRegStr $0 ${RegKey} "Software\Classes\$3\DefaultIcon" ""
@@ -903,7 +903,7 @@ ${RemoveDefaultBrowserAgentShortcut}
 ; HKCU Software\Classes keys when associating handlers. The fix uses the merged
 ; view in HKCR to check for existance of an existing association. This macro
 ; cleans affected installations by removing the HKLM and HKCU value if it is set
-; to FirefoxHTML when there is a value for PersistentHandler or by removing the
+; to WaterfoxHTML when there is a value for PersistentHandler or by removing the
 ; HKCU value when the HKLM value has a value other than an empty string.
 !macro FixBadFileAssociation FILE_TYPE
   ; Only delete the default value in case the key has values for OpenWithList,
@@ -914,8 +914,8 @@ ${RemoveDefaultBrowserAgentShortcut}
   ${WordFind} "$1" "-" "+1{" $1
   ReadRegStr $2 HKCR "${FILE_TYPE}\PersistentHandler" ""
   ${If} "$2" != ""
-    ; Since there is a persistent handler remove FirefoxHTML as the default
-    ; value from both HKCU and HKLM if it set to FirefoxHTML.
+    ; Since there is a persistent handler remove WaterfoxHTML as the default
+    ; value from both HKCU and HKLM if it set to WaterfoxHTML.
     ${If} "$0" == "WaterfoxHTML"
       DeleteRegValue HKCU "Software\Classes\${FILE_TYPE}" ""
     ${EndIf}
@@ -923,7 +923,7 @@ ${RemoveDefaultBrowserAgentShortcut}
       DeleteRegValue HKLM "Software\Classes\${FILE_TYPE}" ""
     ${EndIf}
   ${ElseIf} "$0" == "WaterfoxHTML"
-    ; Since HKCU is set to FirefoxHTML remove FirefoxHTML as the default value
+    ; Since HKCU is set to WaterfoxHTML remove WaterfoxHTML as the default value
     ; from HKCU if HKLM is set to a value other than an empty string.
     ${If} "$1" != ""
       DeleteRegValue HKCU "Software\Classes\${FILE_TYPE}" ""
@@ -981,7 +981,7 @@ ${RemoveDefaultBrowserAgentShortcut}
 
   ${IsHandlerForInstallDir} "WaterfoxHTML-$AppUserModelID" $R9
   ${If} "$R9" == "true"
-    ; An empty string is used for the 5th param because FirefoxHTML is not a
+    ; An empty string is used for the 5th param because WaterfoxHTML is not a
     ; protocol handler.
     ${AddDisabledDDEHandlerValues} "WaterfoxHTML-$AppUserModelID" "$2" "$8,1" \
                                    "${AppRegName} HTML Document" ""
