@@ -1425,7 +1425,7 @@ var Policies = {
         setAndLockPref("pdfjs.disabled", !param.Enabled);
       }
       if ("EnablePermissions" in param) {
-        setAndLockPref("pdfjs.enablePermissions", !param.Enabled);
+        setAndLockPref("pdfjs.enablePermissions", param.EnablePermissions);
       }
     },
   },
