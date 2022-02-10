@@ -83,13 +83,16 @@ jobs:
           az login --service-principal --username ${{ secrets.AZURE_USER_ID }} --password ${{ secrets.AZURE_USER_PWD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
           find ./ -type f -name "*.exe" -exec jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-512 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" {} \;
           find ./ -type f -name "*.dll" -exec jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-512 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" {} \;
-          7z a -r -t7z app.7z -mx -m0=BCJ2 -m1=LZMA:d25 -m2=LZMA:d19 -m3=LZMA:d19 -mb0:1 -mb0s1:2 -mb0s2:3
+          7z a -r -t7z '-x!*-stub.exe' app.7z -mx -m0=BCJ2 -m1=LZMA:d25 -m2=LZMA:d19 -m3=LZMA:d19 -mb0:1 -mb0s1:2 -mb0s2:3
           cp $GITHUB_WORKSPACE/browser/installer/windows/app.tag .
           cp $GITHUB_WORKSPACE/other-licenses/7zstub/firefox/7zSD.Win32.sfx .
           cat 7zSD.Win32.sfx app.tag app.7z > "Waterfox $VERSION_DISPLAY Setup.exe"
           jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-512 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" "Waterfox $VERSION_DISPLAY Setup.exe"
           jsign -s $HOME/tooltool12/dummy.pfx --storepass=password --storetype=PKCS12 "Waterfox $VERSION_DISPLAY Setup.exe"
+          jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-512 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" "waterfox-$VERSION_DISPLAY.en-US.win64.installer-stub.exe"
+          jsign -s $HOME/tooltool12/dummy.pfx --storepass=password --storetype=PKCS12 "waterfox-$VERSION_DISPLAY.en-US.win64.installer-stub.exe"
           az logout
+          mv waterfox-$VERSION_DISPLAY.en-US.win64.installer-stub.exe "Install Waterfox.exe"
           rm -rf core 7zSD.Win32.sfx app.tag app.7z setup.exe
           popd
 
@@ -149,7 +152,7 @@ jobs:
         run: |
           VERSION_DISPLAY=`cat browser/config/version_display.txt`
           AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./obj-${{ env.ARCH }}/dist/update/update.xml s3://aus.waterfox.net/update/staging/WINNT_x86_64/update.xml
-          rsync -rtvz --chmod=D2755,F644 --delete-before --progress {./obj-${{ env.ARCH }}/dist/install/sea/Waterfox\ $VERSION_DISPLAY\ Setup.exe,./obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.win64.complete.xz.mar} kontos@rsync.keycdn.com:waterfox/staging/x86_64/Windows_NT
+          rsync -rtvz --chmod=D2755,F644 --delete-before --progress {./obj-${{ env.ARCH }}/dist/install/sea/Waterfox\ $VERSION_DISPLAY\ Setup.exe,./obj-${{ env.ARCH }}/dist/install/sea/Install\ Waterfox.exe,./obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.win64.complete.xz.mar} kontos@rsync.keycdn.com:waterfox/staging/x86_64/Windows_NT
 
   macos-x64:
     name: 🍎 macOS X64
