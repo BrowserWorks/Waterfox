@@ -78,6 +78,7 @@ jobs:
         run: |
           VERSION_DISPLAY=`cat browser/config/version_display.txt`
           pushd obj-${{ env.ARCH }}/dist/install/sea/
+          # Handle full installer signing.
           7z x waterfox-$VERSION_DISPLAY.en-US.win64.installer.exe
           rm -f waterfox-$VERSION_DISPLAY.en-US.win64.installer.exe
           az login --service-principal --username ${{ secrets.AZURE_USER_ID }} --password ${{ secrets.AZURE_USER_PWD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
@@ -89,10 +90,16 @@ jobs:
           cat 7zSD.Win32.sfx app.tag app.7z > "Waterfox $VERSION_DISPLAY Setup.exe"
           jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-512 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" "Waterfox $VERSION_DISPLAY Setup.exe"
           jsign -s $HOME/tooltool12/dummy.pfx --storepass=password --storetype=PKCS12 "Waterfox $VERSION_DISPLAY Setup.exe"
-          jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-512 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" "waterfox-$VERSION_DISPLAY.en-US.win64.installer-stub.exe"
-          jsign -s $HOME/tooltool12/dummy.pfx --storepass=password --storetype=PKCS12 "waterfox-$VERSION_DISPLAY.en-US.win64.installer-stub.exe"
+          # Handle stub installer signing.
+          7z x waterfox-$VERSION_DISPLAY.en-US.win64.installer-stub.exe
+          rm -f waterfox-$VERSION_DISPLAY.en-US.win64.installer-stub.exe
+          jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-512 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" "setup-stub.exe"
+          popd
+          ./mach repackage installer -o obj-${{ env.ARCH }}/dist/install/sea/Install\ Waterfox.exe --tag $GITHUB_WORKSPACE/browser/installer/windows/stub.tag --setupexe obj-${{ env.ARCH }}/dist/install/sea/setup-stub.exe --sfx-stub $GITHUB_WORKSPACE/other-licenses/7zstub/firefox/7zSD.Win32.sfx --use-upx
+          pushd obj-${{ env.ARCH }}/dist/install/sea/
+          jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-512 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" "Install Waterfox.exe"
+          jsign -s $HOME/tooltool12/dummy.pfx --storepass=password --storetype=PKCS12 "Install Waterfox.exe"
           az logout
-          mv waterfox-$VERSION_DISPLAY.en-US.win64.installer-stub.exe "Install Waterfox.exe"
           rm -rf core 7zSD.Win32.sfx app.tag app.7z setup.exe
           popd
 
