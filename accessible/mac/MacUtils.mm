@@ -71,6 +71,10 @@ NSString* GetAccAttr(mozAccessible* aNativeAccessible, nsAtom* aAttrName) {
     proxy->Attributes(&attributes);
   }
 
+  if (!attributes) {
+    return nil;
+  }
+
   attributes->GetAttribute(aAttrName, result);
 
   if (!result.IsEmpty()) {
