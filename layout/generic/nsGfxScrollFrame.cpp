@@ -3137,8 +3137,13 @@ void ScrollFrameHelper::ScrollToImpl(nsPoint aPt, const nsRect& aRange,
     AutoScrollbarRepaintSuppression repaintSuppression(this, weakFrame,
                                                        !schedulePaint);
 
-    nsPoint relativeOffset =
-        presContext->PresShell()->GetVisualViewportOffset() - curPos;
+    nsPoint visualViewportOffset = curPos;
+    if (presContext->PresShell()->IsVisualViewportOffsetSet()) {
+      visualViewportOffset =
+          presContext->PresShell()->GetVisualViewportOffset();
+    }
+    nsPoint relativeOffset = visualViewportOffset - curPos;
+
     presContext->PresShell()->SetVisualViewportOffset(pt + relativeOffset,
                                                       curPos);
     if (!weakFrame.IsAlive()) {
