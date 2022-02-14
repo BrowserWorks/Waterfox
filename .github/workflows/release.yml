@@ -77,7 +77,7 @@ jobs:
               ver=$(echo $i | sed 's/\///g')
                   if [[ $i == "G3"* ]]
                   then
-                      os=(Windows_NT Linux Darwin)
+                      os=(WINNT Linux Darwin)
                       for j in ${os[@]}
                       do
                       update_loc="s3://aus.waterfox.net/update/staging/"$j"_x86_64/update.xml"
@@ -135,7 +135,7 @@ jobs:
               ver=$(echo $i | sed 's/\///g')
                   if [[ $i == "G3"* ]]
                   then
-                      os=(Windows_NT Linux Darwin)
+                      os=(WINNT Linux Darwin)
                       for j in ${os[@]}
                       do
                       update_loc="s3://aus.waterfox.net/update/staging/"$j"_x86_64/update.xml"
