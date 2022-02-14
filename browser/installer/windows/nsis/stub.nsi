@@ -518,7 +518,7 @@ Function .onUserAbort
     ${If} $0 == 1002
       ; The cancel button was clicked
       Call LaunchHelpPage
-      Call SendPing
+      SendMessage $HWNDPARENT "0x408" "120" ""
     ${Else}
       ; Either the continue button was clicked or the dialog was dismissed
       Call StartDownload
@@ -986,6 +986,12 @@ Function LaunchFullInstaller
   ${StartTimer} ${InstallIntervalMS} CheckInstall
 FunctionEnd
 
+; Typically this would be called to eventually close the installer after the
+; browser launches. For whatever reason, potentially due to HideWindow, the
+; installer process keeps running. This could be related due to removal of
+; an actual ping endpoint. We'll use SendMessage $HWNDPARENT "0x408" "120" ""
+; instead of calling SendPing.
+; Remember to switch back to SendPing when debugging.
 Function SendPing
   HideWindow
 
@@ -1441,7 +1447,7 @@ Function WaitForAppLaunch
     WebBrowser::CancelTimer $TimerHandle
     StrCpy $ProgressCompleted "${PROGRESS_BAR_APP_LAUNCH_END_STEP}"
     Call SetProgressBars
-    Call SendPing
+    SendMessage $HWNDPARENT "0x408" "120" ""
     Return
   ${EndIf}
 
@@ -1450,7 +1456,7 @@ Function WaitForAppLaunch
   ${If} $0 >= ${AppLaunchWaitTimeoutMS}
     ; We've waited an unreasonably long time, so just exit.
     WebBrowser::CancelTimer $TimerHandle
-    Call SendPing
+    SendMessage $HWNDPARENT "0x408" "120" ""
     Return
   ${EndIf}
 
@@ -1469,7 +1475,7 @@ Function DisplayDownloadError
 
   MessageBox MB_OKCANCEL|MB_ICONSTOP "$(ERROR_DOWNLOAD_CONT)" IDCANCEL +2 IDOK +1
   Call LaunchHelpPage
-  Call SendPing
+  SendMessage $HWNDPARENT "0x408" "120" ""
 FunctionEnd
 
 Function LaunchHelpPage
