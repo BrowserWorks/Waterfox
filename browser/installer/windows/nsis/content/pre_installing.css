@@ -3,47 +3,55 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
  body {
-    color: #ffffff;
-  }
+  color: #ffffff;
+}
 
-  a:link,
-  a:visited,
-  a:hover,
-  a:active {
-    color: #ffffff;
-  }
+a:link,
+a:visited,
+a:hover,
+a:active {
+  color: #ffffff;
+}
 
-  #header,
-  #CheckboxContainer,
-  #ButtonContainer {
-    text-align: center;
-    margin-left: 40px;
-    margin-right: 40px;
-    margin-bottom: 30px;
-  }
+p {
+  text-align: center;
+  margin-left: 40px;
+  margin-right: 40px;
+  margin-bottom: 30px;
+  font-size: 13px;
+}
 
-  #header {
-    font-size: 35px;
-    font-weight: normal;
-    margin-top: 45px;
-  }
+#header,
+#CheckboxContainer,
+#ButtonContainer {
+  text-align: center;
+  margin-left: 40px;
+  margin-right: 40px;
+  margin-bottom: 30px;
+}
 
-  #Checkbox {
-    vertical-align: middle;
-  }
+#header {
+  font-size: 35px;
+  font-weight: normal;
+  margin-top: 45px;
+}
 
-  #CheckboxLabel {
-    font-size: 13px;
-  }
+#Checkbox {
+  vertical-align: middle;
+}
 
-  #Button {
-    padding: 8px 40px;
-    font-size: 15px;
-  }
+#CheckboxLabel {
+  font-size: 13px;
+}
 
-  /* The footer goes in the bottom right corner. */
-  #footer {
-    position: fixed;
-    right: 50px;
-    bottom: 59px;
-  }
+#Button {
+  padding: 8px 40px;
+  font-size: 15px;
+}
+
+/* The footer goes in the bottom right corner. */
+#footer {
+  position: fixed;
+  right: 50px;
+  bottom: 59px;
+}
