@@ -14,6 +14,10 @@ const { PlacesUIUtils } = ChromeUtils.import(
   "resource:///modules/PlacesUIUtils.jsm"
 );
 
+const { TabStateCache } = ChromeUtils.import(
+  "resource:///modules/sessionstore/TabStateCache.jsm"
+);
+
 const { ExtensiblesElements } = ChromeUtils.import(
   "resource:///modules/ExtensiblesElements.jsm"
 );
@@ -449,8 +453,13 @@ const PrivateTab = {
     let win = tab.ownerGlobal;
     let { PrivateTab } = win;
     let prevTab = aEvent.detail.previousTab;
+    let isPrivate = PrivateTab.isPrivate(tab);
     if (tab.userContextId != prevTab.userContextId) {
       PrivateTab.toggleMask(win);
+      // Ensure no private tab data saved to history/recently closed
+      TabStateCache.update(tab.linkedBrowser.permanentKey, { isPrivate });
+      // Ensure we don't save search suggestions for PrivateTab
+      win.gURLBar.isPrivate = isPrivate;
     }
   },
 
