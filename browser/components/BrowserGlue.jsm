@@ -4028,9 +4028,10 @@ BrowserGlue.prototype = {
 
   async _setAttributionData() {
     // Kick off async process to set attribution code preference
+    let distSrc = Services.prefs.getCharPref("distribution.source", "");
     try {
       let attrData = await AttributionCode.getAttrDataAsync();
-      if (attrData) {
+      if (Object.keys(attrData).length) {
         let attributionStr = "";
         for (const [key, value] of Object.entries(attrData)) {
           // If PTAG/TypeTag we only want to set the relevant pref
@@ -4052,7 +4053,7 @@ BrowserGlue.prototype = {
           attributionStr += `&${key}=${value}`;
         }
         // Add install param
-        if (attributionStr != "") {
+        if (attributionStr) {
           attributionStr += "&status=install";
         }
         let additionalPage = Services.urlFormatter.formatURLPref(
@@ -4090,6 +4091,8 @@ BrowserGlue.prototype = {
         }
 
         Services.prefs.setCharPref("browser.distribution.cohort", getDate());
+      } else if (!distSrc) {
+        Services.prefs.clearUserPref("browser.distribution.cohort");
       }
     } catch (ex) {
       Services.console.logStringMessage(ex + "error setting attr data");
