@@ -4028,6 +4028,7 @@ BrowserGlue.prototype = {
 
   async _setAttributionData() {
     // Kick off async process to set attribution code preference
+    let distSrc = Services.prefs.getCharPref("distribution.source", "");
     try {
       let attrData = await AttributionCode.getAttrDataAsync();
       if (Object.keys(attrData).length) {
@@ -4090,7 +4091,7 @@ BrowserGlue.prototype = {
         }
 
         Services.prefs.setCharPref("browser.distribution.cohort", getDate());
-      } else {
+      } else if (!distSrc) {
         Services.prefs.clearUserPref("browser.distribution.cohort");
       }
     } catch (ex) {
