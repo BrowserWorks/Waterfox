@@ -217,6 +217,9 @@ struct LoadingSessionHistoryInfo {
   LoadingSessionHistoryInfo(SessionHistoryEntry* aEntry,
                             LoadingSessionHistoryInfo* aInfo);
 
+  // For about:blank only.
+  explicit LoadingSessionHistoryInfo(const SessionHistoryInfo& aInfo);
+
   already_AddRefed<nsDocShellLoadState> CreateLoadInfo() const;
 
   SessionHistoryInfo mInfo;
