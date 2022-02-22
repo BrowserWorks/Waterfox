@@ -44,9 +44,13 @@ const PrivateTab = {
       #private-mask[enabled="true"] {
         display: block !important;
       }
-      .privatetab-icon {
-        list-style-image: url(chrome://browser/skin/privatebrowsing/favicon.svg) !important;
+
+      @media (-wfx-default-theme) {
+        .privatetab-icon {
+          list-style-image: url(chrome://browser/skin/privatebrowsing/favicon.svg) !important;
+        }
       }
+
       #${this.BTN_ID}, #${this.BTN2_ID} {
         list-style-image: url(chrome://browser/skin/privateBrowsing.svg);
       }

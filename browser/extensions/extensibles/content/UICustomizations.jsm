@@ -15,6 +15,9 @@ const { BrowserUtils } = ChromeUtils.import(
 const UICustomizations = {
   PREF_TOOLBARPOS: "browser.tabs.toolbarposition",
   PREF_BOOKMARKPOS: "browser.bookmarks.toolbarposition",
+  PREF_DEFAULTTHEME: "browser.lepton.enabled",
+  PREF_ACTIVETHEME: "extensions.activeThemeID",
+  DEFAULT_THEMEID: "lepton@waterfox.net",
 
   get style() {
     return `
@@ -34,6 +37,15 @@ const UICustomizations = {
     this.initListeners(window);
     this.initPrefObservers();
     BrowserUtils.setStyle(this.style); // TODO: Move to extension/css and include in relevant css file
+
+    // Make sure pref is aligned with active theme ID initially
+    let activeTheme = PrefUtils.get(this.PREF_ACTIVETHEME);
+    if (
+      activeTheme != this.DEFAULT_THEMEID &&
+      PrefUtils.get(this.PREF_DEFAULTTHEME)
+    ) {
+      this.setDefaultThemePref(activeTheme);
+    }
   },
 
   initPrefObservers() {
@@ -55,6 +67,18 @@ const UICustomizations = {
           UICustomizations.moveBookmarksBar(win, value);
         });
       }
+    );
+
+    // If activeThemeID changes update default theme pref -> could expand to do more than just default or not
+    PrefUtils.addObserver(this.PREF_ACTIVETHEME, value => {
+      this.setDefaultThemePref(value);
+    });
+  },
+
+  setDefaultThemePref(prefValue) {
+    PrefUtils.set(
+      this.PREF_DEFAULTTHEME,
+      prefValue === this.DEFAULT_THEMEID // Currently, only lepton displays icons
     );
   },
 
