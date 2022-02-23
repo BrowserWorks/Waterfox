@@ -21,18 +21,18 @@
 !endif
 
 # These defines should match application.ini settings
-!define AppName               "Firefox"
+!define AppName               "Waterfox"
 !define AppVersion            "@APP_VERSION@"
 !define GREVersion            @MOZILLA_VERSION@
 !define AB_CD                 "@AB_CD@"
 
 !define FileMainEXE           "@MOZ_APP_NAME@.exe"
-!define MainWindowClass       "MozillaWindowClass"
-!define DialogWindowClass     "MozillaDialogClass"
-!define DDEApplication        "Firefox"
-!define AppRegName            "Firefox"
+!define MainWindowClass       "WaterfoxWindowClass"
+!define DialogWindowClass     "WaterfoxDialogClass"
+!define DDEApplication        "Waterfox"
+!define AppRegName            "Waterfox"
 
-!define BrandProductName      "Firefox"
+!define BrandProductName      "Waterfox"
 !ifndef DEV_EDITION
 !define BrandShortName        "@MOZ_APP_DISPLAYNAME@"
 !endif
@@ -63,7 +63,7 @@
 
 #ifdef MOZ_LAUNCHER_PROCESS
 !define MOZ_LAUNCHER_PROCESS
-!define MOZ_LAUNCHER_SUBKEY "Software\Mozilla\${AppName}\Launcher"
+!define MOZ_LAUNCHER_SUBKEY "Software\WaterfoxLimited\${AppName}\Launcher"
 #endif
 
 #ifdef RELEASE_OR_BETA
@@ -119,7 +119,7 @@ VIProductVersion "1.0.0.0"
 VIAddVersionKey "ProductName"     "${BrandShortName}"
 VIAddVersionKey "CompanyName"     "${CompanyName}"
 #ifdef MOZ_OFFICIAL_BRANDING
-VIAddVersionKey "LegalTrademarks" "${BrandShortName} is a Trademark of The Mozilla Foundation."
+VIAddVersionKey "LegalTrademarks" "${BrandShortName} is a Trademark of WaterfoxLimited."
 #endif
 VIAddVersionKey "LegalCopyright"  "${CompanyName}"
 VIAddVersionKey "FileVersion"     "${AppVersion}"
