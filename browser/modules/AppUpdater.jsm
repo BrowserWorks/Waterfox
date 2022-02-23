@@ -65,6 +65,11 @@ class AppUpdater {
       return;
     }
 
+    if (this.updateDisabled) {
+      this._setStatus(AppUpdater.STATUS.NEVER_CHECKED);
+      return;
+    }
+
     if (this.updateDisabledByPolicy) {
       this._setStatus(AppUpdater.STATUS.UPDATE_DISABLED_BY_POLICY);
       return;
@@ -173,6 +178,10 @@ class AppUpdater {
       this.um.downloadingUpdate &&
       this.um.downloadingUpdate.state == "downloading"
     );
+  }
+
+  get updateDisabled() {
+    return !Services.prefs.getBoolPref("app.update.enabled", true);
   }
 
   // true when updating has been disabled by enterprise policy
@@ -444,6 +453,8 @@ class AppUpdater {
     if (!this._status) {
       if (!AppConstants.MOZ_UPDATER) {
         this._status = AppUpdater.STATUS.NO_UPDATER;
+      } else if (this.updateDisabled) {
+        this._status = AppUpdater.STATUS.NEVER_CHECKED;
       } else if (this.updateDisabledByPolicy) {
         this._status = AppUpdater.STATUS.UPDATE_DISABLED_BY_POLICY;
       } else if (this.isReadyForRestart) {
