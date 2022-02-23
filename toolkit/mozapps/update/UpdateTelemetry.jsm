@@ -504,7 +504,7 @@ var AUSTLMY = {
       );
       wrk.open(
         wrk.ROOT_KEY_LOCAL_MACHINE,
-        "SOFTWARE\\Mozilla\\MaintenanceService",
+        "SOFTWARE\\WaterfoxLimited\\MaintenanceService",
         wrk.ACCESS_READ | wrk.WOW64_64
       );
       // Was the service at some point installed, but is now uninstalled?

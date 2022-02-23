@@ -105,7 +105,7 @@ old_default (both)
 had_old_install (both)
   True if at least one existing installation of Firefox was found on the system prior to this installation.
   
-  full: Checks for the installation directory given in the ``Software\Mozilla\${BrandFullName}`` registry keys, either :abbr:`HKLM` or :abbr:`HKCU`
+  full: Checks for the installation directory given in the ``Software\WaterfoxLimited\${BrandFullName}`` registry keys, either :abbr:`HKLM` or :abbr:`HKCU`
 
   stub: Checks for the top level profile directory ``%LOCALAPPDATA%\Mozilla\Firefox``
 
