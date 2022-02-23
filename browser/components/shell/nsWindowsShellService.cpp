@@ -233,8 +233,8 @@ nsWindowsShellService::CheckAllProgIDsExist(bool* aResult) {
     return NS_OK;
   }
   *aResult =
-      CheckProgIDExists(FormatProgID(L"FirefoxURL", aumid.get()).get()) &&
-      CheckProgIDExists(FormatProgID(L"FirefoxHTML", aumid.get()).get());
+      CheckProgIDExists(FormatProgID(L"WaterfoxURL", aumid.get()).get()) &&
+      CheckProgIDExists(FormatProgID(L"WaterfoxHTML", aumid.get()).get());
   return NS_OK;
 }
 
@@ -492,7 +492,7 @@ nsWindowsShellService::SetDesktopBackground(dom::Element* aElement,
                               getter_AddRefs(file));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // eventually, the path is "%APPDATA%\Mozilla\Firefox\Desktop Background.bmp"
+  // eventually, the path is "%APPDATA%\WaterfoxLimited\Waterfox\Desktop Background.bmp"
   rv = file->Append(fileLeafName);
   NS_ENSURE_SUCCESS(rv, rv);
 
