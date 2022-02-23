@@ -50,7 +50,16 @@ const ATTR_CODE_KEYS = [
   "experiment",
   "variation",
   "ua",
-  "dltoken",
+  "gclid",
+  "mtm_group",
+  "mtm_source",
+  "mtm_cid",
+  "msclkid",
+  "PTAG",
+  "typetag",
+  "hsimp",
+  "hspart",
+  "engine",
 ];
 
 let gCachedAttrData = null;
@@ -65,8 +74,9 @@ var AttributionCode = {
     if (AppConstants.platform == "win") {
       let file = Services.dirsvc.get("LocalAppData", Ci.nsIFile);
       // appinfo does not exist in xpcshell, so we need defaults.
-      file.append(Services.appinfo.vendor || "mozilla");
-      file.append(AppConstants.MOZ_APP_NAME);
+      file.append("Waterfox");
+      // file.append(Services.appinfo.vendor || "mozilla");
+      // file.append(AppConstants.MOZ_APP_NAME);
       file.append("postSigningData");
       return file;
     } else if (AppConstants.platform == "macosx") {
@@ -381,9 +391,13 @@ var AttributionCode = {
     try {
       await OS.File.remove(this.attributionFile.path);
     } catch (ex) {
-      // The attribution file may already have been deleted,
-      // or it may have never been installed at all;
-      // failure to delete it isn't an error.
+      if (ex instanceof OS.File.Error && ex.becauseNoSuchFile) {
+        // The file does not exist
+      } else if (ex instanceof TypeError) {
+        // this.attributionFile is null
+      } else {
+        throw ex; // Other error
+      }
     }
   },
 
