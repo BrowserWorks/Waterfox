@@ -59,12 +59,12 @@ let ShellServiceInternal = {
     if (AppConstants.platform == "win") {
       let optOutValue = WindowsRegistry.readRegKey(
         Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-        "Software\\Mozilla\\Firefox",
+        "Software\\WaterfoxLimited\\Waterfox",
         "DefaultBrowserOptOut"
       );
       WindowsRegistry.removeRegKey(
         Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-        "Software\\Mozilla\\Firefox",
+        "Software\\WaterfoxLimited\\Waterfox",
         "DefaultBrowserOptOut"
       );
       if (optOutValue == "True") {
