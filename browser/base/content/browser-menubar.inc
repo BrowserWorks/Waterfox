@@ -79,6 +79,9 @@
                 <menuitem id="goOfflineMenuitem"
                           type="checkbox"
                           command="cmd_toggleOfflineStatus" data-l10n-id="menu-file-go-offline"/>
+#ifdef XP_MACOSX
+  #include ../../extensions/extensibles/builtins/menubar/restartbutton.inc
+#endif
                 <menuitem id="menu_FileQuitItem"
 #ifdef XP_MACOSX
                           data-l10n-id="menu-quit-mac"

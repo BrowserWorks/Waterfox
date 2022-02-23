@@ -2421,6 +2421,10 @@ STATIC_ATOMS = [
     Atom("DirectoryService_LocalAppdataLow", "LocalAppDataLow"),
     Atom("DirectoryService_LowIntegrityTempBase", "LowTmpDBase"),
     Atom("DirectoryService_WinCookiesDirectory", "CookD"),
+    # Waterfox atoms
+    Atom("_wfx_icon_only_pinned", "-wfx-icon-only-pinned"),
+    Atom("_wfx_status_contrast_text", "-wfx-status-contrast-text"),
+    Atom("_wfx_default_theme", "-wfx-default-theme"),
     # CSS pseudo-elements -- these must appear in the same order as
     # in nsCSSPseudoElementList.h
     PseudoElementAtom("PseudoElement_after", ":after"),

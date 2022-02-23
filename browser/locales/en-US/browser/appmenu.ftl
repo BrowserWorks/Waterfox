@@ -77,6 +77,9 @@ appmenu-fxa-show-more-tabs = Show More Tabs
 appmenuitem-save-page =
     .label = Save page as…
 
+appmenuitem-restart-browser =
+    .label = Restart
+
 ## What's New panel in App menu.
 
 whatsnew-panel-header = What’s New
