@@ -213,6 +213,18 @@ Preferences.addAll([
 
   // Windows SSO
   { id: "network.http.windows-sso.enabled", type: "bool" },
+
+  // Referer
+  { id: "network.http.sendRefererHeader", type: "int" },
+
+  // WebRTC P2P
+  { id: "media.peerconnection.enabled", type: "bool" },
+
+  // Images
+  { id: "permissions.default.image", type: "int" },
+
+  // Scripts
+  { id: "javascript.enabled", type: "bool" },
 ]);
 
 // Study opt out

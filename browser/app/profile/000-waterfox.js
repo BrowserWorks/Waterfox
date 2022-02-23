@@ -50,7 +50,7 @@ pref("browser.newtabpage.activity-stream.feeds.system.topstories", false, locked
 pref("browser.newtabpage.activity-stream.feeds.telemetry", false, locked);
 pref("browser.newtabpage.activity-stream.improvesearch.topSiteSearchShortcuts", false);
 pref("browser.newtabpage.activity-stream.section.highlights.includePocket", false, locked);
-pref("browser.newtabpage.activity-stream.section.highlights.rows", "2");
+pref("browser.newtabpage.activity-stream.section.highlights.rows", 2);
 pref("browser.newtabpage.activity-stream.showSponsored", false, locked);
 pref("browser.newtabpage.activity-stream.showSponsoredTopSites", false, locked);
 pref("browser.newtabpage.activity-stream.telemetry", false, locked);
@@ -64,6 +64,7 @@ pref("browser.safebrowsing.downloads.remote.enabled", false);
 pref("browser.safebrowsing.downloads.remote.url", "", locked);
 pref("browser.safebrowsing.malware.enabled", false);
 pref("browser.send_pings", false, locked);
+pref("browser.tabs.duplicateTab", true);
 //pref("browser.tabs.remote.separatedMozillaDomains", "", locked);
 pref("browser.topsites.contile.enabled", false, locked);
 pref("browser.topsites.contile.endpoint", "", locked);
