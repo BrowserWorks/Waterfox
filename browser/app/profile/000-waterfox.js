@@ -150,3 +150,15 @@ pref("toolkit.telemetry.unified", false, locked);
 pref("toolkit.telemetry.updatePing.enabled", false, locked); // Make sure updater telemetry is disabled; see #25909.
 pref("trailhead.firstrun.branches", "", locked);
 pref("xpinstall.signatures.required", false);
+# Extensibles prefs
+pref("browser.tabs.duplicateTab", true);
+pref("browser.tabs.copyurl", true);
+pref("browser.tabs.copyallurls", false);
+pref("browser.tabs.copyurl.activetab", false);
+pref("browser.restart_menu.showpanelmenubtn", true);
+pref("browser.restart_menu.purgecache", false);
+pref("browser.restart_menu.requireconfirm", true);
+pref("browser.tabs.toolbarposition", "topabove");
+pref("browser.bookmarks.toolbarposition", "top");
+pref("browser.statusbar.appendStatusText", true);
+pref("browser.statusbar.enabled", false);

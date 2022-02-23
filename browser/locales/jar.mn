@@ -11,6 +11,7 @@
   preview/ion.ftl                                  (../components/ion/content/ion.ftl)
   preview/protections.ftl                          (../components/protections/content/protections.ftl)
   preview/interventions.ftl                        (../components/urlbar/content/interventions.ftl)
+  browser/extensibles.ftl                          (../extensions/extensibles/locales/en-US/extensibles.ftl)
   browser                                          (%browser/**/*.ftl)
 
 @AB_CD@.jar:
