@@ -6,5 +6,5 @@
 -brand-short-name = Dokimi
 -brand-full-name = Dokimi
 -brand-product-name = Waterfox
--vendor-short-name = Waterfox Ltd.
-trademarkInfo = { "Waterfox® is a registered trademark of Waterfox Ltd." }
+-vendor-short-name = Waterfox Limited
+trademarkInfo = { "Waterfox® is a registered trademark of Waterfox Limited" }
