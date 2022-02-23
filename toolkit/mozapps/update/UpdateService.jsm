@@ -3689,6 +3689,15 @@ UpdateService.prototype = {
    * See nsIUpdateService.idl
    */
   get canUsuallyCheckForUpdates() {
+    var enabled = Services.prefs.getBoolPref("app.update.enabled", true);
+    if (!enabled) {
+      LOG(
+        "gCanCheckForUpdates - unable to automatically check for updates, " +
+          "the preference is disabled."
+      );
+      return false;
+    }
+
     if (this.disabledByPolicy) {
       LOG(
         "UpdateService.canUsuallyCheckForUpdates - unable to automatically check " +
