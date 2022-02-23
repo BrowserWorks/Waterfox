@@ -242,7 +242,7 @@ bool WinTaskbar::GetAppUserModelID(nsAString& aDefaultGroupId) {
   nsCString appName;
   if (appInfo && NS_SUCCEEDED(appInfo->GetName(appName))) {
     nsAutoString regKey;
-    regKey.AssignLiteral("Software\\Mozilla\\");
+    regKey.AssignLiteral("Software\\WaterfoxLimited\\");
     AppendASCIItoUTF16(appName, regKey);
     regKey.AppendLiteral("\\TaskBarIDs");
 

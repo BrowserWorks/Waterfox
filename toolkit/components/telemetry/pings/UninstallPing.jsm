@@ -60,7 +60,7 @@ var UninstallPing = {
       }
     }
 
-    const subKeyName = `Software\\Mozilla\\${Services.appinfo.name}\\TaskBarIDs`;
+    const subKeyName = `Software\\WaterfoxLimited\\${Services.appinfo.name}\\TaskBarIDs`;
 
     const paths = new Set();
 
