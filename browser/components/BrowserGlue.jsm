@@ -32,6 +32,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   ASRouterNewTabHook: "resource://activity-stream/lib/ASRouterNewTabHook.jsm",
   ASRouter: "resource://activity-stream/lib/ASRouter.jsm",
   AsyncShutdown: "resource://gre/modules/AsyncShutdown.jsm",
+  AttributionCode: "resource:///modules/AttributionCode.jsm",
   BackgroundUpdate: "resource://gre/modules/BackgroundUpdate.jsm",
   Blocklist: "resource://gre/modules/Blocklist.jsm",
   BookmarkHTMLUtils: "resource://gre/modules/BookmarkHTMLUtils.jsm",
@@ -1253,6 +1254,9 @@ BrowserGlue.prototype = {
 
     // This value is to limit collecting Places telemetry once per session.
     this._placesTelemetryGathered = false;
+
+    // update startup pages with attribution data
+    this._setAttributionData();
   },
 
   // cleanup (called on application shutdown)
@@ -2498,6 +2502,16 @@ BrowserGlue.prototype = {
           }
         },
       },
+      {
+        task: () => {
+          AttributionCode.deleteFileAsync();
+          // reset prefs
+          Services.prefs.clearUserPref(
+            "startup.homepage_welcome_url.additional"
+          );
+          Services.prefs.clearUserPref("startup.homepage_override_url");
+        },
+      },
 
       // FOG doesn't need to be initialized _too_ early because it has a
       // pre-init buffer.
@@ -2565,7 +2579,15 @@ BrowserGlue.prototype = {
             Cu.isInAutomation &&
             Services.prefs.getBoolPref("app.update.disabledForTesting", false);
           if (!disabledForTesting) {
-            BackgroundUpdate.maybeScheduleBackgroundUpdateTask();
+            try {
+              BackgroundUpdate.maybeScheduleBackgroundUpdateTask();
+            } catch (ex) {
+              if (ex.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
+                // The file does not exist
+              } else {
+                throw ex; // Other error
+              }
+            }
           }
         },
       },
@@ -3853,6 +3875,105 @@ BrowserGlue.prototype = {
 
     // Update the migration version.
     Services.prefs.setIntPref("browser.migration.version", UI_VERSION);
+  },
+
+  async _setDefaultEng(value) {
+    try {
+      let searchInitializedPromise = new Promise(resolve => {
+        if (Services.search.isInitialized) {
+          resolve();
+        }
+        const SEARCH_SERVICE_TOPIC = "browser-search-service";
+        Services.obs.addObserver(function observer(subject, topic, data) {
+          if (data != "init-complete") {
+            return;
+          }
+          Services.obs.removeObserver(observer, SEARCH_SERVICE_TOPIC);
+          resolve();
+        }, SEARCH_SERVICE_TOPIC);
+      });
+      searchInitializedPromise.then(() => {
+        const nameMap = { bing: "Bing", yahoo: "Yahoo!" };
+        const engine = Services.search.getEngineByName(nameMap[value]);
+        Services.search.setDefault(engine);
+        Services.search.setDefaultPrivate(engine);
+      });
+    } catch (ex) {
+      // Minor issue, carry on
+    }
+  },
+
+  async _setAttributionData() {
+    // Kick off async process to set attribution code preference
+    let distSrc = Services.prefs.getCharPref("distribution.source", "");
+    try {
+      let attrData = await AttributionCode.getAttrDataAsync();
+      if (Object.keys(attrData).length) {
+        let attributionStr = "";
+        for (const [key, value] of Object.entries(attrData)) {
+          // If PTAG/TypeTag we only want to set the relevant pref
+          if (["PTAG", "hspart", "hsimp", "typetag"].includes(key)) {
+            Services.prefs.setCharPref(
+              "browser.search." + key.toLowerCase(),
+              value
+            );
+            continue;
+          }
+          // If mtm_source we want to set the distribution source pref & attribution data
+          if (key == "mtm_source") {
+            Services.prefs.setCharPref("distribution.source", value);
+          } else if (key == "engine" && ["bing", "yahoo"].includes(value)) {
+            this._setDefaultEng(value);
+            continue;
+          }
+          // Only add to postSigningData if this hasn't been called previously
+          attributionStr += `&${key}=${value}`;
+        }
+        // Add install param
+        if (attributionStr) {
+          attributionStr += "&status=install";
+        }
+        let additionalPage = Services.urlFormatter.formatURLPref(
+          "startup.homepage_welcome_url.additional"
+        );
+        Services.prefs.setCharPref(
+          "startup.homepage_welcome_url.additional",
+          additionalPage + attributionStr
+        );
+        let overridePage = Services.urlFormatter.formatURLPref(
+          "startup.homepage_override_url"
+        );
+        Services.prefs.setCharPref(
+          "startup.homepage_override_url",
+          overridePage + attributionStr
+        );
+        // Set cohort
+        function getDate() {
+          const d = new Date();
+          let month = "" + (d.getMonth() + 1);
+          let day = "" + d.getDate();
+          let year = d
+            .getFullYear()
+            .toString()
+            .slice(-2);
+
+          if (month.length < 2) {
+            month = "0" + month;
+          }
+          if (day.length < 2) {
+            day = "0" + day;
+          }
+
+          return [day, month, year].join("");
+        }
+
+        Services.prefs.setCharPref("browser.distribution.cohort", getDate());
+      } else if (!distSrc) {
+        Services.prefs.clearUserPref("browser.distribution.cohort");
+      }
+    } catch (ex) {
+      Services.console.logStringMessage(ex + "error setting attr data");
+    }
   },
 
   _showUpgradeDialog() {
