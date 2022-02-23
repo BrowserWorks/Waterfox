@@ -213,6 +213,29 @@ Preferences.addAll([
 
   // Media
   { id: "media.hardwaremediakeys.enabled", type: "bool" },
+
+  // Waterfox
+
+  // Tab Toolbar Position
+  { id: "browser.tabs.toolbarposition", type: "wstring" },
+
+  // Tab Context Menu
+  { id: "browser.tabs.duplicateTab", type: "bool" },
+  { id: "browser.tabs.copyurl", type: "bool" },
+  { id: "browser.tabs.activetab", type: "bool" },
+  { id: "browser.tabs.copyallurls", type: "bool" },
+
+  // Restart Menu Item
+  { id: "browser.restart_menu.purgecache", type: "bool" },
+  { id: "browser.restart_menu.requireconfirm", type: "bool" },
+  { id: "browser.restart_menu.showpanelmenubtn", type: "bool" },
+
+  // Status Bar
+  { id: "browser.statusbar.enabled", type: "bool" },
+  { id: "browser.statusbar.appendStatusText", type: "bool" },
+
+  // Bookmarks Toolbar Position
+  { id: "browser.bookmarks.toolbarposition", type: "wstring" },
 ]);
 
 if (AppConstants.HAVE_SHELL_SERVICE) {
@@ -386,14 +409,6 @@ var gMainPane = {
     // default zoom preferences menu, and to establish a
     // listener for future menu changes.
     gMainPane.initDefaultZoomValues();
-
-    let cfrLearnMoreUrl =
-      Services.urlFormatter.formatURLPref("app.support.baseURL") +
-      "extensionrecommendations";
-    for (const id of ["cfrLearnMore", "cfrFeaturesLearnMore"]) {
-      let link = document.getElementById(id);
-      link.setAttribute("href", cfrLearnMoreUrl);
-    }
 
     if (
       Services.prefs.getBoolPref(
