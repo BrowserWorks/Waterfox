@@ -106,6 +106,8 @@ menu-file-import-from-another-browser =
 menu-file-go-offline =
     .label = Work Offline
     .accesskey = k
+menu-restart-button = 
+    .label = Restart
 
 ## Edit Menu
 

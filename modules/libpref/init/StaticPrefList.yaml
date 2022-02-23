@@ -1348,6 +1348,25 @@
   value: "#551A8B"
   mirror: never
 
+# WATERFOX
+- name: browser.tabs.pinnedIconOnly
+  type: RelaxedAtomicBool
+  value: true
+  mirror: always
+  rust: true
+
+- name: browser.statusbar.contrastText
+  type: RelaxedAtomicBool
+  value: true
+  mirror: always
+  rust: true
+
+- name: browser.lepton.enabled
+  type: RelaxedAtomicBool
+  value: true
+  mirror: always
+  rust: true
+
 #---------------------------------------------------------------------------
 # Prefs starting with "canvas."
 #---------------------------------------------------------------------------

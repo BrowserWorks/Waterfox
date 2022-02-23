@@ -1374,6 +1374,12 @@ BrowserGlue.prototype = {
     SessionStore.init();
 
     AddonManager.maybeInstallBuiltinAddon(
+      "extensibles@waterfox.net",
+      "1.0.0",
+      "resource://builtin-addons/extensibles/"
+    );
+
+    AddonManager.maybeInstallBuiltinAddon(
       "firefox-compact-light@mozilla.org",
       "1.2",
       "resource://builtin-themes/light/"
