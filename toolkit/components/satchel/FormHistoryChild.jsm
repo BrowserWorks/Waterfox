@@ -54,7 +54,8 @@ class FormHistoryChild extends JSWindowActorChild {
     let form = event.target;
     if (
       !gEnabled ||
-      PrivateBrowsingUtils.isContentWindowPrivate(form.ownerGlobal)
+      PrivateBrowsingUtils.isContentWindowPrivate(form.ownerGlobal) ||
+      Services.prefs.getBoolPref("browser.tabs.selectedTabPrivate", false) // WATERFOX
     ) {
       return;
     }

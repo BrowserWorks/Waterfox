@@ -1101,3 +1101,36 @@ function updateImportCommandEnabledState() {
       .setAttribute("disabled", "true");
   }
 }
+
+/**
+  ######## Waterfox Utility Functions ########
+ */
+XPCOMUtils.defineLazyModuleGetters(this, {
+  TabFeatures: "resource:///modules/TabFeatures.jsm",
+  UICustomizations: "resource:///modules/UICustomizations.jsm",
+  PrivateTab: "resource:///modules/PrivateTab.jsm",
+  StatusBar: "resource:///modules/StatusBar.jsm",
+});
+function restartBrowser() {
+  TabFeatures.restartBrowser();
+}
+
+function styleMenuBar() {
+  UICustomizations.styleMenuBar();
+}
+
+function openAllPrivate(event) {
+  PrivateTab.openAllPrivate(event);
+}
+
+function openPrivateTab(event) {
+  PrivateTab.openPrivateTab(event);
+}
+
+function browserOpenTabPrivate(window) {
+  PrivateTab.browserOpenTabPrivate(window);
+}
+
+function togglePrivate(window, tab) {
+  PrivateTab.togglePrivate(window, tab);
+}

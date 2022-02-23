@@ -225,6 +225,11 @@ Preferences.addAll([
   { id: "browser.tabs.activetab", type: "bool" },
   { id: "browser.tabs.copyallurls", type: "bool" },
 
+  // Additional Tab Prefs
+  { id: "browser.tabs.pinnedIconOnly", type: "bool" },
+  { id: "browser.tabs.insertAfterCurrent", type: "bool" },
+  { id: "browser.tabs.insertRelatedAfterCurrent", type: "bool" },
+
   // Restart Menu Item
   { id: "browser.restart_menu.purgecache", type: "bool" },
   { id: "browser.restart_menu.requireconfirm", type: "bool" },
@@ -233,6 +238,7 @@ Preferences.addAll([
   // Status Bar
   { id: "browser.statusbar.enabled", type: "bool" },
   { id: "browser.statusbar.appendStatusText", type: "bool" },
+  { id: "browser.statusbar.contrastText", type: "bool" },
 
   // Bookmarks Toolbar Position
   { id: "browser.bookmarks.toolbarposition", type: "wstring" },
