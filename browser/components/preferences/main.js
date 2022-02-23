@@ -84,6 +84,9 @@ const ICON_URL_APP =
 // was set by us to a custom handler icon and CSS should not try to override it.
 const APP_ICON_ATTR_NAME = "appHandlerIcon";
 
+// WATERFOX
+const PREF_UPDATE_ENABLED = "app.update.enabled";
+
 ChromeUtils.defineModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
 
 if (AppConstants.MOZ_DEV_EDITION) {
@@ -214,7 +217,9 @@ Preferences.addAll([
   // Media
   { id: "media.hardwaremediakeys.enabled", type: "bool" },
 
-  // Waterfox
+  // WATERFOX
+  // Enable auto update checking
+  { id: "app.update.enabled", type: "bool" },
 
   // Tab Toolbar Position
   { id: "browser.tabs.toolbarposition", type: "wstring" },
@@ -686,6 +691,7 @@ var gMainPane = {
         // Start with no option selected since we are still reading the value
         document.getElementById("autoDesktop").removeAttribute("selected");
         document.getElementById("manualDesktop").removeAttribute("selected");
+        document.getElementById("disabledDesktop").removeAttribute("selected");
         // Start reading the correct value from the disk
         this.readUpdateAutoPref();
         setEventListener("updateRadioGroup", "command", event => {
@@ -1819,7 +1825,9 @@ var gMainPane = {
 
       radiogroup.disabled = true;
       let enabled = await UpdateUtils.getAppUpdateAutoEnabled();
-      radiogroup.value = enabled;
+      // If user sets app.update.enabled to false, set value to disabled, else use enabled
+      let manualUpdates = Services.prefs.getBoolPref(PREF_UPDATE_ENABLED, true);
+      radiogroup.value = !manualUpdates ? "disabled" : enabled;
       radiogroup.disabled = false;
 
       this.maybeDisableBackgroundUpdateControls();
@@ -1839,6 +1847,11 @@ var gMainPane = {
       radiogroup.disabled = true;
       try {
         await UpdateUtils.setAppUpdateAutoEnabled(updateAutoValue);
+        // Ensure enabled pref is updated based on radiogroup value
+        Services.prefs.setBoolPref(
+          PREF_UPDATE_ENABLED,
+          radiogroup.value != "disabled"
+        );
         radiogroup.disabled = false;
       } catch (error) {
         Cu.reportError(error);
