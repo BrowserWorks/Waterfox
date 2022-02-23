@@ -197,7 +197,7 @@
                      closemenu="none"
                      oncommand="PanelUI.showSubView('PanelUI-helpView', this)"/>
 #ifndef XP_MACOSX
-      <toolbarseparator/>
+                     <toolbarseparator/>
       <toolbarbutton id="appMenu-quit-button"
                      class="subviewbutton subviewbutton-iconic"
 #ifdef XP_WIN
@@ -348,6 +348,7 @@
                      oncommand="PanelUI.showSubView('PanelUI-helpView', this)"/>
 #ifndef XP_MACOSX
       <toolbarseparator/>
+#include ../../extensions/extensibles/builtins/appmenu/restartbutton.inc
       <toolbarbutton id="appMenu-quit-button2"
                      class="subviewbutton"
                      data-l10n-id="appmenuitem-exit2"
