@@ -1,0 +1,49 @@
+{
+  "manifest_version": 2,
+  "name": "Extensibles",
+  "description": "Additional built-in features for Waterfox",
+  "version": "1.0.0",
+  "default_locale": "en",
+  "hidden": true,
+
+  "applications": {
+    "gecko": {
+      "id": "extensibles@waterfox.net",
+      "strict_min_version": "72.0a1"
+    }
+  },
+
+	"content_scripts": [
+		{
+			"matches":[
+				"http://chrome.google.com/webstore*",
+				"https://chrome.google.com/webstore*"
+			],
+			"js":[
+				"addon-stores/cws.js"
+			],
+      "run_at": "document_start",
+      "all_frames": true
+		},
+		{
+			"matches":[
+				"http://addons.opera.com/*",
+				"https://addons.opera.com/*"
+			],
+			"js":[
+				"addon-stores/ows.js"
+			],
+      "run_at": "document_start",
+      "all_frames": true
+		}
+	],
+
+  "background": {
+    "scripts": [
+      "addon-stores/cws.js",
+      "addon-stores/ows.js"
+    ]
+  },
+
+  "permissions": ["tabs", "menus"]
+}

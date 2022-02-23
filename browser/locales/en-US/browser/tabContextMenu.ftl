@@ -71,6 +71,10 @@ tab-context-share-url =
     .accesskey = h
 tab-context-share-more =
     .label = More…
+copy-url =
+    .label = Copy Tab Link
+copy-all-urls =
+    .label = Copy All Tab Links
 
 ## Variables:
 ##  $tabCount (Number): the number of tabs that are affected by the action.

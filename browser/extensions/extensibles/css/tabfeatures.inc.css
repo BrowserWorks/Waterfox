@@ -1,0 +1,62 @@
+@media not (-wfx-icon-only-pinned) {
+    .tab-label-container[textoverflow][labeldirection=ltr],
+    .tab-label-container[textoverflow]:not([labeldirection]):-moz-locale-dir(ltr) {
+      direction: ltr;
+      mask-image: linear-gradient(to left, transparent, black var(--tab-label-mask-size));
+    }
+
+    .tab-label-container[textoverflow][labeldirection=rtl],
+    .tab-label-container[textoverflow]:not([labeldirection]):-moz-locale-dir(rtl) {
+      direction: rtl;
+      mask-image: linear-gradient(to right, transparent, black var(--tab-label-mask-size));
+    }
+
+    .tabbrowser-tab {
+      -moz-box-flex: 100;
+      max-width: 225px;
+      min-width: var(--tab-min-width);
+      width: 0;
+      transition: min-width 100ms ease-out,
+                  max-width 100ms ease-out;
+    }
+
+    .tabbrowser-tab:not([fadein]) {
+      max-width: 0.1px;
+      min-width: 0.1px;
+      visibility: hidden;
+    }
+
+    .tab-throbber,
+    .tab-icon-pending,
+    .tab-icon-image,
+    .tab-sharing-icon-overlay,
+    .tab-icon-overlay {
+      margin-inline-end: 5.5px;
+    }
+}
+
+@media (-wfx-status-contrast-text) {
+  #status-text > #statuspanel-label {
+    color: var(--lwt-toolbar-field-color) !important;
+  }
+}
+
+#status-text > #statuspanel-label {
+  color: var(--arrowpanel-border-color);
+}
+
+%ifndef XP_MACOSX
+  /* Ensure that bottom positioned tabs are colored according to theme */
+  #browser-bottombox {
+    background-color: var(--lwt-accent-color);
+  }
+  /* Ensure that status bar colored according to theme */
+  #status-bar {
+    appearance: auto !important;
+  }
+%endif
+
+/* Ensure that bottom positioned tabs collapse when video's are fullscreen */
+:root[inDOMFullscreen] #browser-bottombox {
+  visibility: collapse;
+}

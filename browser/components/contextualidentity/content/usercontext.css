@@ -91,6 +91,10 @@
   --identity-icon: url("resource://usercontext-content/pet.svg");
 }
 
+.identity-icon-private {
+  --identity-icon: url("resource://usercontext-content/private.svg");
+}
+
 .identity-icon-tree {
   --identity-icon: url("resource://usercontext-content/tree.svg");
 }
