@@ -170,10 +170,20 @@ export const MultiStageAboutWelcome = props => {
   );
 };
 
+export const AdditionalText = props => {
+  return (
+    <div className="additional-text">
+      <Localized text={props.content.additional}></Localized>
+      <Localized text={props.content.additional2}></Localized>
+    </div>
+  )
+}
+
 export const SecondaryCTA = props => {
   let targetElement = props.position
     ? `secondary_button_${props.position}`
     : `secondary_button`;
+  let altName = props.id == "AW_DEFAULT_SEARCH" ? " primary" : "secondary text-link";
   return (
     <div
       className={
@@ -185,7 +195,7 @@ export const SecondaryCTA = props => {
       </Localized>
       <Localized text={props.content[targetElement].label}>
         <button
-          className="secondary text-link"
+          className={`${altName}`}
           value={targetElement}
           onClick={props.handleAction}
         />
@@ -293,6 +303,10 @@ export class WelcomeScreen extends React.PureComponent {
 
       this.props.setActiveTheme(themeToUse);
       window.AWSelectTheme(themeToUse);
+    }
+
+    if (action.search) {
+      window.AWSelectSearchEngine(action.search);
     }
 
     if (action.navigate) {
