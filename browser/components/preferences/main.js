@@ -2087,7 +2087,16 @@ var gMainPane = {
       if (aData != "true" && aData != "false") {
         throw new Error("Invalid preference value for app.update.auto");
       }
-      document.getElementById("updateRadioGroup").value = aData;
+      // Going from Auto to Disable needs to be correctly reflected here
+      // At this point app.update.enabled has not yet been set, so we
+      // want to set disabled if it is going from true->false and is
+      // currently true
+      let manualUpdates = Services.prefs.getBoolPref(
+        "app.update.enabled",
+        true
+      );
+      document.getElementById("updateRadioGroup").value =
+        manualUpdates && !(aData === "true") ? "disabled" : aData;
       this.maybeDisableBackgroundUpdateControls();
     } else if (aTopic == BACKGROUND_UPDATE_CHANGED_TOPIC) {
       if (!AppConstants.MOZ_UPDATER || !AppConstants.MOZ_UPDATE_AGENT) {
