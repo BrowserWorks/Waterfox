@@ -150,6 +150,18 @@ body {
     }
   }
 
+  .additional-text {
+    font-size: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+    width: 70%;
+    text-align: center;
+    margin: 10px auto;
+  }
+
   .tiles-theme-container {
     margin: 10px auto;
   }
