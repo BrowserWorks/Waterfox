@@ -1,3 +1,18 @@
+<!-- Dynamic Theme preferences -->
+  <groupbox id="dynamicThemeGroup" data-category="paneGeneral" hidden="true">
+    <label>
+      <html:h2 data-l10n-id="dynamic-theme-header" />
+    </label>
+    <radiogroup id="dynamicThemeRadioGroup">
+      <radio value="1"
+             data-l10n-id="dynamic-theme-dark"/>
+      <radio value="0"
+             data-l10n-id="dynamic-theme-light"/>
+      <radio value="-1"
+             data-l10n-id="dynamic-theme-auto"/>
+    </radiogroup>
+  </groupbox>
+
 <!-- Restart Menu Item preferences -->
   <groupbox id="restartGroup" data-category="paneGeneral" hidden="true">
     <label>
