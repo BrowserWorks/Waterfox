@@ -11,6 +11,7 @@ const LIGHT_THEME_ID = "firefox-compact-light@mozilla.org";
 const DARK_THEME_ID = "firefox-compact-dark@mozilla.org";
 const AUSD_THEME_ID = "australis-dark@waterfox.net";
 const AUSL_THEME_ID = "australis-light@waterfox.net";
+const MOZ_DEFAULT_THEME_ID = "default-theme@mozilla.org";
 
 ChromeUtils.defineModuleGetter(
   this,
@@ -272,7 +273,7 @@ LightweightThemeConsumer.prototype = {
     const useDarkTheme =
       themeData.darkTheme &&
       this.darkThemeMediaQuery?.matches &&
-      (themeData.darkTheme.id != DEFAULT_THEME_ID ||
+      (themeData.darkTheme.id != MOZ_DEFAULT_THEME_ID ||
         AppConstants.platform != "linux");
 
     let theme = useDarkTheme ? themeData.darkTheme : themeData.theme;
@@ -296,7 +297,8 @@ LightweightThemeConsumer.prototype = {
         theme.id == LIGHT_THEME_ID ||
         theme.id == DARK_THEME_ID ||
         theme.id == AUSD_THEME_ID ||
-        theme.id == AUSL_THEME_ID
+        theme.id == AUSL_THEME_ID ||
+        theme.id == MOZ_DEFAULT_THEME_ID
     );
     this._setExperiment(active, themeData.experiment, theme.experimental);
     _setImage(root, active, "--lwt-header-image", theme.headerURL);
@@ -308,13 +310,13 @@ LightweightThemeConsumer.prototype = {
     );
     _setProperties(root, active, theme);
 
-    if (theme.id != DEFAULT_THEME_ID || useDarkTheme) {
+    if (theme.id != MOZ_DEFAULT_THEME_ID || useDarkTheme) {
       root.setAttribute("lwtheme", "true");
     } else {
       root.removeAttribute("lwtheme");
       root.removeAttribute("lwthemetextcolor");
     }
-    if (theme.id == DEFAULT_THEME_ID && useDarkTheme) {
+    if (theme.id == MOZ_DEFAULT_THEME_ID && useDarkTheme) {
       root.setAttribute("lwt-default-theme-in-dark-mode", "true");
     } else {
       root.removeAttribute("lwt-default-theme-in-dark-mode");
