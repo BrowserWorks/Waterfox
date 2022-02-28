@@ -564,19 +564,28 @@ GeckoDriver.prototype.newSession = async function(cmd) {
     this.registerListenersForWindow(win);
   }
 
+  // Setup observer for modal dialogs
+  this.dialogObserver = new modal.DialogObserver(() => this.curBrowser);
+  this.dialogObserver.add(this.handleModalDialog.bind(this));
+
   if (this.mainFrame) {
     this.currentSession.chromeBrowsingContext = this.mainFrame.browsingContext;
     this.mainFrame.focus();
   }
 
   if (this.curBrowser.tab) {
-    this.currentSession.contentBrowsingContext = this.curBrowser.contentBrowser.browsingContext;
+    const browsingContext = this.curBrowser.contentBrowser.browsingContext;
+    this.currentSession.contentBrowsingContext = browsingContext;
+    // If the currently selected tab is loading, wait until it's done.
+    if (browsingContext.webProgress.isLoadingDocument) {
+      await navigate.waitForNavigationCompleted(this, () => {}, {
+        loadEventExpected: true,
+        unknownState: true,
+      });
+    }
+
     this.curBrowser.contentBrowser.focus();
   }
-
-  // Setup observer for modal dialogs
-  this.dialogObserver = new modal.DialogObserver(() => this.curBrowser);
-  this.dialogObserver.add(this.handleModalDialog.bind(this));
 
   // Check if there is already an open dialog for the selected browser window.
   this.dialog = modal.findModalDialogs(this.curBrowser);
