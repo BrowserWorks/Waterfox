@@ -40,29 +40,10 @@
 
   "background": {
     "scripts": [
-      "tabfeatures/background.js",
-      "aboutpreferences/background.js",
       "addon-stores/cws.js",
       "addon-stores/ows.js"
     ]
   },
 
-  "permissions": ["tabs", "menus"],
-
-  "experiment_apis": {
-    "extensibles": {
-      "schema": "./experiment-apis/extensibles/schema.json",
-      "parent": {
-        "scopes": ["addon_parent"],
-        "script": "./experiment-apis/extensibles/api.js",
-        "paths": [
-          ["extensibles", "utils"],
-          ["extensibles", "privatetab"],
-          ["extensibles", "statusbar"],
-          ["extensibles", "tabfeatures"],
-          ["extensibles", "prefsext"]
-        ]
-      }
-    }
-  }
+  "permissions": ["tabs", "menus"]
 }
