@@ -7293,12 +7293,4 @@ var TabContextMenu = {
       sharingService.openSharingPreferences();
     }
   },
-
-  copyTabUrl(uri) {
-    Services.obs.notifyObservers(null, "menuitem-copyurl-extension", uri);
-  },
-
-  copyAllTabUrls() {
-    Services.obs.notifyObservers(null, "menuitem-copyallurls-extension");
-  },
 };

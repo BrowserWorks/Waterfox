@@ -1644,4 +1644,4 @@ toolbar[keyNav=true]:not([collapsed=true], [customizing=true]) toolbartabstop {
  * End Dialogs
  */
 
-%include ../../extensions/extensibles/extension/css/tabfeatures.inc.css
+%include ../../extensions/extensibles/css/tabfeatures.inc.css
