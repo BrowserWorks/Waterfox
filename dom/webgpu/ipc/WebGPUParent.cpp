@@ -736,6 +736,7 @@ ipc::IPCResult WebGPUParent::RecvShutdown() {
   mCanvasMap.clear();
   ffi::wgpu_server_poll_all_devices(mContext, true);
   ffi::wgpu_server_delete(const_cast<ffi::WGPUGlobal*>(mContext));
+  mContext = nullptr;
   return IPC_OK();
 }
 
