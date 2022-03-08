@@ -232,7 +232,7 @@ Var ArchToInstall
 !undef URLStubDownloadAMD64
 !undef URLStubDownloadAArch64
 !define URLStubDownloadX86 ""
-!define URLStubDownloadAMD64 "https://github.com/WaterfoxCo/Waterfox/releases/latest/download/Waterfox.${AppVersion}.Setup.exe"
+!define URLStubDownloadAMD64 "https://github.com/WaterfoxCo/Waterfox/releases/download/${AppVersion}/Waterfox.${AppVersion}.Setup.exe"
 !define URLStubDownloadAArch64 ""
 !undef URLManualDownload
 !define URLManualDownload ""
