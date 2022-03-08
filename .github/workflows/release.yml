@@ -195,6 +195,7 @@ jobs:
           ascii
           user ${{ secrets.FTP_USR }} ${{ secrets.FTP_PASS }}
           prompt
+            rename staging/x86_64/Windows_NT/Install\ Waterfox.exe releases/win64/installer/Install\ Waterfox.exe
             rename staging/x86_64/Windows_NT/Waterfox\ ${{ github.event.inputs.version }}\ Setup.exe releases/win64/installer/Waterfox\ ${{ github.event.inputs.version }}\ Setup.exe
             rename staging/x86_64/Windows_NT/waterfox-${{ github.event.inputs.version }}.en-US.win64.complete.xz.mar releases/win64/update/waterfox-${{ github.event.inputs.version }}.en-US.win64.complete.xz.mar
             rename staging/x86_64/Linux/waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2 releases/linux64/installer/waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2
