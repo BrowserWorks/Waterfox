@@ -15,6 +15,7 @@
 #  include "mozilla/gfx/DeviceManagerDx.h"  // for DeviceManagerDx
 #  include "mozilla/layers/ImageDataSerializer.h"
 #endif
+#include "mozilla/StaticPrefs_dom.h"
 #include "mozilla/dom/WebGLParent.h"
 #include "mozilla/ipc/Transport.h"           // for Transport
 #include "mozilla/layers/AnimationHelper.h"  // for CompositorAnimationStorage
@@ -270,6 +271,10 @@ bool ContentCompositorBridgeParent::DeallocPWebRenderBridgeParent(
 }
 
 webgpu::PWebGPUParent* ContentCompositorBridgeParent::AllocPWebGPUParent() {
+  if (!StaticPrefs::dom_webgpu_enabled()) {
+    return nullptr;
+  }
+
   webgpu::WebGPUParent* parent = new webgpu::WebGPUParent();
   parent->AddRef();  // IPDL reference
   return parent;
