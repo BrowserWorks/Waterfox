@@ -18,6 +18,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
 });
 
 const USER_LOCALE = "$USER_LOCALE";
+const USER_REGION = "$USER_REGION";
 
 XPCOMUtils.defineLazyGetter(this, "logConsole", () => {
   return console.createInstance({
@@ -265,8 +266,17 @@ class SearchEngineSelector {
             const engine = { ...baseConfig };
             engine.webExtension = { ...baseConfig.webExtension };
             delete engine.webExtension.locales;
-            engine.webExtension.locale =
-              webExtensionLocale == USER_LOCALE ? locale : webExtensionLocale;
+            switch (webExtensionLocale) {
+              case USER_LOCALE:
+                engine.webExtension.locale = locale;
+                break;
+              case USER_REGION:
+                engine.webExtension.locale = lcRegion;
+                break;
+              default:
+                engine.webExtension.locale = webExtensionLocale;
+                break;
+            }
             engines.push(engine);
           }
         } else {
@@ -292,6 +302,9 @@ class SearchEngineSelector {
     }
 
     for (const engine of engines) {
+      engine.telemetryId = engine.telemetryId
+        ?.replace(USER_LOCALE, locale)
+        .replace(USER_REGION, lcRegion);
       if (
         "default" in engine &&
         shouldPrefer(
