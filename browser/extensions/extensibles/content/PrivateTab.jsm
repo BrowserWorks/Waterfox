@@ -26,6 +26,8 @@ const { BrowserUtils } = ChromeUtils.import(
   "resource:///modules/BrowserUtils.jsm"
 );
 
+const { PrefUtils } = ChromeUtils.import("resource:///modules/PrefUtils.jsm");
+
 const PrivateTab = {
   config: {
     neverClearData: false, // TODO: change to pref controlled value; if you want to not record history but don"t care about other data, maybe even want to keep private logins
@@ -465,6 +467,8 @@ const PrivateTab = {
       // Ensure we don't save search suggestions for PrivateTab
       win.gURLBar.isPrivate = isPrivate;
     }
+    // Update selected tab private status
+    PrefUtils.set("browser.tabs.selectedTabPrivate", isPrivate);
   },
 
   onTabClose(aEvent) {
