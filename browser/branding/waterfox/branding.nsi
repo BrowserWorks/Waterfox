@@ -12,7 +12,7 @@
 !define BrandFullName         "Waterfox"
 !define CompanyName           "Waterfox Limited"
 !define URLInfoAbout          "https://www.waterfox.net"
-!define URLUpdateInfo         "https://www.waterfox.net/browser/${AppVersion}/releasenotes"
+!define URLUpdateInfo         "https://www.waterfox.net/docs/releases/${AppVersion}"
 !define HelpLink              "https://support.waterfox.net"
 
 ; The OFFICIAL define is a workaround to support different urls for Release and
@@ -20,7 +20,7 @@
 ; set the update channel to beta.
 !define OFFICIAL
 !define URLStubDownloadX86 ""
-!define URLStubDownloadAMD64 "https://github.com/WaterfoxCo/Waterfox/releases/latest/download/Waterfox.${AppVersion}.Setup.exe"
+!define URLStubDownloadAMD64 "https://cdn.waterfox.net/releases/win64/latest"
 !define URLStubDownloadAArch64 ""
 !define URLManualDownload "https://www.waterfox.net/download/"
 !define URLSystemRequirements "https://www.waterfox.net/download/"
