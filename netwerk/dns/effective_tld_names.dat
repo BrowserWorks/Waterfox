@@ -11241,6 +11241,11 @@ deno-staging.dev
 // Submitted by Peter Thomassen <peter@desec.io>
 dedyn.io
 
+// Deta: https://www.deta.sh/
+// Submitted by Aavash Shrestha <aavash@deta.sh>
+deta.app
+deta.dev
+
 // Diher Solutions : https://diher.solutions
 // Submitted by Didi Hermawan <mail@diher.solutions>
 *.rss.my.id
@@ -11870,8 +11875,6 @@ app.os.stg.fedoraproject.org
 
 // FearWorks Media Ltd. : https://fearworksmedia.co.uk
 // submitted by Keith Fairley <domains@fearworksmedia.co.uk>
-couk.me
-ukco.me
 conn.uk
 copro.uk
 hosp.uk
@@ -13499,6 +13502,8 @@ srht.site
 stackhero-network.com
 
 // Staclar : https://staclar.com
+// Submitted by Q Misell <q@staclar.com>
+musician.io
 // Submitted by Matthias Merkel <matthias.merkel@staclar.com>
 novecore.site
 
@@ -13741,6 +13746,10 @@ my-wan.de
 syno-ds.de
 synology-diskstation.de
 synology-ds.de
+
+// Typedream : https://typedream.com
+// Submitted by Putri Karunia <putri@typedream.com>
+typedream.app
 
 // Typeform : https://www.typeform.com
 // Submitted by Sergi Ferriz <sergi.ferriz@typeform.com>
