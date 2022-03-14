@@ -33,16 +33,6 @@ ChromeUtils.defineModuleGetter(
   "resource:///modules/sessionstore/SessionMigration.jsm"
 );
 ChromeUtils.defineModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
-ChromeUtils.defineModuleGetter(
-  this,
-  "FileUtils",
-  "resource://gre/modules/FileUtils.jsm"
-);
-ChromeUtils.defineModuleGetter(
-  this,
-  "ProfileAge",
-  "resource://gre/modules/ProfileAge.jsm"
-);
 
 function SelectedDirProfileMigrator() {
   this.wrappedJSObject = this; // for testing...
@@ -153,7 +143,7 @@ SelectedDirProfileMigrator.prototype._getResourcesInternal = function(
     let pageInfos = [];
     for (let row of rows) {
       try {
-        // if having typed_count, we changes transition type to typed.
+        // if having typed_count, we change transition type to typed.
         let transition = PlacesUtils.history.TRANSITIONS.LINK;
         if (row.getResultByName("typed") > 0) {
           transition = PlacesUtils.history.TRANSITIONS.TYPED;
@@ -256,10 +246,9 @@ SelectedDirProfileMigrator.prototype._getResourcesInternal = function(
   }
 
   let types = MigrationUtils.resourceTypes;
-  let classic = this._getFileObject(sourceProfileDir, "key3.db");
   let bookmarks;
   let places;
-  if (!classic) {
+  if (!this._getFileObject(sourceProfileDir, "places.sqlite")) {
     places = getFileResource(types.HISTORY, [
       "places.sqlite",
       "places.sqlite-wal",
@@ -284,7 +273,7 @@ SelectedDirProfileMigrator.prototype._getResourcesInternal = function(
     "autofill-profiles.json",
   ]);
   // don't try to import if places.sqlite doesn't exist
-  if (this._getFileObject(sourceProfileDir, "places.sqlite") && classic) {
+  if (this._getFileObject(sourceProfileDir, "places.sqlite")) {
     places = {
       name: "history",
       type: types.HISTORY,
@@ -324,19 +313,19 @@ SelectedDirProfileMigrator.prototype._getResourcesInternal = function(
             sourceDir.path,
             "bookmarks",
             `SELECT 
-              b.type,
-              b.position,
-              (SELECT guid FROM moz_bookmarks WHERE id = b.parent) as parentGuid, 
-              b.parent, 
-              b.title,
-              b.guid,
-              p.url,
-              p.hidden
-            FROM moz_bookmarks b
-            LEFT JOIN moz_places p
-            ON b.fk = p.id 
-            WHERE 
-              parentGuid != 'root________' AND (b.type == 2 OR (p.url IS NOT NULL AND p.hidden != 1));`
+               b.type,
+               b.position,
+               (SELECT guid FROM moz_bookmarks WHERE id = b.parent) as parentGuid, 
+               b.parent, 
+               b.title,
+               b.guid,
+               p.url,
+               p.hidden
+             FROM moz_bookmarks b
+             LEFT JOIN moz_places p
+             ON b.fk = p.id 
+             WHERE
+               parentGuid != 'root________' AND (b.type == 2 OR (p.url IS NOT NULL AND p.hidden != 1));`
           );
           let formattedRows = formatBookmarkRows(rows);
           let ids = Object.values(formattedRows).map(row => {
@@ -344,21 +333,15 @@ SelectedDirProfileMigrator.prototype._getResourcesInternal = function(
           });
           let itemsToInsert = sortBookmarkRows(formattedRows, ids);
           // insert bookmarks
-          Object.entries(itemsToInsert).forEach(
-            async ([parentGuid, parent]) => {
-              // do not attempt to insert if empty
-              if (parent.children && parent.children.length) {
-                try {
-                  await MigrationUtils.insertManyBookmarksWrapper(
-                    parent.children,
-                    parentGuid
-                  );
-                } catch (ex) {
-                  Cu.reportError(ex);
-                }
-              }
+          for (let [parentGuid, parent] of Object.entries(itemsToInsert)) {
+            // do not attempt to insert if empty
+            if (parent.children && parent.children.length) {
+              await MigrationUtils.insertManyBookmarksWrapper(
+                parent.children,
+                parentGuid
+              );
             }
-          );
+          }
           aCallback(true);
         } catch (ex) {
           Cu.reportError(ex);
