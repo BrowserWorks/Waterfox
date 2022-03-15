@@ -4178,8 +4178,13 @@ void Document::LocalizationLinkAdded(Element* aLinkElement) {
   mDocumentL10n->AddResourceId(href);
 
   if (mReadyState >= READYSTATE_INTERACTIVE) {
-    mDocumentL10n->Activate(true);
-    mDocumentL10n->TriggerInitialTranslation();
+    RefPtr<DocumentL10n> l10n = mDocumentL10n;
+    RefPtr<Runnable> r = NS_NewRunnableFunction(
+        "DocumentL10n::TriggerInitialTranslation()", [l10n]() {
+          l10n->Activate(true);
+          l10n->TriggerInitialTranslation();
+        });
+    nsContentUtils::AddScriptRunner(r.forget());
   } else {
     if (!mDocumentL10n->mBlockingLayout) {
       // Our initial translation is going to block layout start.  Make sure
@@ -4235,7 +4240,8 @@ void Document::OnParsingCompleted() {
   OnL10nResourceContainerParsed();
 
   if (mDocumentL10n) {
-    mDocumentL10n->TriggerInitialTranslation();
+    RefPtr<DocumentL10n> l10n = mDocumentL10n;
+    l10n->TriggerInitialTranslation();
   }
 }
 
