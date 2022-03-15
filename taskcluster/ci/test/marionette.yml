@@ -36,10 +36,7 @@ job-defaults:
         by-test-platform:
             .*-qr/debug: ['fission', 'webrender-sw']
             default: ['fission']
-    virtualization:
-        by-test-platform:
-            windows10-64.*: hardware
-            default: virtual
+    virtualization: virtual
     python-3: true
 
 marionette:
