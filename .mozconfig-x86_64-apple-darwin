@@ -8,20 +8,20 @@ if test $(uname -s) = Darwin; then
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
 elif test $(uname -s) = Linux; then
-    CCTOOLS=$HOME/crosstool12
-    CROSS_SYSROOT=$CCTOOLS/MacOSX11.3.sdk
-    export CC=$CCTOOLS/clang/bin/clang
-    export CXX=$CCTOOLS/clang/bin/clang++
-    export DMG_TOOL=$CCTOOLS/dmg/dmg
-    export DSYMUTIL=$CCTOOLS/clang/bin/dsymutil
-    export HFS_TOOL=$CCTOOLS/dmg/hfsplus
+    TOOLS=$HOME/macos-cross
+    CROSS_SYSROOT=${TOOLS}/MacOSX11.3.sdk
+    export CC=${TOOLS}/clang/bin/clang
+    export CXX=${TOOLS}/clang/bin/clang++
+    export DMG_TOOL=${TOOLS}/dmg/dmg
+    export DSYMUTIL=${TOOLS}/clang/bin/dsymutil
+    export HFS_TOOL=${TOOLS}/dmg/hfsplus
     export HOST_CFLAGS="-g"
     export HOST_CXXFLAGS="-g"
     export HOST_LDFLAGS="-g"
     export MACOS_SDK_DIR=$CROSS_SYSROOT
-    export MKFSHFS=$CCTOOLS/hfsplus-tools/newfs_hfs
-    mk_add_options "export LD_LIBRARY_PATH=$CCTOOLS/clang/lib"
-    mk_add_options "export PATH=$CCTOOLS/cctools/bin:$CCTOOLS/clang/bin:$PATH"
+    export MKFSHFS=${TOOLS}/hfsplus-tools/newfs_hfs
+    mk_add_options "export LD_LIBRARY_PATH=${TOOLS}/clang/lib"
+    mk_add_options "export PATH=${TOOLS}/cctools/bin:${TOOLS}/clang/bin:$PATH"
     unset MOZ_STDCXX_COMPAT
 fi
 
@@ -61,6 +61,7 @@ elif [ -f "$HOME/.mozbuild/sccache/sccache" ]; then
     ac_add_options --with-ccache=$HOME/.mozbuild/sccache/sccache
 fi
 
+export RUSTC_OPT_LEVEL=2
 mk_add_options AUTOCLOBBER=1
 mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
 MOZ_REQUIRE_SIGNING=
