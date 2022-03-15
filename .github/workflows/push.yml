@@ -4,6 +4,11 @@ on:
   push:
     branches: [current]
 
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  WFX_RELEASE: 1
+
 jobs:
   windows-x64:
     name: 🪟 Windows X64
@@ -14,19 +19,18 @@ jobs:
     env:
       MOZCONFIG: ".mozconfig-x86_64-pc-windows-msvc"
       SHELL: /bin/sh
-      WFX_RELEASE: 1
       WINEDEBUG: -all
       ARCH: x86_64-pc-mingw32
     steps:
       - name: 📤 Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: 🧰 Cache
         uses: actions/cache@v2
         id: cache-win-x64
         with:
           path: |
-            ~/tooltool12
+            ~/win-cross
             ~/.cache/sccache
             ~/.mozbuild
           key: win-${{ hashFiles('**/browser/config/version_display.txt') }}
@@ -35,40 +39,34 @@ jobs:
 
       - name: 💿 Setup extra build dependencies
         run: |
-          sudo apt update
-          sudo apt install -y build-essential libpython3-dev m4 nodejs unzip uuid zip libasound2-dev libcurl4-openssl-dev libdbus-1-dev libdbus-glib-1-dev libdrm-dev libgtk-3-dev libpulse-dev libx11-xcb-dev libxt-dev xvfb upx nsis jq yasm nasm wget2
-          wget2 https://www.7-zip.org/a/7z2107-linux-x64.tar.xz
+          sudo apt install -y build-essential libpython3-dev m4 nodejs unzip uuid zip libasound2-dev libcurl4-openssl-dev libdbus-1-dev libdbus-glib-1-dev libdrm-dev libgtk-3-dev libpulse-dev libx11-xcb-dev libxt-dev xvfb upx nsis jq yasm nasm
+          wget https://www.7-zip.org/a/7z2107-linux-x64.tar.xz
           tar xf 7z2107-linux-x64.tar.xz
           sudo mv 7zz /usr/local/bin/7z
 
       - name: 💿 Setup rust
         run: |
-          rustup default 1.55.0-x86_64-unknown-linux-gnu
+          rustup default 1.59.0-x86_64-unknown-linux-gnu
           rustup target add x86_64-pc-windows-msvc
 
       - name: 💿 Setup jsign
         run: |
-          wget2 https://github.com/ebourg/jsign/releases/download/4.0/jsign_4.0_all.deb
+          wget https://github.com/ebourg/jsign/releases/download/4.0/jsign_4.0_all.deb
           sudo apt install -y ./jsign_4.0_all.deb
 
-      - name: ⏬ Download tooltool
+      - name: ⏬ Setup win-cross
         run: |
-          wget2 https://cdn.waterfox.net/tools/tooltool12.tar.xz
-        if: steps.cache-win-x64.outputs.cache-hit != 'true'
-
-      - name: 💿 Setup tooltool
-        run: |
-          tar -xvf tooltool12.tar.xz -C $HOME/
+          aws s3 cp s3://waterfox/prep/win-cross.tar.xz win-cross.tar.xz
+          tar -xvf win-cross.tar.xz -C $HOME/
         if: steps.cache-win-x64.outputs.cache-hit != 'true'
 
       - name: 🍷 WINE environment
         run: |
-              Xvfb :2 -screen 0 1024x768x16 &
-              export DISPLAY=:2
+          Xvfb :2 -screen 0 1024x768x16 &
+          export DISPLAY=:2
 
       - name: 🏗 Build
         run: |
-          sudo mount -t vfat $HOME/tooltool12/fat.fs /mnt/ -o rw,umask=0000 || :
           ./mach create-mach-environment
           ./mach build
 
@@ -143,12 +141,12 @@ jobs:
           popd
 
       - name: 🆙 Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Waterfox Windows Artifact ${{ github.run_id }}
           path: |
             ./obj-${{ env.ARCH }}/dist/install/sea/*.exe
-            ./obj-${{ env.ARCH }}/dist/update/*.mar 
+            ./obj-${{ env.ARCH }}/dist/update/*.mar
             ./obj-${{ env.ARCH }}/dist/update/*.xml
 
       - name: 🔑 Install SSH key
@@ -161,7 +159,7 @@ jobs:
       - name: ♻️ Stage files
         run: |
           VERSION_DISPLAY=`cat browser/config/version_display.txt`
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./obj-${{ env.ARCH }}/dist/update/update.xml s3://aus.waterfox.net/update/staging/WINNT_x86_64/update.xml
+          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./obj-${{ env.ARCH }}/dist/update/update.xml s3://aus.waterfox.net/update/staging/WINNT_x86_64/update.xml
           rsync -rtvz --chmod=D2755,F644 --delete-before --progress {./obj-${{ env.ARCH }}/dist/install/sea/Waterfox\ $VERSION_DISPLAY\ Setup.exe,./obj-${{ env.ARCH }}/dist/install/sea/Install\ Waterfox.exe,./obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.win64.complete.xz.mar} kontos@rsync.keycdn.com:waterfox/staging/x86_64/Windows_NT
 
   macos-x64:
@@ -173,18 +171,17 @@ jobs:
     env:
       shell: bash
       MOZCONFIG: ".mozconfig-x86_64-apple-darwin"
-      WFX_RELEASE: 1
       ARCH: x86_64-apple-darwin
     steps:
       - name: 📤 Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: 🧰 Cache restoration
         uses: actions/cache@v2
         id: cache-macos-x64
         with:
           path: |
-            ~/crosstool12
+            ~/macos-cross
             ~/.cache/sccache
           key: macos-x64-${{ hashFiles('**/browser/config/version_display.txt') }}
           restore-keys: |
@@ -192,21 +189,18 @@ jobs:
 
       - name: 💿 Build dependencies installation
         run: |
-          rustup default 1.55.0-x86_64-unknown-linux-gnu
+          rustup default 1.59.0-x86_64-unknown-linux-gnu
           rustup target add ${{ env.ARCH }}
-          sudo apt install nasm yasm wget2
-          wget2 https://www.7-zip.org/a/7z2107-linux-x64.tar.xz
+          cargo install cbindgen
+          sudo apt install nasm yasm
+          wget https://www.7-zip.org/a/7z2107-linux-x64.tar.xz
           tar xf 7z2107-linux-x64.tar.xz
           sudo mv 7zz /usr/local/bin/7z
 
-      - name: ⏬ Download crosstool
+      - name: ⏬ Setup macos-cross
         run: |
-          wget2 https://cdn.waterfox.net/tools/crosstool12.tar.xz
-        if: steps.cache-macos-x64.outputs.cache-hit != 'true'
-
-      - name: 💿 Setup crosstool
-        run: |
-          tar -xvf crosstool12.tar.xz -C $HOME/
+          aws s3 cp s3://waterfox/prep/macos-cross.tar.xz macos-cross.tar.xz
+          tar -xvf macos-cross.tar.xz -C $HOME/
         if: steps.cache-macos-x64.outputs.cache-hit != 'true'
 
       - name: 🏗 Build
@@ -220,7 +214,7 @@ jobs:
           ./mach package-multi-locale --locales ar cs da de el en-GB en-US es-ES es-MX fr hu id it ja ko lt nl nn-NO pl pt-BR pt-PT ru sv-SE th vi zh-CN zh-TW
 
       - name: 🆙 Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: macOS X64 Build Artifacts ${{ github.run_id }}
           path: |
@@ -236,11 +230,10 @@ jobs:
     env:
       shell: bash
       MOZCONFIG: ".mozconfig-aarch64-apple-darwin"
-      WFX_RELEASE: 1
       ARCH: aarch64-apple-darwin
     steps:
       - name: 📤 Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: 🧰 Cache restoration
         uses: actions/cache@v2
@@ -255,22 +248,18 @@ jobs:
 
       - name: 💿 Build dependencies installation
         run: |
-          rustup default 1.55.0-x86_64-unknown-linux-gnu
+          rustup default 1.59.0-x86_64-unknown-linux-gnu
           rustup target add ${{ env.ARCH }}
-          sudo apt install wget2
-          wget2 https://www.7-zip.org/a/7z2107-linux-x64.tar.xz
+          cargo install cbindgen
+          wget https://www.7-zip.org/a/7z2107-linux-x64.tar.xz
           tar xf 7z2107-linux-x64.tar.xz
           sudo mv 7zz /usr/local/bin/7z
 
-      - name: ⏬ Download crosstool
+      - name: ⏬ Setup macos-cross
         run: |
-          wget2 https://cdn.waterfox.net/tools/crosstool12.tar.xz
-        if: steps.cache-macos-arm64.outputs.cache-hit != 'true'
-
-      - name: 💿 Setup crosstool
-        run: |
-          tar -xvf crosstool12.tar.xz -C $HOME/
-        if: steps.cache-macos-arm64.outputs.cache-hit != 'true'
+          aws s3 cp s3://waterfox/prep/macos-cross.tar.xz macos-cross.tar.xz
+          tar -xvf macos-cross.tar.xz -C $HOME/
+        if: steps.cache-macos-x64.outputs.cache-hit != 'true'
 
       - name: 🏗 Build
         run: |
@@ -283,7 +272,7 @@ jobs:
           ./mach package-multi-locale --locales ar cs da de el en-GB en-US es-ES es-MX fr hu id it ja ko lt nl nn-NO pl pt-BR pt-PT ru sv-SE th vi zh-CN zh-TW
 
       - name: 🆙 Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: macOS ARM64 Build Artifacts ${{ github.run_id }}
           path: |
@@ -299,7 +288,6 @@ jobs:
     env:
       shell: bash
       MOZCONFIG: ".mozconfig-x86_64-pc-linux-gnu"
-      WFX_RELEASE: 1
       ARCH: x86_64-pc-linux-gnu
     steps:
       - name: 📤 Checkout
@@ -317,17 +305,18 @@ jobs:
 
       - name: 💿 Setup Rust
         run: |
-          rustup default 1.55.0-x86_64-unknown-linux-gnu
+          rustup default 1.59.0-x86_64-unknown-linux-gnu
 
       - name: 💿 Setup build packages
         run: |
-          sudo apt update
-          sudo apt install -y build-essential libpython3-dev m4 nodejs unzip uuid zip libasound2-dev libcurl4-openssl-dev libdbus-1-dev libdbus-glib-1-dev libdrm-dev libgtk-3-dev libpulse-dev libx11-xcb-dev libxt-dev clang-12 yasm nasm wget2
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
+          sudo apt-get install clang-13 lldb-13 lld-13 libc++-13-dev libc++abi-13-dev -y
+          sudo apt install -y build-essential libpython3-dev m4 nodejs unzip uuid zip libasound2-dev libcurl4-openssl-dev libdbus-1-dev libdbus-glib-1-dev libdrm-dev libgtk-3-dev libpulse-dev libx11-xcb-dev libxt-dev clang-12 yasm nasm
           sudo update-alternatives --remove-all clang
           sudo update-alternatives --remove-all clang++
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-12 100
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-12 100
-          wget2 https://www.7-zip.org/a/7z2107-linux-x64.tar.xz
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-13 100
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-13 100
+          wget https://www.7-zip.org/a/7z2107-linux-x64.tar.xz
           tar xf 7z2107-linux-x64.tar.xz
           sudo mv 7zz /usr/local/bin/7z
 
@@ -373,7 +362,7 @@ jobs:
           sed -i "s/HASH/"$SHA512"/g" update.xml
 
       - name: 🆙 Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Waterfox Linux Artifact ${{ github.run_id }}
           path: |
@@ -391,21 +380,21 @@ jobs:
       - name: ♻️ Stage files
         run: |
           VERSION_DISPLAY=`cat browser/config/version_display.txt`
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./update/update.xml s3://aus.waterfox.net/update/staging/Linux_x86_64/update.xml
+          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./update/update.xml s3://aus.waterfox.net/update/staging/Linux_x86_64/update.xml
           rsync -rtvz --chmod=D2755,F644 --delete-before --progress {./obj-${{ env.ARCH }}/dist/waterfox-$VERSION_DISPLAY.en-US.linux-x86_64.tar.bz2,./update/waterfox-$VERSION_DISPLAY.en-US.linux64.complete.xz.mar} kontos@rsync.keycdn.com:waterfox/staging/x86_64/Linux
 
   macos-x64-finish:
     name: 🍎 macOS X64 Package and Sign
     needs: [macos-x64]
-    runs-on: [macos-11]
+    runs-on: [macos-latest]
     env:
       ARCH: x86_64-apple-darwin
     steps:
       - name: 📤 Checkout
-        uses: actions/checkout@v2
-        
+        uses: actions/checkout@v3
+
       - name: ⏬ Download build artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: macOS X64 Build Artifacts ${{ github.run_id }}
           path: ./obj-${{ env.ARCH }}/dist/
@@ -413,7 +402,7 @@ jobs:
       - name: 💿 Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: "12.5.1"
+          xcode-version: latest-stable
 
       - name: 💿 Setup rsync
         run: |
@@ -488,7 +477,7 @@ jobs:
           sed -i '' -e "s/HASH/"$SHA512"/g" ./obj-${{ env.ARCH }}/dist/update/update.xml
 
       - name: 🆙 Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Waterfox macOS Artifacts ${{ github.run_id }}
           path: |
@@ -506,21 +495,21 @@ jobs:
       - name: ♻️ Stage files
         run: |
           VERSION_DISPLAY=`cat browser/config/version_display.txt`
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./obj-${{ env.ARCH }}/dist/update/update.xml s3://aus.waterfox.net/update/staging/Darwin_x86_64/update.xml
+          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./obj-${{ env.ARCH }}/dist/update/update.xml s3://aus.waterfox.net/update/staging/Darwin_x86_64/update.xml
           rsync -rtvz --chmod=D2755,F644 --delete-before --progress {obj-${{ env.ARCH }}/dist/waterfox/Waterfox\ ${VERSION_DISPLAY}\ Setup.dmg,obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.osx64.complete.xz.mar} kontos@rsync.keycdn.com:waterfox/staging/x86_64/Darwin
 
   macos-arm64-finish:
     name: 🍎 macOS ARM64 Package and Sign
     needs: [macos-arm64]
-    runs-on: [macos-11]
+    runs-on: [macos-latest]
     env:
       ARCH: aarch64-apple-darwin
     steps:
       - name: 📤 Checkout
-        uses: actions/checkout@v2
-        
+        uses: actions/checkout@v3
+
       - name: ⏬ Download build artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: macOS ARM64 Build Artifacts ${{ github.run_id }}
           path: ./obj-${{ env.ARCH }}/dist/
@@ -528,7 +517,7 @@ jobs:
       - name: 💿 Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: "12.5.1"
+          xcode-version: latest-stable
 
       - name: 💿 Setup rsync
         run: |
@@ -603,7 +592,7 @@ jobs:
           sed -i '' -e "s/HASH/"$SHA512"/g" ./obj-${{ env.ARCH }}/dist/update/update.xml
 
       - name: 🆙 Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Waterfox macOS Artifacts ${{ github.run_id }}
           path: |

@@ -8,15 +8,16 @@ on:
         required: true
         default: 'G'
 
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_EC2_METADATA_DISABLED: true
+  AWS_REGION: us-west-2
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
 jobs:
   soft-release:
     name: Soft Release
     runs-on: ubuntu-latest
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_EC2_METADATA_DISABLED: true
-      AWS_REGION: us-west-2
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
       - name: Download assets
         run: |
@@ -128,11 +129,6 @@ jobs:
     name: Full Release
     needs: [soft-release]
     environment: hard-release
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_EC2_METADATA_DISABLED: true
-      AWS_REGION: us-west-2
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     runs-on: ubuntu-latest
     steps:
       - name: ⚙︎ Release AUS
@@ -195,6 +191,7 @@ jobs:
           ascii
           user ${{ secrets.FTP_USR }} ${{ secrets.FTP_PASS }}
           prompt
+            rename staging/x86_64/Windows_NT/Install\ Waterfox.exe releases/win64/installer/Install\ Waterfox.exe
             rename staging/x86_64/Windows_NT/Waterfox\ ${{ github.event.inputs.version }}\ Setup.exe releases/win64/installer/Waterfox\ ${{ github.event.inputs.version }}\ Setup.exe
             rename staging/x86_64/Windows_NT/waterfox-${{ github.event.inputs.version }}.en-US.win64.complete.xz.mar releases/win64/update/waterfox-${{ github.event.inputs.version }}.en-US.win64.complete.xz.mar
             rename staging/x86_64/Linux/waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2 releases/linux64/installer/waterfox-${{ github.event.inputs.version }}.en-US.linux-x86_64.tar.bz2
@@ -202,3 +199,18 @@ jobs:
             rename staging/x86_64/Darwin/waterfox-${{ github.event.inputs.version }}.en-US.osx64.complete.xz.mar releases/osx64/update/waterfox-${{ github.event.inputs.version }}.en-US.osx64.complete.xz.mar
             rename staging/aarch64/Darwin/waterfox-${{ github.event.inputs.version }}.en-US.osx-arm64.complete.xz.mar releases/osx64/update/waterfox-${{ github.event.inputs.version }}.en-US.osx-arm64.complete.xz.mar
           EOT
+      - name: ⎆ Update latest redirect
+        run: |
+            curl "https://api.cloudflare.com/client/v4/accounts/$CF_ZONE_ID/rules/lists/8eefc8eca6e6407e80132f90c00ce149/items" \
+            -H "X-Auth-Email: $CF_EMAIL" \
+            -H "X-Auth-Key: $CF_AUTH" \
+            -H "Content-Type: application/json" \
+            -d '[
+            {
+                "redirect": {
+                "source_url": "cdn.waterfox.net/releases/win64/latest",
+                "target_url": "https://cdn.waterfox.net/releases/win64/installer/Waterfox%20${{ github.event.inputs.version }}%20Setup.exe",
+                "status_code": 302
+                }
+            }
+            ]'
