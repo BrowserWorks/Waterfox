@@ -80,6 +80,21 @@ jobs:
 
       - name: ⚙︎ Dry run AUS
         run: |
+          os=(WINNT_x86_64 Linux_x86_64 Darwin_x86_64 Darwin_aarch64)
+          for j in ${os[@]}
+          do
+            update_loc="s3://aus.waterfox.net/update/staging/"$j"/update.xml"
+            mkdir -p aus_tmp/$j/
+            aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
+              ./aus_tmp/$j/update.xml
+            sed -i 's/staging\/x86_64\/Linux/releases\/linux64\/update/g' ./aus_tmp/$j/update.xml
+            sed -i 's/staging\/x86_64\/Windows_NT/releases\/win64\/update/g' ./aus_tmp/$j/update.xml
+            sed -i 's/staging\/x86_64\/Darwin/releases\/osx64\/update/g' ./aus_tmp/$j/update.xml
+            sed -i 's/staging\/aarch64\/Darwin/releases\/osx64\/update/g' ./aus_tmp/$j/update.xml
+            aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./aus_tmp/$j/update.xml \
+              s3://aus.waterfox.net/update/Waterfox/tmp/$j/update.xml
+          done
+
           for i in $(aws s3 ls s3://aus.waterfox.net/update/Waterfox/ | awk '{OFS=" "};{if ($1=="PRE") print $2}')
           do
               if [[ $i != '/' ]]
@@ -87,39 +102,26 @@ jobs:
               ver=$(echo $i | sed 's/\///g')
                   if [[ $i == "G3"* ]]
                   then
-                      os=(WINNT Linux Darwin)
+                      os=(Windows_NT Linux Darwin)
                       for j in ${os[@]}
                       do
-                      update_loc="s3://aus.waterfox.net/update/staging/"$j"_x86_64/update.xml"
-                        if [[ $j == "WINNT" ]]
-                        then
-                          j="Windows_NT"
-                        fi
-                          mkdir -p ./update/Waterfox/$ver/default/$j/
-                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
-                          ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/x86_64\/Linux/releases\/linux64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/x86_64\/Windows_NT/releases\/win64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/x86_64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/aarch64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          aws s3 cp --dryrun --content-type="text/xml" --metadata-directive="REPLACE" ./update/Waterfox/$ver/default/$j/update.xml \
-                          s3://aus.waterfox.net/update/Waterfox/$ver/default/$j/update.xml
+                          dest=s3://aus.waterfox.net/update/Waterfox/$ver/default/$j/update.xml
+                          if [[ $j == "Windows_NT" ]]
+                          then
+                            j=WINNT
+                          fi
+                          aws s3 cp --dryrun --content-type="text/xml" --metadata-directive="REPLACE" \
+                            s3://aus.waterfox.net/update/Waterfox/tmp/${j}_x86_64/update.xml \
+                            $dest
                       done
                   elif [[ $i == "G4"* ]]
                   then
                       os=(WINNT_x86_64 Linux_x86_64 Darwin_x86_64 Darwin_aarch64)
                       for j in ${os[@]}
                       do
-                          update_loc="s3://aus.waterfox.net/update/staging/$j/update.xml"
-                          mkdir -p ./update/Waterfox/$ver/default/$j/
-                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
-                          ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/x86_64\/Linux/releases\/linux64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/x86_64\/Windows_NT/releases\/win64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/x86_64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/aarch64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          aws s3 cp --dryrun --content-type="text/xml" --metadata-directive="REPLACE" ./update/Waterfox/$ver/default/$j/update.xml \
-                          s3://aus.waterfox.net/update/Waterfox/$ver/default/$j/update.xml
+                          aws s3 cp --dryrun --content-type="text/xml" --metadata-directive="REPLACE" \
+                            s3://aus.waterfox.net/update/Waterfox/tmp/$j/update.xml \
+                            s3://aus.waterfox.net/update/Waterfox/$ver/default/$j/update.xml
                       done
                   fi
               fi
@@ -133,6 +135,21 @@ jobs:
     steps:
       - name: ⚙︎ Release AUS
         run: |
+          os=(WINNT_x86_64 Linux_x86_64 Darwin_x86_64 Darwin_aarch64)
+          for j in ${os[@]}
+          do
+            update_loc="s3://aus.waterfox.net/update/staging/"$j"/update.xml"
+            mkdir -p aus_tmp/$j/
+            aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
+              ./aus_tmp/$j/update.xml
+            sed -i 's/staging\/x86_64\/Linux/releases\/linux64\/update/g' ./aus_tmp/$j/update.xml
+            sed -i 's/staging\/x86_64\/Windows_NT/releases\/win64\/update/g' ./aus_tmp/$j/update.xml
+            sed -i 's/staging\/x86_64\/Darwin/releases\/osx64\/update/g' ./aus_tmp/$j/update.xml
+            sed -i 's/staging\/aarch64\/Darwin/releases\/osx64\/update/g' ./aus_tmp/$j/update.xml
+            aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./aus_tmp/$j/update.xml \
+              s3://aus.waterfox.net/update/Waterfox/tmp/$j/update.xml
+          done
+
           for i in $(aws s3 ls s3://aus.waterfox.net/update/Waterfox/ | awk '{OFS=" "};{if ($1=="PRE") print $2}')
           do
               if [[ $i != '/' ]]
@@ -140,39 +157,26 @@ jobs:
               ver=$(echo $i | sed 's/\///g')
                   if [[ $i == "G3"* ]]
                   then
-                      os=(WINNT Linux Darwin)
+                      os=(Windows_NT Linux Darwin)
                       for j in ${os[@]}
                       do
-                      update_loc="s3://aus.waterfox.net/update/staging/"$j"_x86_64/update.xml"
-                        if [[ $j == "WINNT" ]]
-                        then
-                          j="Windows_NT"
-                        fi
-                          mkdir -p ./update/Waterfox/$ver/default/$j/
-                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
-                          ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/x86_64\/Linux/releases\/linux64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/x86_64\/Windows_NT/releases\/win64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/x86_64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/aarch64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./update/Waterfox/$ver/default/$j/update.xml \
-                          s3://aus.waterfox.net/update/Waterfox/$ver/default/$j/update.xml
+                          dest=s3://aus.waterfox.net/update/Waterfox/$ver/default/$j/update.xml
+                          if [[ $j == "Windows_NT" ]]
+                          then
+                            j=WINNT
+                          fi
+                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" \
+                            s3://aus.waterfox.net/update/Waterfox/tmp/${j}_x86_64/update.xml \
+                            $dest
                       done
                   elif [[ $i == "G4"* ]]
                   then
                       os=(WINNT_x86_64 Linux_x86_64 Darwin_x86_64 Darwin_aarch64)
                       for j in ${os[@]}
                       do
-                          update_loc="s3://aus.waterfox.net/update/staging/$j/update.xml"
-                          mkdir -p ./update/Waterfox/$ver/default/$j/
-                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
-                          ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/x86_64\/Linux/releases\/linux64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/x86_64\/Windows_NT/releases\/win64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/x86_64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          sed -i 's/staging\/aarch64\/Darwin/releases\/osx64\/update/g' ./update/Waterfox/$ver/default/$j/update.xml
-                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./update/Waterfox/$ver/default/$j/update.xml \
-                          s3://aus.waterfox.net/update/Waterfox/$ver/default/$j/update.xml
+                          aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" \
+                            s3://aus.waterfox.net/update/Waterfox/tmp/$j/update.xml \
+                            s3://aus.waterfox.net/update/Waterfox/$ver/default/$j/update.xml
                       done
                   fi
               fi
