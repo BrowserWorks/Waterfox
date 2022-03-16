@@ -98,7 +98,8 @@ pref("general.useragent.compatMode.firefox", true);
 pref("geo.provider.network.url", "", locked);
 // pref("image.avif.enabled", true); // Disable until avif encoder gets updated.
 pref("image.jxl.enabled", true);
-pref("layout.css.backdrop-filter.enabled", true, locked);
+pref("layout.css.backdrop-filter.enabled", true);
+pref("layout.css.color-mix.enabled", true);
 pref("media.eme.enabled", false);
 pref("media.gmp-manager.url", "data:application/json,", locked);
 pref("media.webrtc.hw.h264.enabled", true);
@@ -139,7 +140,7 @@ pref("services.sync.telemetry.submissionInterval", "0", locked);
 pref("signon.management.page.mobileAndroidURL", "", locked);
 pref("signon.management.page.mobileAppleURL", "", locked);
 pref("signon.recipes.remoteRecipesEnabled", false, locked);
-pref("svg.context-properties.content.enabled", true, locked);
+pref("svg.context-properties.content.enabled", true);
 pref("telemetry.origin_telemetry_test_mode.enabled", false, locked);
 pref("toolkit.legacyUserProfileCustomizations.stylesheets", true, locked);
 pref("toolkit.telemetry.archive.enabled", false, locked);
