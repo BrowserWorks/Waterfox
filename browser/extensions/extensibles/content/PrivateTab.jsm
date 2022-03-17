@@ -18,6 +18,10 @@ const { TabStateCache } = ChromeUtils.import(
   "resource:///modules/sessionstore/TabStateCache.jsm"
 );
 
+const { TabStateFlusher } = ChromeUtils.import(
+  "resource:///modules/sessionstore/TabStateFlusher.jsm"
+);
+
 const { ExtensiblesElements } = ChromeUtils.import(
   "resource:///modules/ExtensiblesElements.jsm"
 );
@@ -395,7 +399,7 @@ const PrivateTab = {
 
   togglePrivate(aWindow, aTab = aWindow.gBrowser.selectedTab) {
     let { gBrowser } = aWindow;
-    aTab.isToggling = true;
+    aTab.setAttribute("isToggling", true);
     let shouldSelect = aTab == aWindow.gBrowser.selectedTab;
     let newTab = gBrowser.duplicateTab(aTab);
     if (shouldSelect) {
@@ -418,6 +422,7 @@ const PrivateTab = {
   initPrivateTabListeners(aWindow) {
     let { gBrowser } = aWindow;
     gBrowser.tabContainer.addEventListener("TabSelect", this.onTabSelect);
+    gBrowser.tabContainer.addEventListener("TabOpen", this.onTabOpen);
 
     gBrowser.privateListener = e => {
       let browser = e.target;
@@ -460,15 +465,50 @@ const PrivateTab = {
     let { PrivateTab } = win;
     let prevTab = aEvent.detail.previousTab;
     let isPrivate = PrivateTab.isPrivate(tab);
+
     if (tab.userContextId != prevTab.userContextId) {
+      // Show/hide private mask on browser window
       PrivateTab.toggleMask(win);
-      // Ensure no private tab data saved to history/recently closed
-      TabStateCache.update(tab.linkedBrowser.permanentKey, { isPrivate });
       // Ensure we don't save search suggestions for PrivateTab
       win.gURLBar.isPrivate = isPrivate;
+      // Update selected tab private status for autofill
+      PrefUtils.set("browser.tabs.selectedTabPrivate", isPrivate);
     }
-    // Update selected tab private status
-    PrefUtils.set("browser.tabs.selectedTabPrivate", isPrivate);
+  },
+
+  onTabOpen(aEvent) {
+    // Update tab state cache
+    let tab = aEvent.target;
+    if (!tab) {
+      return;
+    }
+    let win = tab.ownerGlobal;
+    let { PrivateTab } = win;
+    let prevTab = aEvent.detail.previousTab;
+    // Don't need to worry about force updating tab state unless
+    // the usercontextid's are different, as otherwise we know the
+    // usercontextid will be correct and just need to assert whether
+    // the tab is private or not.
+    let isPrivate = PrivateTab.isPrivate(tab);
+    if (tab.userContextId != prevTab.userContextId) {
+      let userContextId = isPrivate ? PrivateTab.container.userContextId : 0;
+      // Duplicating a tab copies the tab state cache from the parent tab.
+      // Therefore we need to flush the tab state to ensure it's updated,
+      // then overwrite the tab usercontextid so that any restored tabs
+      // are opened in the correct container, rather than that of their
+      // parent tab.
+      let browser = tab.linkedBrowser;
+      TabStateFlusher.flush(browser).then(() => {
+        TabStateCache.update(tab.linkedBrowser.permanentKey, {
+          isPrivate,
+          userContextId,
+        });
+      });
+    } else {
+      TabStateCache.update(tab.linkedBrowser.permanentKey, {
+        isPrivate,
+      });
+    }
   },
 
   onTabClose(aEvent) {
@@ -514,8 +554,8 @@ const PrivateTab = {
   initCustomFunctions(aWindow) {
     let { MozElements, customElements, PrivateTab } = aWindow;
     MozElements.MozTab.prototype.getAttribute = function(att) {
-      if (att == "usercontextid" && this.isToggling) {
-        delete this.isToggling;
+      if (att == "usercontextid" && this.getAttribute("isToggling", false)) {
+        this.removeAttribute("isToggling");
         // If in private tab and we attempt to toggle, remove container, else convert to private tab
         return PrivateTab.orig_getAttribute.call(this, att) ==
           PrivateTab.container.userContextId
