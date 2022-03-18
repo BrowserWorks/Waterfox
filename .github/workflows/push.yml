@@ -85,8 +85,8 @@ jobs:
           jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-512 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" obj-${{ env.ARCH }}/browser/installer/windows/instgen/setup.exe
           find obj-${{ env.ARCH }}/dist/waterfox -type f -name "*.exe" -exec jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-512 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" {} \;
           find obj-${{ env.ARCH }}/dist/waterfox -type f -name "*.dll" -exec jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-512 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" {} \;
-          python -m mozbuild.action.make_zip 'obj-${{ env.ARCH }}/dist/waterfox' 'obj-${{ env.ARCH }}/dist/waterfox.zip'
-          ./mach repackage installer -o 'obj-${{ env.ARCH }}/dist/install/sea/Waterfox $VERSION_DISPLAY Setup.exe' --package-name obj-${{ env.ARCH }}/dist/waterfox --package obj-${{ env.ARCH }}/dist/waterfox.zip --tag browser/installer/windows/app.tag --setupexe obj-${{ env.ARCH }}/browser/installer/windows/instgen/setup.exe --sfx-stub other-licenses/7zstub/firefox/7zSD.Win32.sfx --use-upx
+          python -m mozbuild.action.make_zip obj-${{ env.ARCH }}/dist/waterfox obj-${{ env.ARCH }}/dist/waterfox.zip
+          ./mach repackage installer -o "obj-${{ env.ARCH }}/dist/install/sea/Waterfox $VERSION_DISPLAY Setup.exe" --package-name obj-${{ env.ARCH }}/dist/waterfox --package obj-${{ env.ARCH }}/dist/waterfox.zip --tag browser/installer/windows/app.tag --setupexe obj-${{ env.ARCH }}/browser/installer/windows/instgen/setup.exe --sfx-stub other-licenses/7zstub/firefox/7zSD.Win32.sfx --use-upx
           jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-512 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" "obj-${{ env.ARCH }}/dist/install/sea/Waterfox $VERSION_DISPLAY Setup.exe"
           jsign -s $HOME/win-cross/dummy.pfx --storepass=password --storetype=PKCS12 "obj-${{ env.ARCH }}/dist/install/sea/Waterfox $VERSION_DISPLAY Setup.exe"
           # Handle stub installer signing.
@@ -304,9 +304,9 @@ jobs:
       - name: 💿 Setup build packages
         run: |
           wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
+          sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal main'
           sudo apt update
-          sudo apt-get install clang-13 lldb-13 lld-13 libc++-13-dev libc++abi-13-dev -y
-          sudo apt install -y build-essential libpython3-dev m4 nodejs unzip uuid zip libasound2-dev libcurl4-openssl-dev libdbus-1-dev libdbus-glib-1-dev libdrm-dev libgtk-3-dev libpulse-dev libx11-xcb-dev libxt-dev clang-12 yasm nasm
+          sudo apt install -y build-essential libpython3-dev m4 nodejs unzip uuid zip libasound2-dev libcurl4-openssl-dev libdbus-1-dev libdbus-glib-1-dev libdrm-dev libgtk-3-dev libpulse-dev libx11-xcb-dev libxt-dev clang-13 lldb-13 lld-13 libc++-13-dev libc++abi-13-dev yasm nasm
           sudo update-alternatives --remove-all clang
           sudo update-alternatives --remove-all clang++
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-13 100
