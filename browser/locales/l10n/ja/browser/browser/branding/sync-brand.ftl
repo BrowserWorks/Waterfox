@@ -4,4 +4,4 @@
 
 # “Account” can be localized, “Waterfox” must be treated as a brand,
 # and kept in English.
--fxaccount-brand-name = Waterfox アカウント
+-fxaccount-brand-name = Firefox アカウント
