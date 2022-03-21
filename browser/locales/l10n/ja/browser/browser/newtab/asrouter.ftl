@@ -126,7 +126,7 @@ cfr-doorhanger-video-support-primary-button = 今すぐ更新
 ##
 ## If a user is detected to be on a public Wi-Fi network, they are given a
 ## bit of info about how to improve their privacy and then offered a button
-## to the Waterfox VPN page and a link to dismiss the dialog.
+## to the Mozilla VPN page and a link to dismiss the dialog.
 
 spotlight-public-wifi-vpn-header = 公共 Wi-Fi を使うかのように
 spotlight-public-wifi-vpn-body = あなたの行動と訪問先を秘匿するなら、VPN を検討してみましょう。空港や喫茶店のような公共の場所でブラウジングするときのプライバシーを保護します。
