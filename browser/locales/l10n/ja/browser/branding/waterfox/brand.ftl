@@ -23,4 +23,4 @@
 # remain unchanged across different versions (Nightly, Beta, etc.).
 -brand-product-name = Waterfox
 -vendor-short-name = Waterfox
-trademarkInfo = Waterfox および Waterfox ロゴは 米国 Waterfox Foundation の米国およびその他の国における商標です。
+trademarkInfo = Waterfox および Waterfox ロゴは 米国 Waterfox Limited の英国およびその他の国における商標です。

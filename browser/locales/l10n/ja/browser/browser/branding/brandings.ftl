@@ -22,7 +22,7 @@
 -pocket-brand-name = Pocket
 -send-brand-name = Waterfox Send
 -screenshots-brand-name = Waterfox Screenshots
--mozilla-vpn-brand-name = Waterfox VPN
+-mozilla-vpn-brand-name = Mozilla VPN
 -profiler-brand-name = Waterfox Profiler
 -translations-brand-name = Waterfox Translations
 

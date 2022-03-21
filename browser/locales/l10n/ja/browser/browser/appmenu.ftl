@@ -98,6 +98,9 @@ appmenu-fxa-show-more-tabs = さらにタブを表示
 appmenuitem-save-page =
     .label = 名前を付けてページを保存...
 
+appmenuitem-restart-browser =
+    .label = 再起動
+
 ## What's New panel in App menu.
 
 whatsnew-panel-header = 新着情報
