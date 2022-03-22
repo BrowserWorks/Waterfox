@@ -94,6 +94,12 @@ class nsDisplayTableBackgroundSet {
 
   const nsRect& GetDirtyRect() { return mDirtyRect; }
 
+  const mozilla::DisplayItemClipChain* GetTableClipChain() {
+    return mCombinedTableClipChain;
+  }
+
+  const mozilla::ActiveScrolledRoot* GetTableASR() { return mTableASR; }
+
  private:
   // This class is only used on stack, so we don't have to worry about leaking
   // it.  Don't let us be heap-allocated!
@@ -109,6 +115,9 @@ class nsDisplayTableBackgroundSet {
   nsTArray<nsTableColFrame*> mColumns;
   nsPoint mToReferenceFrame;
   nsRect mDirtyRect;
+
+  const mozilla::DisplayItemClipChain* mCombinedTableClipChain;
+  const mozilla::ActiveScrolledRoot* mTableASR;
 };
 
 /* ========================================================================== */
