@@ -476,39 +476,27 @@ const PrivateTab = {
     }
   },
 
-  onTabOpen(aEvent) {
+  async onTabOpen(aEvent) {
     // Update tab state cache
     let tab = aEvent.target;
     if (!tab) {
       return;
     }
-    let win = tab.ownerGlobal;
-    let { PrivateTab } = win;
-    let prevTab = aEvent.detail.previousTab;
-    // Don't need to worry about force updating tab state unless
-    // the usercontextid's are different, as otherwise we know the
-    // usercontextid will be correct and just need to assert whether
-    // the tab is private or not.
+    let { PrivateTab } = tab.ownerGlobal;
     let isPrivate = PrivateTab.isPrivate(tab);
-    if (tab.userContextId != prevTab.userContextId) {
-      let userContextId = isPrivate ? PrivateTab.container.userContextId : 0;
-      // Duplicating a tab copies the tab state cache from the parent tab.
-      // Therefore we need to flush the tab state to ensure it's updated,
-      // then overwrite the tab usercontextid so that any restored tabs
-      // are opened in the correct container, rather than that of their
-      // parent tab.
-      let browser = tab.linkedBrowser;
-      TabStateFlusher.flush(browser).then(() => {
-        TabStateCache.update(tab.linkedBrowser.permanentKey, {
-          isPrivate,
-          userContextId,
-        });
-      });
-    } else {
+    let userContextId = isPrivate ? PrivateTab.container.userContextId : 0;
+    // Duplicating a tab copies the tab state cache from the parent tab.
+    // Therefore we need to flush the tab state to ensure it's updated,
+    // then overwrite the tab usercontextid so that any restored tabs
+    // are opened in the correct container, rather than that of their
+    // parent tab.
+    let browser = tab.linkedBrowser;
+    TabStateFlusher.flush(browser).then(() => {
       TabStateCache.update(tab.linkedBrowser.permanentKey, {
         isPrivate,
+        userContextId,
       });
-    }
+    });
   },
 
   onTabClose(aEvent) {
