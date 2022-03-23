@@ -1118,7 +1118,13 @@ SearchService.prototype = {
       e.webExtension.locale = e.webExtension?.locale ?? SearchUtils.DEFAULT_TAG;
     }
 
-    return { engines, privateDefault: undefined };
+    let privateDefault = {
+      webExtension: { id: "startpage@search.waterfox.net" },
+    };
+    privateDefault.webExtension.locale =
+      privateDefault.webExtension?.locale ?? SearchUtils.DEFAULT_TAG;
+
+    return { engines, privateDefault };
   },
 
   _setDefaultAndOrdersFromSelector(engines, privateDefault) {
