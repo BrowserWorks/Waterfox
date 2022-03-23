@@ -112,7 +112,10 @@ function handleInstall(e) {
     );
   } else {
     let downloadURL = buildDownloadURL(extId);
-    location.href = downloadURL;
+    // Send downloadURL to background script
+    browser.runtime.sendMessage({
+      downloadURL,
+    });
   }
 }
 

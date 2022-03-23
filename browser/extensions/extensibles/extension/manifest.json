@@ -13,37 +13,38 @@
     }
   },
 
-	"content_scripts": [
-		{
-			"matches":[
-				"http://chrome.google.com/webstore*",
-				"https://chrome.google.com/webstore*"
-			],
-			"js":[
-				"addon-stores/cws.js"
-			],
+  "content_scripts": [
+    {
+      "matches": [
+        "http://chrome.google.com/webstore*",
+        "https://chrome.google.com/webstore*"
+      ],
+      "js": ["addon-stores/cws.js"],
       "run_at": "document_start",
       "all_frames": true
-		},
-		{
-			"matches":[
-				"http://addons.opera.com/*",
-				"https://addons.opera.com/*"
-			],
-			"js":[
-				"addon-stores/ows.js"
-			],
+    },
+    {
+      "matches": ["http://addons.opera.com/*", "https://addons.opera.com/*"],
+      "js": ["addon-stores/ows.js"],
       "run_at": "document_start",
       "all_frames": true
-		}
-	],
+    }
+  ],
 
   "background": {
-    "scripts": [
-      "addon-stores/cws.js",
-      "addon-stores/ows.js"
-    ]
+    "scripts": ["background/as_background.js"]
   },
 
-  "permissions": ["tabs", "menus"]
+  "permissions": ["tabs", "menus"],
+
+  "experiment_apis": {
+    "total": {
+      "schema": "experiments/schema.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "script": "experiments/api.js",
+        "paths": [["wf"]]
+      }
+    }
+  }
 }
