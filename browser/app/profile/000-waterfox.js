@@ -64,6 +64,8 @@ pref("browser.safebrowsing.downloads.enabled", false);
 pref("browser.safebrowsing.downloads.remote.enabled", false);
 pref("browser.safebrowsing.downloads.remote.url", "", locked);
 pref("browser.safebrowsing.malware.enabled", false);
+pref("browser.search.separatePrivateDefault", true);
+pref("browser.search.separatePrivateDefault.ui.enabled", true);
 pref("browser.send_pings", false, locked);
 pref("browser.tabs.duplicateTab", true);
 //pref("browser.tabs.remote.separatedMozillaDomains", "", locked);
