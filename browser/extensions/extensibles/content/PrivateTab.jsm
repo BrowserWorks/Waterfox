@@ -51,11 +51,13 @@ const PrivateTab = {
         display: block !important;
       }
 
+      /* This should now be controlled on the lepton theme side
       @media (-wfx-default-theme) {
         .privatetab-icon {
           list-style-image: url(chrome://browser/skin/privatebrowsing/favicon.svg) !important;
         }
       }
+      */
 
       #${this.BTN_ID}, #${this.BTN2_ID} {
         list-style-image: url(chrome://browser/skin/privateBrowsing.svg);
