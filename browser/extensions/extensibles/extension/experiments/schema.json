@@ -1,0 +1,20 @@
+[
+  {
+    "namespace": "wf",
+    "description": "Helper functions for Waterfox extensions.",
+    "functions": [
+      {
+        "name": "attemptInstallChromeExtension",
+        "type": "function",
+        "async": true,
+        "description": "Attempt to install the Chrome extension at the given URI.",
+        "parameters": [
+          {
+            "name": "uri",
+            "type": "string"
+          }
+        ]
+      }
+    ]
+  }
+]
