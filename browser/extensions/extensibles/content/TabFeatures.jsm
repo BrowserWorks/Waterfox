@@ -177,9 +177,12 @@ const TabFeatures = {
   },
 
   _attemptRestart() {
+    // Purge cache if required
     if (Services.prefs.getBoolPref(this.PREF_PURGECACHE)) {
       Services.appinfo.invalidateCachesOnRestart();
     }
+
+    // Initiate the restart
     Services.startup.quit(
       Services.startup.eRestart | Services.startup.eAttemptQuit
     );
