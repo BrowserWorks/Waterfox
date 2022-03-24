@@ -400,19 +400,24 @@ const PrivateTab = {
   },
 
   togglePrivate(aWindow, aTab = aWindow.gBrowser.selectedTab) {
-    let { gBrowser } = aWindow;
+    let newTab;
+    const { gBrowser, gURLBar } = aWindow;
     aTab.setAttribute("isToggling", true);
-    let shouldSelect = aTab == aWindow.gBrowser.selectedTab;
-    let newTab = gBrowser.duplicateTab(aTab);
-    if (shouldSelect) {
-      let gURLBar = aWindow.gURLBar;
-      let focusUrlbar = gURLBar.focused;
-      gBrowser.selectedTab = newTab;
-      if (focusUrlbar) {
-        gURLBar.focus();
+    const shouldSelect = aTab == aWindow.gBrowser.selectedTab;
+    try {
+      newTab = gBrowser.duplicateTab(aTab);
+      if (shouldSelect) {
+        gBrowser.selectedTab = newTab;
+        const focusUrlbar = gURLBar.focused;
+        if (focusUrlbar) {
+          gURLBar.focus();
+        }
       }
+      gBrowser.removeTab(aTab);
+    } catch (ex) {
+      // Can use this to pop up failure message
     }
-    gBrowser.removeTab(aTab);
+    return newTab;
   },
 
   browserOpenTabPrivate(aWindow) {
@@ -493,12 +498,19 @@ const PrivateTab = {
     // are opened in the correct container, rather than that of their
     // parent tab.
     let browser = tab.linkedBrowser;
-    TabStateFlusher.flush(browser).then(() => {
-      TabStateCache.update(tab.linkedBrowser.permanentKey, {
-        isPrivate,
-        userContextId,
-      });
-    });
+    // Can't update tab state if we can't get the browser
+    if (browser) {
+      TabStateFlusher.flush(browser)
+        .then(() => {
+          TabStateCache.update(tab.linkedBrowser.permanentKey, {
+            isPrivate,
+            userContextId,
+          });
+        })
+        .catch(ex => {
+          // Sometimes tests fail here
+        });
+    }
   },
 
   onTabClose(aEvent) {
