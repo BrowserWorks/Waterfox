@@ -54,11 +54,21 @@ add_task(async function testAddWidgets() {
     "zoom-controls",
     "fullscreen-button",
     "status-text",
-    "new-window-button",
   ];
   simulateItemDrag(btn, panel); // Doesn't work in test, does in prod?
-//   assertAreaPlacements(panel.id, placementsAfterAppend);
+  assertAreaPlacements(panel.id, placementsAfterAppend);
   await endCustomizing();
   // Clear pref
   Services.prefs.clearUserPref(STATUSBAR_ENABLED_PREF);
+});
+
+add_task(async function testShowStatusBarCustomizing() {
+  // Status bar should be hidden
+  let statusBar = document.querySelector('#status-bar');
+  let style = window.getComputedStyle(statusBar);
+  is(style.visibility, "collapse", "Status bar is collapsed")
+  // When we start customizing should be displayed
+  await startCustomizing();
+  is(style.visibility, "visible", "Status bar is displayed when customizing")
+  await endCustomizing();
 });

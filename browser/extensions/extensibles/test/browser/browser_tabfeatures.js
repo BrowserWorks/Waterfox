@@ -23,10 +23,6 @@ add_task(async function testCopyTabUrls() {
   is(copyAllTabUrls.hidden, false, "Copy all tab URLs visible");
   Services.prefs.clearUserPref(COPY_URL_PREF);
   Services.prefs.clearUserPref(COPY_ALL_URLS_PREF);
-  // TODO: Make sure functionality works
-  // TODO: Test copy tab url copies URL
-  // TODO: Make sure active tab pref works
-  // TODO: Test copy all tab urls works
 });
 
 add_task(async function testHideDuplicateTab() {
@@ -45,7 +41,11 @@ add_task(async function testHideDuplicateTab() {
 add_task(async function testRestartItem() {
   // Make sure element is present
   let restartBrowserMenu = document.getElementById("app_restartBrowser");
-  let restartBrowserApp = document.getElementById("appMenu-restart-button");
+  // Need to use PanelMultiView to get PanelUI elements
+  let restartBrowserApp = PanelMultiView.getViewNode(
+    document,
+    "appMenu-restart-button"
+  );
   if (OS == "macosx") {
     ok(restartBrowserMenu, "Restart browser menu bar item is included");
     is(restartBrowserApp, null, "Restart browser appMenu item not included");
@@ -74,69 +74,41 @@ add_task(async function testRestartItem() {
     );
   }
   Services.prefs.clearUserPref(RESTART_PREF);
-  // TODO: Make sure functionality works
-  // TODO: Test requireconfirm pops up confirmation window
-  // TODO: Test purgecache clears cache
 });
 
-add_task(async function testMoveTabBar() {
-  // Test default (topabove)
-  let el = document.querySelector("#TabsToolbar");
-  let bottomBox = document.querySelector("#browser-bottombox");
-  is(el.parentElement.id, "titlebar", "Tab toolbar is below menu bar");
-  // Test topbelow
-  Services.prefs.setCharPref(TABBAR_POSITION_PREF, "topbelow");
-  is(el.parentElement.id, "navigator-toolbox", "Tabs toolbar is below nav bar");
-  // Test bottom above
-  Services.prefs.setCharPref(TABBAR_POSITION_PREF, "bottomabove");
-  is(el.parentElement.id, "browser-bottombox", "Tabs toolbar is in bottom box");
-  is(
-    bottomBox.firstChild.id,
-    "TabsToolbar",
-    "Tabs toolbar is first element in bottom box"
-  );
-  // Test bottom below (reliance upon StatusBar.jsm)
-  Services.prefs.setCharPref(TABBAR_POSITION_PREF, "bottombelow");
-  is(el.parentElement.id, "browser-bottombox", "Tabs toolbar is in bottom box");
-  is(
-    bottomBox.firstChild.id,
-    "status-bar",
-    "Tabs toolbar is not first element in bottom box"
-  );
-  // Clear pref
-  Services.prefs.clearUserPref(TABBAR_POSITION_PREF);
-});
-
-add_task(async function testMoveBookmarksBar() {
-  // Test default (top)
-  let el = document.querySelector("#PersonalToolbar");
-  is(
-    el.parentElement.id,
-    "navigator-toolbox",
-    "Bookmarks bar is below nav bar"
-  );
-  // Test bottom
-  Services.prefs.setCharPref(BOOKMARKBAR_POSITION_PREF, "bottom");
-  is(
-    el.parentElement.id,
-    "browser-bottombox",
-    "Bookmarks bar is in bottom box"
-  );
-  // Test bottom buttons not disabled
-  // Test bottom context menu item still visible
-  // Clear pref
-  Services.prefs.clearUserPref(BOOKMARKBAR_POSITION_PREF);
-});
-
-add_task(async function testWindowButtons() {
-  // Test menu bar visible and tabs in default position
-  // Test menu bar visible and tabs not in default position
-  // Test menu bar hidden and tabs in default position
-  // Test menu bar hidden and tabs not in default position
-});
-
-add_task(async function testSecondWindow() {
-  // Change all prefs to non default values
-  // Open new browser window
-  // Test all cases reflected in new window
+add_task(async function testCopyUrlFunctionality() {
+  let copyTabUrl = document.getElementById("context_copyTabUrl");
+  let copyAllTabUrls = document.getElementById("context_copyAllTabUrls");
+  const tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, URI1);
+  let browser = tab.linkedBrowser;
+  // Test copy tab url copies URL
+  await openTabContextMenu(tab);
+  EventUtils.synthesizeMouseAtCenter(copyTabUrl, {});
+  let tabURI = await pasteFromClipboard(browser);
+  is(tabURI, URI1);
+  // Test copy all tab urls
+  Services.prefs.setBoolPref(COPY_ALL_URLS_PREF, true);
+  const tab2 = await BrowserTestUtils.openNewForegroundTab(gBrowser, URI2);
+  await openTabContextMenu(tab);
+  EventUtils.synthesizeMouseAtCenter(copyAllTabUrls, {});
+  let tabURIs = await pasteFromClipboard(browser);
+  is(tabURIs, URI1 + "\n" + URI2);
+  // Test copy active tab pref
+  Services.prefs.setBoolPref(COPY_ACTIVE_URL_PREF, true);
+  await openTabContextMenu(tab);
+  EventUtils.synthesizeMouseAtCenter(copyTabUrl, {});
+  let activeURI = await pasteFromClipboard(browser);
+  // URI2 should be active, so we copy from tab1 to verify
+  is(activeURI, URI2);
+  // Then we verify that URI1 is copied when active pref is false
+  Services.prefs.setBoolPref(COPY_ACTIVE_URL_PREF, false);
+  await openTabContextMenu(tab);
+  EventUtils.synthesizeMouseAtCenter(copyTabUrl, {});
+  activeURI = await pasteFromClipboard(browser);
+  is(activeURI, URI1);
+  // Cleanup
+  Services.prefs.clearUserPref(COPY_ALL_URLS_PREF);
+  Services.prefs.clearUserPref(COPY_ACTIVE_URL_PREF);
+  BrowserTestUtils.removeTab(tab);
+  BrowserTestUtils.removeTab(tab2);
 });
