@@ -4,19 +4,77 @@ const { AppConstants } = ChromeUtils.import(
   "resource://gre/modules/AppConstants.jsm"
 );
 
+const { TabStateFlusher } = ChromeUtils.import(
+  "resource:///modules/sessionstore/TabStateFlusher.jsm"
+);
+
+const { TabStateCache } = ChromeUtils.import(
+  "resource:///modules/sessionstore/TabStateCache.jsm"
+);
+
+const { SearchTestUtils } = ChromeUtils.import(
+  "resource://testing-common/SearchTestUtils.jsm"
+);
+
+SearchTestUtils.init(this);
+
+const { UrlbarTestUtils } = ChromeUtils.import(
+  "resource://testing-common/UrlbarTestUtils.jsm"
+);
+
+UrlbarTestUtils.init(this);
+
 const { PrivateTab } = ChromeUtils.import("resource:///modules/PrivateTab.jsm");
+
+const { PrefUtils } = ChromeUtils.import("resource:///modules/PrefUtils.jsm");
 
 var { synthesizeDrop, synthesizeMouseAtCenter } = EventUtils;
 
 const COPY_URL_PREF = "browser.tabs.copyurl";
 const COPY_ALL_URLS_PREF = "browser.tabs.copyallurls";
+const COPY_ACTIVE_URL_PREF = "browser.tabs.copyurl.activetab";
 const DUPLICATE_TAB_PREF = "browser.tabs.duplicateTab";
 const RESTART_PREF = "browser.restart_menu.showpanelmenubtn";
 const TABBAR_POSITION_PREF = "browser.tabs.toolbarposition";
 const BOOKMARKBAR_POSITION_PREF = "browser.bookmarks.toolbarposition";
 const STATUSBAR_ENABLED_PREF = "browser.statusbar.enabled";
 
+const URI1 = "https://test1.example.com/";
+const URI2 = "https://example.com/";
+
 let OS = AppConstants.platform;
+
+function promiseBrowserLoaded(
+  aBrowser,
+  ignoreSubFrames = true,
+  wantLoad = null
+) {
+  return BrowserTestUtils.browserLoaded(aBrowser, !ignoreSubFrames, wantLoad);
+}
+
+// Removes the given tab immediately and returns a promise that resolves when
+// all pending status updates (messages) of the closing tab have been received.
+function promiseRemoveTabAndSessionState(tab) {
+  let sessionUpdatePromise = BrowserTestUtils.waitForSessionStoreUpdate(tab);
+  BrowserTestUtils.removeTab(tab);
+  return sessionUpdatePromise;
+}
+
+function setPropertyOfFormField(browserContext, selector, propName, newValue) {
+  return SpecialPowers.spawn(
+    browserContext,
+    [selector, propName, newValue],
+    (selectorChild, propNameChild, newValueChild) => {
+      let node = content.document.querySelector(selectorChild);
+      node[propNameChild] = newValueChild;
+
+      let event = node.ownerDocument.createEvent("UIEvents");
+      event.initUIEvent("input", true, true, node.ownerGlobal, 0);
+      node.dispatchEvent(event);
+    }
+  );
+}
+
 /**
  * Helper for opening the toolbar context menu.
  */
@@ -68,6 +126,29 @@ async function openToolbarContextMenu(contextMenu, target) {
   let popupshown = BrowserTestUtils.waitForEvent(contextMenu, "popupshown");
   EventUtils.synthesizeMouseAtCenter(target, { type: "contextmenu" });
   await popupshown;
+}
+
+/**
+ * Helper to paste from clipboard
+ */
+
+async function pasteFromClipboard(browser) {
+  return await SpecialPowers.spawn(browser, [], () => {
+    let { document } = content;
+    document.body.contentEditable = true;
+    document.body.focus();
+    let pastePromise = new Promise(resolve => {
+      document.addEventListener(
+        "paste",
+        e => {
+          resolve(e.clipboardData.getData("text/plain"));
+        },
+        { once: true }
+      );
+    });
+    document.execCommand("paste");
+    return pastePromise;
+  });
 }
 
 /**
