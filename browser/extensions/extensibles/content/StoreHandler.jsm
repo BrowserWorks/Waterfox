@@ -209,6 +209,8 @@ class StoreHandler {
         try {
           await this._removeChromeHeaders(this.xpiPath);
           let manifest = this._amendManifest(this.nsiFileXpi);
+          // Notify tests
+          Services.obs.notifyObservers(null, "waterfox-test-stores");
           if (manifest instanceof Array) {
             this._cleanup(this.nsiFileXpi);
             this._installFailedMsg(
