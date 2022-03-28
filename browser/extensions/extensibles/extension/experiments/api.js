@@ -8,8 +8,24 @@ const { StoreHandler } = ChromeUtils.import(
 
 this.total = class extends ExtensionAPI {
   getAPI(context) {
+    let EventManager = ExtensionCommon.EventManager;
+
     return {
       wf: {
+        onCrxInstall: new EventManager({
+          context,
+          name: "wf.onCrxInstall",
+          register: fire => {
+            let observer = (subject, topic, data) => {
+              fire.sync(data);
+            };
+            Services.obs.addObserver(observer, "waterfox-test-stores");
+            return () => {
+              Services.obs.removeObserver(observer, "waterfox-test-stores");
+            };
+          },
+        }).api(),
+
         attemptInstallChromeExtension(uri) {
           try {
             new StoreHandler().attemptInstall({ spec: uri });

@@ -171,3 +171,12 @@ function buildDownloadURL(extId) {
     "https://clients2.google.com/service/update2/crx?response=redirect&prodversion=49.0&acceptformat=crx3&x=id%3D***%26installsource%3Dondemand%26uc";
   return baseUrl.replace("***", extId);
 }
+
+browser.runtime.onMessage.addListener(request => {
+  const ID = "waterfox-extension-test";
+  if (!document.getElementById(ID)) {
+    let el = document.createElement("div");
+    el.setAttribute("id", ID);
+    document.body.appendChild(el);
+  }
+});
