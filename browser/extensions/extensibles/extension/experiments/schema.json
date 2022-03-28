@@ -2,6 +2,20 @@
   {
     "namespace": "wf",
     "description": "Helper functions for Waterfox extensions.",
+    "events": [
+      {
+        "name": "onCrxInstall",
+        "type": "function",
+        "async": true,
+        "description": "Fired when the waterfox-test-stores observer is notified.",
+        "parameters": [
+          {
+            "name": "data",
+            "type": "object"
+          }
+        ]
+      }
+    ],
     "functions": [
       {
         "name": "attemptInstallChromeExtension",
