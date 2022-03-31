@@ -50,3 +50,18 @@
              data-l10n-id="bookmarks-position-bottom"/>
     </radiogroup>
 </groupbox>
+#ifdef XP_LINUX
+  <!-- Geolocation API preferences -->
+<groupbox id="geolocationGroup"
+          data-category="paneGeneral"
+          hidden="true">
+  <label><html:h2 data-l10n-id="geolocation-api-header"/></label>
+  <label data-l10n-id="geolocation-description"/>
+    <radiogroup id="geolocationRadioGroup" preference="geo.provider.network.url">
+      <radio value="https://location.services.mozilla.com/v1/geolocate?key=%MOZILLA_API_KEY%"
+             data-l10n-id="geolocation-api-enabled"/>
+      <radio value=""
+             data-l10n-id="geolocation-api-disabled"/>
+    </radiogroup>
+</groupbox>
+#endif
