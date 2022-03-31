@@ -21,6 +21,7 @@ case $(uname -s) in
     Linux)
         # Any Linux specific settings
         X=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)
+		ac_add_options --with-mozilla-api-keyfile="$PWD"/mozilla-api
         case $(uname -m) in
             x86_64)
                 if test -d "$HOME/.mozbuild/clang/bin"; then
