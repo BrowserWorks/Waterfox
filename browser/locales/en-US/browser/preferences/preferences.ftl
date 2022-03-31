@@ -1403,6 +1403,12 @@ bookmarks-position-top =
     .label = Top
 bookmarks-position-bottom =
     .label = Bottom
+geolocation-api-header = Geolocation API
+geolocation-description = Some websites require your location to function. If a website isn't functioning as a result of not being able to find your location, please enable this preference and try again.
+geolocation-api-enabled =
+    .label = Enable
+geolocation-api-disabled =
+    .label = Disable
 
 # Waterfox - privacy
 send-referrer-header-0 =

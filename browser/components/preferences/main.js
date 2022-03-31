@@ -250,6 +250,9 @@ Preferences.addAll([
 
   // Bookmarks Toolbar Position
   { id: "browser.bookmarks.toolbarposition", type: "wstring" },
+
+  // Geolocation API
+  { id: "geo.provider.network.url", type: "wstring" },
 ]);
 
 if (AppConstants.HAVE_SHELL_SERVICE) {
