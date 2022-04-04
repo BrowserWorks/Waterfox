@@ -12,3 +12,10 @@
     data-lazy-l10n-id="copy-all-urls"
     preference="browser.tabs.copyallurls"
 />
+<menuitem
+    id="context_unloadTab"
+    class="tabFeature"
+    oncommand="gBrowser.discardBrowser(TabContextMenu.contextTab);"
+    data-lazy-l10n-id="unload-tab"
+    preference="browser.tabs.unloadTab"
+/>
