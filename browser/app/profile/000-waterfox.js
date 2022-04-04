@@ -168,6 +168,7 @@ pref("browser.tabs.duplicateTab", true);
 pref("browser.tabs.copyurl", true);
 pref("browser.tabs.copyallurls", false);
 pref("browser.tabs.copyurl.activetab", false);
+pref("browser.tabs.unloadTab", false);
 pref("browser.restart_menu.showpanelmenubtn", true);
 pref("browser.restart_menu.purgecache", false);
 pref("browser.restart_menu.requireconfirm", true);
