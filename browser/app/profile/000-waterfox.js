@@ -68,6 +68,7 @@ pref("browser.search.separatePrivateDefault", true);
 pref("browser.search.separatePrivateDefault.ui.enabled", true);
 pref("browser.send_pings", false, locked);
 pref("browser.tabs.duplicateTab", true);
+pref("browser.tabs.unloadOnLowMemory", true);
 //pref("browser.tabs.remote.separatedMozillaDomains", "", locked);
 pref("browser.topsites.contile.enabled", false, locked);
 pref("browser.topsites.contile.endpoint", "", locked);
