@@ -87,6 +87,11 @@ const TabFeatures = {
         el.hidden = !visible;
       }
     }
+    // Can't unload selected tab, so don't show menu item in that case
+    if (win.TabContextMenu.contextTab === win.gBrowser.selectedTab) {
+      const el = document.getElementById("context_unloadTab");
+      el.hidden = true;
+    }
   },
 
   // Copies current tab url to clipboard

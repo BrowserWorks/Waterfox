@@ -20,3 +20,6 @@ private-tab =
 
 status-bar =
     .label = Status Bar
+
+unload-tab =
+    .label = Unload Tab
