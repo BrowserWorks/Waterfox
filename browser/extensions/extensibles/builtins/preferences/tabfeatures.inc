@@ -16,6 +16,7 @@
     <checkbox id="copyUrl" preference="browser.tabs.copyurl" data-l10n-id="show-copy-url"/>
     <checkbox id="copyActiveTab" preference="browser.tabs.activetab" data-l10n-id="enable-copy-active-tab"/>
     <checkbox id="copyAllUrls" preference="browser.tabs.copyallurls" data-l10n-id="show-copy-all-urls"/>
+    <checkbox id="unloadTab" preference="browser.tabs.unloadTab" data-l10n-id="show-unload-tab"/>
   </vbox>
 
 <!-- Additional Tab preferences -->
