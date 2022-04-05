@@ -229,6 +229,7 @@ Preferences.addAll([
   { id: "browser.tabs.copyurl", type: "bool" },
   { id: "browser.tabs.activetab", type: "bool" },
   { id: "browser.tabs.copyallurls", type: "bool" },
+  { id: "browser.tabs.unloadTab", type: "bool" },
 
   // Additional Tab Prefs
   { id: "browser.tabs.pinnedIconOnly", type: "bool" },
