@@ -80,8 +80,16 @@ const EXTENSION_ICON_URL =
   "chrome://mozapps/skin/extensions/extensionGeneric.svg";
 const BUILTIN_THEME_PREVIEWS = new Map([
   [
-    "default-theme@mozilla.org",
-    "chrome://mozapps/content/extensions/default-theme.svg",
+    "lepton@waterfox.net",
+    "chrome://mozapps/content/extensions/lepton-theme.svg",
+  ],
+  [
+    "australis-dark@waterfox.net",
+    "chrome://mozapps/content/extensions/australis-dark.svg",
+  ],
+  [
+    "australis-light@waterfox.net",
+    "chrome://mozapps/content/extensions/australis-light.svg",
   ],
   [
     "firefox-compact-light@mozilla.org",
@@ -92,8 +100,8 @@ const BUILTIN_THEME_PREVIEWS = new Map([
     "chrome://mozapps/content/extensions/firefox-compact-dark.svg",
   ],
   [
-    "firefox-alpenglow@mozilla.org",
-    "chrome://mozapps/content/extensions/firefox-alpenglow.svg",
+    "default-theme@mozilla.org",
+    "chrome://mozapps/content/extensions/default-theme.svg",
   ],
 ]);
 

@@ -20,6 +20,7 @@ pref("app.update.badgeWaitTime", 0);
 pref("app.update.notifyDuringDownload", true);
 pref("app.update.promptWaitTime", 3600);
 pref("app.update.url.override", "", sticky);
+pref("browser.compactmode.show", true);
 pref("browser.download.autohideButton", false);
 pref("browser.download.panel.shown", true);
 pref("browser.newtabpage.activity-stream.asrouter.providers.cfr", "{}", locked);
