@@ -1,0 +1,300 @@
+:root {
+  --tab-curve-width: 30px;
+  --tabs-border: transparent !important;
+  --tab-border-radius: 0 !important;
+}
+
+#navigator-toolbox:-moz-lwtheme {
+  --tabs-border-color: rgba(0,0,0,0) !important;
+}
+
+.tabbrowser-arrowscrollbox .arrowscrollbox-scrollbox {
+  padding-inline-start: 10px !important;
+}
+
+/* To be able to see the top border of the tab */
+.tab-stack {
+  margin-top: 2px !important;
+}
+
+/* To prevent tab label appearing on pinned tab in compact mode. */
+.tab-content {
+  padding: 0 12px !important;
+}
+
+/* When the window is maximized, the first pinned tab is properly displayed. */
+#TabsToolbar  {
+  padding-inline-start: 15px !important;
+  min-height: 33px !important;
+  max-height: 33px !important;
+}
+
+.tabbrowser-tab[first-visible-tab="true"] {
+  padding-left: 12px !important;
+}
+
+#tabbrowser-tabs {
+  margin-left: -15px !important;
+}
+
+.titlebar-placeholder {
+  border: none !important;
+}
+
+.titlebar-spacer {
+  border: none !important;
+}
+
+/* Styles to account for when tab scrollbar is visible, and margin-inline-start kicks in */
+.tabbrowser-tab[pinned="true"] {
+  width: 40px !important; /* Actual photon pinned tab is 41px, but 40px removes pixelated artifact from pinned tab favicon */
+}
+
+.tabbrowser-tab[pinned="true"][style^="margin-inline-start"] {
+  padding-left: 12px !important;
+}
+
+/* Remove unneeded styles from Photon */
+.tabbrowser-tab::before,
+.tabbrowser-tab::after {
+  border: none !important;
+}
+
+/* Remove uneeded styles from Proton */
+.tabbrowser-tab {
+  padding-inline: 0px !important;
+}
+
+.tab-background {
+  margin-bottom: 0 !important;
+  display: flex !important;
+}
+
+.tab-background > .tab-context-line {
+  flex: 1 !important;
+}
+
+#tabbrowser-tabs[haspinnedtabs]:not([positionpinnedtabs]) > #tabbrowser-arrowscrollbox > .tabbrowser-tab[first-visible-unpinned-tab] {
+  margin-inline-start: 0px !important;
+}
+
+/* Remove container colors */
+.tabbrowser-tab[usercontextid] > .tab-stack > .tab-background > .tab-context-line {
+  background-color: rgba(0,0,0,0) !important;
+  height: inherit !important;
+  border-radius: 0px !important;
+  margin: 0px !important;
+}
+
+/* Windows 7 specific */
+@media (-moz-os-version: windows-win7) {
+  .tabbrowser-tab {
+    background-color: transparent !important;
+    border: none !important;
+  }
+
+  @media (-moz-windows-default-theme) {
+    .tabbrowser-tab:not(:-moz-lwtheme) {
+      background-color: transparent !important;
+      border: none !important;
+    }
+  }
+}
+
+.tabbrowser-tab > .tab-stack > .tab-background {
+  background-image: none !important;
+  -moz-box-orient: horizontal !important;
+  background-color: transparent !important;
+  margin-top: 1px !important;
+}
+
+.tab-background[selected="true"] {
+  border: none !important;
+}
+
+.tab-background {
+  pointer-events: none !important;
+}
+
+.tab-line {
+  display: none !important;
+}
+
+.tab-bottom-line {
+  display: none !important;
+}
+
+/* Match height of new tab button (right svg) on hover */
+#tabs-newtab-button {
+  margin: 0 !important;
+}
+
+/* overlap the tab curves */
+.tab-background {
+  -moz-margin-end: -15px !important;
+  -moz-margin-start: -15px !important;
+}
+
+/* Remove blue animation on tab on page load complete */
+.tab-loading-burst {
+  display: none !important;
+}
+
+/* Begin tab background customizations */
+.tab-background[selected="true"]::before {
+  border: none !important;
+  content: "" !important;
+  width: 30px !important;
+  min-height: 30px !important;
+  display: -moz-box !important;
+  background-repeat: no-repeat !important;
+}
+
+.tab-background[selected="true"]::after {
+  border: none !important;
+  content: "" !important;
+  width: 30px !important;
+  min-height: 30px !important;
+  display: -moz-box !important;
+  background-repeat: no-repeat !important;
+}
+
+.tab-background[selected="true"] > spacer {
+  margin-top: 0px !important;
+}
+
+#new-tab-button,
+#tabs-newtab-button {
+  width: calc(36px + 30px) !important;
+  margin-inline-start: -15px !important;
+  margin-top: 1px !important;
+}
+
+/* Tab hover customizations */
+.close-icon:hover {
+  border-radius: 50% !important;
+}
+
+/* Regular tabs */
+.tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true])::before {
+  display: -moz-box !important;
+  background-repeat: no-repeat !important;
+  content: "" !important;
+  width: 30px !important;
+  max-height: 30px !important;
+  background-color: transparent !important;
+}
+
+.tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true])::after {
+  display: -moz-box !important;
+  background-repeat: no-repeat !important;
+  content: "" !important;
+  width: 30px !important;
+  max-height: 30px !important;
+  background-color: transparent !important;
+}
+
+.tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true]) > spacer {
+  margin-top: 0px !important;
+}
+
+#TabsToolbar[brighttext] > #tabbrowser-tabs > .tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected="true"]),
+#tabs-newtab-button:hover,
+#tabs-newtab-button:hover::before,
+#tabs-newtab-button:hover::after {
+  background-color: transparent !important;
+}
+
+/* New tab hover customizations */
+.tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected="true"]), #tabs-newtab-button:hover {
+  background-position: 0px 2px, 30px 4px , 36px 2px !important;
+  background-repeat: no-repeat !important;
+  background-size: 30px 30px, calc(100% - (2 * 30px)) 30px, 30px !important;
+}
+
+#tabs-newtab-button:hover > .toolbarbutton-icon {
+  background: none !important;
+  background-color: transparent !important;
+}
+
+/* Color specific customizations */
+:root {
+  --svg-selected-before: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:svg='http://www.w3.org/2000/svg' width='30px' height='31px' preserveAspectRatio='none'><defs><svg:clipPath id='tab-curve-clip-path-start' clipPathUnits='objectBoundingBox'><svg:path d='m 1,0.065 0.05,0 0,0.938 -1,0 0,-0.028 C 0.32082458,0.95840561 0.4353096,0.81970962 0.48499998,0.5625 0.51819998,0.3905 0.535,0.0659 1,0.065 z'/></svg:clipPath><svg:clipPath id='tab-curve-clip-path-end' clipPathUnits='objectBoundingBox'><svg:path d='m 0,0.065 -0.05,0 0,0.938 1,0 0,-0.028 C 0.67917542,0.95840561 0.56569036,0.81970962 0.51599998,0.5625 0.48279998,0.3905 0.465,0.0659 0,0.065 z'/></svg:clipPath><svg:clipPath id='tab-hover-clip-path' clipPathUnits='objectBoundingBox'><svg:path d='M 0,0.2 0,1 1,1, 1,0.2 z'/></svg:clipPath></defs><foreignObject width='30' height='31' clip-path='url(%23tab-curve-clip-path-start)'><div id='tab-background-fill' style='background-color:rgba(251,251,251,1);background-repeat:no-repeat;height:100%;width:100%;' xmlns='http://www.w3.org/1999/xhtml'></div></foreignObject></svg>");
+
+  --svg-selected-after: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:svg='http://www.w3.org/2000/svg' width='30px' height='31px' preserveAspectRatio='none'><defs><svg:clipPath id='tab-curve-clip-path-start' clipPathUnits='objectBoundingBox'><svg:path d='m 1,0.065 0.05,0 0,0.938 -1,0 0,-0.028 C 0.32082458,0.95840561 0.4353096,0.81970962 0.48499998,0.5625 0.51819998,0.3905 0.535,0.0659 1,0.065 z'/></svg:clipPath><svg:clipPath id='tab-curve-clip-path-end' clipPathUnits='objectBoundingBox'><svg:path d='m 0,0.065 -0.05,0 0,0.938 1,0 0,-0.028 C 0.67917542,0.95840561 0.56569036,0.81970962 0.51599998,0.5625 0.48279998,0.3905 0.465,0.0659 0,0.065 z'/></svg:clipPath><svg:clipPath id='tab-hover-clip-path' clipPathUnits='objectBoundingBox'><svg:path d='M 0,0.2 0,1 1,1, 1,0.2 z'/></svg:clipPath></defs><foreignObject width='30' height='31' clip-path='url(%23tab-curve-clip-path-end)'><div id='tab-background-fill' style='background-color:rgba(251,251,251,1);background-repeat:no-repeat;height:100%;width:100%;' xmlns='http://www.w3.org/1999/xhtml'></div></foreignObject></svg>");
+
+  --background-selected-middle:
+    linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0)),
+    linear-gradient(
+      transparent
+      2px,
+      rgba(251,251,251,1) 2px,
+      rgba(251,251,251,1)
+    ),
+    none;
+
+  --svg-hover-before: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:svg='http://www.w3.org/2000/svg' width='30px' height='30px' preserveAspectRatio='none'><defs><svg:clipPath id='tab-curve-clip-path-start' clipPathUnits='objectBoundingBox'><svg:path d='m 1,0.065 0.05,0 0,0.938 -1,0 0,-0.028 C 0.32082458,0.95840561 0.4353096,0.81970962 0.48499998,0.5625 0.51819998,0.3905 0.535,0.0659 1,0.065 z'/></svg:clipPath><svg:clipPath id='tab-curve-clip-path-end' clipPathUnits='objectBoundingBox'><svg:path d='m 0,0.065 -0.05,0 0,0.938 1,0 0,-0.028 C 0.67917542,0.95840561 0.56569036,0.81970962 0.51599998,0.5625 0.48279998,0.3905 0.465,0.0659 0,0.065 z'/></svg:clipPath><svg:clipPath id='tab-hover-clip-path' clipPathUnits='objectBoundingBox'><svg:path d='M 0,0.2 0,1 1,1, 1,0.2 z'/></svg:clipPath></defs><foreignObject width='30' height='30' clip-path='url(%23tab-curve-clip-path-start)'><div id='tab-background-fill' style='background-color:rgba(0,0,0, .1);background-repeat:no-repeat;height:100%;width:100%;' xmlns='http://www.w3.org/1999/xhtml'></div></foreignObject></svg>");
+
+  --svg-hover-after: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:svg='http://www.w3.org/2000/svg' width='30px' height='31px' preserveAspectRatio='none'><defs><svg:clipPath id='tab-curve-clip-path-start' clipPathUnits='objectBoundingBox'><svg:path d='m 1,0.065 0.05,0 0,0.938 -1,0 0,-0.028 C 0.32082458,0.95840561 0.4353096,0.81970962 0.48499998,0.5625 0.51819998,0.3905 0.535,0.0659 1,0.065 z'/></svg:clipPath><svg:clipPath id='tab-curve-clip-path-end' clipPathUnits='objectBoundingBox'><svg:path d='m 0,0.065 -0.05,0 0,0.938 1,0 0,-0.028 C 0.67917542,0.95840561 0.56569036,0.81970962 0.51599998,0.5625 0.48279998,0.3905 0.465,0.0659 0,0.065 z'/></svg:clipPath><svg:clipPath id='tab-hover-clip-path' clipPathUnits='objectBoundingBox'><svg:path d='M 0,0.2 0,1 1,1, 1,0.2 z'/></svg:clipPath></defs><foreignObject width='30' height='31' clip-path='url(%23tab-curve-clip-path-end)'><div id='tab-background-fill' style='background-color:rgba(0,0,0,.1);background-repeat:no-repeat;height:100%;width:100%;' xmlns='http://www.w3.org/1999/xhtml'></div></foreignObject></svg>");
+
+  --background-hover-middle:
+    linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0)),
+    linear-gradient(
+      transparent
+      2px,
+      rgba(0,0,0,.1) 2px,
+      rgba(0,0,0,.1)
+    ),
+    none !important;
+
+  --newtab-hover: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:svg='http://www.w3.org/2000/svg' width='30px' height='31px' preserveAspectRatio='none'><defs><svg:clipPath id='tab-curve-clip-path-start' clipPathUnits='objectBoundingBox'><svg:path d='m 1,0.065 0.05,0 0,0.938 -1,0 0,-0.028 C 0.32082458,0.95840561 0.4353096,0.81970962 0.48499998,0.5625 0.51819998,0.3905 0.535,0.0659 1,0.065 z'/></svg:clipPath><svg:clipPath id='tab-curve-clip-path-end' clipPathUnits='objectBoundingBox'><svg:path d='m 0,0.065 -0.05,0 0,0.938 1,0 0,-0.028 C 0.67917542,0.95840561 0.56569036,0.81970962 0.51599998,0.5625 0.48279998,0.3905 0.465,0.0659 0,0.065 z'/></svg:clipPath><svg:clipPath id='tab-hover-clip-path' clipPathUnits='objectBoundingBox'><svg:path d='M 0,0.2 0,1 1,1, 1,0.2 z'/></svg:clipPath></defs><foreignObject width='30' height='31' clip-path='url(%23tab-curve-clip-path-start)'><div id='tab-background-fill' style='background-color:rgba(0,0,0,.1);background-repeat:no-repeat;height:100%;width:100%;' xmlns='http://www.w3.org/1999/xhtml'></div></foreignObject></svg>"),
+    linear-gradient(rgba(0,0,0,.1), rgba(0,0,0,.1)),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:svg='http://www.w3.org/2000/svg' width='30px' height='30px' preserveAspectRatio='none'><defs><svg:clipPath id='tab-curve-clip-path-start' clipPathUnits='objectBoundingBox'><svg:path d='m 1,0.065 0.05,0 0,0.938 -1,0 0,-0.028 C 0.32082458,0.95840561 0.4353096,0.81970962 0.48499998,0.5625 0.51819998,0.3905 0.535,0.0659 1,0.065 z'/></svg:clipPath><svg:clipPath id='tab-curve-clip-path-end' clipPathUnits='objectBoundingBox'><svg:path d='m 0,0.065 -0.05,0 0,0.938 1,0 0,-0.028 C 0.67917542,0.95840561 0.56569036,0.81970962 0.51599998,0.5625 0.48279998,0.3905 0.465,0.0659 0,0.065 z'/></svg:clipPath><svg:clipPath id='tab-hover-clip-path' clipPathUnits='objectBoundingBox'><svg:path d='M 0,0.2 0,1 1,1, 1,0.2 z'/></svg:clipPath></defs><foreignObject width='30' height='31' clip-path='url(%23tab-curve-clip-path-end)'><div id='tab-background-fill' style='background-color:rgba(0,0,0,.1);background-repeat:no-repeat;height:100%;width:100%;' xmlns='http://www.w3.org/1999/xhtml'></div></foreignObject></svg>");
+}
+
+
+/* OS-specific color variables */
+@media screen and (-moz-windows-theme) {
+  :root {
+
+  }
+}
+
+@media not screen and (-moz-windows-theme) {
+  :root {
+
+  }
+}
+
+.tab-background[selected="true"]::before {
+  background-image: var(--svg-selected-before) !important;
+}
+
+.tab-background[selected="true"]::after {
+  background-image: var(--svg-selected-after) !important;
+}
+
+.tab-background[selected="true"] > .tab-context-line {
+ background-image: var(--background-selected-middle) !important;
+}
+
+.tabbrowser-tab[visuallyselected="true"] > .tab-stack > .tab-background {
+  box-shadow: none !important;
+}
+
+.tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true])::before {
+  background-image: var(--svg-hover-before) !important;
+}
+
+.tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true])::after {
+  background-image: var(--svg-hover-after) !important;
+}
+
+.tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true]) > .tab-context-line {
+  background-image: var(--background-hover-middle) !important;
+
+}
+
+#tabs-newtab-button:hover {
+  background-image: var(--newtab-hover) !important;
+}
