@@ -148,20 +148,21 @@ const TabFeatures = {
     return urlArr;
   },
 
-  restartBrowser() {
+  async restartBrowser() {
     try {
       if (Services.prefs.getBoolPref(this.PREF_REQUIRECONFIRM)) {
-        let brand = this.brandBundle.GetStringFromName("brandShortName");
-        let title = this.browserBundle.formatStringFromName(
-          "restartPromptTitle",
-          [brand],
-          1
-        );
-        let question = this.browserBundle.formatStringFromName(
-          "restartPromptQuestion",
-          [brand],
-          1
-        );
+        // Need brand in here to be able to expand { -brand-short-name }
+        let l10n = new Localization([
+          "branding/brand.ftl",
+          "browser/extensibles.ftl",
+        ]);
+        let [title, question] = (
+          await l10n.formatMessages([
+            { id: "restart-prompt-title" },
+            { id: "restart-prompt-question" },
+          ])
+        ).map(({ value }) => value);
+
         if (Services.prompt.confirm(null, title, question)) {
           // only restart if confirmation given
           this._attemptRestart();
@@ -170,7 +171,7 @@ const TabFeatures = {
         this._attemptRestart();
       }
     } catch (e) {
-      throw new Error(
+      Cu.reportError(
         "We're sorry but something has gone wrong with 'restartBrowser' " + e
       );
     }
