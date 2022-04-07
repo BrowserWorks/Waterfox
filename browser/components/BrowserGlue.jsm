@@ -3273,7 +3273,7 @@ BrowserGlue.prototype = {
   _migrateUI: function BG__migrateUI() {
     // Use an increasing number to keep track of the current migration state.
     // Completely unrelated to the current Firefox release number.
-    const UI_VERSION = 117;
+    const UI_VERSION = 118;
     const BROWSER_DOCURL = AppConstants.BROWSER_CHROME_URL;
 
     if (!Services.prefs.prefHasUserValue("browser.migration.version")) {
@@ -3995,6 +3995,59 @@ BrowserGlue.prototype = {
         //Then clear user pref
         Services.prefs.clearUserPref("browser.bookmarksBar.position");
       }
+    }
+
+    if (currentUIVersion < 118) {
+      // This over-engineered bit of code detects if DuckDuckGo is the default
+      // search engine. If it is, we must set it as the default private engine
+      // as well - not Startpage.
+      // If this code breaks, the whole browser behaves in inappropriate ways.
+      // That's why there are numerous try/catch blocks.
+      // We need to wait for the SearchService to be initialised before we can
+      // try to do anything with it.
+      let searchInitializedPromise = new Promise(resolve => {
+        if (Services.search.isInitialized) {
+          resolve();
+        }
+        const SEARCH_SERVICE_TOPIC = "browser-search-service";
+        Services.obs.addObserver(function observer(subject, topic, data) {
+          if (data != "init-complete") {
+            return;
+          }
+          Services.obs.removeObserver(observer, SEARCH_SERVICE_TOPIC);
+          resolve();
+        }, SEARCH_SERVICE_TOPIC);
+      });
+      searchInitializedPromise.then(() => {
+        (async () => {
+          let defaultEngine;
+          let engine;
+          try {
+            defaultEngine = await Services.search.getDefault();
+            engine = Services.search.getEngineByName("DuckDuckGo");
+            if (defaultEngine.name != engine.name) {
+              console.info(
+                `"${defaultEngine.name}" is not the default search engine, ` +
+                  `"${engine.name}" is. Skip modifying the default private search` +
+                  `.`
+              );
+            } else if (defaultEngine.name == engine.name) {
+              try {
+                await Services.search.setDefaultPrivate(engine);
+              } catch (ex) {
+                console.error(
+                  `Unable to set the default private search engine to "${engine.name}"`,
+                  ex
+                );
+              }
+            }
+          } catch (ex) {
+            console.error(ex);
+          }
+        })().catch(ex => {
+          Cu.reportError(ex);
+        });
+      });
     }
 
     // Update the migration version.
