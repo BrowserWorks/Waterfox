@@ -71,6 +71,10 @@ tab-context-share-url =
     .accesskey = U
 tab-context-share-more =
     .label = Więcej…
+copy-url =
+    .label = Kopiuj URL karty
+copy-all-urls =
+    .label = Kopiuj URL wszystkich kart
 
 ## Variables:
 ##  $tabCount (Number): the number of tabs that are affected by the action.
