@@ -111,6 +111,8 @@ menu-file-import-from-another-browser =
 menu-file-go-offline =
     .label = Pracuj w trybie offline
     .accesskey = c
+menu-restart-button = 
+    .label = Zrestartuj
 
 ## Edit Menu
 
