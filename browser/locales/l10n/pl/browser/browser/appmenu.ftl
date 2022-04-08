@@ -101,6 +101,9 @@ appmenu-fxa-setup-sync =
 appmenu-fxa-show-more-tabs = Wyświetl więcej kart
 appmenuitem-save-page =
     .label = Zapisz stronę jako…
+    
+appmenuitem-restart-browser =
+    .label = Zrestartuj
 
 ## What's New panel in App menu.
 
