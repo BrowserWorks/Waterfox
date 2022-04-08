@@ -18,3 +18,7 @@ status-bar =
     .label = Pasek stanu
 unload-tab =
     .label = Usuń z pamięci
+restart-prompt-title =
+    .label = Uruchomić ponownie przeglądarkę Waterfox ?
+restart-prompt-question =
+    .label = Czy na pewno chcesz ponownie uruchomić przeglądarkę Waterfox ?
