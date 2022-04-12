@@ -284,13 +284,12 @@ const PrivateTab = {
       return;
     }
     let { document, PrivateTab } = win;
+    const isPrivate =
+      win.TabContextMenu.contextTab.userContextId ===
+      PrivateTab.container.userContextId;
     document
       .getElementById("toggleTabPrivateState")
-      .setAttribute(
-        "checked",
-        win.TabContextMenu.contextTab.userContextId ==
-          PrivateTab.container.userContextId
-      );
+      .setAttribute("data-l10n-args", JSON.stringify({ isPrivate }));
   },
 
   openLink(aEvent) {
