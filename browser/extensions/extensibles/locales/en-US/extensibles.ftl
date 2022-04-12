@@ -16,7 +16,11 @@ open-link-private =
     .label = Open Link in New Private Tab
 
 private-tab =
-    .label = Private Tab
+    .label =
+        { $isPrivate ->
+            [true] Exit Private Tab
+            *[false] Make Private Tab
+        }
 
 status-bar =
     .label = Status Bar
