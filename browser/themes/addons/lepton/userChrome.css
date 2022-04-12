@@ -5917,9 +5917,7 @@ menupopup:is(#context_sendTabToDevicePopupMenu, #context-sendpagetodevice-popup)
 }
 
 menuitem.privatetab-icon {
-  list-style-image: url("chrome://browser/skin/lepton/priavate-favicon.svg") !important;
-  fill: currentColor;
-  -moz-context-properties: fill;
+  --menuitem-image: url("chrome://browser/skin/lepton/private-favicon.svg");
 }
 
 /* New Folder Button */
