@@ -1,6 +1,6 @@
 # In browser/locales/jar.mn
 open-all-private =
-    .label = すべてのプライベートタブで開く
+    .label = すべてのサイトをプライベートタブで開く
 
 open-all-links-private =
     .label = すべてのリンクをプライベートタブで開く
