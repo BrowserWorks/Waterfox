@@ -490,25 +490,33 @@ const PrivateTab = {
     }
     let { PrivateTab } = tab.ownerGlobal;
     let isPrivate = PrivateTab.isPrivate(tab);
-    let userContextId = isPrivate ? PrivateTab.container.userContextId : 0;
-    // Duplicating a tab copies the tab state cache from the parent tab.
-    // Therefore we need to flush the tab state to ensure it's updated,
-    // then overwrite the tab usercontextid so that any restored tabs
-    // are opened in the correct container, rather than that of their
-    // parent tab.
-    let browser = tab.linkedBrowser;
-    // Can't update tab state if we can't get the browser
-    if (browser) {
-      TabStateFlusher.flush(browser)
-        .then(() => {
-          TabStateCache.update(tab.linkedBrowser.permanentKey, {
-            isPrivate,
-            userContextId,
+    // if statement is temp solution to prevent containers being dropped on restart.
+    // The flushing and cache updating should only occur if the parent tab was
+    // private and the new tab is non-private OR the parent tab was non-private
+    // and the new tab is private. Otherwise we should rely on default behaviour.
+    // We also need to be wary of pinned state of tabs, as that may also have been
+    // affected in the same case.
+    if (isPrivate) {
+      let userContextId = isPrivate ? PrivateTab.container.userContextId : 0;
+      // Duplicating a tab copies the tab state cache from the parent tab.
+      // Therefore we need to flush the tab state to ensure it's updated,
+      // then overwrite the tab usercontextid so that any restored tabs
+      // are opened in the correct container, rather than that of their
+      // parent tab.
+      let browser = tab.linkedBrowser;
+      // Can't update tab state if we can't get the browser
+      if (browser) {
+        TabStateFlusher.flush(browser)
+          .then(() => {
+            TabStateCache.update(tab.linkedBrowser.permanentKey, {
+              isPrivate,
+              userContextId,
+            });
+          })
+          .catch(ex => {
+            // Sometimes tests fail here
           });
-        })
-        .catch(ex => {
-          // Sometimes tests fail here
-        });
+      }
     }
   },
 
