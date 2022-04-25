@@ -135,7 +135,7 @@ var ReaderMode = {
     });
 
     let url = win.document.location.href;
-    let originalURL = ReaderMode.getOriginalUrl(url);
+    let originalURL = this.getOriginalUrl(url);
     let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
 
     if (!Services.appinfo.sessionHistoryInParent) {
@@ -219,7 +219,7 @@ var ReaderMode = {
   },
 
   getOriginalUrlObjectForDisplay(url) {
-    let originalUrl = ReaderMode.getOriginalUrl(url);
+    let originalUrl = this.getOriginalUrl(url);
     if (originalUrl) {
       let uriObj;
       try {
@@ -264,10 +264,11 @@ var ReaderMode = {
    * @resolves JS object representing the article, or null if no article is found.
    */
   async downloadAndParseDocument(url) {
-    let doc = await this._downloadDocument(url);
-    if (!doc) {
+    let result = await this._downloadDocument(url);
+    if (!result?.doc) {
       return null;
     }
+    let { doc, newURL } = result;
     if (
       !Readerable.shouldCheckUri(doc.documentURIObject) ||
       !Readerable.shouldCheckUri(doc.baseURIObject, true)
@@ -276,7 +277,14 @@ var ReaderMode = {
       return null;
     }
 
-    return this._readerParse(doc);
+    let article = await this._readerParse(doc);
+    // If we have to redirect, reject to the caller with the parsed article,
+    // so we can update the URL before displaying it.
+    if (newURL) {
+      return Promise.reject({ newURL, article });
+    }
+    // Otherwise, we can just continue with the article.
+    return article;
   },
 
   _downloadDocument(url) {
@@ -312,48 +320,6 @@ var ReaderMode = {
           return;
         }
 
-        // Manually follow a meta refresh tag if one exists.
-        let meta = doc.querySelector("meta[http-equiv=refresh]");
-        if (meta) {
-          let content = meta.getAttribute("content");
-          if (content) {
-            let urlIndex = content.toUpperCase().indexOf("URL=");
-            if (urlIndex > -1) {
-              let baseURI = Services.io.newURI(url);
-              let newURI = Services.io.newURI(
-                content.substring(urlIndex + 4),
-                null,
-                baseURI
-              );
-              let newURL = newURI.spec;
-              let ssm = Services.scriptSecurityManager;
-              let flags =
-                ssm.LOAD_IS_AUTOMATIC_DOCUMENT_REPLACEMENT |
-                ssm.DISALLOW_INHERIT_PRINCIPAL;
-              try {
-                ssm.checkLoadURIStrWithPrincipal(
-                  doc.nodePrincipal,
-                  newURL,
-                  flags
-                );
-              } catch (ex) {
-                let errorMsg =
-                  "Reader mode disallowed meta refresh (reason: " + ex + ").";
-
-                if (Services.prefs.getBoolPref("reader.errors.includeURLs")) {
-                  errorMsg += " Refresh target URI: '" + newURL + "'.";
-                }
-                reject(errorMsg);
-                return;
-              }
-              // Otherwise, pass an object indicating our new URL:
-              if (!baseURI.equalsExceptRef(newURI)) {
-                reject({ newURL });
-                return;
-              }
-            }
-          }
-        }
         let responseURL = xhr.responseURL;
         let givenURL = url;
         // Convert these to real URIs to make sure the escaping (or lack
@@ -369,14 +335,15 @@ var ReaderMode = {
           /* Ignore errors - we'll use what we had before */
         }
 
-        if (responseURL != givenURL) {
-          // We were redirected without a meta refresh tag.
-          // Force redirect to the correct place:
-          reject({ newURL: xhr.responseURL });
-          return;
-        }
-        resolve(doc);
+        // We treat redirects as download successes here:
         histogram.add(DOWNLOAD_SUCCESS);
+
+        let result = { doc };
+        if (responseURL != givenURL) {
+          result.newURL = xhr.responseURL;
+        }
+
+        resolve(result);
       };
       xhr.send();
     });

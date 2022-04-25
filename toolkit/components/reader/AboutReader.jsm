@@ -767,7 +767,12 @@ AboutReader.prototype = {
       try {
         article = await ReaderMode.downloadAndParseDocument(url);
       } catch (e) {
-        if (e && e.newURL) {
+        if (e?.newURL && this._actor) {
+          await this._actor.sendQuery("RedirectTo", {
+            newURL: e.newURL,
+            article: e.article,
+          });
+
           let readerURL = "about:reader?url=" + encodeURIComponent(e.newURL);
           this._win.location.replace(readerURL);
           return;
