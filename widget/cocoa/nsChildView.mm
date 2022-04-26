@@ -2870,21 +2870,21 @@ NSEvent* gLastDragMouseDownEvent = nil;  // [strong]
 }
 
 - (bool)shouldConsiderStartingSwipeFromEvent:(NSEvent*)anEvent {
-  // This method checks whether the AppleEnableSwipeNavigateWithScrolls global
-  // preference is set.  If it isn't, fluid swipe tracking is disabled, and a
-  // horizontal two-finger gesture is always a scroll (even in Safari).  This
-  // preference can't (currently) be set from the Preferences UI -- only using
-  // 'defaults write'.
-  if (![NSEvent isSwipeTrackingFromScrollEventsEnabled]) {
-    return false;
-  }
-
   // Only initiate horizontal tracking for gestures that have just begun --
   // otherwise a scroll to one side of the page can have a swipe tacked on
   // to it.
   NSEventPhase eventPhase = [anEvent phase];
   if ([anEvent type] != NSEventTypeScrollWheel || eventPhase != NSEventPhaseBegan ||
       ![anEvent hasPreciseScrollingDeltas]) {
+    return false;
+  }
+
+  // This method checks whether the AppleEnableSwipeNavigateWithScrolls global
+  // preference is set.  If it isn't, fluid swipe tracking is disabled, and a
+  // horizontal two-finger gesture is always a scroll (even in Safari).  This
+  // preference can't (currently) be set from the Preferences UI -- only using
+  // 'defaults write'.
+  if (![NSEvent isSwipeTrackingFromScrollEventsEnabled]) {
     return false;
   }
 
