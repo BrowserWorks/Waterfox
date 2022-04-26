@@ -701,8 +701,10 @@ class SandboxPolicyCommon : public SandboxPolicyBase {
         // clockid_t can encode a pid or tid to monitor another
         // process or thread's CPU usage (see CPUCLOCK_PID and related
         // definitions in include/linux/posix-timers.h in the kernel
-        // source).  Those values could be detected by bit masking,
-        // but it's simpler to just have a default-deny policy.
+        // source).  For threads, the kernel allows only tids within
+        // the calling process, so it isn't a problem if we don't
+        // filter those; pids do need to be restricted to the current
+        // process in order to not leak information.
         Arg<clockid_t> clk_id(0);
         return If(clk_id == CLOCK_MONOTONIC, Allow())
 #ifdef CLOCK_MONOTONIC_COARSE
