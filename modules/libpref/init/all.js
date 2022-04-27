@@ -1410,7 +1410,7 @@ pref("network.http.spdy.push-allowance", 131072);   // 128KB
 pref("network.http.spdy.pull-allowance", 12582912); // 12MB
 pref("network.http.spdy.default-concurrent", 100);
 pref("network.http.spdy.default-hpack-buffer", 65536); // 64k
-pref("network.http.spdy.websockets", true);
+pref("network.http.spdy.websockets", false);
 pref("network.http.spdy.enable-hpack-dump", false);
 
 // Http3 parameters
