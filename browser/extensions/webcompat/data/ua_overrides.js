@@ -36,6 +36,10 @@ const AVAILABLE_UA_OVERRIDES = [
         "*://mail.yahoo.com/*",
         "*://vk.com/*",
         "*://addons.mozilla.org/*",
+        "*://*.canva.com/*",
+        "*://*.tax.ny.gov/*",
+        "*://*.hulu.com/*",
+        "*://mewe.com/*",
       ],
       uaTransformer: originalUA => {
         return originalUA.replace(/Waterfox.+$/, "");
