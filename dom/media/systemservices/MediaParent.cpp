@@ -392,9 +392,8 @@ class OriginKeyStore {
   }
 
   // Only accessed on StreamTS threads
-  OriginKeysLoader mOriginKeys GUARDED_BY(sOriginKeyStoreStsMutex);
-  OriginKeysTable mPrivateBrowsingOriginKeys
-      GUARDED_BY(sOriginKeyStoreStsMutex);
+  OriginKeysLoader mOriginKeys;
+  OriginKeysTable mPrivateBrowsingOriginKeys;
 };
 OriginKeyStore* OriginKeyStore::sOriginKeyStore = nullptr;
 
