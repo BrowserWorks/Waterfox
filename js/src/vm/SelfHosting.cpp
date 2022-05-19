@@ -2386,7 +2386,7 @@ static const JSFunctionSpec intrinsic_functions[] = {
     JS_INLINABLE_FN("UnsafeSetReservedSlot", intrinsic_UnsafeSetReservedSlot, 3,
                     0, IntrinsicUnsafeSetReservedSlot),
 
-    // Intrinsics and standard functions used by Intl API implementation.
+// Intrinsics and standard functions used by Intl API implementation.
 #ifdef JS_HAS_INTL_API
     JS_FN("intl_BestAvailableLocale", intl_BestAvailableLocale, 3, 0),
     JS_FN("intl_CallCollatorMethodIfWrapped",
@@ -2476,6 +2476,7 @@ static const JSFunctionSpec intrinsic_functions[] = {
 #endif  // JS_HAS_INTL_API
 
     // Standard builtins used by self-hosting.
+    JS_FN("new_List", intrinsic_newList, 0, 0),
     JS_INLINABLE_FN("std_Array", array_construct, 1, 0, Array),
     JS_INLINABLE_FN("std_Array_pop", array_pop, 0, 0, ArrayPop),
     JS_INLINABLE_FN("std_Array_push", array_push, 1, 0, ArrayPush),

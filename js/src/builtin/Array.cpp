@@ -4243,3 +4243,35 @@ JS_PUBLIC_API bool JS::SetArrayLength(JSContext* cx, Handle<JSObject*> obj,
 
   return SetLengthProperty(cx, obj, length);
 }
+
+bool js::intrinsic_newList(JSContext* cx, unsigned argc, js::Value* vp) {
+  CallArgs args = CallArgsFromVp(argc, vp);
+  MOZ_ASSERT(args.length() == 0);
+
+  size_t length = 0;
+  gc::AllocKind allocKind = GuessArrayGCKind(length);
+  MOZ_ASSERT(CanChangeToBackgroundAllocKind(allocKind, &ArrayObject::class_));
+  allocKind = ForegroundToBackgroundAllocKind(allocKind);
+
+  /*
+   * Get a shape with zero fixed slots, regardless of the size class.
+   * See JSObject::createArray.
+   */
+  RootedShape shape(
+      cx, SharedShape::getInitialShape(cx, &ArrayObject::class_, cx->realm(),
+                                       TaggedProto(), gc::AllocKind::OBJECT0));
+  if (!shape) {
+    return false;
+  }
+
+  gc::InitialHeap heap = gc::InitialHeap::DefaultHeap;
+  AutoSetNewObjectMetadata metadata(cx);
+  RootedArrayObject list(cx, ArrayObject::createArray(cx, allocKind, heap,
+                                                      shape, length, metadata));
+  if (!list || !AddLengthProperty(cx, list)) {
+    return false;
+  }
+
+  args.rval().setObject(*list);
+  return true;
+}
