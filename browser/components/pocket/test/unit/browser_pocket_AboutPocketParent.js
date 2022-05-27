@@ -251,7 +251,7 @@ test_runner(async function test_AboutPocketParent_receiveMessage_PKT_getTags({
   );
   Assert.deepEqual(
     sendResponseMessageToPanel.firstCall.args,
-    ["PKT_getTags", 1, { tags: [], usedTags: [] }],
+    ["PKT_getTags", 1, { tags: [] }],
     "Should fire sendResponseMessageToPanel with proper args from PKT_getTags"
   );
 });
