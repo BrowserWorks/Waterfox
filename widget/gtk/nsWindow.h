@@ -523,6 +523,12 @@ class nsWindow final : public nsBaseWidget {
   nsSizeMode mSizeState;
   float mAspectRatio;
   float mAspectRatioSaved;
+  // The size requested, which might not be reflected in mBounds.  Used in
+  // WaylandPopupSetDirectPosition() to remember intended size for popup
+  // positioning, in LockAspect() to remember the intended aspect ratio, and
+  // to remember a size requested while waiting for moved-to-rect when
+  // OnSizeAllocate() might change mBounds.Size().
+  LayoutDeviceIntSize mLastSizeRequest;
   nsIntPoint mClientOffset;
 
   // This field omits duplicate scroll events caused by GNOME bug 726878.
@@ -584,10 +590,8 @@ class nsWindow final : public nsBaseWidget {
   // Remember the last sizemode so that we can restore it when
   // leaving fullscreen
   nsSizeMode mLastSizeMode;
-  // We can't detect size state changes correctly so set this flag
-  // to force update mBounds after a size state change from a configure
-  // event.
-  bool mBoundsAreValid;
+  // We can expect at least one size-allocate event after early resizes.
+  bool mHasReceivedSizeAllocate;
 
   static bool DragInProgress(void);
 
@@ -760,10 +764,10 @@ class nsWindow final : public nsBaseWidget {
    * and we're waiting for move-to-rect callback.
    *
    * If another resize request comes between move-to-rect call and
-   * move-to-rect callback we store it to mNewSizeAfterMoveToRect.
+   * move-to-rect callback we set mResizedAfterMoveToRect.
    */
   bool mWaitingForMoveToRectCallback;
-  LayoutDeviceIntRect mNewSizeAfterMoveToRect;
+  bool mResizedAfterMoveToRect;
 
   /**
    * |mIMContext| takes all IME related stuff.
