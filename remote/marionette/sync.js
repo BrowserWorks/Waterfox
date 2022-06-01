@@ -465,22 +465,32 @@ this.DebounceCallback = DebounceCallback;
  *     Extra options.
  * @param {boolean=} options.capture
  *     True to use a capturing listener.
- * @param {function(Event)=} options.checkFn
+ * @param {function(Event)=} [null] options.checkFn
  *     Called with the ``Event`` object as argument, should return ``true``
  *     if the event is the expected one, or ``false`` if it should be
  *     ignored and listening should continue. If not specified, the first
  *     event with the specified name resolves the returned promise.
+ * @param {number=} [null] options.timeout
+ *     Timeout duration in milliseconds, if provided.
+ *     If specified, then the returned promise will be rejected with
+ *     TimeoutError, if not already resolved, after this duration has elapsed.
+ *     If not specified, then no timeout is used.
  * @param {boolean=} options.wantsUntrusted
  *     True to receive synthetic events dispatched by web content.
  *
  * @return {Promise.<Event>}
  *     Promise which resolves to the received ``Event`` object, or rejects
- *     in case of a failure.
+ *     in case of a failure or after options.timeout milliseconds if specified.
  */
 function waitForEvent(
   subject,
   eventName,
-  { capture = false, checkFn = null, wantsUntrusted = false } = {}
+  {
+    capture = false,
+    checkFn = null,
+    timeout = null,
+    wantsUntrusted = false,
+  } = {}
 ) {
   if (subject == null || !("addEventListener" in subject)) {
     throw new TypeError();
@@ -494,33 +504,57 @@ function waitForEvent(
   if (checkFn != null && typeof checkFn != "function") {
     throw new TypeError();
   }
+  if (timeout != null && typeof timeout != "number") {
+    throw new TypeError();
+  }
+  if (timeout < 0) {
+    throw new RangeError();
+  }
   if (wantsUntrusted != null && typeof wantsUntrusted != "boolean") {
     throw new TypeError();
   }
 
   return new Promise((resolve, reject) => {
-    subject.addEventListener(
-      eventName,
-      function listener(event) {
-        logger.trace(`Received DOM event ${event.type} for ${event.target}`);
-        try {
-          if (checkFn && !checkFn(event)) {
-            return;
-          }
-          subject.removeEventListener(eventName, listener, capture);
-          executeSoon(() => resolve(event));
-        } catch (ex) {
-          try {
-            subject.removeEventListener(eventName, listener, capture);
-          } catch (ex2) {
-            // Maybe the provided object does not support removeEventListener.
-          }
-          executeSoon(() => reject(ex));
+    let timer;
+
+    function cleanUp() {
+      timer?.cancel();
+      subject.removeEventListener(eventName, listener, capture);
+    }
+
+    function listener(event) {
+      logger.trace(`Received DOM event ${event.type} for ${event.target}`);
+      try {
+        if (checkFn && !checkFn(event)) {
+          return;
         }
-      },
-      capture,
-      wantsUntrusted
-    );
+        cleanUp();
+        executeSoon(() => resolve(event));
+      } catch (ex) {
+        try {
+          cleanUp();
+        } catch (ex2) {
+          // Maybe the provided object does not support removeEventListener.
+        }
+        executeSoon(() => reject(ex));
+      }
+    }
+
+    subject.addEventListener(eventName, listener, capture, wantsUntrusted);
+
+    if (timeout !== null) {
+      timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+      timer.init(
+        () => {
+          cleanUp();
+          reject(
+            new error.TimeoutError(`EventPromise timed out after ${timeout} ms`)
+          );
+        },
+        timeout,
+        TYPE_ONE_SHOT
+      );
+    }
   });
 }
 
