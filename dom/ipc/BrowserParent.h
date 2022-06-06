@@ -27,6 +27,7 @@
 #include "nsIDOMEventListener.h"
 #include "nsIRemoteTab.h"
 #include "nsIWidget.h"
+#include "nsTArray.h"
 #include "nsWeakReference.h"
 
 class imgIContainer;
@@ -268,7 +269,8 @@ class BrowserParent final : public PBrowserParent,
 
   mozilla::ipc::IPCResult RecvEvent(const RemoteDOMEvent& aEvent);
 
-  mozilla::ipc::IPCResult RecvReplyKeyEvent(const WidgetKeyboardEvent& aEvent);
+  mozilla::ipc::IPCResult RecvReplyKeyEvent(const WidgetKeyboardEvent& aEvent,
+                                            const nsID& aUUID);
 
   mozilla::ipc::IPCResult RecvAccessKeyNotHandled(
       const WidgetKeyboardEvent& aEvent);
@@ -887,6 +889,22 @@ class BrowserParent final : public PBrowserParent,
 
   Maybe<LayoutDeviceToLayoutDeviceMatrix4x4> mChildToParentConversionMatrix;
   Maybe<ScreenRect> mRemoteDocumentRect;
+
+  // mWaitingReplyKeyboardEvents stores keyboard events which are sent from
+  // SendRealKeyEvent and the event will be back as a reply event.  They are
+  // removed when RecvReplyKeyEvent receives corresponding event or newer event.
+  // Note that reply event will be used for handling non-reserved shortcut keys.
+  // Therefore, we need to store only important data for GlobalKeyHandler.
+  struct SentKeyEventData {
+    uint32_t mKeyCode;
+    uint32_t mCharCode;
+    uint32_t mPseudoCharCode;
+    KeyNameIndex mKeyNameIndex;
+    CodeNameIndex mCodeNameIndex;
+    Modifiers mModifiers;
+    nsID mUUID;
+  };
+  nsTArray<SentKeyEventData> mWaitingReplyKeyboardEvents;
 
   nsIntRect mRect;
   ScreenIntSize mDimensions;
