@@ -822,6 +822,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvDropLinks(
 }
 
 mozilla::ipc::IPCResult BrowserParent::RecvEvent(const RemoteDOMEvent& aEvent) {
+  NS_ENSURE_TRUE(xpc::IsInAutomation(), IPC_FAIL(this, "Unexpected event"));
+
   RefPtr<Event> event = aEvent.mEvent;
   NS_ENSURE_TRUE(event, IPC_OK());
 
@@ -1643,6 +1645,8 @@ void BrowserParent::SendMouseWheelEvent(WidgetWheelEvent& aEvent) {
 
 mozilla::ipc::IPCResult BrowserParent::RecvDispatchWheelEvent(
     const mozilla::WidgetWheelEvent& aEvent) {
+  NS_ENSURE_TRUE(xpc::IsInAutomation(), IPC_FAIL(this, "Unexpected event"));
+
   nsCOMPtr<nsIWidget> widget = GetWidget();
   if (!widget) {
     return IPC_OK();
@@ -1658,6 +1662,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvDispatchWheelEvent(
 
 mozilla::ipc::IPCResult BrowserParent::RecvDispatchMouseEvent(
     const mozilla::WidgetMouseEvent& aEvent) {
+  NS_ENSURE_TRUE(xpc::IsInAutomation(), IPC_FAIL(this, "Unexpected event"));
+
   nsCOMPtr<nsIWidget> widget = GetWidget();
   if (!widget) {
     return IPC_OK();
@@ -1673,6 +1679,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvDispatchMouseEvent(
 
 mozilla::ipc::IPCResult BrowserParent::RecvDispatchKeyboardEvent(
     const mozilla::WidgetKeyboardEvent& aEvent) {
+  NS_ENSURE_TRUE(xpc::IsInAutomation(), IPC_FAIL(this, "Unexpected event"));
+
   nsCOMPtr<nsIWidget> widget = GetWidget();
   if (!widget) {
     return IPC_OK();
@@ -1688,6 +1696,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvDispatchKeyboardEvent(
 
 mozilla::ipc::IPCResult BrowserParent::RecvDispatchTouchEvent(
     const mozilla::WidgetTouchEvent& aEvent) {
+  NS_ENSURE_TRUE(xpc::IsInAutomation(), IPC_FAIL(this, "Unexpected event"));
+
   nsCOMPtr<nsIWidget> widget = GetWidget();
   if (!widget) {
     return IPC_OK();
@@ -1710,6 +1720,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvRequestNativeKeyBindings(
     nsTArray<CommandInt>* aCommands) {
   MOZ_ASSERT(aCommands);
   MOZ_ASSERT(aCommands->IsEmpty());
+
+  NS_ENSURE_TRUE(xpc::IsInAutomation(), IPC_FAIL(this, "Unexpected event"));
 
   nsIWidget::NativeKeyBindingsType keyBindingsType =
       static_cast<nsIWidget::NativeKeyBindingsType>(aType);
@@ -1810,6 +1822,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvSynthesizeNativeKeyEvent(
     const int32_t& aNativeKeyboardLayout, const int32_t& aNativeKeyCode,
     const uint32_t& aModifierFlags, const nsString& aCharacters,
     const nsString& aUnmodifiedCharacters, const uint64_t& aObserverId) {
+  NS_ENSURE_TRUE(xpc::IsInAutomation(), IPC_FAIL(this, "Unexpected event"));
+
   AutoSynthesizedEventResponder responder(this, aObserverId, "keyevent");
   nsCOMPtr<nsIWidget> widget = GetWidget();
   if (widget) {
@@ -1824,6 +1838,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvSynthesizeNativeMouseEvent(
     const LayoutDeviceIntPoint& aPoint, const uint32_t& aNativeMessage,
     const int16_t& aButton, const uint32_t& aModifierFlags,
     const uint64_t& aObserverId) {
+  NS_ENSURE_TRUE(xpc::IsInAutomation(), IPC_FAIL(this, "Unexpected event"));
+
   AutoSynthesizedEventResponder responder(this, aObserverId, "mouseevent");
   nsCOMPtr<nsIWidget> widget = GetWidget();
   if (widget) {
@@ -1838,6 +1854,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvSynthesizeNativeMouseEvent(
 
 mozilla::ipc::IPCResult BrowserParent::RecvSynthesizeNativeMouseMove(
     const LayoutDeviceIntPoint& aPoint, const uint64_t& aObserverId) {
+  // This is used by pointer lock API.  So, even if it's not in the automation
+  // mode, we need to accept the request.
   AutoSynthesizedEventResponder responder(this, aObserverId, "mousemove");
   nsCOMPtr<nsIWidget> widget = GetWidget();
   if (widget) {
@@ -1851,6 +1869,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvSynthesizeNativeMouseScrollEvent(
     const double& aDeltaX, const double& aDeltaY, const double& aDeltaZ,
     const uint32_t& aModifierFlags, const uint32_t& aAdditionalFlags,
     const uint64_t& aObserverId) {
+  NS_ENSURE_TRUE(xpc::IsInAutomation(), IPC_FAIL(this, "Unexpected event"));
+
   AutoSynthesizedEventResponder responder(this, aObserverId,
                                           "mousescrollevent");
   nsCOMPtr<nsIWidget> widget = GetWidget();
@@ -1866,6 +1886,17 @@ mozilla::ipc::IPCResult BrowserParent::RecvSynthesizeNativeTouchPoint(
     const uint32_t& aPointerId, const TouchPointerState& aPointerState,
     const LayoutDeviceIntPoint& aPoint, const double& aPointerPressure,
     const uint32_t& aPointerOrientation, const uint64_t& aObserverId) {
+  // This is used by DevTools to emulate touch events from mouse events in the
+  // responsive design mode.  Therefore, we should accept the IPC messages even
+  // if it's not in the automation mode but the browsing context is in RDM pane.
+  // And the IPC message could be just delayed after closing the responsive
+  // design mode.  Therefore, we shouldn't return IPC_FAIL since doing it makes
+  // the tab crash.
+  if (!xpc::IsInAutomation()) {
+    NS_ENSURE_TRUE(mBrowsingContext, IPC_OK());
+    NS_ENSURE_TRUE(mBrowsingContext->Top()->GetInRDMPane(), IPC_OK());
+  }
+
   AutoSynthesizedEventResponder responder(this, aObserverId, "touchpoint");
   nsCOMPtr<nsIWidget> widget = GetWidget();
   if (widget) {
@@ -1879,6 +1910,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvSynthesizeNativeTouchPoint(
 mozilla::ipc::IPCResult BrowserParent::RecvSynthesizeNativeTouchPadPinch(
     const TouchpadPinchPhase& aEventPhase, const float& aScale,
     const LayoutDeviceIntPoint& aPoint, const int32_t& aModifierFlags) {
+  NS_ENSURE_TRUE(xpc::IsInAutomation(), IPC_FAIL(this, "Unexpected event"));
+
   nsCOMPtr<nsIWidget> widget = GetWidget();
   if (widget) {
     widget->SynthesizeNativeTouchPadPinch(aEventPhase, aScale, aPoint,
@@ -1890,6 +1923,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvSynthesizeNativeTouchPadPinch(
 mozilla::ipc::IPCResult BrowserParent::RecvSynthesizeNativeTouchTap(
     const LayoutDeviceIntPoint& aPoint, const bool& aLongTap,
     const uint64_t& aObserverId) {
+  NS_ENSURE_TRUE(xpc::IsInAutomation(), IPC_FAIL(this, "Unexpected event"));
+
   AutoSynthesizedEventResponder responder(this, aObserverId, "touchtap");
   nsCOMPtr<nsIWidget> widget = GetWidget();
   if (widget) {
@@ -1900,6 +1935,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvSynthesizeNativeTouchTap(
 
 mozilla::ipc::IPCResult BrowserParent::RecvClearNativeTouchSequence(
     const uint64_t& aObserverId) {
+  NS_ENSURE_TRUE(xpc::IsInAutomation(), IPC_FAIL(this, "Unexpected event"));
+
   AutoSynthesizedEventResponder responder(this, aObserverId, "cleartouch");
   nsCOMPtr<nsIWidget> widget = GetWidget();
   if (widget) {
@@ -1913,6 +1950,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvSynthesizeNativePenInput(
     const LayoutDeviceIntPoint& aPoint, const double& aPressure,
     const uint32_t& aRotation, const int32_t& aTiltX, const int32_t& aTiltY,
     const uint64_t& aObserverId) {
+  NS_ENSURE_TRUE(xpc::IsInAutomation(), IPC_FAIL(this, "Unexpected event"));
+
   AutoSynthesizedEventResponder responder(this, aObserverId, "peninput");
   nsCOMPtr<nsIWidget> widget = GetWidget();
   if (widget) {
@@ -1925,6 +1964,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvSynthesizeNativePenInput(
 
 mozilla::ipc::IPCResult BrowserParent::RecvSynthesizeNativeTouchpadDoubleTap(
     const LayoutDeviceIntPoint& aPoint, const uint32_t& aModifierFlags) {
+  NS_ENSURE_TRUE(xpc::IsInAutomation(), IPC_FAIL(this, "Unexpected event"));
+
   nsCOMPtr<nsIWidget> widget = GetWidget();
   if (widget) {
     widget->SynthesizeNativeTouchpadDoubleTap(aPoint, aModifierFlags);
