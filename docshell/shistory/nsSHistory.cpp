@@ -167,11 +167,9 @@ class MOZ_STACK_CLASS SHistoryChangeNotifier {
       MOZ_ASSERT(mSHistory->HasOngoingUpdate());
       mSHistory->SetHasOngoingUpdate(false);
 
-      if (mozilla::SessionHistoryInParent() &&
-          mSHistory->GetBrowsingContext()) {
-        mSHistory->GetBrowsingContext()
-            ->Canonical()
-            ->HistoryCommitIndexAndLength();
+      RefPtr<BrowsingContext> rootBC = mSHistory->GetBrowsingContext();
+      if (mozilla::SessionHistoryInParent() && rootBC) {
+        rootBC->Canonical()->HistoryCommitIndexAndLength();
       }
     }
   }
@@ -254,7 +252,7 @@ void nsSHistory::EvictContentViewerForEntry(nsISHEntry* aEntry) {
 }
 
 nsSHistory::nsSHistory(BrowsingContext* aRootBC)
-    : mRootBC(aRootBC),
+    : mRootBC(aRootBC->Id()),
       mHasOngoingUpdate(false),
       mIndex(-1),
       mRequestedIndex(-1),
@@ -724,13 +722,13 @@ void nsSHistory::HandleEntriesToSwapInDocShell(
   }
 }
 
-void nsSHistory::UpdateRootBrowsingContextState() {
-  if (mRootBC && mRootBC->EverAttached()) {
+void nsSHistory::UpdateRootBrowsingContextState(BrowsingContext* aRootBC) {
+  if (aRootBC && aRootBC->EverAttached()) {
     bool sameDocument = IsEmptyOrHasEntriesForSingleTopLevelPage();
-    if (sameDocument != mRootBC->GetIsSingleToplevelInHistory()) {
+    if (sameDocument != aRootBC->GetIsSingleToplevelInHistory()) {
       // If the browsing context is discarded then its session history is
       // invalid and will go away.
-      Unused << mRootBC->SetIsSingleToplevelInHistory(sameDocument);
+      Unused << aRootBC->SetIsSingleToplevelInHistory(sameDocument);
     }
   }
 }
@@ -808,7 +806,8 @@ nsSHistory::AddEntry(nsISHEntry* aSHEntry, bool aPersist) {
 
   // If we have a root docshell, update the docshell id of the root shentry to
   // match the id of that docshell
-  if (mRootBC) {
+  RefPtr<BrowsingContext> rootBC = GetBrowsingContext();
+  if (rootBC) {
     aSHEntry->SetDocshellID(mRootDocShellID);
   }
 
@@ -1051,8 +1050,9 @@ nsSHistory::PurgeHistory(int32_t aNumEntries) {
     }
   }
 
-  if (mRootBC) {
-    mRootBC->PreOrderWalk([&docshellIDToEntry](BrowsingContext* aBC) {
+  RefPtr<BrowsingContext> rootBC = GetBrowsingContext();
+  if (rootBC) {
+    rootBC->PreOrderWalk([&docshellIDToEntry](BrowsingContext* aBC) {
       SessionHistoryEntry* entry = docshellIDToEntry.Get(aBC->GetHistoryID());
       Unused << aBC->SetHistoryEntryCount(
           entry ? uint32_t(entry->BCHistoryLength()) : 0);
@@ -1068,11 +1068,11 @@ nsSHistory::PurgeHistory(int32_t aNumEntries) {
   mRequestedIndex -= aNumEntries;
   mRequestedIndex = std::max(mRequestedIndex, -1);
 
-  if (mRootBC && mRootBC->GetDocShell()) {
-    mRootBC->GetDocShell()->HistoryPurged(aNumEntries);
+  if (rootBC && rootBC->GetDocShell()) {
+    rootBC->GetDocShell()->HistoryPurged(aNumEntries);
   }
 
-  UpdateRootBrowsingContextState();
+  UpdateRootBrowsingContextState(rootBC);
 
   return NS_OK;
 }
@@ -1838,8 +1838,11 @@ NS_IMETHODIMP_(void)
 nsSHistory::RemoveEntries(nsTArray<nsID>& aIDs, int32_t aStartIndex) {
   bool didRemove;
   RemoveEntries(aIDs, aStartIndex, &didRemove);
-  if (didRemove && mRootBC && mRootBC->GetDocShell()) {
-    mRootBC->GetDocShell()->DispatchLocationChangeEvent();
+  if (didRemove) {
+    RefPtr<BrowsingContext> rootBC = GetBrowsingContext();
+    if (rootBC && rootBC->GetDocShell()) {
+      rootBC->GetDocShell()->DispatchLocationChangeEvent();
+    }
   }
 }
 
@@ -1976,7 +1979,8 @@ nsresult nsSHistory::LoadEntry(int32_t aIndex, long aLoadType,
                                bool aSameEpoch, bool aUserActivation) {
   MOZ_LOG(gSHistoryLog, LogLevel::Debug,
           ("LoadEntry(%d, 0x%lx, %u)", aIndex, aLoadType, aHistCmd));
-  if (!mRootBC) {
+  RefPtr<BrowsingContext> rootBC = GetBrowsingContext();
+  if (!rootBC) {
     return NS_ERROR_FAILURE;
   }
 
@@ -2043,13 +2047,13 @@ nsresult nsSHistory::LoadEntry(int32_t aIndex, long aLoadType,
 
   if (mRequestedIndex == mIndex) {
     // Possibly a reload case
-    InitiateLoad(nextEntry, mRootBC, aLoadType, aLoadResults, aUserActivation);
+    InitiateLoad(nextEntry, rootBC, aLoadType, aLoadResults, aUserActivation);
     return NS_OK;
   }
 
   // Going back or forward.
   bool differenceFound = LoadDifferingEntries(
-      prevEntry, nextEntry, mRootBC, aLoadType, aLoadResults, aUserActivation);
+      prevEntry, nextEntry, rootBC, aLoadType, aLoadResults, aUserActivation);
   if (!differenceFound) {
     // We did not find any differences. Go further in the history.
     return LoadNextPossibleEntry(aIndex, aLoadType, aHistCmd, aLoadResults,
@@ -2072,7 +2076,7 @@ bool nsSHistory::LoadDifferingEntries(nsISHEntry* aPrevEntry,
   // Check the IDs to verify if the pages are different.
   if (prevID != nextID) {
     // Set the Subframe flag if not navigating the root docshell.
-    aNextEntry->SetIsSubFrame(aParent != mRootBC);
+    aNextEntry->SetIsSubFrame(aParent->Id() != mRootBC);
     InitiateLoad(aNextEntry, aParent, aLoadType, aLoadResults, aUserActivation);
     return true;
   }
