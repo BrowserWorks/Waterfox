@@ -494,8 +494,8 @@ class nsWindow final : public nsBaseWidget {
   nsWindow* GetTransientForWindowIfPopup();
   bool IsHandlingTouchSequence(GdkEventSequence* aSequence);
 
-  void ResizeInt(int aX, int aY, int aWidth, int aHeight, bool aMove,
-                 bool aRepaint);
+  void ResizeInt(const mozilla::Maybe<LayoutDeviceIntPoint>& aMove,
+                 LayoutDeviceIntSize aSize, bool aRepaint);
   void NativeMoveResizeWaylandPopup(GdkPoint* aPosition, GdkRectangle* aSize);
 
   // Returns true if the given point (in device pixels) is within a resizer

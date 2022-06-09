@@ -1138,14 +1138,10 @@ void nsWindow::Show(bool aState) {
   NativeShow(aState);
 }
 
-void nsWindow::ResizeInt(int aX, int aY, int aWidth, int aHeight, bool aMove,
-                         bool aRepaint) {
-  LOG(("nsWindow::ResizeInt [%p] x:%d y:%d -> w:%d h:%d repaint %d aMove %d\n",
-       (void*)this, aX, aY, aWidth, aHeight, aRepaint, aMove));
-
-  ConstrainSize(&aWidth, &aHeight);
-
-  LOG(("  ConstrainSize: w:%d h;%d\n", aWidth, aHeight));
+void nsWindow::ResizeInt(const Maybe<LayoutDeviceIntPoint>& aMove,
+                         LayoutDeviceIntSize aSize, bool aRepaint) {
+  LOG(("nsWindow::ResizeInt [%p] w:%d h:%d repaint %d\n", (void*)this,
+       aSize.width, aSize.height, aRepaint));
 
   // If we used to have insane bounds, we may have skipped actually positioning
   // the widget in NativeMoveResizeWaylandPopup, in which case we need to
@@ -1154,14 +1150,18 @@ void nsWindow::ResizeInt(int aX, int aY, int aWidth, int aHeight, bool aMove,
       !AreBoundsSane() && IsWaylandPopup();
 
   if (aMove) {
-    mBounds.x = aX;
-    mBounds.y = aY;
+    mBounds.x = aMove->x;
+    mBounds.y = aMove->y;
+    LOG(("  with move to left:%d top:%d", aMove->x, aMove->y));
   }
 
-  // For top-level windows, aWidth and aHeight should possibly be
+  ConstrainSize(&aSize.width, &aSize.height);
+  LOG(("  ConstrainSize: w:%d h;%d\n", aSize.width, aSize.height));
+
+  // For top-level windows, aSize should possibly be
   // interpreted as frame bounds, but NativeResize treats these as window
   // bounds (Bug 581866).
-  mBounds.SizeTo(aWidth, aHeight);
+  mBounds.SizeTo(aSize);
 
   // We set correct mBounds in advance here. This can be invalided by state
   // event.
@@ -1195,10 +1195,9 @@ void nsWindow::Resize(double aWidth, double aHeight, bool aRepaint) {
 
   double scale =
       BoundsUseDesktopPixels() ? GetDesktopToDeviceScale().scale : 1.0;
-  int32_t width = NSToIntRound(scale * aWidth);
-  int32_t height = NSToIntRound(scale * aHeight);
+  auto size = LayoutDeviceIntSize::Round(scale * aWidth, scale * aHeight);
 
-  ResizeInt(0, 0, width, height, /* aMove */ false, aRepaint);
+  ResizeInt(Nothing(), size, aRepaint);
 }
 
 void nsWindow::Resize(double aX, double aY, double aWidth, double aHeight,
@@ -1208,13 +1207,10 @@ void nsWindow::Resize(double aX, double aY, double aWidth, double aHeight,
 
   double scale =
       BoundsUseDesktopPixels() ? GetDesktopToDeviceScale().scale : 1.0;
-  int32_t width = NSToIntRound(scale * aWidth);
-  int32_t height = NSToIntRound(scale * aHeight);
+  auto size = LayoutDeviceIntSize::Round(scale * aWidth, scale * aHeight);
+  auto topLeft = LayoutDeviceIntPoint::Round(scale * aX, scale * aY);
 
-  int32_t x = NSToIntRound(scale * aX);
-  int32_t y = NSToIntRound(scale * aY);
-
-  ResizeInt(x, y, width, height, /* aMove */ true, aRepaint);
+  ResizeInt(Some(topLeft), size, aRepaint);
 }
 
 void nsWindow::Enable(bool aState) { mEnabled = aState; }
@@ -5598,8 +5594,7 @@ nsresult nsWindow::Create(nsIWidget* aParent, nsNativeWidget aNativeParent,
 
   // resize so that everything is set to the right dimensions
   if (!mIsTopLevel) {
-    ResizeInt(mBounds.x, mBounds.y, mBounds.width, mBounds.height,
-              /* aMove */ false, /* aRepaint */ false);
+    ResizeInt(Nothing(), mBounds.Size(), /* aRepaint */ false);
   }
 
 #ifdef MOZ_X11
