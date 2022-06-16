@@ -14,10 +14,26 @@ add_task(async function regular_mode() {
   Assert.equal(className, "", "No classes set on body");
 });
 
+function promiseResize(win, width, height) {
+  if (win.outerWidth == width && win.outerHeight == height) {
+    return Promise.resolve();
+  }
+  return new Promise(resolve => {
+    // More than one "resize" might be received if the window was recently
+    // created.
+    win.addEventListener("resize", () => {
+      if (win.outerWidth == width && win.outerHeight == height) {
+        resolve();
+      }
+    });
+    win.resizeTo(width, height);
+  });
+}
+
 add_task(async function compact_mode() {
   // Shrink the window for this test.
   const { outerHeight, outerWidth } = window;
-  window.resizeTo(outerWidth, 500);
+  await promiseResize(window, outerWidth, 500);
 
   let className;
   await showAndWaitForDialog(async win => {
@@ -28,5 +44,5 @@ add_task(async function compact_mode() {
 
   Assert.equal(className, "compact", "Set class on body");
 
-  window.resizeTo(outerWidth, outerHeight);
+  await promiseResize(window, outerWidth, outerHeight);
 });
