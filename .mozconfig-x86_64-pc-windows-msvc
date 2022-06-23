@@ -4,7 +4,6 @@ export WINDOWSSDKDIR="${TOOLS}/win-sdk"
 EXTRA_PATH="${TOOLS}/clang/bin:${TOOLS}/visual-c/tools/msvc/14.31.31103/bin/hostx64/x64:"
 X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)))
 
-export CBINDGEN="${TOOLS}/cbindgen/cbindgen"
 export CC="${TOOLS}/clang/bin/clang-cl"
 export CXX="${TOOLS}/clang/bin/clang-cl"
 export DIA_SDK_PATH="${TOOLS}/dia-sdk"

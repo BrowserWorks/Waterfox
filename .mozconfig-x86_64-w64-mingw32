@@ -5,7 +5,6 @@ unset MAKECAB
 TOOLTOOL_DIR=$HOME/tooltool12
 
 AR="${TOOLTOOL_DIR}/clang/bin/llvm-ar"
-CBINDGEN="${TOOLTOOL_DIR}/cbindgen/cbindgen"
 CC="${TOOLTOOL_DIR}/clang/bin/x86_64-w64-mingw32-clang"
 CLANGPATH=$TOOLTOOL_DIR/clang
 BINDGEN_CFLAGS="-I$CLANGPATH/x86_64-w64-mingw32/include/c++/v1 -I$CLANGPATH/x86_64-w64-mingw32/include"
