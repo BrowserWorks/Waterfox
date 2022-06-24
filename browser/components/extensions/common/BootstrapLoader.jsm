@@ -74,21 +74,6 @@ Services.obs.addObserver(doc => {
   }
 }, "chrome-document-loaded");
 
-const Object = Cu.getGlobalForObject(Cu).Object;
-const { freeze } = Object;
-Object.freeze = obj => {
-  if (
-    Components.stack.caller.filename !=
-      "resource://gre/modules/AddonManager.jsm" ||
-    !obj.OPTIONS_TYPE_TAB
-  )
-    return freeze(obj);
-
-  obj.OPTIONS_TYPE_DIALOG = 1;
-  Object.freeze = freeze;
-  return freeze(obj);
-}
-
 XPCOMUtils.defineLazyGetter(this, "BOOTSTRAP_REASONS", () => {
   const { XPIProvider } = ChromeUtils.import(
     "resource://gre/modules/addons/XPIProvider.jsm"
