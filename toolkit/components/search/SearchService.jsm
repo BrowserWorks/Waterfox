@@ -1101,7 +1101,7 @@ SearchService.prototype = {
       ? "esr"
       : AppConstants.MOZ_UPDATE_CHANNEL;
 
-    const engines = [
+    const standardEngines = [
       { webExtension: { id: "bing@search.waterfox.net" }, orderHint: 100 },
       { webExtension: { id: "startpage@search.waterfox.net" }, orderHint: 90 },
       { webExtension: { id: "yahoo@search.waterfox.net" }, orderHint: 80 },
@@ -1110,6 +1110,18 @@ SearchService.prototype = {
       { webExtension: { id: "ecosia@search.waterfox.net" }, orderHint: 50 },
       { webExtension: { id: "wikipedia@search.mozilla.org" }, orderHint: 40 },
     ];
+
+    const distroEngineIds = Services.prefs.getCharPref(
+      "distribution.engines",
+      ""
+    );
+
+    const distroEngines = distroEngineIds.split(",").map((engineId, idx) => {
+      return { webExtension: { id: engineId }, orderHint: 100 - idx * 10 };
+    });
+
+    const engines =
+      SearchUtils.distroID && distroEngineIds ? distroEngines : standardEngines;
 
     for (let e of engines) {
       if (!e.webExtension) {
