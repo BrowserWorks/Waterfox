@@ -7,6 +7,7 @@ MOZ_APP_VENDOR="WaterfoxLimited"
 MOZ_APP_BASENAME=Waterfox
 MOZ_DISTRIBUTION_ID=net.waterfox
 MOZ_UPDATER=1
+MOZ_APP_UA_NAME="Firefox"
 
 if test "$OS_ARCH" = "WINNT"; then
   if ! test "$HAVE_64BIT_BUILD"; then
