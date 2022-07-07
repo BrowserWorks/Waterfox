@@ -1,6 +1,25 @@
 {
   "data": [
     {
+      "stash": {
+        "blocked": [
+          "{ffcd00e2-a0c9-45be-ace7-efc1a180958f}:1.5",
+          "{ffcd00e2-a0c9-45be-ace7-efc1a180958f}:1.7",
+          "{ffcd00e2-a0c9-45be-ace7-efc1a180958f}:1.6",
+          "{ffcd00e2-a0c9-45be-ace7-efc1a180958f}:1.8",
+          "TwitchExplorer@ext:1.0",
+          "{ffcd00e2-a0c9-45be-ace7-efc1a180958f}:1.9",
+          "{83e226c8-1c8c-4d45-8301-454daacd1ee1}:1.1.2"
+        ],
+        "unblocked": []
+      },
+      "schema": 1656333551217,
+      "key_format": "{guid}:{version}",
+      "stash_time": 1656527706940,
+      "id": "a4525ac3-c65f-4415-ba10-3efdd28db858",
+      "last_modified": 1656527861860
+    },
+    {
       "schema": 1656333549691,
       "attachment": {
         "hash": "34f969c8e082310785ec4262e2d5b58c919d4de856ffc64b3467507f83ac9571",
