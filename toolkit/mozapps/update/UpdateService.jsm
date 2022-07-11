@@ -1227,7 +1227,7 @@ function isServiceInstalled() {
     );
     wrk.open(
       wrk.ROOT_KEY_LOCAL_MACHINE,
-      "SOFTWARE\\Mozilla\\MaintenanceService",
+      "Software\\Waterfox\\MaintenanceService",
       wrk.ACCESS_READ | wrk.WOW64_64
     );
     installed = wrk.readIntValue("Installed");
@@ -4524,7 +4524,7 @@ Checker.prototype = {
     );
 
     let regPath =
-      "SOFTWARE\\Mozilla\\" + Services.appinfo.name + "\\32to64DidMigrate";
+      "Software\\Waterfox\\" + Services.appinfo.name + "\\32to64DidMigrate";
     let regValHKCU = WindowsRegistry.readRegKey(
       wrk.ROOT_KEY_CURRENT_USER,
       regPath,
@@ -5370,7 +5370,7 @@ Downloader.prototype = {
       }
 
       let updateRootDir = FileUtils.getDir(KEY_UPDROOT, [], true);
-      let jobName = "MozillaUpdate " + updateRootDir.leafName;
+      let jobName = "WaterfoxUpdate " + updateRootDir.leafName;
       let updatePath = updateDir.path;
       if (!Bits.initialized) {
         Bits.init(jobName, updatePath, monitorTimeout);
