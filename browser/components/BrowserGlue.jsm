@@ -64,6 +64,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   Normandy: "resource://normandy/Normandy.jsm",
   OS: "resource://gre/modules/osfile.jsm",
   OsEnvironment: "resource://gre/modules/OsEnvironment.jsm",
+  UIBuilder: "resource:///modules/UIBuilder.jsm",
   PageActions: "resource:///modules/PageActions.jsm",
   PageThumbs: "resource://gre/modules/PageThumbs.jsm",
   PdfJs: "resource://pdf.js/PdfJs.jsm",
@@ -1012,7 +1013,7 @@ BrowserGlue.prototype = {
           "resource:///modules/BootstrapLoader.jsm"
         );
         AddonManager.addExternalExtensionLoader(BootstrapLoader);
-      break;
+        break;
       case "notifications-open-settings":
         this._openPreferences("privacy-permissions");
         break;
@@ -1412,6 +1413,9 @@ BrowserGlue.prototype = {
     SaveToPocket.init();
 
     AboutHomeStartupCache.init();
+
+    // Initialise Waterfox Overlay component
+    UIBuilder.init();
 
     Services.obs.notifyObservers(null, "browser-ui-startup-complete");
   },

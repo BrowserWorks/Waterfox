@@ -17,6 +17,7 @@ XPCOM_MANIFESTS += [
 ]
 
 EXTRA_JS_MODULES += [
+  'components/overlays/OverlaysNew.jsm',
   'content/AddonStores.jsm',
   'content/BrowserUtils.jsm',
   'content/ExtensiblesElements.jsm',
@@ -25,6 +26,7 @@ EXTRA_JS_MODULES += [
   'content/StatusBar.jsm',
   'content/StoreHandler.jsm',
   'content/TabFeatures.jsm',
+  'content/UIBuilder.jsm',
   'content/UICustomizations.jsm',
 ]
 

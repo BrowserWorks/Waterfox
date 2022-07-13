@@ -1,3 +1,6 @@
 browser.jar:
 %   resource builtin-addons %builtin-addons/  contentaccessible=yes
-    builtin-addons/extensibles/ (extension/**)
+    builtin-addons/extensibles/                            (extension/**)
+
+%   resource waterfox %waterfox/ contentaccessible=yes
+    waterfox/overlays/chrome.manifest                      (chrome.manifest)
