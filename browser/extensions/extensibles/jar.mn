@@ -4,3 +4,6 @@ browser.jar:
 
 %   resource waterfox %waterfox/ contentaccessible=yes
     waterfox/overlays/chrome.manifest                      (chrome.manifest)
+
+%  content browser %content/browser/ contentaccessible=yes
+*    content/browser/overlays/tabfeatures.xhtml            (components/tabfeatures/content/tabfeatures.xhtml)

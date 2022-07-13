@@ -12,14 +12,11 @@ const { AppConstants } = ChromeUtils.import(
   "resource://gre/modules/AppConstants.jsm"
 );
 
-const { BrowserUtils } = ChromeUtils.import(
-  "resource:///modules/BrowserUtils.jsm"
-);
-
 const TabFeatures = {
   PREF_ACTIVETAB: "browser.tabs.copyurl.activetab",
   PREF_REQUIRECONFIRM: "browser.restart_menu.requireconfirm",
   PREF_PURGECACHE: "browser.restart_menu.purgecache",
+
   get browserBundle() {
     return Services.strings.createBundle(
       "chrome://extensibles/locale/extensibles.properties"
@@ -30,21 +27,8 @@ const TabFeatures = {
       "chrome://branding/locale/brand.properties"
     );
   },
-  get updateItems() {
-    return [
-      {
-        id: "context_duplicateTab",
-        attrs: {
-          class: "tabFeature",
-          preference: "browser.tabs.duplicateTab",
-        },
-      },
-    ];
-  },
 
   init(window) {
-    // Add any attributes to required elements
-    this.initAttributes(this.updateItems, window);
     this.initListeners(window);
   },
 
@@ -61,15 +45,6 @@ const TabFeatures = {
         .getElementById("appMenu-popup")
         ?.addEventListener("popupshowing", this.tabContext);
     }
-  },
-
-  initAttributes(aItems, aWindow) {
-    aItems.forEach(item => {
-      let el = aWindow.document.getElementById(item.id);
-      Object.entries(item.attrs).forEach(([id, val]) => {
-        el?.setAttribute(id, val);
-      });
-    });
   },
 
   tabContext(aEvent) {
@@ -189,6 +164,3 @@ const TabFeatures = {
     );
   },
 };
-
-// Inherited props
-TabFeatures.executeInAllWindows = BrowserUtils.executeInAllWindows;
