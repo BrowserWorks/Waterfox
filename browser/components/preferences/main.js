@@ -216,44 +216,6 @@ Preferences.addAll([
 
   // Media
   { id: "media.hardwaremediakeys.enabled", type: "bool" },
-
-  // WATERFOX
-  // Enable auto update checking
-  { id: "app.update.enabled", type: "bool" },
-
-  // Tab Toolbar Position
-  { id: "browser.tabs.toolbarposition", type: "wstring" },
-
-  // Tab Context Menu
-  { id: "browser.tabs.duplicateTab", type: "bool" },
-  { id: "browser.tabs.copyurl", type: "bool" },
-  { id: "browser.tabs.activetab", type: "bool" },
-  { id: "browser.tabs.copyallurls", type: "bool" },
-  { id: "browser.tabs.unloadTab", type: "bool" },
-
-  // Additional Tab Prefs
-  { id: "browser.tabs.pinnedIconOnly", type: "bool" },
-  { id: "browser.tabs.insertAfterCurrent", type: "bool" },
-  { id: "browser.tabs.insertRelatedAfterCurrent", type: "bool" },
-
-  // Dark Theme
-  { id: "ui.systemUsesDarkTheme", type: "int" },
-
-  // Restart Menu Item
-  { id: "browser.restart_menu.purgecache", type: "bool" },
-  { id: "browser.restart_menu.requireconfirm", type: "bool" },
-  { id: "browser.restart_menu.showpanelmenubtn", type: "bool" },
-
-  // Status Bar
-  { id: "browser.statusbar.enabled", type: "bool" },
-  { id: "browser.statusbar.appendStatusText", type: "bool" },
-  { id: "browser.statusbar.contrastText", type: "bool" },
-
-  // Bookmarks Toolbar Position
-  { id: "browser.bookmarks.toolbarposition", type: "wstring" },
-
-  // Geolocation API
-  { id: "geo.provider.network.url", type: "wstring" },
 ]);
 
 if (AppConstants.HAVE_SHELL_SERVICE) {
@@ -390,7 +352,6 @@ var gMainPane = {
 
     this.initBrowserContainers();
     this.buildContentProcessCountMenuList();
-
     let performanceSettingsLink = document.getElementById(
       "performanceSettingsLearnMore"
     );
@@ -747,13 +708,6 @@ var gMainPane = {
         }
       }
     }
-
-    // WATERFOX
-    // Select the correct radio button based on current pref value
-    this.setDynamicThemeGroupValue();
-    setEventListener("dynamicThemeGroup", "command", event => {
-      this.updateDynamicThemePref(event.target.value);
-    });
 
     // Initilize Application section.
 
@@ -2027,29 +1981,6 @@ var gMainPane = {
       await aus.stopDownload();
       um.cleanupReadyUpdate();
       um.cleanupDownloadingUpdate();
-    }
-  },
-
-  async setDynamicThemeGroupValue() {
-    let radiogroup = document.getElementById("dynamicThemeRadioGroup");
-    radiogroup.disabled = true;
-
-    radiogroup.value = Services.prefs.getIntPref("ui.systemUsesDarkTheme", -1);
-
-    radiogroup.disabled = false;
-  },
-
-  async updateDynamicThemePref(value) {
-    switch (value) {
-      case "1":
-        Services.prefs.setIntPref("ui.systemUsesDarkTheme", 1);
-        break;
-      case "0":
-        Services.prefs.setIntPref("ui.systemUsesDarkTheme", 0);
-        break;
-      case "-1":
-        Services.prefs.clearUserPref("ui.systemUsesDarkTheme");
-        break;
     }
   },
 
