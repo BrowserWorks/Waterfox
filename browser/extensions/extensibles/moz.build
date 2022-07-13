@@ -18,12 +18,12 @@ XPCOM_MANIFESTS += [
 
 EXTRA_JS_MODULES += [
   'components/overlays/OverlaysNew.jsm',
+  'components/privatetab/PrivateTab.jsm',
   'components/tabfeatures/TabFeatures.jsm',
   'content/AddonStores.jsm',
   'content/BrowserUtils.jsm',
   'content/ExtensiblesElements.jsm',
   'content/PrefUtils.jsm',
-  'content/PrivateTab.jsm',
   'content/StatusBar.jsm',
   'content/StoreHandler.jsm',
   'content/UIBuilder.jsm',

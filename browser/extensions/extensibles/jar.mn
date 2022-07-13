@@ -10,4 +10,4 @@ browser.jar:
 *    content/browser/overlays/tabfeatures.xhtml            (components/tabfeatures/content/tabfeatures.xhtml)
 *    content/browser/overlays/preferences.xhtml            (components/preferences/content/preferences.xhtml)
      content/browser/overlays/preferences.js               (components/preferences/content/preferences.js)
-     
+     content/browser/overlays/privatetab.xhtml             (components/privatetab/content/privatetab.xhtml)

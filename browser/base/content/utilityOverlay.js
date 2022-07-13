@@ -1119,6 +1119,10 @@ function styleMenuBar() {
   UICustomizations.styleMenuBar();
 }
 
+function openLink(event) {
+  PrivateTab.openLink(event);
+}
+
 function openAllPrivate(event) {
   PrivateTab.openAllPrivate(event);
 }

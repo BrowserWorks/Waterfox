@@ -22,10 +22,6 @@ const { TabStateFlusher } = ChromeUtils.import(
   "resource:///modules/sessionstore/TabStateFlusher.jsm"
 );
 
-const { ExtensiblesElements } = ChromeUtils.import(
-  "resource:///modules/ExtensiblesElements.jsm"
-);
-
 const { BrowserUtils } = ChromeUtils.import(
   "resource:///modules/BrowserUtils.jsm"
 );
@@ -85,7 +81,6 @@ const PrivateTab = {
     // Only init in a non-private window
     if (!window.PrivateBrowsingUtils.isWindowPrivate(window)) {
       this.initContainer("Private");
-      this.initElements(window);
       this.initObservers(window);
       this.initListeners(window);
       this.initCustomFunctions(window);
@@ -122,23 +117,6 @@ const PrivateTab = {
     });
   },
 
-  initElements(window) {
-    ExtensiblesElements.elements.forEach(item => {
-      const { tag, attrs, adjacentTo, position } = item;
-      BrowserUtils.createAndPositionElement(
-        window,
-        tag,
-        attrs,
-        adjacentTo,
-        position
-      );
-    });
-    ExtensiblesElements.appendElements.forEach(item => {
-      const { tag, attrs, appendTo } = item;
-      BrowserUtils.createAndPositionElement(window, tag, attrs, appendTo);
-    });
-  },
-
   initObservers(aWindow) {
     this.setPrivateObserver();
   },
@@ -155,9 +133,6 @@ const PrivateTab = {
       .getElementById("contentAreaContextMenu")
       ?.addEventListener("popuphidden", this.hideContext);
     aWindow.document
-      .getElementById("openLinkInPrivateTab")
-      ?.addEventListener("command", this.openLink);
-    aWindow.document
       .getElementById("tabContextMenu")
       ?.addEventListener("popupshowing", this.tabContext);
     aWindow.document
@@ -169,7 +144,12 @@ const PrivateTab = {
     let { CustomizableUI } = ChromeUtils.import(
       "resource:///modules/CustomizableUI.jsm"
     );
-    let attrs = ExtensiblesElements.widgetAttrs;
+    let attrs = {
+      id: "privateTab-button",
+      label: "new-private-tab",
+      class: "toolbarbutton-1 chromeclass-toolbar-additional",
+      oncommand: "browserOpenTabPrivate(window)",
+    };
     // if widget exists, don't attempt to create it again
     if (!CustomizableUI.getWidget(PrivateTab.BTN_ID)) {
       CustomizableUI.createWidget({
@@ -355,31 +335,7 @@ const PrivateTab = {
               "$1$2$1userContextId: aEvent.userContextId || 0,"
             )
       );
-
-      eval(
-        "PlacesUIUtils._openNodeIn = " +
-          PlacesUIUtils._openNodeIn
-            .toString()
-            .replace(/(\s+)(aPrivate = false)\n/, "$1$2,$1userContextId = 0\n")
-            .replace(/(\s+)(private: aPrivate,)\n/, "$1$2$1userContextId,\n")
-      );
     } catch (ex) {}
-
-    // let openTabsetStr = PlacesUIUtils.openTabset
-    //   .toString()
-    //   .replace(
-    //     /(\s+)(inBackground: loadInBackground,)/,
-    //     "$1$2$1userContextId: aEvent.userContextId || 0,"
-    //   );
-    // let openNodeStr = PlacesUIUtils._openNodeIn
-    //   .toString()
-    //   .replace(/(\s+)(aPrivate = false)\n/, "$1$2,$1userContextId = 0\n")
-    //   .replace(/(\s+)(private: aPrivate,)\n/, "$1$2$1userContextId,\n");
-
-    // aWindow.PlacesUIUtils.openTabset = new Function(
-    //   "return function " + openTabsetStr
-    // )();
-    // aWindow.PlacesUIUtils._openNodeIn = new Function("return " + openNodeStr)();
   },
 
   openAllPrivate(event) {
@@ -389,13 +345,10 @@ const PrivateTab = {
 
   openPrivateTab(event) {
     let view = event.target.parentElement._view;
-    PlacesUIUtils._openNodeIn(
-      view.selectedNode,
-      "tab",
-      view.ownerWindow,
-      false,
-      this.container.userContextId
-    );
+    PlacesUIUtils._openNodeIn(view.selectedNode, "tab", view.ownerWindow, {
+      aPrivate: false,
+      userContextId: this.container.userContextId,
+    });
   },
 
   togglePrivate(aWindow, aTab = aWindow.gBrowser.selectedTab) {
