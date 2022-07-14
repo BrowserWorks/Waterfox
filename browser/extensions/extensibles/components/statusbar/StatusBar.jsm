@@ -8,9 +8,7 @@ const { CustomizableUI } = ChromeUtils.import(
   "resource:///modules/CustomizableUI.jsm"
 );
 
-const { ExtensiblesElements } = ChromeUtils.import(
-  "resource:///modules/ExtensiblesElements.jsm"
-);
+const { setTimeout } = ChromeUtils.import("resource://gre/modules/Timer.jsm");
 
 const { PrefUtils } = ChromeUtils.import("resource:///modules/PrefUtils.jsm");
 
@@ -70,36 +68,22 @@ const StatusBar = {
   },
 
   init(window) {
-    this.createStatusBar(window);
-    this.configureDummyBar(window, "status-dummybar");
-    this.configureStatusBar(window);
-    this.overrideStatusPanelLabel(window);
-    this.configureBottomBox(window);
-    this.initPrefListeners();
-    this.registerArea(window, "status-bar");
-    BrowserUtils.setStyle(this.style);
+    if (!window.document.getElementById("status-dummybar")) {
+      setTimeout(() => {
+        this.init(window);
+      }, 25);
+    } else if (!window.statusbar.node) {
+      this.configureDummyBar(window, "status-dummybar");
+      this.configureStatusBar(window);
+      this.overrideStatusPanelLabel(window);
+      this.configureBottomBox(window);
+      this.initPrefListeners();
+      this.registerArea(window, "status-bar");
+      BrowserUtils.setStyle(this.style);
+    }
   },
 
-  createStatusBar(aWindow) {
-    BrowserUtils.createAndPositionElement(
-      aWindow,
-      ExtensiblesElements.statusDummyBar.tag,
-      ExtensiblesElements.statusDummyBar.attrs,
-      ExtensiblesElements.statusDummyBar.appendTo
-    );
-    aWindow.statusbar.node = BrowserUtils.createElement(
-      aWindow.document,
-      ExtensiblesElements.statusBarElements.bar.tag,
-      ExtensiblesElements.statusBarElements.bar.attrs
-    );
-    aWindow.statusbar.textNode = BrowserUtils.createElement(
-      aWindow.document,
-      ExtensiblesElements.statusBarElements.item.tag,
-      ExtensiblesElements.statusBarElements.item.attrs
-    );
-  },
-
-  initPrefListeners() {
+  async initPrefListeners() {
     this.enabledListener = PrefUtils.addObserver(
       this.PREF_ENABLED,
       isEnabled => {
@@ -115,13 +99,13 @@ const StatusBar = {
     );
   },
 
-  setStatusBarVisibility(isEnabled) {
+  async setStatusBarVisibility(isEnabled) {
     CustomizableUI.getWidget("status-dummybar").instances.forEach(dummyBar => {
       dummyBar.node.setAttribute("collapsed", !isEnabled);
     });
   },
 
-  setStatusTextVisibility() {
+  async setStatusTextVisibility() {
     if (this.enabled && this.showLinks) {
       // Status bar enabled and want to display links in it
       StatusBar.executeInAllWindows((doc, win) => {
@@ -145,7 +129,7 @@ const StatusBar = {
     }
   },
 
-  registerArea(aWindow, aArea) {
+  async registerArea(aWindow, aArea) {
     if (!CustomizableUI.areas.includes("status-bar")) {
       CustomizableUI.registerArea(aArea, {
         type: CustomizableUI.TYPE_TOOLBAR,
@@ -160,7 +144,7 @@ const StatusBar = {
     }
   },
 
-  configureDummyBar(aWindow, aId) {
+  async configureDummyBar(aWindow, aId) {
     let { document } = aWindow;
     let el = document.getElementById(aId);
     el.collapsed = !this.enabled;
@@ -188,6 +172,8 @@ const StatusBar = {
 
   configureStatusBar(aWindow) {
     let StatusPanel = aWindow.StatusPanel;
+    aWindow.statusbar.node = aWindow.document.getElementById("status-bar");
+    aWindow.statusbar.textNode = aWindow.document.getElementById("status-text");
     if (this.textInBar) {
       aWindow.statusbar.textNode.appendChild(StatusPanel._labelElement);
     }
@@ -195,7 +181,7 @@ const StatusBar = {
     aWindow.statusbar.node.setAttribute("collapsed", !this.enabled);
   },
 
-  overrideStatusPanelLabel(aWindow) {
+  async overrideStatusPanelLabel(aWindow) {
     let { StatusPanel, MousePosTracker } = aWindow;
     let window = aWindow;
     // TODO: Should be able to do this with a WrappedJSObject instead
@@ -212,7 +198,7 @@ const StatusBar = {
     );
   },
 
-  configureBottomBox(aWindow) {
+  async configureBottomBox(aWindow) {
     let { document } = aWindow;
     let bottomBox = document.getElementById("browser-bottombox");
     CustomizableUI.registerToolbarNode(aWindow.statusbar.node);
