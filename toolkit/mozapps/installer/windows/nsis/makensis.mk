@@ -20,6 +20,7 @@ endif
 
 TOOLKIT_NSIS_FILES = \
 	common.nsh \
+	CPUFeatures.nsh \
 	locale.nlf \
 	locale-fonts.nsh \
 	locale-rtl.nlf \
@@ -35,6 +36,7 @@ CUSTOM_NSIS_PLUGINS = \
 	BitsUtils.dll \
 	CertCheck.dll \
 	CityHash.dll \
+	CPUFeatures.dll \
 	ExecInExplorer.dll \
 	HttpPostFile.dll \
 	InetBgDL.dll \
