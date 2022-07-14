@@ -75,7 +75,9 @@ let gUndoData = null;
 XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
   if (AppConstants.platform == "win") {
     return [
+      "waterfoxclassic",
       "firefox",
+      "waterfox",
       "edge",
       "ie",
       "brave",
@@ -90,7 +92,9 @@ XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
   }
   if (AppConstants.platform == "macosx") {
     return [
+      "waterfoxclassic",
       "firefox",
+      "waterfox",
       "safari",
       "brave",
       "chrome",
@@ -104,6 +108,8 @@ XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
     return [
       "firefox",
       "brave",
+      "waterfoxclassic",
+      "waterfox",
       "chrome",
       "chrome-beta",
       "chrome-dev",
@@ -425,7 +431,7 @@ var MigratorPrototype = {
           // If migrate throws, an error occurred, and the callback
           // (itemMayBeDone) might haven't been called.
           try {
-            res.migrate(resourceDone);
+            await res.migrate(resourceDone);
           } catch (ex) {
             Cu.reportError(ex);
             resourceDone(false);
@@ -770,10 +776,10 @@ var MigrationUtils = Object.seal({
       "Internet Explorer": "ie",
       "Microsoft Edge": "edge",
       Safari: "safari",
-      Firefox: "firefox",
-      Nightly: "firefox",
       "Brave Web Browser": "brave", // Windows, Linux
       Brave: "brave", // OS X
+      Firefox: "waterfox",
+      Nightly: "waterfox",
       "Google Chrome": "chrome", // Windows, Linux
       Chrome: "chrome", // OS X
       Chromium: "chromium", // Windows, OS X
@@ -789,7 +795,7 @@ var MigrationUtils = Object.seal({
       key = APP_DESC_TO_KEY[browserDesc] || "";
       // Handle devedition, as well as "FirefoxNightly" on OS X.
       if (!key && browserDesc.startsWith("Firefox")) {
-        key = "firefox";
+        key = "waterfox";
       }
     } catch (ex) {
       Cu.reportError("Could not detect default browser: " + ex);
@@ -799,7 +805,7 @@ var MigrationUtils = Object.seal({
     // ourselves as the default (on Windows 7 and below). In that case, check if we
     // have a registry key that tells us where to go:
     if (
-      key == "firefox" &&
+      key == "waterfox" &&
       AppConstants.isPlatformAndVersionAtMost("win", "6.2")
     ) {
       // Because we remove the registry key, reading the registry key only works once.
@@ -1256,7 +1262,7 @@ var MigrationUtils = Object.seal({
 
   _sourceNameToIdMapping: {
     nothing: 1,
-    firefox: 2,
+    waterfox: 2,
     edge: 3,
     ie: 4,
     chrome: 5,
@@ -1269,6 +1275,7 @@ var MigrationUtils = Object.seal({
     "chromium-edge": 10,
     "chromium-edge-beta": 10,
     brave: 11,
+    firefox: 12,
   },
   getSourceIdForTelemetry(sourceName) {
     return this._sourceNameToIdMapping[sourceName] || 0;
