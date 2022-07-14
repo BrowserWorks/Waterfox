@@ -3872,6 +3872,15 @@ UpdateService.prototype = {
    * See nsIUpdateService.idl
    */
   get canUsuallyCheckForUpdates() {
+    let prefEnabled = Services.prefs.getBoolPref("app.update.enabled", true);
+    if (!prefEnabled) {
+      LOG(
+        "UpdateService.canUsuallyCheckForUpdates - unable to automatically check " +
+          "the preference is disabled."
+      );
+      return false;
+    }
+
     if (this.disabled) {
       LOG(
         "UpdateService.canUsuallyCheckForUpdates - unable to automatically check " +
