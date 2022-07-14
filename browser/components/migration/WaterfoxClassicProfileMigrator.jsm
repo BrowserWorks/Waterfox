@@ -7,13 +7,10 @@
 "use strict";
 
 /*
- * Migrates from a Firefox profile in a lossy manner in order to clean up a
+ * Imports from a Waterfox profile in a lossy manner in order to clean up a
  * user's profile.  Data is only migrated where the benefits outweigh the
  * potential problems caused by importing undesired/invalid configurations
  * from the source profile.
- * Caveats:
- *  - Will fail to set currentProfileDir if current profile path doesn't match a
- *    profile in the database, i.e. when browser being run from ./mach run
  */
 
 const { MigrationUtils, MigratorPrototype } = ChromeUtils.import(
@@ -25,6 +22,11 @@ ChromeUtils.defineModuleGetter(
   this,
   "PlacesBackups",
   "resource://gre/modules/PlacesBackups.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "PlacesUtils",
+  "resource://gre/modules/PlacesUtils.jsm"
 );
 ChromeUtils.defineModuleGetter(
   this,
@@ -43,117 +45,27 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/ProfileAge.jsm"
 );
 
-var { AppConstants } = ChromeUtils.import(
-  "resource://gre/modules/AppConstants.jsm"
-);
-
-function FirefoxProfileMigrator() {
+function WaterfoxClassicProfileMigrator() {
   this.wrappedJSObject = this; // for testing...
-
-  this._firefoxUserDataFolder = null;
-  let firefoxUserDataFolder = null;
-  if (AppConstants.platform == "macosx") {
-    firefoxUserDataFolder = FileUtils.getDir(
-      "ULibDir",
-      ["Application Support", "Firefox"],
-      false
-    );
-  } else if (AppConstants.platform == "linux") {
-    firefoxUserDataFolder = FileUtils.getDir(
-      "Home",
-      [".mozilla", "firefox"],
-      false
-    );
-  } else if (AppConstants.platform == "win") {
-    firefoxUserDataFolder = FileUtils.getDir(
-      "AppData",
-      ["Mozilla", "Firefox"],
-      false
-    );
-  }
-  this._firefoxUserDataFolder = firefoxUserDataFolder.exists()
-    ? firefoxUserDataFolder
-    : null;
 }
 
-FirefoxProfileMigrator.prototype = Object.create(MigratorPrototype);
+WaterfoxClassicProfileMigrator.prototype = Object.create(MigratorPrototype);
 
-function getAllProfilesNative() {
+WaterfoxClassicProfileMigrator.prototype._getAllProfiles = function() {
   let allProfiles = new Map();
   let profileService = Cc["@mozilla.org/toolkit/profile-service;1"].getService(
     Ci.nsIToolkitProfileService
   );
   for (let profile of profileService.profiles) {
     let rootDir = profile.rootDir;
-
-    if (rootDir.exists() && rootDir.isReadable()) {
+    if (
+      rootDir.exists() &&
+      rootDir.isReadable() &&
+      !rootDir.path.includes("68-edition")
+    ) {
       allProfiles.set(profile.name, rootDir);
     }
   }
-  return allProfiles;
-}
-
-FirefoxProfileMigrator.prototype._getAllProfiles = function() {
-  //return getAllProfilesNative();
-
-  let allProfiles = new Map();
-  let profileConfig = this._firefoxUserDataFolder.clone();
-  profileConfig.append("profiles.ini");
-  if (!profileConfig.exists()) {
-    Cu.reportError("'Profiles.ini' does not exist.");
-  }
-  if (!profileConfig.isReadable()) {
-    Cu.reportError("'Profiles.ini' could not be read.");
-  }
-  let profileConfigObj = Cc["@mozilla.org/xpcom/ini-parser-factory;1"]
-    .getService(Ci.nsIINIParserFactory)
-    .createINIParser(profileConfig);
-  let path = "";
-  if (profileConfigObj) {
-    path = profileConfigObj.getString("Profile0", "Path");
-  }
-  // get PathProfile default
-  let rootDir = this._firefoxUserDataFolder.clone();
-  let profileDefault = "";
-  let profileName = path;
-  let rootFolder = "";
-  if (path.split("/").length > 1) {
-    profileDefault = path.split("/");
-    profileName = profileDefault[profileDefault.length - 1];
-    rootFolder = profileDefault[0];
-  }
-
-  let folderProfile = [];
-  let sourceFolder = null;
-  if (AppConstants.platform == "macosx") {
-    if (rootFolder == "") {
-      folderProfile = ["Application Support", "Firefox", profileName];
-    } else {
-      folderProfile = [
-        "Application Support",
-        "Firefox",
-        rootFolder,
-        profileName,
-      ];
-    }
-    sourceFolder = FileUtils.getDir("ULibDir", folderProfile, false);
-  } else if (AppConstants.platform == "linux") {
-    if (rootFolder == "") {
-      folderProfile = [".mozilla", "firefox", profileName];
-    } else {
-      folderProfile = [".mozilla", "firefox", rootFolder, profileName];
-    }
-    sourceFolder = FileUtils.getDir("Home", folderProfile, false);
-  } else if (AppConstants.platform == "win") {
-    if (rootFolder == "") {
-      folderProfile = ["Mozilla", "Firefox", profileName];
-    } else {
-      folderProfile = ["Mozilla", "Firefox", rootFolder, profileName];
-    }
-    sourceFolder = FileUtils.getDir("AppData", folderProfile, false);
-  }
-
-  allProfiles.set(profileName, sourceFolder);
   return allProfiles;
 };
 
@@ -161,13 +73,16 @@ function sorter(a, b) {
   return a.id.toLocaleLowerCase().localeCompare(b.id.toLocaleLowerCase());
 }
 
-FirefoxProfileMigrator.prototype.getSourceProfiles = function() {
+WaterfoxClassicProfileMigrator.prototype.getSourceProfiles = function() {
   return [...this._getAllProfiles().keys()]
     .map(x => ({ id: x, name: x }))
     .sort(sorter);
 };
 
-FirefoxProfileMigrator.prototype._getFileObject = function(dir, fileName) {
+WaterfoxClassicProfileMigrator.prototype._getFileObject = function(
+  dir,
+  fileName
+) {
   let file = dir.clone();
   file.append(fileName);
 
@@ -177,8 +92,12 @@ FirefoxProfileMigrator.prototype._getFileObject = function(dir, fileName) {
   return file.exists() ? file : null;
 };
 
-FirefoxProfileMigrator.prototype.getResources = function(aProfile) {
-  let sourceProfileDir = (aProfile = this._getAllProfiles().get(aProfile.id));
+WaterfoxClassicProfileMigrator.prototype.getResources = function(aProfile) {
+  let sourceProfileDir = aProfile
+    ? this._getAllProfiles().get(aProfile.id)
+    : Cc["@mozilla.org/toolkit/profile-service;1"].getService(
+        Ci.nsIToolkitProfileService
+      ).defaultProfile.rootDir;
   if (
     !sourceProfileDir ||
     !sourceProfileDir.exists() ||
@@ -191,25 +110,35 @@ FirefoxProfileMigrator.prototype.getResources = function(aProfile) {
     Ci.nsIToolkitProfileService
   ).defaultProfile;
 
-  if (profile == null) {
+  if (!profile) {
     profile = Cc["@mozilla.org/toolkit/profile-service;1"].getService(
       Ci.nsIToolkitProfileService
     ).currentProfile;
   }
 
+  if (!profile) {
+    // no profile in use, nowhere to migrate data
+    return null;
+  }
+
   let currentProfileDir = profile.rootDir;
+
+  // Surely data cannot be imported from the current profile.
+  if (sourceProfileDir.equals(currentProfileDir)) {
+    return null;
+  }
 
   return this._getResourcesInternal(sourceProfileDir, currentProfileDir);
 };
 
-FirefoxProfileMigrator.prototype.getLastUsedDate = function() {
+WaterfoxClassicProfileMigrator.prototype.getLastUsedDate = function() {
   // We always pretend we're really old, so that we don't mess
   // up the determination of which browser is the most 'recent'
   // to import from.
   return Promise.resolve(new Date(0));
 };
 
-FirefoxProfileMigrator.prototype._getResourcesInternal = function(
+WaterfoxClassicProfileMigrator.prototype._getResourcesInternal = function(
   sourceProfileDir,
   currentProfileDir
 ) {
@@ -228,7 +157,11 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
       type: aMigrationType,
       migrate(aCallback) {
         for (let file of files) {
-          file.copyTo(currentProfileDir, "");
+          try {
+            file.copyTo(currentProfileDir, "");
+          } catch (ex) {
+            // failed to copy
+          }
         }
         aCallback(true);
       },
@@ -244,11 +177,113 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
     Services.prefs.savePrefFile(newPrefsFile);
   }
 
+  function formatHistoryRows(rows) {
+    let pageInfos = [];
+    for (let row of rows) {
+      try {
+        // if having typed_count, we changes transition type to typed.
+        let transition = PlacesUtils.history.TRANSITIONS.LINK;
+        if (row.getResultByName("typed") > 0) {
+          transition = PlacesUtils.history.TRANSITIONS.TYPED;
+        }
+
+        pageInfos.push({
+          title: row.getResultByName("title"),
+          url: new URL(row.getResultByName("url")),
+          visits: [
+            {
+              transition,
+              date: row.getResultByName("last_visit_date"),
+            },
+          ],
+        });
+      } catch (ex) {
+        Cu.reportError(ex);
+      }
+    }
+    return pageInfos;
+  }
+
+  /**
+   * Format raw query results for bookmarks and folders.
+   * @param rows Raw query results from getRowsFromDBWithoutLocks()
+   * @returns Object containing guid: {item} mappings.
+   */
+  function formatBookmarkRows(rows) {
+    let unsortedRows = {};
+    rows.forEach(row => {
+      let type = row.getResultByName("type");
+      let item = {
+        type,
+        parentGuid: row.getResultByName("parentGuid"),
+        guid: row.getResultByName("guid"),
+        title: row.getResultByName("title"),
+      };
+      type == PlacesUtils.bookmarks.TYPE_BOOKMARK
+        ? (item.url = row.getResultByName("url"))
+        : null;
+      unsortedRows[item.guid] = item;
+    });
+    return unsortedRows;
+  }
+
+  /**
+   * As folders can be created after bookmarks, and bookmarks moved inside these younger folders,
+   * we need to sequentially loop through items to ensure parents are added before children.
+   * @param unsortedRows A formattedRows Object returned from formatBookmarkRows()
+   * @param presentIds Array of item guids in unsortedRows
+   * @param nextLevelItems Array of items at the current level of nesting
+   * @param rowsToInsert Object of guid: {children: []} to be inserted with insertManyBookmarksWrapper()
+   * @returns rowsToInsert
+   */
+  function sortBookmarkRows(
+    unsortedRows,
+    presentIds,
+    nextLevelItems = [],
+    rowsToInsert = {}
+  ) {
+    // Top level items
+    if (Object.keys(rowsToInsert).length === 0) {
+      let parentIds = Object.values(unsortedRows)
+        .filter(item => !presentIds.includes(item.parentGuid))
+        .map(item => {
+          // Add top level, existing guids
+          item.parentGuid in rowsToInsert
+            ? rowsToInsert[item.parentGuid].children.push(item)
+            : (rowsToInsert[item.parentGuid] = { children: [item] });
+          // Assign children
+          return item.guid;
+        });
+      nextLevelItems = Object.values(unsortedRows).filter(item =>
+        parentIds.includes(item.parentGuid)
+      );
+    } else {
+      // Bottom level items
+      if (Array.isArray(nextLevelItems) && !nextLevelItems.length) {
+        return rowsToInsert;
+      }
+      // Mid level items
+      let nextLevelIds = nextLevelItems.map(item => {
+        if (unsortedRows[item.parentGuid].children) {
+          unsortedRows[item.parentGuid].children.push(item);
+        } else {
+          unsortedRows[item.parentGuid].children = [item];
+        }
+        return item.guid;
+      });
+      nextLevelItems = Object.values(unsortedRows).filter(item =>
+        nextLevelIds.includes(item.parentGuid)
+      );
+    }
+    return sortBookmarkRows(
+      unsortedRows,
+      presentIds,
+      nextLevelItems,
+      rowsToInsert
+    );
+  }
+
   let types = MigrationUtils.resourceTypes;
-  let places = getFileResource(types.HISTORY, [
-    "places.sqlite",
-    "places.sqlite-wal",
-  ]);
   let favicons = getFileResource(types.HISTORY, [
     "favicons.sqlite",
     "favicons.sqlite-wal",
@@ -267,6 +302,94 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
     "formhistory.sqlite",
     "autofill-profiles.json",
   ]);
+
+  let bookmarks;
+  let places;
+  // don't try to import if places.sqlite doesn't exist
+  if (this._getFileObject(sourceProfileDir, "places.sqlite")) {
+    places = {
+      name: "history",
+      type: types.HISTORY,
+      migrate: async aCallback => {
+        try {
+          // get history from places.sqlite
+          let sourceDir = sourceProfileDir.clone();
+          sourceDir.append("places.sqlite");
+          let query =
+            "SELECT url, title, last_visit_date, typed FROM moz_places WHERE hidden = 0";
+          let rows = await MigrationUtils.getRowsFromDBWithoutLocks(
+            sourceDir.path,
+            "history",
+            query
+          );
+          let formattedRows = formatHistoryRows(rows);
+          if (formattedRows.length) {
+            await MigrationUtils.insertVisitsWrapper(formattedRows);
+          }
+          aCallback(true);
+        } catch (ex) {
+          aCallback(false);
+        }
+      },
+    };
+
+    bookmarks = {
+      name: "bookmarks", // name is used only by tests.
+      type: types.BOOKMARKS,
+      migrate: async aCallback => {
+        try {
+          // get bookmarks from places.sqlite
+          let sourceDir = sourceProfileDir.clone();
+          sourceDir.append("places.sqlite");
+          // get raw rows from db
+          let rows = await MigrationUtils.getRowsFromDBWithoutLocks(
+            sourceDir.path,
+            "bookmarks",
+            `SELECT 
+              b.type,
+              b.position,
+              (SELECT guid FROM moz_bookmarks WHERE id = b.parent) as parentGuid, 
+              b.parent, 
+              b.title,
+              b.guid,
+              p.url,
+              p.hidden
+            FROM moz_bookmarks b
+            LEFT JOIN moz_places p
+            ON b.fk = p.id 
+            WHERE 
+              parentGuid != 'root________' AND (b.type == 2 OR (p.url IS NOT NULL AND p.hidden != 1));`
+          );
+          let formattedRows = formatBookmarkRows(rows);
+          let ids = Object.values(formattedRows).map(row => {
+            return row.guid;
+          });
+          let itemsToInsert = sortBookmarkRows(formattedRows, ids);
+          // insert bookmarks
+          Object.entries(itemsToInsert).forEach(
+            async ([parentGuid, parent]) => {
+              // do not attempt to insert if empty
+              if (parent.children && parent.children.length) {
+                try {
+                  await MigrationUtils.insertManyBookmarksWrapper(
+                    parent.children,
+                    parentGuid
+                  );
+                } catch (ex) {
+                  Cu.reportError(ex);
+                }
+              }
+            }
+          );
+          aCallback(true);
+        } catch (ex) {
+          Cu.reportError(ex);
+          aCallback(false);
+        }
+      },
+    };
+  }
+
   let bookmarksBackups = getFileResource(types.OTHERDATA, [
     PlacesBackups.profileRelativeFolderPath,
   ]);
@@ -351,7 +474,7 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
           let data = JSON.parse(raw);
           if (data && data.accountData && data.accountData.email) {
             let username = data.accountData.email;
-            // Copy the file itself.
+            // copy the file itself.
             await OS.File.copy(
               oldPath,
               OS.Path.join(currentProfileDir.path, "signedInUser.json")
@@ -387,64 +510,6 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
     },
   };
 
-  // Telemetry related migrations.
-  let times = {
-    name: "times", // name is used only by tests.
-    type: types.OTHERDATA,
-    migrate: aCallback => {
-      let file = this._getFileObject(sourceProfileDir, "times.json");
-      if (file) {
-        file.copyTo(currentProfileDir, "");
-      }
-      // And record the fact a migration (ie, a reset) happened.
-      let recordMigration = async () => {
-        try {
-          let profileTimes = await ProfileAge(currentProfileDir.path);
-          await profileTimes.recordProfileReset();
-          aCallback(true);
-        } catch (e) {
-          aCallback(false);
-        }
-      };
-
-      recordMigration();
-    },
-  };
-  let telemetry = {
-    name: "telemetry", // name is used only by tests...
-    type: types.OTHERDATA,
-    migrate: aCallback => {
-      let createSubDir = name => {
-        let dir = currentProfileDir.clone();
-        dir.append(name);
-        dir.create(Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
-        return dir;
-      };
-
-      // If the 'datareporting' directory exists we migrate files from it.
-      let dataReportingDir = this._getFileObject(
-        sourceProfileDir,
-        "datareporting"
-      );
-      if (dataReportingDir && dataReportingDir.isDirectory()) {
-        // Copy only specific files.
-        let toCopy = ["state.json", "session-state.json"];
-
-        let dest = createSubDir("datareporting");
-        let enumerator = dataReportingDir.directoryEntries;
-        while (enumerator.hasMoreElements()) {
-          let file = enumerator.nextFile;
-          if (file.isDirectory() || !toCopy.includes(file.leafName)) {
-            continue;
-          }
-          file.copyTo(dest, "");
-        }
-      }
-
-      aCallback(true);
-    },
-  };
-
   return [
     places,
     cookies,
@@ -454,17 +519,17 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
     bookmarksBackups,
     session,
     sync,
-    times,
-    telemetry,
     favicons,
+    bookmarks,
   ].filter(r => r);
 };
 
-FirefoxProfileMigrator.prototype.classDescription = "Firefox Profile Migrator";
-FirefoxProfileMigrator.prototype.contractID =
-  "@mozilla.org/profile/migrator;1?app=browser&type=firefox";
-FirefoxProfileMigrator.prototype.classID = Components.ID(
-  "{849265D1-20D6-4F19-950F-4B24546B9046}"
+WaterfoxClassicProfileMigrator.prototype.classDescription =
+  "Waterfox Classic Profile Migrator";
+WaterfoxClassicProfileMigrator.prototype.contractID =
+  "@mozilla.org/profile/migrator;1?app=browser&type=waterfoxclassic";
+WaterfoxClassicProfileMigrator.prototype.classID = Components.ID(
+  "{971AAC44-A66D-4BA6-B406-D75FCB3B3D15}"
 );
 
-var EXPORTED_SYMBOLS = ["FirefoxProfileMigrator"];
+var EXPORTED_SYMBOLS = ["WaterfoxClassicProfileMigrator"];
