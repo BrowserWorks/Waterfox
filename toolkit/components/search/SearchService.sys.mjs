@@ -466,9 +466,7 @@ export class SearchService {
   // Test-only function to reset just the engine selector so that it can
   // load a different configuration.
   resetEngineSelector() {
-    this.#engineSelector = new lazy.SearchEngineSelector(
-      this.#handleConfigurationUpdated.bind(this)
-    );
+    console.log("resetEngineSelector()")
   }
 
   resetToAppDefaultEngine() {
@@ -1334,8 +1332,6 @@ export class SearchService {
 
       // See if we have a settings file so we don't have to parse a bunch of XML.
       let settings = await this._settings.get();
-
-      this.#setupRemoteSettings().catch(console.error);
 
       await this.#loadEngines(settings);
 
@@ -2286,10 +2282,27 @@ export class SearchService {
       this._settings.setMetaDataAttribute(key, value);
     }
 
-    let { engines, privateDefault } =
-      await this.#engineSelector.fetchEngineConfiguration(
-        searchEngineSelectorProperties
-      );
+    const defaultEngines = [
+      { webExtension: { id: "bing@search.waterfox.net" }, orderHint: 100 },
+      { webExtension: { id: "startpage@search.waterfox.net" }, orderHint: 90 },
+      { webExtension: { id: "yahoo@search.waterfox.net" }, orderHint: 80 },
+      { webExtension: { id: "google@search.waterfox.net" }, orderHint: 70 },
+      { webExtension: { id: "ddg@search.waterfox.net" }, orderHint: 60 },
+      { webExtension: { id: "qwant@search.waterfox.net" }, orderHint: 50 },
+      { webExtension: { id: "ecosia@search.waterfox.net" }, orderHint: 40 },
+    ];
+
+    const distroEngineIDs = Services.prefs.getCharPref(
+      "distribution.engines",
+      ""
+    );
+
+    const distroEngines = distroEngineIDs.split(",").map((engineId, idx) => {
+      return { webExtension: { id: engineId }, orderHint: 100 - idx * 10 };
+    });
+
+    const engines =
+      SearchUtils.distroID && distroEngineIDs ? distroEngines : defaultEngines;
 
     for (let e of engines) {
       if (!e.webExtension) {
@@ -2298,6 +2311,12 @@ export class SearchService {
       e.webExtension.locale =
         e.webExtension?.locale ?? lazy.SearchUtils.DEFAULT_TAG;
     }
+
+    const privateDefault = {
+      webExtension: { id: "startpage@search.waterfox.net" },
+    };
+    privateDefault.webExtension.locale =
+      privateDefault.webExtension?.locale ?? SearchUtils.DEFAULT_TAG;
 
     return { engines, privateDefault };
   }
