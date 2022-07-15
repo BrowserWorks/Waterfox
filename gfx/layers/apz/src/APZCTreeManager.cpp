@@ -25,6 +25,7 @@
 #include "mozilla/gfx/GPUParent.h"          // for GPUParent
 #include "mozilla/gfx/Logging.h"            // for gfx::TreeLog
 #include "mozilla/gfx/Point.h"              // for Point
+#include "mozilla/gfx/Matrix.h"
 #include "mozilla/layers/APZSampler.h"      // for APZSampler
 #include "mozilla/layers/APZThreadUtils.h"  // for AssertOnControllerThread, etc
 #include "mozilla/layers/APZUpdater.h"      // for APZUpdater
@@ -2842,6 +2843,53 @@ APZCTreeManager::HitTestResult APZCTreeManager::GetTargetAPZC(
   return GetAPZCAtPoint(aPoint, lock);
 }
 
+static bool CheckCloseToIdentity(const gfx::Matrix4x4& aMatrix) {
+  // We allow a factor of 1/2048 in the multiply part of the matrix, so that if
+  // we multiply by a point on a screen of size 2048 we would be off by at most
+  // 1 pixel approximately.
+  const float multiplyEps = 1 / 2048.f;
+  // We allow 1 pixel in the translate part of the matrix.
+  const float translateEps = 1.f;
+
+  if (!FuzzyEqualsAdditive(aMatrix._11, 1.f, multiplyEps) ||
+      !FuzzyEqualsAdditive(aMatrix._12, 0.f, multiplyEps) ||
+      !FuzzyEqualsAdditive(aMatrix._13, 0.f, multiplyEps) ||
+      !FuzzyEqualsAdditive(aMatrix._14, 0.f, multiplyEps) ||
+      !FuzzyEqualsAdditive(aMatrix._21, 0.f, multiplyEps) ||
+      !FuzzyEqualsAdditive(aMatrix._22, 1.f, multiplyEps) ||
+      !FuzzyEqualsAdditive(aMatrix._23, 0.f, multiplyEps) ||
+      !FuzzyEqualsAdditive(aMatrix._24, 0.f, multiplyEps) ||
+      !FuzzyEqualsAdditive(aMatrix._31, 0.f, multiplyEps) ||
+      !FuzzyEqualsAdditive(aMatrix._32, 0.f, multiplyEps) ||
+      !FuzzyEqualsAdditive(aMatrix._33, 1.f, multiplyEps) ||
+      !FuzzyEqualsAdditive(aMatrix._34, 0.f, multiplyEps) ||
+      !FuzzyEqualsAdditive(aMatrix._41, 0.f, translateEps) ||
+      !FuzzyEqualsAdditive(aMatrix._42, 0.f, translateEps) ||
+      !FuzzyEqualsAdditive(aMatrix._43, 0.f, translateEps) ||
+      !FuzzyEqualsAdditive(aMatrix._44, 1.f, multiplyEps)) {
+    return false;
+  }
+  return true;
+}
+
+// Checks that within the constraints of floating point math we can invert it
+// reasonably enough that multiplying by the computed inverse is close to the
+// identity.
+static bool CheckInvertibleWithFinitePrecision(const gfx::Matrix4x4& aMatrix) {
+  auto inverse = aMatrix.MaybeInverse();
+  if (inverse.isNothing()) {
+    // Should we return false?
+    return true;
+  }
+  if (!CheckCloseToIdentity(aMatrix * *inverse)) {
+    return false;
+  }
+  if (!CheckCloseToIdentity(*inverse * aMatrix)) {
+    return false;
+  }
+  return true;
+}
+
 APZCTreeManager::HitTestResult APZCTreeManager::GetAPZCAtPointWR(
     const ScreenPoint& aHitTestPoint,
     const RecursiveMutexAutoLock& aProofOfTreeLock) {
@@ -2900,6 +2948,12 @@ APZCTreeManager::HitTestResult APZCTreeManager::GetAPZCAtPointWR(
     if (flags & EventRegionsOverride::ForceEmptyHitRegion) {
       // This result is inside a subtree that is invisible to hit-testing.
       APZCTM_LOG("skipping due to FEHR subtree.\n");
+      continue;
+    }
+
+    if (!CheckInvertibleWithFinitePrecision(
+            GetScreenToApzcTransform(node->GetApzc()).ToUnknownMatrix())) {
+      APZCTM_LOG("skipping due to check inverse accuracy\n");
       continue;
     }
 
