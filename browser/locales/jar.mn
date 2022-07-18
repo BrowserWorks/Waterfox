@@ -12,6 +12,7 @@
   preview/protections.ftl                          (../components/protections/content/protections.ftl)
   preview/interventions.ftl                        (../components/urlbar/content/interventions.ftl)
   preview/firefoxSuggest.ftl                       (../components/urlbar/content/firefoxSuggest.ftl)
+  browser/waterfox.ftl                             (../../waterfox/browser/locales/en-US/waterfox.ftl)
 #ifdef NIGHTLY_BUILD
   preview/firefoxView.ftl                          (../components/firefoxview/firefoxView.ftl)
   preview/colorwaycloset.ftl                       (../components/colorways/colorwaycloset.ftl)
