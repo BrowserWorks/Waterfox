@@ -18,7 +18,7 @@ pref("app.update.promptWaitTime", 691200);
 // wizard.
 pref("app.update.url.manual", "https://www.waterfox.net/download/");
 pref("app.update.url.details", "https://www.waterfox.net/blog/");
-pref("app.releaseNotesURL", "hhttps://www.waterfox.net/docs/releases/%DISPLAY_VERSION%/?utm_source=waterfox-browser&utm_medium=waterfox-browser&utm_campaign=whatsnew");
+pref("app.releaseNotesURL", "https://www.waterfox.net/docs/releases/%DISPLAY_VERSION%/?utm_source=waterfox-browser&utm_medium=waterfox-browser&utm_campaign=whatsnew");
 pref("app.releaseNotesURL.aboutDialog", "https://www.waterfox.net/docs/releases/%DISPLAY_VERSION%/?utm_source=waterfox-browser&utm_medium=waterfox-desktop&utm_campaign=about-dialog");
 
 // The number of days a binary is permitted to be old
