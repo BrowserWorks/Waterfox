@@ -35,3 +35,7 @@ private-tab =
             [true] Exit Private Tab
             *[false] Make Private Tab
         }
+
+## Status Bar
+status-bar =
+    .label = Status Bar
