@@ -1034,6 +1034,7 @@ AddonWrapper = class {
 
     if (addon.optionsType) {
       switch (parseInt(addon.optionsType, 10)) {
+        case lazy.AddonManager.OPTIONS_TYPE_DIALOG:
         case lazy.AddonManager.OPTIONS_TYPE_TAB:
         case lazy.AddonManager.OPTIONS_TYPE_INLINE_BROWSER:
           return hasOptionsURL ? addon.optionsType : null;
@@ -2528,8 +2529,8 @@ const XPIDatabase = {
     }
 
     if (this.isDisabledLegacy(aAddon)) {
-      logger.warn(`disabling legacy extension ${aAddon.id}`);
-      return false;
+      logger.warn(`enabling legacy extension ${aAddon.id}`);
+      return true;
     }
 
     if (lazy.AddonManager.checkCompatibility) {
