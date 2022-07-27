@@ -97,6 +97,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   UpdateListener: "resource://gre/modules/UpdateListener.jsm",
   UrlbarQuickSuggest: "resource:///modules/UrlbarQuickSuggest.jsm",
   UrlbarPrefs: "resource:///modules/UrlbarPrefs.jsm",
+  WaterfoxGlue: "resource:///modules/WaterfoxGlue.jsm",
   WebChannel: "resource://gre/modules/WebChannel.jsm",
   WindowsRegistry: "resource://gre/modules/WindowsRegistry.jsm",
 });
@@ -1236,6 +1237,8 @@ BrowserGlue.prototype = {
   // (i.e. before the first window is opened)
   _beforeUIStartup: function BG__beforeUIStartup() {
     SessionStartup.init();
+
+    WaterfoxGlue.init();
 
     // check if we're in safe mode
     if (Services.appinfo.inSafeMode) {
