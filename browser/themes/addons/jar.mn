@@ -6,6 +6,7 @@ browser.jar:
 %  resource builtin-themes %content/builtin-themes/
 
   content/builtin-themes/alpenglow                 (alpenglow/*.svg)
+  content/builtin-themes/alpenglow                 (alpenglow/*.css)
   content/builtin-themes/alpenglow/manifest.json   (alpenglow/manifest.json)
 
   content/builtin-themes/dark                      (dark/*.svg)
