@@ -23,6 +23,7 @@ toolkit.jar:
   content/mozapps/extensions/view-controller.js                 (content/view-controller.js)
 
 % resource default-theme %content/mozapps/extensions/default-theme/
+  content/mozapps/extensions/default-theme                      (default-theme/*.css)
   content/mozapps/extensions/default-theme                      (default-theme/*.svg)
   content/mozapps/extensions/default-theme/manifest.json        (default-theme/manifest.json)
 #endif
