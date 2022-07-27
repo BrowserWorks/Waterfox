@@ -69,6 +69,7 @@
   },
 
   "theme_experiment": {
+    "stylesheet": "experiment.css",
     "colors": {
       "button": "--button-bgcolor",
       "button_hover": "--button-hover-bgcolor",
