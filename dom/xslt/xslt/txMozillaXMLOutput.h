@@ -32,7 +32,7 @@ class Element;
 class txTransformNotifier final : public nsIScriptLoaderObserver,
                                   public nsICSSLoaderObserver {
  public:
-  txTransformNotifier();
+  explicit txTransformNotifier(mozilla::dom::Document* aSourceDocument);
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSISCRIPTLOADEROBSERVER
@@ -52,6 +52,7 @@ class txTransformNotifier final : public nsIScriptLoaderObserver,
   ~txTransformNotifier();
   void SignalTransformEnd(nsresult aResult = NS_OK);
 
+  nsCOMPtr<mozilla::dom::Document> mSourceDocument;
   nsCOMPtr<mozilla::dom::Document> mDocument;
   nsCOMPtr<nsITransformObserver> mObserver;
   nsCOMArray<nsIScriptElement> mScriptElements;
@@ -61,7 +62,8 @@ class txTransformNotifier final : public nsIScriptLoaderObserver,
 
 class txMozillaXMLOutput : public txAOutputXMLEventHandler {
  public:
-  txMozillaXMLOutput(txOutputFormat* aFormat, nsITransformObserver* aObserver);
+  txMozillaXMLOutput(mozilla::dom::Document* aSourceDocument,
+                     txOutputFormat* aFormat, nsITransformObserver* aObserver);
   txMozillaXMLOutput(txOutputFormat* aFormat,
                      mozilla::dom::DocumentFragment* aFragment, bool aNoFixup);
   ~txMozillaXMLOutput();

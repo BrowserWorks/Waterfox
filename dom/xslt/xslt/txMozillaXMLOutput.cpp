@@ -47,7 +47,8 @@ using namespace mozilla::dom;
   NS_ASSERTION(mCurrentNode, "mCurrentNode is nullptr"); \
   if (!mCurrentNode) return NS_ERROR_UNEXPECTED
 
-txMozillaXMLOutput::txMozillaXMLOutput(txOutputFormat* aFormat,
+txMozillaXMLOutput::txMozillaXMLOutput(Document* aSourceDocument,
+                                       txOutputFormat* aFormat,
                                        nsITransformObserver* aObserver)
     : mTreeDepth(0),
       mBadChildLevel(0),
@@ -58,7 +59,7 @@ txMozillaXMLOutput::txMozillaXMLOutput(txOutputFormat* aFormat,
       mNoFixup(false) {
   MOZ_COUNT_CTOR(txMozillaXMLOutput);
   if (aObserver) {
-    mNotifier = new txTransformNotifier();
+    mNotifier = new txTransformNotifier(aSourceDocument);
     if (mNotifier) {
       mNotifier->Init(aObserver);
     }
@@ -846,8 +847,10 @@ nsresult txMozillaXMLOutput::createHTMLElement(nsAtom* aName,
   return rv;
 }
 
-txTransformNotifier::txTransformNotifier()
-    : mPendingStylesheetCount(0), mInTransform(false) {}
+txTransformNotifier::txTransformNotifier(Document* aSourceDocument)
+    : mSourceDocument(aSourceDocument),
+      mPendingStylesheetCount(0),
+      mInTransform(false) {}
 
 txTransformNotifier::~txTransformNotifier() = default;
 
@@ -918,7 +921,7 @@ nsresult txTransformNotifier::SetOutputDocument(Document* aDocument) {
   mDocument = aDocument;
 
   // Notify the contentsink that the document is created
-  return mObserver->OnDocumentCreated(mDocument);
+  return mObserver->OnDocumentCreated(mSourceDocument, mDocument);
 }
 
 void txTransformNotifier::SignalTransformEnd(nsresult aResult) {
@@ -949,6 +952,6 @@ void txTransformNotifier::SignalTransformEnd(nsresult aResult) {
   }
 
   if (NS_SUCCEEDED(aResult)) {
-    mObserver->OnTransformDone(aResult, mDocument);
+    mObserver->OnTransformDone(mSourceDocument, aResult, mDocument);
   }
 }
