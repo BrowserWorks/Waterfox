@@ -14,6 +14,7 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   AddonManager: "resource://gre/modules/AddonManager.jsm",
+  AttributionCode: "resource:///modules/AttributionCode.jsm",
   ChromeManifest: "resource:///modules/ChromeManifest.jsm",
   Overlays: "resource:///modules/Overlays.jsm",
   PrivateTab: "resource:///modules/PrivateTab.jsm",
@@ -26,6 +27,9 @@ XPCOMUtils.defineLazyGlobalGetters(this, ["fetch"]);
 
 const WaterfoxGlue = {
   async init() {
+    // Parse attribution data
+    this._setAttributionData();
+
     // Parse chrome.manifest
     this.startupManifest = await this.getChromeManifest("startup");
     this.privateManifest = await this.getChromeManifest("private");
@@ -36,6 +40,108 @@ const WaterfoxGlue = {
     Services.obs.addObserver(this, "main-pane-loaded");
     // Observe final-ui-startup to launch browser window dependant tasks
     Services.obs.addObserver(this, "final-ui-startup");
+    // Observe browser-delayed-startup-finished to launch delayed tasks
+    Services.obs.addObserver(this, "browser-delayed-startup-finished");
+  },
+
+  async _setAttributionData() {
+    // Kick off async process to set attribution code preference
+    let distSrc = Services.prefs.getCharPref("distribution.source", "");
+    try {
+      let attrData = await AttributionCode.getAttrDataAsync();
+      console.log(attrData);
+      if (Object.keys(attrData).length) {
+        let attributionStr = "";
+        for (const [key, value] of Object.entries(attrData)) {
+          // If PTAG/TypeTag we only want to set the relevant pref
+          if (["PTAG", "hspart", "hsimp", "typetag"].includes(key)) {
+            Services.prefs.setCharPref(
+              "browser.search." + key.toLowerCase(),
+              value
+            );
+            continue;
+          }
+          // If mtm_source we want to set the distribution source pref & attribution data
+          if (key == "mtm_source") {
+            Services.prefs.setCharPref("distribution.source", value);
+          } else if (key == "engine" && ["bing", "yahoo"].includes(value)) {
+            this._setDefaultEng(value);
+            continue;
+          }
+          // Only add to postSigningData if this hasn't been called previously
+          attributionStr += `&${key}=${value}`;
+        }
+        // Add install param
+        if (attributionStr) {
+          attributionStr += "&status=install";
+        }
+        let additionalPage = Services.urlFormatter.formatURLPref(
+          "startup.homepage_welcome_url.additional"
+        );
+        Services.prefs.setCharPref(
+          "startup.homepage_welcome_url.additional",
+          additionalPage + attributionStr
+        );
+        let overridePage = Services.urlFormatter.formatURLPref(
+          "startup.homepage_override_url"
+        );
+        Services.prefs.setCharPref(
+          "startup.homepage_override_url",
+          overridePage + attributionStr
+        );
+        // Set cohort
+        function getDate() {
+          const d = new Date();
+          let month = "" + (d.getMonth() + 1);
+          let day = "" + d.getDate();
+          let year = d
+            .getFullYear()
+            .toString()
+            .slice(-2);
+
+          if (month.length < 2) {
+            month = "0" + month;
+          }
+          if (day.length < 2) {
+            day = "0" + day;
+          }
+
+          return [day, month, year].join("");
+        }
+
+        Services.prefs.setCharPref("browser.distribution.cohort", getDate());
+      } else if (!distSrc) {
+        Services.prefs.clearUserPref("browser.distribution.cohort");
+      }
+    } catch (ex) {
+      Services.console.logStringMessage(ex + "error setting attr data");
+    }
+  },
+
+  async _setDefaultEng(value) {
+    try {
+      let searchInitializedPromise = new Promise(resolve => {
+        if (Services.search.isInitialized) {
+          resolve();
+        }
+        const SEARCH_SERVICE_TOPIC = "browser-search-service";
+        Services.obs.addObserver(function observer(subject, topic, data) {
+          if (data != "init-complete") {
+            return;
+          }
+          Services.obs.removeObserver(observer, SEARCH_SERVICE_TOPIC);
+          resolve();
+        }, SEARCH_SERVICE_TOPIC);
+      });
+      searchInitializedPromise.then(() => {
+        const nameMap = { bing: "Bing", yahoo: "Yahoo!" };
+        const engine = Services.search.getEngineByName(nameMap[value]);
+        Services.search.setDefault(engine);
+        Services.search.setDefaultPrivate(engine);
+      });
+    } catch (ex) {
+      // Minor issue, carry on
+    }
   },
 
   async getChromeManifest(manifest) {
@@ -135,6 +241,9 @@ const WaterfoxGlue = {
       case "final-ui-startup":
         this._beforeUIStartup();
         break;
+      case "browser-delayed-startup-finished":
+        this._delayedTasks();
+        break;
     }
   },
 
@@ -176,6 +285,25 @@ const WaterfoxGlue = {
           enableTheme(DEFAULT_THEME);
         }
       });
+    }
+  },
+
+  async _delayedTasks() {
+    let tasks = [
+      {
+        task: () => {
+          AttributionCode.deleteFileAsync();
+          // Reset prefs
+          Services.prefs.clearUserPref(
+            "startup.homepage_welcome_url.additional"
+          );
+          Services.prefs.clearUserPref("startup.homepage_override_url");
+        },
+      },
+    ];
+
+    for (const task of tasks) {
+      task.task();
     }
   },
 };

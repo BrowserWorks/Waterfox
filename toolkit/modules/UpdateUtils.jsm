@@ -13,6 +13,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   AppConstants: "resource://gre/modules/AppConstants.jsm",
   ctypes: "resource://gre/modules/ctypes.jsm",
   Services: "resource://gre/modules/Services.jsm",
+  ShellService: "resource:///modules/ShellService.jsm",
   WindowsRegistry: "resource://gre/modules/WindowsRegistry.jsm",
   WindowsVersionInfo:
     "resource://gre/modules/components-utils/WindowsVersionInfo.jsm",
@@ -70,6 +71,13 @@ var UpdateUtils = {
     return this.getUpdateChannel();
   },
 
+  getDefault() {
+    try {
+      return ShellService.isDefaultBrowser();
+    } catch (e) {}
+    return null;
+  },
+
   /**
    * Formats a URL by replacing %...% values with OS, build and locale specific
    * values.
@@ -80,7 +88,7 @@ var UpdateUtils = {
    */
   async formatUpdateURL(url) {
     const locale = await this.getLocale();
-
+    let defaultSearch = await Services.search.getDefault();
     return url
       .replace(/%(\w+)%/g, (match, name) => {
         switch (name) {
@@ -109,8 +117,36 @@ var UpdateUtils = {
           case "SYSTEM_CAPABILITIES":
             return getSystemCapabilities();
           case "DISTRIBUTION":
+            let cohort = Services.prefs.getCharPref(
+              "browser.distribution.cohort",
+              ""
+            );
+            if (cohort) {
+              let def = this.getDefault() ? "1" : "0";
+              let src = Services.prefs.getCharPref("distribution.source", "");
+              if (!src) {
+                src = "wfx";
+              }
+              return cohort + def + src;
+            }
             return getDistributionPrefValue(PREF_APP_DISTRIBUTION);
           case "DISTRIBUTION_VERSION":
+            if (defaultSearch.name == "Bing") {
+              return Services.prefs.getCharPref(
+                "browser.search.ptag",
+                getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION) + "_b"
+              );
+            } else if (defaultSearch.name == "Yahoo!") {
+              return Services.prefs.getCharPref(
+                "browser.search.typetag",
+                getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION) + "_y"
+              );
+            } else if (defaultSearch.name == "Startpage") {
+              if (Services.prefs.getCharPref("distribution.engine", "")) {
+                return "spA";
+              }
+              return "spB";
+            }
             return getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION);
         }
         return match;
