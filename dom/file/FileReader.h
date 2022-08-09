@@ -156,6 +156,7 @@ class FileReader final : public DOMEventTargetHelper,
   nsresult IncreaseBusyCounter();
   void DecreaseBusyCounter();
 
+  void Cleanup();
   void Shutdown();
 
   char* mFileData;

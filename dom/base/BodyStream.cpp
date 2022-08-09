@@ -115,8 +115,8 @@ void BodyStream::Create(JSContext* aCx, BodyStreamHolder* aStreamHolder,
     WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(aCx);
     MOZ_ASSERT(workerPrivate);
 
-    RefPtr<WeakWorkerRef> workerRef =
-        WeakWorkerRef::Create(workerPrivate, [stream]() { stream->Close(); });
+    RefPtr<StrongWorkerRef> workerRef =
+        StrongWorkerRef::Create(workerPrivate, "BodyStream", [stream]() { stream->Close(); });
 
     if (NS_WARN_IF(!workerRef)) {
       aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
@@ -215,6 +215,7 @@ void BodyStream::requestData(JSContext* aCx, JS::HandleObject aStream,
     ErrorPropagation(aCx, lock, aStream, rv);
     return;
   }
+  mAsyncWaitWorkerRef = mWorkerRef;
 
   // All good.
 }
@@ -254,6 +255,7 @@ void BodyStream::writeIntoReadRequestBuffer(JSContext* aCx,
     ErrorPropagation(aCx, lock, aStream, rv);
     return;
   }
+  mAsyncWaitWorkerRef = mWorkerRef;
 
   // All good.
 }
@@ -362,6 +364,7 @@ NS_IMETHODIMP
 BodyStream::OnInputStreamReady(nsIAsyncInputStream* aStream) {
   AssertIsOnOwningThread();
   MOZ_DIAGNOSTIC_ASSERT(aStream);
+  mAsyncWaitWorkerRef = nullptr;
 
   // Acquire |mMutex| in order to safely inspect |mState| and use |mGlobal|.
   Maybe<MutexAutoLock> lock;
@@ -511,7 +514,7 @@ void BodyStream::ReleaseObjects(const MutexAutoLock& aProofOfLock) {
     // Let's dispatch a WorkerControlRunnable if the owning thread is a worker.
     if (mWorkerRef) {
       RefPtr<WorkerShutdown> r =
-          new WorkerShutdown(mWorkerRef->GetUnsafePrivate(), this);
+          new WorkerShutdown(mWorkerRef->Private(), this);
       Unused << NS_WARN_IF(!r->Dispatch());
       return;
     }

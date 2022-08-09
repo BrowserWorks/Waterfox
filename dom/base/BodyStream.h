@@ -27,7 +27,7 @@ class ErrorResult;
 namespace dom {
 
 class BodyStream;
-class WeakWorkerRef;
+class StrongWorkerRef;
 
 class BodyStreamHolder : public nsISupports {
   friend class BodyStream;
@@ -168,7 +168,8 @@ class BodyStream final : public nsIInputStreamCallback,
   nsCOMPtr<nsIInputStream> mOriginalInputStream;
   nsCOMPtr<nsIAsyncInputStream> mInputStream;
 
-  RefPtr<WeakWorkerRef> mWorkerRef;
+  RefPtr<StrongWorkerRef> mWorkerRef;
+  RefPtr<StrongWorkerRef> mAsyncWaitWorkerRef;
 };
 
 }  // namespace dom
