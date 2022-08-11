@@ -1,6 +1,15 @@
 name: Deployment
 on:
   workflow_dispatch:
+    inputs:
+      prerelease:
+        description: 'This is a pre-release'
+        required: true
+        type: string
+      tags:
+        description: 'Create a tag'
+        required: true
+        type: string
 
 jobs:
   build:
@@ -24,6 +33,8 @@ jobs:
       ONE_PEM: '${{ secrets.ONE_PEM }}'
       SIGN_BASE64: '${{ secrets.SIGN_BASE64 }}'
     with:
+      PRE_RELEASE: '${{ github.event.inputs.prerelease }}'
+      TAG_VERSION: '${{ github.event.inputs.tags }}'
       TRIGGER_EVENT: '${{ github.event_name }}'
   stage:
     name: Deploy to Staging
