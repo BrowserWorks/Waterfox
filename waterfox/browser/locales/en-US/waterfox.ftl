@@ -116,3 +116,7 @@ enable-javascript =
     .label = Enable JavaScript
 webrtc-header = WebRTC peer connection
 ref-header = HTTP Referrer Header
+
+## about:telemetry
+telemetry-page-subtitle = Waterfox does not collect telemetry about your installation - any telemetry modules are disabled when the browser is built. What you do in your browser is only known by you.
+telemetry-privacy-policy = Privacy Policy
