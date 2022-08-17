@@ -29,6 +29,7 @@ body:
       description: What version of our software are you running? Please DO NOT report Classic bugs.
       options:
         - G4
+        - G5 Beta
         - Other
     validations:
       required: true
