@@ -31,6 +31,11 @@
 /* Define to 1 if you have the `arc4random' function. */
 #define EVENT__HAVE_ARC4RANDOM 1
 
+/* Define to 1 if you have the `arc4random_addrandom' function. */
+#if defined(__DragonFly__) || defined(__NetBSD__)
+#define EVENT__HAVE_ARC4RANDOM_ADDRANDOM 1
+#endif
+
 /* Define to 1 if you have the `arc4random_buf' function. */
 #define EVENT__HAVE_ARC4RANDOM_BUF 1
 
