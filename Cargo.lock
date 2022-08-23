@@ -486,7 +486,7 @@ version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cc38c385bfd7e444464011bb24820f40dd1c76bcdfa1b78611cb7c2e5cafab75"
 dependencies = [
- "rustc_version",
+ "rustc_version 0.2.3",
 ]
 
 [[package]]
@@ -1033,7 +1033,7 @@ dependencies = [
  "pulse",
  "pulse-ffi",
  "ringbuf",
- "semver",
+ "semver 0.9.0",
 ]
 
 [[package]]
@@ -1969,7 +1969,7 @@ dependencies = [
  "rsdparsa_capi",
  "rusqlite",
  "rust_minidump_writer_linux",
- "rustc_version",
+ "rustc_version 0.2.3",
  "static_prefs",
  "storage",
  "unic-langid",
@@ -1987,7 +1987,7 @@ name = "gkrust_utils"
 version = "0.1.0"
 dependencies = [
  "nsstring",
- "semver",
+ "semver 0.9.0",
  "uuid",
 ]
 
@@ -3147,7 +3147,7 @@ version = "0.4.1"
 dependencies = [
  "regex",
  "rust-ini",
- "semver",
+ "semver 0.9.0",
 ]
 
 [[package]]
@@ -3541,10 +3541,11 @@ dependencies = [
 
 [[package]]
 name = "packed_simd_2"
-version = "0.3.7"
-source = "git+https://github.com/hsivonen/packed_simd?rev=c149d0a519bf878567c7630096737669ec2ff15f#c149d0a519bf878567c7630096737669ec2ff15f"
+version = "0.3.8"
+source = "git+https://github.com/hsivonen/packed_simd?rev=90eebb82a107cbec1c8e406d9223819417e96de1#90eebb82a107cbec1c8e406d9223819417e96de1"
 dependencies = [
  "cfg-if 1.0.0",
+ "rustc_version 0.4.0",
 ]
 
 [[package]]
@@ -3886,7 +3887,7 @@ name = "qcms"
 version = "0.2.0"
 dependencies = [
  "libc",
- "rustc_version",
+ "rustc_version 0.2.3",
 ]
 
 [[package]]
@@ -3980,7 +3981,7 @@ checksum = "beb71f708fe39b2c5e98076204c3cc094ee5a4c12c4cdb119a2b72dc34164f41"
 dependencies = [
  "bitflags",
  "cc",
- "rustc_version",
+ "rustc_version 0.2.3",
 ]
 
 [[package]]
@@ -4276,7 +4277,16 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "138e3e0acb6c9fb258b19b67cb8abd63c00679d2851805ea151465464fe9030a"
 dependencies = [
- "semver",
+ "semver 0.9.0",
+]
+
+[[package]]
+name = "rustc_version"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
+dependencies = [
+ "semver 1.0.13",
 ]
 
 [[package]]
@@ -4359,6 +4369,12 @@ checksum = "1d7eb9ef2c18661902cc47e535f9bc51b78acd254da71d375c2f6720d9a40403"
 dependencies = [
  "semver-parser",
 ]
+
+[[package]]
+name = "semver"
+version = "1.0.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93f6841e709003d68bb2deee8c343572bf446003ec20a583e76f7b15cebf3711"
 
 [[package]]
 name = "semver-parser"
