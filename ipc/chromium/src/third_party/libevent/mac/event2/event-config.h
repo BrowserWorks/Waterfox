@@ -29,6 +29,9 @@
 /* Define to 1 if you have the `arc4random' function. */
 #define EVENT__HAVE_ARC4RANDOM 1
 
+/* Define to 1 if you have the `arc4random_addrandom' function. */
+#define EVENT__HAVE_ARC4RANDOM_ADDRANDOM 1
+
 /* Define to 1 if you have the `arc4random_buf' function. */
 #define EVENT__HAVE_ARC4RANDOM_BUF 1
 
