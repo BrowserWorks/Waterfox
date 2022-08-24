@@ -1,5 +1,5 @@
 # In browser/locales/jar.mn
-# Localised versions MUST be located in browser/locales/l10n/{locale}/browser/browser/extensibles.ftl
+# Localised versions MUST be located in browser/locales/l10n/{locale}/browser/browser/waterfox.ftl
 
 ## Restart Prompt
 restart-prompt-title = Restart { -brand-short-name }
