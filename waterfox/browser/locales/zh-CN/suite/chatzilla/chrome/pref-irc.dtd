@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref-irc.window.title "ChatZilla">
+
+<!ENTITY pref-irc.open.title     "ChatZilla 首选项">
+<!ENTITY pref-irc.open.desc      "ChatZilla 的的首选项比较繁杂，无法在此窗口完整显示。您可以从此处打开它自己的首选项窗口。">
+<!ENTITY pref-irc.open.label     "打开 ChatZilla 首选项">
+<!ENTITY pref-irc.open.accesskey "O">
+<!ENTITY startup.chat.label "ChatZilla">
+<!ENTITY startup.chat.accesskey "Z">
