@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP-Verbindungen">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Optionen für direkte Verbindungen">
+<!ENTITY prefProxy.label                     "Optionen für Proxy-Verbindungen">
+<!ENTITY prefEnableHTTP10.label              "HTTP 1.0 verwenden">
+<!ENTITY prefEnableHTTP10.accesskey          "v">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "w">
+<!ENTITY prefEnableHTTP11.label              "HTTP 1.1 verwenden">
+<!ENTITY prefEnableHTTP11.accesskey          "e">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "HTTP-Verbindungen können mit diesen Optionen feineingestelt werden, um Geschwindigkeit oder Kompatibilität zu verbessern. Manche Proxy-Server zum Beispiel benötigen bekannterweise HTTP/1.0 (siehe Release Notes für Details).">
+<!ENTITY prefUseragent.label                 "User-Agent-String">
+<!ENTITY prefWaterfoxStrict.label             "Als Waterfox ausweisen">
+<!ENTITY prefWaterfoxStrict.accesskey         "F">
+<!ENTITY prefWaterfoxNone.label               "Als SeaMonkey ohne Waterfox Kompatibilität ausweisen">
+<!ENTITY prefWaterfoxNone.accesskey           "i">
+<!ENTITY prefWaterfoxCompat2.label            "Als SeaMonkey kompatibel mit Waterfox ausweisen (Standard)">
+<!ENTITY prefWaterfoxCompat2.accesskey        "S">
+<!ENTITY prefCompatWarning2.desc             "WARNUNG: Das Ändern dieser Einstellungen kann dazu führen das Websites oder Funktionen nicht mehr richtig funktionieren.">

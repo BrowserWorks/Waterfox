@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from AccountManager.xhtml -->
+
+<!ENTITY accountManagerTitle.label "Paskyrų nuostatos">
+<!ENTITY  accountManagerCloseButton.label "Užverti">
+
+<!ENTITY accountActionsButton.label "Veiksmai">
+<!ENTITY accountActionsButton.accesskey "V">
+<!ENTITY addMailAccountButton.label "Nauja pašto paskyra…">
+<!ENTITY addMailAccountButton.accesskey "N">
+<!ENTITY addIMAccountButton.label "Nauja pokalbių paskyra…">
+<!ENTITY addIMAccountButton.accesskey "p">
+<!ENTITY addFeedAccountButton.label "Nauja sklaidos kanalų paskyra…">
+<!ENTITY addFeedAccountButton.accesskey "s">
+<!ENTITY setDefaultButton.label "Laikyti pirmąja">
+<!ENTITY setDefaultButton.accesskey "L">
+<!ENTITY removeButton.label "Pašalinti paskyrą">
+<!ENTITY removeButton.accesskey "š">
+
+<!ENTITY addonsButton.label "Priedai ir grafiniai apvalkalai">
+
+<!-- AccountManager.xhtml -->
