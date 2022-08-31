@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "E-mail &amp; nieuwsgroepen">
+<!ENTITY generalSettings.caption          "Algemene instellingen">
+<!ENTITY confirmMove.label                "Bevestiging vragen bij het verplaatsen van mappen naar de prullenbak">
+<!ENTITY confirmMove.accesskey            "B">
+<!ENTITY preserveThreading.label          "Berichtconversaties bij elkaar houden bij het sorteren van berichten">
+<!ENTITY preserveThreading.accesskey      "v">
+<!ENTITY mailAutoHide.label               "De e-mailtabbladenwerkbalk verbergen wanneer slechts één tabblad is geopend">
+<!ENTITY mailAutoHide.accesskey           "D">
+<!ENTITY loadInBackground.label           "Naar nieuwe tabbladen schakelen wanneer deze worden geopend">
+<!ENTITY loadInBackground.accesskey       "N">
+<!ENTITY mailOpenTabsFor.label            "Tabbladen in plaats van vensters openen voor">
+<!ENTITY mailMiddleClick.label            "Middelklik of Ctrl+Enter op een bericht of een map">
+<!ENTITY mailMiddleClick.accesskey        "M">
+<!ENTITY mailMiddleClickMac.label         "Klik met uw middelste muisknop of gebruik &#8984;+Return op een bericht of een map">
+<!ENTITY mailMiddleClickMac.accesskey     "M">
+<!ENTITY mailDoubleClick.label            "Dubbelklik op een bericht">
+<!ENTITY mailDoubleClick.accesskey        "k">
+<!ENTITY mailBiffOnNewWindow.label        "Alleen op nieuwe berichten controleren na het openen van E-mail &amp; nieuwsgroepen">
+<!ENTITY mailBiffOnNewWindow.accesskey    "c">
+
+<!ENTITY messengerStartPage.caption       "E-mail-startpagina">
+<!ENTITY enableStartPage.label            "Wanneer Mail start, de startpagina in het berichtgedeelte tonen">
+<!ENTITY enableStartPage.accesskey        "W">
+<!ENTITY location.label                   "Locatie:">
+<!ENTITY location.accesskey               "L">
+<!ENTITY useDefault.label                 "Standaardinstelling herstellen">
+<!ENTITY useDefault.accesskey             "S">
+<!ENTITY rememberLastMsg.label            "Het laatst geselecteerde bericht onthouden">
+<!ENTITY rememberLastMsg.accesskey        "t">
