@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Мастер учётных записей">
+<!ENTITY accountWizard.size "width: 50em; height: 40em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Персональные данные">
+<!ENTITY identityDesc.label "Для каждой учётной записи имеются персональные данные, которые смогут увидеть читающие ваши письма адресаты.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Введите имя, которое будет появляться в поле «От» при отправке сообщений">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(например, «Иван Иванов»).">
+<!ENTITY fullnameLabel.label "Выводимое имя:">
+<!ENTITY fullnameLabel.accesskey "ы">
+
+<!ENTITY emailLabel.label "Адрес электронной почты:">
+<!ENTITY emailLabel.accesskey "д">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Информация о сервере входящей почты">
+<!ENTITY incomingUsername.label "Имя пользователя:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Введите имя используемого вами сервера новостей (NNTP) (например, «news.test.ru»).">
+<!ENTITY newsServerLabel.label "Сервер групп новостей:">
+<!ENTITY newsServerLabel.accesskey "е">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Имя учётной записи">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Введите имя этой учётной записи (например, «Рабочая», «Личная» или «Группы новостей»).">
+<!ENTITY accnameLabel.label "Имя учётной записи:">
+<!ENTITY accnameLabel.accesskey "у">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Поздравляем!">
+<!ENTITY completionText.label "Пожалуйста, проверьте, что приведённая ниже информация верна.">
+<!ENTITY newsServerNamePrefix.label "Имя сервера новостей (NNTP):">
+<!ENTITY clickFinish.label "Нажмите «Готово», чтобы сохранить текущие параметры и завершить работу «Мастера учётных записей».">
+<!ENTITY clickFinish.labelMac "Нажмите «Готово», чтобы сохранить текущие параметры и завершить работу «Мастера учётных записей».">
