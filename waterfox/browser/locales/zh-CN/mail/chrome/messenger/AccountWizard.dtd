@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "账户向导">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "身份">
+<!ENTITY identityDesc.label "每个账户可以有一个身份，当其他人接收到您的消息时此身份可以让他们知道这是您发的消息。">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "请输入您希望在发送的消息中出现在 &quot;发件人&quot; 字段中的姓名。">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "（例如，&quot;张兵&quot;）">
+<!ENTITY fullnameLabel.label "您的姓名:">
+<!ENTITY fullnameLabel.accesskey "Y">
+
+<!ENTITY emailLabel.label "电子邮件：">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "接收服务器信息">
+<!ENTITY incomingUsername.label "用户名：">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "输入新闻 (NNTP) 服务器名。（例如，&quot;news.netscape.net&quot;。）">
+<!ENTITY newsServerLabel.label "新闻组服务器:">
+<!ENTITY newsServerLabel.accesskey "S">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "账户名称">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "输入您想要此账户使用的名称。（例如，&quot;工作账户&quot;、&quot;家庭账户&quot; 或 &quot;新闻账户&quot;）">
+<!ENTITY accnameLabel.label "账户名称:">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "恭喜您！">
+<!ENTITY completionText.label "您已输入设置此账户所有必需的信息。">
+<!ENTITY newsServerNamePrefix.label "新闻服务器名(NNTP)：">
+<!ENTITY clickFinish.label "单击“完成”保存设置并退出账户向导。">
+<!ENTITY clickFinish.labelMac "点击 完成 已保存这些设置并退出账户向导。">

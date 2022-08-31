@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Einstellungen f&#252;r Validierung</title>
+    <link rel="stylesheet" href="helpFileLayout.css" type="text/css" />
+</head>
+<body>
+<h1 id="validation_settings">Validierungs-Einstellungen</h1>
+
+<p>Dieser Abschnitt beschreibt, wie Validierungs-Einstellungen gesetzt werden
+und wie Sie Einstellungen zu Zertifikat-R&#252;ckruf-Listen (Certificate
+Revocation List, CRL) vornehmen.</p>
+
+<p>F&#252;r Schritt-f&#252;r-Schritt-Beschreibungen von verschiedenen auf
+Validierung und CRLs bezogenen Aufgaben siehe
+<a href="using_certs_help.xhtml#controlling_validation">Wie Zertifikat-Validierung funktioniert</a>.</p>
+
+<div class="contentsBox">In diesem Abschnitt:
+    <ul>
+        <li><a href="#privacy_and_security_preferences_validation">Privatsph&#228;re- &amp; Sicherheits-Einstellungen - 
+        Validierung</a></li>
+        <li><a href="#manage_crls">CRL-Verwaltung</a></li>
+        <li><a href="#crl_import_status">CRL-Import-Status</a></li>
+        <li><a href="#automatic_crl_update_preferences">Einstellungen f&#252;r automatisierte CRL-Aktualisierungen</a></li>
+    </ul>
+</div>
+
+<h2 id="privacy_and_security_preferences_validation">Privatsph&#228;re- &amp;
+Sicherheits-Einstellungen - Validierung</h2>
+
+<p>Dieser Abschnitt beschreibt, wie Sie das Panel f&#252;r Validierungs-Einstellungen
+   benutzen. Wenn Sie dieses Panel noch nicht aufgerufen haben, folgen Sie diesen Schritten:</p>
+
+<ol>
+    <li>&#214;ffnen Sie das <span class="noMac">Bearbeiten</span>
+        <span class="mac">&brandShortName;</span>-Men&#252; und w&#228;hlen Sie Einstellungen.</li>
+    <li>Unter der Privatsph&#228;re &amp; Sicherheits-Kategorie klicken Sie auf Validierung.
+        (Wenn keine Unterkategorien sichtbar sind, klicken Sie doppelt auf Privatsph&#228;re
+	    &amp; Sicherheit, um die Liste zu erweitern)</li>
+</ol>
+
+<p>F&#252;r Hintergrund-Informationen zur Zertifikat-Validierung siehe
+<a href="using_certs_help.xhtml#controlling_validation">Wie Zertifikat-Validierung funktioniert</a>.</p>
+
+
+<h3 id="crl">CRL</h3>
+
+<p>Eine Zertifikat-R&#252;ckruf-Liste (CRL) ist eine Liste widerrufener Zertifikate,
+   die von einer <a href="glossary.xhtml#certificate_authority">Zertifizierungsstelle (CA)</a>
+   generiert und signiert wurde. Es ist m&#246;glich, eine CRL in Ihren Browser zu laden, der
+   dann &#252;berpr&#252;fen kann, ob Zertifikate noch g&#252;ltig sind, bevor sie 
+   f&#252;r eine Authentifizierung genutzt werden.</p>
+
+<p>Klicken Sie auf CRL-Verwaltung, um eine Liste aller CRLs zu sehen, die f&#252;r den
+   Zertifikat-Manager verf&#252;gbar sind.</p>
+
+<p>F&#252;r weitere Informationen &#252;ber die Verwaltung von CRLs siehe
+  <a href="using_certs_help.xhtml#managing_crls">CRL-Verwaltung</a>.</p>
+
+<h3 id="ocsp">OCSP</h3>
+
+<p>Das Online Certificate Status Protocol (OCSP) erm&#246;glicht es dem Zertifikat-Manager,
+   eine Online-&#220;berpr&#252;fung der G&#252;ltigkeit eines Zertifikates vorzunehmen, wann
+   immer das Zertifikat betrachtet oder benutzt wird. Dieser Proze&#223; umfasst eine
+   &#220;berpr&#252;fung des Zertifikates gegen eine CRL, die auf einem speziellen Server
+   unterhalten wird. Damit das funktioniert, muss Ihr Computer online sein.</p>
+
+<p>Um zu definieren, wie der Zertifikat-Manager OCSP benutzt, w&#228;hlen Sie eine
+   der Einstellungen im OCSP-Abschnitt der Validierungs-Einstellungen:</p>
+
+<ul>
+  <li><strong>Das Online-Zertifikatsstatus-Protokoll (OCSP) verwenden, um die aktuelle 
+    G&#252;ltigkeit von Zertifikaten zu best&#228;tigen</strong>: Wenn Sie diese Option 
+    w&#228;hlen, f&#252;hrt der Zertifikat-Manager eine Online-Pr&#252;fung durch,
+    wenn ein Zertifikat gepr&#252;ft wird. Ist diese Option deaktiviert, pr&#252;ft der
+    Zertifikat-Manager nur die G&#252;ltigkeits-Dauer sowie ob das Zertifikat von einem
+    Zertifizierungsstelle unterschrieben wurde dessen Zertifikate unter <q>Zertifizierungsstellen</q> 
+    im Zertifikat-Manager aufscheinen und als vertrauensw&#252;rdig f&#252;r diese Art von
+    Zertifikat markiert ist.</li>
+  <li><strong>Ein Zertifikat validieren, wenn es einen OCSP-Server angibt</strong>:
+    W&#228;hlen Sie diese Option, wenn eine Online-Pr&#252;fung durchgef&#252;hrt werden
+    soll, wenn das Zertifikat eine Service-URL zur Validierung angiebt.
+    Der Zertifikat-Manager stellt sicher, dass das Zertifikat von der Validierungs-Stelle
+    als g&#252;ltig anerkannt wird und pr&#252;ft die G&#252;ltigkeits-Periode sowie die 
+    Vertrauensstellung.</li>
+  <li><strong>Alle Zertifikate mittels des folgenden OCSP-Servers validieren</strong>: 
+    W&#228;hlen Sie diese Option, wenn Sie einen bestimmten OCSP-Server angeben wollen, mit 
+    welchem die Validierung aller Zertifikate durchgef&#252;hrt werden soll. Wenn Sie diese
+    Option aktivieren, sollten Sie auch das Zertifikat des Antwort-Unterzeichners ausw&#228;hlen,
+    welches zu dem konfigurierten OCSP-Server passt. Mit dieser Einstellung werden nur 
+    Zertifikate anerkannt, welche mit dem Zertifikat von diesem Antwort-Unterzeichner 
+    (oder mit einem Zertifikat welches mit dem Antwort-Unterzeichner in einer
+    Vertrauensstellung steht) signiert wurden.
+
+    <p>Wenn Sie ein Antwort-Unterzeichner-Zertifikat aus dem Popup-Men&#252; w&#228;hlen, setzt der
+      Zertifikat-Manager automatisch die Service-URL f&#252;r den Unterzeichner ein (falls vorhanden).
+      Wenn die Service-URL nicht automatisch eingesetzt wird, m&#252;ssen Sie sie selbst eintragen;
+      fragen Sie Ihren System-Verwalter nach Einzelheiten.</p></li>
+  <li><strong>Wenn eine OCSP-Server-Verbindung fehlschl&#228;gt, das Zertifikat als ung&#252;ltig 
+    betrachten</strong>: Aktivieren Sie diese Option, wenn die Validierung fehlschlagen soll, sobald 
+    keine Verbindung zum OCSP-Server aufgebaut werden kann.</li>
+</ul>
+
+<h2 id="manage_crls">CRL-Verwaltung</h2>
+
+<p>Dieser Abschnitt beschreibt, wie die Dialogbox zur CRL-Verwaltung benutzt wird. Um sie
+   anzuzeigen, folgen Sie diesen Schritten:</p>
+&#252;
+<ol>
+    <li>&#214;ffnen Sie das <span class="noMac">Bearbeiten</span>
+        <span class="mac">&brandShortName;</span>-Men&#252; und w&#228;hlen Sie Einstellungen.</li>
+    <li>Unter der Kategorie Privatsph&#228;re &amp; Sicherheit w&#228;hlen Sie Validierung.
+        (Wenn keine Unterkategorien sichtbar sind, klicken Sie doppelt auf Privatsph&#228;re
+	    &amp; Sicherheit, um die Liste zu erweitern.)</li>
+    <li>W&#228;hlen Sie CRL-Verwaltung.</li>
+</ol>
+
+<p>Diese Dialogbox zeigt eine Liste der <a href="glossary.xhtml#crl">CRLs</a>
+   an, die Sie zur Benutzung durch Ihren Browser abgerufen haben. Normalerweise rufen Sie eine CRL ab,
+   indem Sie auf eine URL klicken. F&#252;r Informationen &#252;ber die Funktionsweise von CRLs siehe
+   <a href="using_certs_help.xhtml#managing_crls">CRL-Verwaltung</a>.</p>
+
+<p>Zur Auswahl einer CRL klicken Sie darauf. Sie k&#246;nnen dann folgende Aktionen durchf&#252;hren:</p>
+
+<ul>
+    <li><strong>L&#246;schen</strong>: L&#246;scht die CRL dauerhaft von Ihrer Festplatte.
+        Tun Sie dies nur, wenn Sie sicher sind, das Sie diese CRL nicht l&#228;nger f&#252;r
+	    die Validierung von Zertifikaten brauchen. Im Zweifel fragen Sie Ihren Systemverwalter.</li>
+    <li><strong>Einstellungen</strong>: &#214;ffnet die Dialogbox
+        <a href="#automatic_crl_update_preferences">Automatische CRL-Aktualisierungs-Einstellungen</a>
+	    die es Ihnen erm&#246;glicht, automatische CRL-Aktualisierungen f&#252;r die ausgew&#228;hlte
+	    CRL zu aktivieren und anzugeben, wie oft diese durchgef&#252;hrt werden sollen.</li>
+    <li><strong>Update</strong>: Aktualisiert die ausgew&#228;hlte CRL sofort (wenn m&#246;glich).</li>
+</ul>
+
+<p>Die Dialog-Box <q>CRLs verwalten</q> zeigt folgende Informationen &#252;ber jede CRL an:</p>
+
+<ul>
+    <li><strong>Organisation (O)</strong>: Der Name der Organisation, die diese CRL ver&#246;ffentlicht hat.</li>
+    <li><strong>Organisatorische Einheit (OU)</strong>: Der Name der Organisationseinheit, die diese CRL
+        ver&#246;ffentlicht hat (wie z. B. die Root-CA f&#252;r eine spezielle Zertifikatsart).</li>
+    <li><strong>Letztes Update</strong>: Das Datum, zu dem diese Kopie der CRL zuletzt aktualisiert wurde.</li>
+    <li><strong>N&#228;chstes Update</strong>: Der n&#228;chste Zeitpunkt, zu dem eine aktualisierte Version
+        dieser CRL von der ausgebenden Stelle ver&#246;ffentlicht wird.</li>
+    <li><strong>Auto Update</strong>: Zeigt an, ob eine automatische Aktualisierung f&#252;r diese CRL
+        aktiviert wurde. Um die Einstellungen anzuzeigen, die die automatische Aktualisierung kontrollieren,
+	    w&#228;hlen Sie die CRL aus und klicken Sie auf Einstellungen.</li>
+    <li><strong>Auto Update Status</strong>:
+    <ul>
+        <li>Wenn die automatische Aktualisierung nicht aktiviert wurde, oder aktiviert ist, aber der
+	        n&#228;chste Termin noch nicht erreicht wurde, ist dieses Feld leer.</li>
+        <li>Wenn mindestens eine automatische Aktualsierung erfolgt ist, zeigt diese Feld <q>failed</q>
+	        an, wenn die letzte Aktualisierung fehlerhaft war, oder <q>OK</q> wenn die letzte
+		    Aktualisierung erfolgreich war.</li>
+    </ul>
+    </li>
+</ul>
+
+<h2 id="crl_import_status">CRL Import-Status</h2>
+
+<p>Dieser Abschnitt beschreibt, wie Sie die CRL-Import-Status-Dialogbox benutzen, die erscheint,
+   wenn Sie zum ersten Mal eine CRL importieren oder wenn Sie sie erfolgreich manuell aktualisieren.</p>
+
+<p>Diese Dialogbox informiert Sie dar&#252;ber</p>
+
+<ul>
+    <li>ob Ihr Versuch zum Import oder zur Aktualisierung der CRL erfolgreich war</li>
+    <li>welche Organisation die CRL ver&#246;ffentlicht hat</li>
+    <li>wann die n&#228;chste Aktualisierung dieser CRL ver&#246;ffentlicht wird</li>
+    <li>ob die automatische Aktualisierung f&#252;r diese CRL aktiviert ist</li>
+</ul>
+
+<p>Wenn die automatische Aktualisierung nicht aktiviert ist, k&#246;nnen Sie das hier aktivieren:</p>
+
+<ul>
+    <li><strong>Ja</strong>: Klicken Sie auf Ja, um die automatische Aktualisierung f&#252;r diese
+        CRL zu aktivieren. Wenn Sie das tun, erscheint als n&#228;chstes die Einstellungen-Dialogbox
+	    f&#252;r automatische CRL-Aktualisierungen. Der n&#228;chste Abschnitt beschreibt, wie diese 
+        Einstellungen gesetzt werden.</li>
+    <li><strong>Nein</strong>: W&#228;hlen Sie Nein, wenn Sie die automatische Aktualisierung
+        deaktiviert lassen wollen.</li>
+</ul>
+
+<h2 id="automatic_crl_update_preferences">Einstellungen f&#252;r automatische CRL-Aktualisierungen</h2>
+
+<p>Dieser Abschnitt beschreibt, wie Sie die Einstellungen-Dialogbox f&#252;r automatische
+   CRL-Aktualisierungen benutzen. Wenn Sie diese noch nicht ge&#246;ffnet haben, folgen Sie diesen Schritten:</p>
+
+<ol>
+    <li>&#214;ffnen Sie das <span class="noMac">Bearbeiten</span>
+        <span class="mac">&brandShortName;</span>-Men&#252; und w&#228;hlen Sie Einstellungen.</li>
+    <li>Unter der Privatsph&#228;re &amp; Sicherheits-Kategorie klicken Sie auf Validierung.
+        (Wenn keine Unterkategorien sichtbar sind, klicken Sie doppelt auf Privatsph&#228;re
+	    &amp; Sicherheit, um die Liste zu erweitern.)</li>
+    <li>Klicken Sie auf &quot;CRLs verwalten&quot;, dann selektieren Sie die CRL, deren
+        Aktualisierungs-Einstellungen Sie &#228;ndern oder anzeigen m&#246;chten.</li>
+    <li>Klicken Sie auf Einstellungen.</li>
+</ol>
+
+<p>Diese Dialogbox zeigt die folgenden Optionen und Informationen an:</p>
+
+<ul>
+    <li><strong>Automatische Aktualisierung f&#252;r diese CRL aktivieren</strong>: W&#228;hlen
+        Sie diese Option, wenn die gew&#228;hlte CRL automatisch entsprechend Ihrer Einstellungen
+	    aktualisiert werden soll. (Beachten Sie, dass Sie diese Option nicht w&#228;hlen k&#246;nne,
+	    wenn die CRL keinen Zeitpunkt f&#252;r die n&#228;chste Aktualsierung spezifiziert.)
+
+        <p>Wenn Sie die automatische Aktualisierung aktivieren, m&#252;ssen Sie einen der Radio-Kn&#246;pfe
+	       w&#228;hlen:</p>
+
+    <ul>
+        <li><strong>Aktualisiere X Tage vor dem n&#228;chsten Aktualisierungs-Zeitpunkt</strong>:
+	        W&#228;hlen Sie diese Option, wenn Sie die Aktualisierungsh&#228;ufigkeit auf den
+		    Zeitraum abstellen wollen, in dem eine neue Version der CRL vom
+		    CRL-Ver&#246;ffentlicher bereitgestellt wird.</li>
+
+        <li><strong>Aktualisiere alle X Tage</strong>: W&#228;hlen Sie diese Option, wenn Sie
+	        ein Aktualisierungs-Intervall angeben wollen, das nicht vom n&#228;chsten
+		    CRL-Aktualisierungsdatum abh&#228;ngig ist.</li>
+    </ul>
+    </li>
+
+    <li><strong>CRL wurde importiert von</strong>: Zeigt die URL an, von der der Browser die CRL
+        urspr&#252;nglich importiert hat. Diese Einstellung kann nicht ge&#228;ndert werden. Um
+	    eine neue Quelle anzugeben, l&#246;schen Sie diese CRL und reimportieren Sie von der neuen 
+        Quell-URL.</li>
+
+    <li><strong>Bisherige aufeinanderfolgende Aktualisierungs-Fehler</strong>: Zeigt an, wie oft
+        Aktualisierungsversuche f&#252;r diese CRL nacheinander fehlgeschlagen sind,
+	    einschlie&#223;lich des letzten Fehlversuchs:
+        <ul>
+            <li>Wenn der letzte Versuch erfolgreich war, steht hier <q>kein</q> auch wenn es vorherige
+	            fehlerhafte Versuche gegeben hat.</li>
+	  
+	        <li>Wenn der letzte Versuch fehlschlug, zeigt dies die Anzahl aufeinander folgender
+	            Fehlversuche an und die Fehlermeldung f&#252;r den letzten Fehlschlag.</li>
+        </ul>
+    </li>
+</ul>
+
+<p>Klicken Sie auf OK, um Ihre Auswahl zu best&#228;tigen.</p>
+
+</body>
+</html>

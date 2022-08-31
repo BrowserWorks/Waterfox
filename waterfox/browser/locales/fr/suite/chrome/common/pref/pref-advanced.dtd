@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Avancé">
+
+<!ENTITY prefCheckDefault.caption         "Intégration système">
+<!ENTITY prefCheckDefaultClient.label     "Vérifier les paramètres par défaut de l’application au démarrage">
+<!ENTITY prefCheckDefaultClient.accesskey "V">
+
+<!ENTITY defaultClientFor.description     "Utiliser &brandShortName; comme application par défaut pour :">
+<!ENTITY setDefaultBrowser.label          "la navigation">
+<!ENTITY setDefaultBrowser.accesskey      "N">
+<!ENTITY setDefaultMail.label             "le courrier">
+<!ENTITY setDefaultMail.accesskey         "C">
+<!ENTITY setDefaultNews.label             "les groupes">
+<!ENTITY setDefaultNews.accesskey         "r">
+<!ENTITY setDefaultFeed.label             "les flux">
+<!ENTITY setDefaultFeed.accesskey         "F">
+<!ENTITY useInternalSettings.description  "Utiliser le courrier et les groupes de &brandShortName; lorsque ces liens sont ouverts via le navigateur :">
+<!ENTITY useInternalMail.label            "Courrier (mailto:)">
+<!ENTITY useInternalMail.accesskey        "o">
+<!ENTITY useInternalNews.label            "Groupes (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "r">
+
+<!ENTITY printing.label                   "Impression">
+<!ENTITY useNativePrintDialog.label       "Utiliser la boite de dialogue d’impression native (si elle est prise en charge)">
+<!ENTITY useNativePrintDialog.accesskey   "U">
+<!ENTITY useGlobalPrintSettings.label     "Utiliser les paramètres d’impression globaux">
+<!ENTITY useGlobalPrintSettings.accesskey "g">
+
+<!ENTITY crashReports.caption             "Rapporteur de plantage">
+<!ENTITY submitCrashes.label              "Envoyer les rapports de plantage">
+<!ENTITY submitCrashes.accesskey          "E">
+
+<!ENTITY devTools.caption                 "Outils de développement">
+<!ENTITY allowDebugger.label              "Autoriser un débogueur à se connecter à &brandShortName;">
+<!ENTITY allowDebugger.accesskey          "A">
+<!ENTITY allowRemoteConnections.label     "Autoriser les connexions depuis d’autres ordinateurs">
+<!ENTITY allowRemoteConnections.accesskey "o">
+<!ENTITY connectionPrompt.label           "Demander mon autorisation lors des connexions distantes">
+<!ENTITY connectionPrompt.accesskey       "D">
+<!ENTITY remoteDebuggerPort.label         "Numéro de port pour les connexions :">
+<!ENTITY remoteDebuggerPort.accesskey     "n">

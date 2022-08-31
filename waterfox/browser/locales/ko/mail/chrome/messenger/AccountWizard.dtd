@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "계정 마법사">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "아이디">
+<!ENTITY identityDesc.label "메시지 전송 시 계정마다 다른 아이디로 보낼 수 있습니다.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "보내는 메일의 보낸 사람 항목에 표시할 이름을 입력하십시오.">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(예: 홍길동)">
+<!ENTITY fullnameLabel.label "이름:">
+<!ENTITY fullnameLabel.accesskey "Y">
+
+<!ENTITY emailLabel.label "메일 주소:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "받는 서버 정보">
+<!ENTITY incomingUsername.label "사용자명:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "뉴스(NNTP) 서버의 이름을 입력해 주십시오. (예:  news.example.kr)">
+<!ENTITY newsServerLabel.label "뉴스 서버:">
+<!ENTITY newsServerLabel.accesskey "S">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "계정 이름">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "참조할 계정 이름을 입력하십시오.">
+<!ENTITY accnameLabel.label "계정 이름:">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "축하합니다! 계정 설정이 완료되었습니다.">
+<!ENTITY completionText.label "아래의 정보가 맞는지 다시 확인하십시오.">
+<!ENTITY newsServerNamePrefix.label "뉴스 서버 이름 (NNTP):">
+<!ENTITY clickFinish.label "이 설정을 저장하려면 완료를 눌러 계정 마법사를 종료하십시오.">
+<!ENTITY clickFinish.labelMac "현재 설정을 저장하고 계정 마법사를 종료하려면 완료를 선택하십시오.">

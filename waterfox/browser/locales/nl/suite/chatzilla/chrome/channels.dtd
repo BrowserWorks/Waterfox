@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Deelnemen aan kanaal">
+
+<!ENTITY network.label     "Netwerk:">
+<!ENTITY network.accesskey "N">
+
+<!ENTITY channel.label     "Kanaal:">
+<!ENTITY channel.accesskey "K">
+
+<!ENTITY topics.label     "Onderwerpen en kanaalnamen zoeken">
+<!ENTITY topics.accesskey "w">
+
+<!ENTITY join.label     "Deelnemen">
+<!ENTITY join.accesskey "D">
+
+<!ENTITY minusers.label     "Min. gebruikers:">
+<!ENTITY minusers.accesskey "M">
+
+<!ENTITY maxusers.label     "Max. gebruikers:">
+<!ENTITY maxusers.accesskey "x">
+
+<!ENTITY refreshNow.label     "Nu verversen">
+<!ENTITY refreshNow.accesskey "f">
+
+<!ENTITY network.hint.label "Voer een netwerk- of servernaam (u kunt de poort toevoegen) en een kanaal in om deel te nemen.">
+
+<!ENTITY col.network "Netwerk">
+<!ENTITY col.name  "Naam">
+<!ENTITY col.users "Gebruikers">
+<!ENTITY col.topic "Onderwerp">

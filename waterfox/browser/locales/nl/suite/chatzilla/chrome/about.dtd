@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Over ChatZilla">
+
+<!ENTITY chatzilla.label       "ChatZilla">
+<!ENTITY version.unknown.label "Versie onbekend">
+<!ENTITY version.known.label   "Versie &#37;S">
+<!ENTITY description.label     "Een simpele, makkelijk te gebruiken en zeer uitbreidbare Internet Relay Chat (IRC)-client.">
+
+<!ENTITY homepage.label    "Startpagina bezoeken">
+<!ENTITY copyversion.label "Versiedetails kopiëren">
+
+<!ENTITY section.core.label    "Kernontwikkelingsteam:">
+<!ENTITY section.locale.label  "Lokalisatie:">
+<!ENTITY section.contrib.label "Medewerkers:">

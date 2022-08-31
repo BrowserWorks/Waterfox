@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from AccountManager.xhtml -->
+
+<!ENTITY accountManagerTitle.label	"アカウント設定">
+<!ENTITY accountManagerCloseButton.label	"閉じる">
+
+<!ENTITY accountActionsButton.label	"アカウント操作">
+<!ENTITY accountActionsButton.accesskey	"A">
+<!ENTITY addMailAccountButton.label	"メールアカウントを追加...">
+<!ENTITY addMailAccountButton.accesskey	"A">
+<!ENTITY addIMAccountButton.label	"チャットアカウントを追加...">
+<!ENTITY addIMAccountButton.accesskey	"C">
+<!ENTITY addFeedAccountButton.label	"フィードアカウントを追加...">
+<!ENTITY addFeedAccountButton.accesskey	"F">
+<!ENTITY setDefaultButton.label		"既定のアカウントに設定">
+<!ENTITY setDefaultButton.accesskey	"D">
+<!ENTITY removeButton.label		"アカウントを削除">
+<!ENTITY removeButton.accesskey		"R">
+
+<!ENTITY addonsButton.label		"拡張機能とテーマ">

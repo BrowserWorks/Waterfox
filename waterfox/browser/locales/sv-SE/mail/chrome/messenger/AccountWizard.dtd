@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Kontoguiden">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identitet">
+<!ENTITY identityDesc.label "Varje konto har en egen identitet som andra ser och identifierar dig med när du skickar meddelanden.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Skriv in det namn du vill ska visas som avsändare i meddelanden du skickar">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(t.ex. &quot;Sven Svensson&quot;).">
+<!ENTITY fullnameLabel.label "Ditt namn:">
+<!ENTITY fullnameLabel.accesskey "D">
+
+<!ENTITY emailLabel.label "E-postadress:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Serverinställningar">
+<!ENTITY incomingUsername.label "Användarnamn:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Ange namnet på servern för diskussionsgrupper (NNTP) (t.ex. &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "Server för diskussionsgrupper:">
+<!ENTITY newsServerLabel.accesskey "S">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Kontonamn">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Ange namnet som du vill hänvisa till detta konto (t.ex. &quot;Arbetskonto&quot;, &quot;Privat konto&quot; or &quot;Diskussiongrupperna&quot;).">
+<!ENTITY accnameLabel.label "Kontonamn:">
+<!ENTITY accnameLabel.accesskey "K">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Gratulerar!">
+<!ENTITY completionText.label "Kontrollera att uppgifterna nedan är korrekta.">
+<!ENTITY newsServerNamePrefix.label "Server för diskussionsgrupper (NNTP):">
+<!ENTITY clickFinish.label "Klicka på Slutför för att spara kontoinställningarna och avsluta kontoguiden.">
+<!ENTITY clickFinish.labelMac "Klicka på Klar för att spara kontoinställningarna och avsluta kontoguiden.">
