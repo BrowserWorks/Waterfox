@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "ChatZilla 偏好設定">
+
+<!ENTITY loading.label  "請稍候，載入中…">
+
+<!ENTITY homepage.url   "http://chatzilla.hacksrus.com/">
+<!ENTITY homepage.label "ChatZilla 首頁">
+
+<!ENTITY object.add.label       "新增…">
+<!ENTITY object.add.hint        "新增要調整設定的網路、頻道或使用者">
+<!ENTITY object.add.accesskey   "A">
+
+<!ENTITY object.del.label       "移除">
+<!ENTITY object.del.hint        "移除目前的物件，清除所有對它的偏好設定">
+<!ENTITY object.del.accesskey   "R">
+
+<!ENTITY object.reset.label     "重設">
+<!ENTITY object.reset.hint      "將此物件的偏好設定重設回預設值">
+<!ENTITY object.reset.accesskey "s">
+
+<!ENTITY dialog.apply   "套用">
+
+<!ENTITY network "網路">
+<!ENTITY channel "頻道">
+<!ENTITY user    "使用者">
+
+<!ENTITY config.add.title "新增偏好設定物件">
+
+<!ENTITY config.type.label        "類型:">
+<!ENTITY config.type.hint         "要新增偏好設定的物件類型">
+<!ENTITY config.type.accesskey    "T">
+<!ENTITY config.network.label     "網路:">
+<!ENTITY config.network.hint      "網路的已知名稱，或伺服器名稱">
+<!ENTITY config.network.accesskey "N">
+<!ENTITY config.target.label      "目標:">
+<!ENTITY config.target.hint       "目標頻道或使用者名稱">
+<!ENTITY config.target.accesskey  "g">
