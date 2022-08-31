@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "Iniciaste una versión antigua de &brandProductName;">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "Una versión más reciente de &brandProductName; puede haber hecho cambios en tu perfil que ya no son compatibles con esta versión anterior. Usar este perfil solamente con la versión más reciente, o crear un nuevo perfil para esta instalación de &brandShortName;. Crear un nuevo perfil requiere configurar de nuevo tus cuentas, calendarios y complementos.">
+
+<!ENTITY window.moreinfo "Más información…">
+<!ENTITY window.create "Crear nuevo perfil">
+<!ENTITY window.quit-win "Salir">
+<!ENTITY window.quit-nonwin "Salir">

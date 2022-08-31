@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from AccountManager.xhtml -->
+
+<!ENTITY accountManagerTitle.label "Ρυθμίσεις λογαριασμού">
+<!ENTITY  accountManagerCloseButton.label "Κλείσιμο">
+
+<!ENTITY accountActionsButton.label "Ενέργειες λογαριασμού">
+<!ENTITY accountActionsButton.accesskey "ν">
+<!ENTITY addMailAccountButton.label "Προσθήκη λογαριασμού email…">
+<!ENTITY addMailAccountButton.accesskey "α">
+<!ENTITY addIMAccountButton.label "Προσθήκη λογαριασμού συνομιλίας…">
+<!ENTITY addIMAccountButton.accesskey "σ">
+<!ENTITY addFeedAccountButton.label "Προσθήκη λογαριασμού ροής…">
+<!ENTITY addFeedAccountButton.accesskey "ρ">
+<!ENTITY setDefaultButton.label "Ορισμός ως προεπιλογή">
+<!ENTITY setDefaultButton.accesskey "π">
+<!ENTITY removeButton.label "Αφαίρεση λογαριασμού">
+<!ENTITY removeButton.accesskey "Α">
+
+<!ENTITY addonsButton.label "Επεκτάσεις &amp; θέματα">
+
+<!-- AccountManager.xhtml -->

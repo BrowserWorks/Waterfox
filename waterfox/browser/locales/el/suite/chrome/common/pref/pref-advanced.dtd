@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Για προχωρημένους">
+
+<!ENTITY prefCheckDefault.caption         "Ενσωμάτωση συστήματος">
+<!ENTITY prefCheckDefaultClient.label     "Έλεγχος ρυθμίσεων προεπιλεγμένης εφαρμογής κατά την εκκίνησης">
+<!ENTITY prefCheckDefaultClient.accesskey "Έ">
+
+<!ENTITY defaultClientFor.description     "Ορισμός του &brandShortName; ως προεπιλογής για:">
+<!ENTITY setDefaultBrowser.label          "Περιήγηση">
+<!ENTITY setDefaultBrowser.accesskey      "Π">
+<!ENTITY setDefaultMail.label             "Αλληλογραφία">
+<!ENTITY setDefaultMail.accesskey         "Α">
+<!ENTITY setDefaultNews.label             "Συζητήσεις">
+<!ENTITY setDefaultNews.accesskey         "Σ">
+<!ENTITY setDefaultFeed.label             "Ροές">
+<!ENTITY setDefaultFeed.accesskey         "Ρ">
+<!ENTITY useInternalSettings.description  "Χρήση του &brandShortName; για ταχυδρομείο &amp; ομάδες συζητήσεων κατά το άνοιγμα συνδέσμων για:">
+<!ENTITY useInternalMail.label            "Αλληλογραφία (mailto:)">
+<!ENTITY useInternalMail.accesskey        "γ">
+<!ENTITY useInternalNews.label            "Συζητήσεις (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "ζ">
+
+<!ENTITY printing.label                   "Εκτύπωση">
+<!ENTITY useNativePrintDialog.label       "Χρήση εγγενούς διαλόγου εκτύπωσης (όπου υποστηρίζεται)">
+<!ENTITY useNativePrintDialog.accesskey   "Χ">
+<!ENTITY useGlobalPrintSettings.label     "Χρήση γενικών ρυθμίσεων εκτύπωσης">
+<!ENTITY useGlobalPrintSettings.accesskey "γ">
+
+<!ENTITY crashReports.caption             "Αναφορά καταρρεύσεων">
+<!ENTITY submitCrashes.label              "Υποβολή αναφορών κατάρρευσης">
+<!ENTITY submitCrashes.accesskey          "Υ">
+
+<!ENTITY devTools.caption                 "Εργαλεία ανάπτυξης">
+<!ENTITY allowDebugger.label              "Να επιτρέπεται η σύνδεση με το &brandShortName; για έλεγχο σφαλμάτων">
+<!ENTITY allowDebugger.accesskey          "Ν">
+<!ENTITY allowRemoteConnections.label     "Αποδοχή συνδέσεων από άλλους υπολογιστές">
+<!ENTITY allowRemoteConnections.accesskey "ο">
+<!ENTITY connectionPrompt.label           "Ερώτηση για εισερχόμενες συνδέσεις">
+<!ENTITY connectionPrompt.accesskey       "ώ">
+<!ENTITY remoteDebuggerPort.label         "Αριθμός θύρας για σύνδεση:">
+<!ENTITY remoteDebuggerPort.accesskey     "θ">

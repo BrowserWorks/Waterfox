@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY month.1.name "Tháng một" >
+<!ENTITY month.2.name "Tháng hai" >
+<!ENTITY month.3.name "Tháng ba" >
+<!ENTITY month.4.name "Tháng tư" >
+<!ENTITY month.5.name "Tháng năm" >
+<!ENTITY month.6.name "Tháng sáu" >
+<!ENTITY month.7.name "Tháng bảy" >
+<!ENTITY month.8.name "Tháng tám" >
+<!ENTITY month.9.name "Tháng chín" >
+<!ENTITY month.10.name "Tháng mười" >
+<!ENTITY month.11.name "Tháng mười một" >
+<!ENTITY month.12.name "Tháng mười hai" >
+
+<!ENTITY onemonthbackward.tooltip "Lùi một tháng" >
+<!ENTITY onemonthforward.tooltip "Tiến một tháng" >
+<!ENTITY oneyearbackward.tooltip "Một năm trước" >
+<!ENTITY oneyearforward.tooltip "Một năm tiếp" >
+<!ENTITY showToday.tooltip "Đi đến hôm nay">
+<!ENTITY onedayforward.tooltip "Tiến một ngày">
+<!ENTITY onedaybackward.tooltip "Lùi một ngày">
+<!ENTITY showselectedday.tooltip "Hiện các sự kiện của ngày đã chọn">

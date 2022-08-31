@@ -1,0 +1,7 @@
+#filter emptyLines
+
+# LOCALIZATION NOTE: You can place sidebar panel entries here that will be
+# in default profiles. Only do this if you know what you're doing!
+# For normal localizations, it's best to leave this file unchanged.
+
+#unfilter emptyLines
