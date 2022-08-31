@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Βοηθός λογαριασμών">
+<!ENTITY accountWizard.size "width: 55em; height: 37em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Ταυτότητα">
+<!ENTITY identityDesc.label "Κάθε λογαριασμός έχει μια ταυτότητα, η οποία αποτελείται από πληροφορίες που σας ταυτοποιούν στους παραλήπτες των μηνυμάτων σας.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Εισαγάγετε το όνομα που θέλετε να εμφανίζεται στο πεδίο «Από» των εξερχομένων μηνυμάτων σας">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(για παράδειγμα, «Γιώργος Παπαδόπουλος»).">
+<!ENTITY fullnameLabel.label "Το όνομά σας:">
+<!ENTITY fullnameLabel.accesskey "Τ">
+
+<!ENTITY emailLabel.label "Διεύθυνση email:">
+<!ENTITY emailLabel.accesskey "θ">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Πληροφορίες διακομιστή εισερχομένων">
+<!ENTITY incomingUsername.label "Όνομα χρήστη:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Εισαγάγετε το όνομα του διακομιστή συζητήσεών σας (NNTP) (για παράδειγμα, «news.example.net»).">
+<!ENTITY newsServerLabel.label "Διακομιστής ομάδας συζητήσεων:">
+<!ENTITY newsServerLabel.accesskey "σ">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Όνομα λογαριασμού">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Εισαγάγετε το όνομα με το οποίο θα αναγνωρίζετε αυτό τον λογαριασμό (για παράδειγμα, «Λογαριασμός εργασίας», «Λογαριασμός οικίας» ή «Λογαριασμός συζητήσεων»).">
+<!ENTITY accnameLabel.label "Όνομα λογαριασμού:">
+<!ENTITY accnameLabel.accesskey "μ">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Συγχαρητήρια!">
+<!ENTITY completionText.label "Παρακαλώ βεβαιωθείτε ότι οι εξής πληροφορίες είναι σωστές.">
+<!ENTITY newsServerNamePrefix.label "Όνομα διακομιστή συζητήσεων (NNTP):">
+<!ENTITY clickFinish.label "Κάντε κλικ στο «Τέλος» για αποθήκευση των ρυθμίσεων και κλείσιμο του βοηθού λογαριασμών.">
+<!ENTITY clickFinish.labelMac "Κάντε κλικ στο «Τέλος» για αποθήκευση των ρυθμίσεων και κλείσιμο του βοηθού λογαριασμών.">

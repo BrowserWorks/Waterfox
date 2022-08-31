@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Trình thuật sĩ tài khoản">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Nhận dạng">
+<!ENTITY identityDesc.label "Mỗi tài khoản có một danh tính, đó là thông tin nhận dạng bạn với người khác khi họ nhận được thư của bạn.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Nhập tên mà bạn muốn hiển thị trong trường &quot;Từ&quot; trên các thư gửi đi">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(ví dụ, &quot;John Smith&quot;).">
+<!ENTITY fullnameLabel.label "Tên của bạn:">
+<!ENTITY fullnameLabel.accesskey "Y">
+
+<!ENTITY emailLabel.label "Địa chỉ email:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Thông tin máy chủ nhận thư">
+<!ENTITY incomingUsername.label "Tên đăng nhập:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Nhập tên của máy chủ tin tức của bạn (NNTP) (ví dụ: &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "Máy chủ nhóm tin:">
+<!ENTITY newsServerLabel.accesskey "S">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Tên tài khoản">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Nhập tên mà bạn muốn dùng để nói tới tài khoản này (ví dụ, &quot;Tài khoản công việc&quot;, &quot;Tài khoản ở nhà&quot; hoặc &quot;Tài khoản tin tức&quot;).">
+<!ENTITY accnameLabel.label "Tên tài khoản:">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Chúc mừng!">
+<!ENTITY completionText.label "Vui lòng xác minh rằng thông tin dưới đây là chính xác.">
+<!ENTITY newsServerNamePrefix.label "Tên máy chủ tin tức (NNTP):">
+<!ENTITY clickFinish.label "Nhấn Hoàn Thành để lưu các thiết lập này và thoát trình thuật sĩ tài khoản.">
+<!ENTITY clickFinish.labelMac "Nhấn Xong để lưu các thiết lập này và thoát trình thuật sĩ tài khoản.">

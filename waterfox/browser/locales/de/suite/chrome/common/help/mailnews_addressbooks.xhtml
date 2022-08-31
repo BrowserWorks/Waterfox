@@ -1,0 +1,694 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Adressb&#252;cher verwenden</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+     type="text/css"/>
+</head>
+
+<body>
+
+<h1 id="using_address_books">Adressb&#252;cher verwenden</h1>
+
+<div class="contentsBox">In diesem Abschnitt:
+  <ul>
+    <li><a href="#about_address_books">&#220;ber Adressb&#252;cher</a></li>
+    <li><a href="#adding_entries_to_your_address_books">Adressbucheintr&#228;ge hinzuf&#252;gen</a></li>
+    <li><a href="#creating_a_new_address_book">Ein neues Adressbuch erstellen</a></li>
+    <li><a href="#creating_a_new_address_book_card">Eine neue Visitenkarte erstellen</a></li>
+    <li><a href="#creating_a_mailing_list">Eine Versandliste (Mailinglist) erstellen</a></li>
+    <li><a href="#editing_a_mailing_list">Eine Versandliste (Mailinglist) bearbeiten</a></li>
+    <li><a href="#searching_address_books_and_directories">Adressb&#252;cher und LDAP-Verzeichnisse 
+    durchsuchen</a></li>
+    <li><a href="#importing_address_books">Adressb&#252;cher importieren</a></li>
+    <li><a href="#exporting_address_books">Adressb&#252;cher exportieren</a></li>
+    <li><a href="#adding_and_removing_ldap_directories">Hinzuf&#252;gen und entfernen von LDAP-Verzeichnissen</a></li>
+  </ul>
+</div>
+
+<h2 id="about_address_books">&#220;ber Adressb&#252;cher</h2>
+
+<p>Adressb&#252;cher speichern E-Mail-Adressen und Kontaktinformationen von
+Personen, denen Sie normalerweise E-Mail-Nachrichten senden, z. B. Kollegen,
+Kunden, Freunde usw. In &brandShortName; Mail &amp; Newsgroups stehen Ihnen
+zwei Adressb&#252;cher zur Verf&#252;gung: das pers&#246;nliche Adressbuch und
+das Adressbuch <q>Gesammelte Adressen</q>. Sie k&#246;nnen auch noch
+zus&#228;tzliche Adressb&#252;cher anlegen. Der Inhalt dieser Adressb&#252;cher
+wird lokal auf Ihrer Festplatte gespeichert.</p>
+
+<p>Ihr Adressbuch kann auch E-Mail-Adressen aus einem LDAP-Verzeichnis
+enthalten, das sich auf einem LDAP-Verzeichnis-Server befindet. Der
+Verzeichnis-Server speichert E-Mail-Adressen von Personen, die nicht in Ihren
+lokal gespeicherten Adressb&#252;chern enthalten sind.</p>
+
+<h4>Pers&#246;nliches Adressbuch</h4>
+
+<p>Verwenden Sie das pers&#246;nliche Adressbuch, um bestimmte Namen, die Sie
+ben&#246;tigen, hinzuzuf&#252;gen oder um Adressb&#252;cher aus anderen
+E-Mail-Programmen und fr&#252;heren Versionen von &brandShortName; zu
+importieren. Sie k&#246;nnen Versandlisten erstellen, einzelne
+Adresseintr&#228;ge bearbeiten und zus&#228;tzliche Adressb&#252;cher
+erstellen.</p>
+
+<h4>Gesammelte Adressen</h4>
+
+<p>Im Adressbuch <q>Gesammelte Adressen</q> werden automatisch E-Mail-Adressen
+ein- und ausgehender Nachrichten gesammelt. Bei eingehenden E-Mail-Nachrichten
+speichert das Adressbuch <q>Gesammelte Adressen</q> die Absenderadresse, sobald
+Sie die Nachricht &#246;ffnen. Adressen ausgehender Nachrichten werden
+gespeichert, sobald Sie auf <q>Senden</q> klicken.</p>
+
+<h4>LDAP-Verzeichnis (sofern verf&#252;gbar)</h4>
+
+<p>Ein LDAP-Verzeichnis (auch als Nachschlagedienst f&#252;r Adressen bekannt)
+  speichert E-Mail-Adressen von Empf&#228;ngern, die nicht in Ihren lokal
+  gespeicherten Adressb&#252;chern enthalten sind. LDAP-Verzeichnisse bieten
+  Zugang zu gro&#223;en, zentral verwalteten E-Mail-Adressdatenbanken, was
+  besonders f&#252;r die <a href="mailnews_preferences.xhtml#address_autocompletion">
+  Adress-Autovervollst&#228;ndigung</a> von Vorteil ist.</p>
+
+<p>Die automatische Sammlung von Adressen ist standardm&#228;&#223;ig aktiviert. Um
+diese Einstellung zu ver&#228;ndern, beginnen Sie im Mail-Fenster:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das <q><span class="noMac">Bearbeiten</span>
+  <span class="mac">&brandShortName;</span>-Men&#252;</q> 
+  und w&#228;hlen Sie Einstellungen.</li>
+
+  <li>Klicken Sie in der Kategorie <q>Mail &amp; Newsgroups</q> auf
+      <q>Adressieren</q>. (Wenn in dieser Kategorie keine Optionen angezeigt
+	  werden, klicken auf das Dreieck, um die Liste einzublenden.)</li>
+  <li>Unter <q>Sammeln von E-Mail-Adressen</q> aktivieren Sie den Schalter
+      <q>E-Mail-Adressen hinzuf&#252;gen zu:</q> und w&#228;hlen eines der beiden Telefonb&#252;cher:
+      <ul>
+        <li>Pers&#246;nliches Adressbuch</li>
+        <li>Gesammelte Adressen</li>
+      </ul>
+  </li>
+ <li>Klicken Sie auf <q>OK</q>.</li>
+</ol>
+
+<h4>Das Adressbuch aufrufen</h4>
+
+<p>Um das Adressbuch zu &#246;ffnen:</p>
+
+<ul>
+  <li>&#214;ffnen Sie das Men&#252; Fenster und klicken auf Adressbuch, oder
+      klicken Sie auf den Adressbuch-Icon in der Statuszeile.
+
+      <table>
+      <tr>
+        <td colspan="2"><img src="images/taskbar-ab.png" alt="" /></td>
+      </tr>
+
+      <tr>
+        <td style="width: 80px;" />
+        <td><strong>Addressbuchsymbol</strong></td>
+      </tr>
+      </table></li>
+</ul>
+
+<h4>&#196;ndern der Anzeige des Fensters Adressbuch</h4>
+
+<p>So k&#246;nnen die Anzeige des Fensters Adressbuch und der Visitenkarten
+anpassen:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das Men&#252; <q>Fenster</q> und w&#228;hlen Sie
+      <q>Adressbuch</q> aus. Das Fenster <q>Adressbuch</q> wird
+	  ge&#246;ffnet.</li>
+
+  <li>&#214;ffnen Sie im Adressbuchfenster das Men&#252; <q>Ansicht</q> und
+      w&#228;hlen Sie einer der folgenden Anzeigenoptionen:
+
+  <ul>
+    <li>W&#228;hlen Sie <q>Anzeigen/Verstecken</q> und klicken Sie auf den
+	    jeweiligen Punkt den Sie sehen oder nicht sehen wollen.</li>
+
+	<li>W&#228;hlen Sie <q>Namen anzeigen</q> und w&#228;hlen Sie
+	    anschlie&#223;end aus, wie Kartennamen angezeigt werden sollen
+		(<q>Vorname/Nachname</q>, <q>Nachname/Vorname</q> oder
+		<q>Anzeigename</q>).</li>
+
+    <li>W&#228;hlen Sie die Option <q>Sortieren nach</q> und anschlie&#223;end
+	    eine Sortieroption (nach Namen, E-Mail-Adressen, gesch&#228;ftlicher
+		Telefonnummer oder Organisation) aus.</li>
+  </ul></li>
+</ol>
+
+<p>[<a href="#using_address_books">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="adding_entries_to_your_address_books">Adressbucheintr&#228;ge
+hinzuf&#252;gen</h2>
+
+<p>Es gibt mehrere Wege um Adressen zum Adressbuch hinzuzuf&#252;gen:</p>
+
+<ul>
+  <li>Klicken Sie auf den Namen im Absender oder Empf&#228;ngerfeld einer
+      Nachricht, die Sie erhalten haben und klicken Sie dann auf <q>Adresse zu
+	  Adressbuch hinzuf&#252;gen</q>.</li>
+
+  <li>Im Adressbuchfenster klicken Sie auf <q>Neue Karte</q>, um einen neuen
+      Eintrag zu erstellen.</li>
+
+  <li>&#214;ffnen Sie eine Nachricht. Dabei wird der Absender automatisch zum
+      Adressbuch hinzugef&#252;gt (falls die Option aktiviert ist).</li>
+
+  <li>Um Eintr&#228;ge im Adressbuch an eine andere Stelle zu kopieren, markieren
+      Sie den entsprechenden Eintrag und ziehen ihn in das Adressbuch Ihrer
+	  Wahl.</li>
+</ul>
+
+<p>[<a href="#using_address_books">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="creating_a_new_address_book">Ein neues Adressbuch erstellen</h2>
+
+<p>&brandShortName; Mail &amp; Newsgroups erstellt standardm&#228;&#223;ig ein
+pers&#246;nliches Adressbuch. Sie k&#246;nnen aber weitere Adressb&#252;cher
+erstellen.</p>
+
+<p>Ein neues Adressbuch erstellen:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das Men&#252; <q>Fenster</q> und klicken Sie auf
+      <q>Adressbuch</q> oder klicken Sie auf den Adressbuch-Icon in der
+	  Statuszeile. Es erscheint das Adressbuch-Fenster.
+
+      <table>
+      <tr>
+        <td colspan="2"><img src="images/taskbar-ab.png" alt="" /></td>
+      </tr>
+
+      <tr>
+        <td style="width: 80px;" />
+        <td><strong>Addressbuchsymbol</strong></td>
+      </tr>
+      </table></li>
+
+  <li>Im Adressbuch-Fenster, &#246;ffnen Sie das Men&#252; <q>Datei</q>,
+      klicken auf <q>Neu</q> und dann auf <q>Adressbuch</q>. Es erscheint ein
+	  neues Fenster.</li>
+
+  <li>Geben Sie den Namen des neuen Adressbuchs ein, und klicken Sie dann auf
+      OK.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="creating_a_new_address_book_card">Eine neue Visitenkarte erstellen</h2>
+
+<p>Sie k&#246;nnen Visitenkarten verwenden, um Namen, Postanschriften,
+E-Mail-Adressen, Telefonnummern und andere Informationen (z. B. ob der
+Empf&#228;nger Nachrichten im Normaltext-Format oder im HTML-Format bevorzugt)
+speichern.</p>
+
+<p>So erstellen Sie eine Visitenkarte f&#252;r eine Person:</p>
+
+<ol>
+  <li>Klicken Sie auf das Symbol <q>Adressbuch</q> in der Statusleiste oder
+      &#246;ffnen Sie das Men&#252; <q>Fenster</q> und w&#228;hlen Sie
+	  <q>Adressbuch</q>.</li>
+
+  <li>Klicken Sie auf die Option <q>Neue Karte</q> (Wenn Sie &#252;ber mehrere
+      Adressb&#252;cher verf&#252;gen, m&#252;ssen Sie das Adressbuch
+	  ausw&#228;hlen, dem Sie eine Visitenkarte hinzuf&#252;gen
+	  m&#246;chten.)</li>
+
+  <li>Das Dialogfeld <q>Neue Karte</q> enth&#228;lt vier Registerkarten:
+
+  <ul>
+    <li><strong>Kontakt</strong>: Geben Sie folgende Informationen ein:
+        <ul>
+          <li>Vor- und Nachname (Vorname und Nachname der Person, wie sie im
+		      Adressbuch angezeigt werden sollen).</li>
+
+          <li>Anzeigename (der Name, der im Erstellungsfenster im Feld
+		      <q>An</q> angezeigt werden soll.</li>
+
+          <li>Pseudonym (eine Abk&#252;rzung oder ein Pseudonym f&#252;r den
+		      richtigen Namen).</li>
+
+          <li>E-Mail-Adresse (prim&#228;re und zus&#228;tzliche Adresse).</li>
+
+          <li>Bevorzugt folgendes Nachrichten-Format: Wenn Sie wissen, dass
+		      dieser Empf&#228;nger Nachrichten im HTML-Format empfangen kann
+			  (Nachrichten, die Links, Grafiken oder Tabellen enthalten),
+			  w&#228;hlen Sie <q>HTML</q>. Wenn dieser Empf&#228;nger nur
+			  normale Textnachrichten (ohne Formatierungen) empfangen kann,
+			  w&#228;hlen Sie <q>Reintext</q>. Wenn Sie sich nicht sicher sind,
+			  w&#228;hlen Sie <q>Unbekannt</q>. In diesem Falle entscheidet
+			  &brandShortName; Mail &amp; Newsgroups &#252;ber das zu sendende
+			  Format auf der Basis der Einstellungen f&#252;r das Sendeformat
+			  im Dialogfeld <q>Einstellungen</q>. Wenn Mail &amp; Newsgroups
+			  das korrekte Format nicht ermitteln kann, werden Sie beim Senden
+			  gebeten, ein Format auszuw&#228;hlen.</li>
+
+          <li>Von au&#223;en stammende Grafiken in HTML-Mails erlauben: Wenn Sie externe Inhalte von diesem Absender
+            erlauben wollen, aktivieren Sie diese Option.</li>
+
+          <li>AIM-Name</li>
+          
+          <li>Telefonnummer (geben Sie die Telefonnummern f&#252;r diese Person
+		      ein)</li>
+        </ul></li>
+
+    <li><strong>Addresse</strong>: Geben Sie zus&#228;tzliche Informationen wie
+	    Stra&#223;e, Telefonnummer und URL ein.
+        <p><strong>Tipp</strong>: Wenn Sie eine Adresse eingeben, kann Ihnen
+		&brandShortName; auf Wunsch eine Web-Seite mit einer Landkarte
+		anzeigen, die die Umgebung der Adresse darstellt.</p></li>
+        
+        <li><strong>Andere</strong>: Speichern Sie zus&#228;tzliche Informationen auf dieser
+		Registerkarte.</li>
+  </ul></li>
+</ol>
+
+<p><strong>Tipp</strong>: Wenn Sie Eintr&#228;ge schnell dem Adressbuch
+hinzuf&#252;gen m&#246;chten, k&#246;nnen Sie auf eine E-Mail-Adresse in
+eingehenden Nachrichten klicken und die Option <q>Adresse dem Adressbuch
+hinzuf&#252;gen</q> aus dem Dropdown-Listenfeld ausw&#228;hlen. Das Dialogfeld
+<q>Neue Karte</q> wird angezeigt und Sie k&#246;nnen die Informationen
+eingeben.</p>
+
+<h3 id="viewing_or_editing_card_properties">Visitenkarteneigenschaften anzeigen
+und bearbeiten</h3>
+<p>Um eine einzelne Visitenkarte bearbeiten oder anzuschauen:</p>
+<ol>
+  <li>W&#228;hlen Sie die Karte im Fenster <q>Adressenliste</q> aus.</li>
+  <li>Klicken Sie auf <q>Bearbeiten</q>.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="creating_a_mailing_list">Eine Versandliste (Mailinglist) erstellen</h2>
+
+<p>Wenn Sie regelm&#228;&#223;ig Nachrichten an eine Gruppe von
+Empf&#228;ngern senden, k&#246;nnen Sie eine Nachricht schnell adressieren,
+indem Sie eine Versandliste mit den entsprechenden Namen verwenden.</p>
+
+<p>So k&#246;nnen Sie eine Versandliste erstellen und Sie dem Adressbuch
+hinzuf&#252;gen:</p>
+
+<ol>
+  <li>Klicken Sie im Adressbuchfenster auf <q>Neue Liste</q>.</li>
+
+  <li>Geben Sie folgende Informationen in das Dialogfeld <q>Versandliste</q>
+      ein:
+      <ul>
+        <li>Klicken Sie auf die Dropdown-Liste <q>Hinzuf&#252;gen zu:</q>, um
+		    ein Adressbuch auszuw&#228;hlen, in dem die Liste gespeichert
+			werden soll.</li>
+
+        <li>Listenname: Wenn Sie den Listennamen in das Feld <q>An</q> einer
+		    Nachricht eingeben, erhalten alle Personen auf der Liste Ihre
+			Nachricht.</li>
+
+        <li>Listen-Spitzname: Alias (oder Abk&#252;rzung) f&#252;r den
+		    Listennamen.</li>
+
+        <li>Beschreibung: Wird hinter dem Listennamen in der Adresszeile des
+		    Erstellungsfensters angezeigt.</li>
+      </ul></li>
+
+  <li>Geben Sie die E-Mail-Adressen ein die Sie der Mailingliste hinzuf&#252;gen
+      wollen.</li>
+
+  <li>Klicken Sie auf <q>OK</q>.</li>
+</ol>
+
+<p>Die Liste wird auf der rechten und linken Seite des Adressbuchfensters
+angezeigt.</p>
+
+<p>[<a href="#using_address_books">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="editing_a_mailing_list">Eine Versandliste (Mailinglist) bearbeiten</h2>
+
+<p>Versandlisten werden in dem Adressbuch gespeichert, in dem sie erstellt
+wurden.</p>
+
+<p>So entfernen Sie einen Eintrag aus der Liste (ausgehend vom
+Mail-Fenster):</p>
+
+<ol>
+  <li>&#214;ffnen Sie das Men&#252; <q>Fenster</q> und w&#228;hlen Sie
+      <q>Adressbuch</q>.</li>
+
+  <li>Erweitern Sie das Adressbuch, das Ihre Versandliste enth&#228;lt, indem
+      Sie auf das Dreieck neben dem Adressbuchtitel klicken.</li>
+
+  <li>Klicken Sie auf den Namen der Versandliste. Die Listeneintr&#228;ge
+      werden rechts davon angezeigt.</li>
+
+  <li>Klicken Sie auf den Eintrag, den Sie l&#246;schen m&#246;chten.</li>
+
+  <li>Klicken Sie auf <q>L&#246;schen</q>.</li>
+</ol>
+
+<p>So f&#252;gen Sie einer Versandliste Eintr&#228;ge hinzu:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das Men&#252; <q>Fenster</q> und w&#228;hlen Sie
+      <q>Adressbuch</q>.</li>
+
+  <li>Erweitern Sie das Adressbuch, das Ihre Versandliste enth&#228;lt, indem
+      Sie auf das Dreieck neben dem Adressbuchtitel klicken.</li>
+
+  <li>Klicken Sie auf den Namen der Versandliste.</li>
+
+  <li>Klicken Sie auf <q>Eigenschaften</q>.</li>
+
+  <li>F&#252;gen Sie nach Bedarf Eintr&#228;ge hinzu oder entfernen Sie
+      Eintr&#228;ge.</li>
+
+  <li>Klicken Sie auf <q>OK</q>, wenn Sie fertig sind.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="searching_address_books_and_directories">Adressb&#252;cher und
+LDAP-Verzeichnisse durchsuchen</h2>
+
+<p>&brandShortName; Mail &amp; Newsgroups l&#228;&#223;t Sie schnell ein
+Adressbuch oder ein Verzeichnis nach einem Namen oder einer E-Mail-Adresse
+durchsuchen. Sie k&#246;nnen aber auch mehrere Kriterien miteinander
+kombinieren und eine gr&#252;ndlichere Suche starten.</p>
+
+<p>So durchsuchen Sie ein Adressbuch oder ein Verzeichnis nach einem Namen oder
+einer E-Mail-Adresse(ausgehend vom Mail-Fenster):</p>
+
+<ol>
+  <li>Im Adressbuchfenster w&#228;hlen Sie das Adressbuch oder das Verzeichnis,
+      das Sie durchsuchen wollen, aus der Liste aus.</li>
+
+  <li>Rechts von <q>Name oder E-Mail enth&#228;lt:</q> geben Sie den
+      Suchbegriff ein, den Sie finden m&#246;chten. Sie k&#246;nnen auch nur
+	  einen Teil des Suchbegriffs eingeben oder die exakte E-Mail-Adresse oder
+	  Namen, den Sie finden m&#246;chten.
+      <p>Sobald Sie mit dem tippen aufh&#246;ren, zeigt &brandShortName; Mail
+	  &amp; Newsgroups nur noch die Eintr&#228;ge an, bei denen der Suchbegriff
+	  im Namen oder in der E-Mail-Adresse vorkommt.</p></li>
+
+  <li>Klicken Sie auf <q>Leeren</q> um den Suchbegriff zu l&#246;schen und alle
+      Eintr&#228;ge anzuzeigen.</li>
+</ol>
+
+<h3 id="searching_for_specific_entries">Spezielle Eintr&#228;ge suchen</h3>
+
+<p>Sie k&#246;nnen Adressb&#252;cher oder Verzeichnisse nach bestimmten
+intr&#228;gen durchsuchen. Wenn Sie das Dialogfeld <q>Erweiterte
+Adressbuchsuche</q> noch nicht ge&#246;ffnet haben, beginnen Sie im
+Adressbuchfenster:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das Men&#252; <q>Extras</q> und klicken Sie auf
+      <q>Adressen suchen</q>. Es erscheint das Dialogfeld <q>Erweiterte
+	  Adressbuchsuche</q>.</li>
+
+  <li>W&#228;hlen Sie das Adressbuch oder Verzeichnis, das Sie durchsuchen
+      m&#246;chten.</li>
+
+  <li>W&#228;hlen Sie die Kriterien nach denen Mail &amp; Newsgroups das
+      Adressbuch oder Verzeichnis durchsuchen soll. Legen Sie fest ob alle
+	  Kriterien erf&#252;llt werden sollen oder nur ein einziges.</li>
+
+  <li>Klicken Sie auf <q>Mehr</q> um weitere Kriterien hinzuzuf&#252;gen oder
+      <q>Weniger</q> um Kriterien zu l&#246;schen.</li>
+
+  <li>Klicken Sie auf <q>Suchen</q> zum Beginnen oder klicken Sie auf
+      <q>L&#246;schen</q> um Ihre Eingaben zu l&#246;schen. Die Suchergebnisse
+	  erscheinen im unteren Teil des Dialogfelds.</li>
+
+  <li>Um die Eintr&#228;ge in einer anderen Reihenfolge zu sortieren, klicken
+      Sie auf die Spalte, nach der Sie die Eintr&#228;ge sortieren wollen.</li>
+
+  <li>Um die Visitenkarte f&#252;r einen Eintrag anzuzeigen, markieren Sie den
+      Eintrag und klicken auf <q>Eigenschaften</q>.</li>
+
+  <li>Um eine Nachricht an ausgew&#228;hlte Empf&#228;nger zu schreiben,
+      markieren Sie diese in der Liste und klicken Sie auf
+	  <q>Erstellen</q>.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="importing_address_books">Adressb&#252;cher importieren</h2>
+
+<p>Wenn Sie &brandShortName; Adressb&#252;cher aus einem andern Benutzerprofil
+oder von einem anderen Computer haben, oder ein Adressbuch einer &#228;lteren
+Version von &brandShortName;, oder aus einem anderen E-Mail-Programm,
+k&#246;nnen Sie die Eintr&#228;ge dieser Adressb&#252;cher in ein neues
+&brandShortName; Adressbuch importieren.</p>
+
+<p>Sie k&#246;nnen Adressb&#252;cher in folgenden Formaten importieren:
+Netscape 6, Netscape 7, Outlook, Outlook Express, Text-Dateien (.ldif),
+tab-delimited (.tab), comma-separated (.csv), oder Text (.txt). Wenn Sie ein
+Adressbuch importieren, legt Mail &amp; Newsgroups automatisch ein neues
+Adressbuch mit den importierten Eintr&#228;gen an.</p>
+
+<p>Sie k&#246;nnen auch
+<a href="mailnews_getting_started.xhtml#importing_mail_from_other_programs">E-Mails und Einstellungen</a> aus
+Netscape Communicator, Eudora, Outlook und Outlook Express importieren.</p>
+
+<p>Importieren von Adressb&#252;chern (ausgehend vom Mail-Fenster):</p>
+
+<ol>
+  <li>&#214;ffnen Sie das Men&#252; <q>Extras</q> und klicken Sie auf
+      <q>Importieren</q>. Es erscheint der &brandShortName;
+	  Importassistent.</li>
+
+  <li>Folgen Sie den Anweisungen zum Importieren von Adressb&#252;chern.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="exporting_address_books">Adressb&#252;cher exportieren</h2>
+
+<p>Sie k&#246;nnen ein Adressbuch aus &brandShortName; exportieren, wenn Sie
+es z.B. sp&#228;ter in ein anderes Benutzerprofil importieren m&#246;chten, es
+auf einen anderen Computer kopieren m&#246;chten, oder es mit einem anderen
+Programm benutzen m&#246;chten, das Adressb&#252;cher importieren kann. Sie
+k&#246;nnen ein Adressbuch in eines der folgenden Formate exportieren:
+Communicator 4.x oder &brandShortName; (.ldif), tab-delimited (.tab),
+comma-separated (.csv) oder Text (.txt).</p>
+
+<p>So exportieren Sie Adressb&#252;cher (ausgehend vom Adressbuchfenster):</p>
+
+<ol>
+  <li>W&#228;hlen Sie das Adressbuch, das Sie exportieren m&#246;chten.</li>
+
+  <li>&#214;ffnen Sie das Men&#252; <q>Extras</q> und klicken sie auf
+      <q>Exportieren</q>.</li>
+
+  <li>Im Dialogfeld <q>Adressbuch exportieren</q> w&#228;hlen Sie den Ort aus,
+      wo die Adressbuchdatei gespeichert werden soll.</li>
+
+  <li>W&#228;hlen Sie das Dateiformat f&#252;r das exportierte Adressbuch
+      (.ldif, comma-separated, or tab-delimited).</li>
+
+  <li>Geben Sie einen Namen f&#252;r die Adressbuchdatei ein. Stellen Sie
+      sicher, dass Sie die richtige Dateinamenerweiterung(.ldif, .csv, .tab
+	  oder .txt) eingeben.</li>
+
+  <li>Klicken Sie auf <q>Speichern</q>.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="adding_and_removing_ldap_directories">Hinzuf&#252;gen und entfernen von
+LDAP-Verzeichnissen</h2>
+
+<p>Das hinzuf&#252;gen eines LDAP-Verzeichnisses zu Ihrem Adressbuch
+erlaubt es Ihnen dieses nach E-Mail-Adressen oder anderen Kontaktinformationen
+zu durchsuchen. Die k&#246;nnen dieses Verzeichnis aber auch genauso zur
+automatischen Adressvervollst&#228;ndigung benutzen.</p>
+
+<p>Im Allgemeinen verfahren Sie beim Hinzuf&#252;gen oder Entfernen von
+Verzeichnis-Server nach den Anleitungen Ihres Systemadministrators. Der
+Administrator kann Ihnen die f&#252;r das Hinzuf&#252;gen eines neuen
+Verzeichnis-Servers erforderlichen Informationen geben.</p>
+
+<p>So f&#252;gen Sie einen neuen Verzeichnis-Server hinzu:</p>
+
+<ol>
+  <li>W&#228;hlen Sie dazu im Men&#252; <q>Datei</q> die Option <q>Neu</q> und
+      dann <q>LDAP-Verzeichnis</q>. Die Dialogbox
+	  <q>Verzeichnis-Server-Eigenschaften</q> wird angezeigt.</li>
+
+  <li>Geben Sie die folgenden Informationen ein:
+      <ul>
+        <li><strong>Name</strong>: Geben Sie den Namen des Verzeichnis-Dienstes
+		    ein (z. B. Infoverzeichnis).</li>
+
+        <li><strong>Hostname</strong>: Geben Sie hier den Namen des Servers
+		    ein, z. B. ldap.infospace.com.</li>
+
+        <li><strong>Basis DN</strong>: Mit dieser Einstellung wird der
+		    <q>Basis-Unterscheidungsname</q> festgelegt. Geben Sie Codes zur
+			Einschr&#228;nkung der Suche auf ein bestimmtes Land oder eine
+			Organisation ein. Beispiel: c=DE beschr&#228;nkt die Suche auf
+			Deutschland. Basis-DN kann auch die Organisation angeben, die im
+			Verzeichnis durchsucht werden soll (z. B. o=Netscape Communications
+			Corporation, c=US).</li>
+
+        <li><strong>Port-Nummer</strong>: Geben Sie die Nummer des Ports
+		    f&#252;r den LDAP-Server ein. Die Standardeinstellung ist 389.</li>
+
+        <li><strong>DN binden</strong>: Der entsprechende Name der zum
+		    Authentifizieren (einloggen) mit dem LDAP-Server ben&#246;tigt wird.
+			Falls dieses Feld leer gelassen wird, wird eine anonyme Verbindung
+			mit dem LDAP-Server hergestellt.</li>
+
+        <li><strong>Sichere Verbindung (SSL) verwenden</strong>: W&#228;hlen Sie
+		    diese Einstellung, wenn Ihr LDAP-Server eine sichere
+			(verschl&#252;sselte) Verbindung unterst&#252;tzt. Sollten Sie nicht
+			sicher sein, kontaktieren Sie Ihren Systemadministrator.</li>
+      </ul></li>
+
+  <li>Klicken Sie auf die Registerkarte <q>Erweitert</q>, um die Einstellungen
+      f&#252;r den LDAP-Verzeichnis-Server zu konfigurieren.</li>
+
+  <li>Geben Sie folgende Informationen in in den erweiterten Einstellungen
+      f&#252;r den Verzeichnis-Server ein:
+      <ul>
+        <li><strong>Nicht mehr als [__] Ergebnisse zur&#252;ckgeben</strong>: Mit
+		    dieser Einstellung k&#246;nnen Sie die Anzahl der vom
+			Verzeichnis-Server zur&#252;ckgegebenen &#220;bereinstimmungen
+			beschr&#228;nken. Geben Sie ein, wie viele E-Mail-Adressen maximal
+			bei der automatischen Vervollst&#228;ndigung angezeigt werden
+			sollen.</li>
+
+        <li><strong>Umfang(S)</strong>: Begrenzt den Suchbereich. W&#228;hlen
+		    Sie eine der folgenden Optionen:
+            <ul>
+              <li><strong>Eine Ebene</strong>: Durchsucht die Basis-DN und eine
+			      Ebene darunter nach &#252;bereinstimmenden
+				  Eintr&#228;gen.</li>
+
+              <li><strong>Unterbaum</strong>: Durchsucht die Basis-DN und alle
+			      Ebenen darunter nach &#252;bereinstimmenden Eintr&#228;gen.
+				  Dies ist die am wenigsten eingeschr&#228;nkte Form der
+				  Suche.</li>
+            </ul></li>
+
+        <li><strong>Suchfilter</strong>: Geben Sie den Suchfilter ein, der auf
+		    die &#252;bereinstimmenden Ergebnisse im angegebenen Suchumfang
+			angewendet werden soll.</li>
+      </ul></li>
+
+  <li>Klicken Sie auf <q>OK</q>, um das Dialogfeld
+      <q>Verzeichnis-Server-Eigenschaften</q> zu schlie&#223;en.</li>
+</ol>
+
+<p>Das Verzeichnis das Sie hinzugef&#252;gt haben erscheint nun in der Liste
+der Adressb&#252;cher im Adressbuchfenster.</p>
+
+<p>So l&#246;schen Sie einen Verzeichnis-Server:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das <q><span class="noMac">Bearbeiten</span>
+  <span class="mac">&brandShortName;</span>-Men&#252;</q> 
+  und w&#228;hlen Sie Einstellungen.</li>
+
+  <li>Klicken Sie in der Kategorie <q>Mail &amp; Newsgroups</q> auf
+      <q>Adressierung</q>. (Wenn in dieser Kategorie keine Optionen angezeigt
+	  werden, klicken auf das Dreieck, um die Liste einzublenden.)</li>
+
+  <li>Klicken Sie auf der rechten Seite des Dialogfelds unter
+      <q>Auto-Vervollst&#228;ndigung von Adressen</q> auf <q>Verzeichnisse
+	  bearbeiten</q>.</li>
+
+  <li>W&#228;hlen Sie im Dialogfeld <q>LDAP-Verzeichnis-Server</q> das
+      Verzeichnis, das Sie l&#246;schen m&#246;chten, und klicken Sie auf
+	  <q>L&#246;schen</q>.</li>
+
+  <li>Klicken Sie auf <q>OK</q> und ein weiteres Mal auf <q>OK</q>, um das
+      Dialogfeld <q>Einstellungen</q> zu schlie&#223;en.</li>
+</ol>
+
+<p>Informationen &#252;ber das Herunterladen oder syncronisieren eines
+Verzeichnisses zum Offline-Gebrauch, lesen Sie bitte:
+<a href="mailnews_offline.xhtml#downloading_directory_entries_for_offline_use">Herunterladen von 
+Verzeichnisseintr&#228;gen zum Offline-Gebrauch</a>.</p>
+
+<h3 id="directory_server_settings">Serververzeichniseinstellungen</h3>
+
+<p>Wenn Sie noch nicht das Fenster <q>LDAP-Server Einstellungen</q>
+ge&#246;ffnet haben, beginnen Sie im Mail-Fenster:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das Men&#252; <q>Fenster</q> und klicken sie auf
+      <q>Adressbuch</q>.</li>
+
+  <li>W&#228;hlen Sie ein Verzeichnis aus der Liste der Adressb&#252;cher
+      aus.</li>
+
+  <li>Klicken Sie auf <q>Eigenschaften</q>.</li>
+</ol>
+
+<p><strong>Allgemein-Tab</strong></p>
+
+<ul>
+  <li><strong>Name</strong>: Geben Sie den Namen des Verzeichnis-Dienstes ein
+      (z. B. Infoverzeichnis).</li>
+
+  <li><strong>Hostname</strong>: Geben Sie hier den Namen des Servers ein, z.
+      B. ldap.infospace.com.</li>
+
+  <li><strong>Basis DN</strong>: Mit dieser Einstellung wird der
+      <q>Basis-Unterscheidungsname</q> festgelegt. Geben Sie Codes zur
+	  Einschr&#228;nkung der Suche auf ein bestimmtes Land oder eine
+	  Organisation ein. Beispiel: c=DE beschr&#228;nkt die Suche auf
+	  Deutschland. Basis-DN kann auch die Organisation angeben, die im
+	  Verzeichnis durchsucht werden soll (z. B. o=Netscape Communications
+	  Corporation, c=US).</li>
+
+  <li><strong>Port-Nummer</strong>: Geben Sie die Nummer des Ports f&#252;r den
+      LDAP-Server ein. Die Standardeinstellung ist 389.</li>
+
+  <li><strong>DN binden</strong>: Der entsprechende Name der zum Authentifizieren (einloggen) 
+  mit dem LDAP-Server ben&#246;tigt wird. Falls dieses Feld leer gelassen wird, wird eine 
+  anonyme Verbindung mit dem LDAP-Server hergestellt.</li>
+
+  <li><strong>Sichere Verbindung (SSL) verwenden</strong>: W&#228;hlen Sie diese
+      Einstellung, wenn Ihr LDAP-Server eine sichere (verschl&#252;sselte)
+	  Verbindung unterst&#252;tzt. Sollten Sie nicht sicher sein, kontaktieren
+	  Sie Ihren Systemadministrator.</li>
+</ul>
+
+<p><strong>Erweitert-Tab</strong></p>
+
+<ul>
+  <li><strong>Nicht mehr als [__] Ergebnisse zur&#252;ckgeben</strong>: Mit dieser
+      Einstellung k&#246;nnen Sie die Anzahl der vom Verzeichnis-Server
+	  zur&#252;ckgegebenen &#220;bereinstimmungen beschr&#228;nken. Geben Sie
+	  ein, wie viele E-Mail-Adressen maximal bei der automatischen
+	  Vervollst&#228;ndigung angezeigt werden sollen.</li>
+
+  <li><strong>Umfang(S)</strong>: Begrenzt den Suchbereich. W&#228;hlen Sie
+      eine der folgenden Optionen:
+      <ul>
+        <li><strong>Eine Ebene</strong>: Durchsucht die Basis-DN und eine Ebene
+		    darunter nach &#252;bereinstimmenden Eintr&#228;gen.</li>
+
+        <li><strong>Unterbaum</strong>: Durchsucht die Basis-DN und alle Ebenen
+		    darunter nach &#252;bereinstimmenden Eintr&#228;gen. Dies ist die
+			am wenigsten eingeschr&#228;nkte Form der Suche.</li>
+      </ul></li>
+
+  <li><strong>Suchfilter</strong>: Geben Sie den Suchfilter ein, der auf die
+      &#252;bereinstimmenden Ergebnisse im angegebenen Suchumfang angewendet
+	  werden soll.</li>
+      </ul>
+	  
+<p>[<a href="#using_address_books">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+</body>
+</html>

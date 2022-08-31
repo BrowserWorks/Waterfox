@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title "Hämtning av filer">
+
+<!ENTITY downloadBehavior.label "När en fil hämtas">
+<!ENTITY doNothing.label "Öppna inte någonting">
+<!ENTITY doNothing.accesskey "i">
+<!ENTITY openProgressDialog.label "Öppna ett förloppsfönster">
+<!ENTITY openProgressDialog.accesskey "f">
+<!ENTITY openDM.label "Öppna Filhämtaren">
+<!ENTITY openDM.accesskey "Ö">
+<!ENTITY flashWhenOpen.label            "Blinka filhämtaren om den redan är öppen">
+<!ENTITY flashWhenOpen.accesskey        "B">
+
+<!ENTITY downloadLocation.label         "När en fil sparas">
+<!ENTITY saveTo.label                   "Spara filer till">
+<!ENTITY saveTo.accesskey               "a">
+<!ENTITY chooseDownloadFolder.label     "Välj mapp…">
+<!ENTITY chooseDownloadFolder.accesskey "V">
+<!ENTITY alwaysAsk.label                "Fråga alltid var jag vill spara filerna">
+<!ENTITY alwaysAsk.accesskey            "A">
+
+<!ENTITY finishedBehavior.label         "När hämtningen är slutförd">
+<!ENTITY playSound.label                "Ge en ljudsignal">
+<!ENTITY playSound.accesskey            "l">
+<!ENTITY browse.label                   "Välj…">
+<!ENTITY browse.accesskey               "ä">
+<!ENTITY playButton.label               "Spela">
+<!ENTITY playButton.accesskey           "S">

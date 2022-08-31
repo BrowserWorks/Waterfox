@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from AccountManager.xhtml -->
+
+<!ENTITY accountManagerTitle.label "Kontoinställningar för e-post och diskussionsgrupper">
+<!ENTITY  accountManagerCloseButton.label "Stäng">
+
+<!ENTITY accountActionsButton.label "Kontoåtgärder">
+<!ENTITY accountActionsButton.accesskey "t">
+<!ENTITY addMailAccountButton.label "Lägg till e-postkonto…">
+<!ENTITY addMailAccountButton.accesskey "L">
+<!ENTITY addIMAccountButton.label "Lägg till chattkonto…">
+<!ENTITY addIMAccountButton.accesskey "c">
+<!ENTITY addFeedAccountButton.label "Lägg till RSS-kanalkonto…">
+<!ENTITY addFeedAccountButton.accesskey "r">
+<!ENTITY setDefaultButton.label "Gör till standardkonto">
+<!ENTITY setDefaultButton.accesskey "G">
+<!ENTITY removeButton.label "Ta bort konto">
+<!ENTITY removeButton.accesskey "b">
+
+<!ENTITY addonsButton.label "Tillägg &amp; teman">
+
+<!-- AccountManager.xhtml -->

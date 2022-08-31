@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Menubar.tooltip    "Hoofdmenu">
+<!ENTITY Toolbar.tooltip    "Hoofdwerkbalk">
+
+
+<!ENTITY multiline-expand.tooltip   "Omschakelen naar meerregelige invoer (Ctrl+Up)">
+<!ENTITY multiline-contract.tooltip "Omschakelen naar eenregelige invoer (Ctrl+Down)">
+<!ENTITY multiline-send.tooltip     "Deze tekst verzenden (Ctrl-Enter)">
+<!ENTITY server-nick.tooltip        "Wijzig uw schermnaam of stel een afwezigheidsstatus in. Druk op Escape om op het invoervak te focussen.">
+
+<!ENTITY Underline.label             "Onderstrepen">
+<!ENTITY Bold.label                  "Vet">
+<!ENTITY Reverse.label               "Omgekeerde video">
+<!ENTITY Normal.label                "Normaal">
+<!ENTITY Color.label                 "Kleur">
+<!ENTITY ForeBack.label              "xx=Vooruit yy=Terug">
