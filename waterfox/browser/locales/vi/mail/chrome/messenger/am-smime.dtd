@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Mã hóa đầu cuối">
+<!ENTITY e2eLearnMore.label "Xem thêm">
+
+<!ENTITY e2eEnc.description "Nếu không có mã hóa đầu cuối, nội dung của các thư sẽ dễ dàng bị lộ cho nhà cung cấp dịch vụ email của bạn và bị giám sát hàng loạt.">
+
+<!ENTITY e2eTechPref.description "Công nghệ mã hóa ưu tiên:">
+
+<!ENTITY encryptionCert2.message "Chứng chỉ cá nhân để mã hóa:">
+<!ENTITY digitalSign.certificate.button "Chọn…">
+<!ENTITY digitalSign.certificate.accesskey "C">
+<!ENTITY digitalSign.certificate_clear.button "Xóa">
+<!ENTITY digitalSign.certificate_clear.accesskey "g">
+<!ENTITY encryption.certificate.button "Chọn…">
+<!ENTITY encryption.certificate.accesskey "n">
+<!ENTITY encryption.certificate_clear.button "Xóa">
+<!ENTITY encryption.certificate_clear.accesskey "a">
+<!ENTITY signingGroupTitle.label "Chữ kí điện tử">
+<!ENTITY signingCert2.message "Chứng chỉ cá nhân để ký kỹ thuật số:">
+
+<!ENTITY sendingDefaults.label "Cài đặt mặc định để gửi thư">
+
+<!ENTITY technologyAutomatic.label "Chọn tự động dựa trên các khóa hoặc chứng chỉ có sẵn">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Quản lý chứng chỉ S/MIME">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "Thiết bị bảo mật S/MIME">
+<!ENTITY manageDevices2.accesskey "y">
+
+<!ENTITY technologySMIME.label "Ưu tiên S/MIME">
+<!ENTITY technologyOpenPGP.label "Ưu tiên OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Chọn chứng chỉ">
+<!ENTITY certPicker.info  "Chứng chỉ:">
+<!ENTITY certPicker.detailsLabel "Chi tiết của chứng chỉ được chọn:">
+
+<!ENTITY openpgpKey.message "Khóa cá nhân để mã hóa và ký kỹ thuật số:">
+<!ENTITY openpgpKey.button "Đặt khóa cá nhân…">
+<!ENTITY openpgpKey.accesskey "o">

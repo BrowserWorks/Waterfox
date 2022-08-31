@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Kortelės">
+
+<!ENTITY tabDisplay.label "Kortelių juosta">
+
+
+<!ENTITY background.label "Atveriant saitą naujoje kortelėje, įkelti ją į pirmąjį planą">
+<!ENTITY background.accesskey "s">
+<!ENTITY warnOnClose.label "Įspėti prieš užveriant langą, kuriame yra atvertų kortelių">
+<!ENTITY warnOnClose.accesskey "ė">
+<!ENTITY relatedAfterCurrent.label "Susijusias korteles atverti greta esamos">
+<!ENTITY relatedAfterCurrent.accesskey "g">
+
+<!ENTITY openTabs.label "Vietoj naujo naršyklės lango atverti kortelę">
+
+
+
+
+
