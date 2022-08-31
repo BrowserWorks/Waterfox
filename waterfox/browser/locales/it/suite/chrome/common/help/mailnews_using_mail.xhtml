@@ -1,0 +1,1181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Using &brandShortName; Mail</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+<link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+      type="text/css"/>
+</head>
+<body>
+<h1 id="reading_messages">Reading Messages</h1>
+
+<div class="contentsBox">In this section:
+  <ul>
+    <li><a href="#getting_new_messages">Getting New Messages</a></li>
+    <li><a href="#choosing_how_you_view_the_mail_window">Choosing How You View
+      the Mail Window</a></li>
+    <li><a href="#sorting_and_threading_messages">Sorting and Threading
+      Messages</a></li>
+    <li><a href="#saving_and_printing_messages">Saving and Printing
+      Messages</a></li>
+    <li><a href="#controlling_images_scripts_and_plugins">Controlling Images,
+      Scripts, and Plugins</a></li>
+  </ul>
+</div>
+
+<h2 id="getting_new_messages">Getting New Messages</h2>
+
+<p>For an IMAP account, you can retrieve new messages automatically and display
+  them in the Inbox by opening Mail &amp; Newsgroups and selecting the Inbox
+  for the IMAP account.</p>
+
+<p>For a POP account, you must select the Inbox and click Get Msgs to retrieve
+  your messages. By default, messages from your POP account are downloaded in
+  full and deleted from the POP server when you retrieve them. You can
+  <a href="mailnews_account_settings.xhtml#pop_server_settings">change your POP
+  server settings</a> to retrieve just the headers and/or store a copy of
+  messages on the server in addition to downloading them to your computer.</p>
+  
+<p>For news accounts, expanding the account newsgroups list will automatically
+  check for new items, as it will by just selecting one of the newsgroups.
+  While reading a newsgroup, you can force checking for new items by clicking
+  Get Msgs.</p>
+
+<p>For blogs &amp; feeds accounts, the first time you expand the account, it
+  will be checked for new items. Besides that, you can force checking for new
+  items at any time by clicking Get Msgs.</p>
+
+<p>You can also set up Mail &amp; Newsgroups to get new messages at startup and
+  to check for new messages at timed intervals.</p>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/task_mail.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td style="width: 20px;"></td>
+    <td><strong>Mail &amp; Newsgroups icon</strong></td>
+  </tr>
+</table>
+
+<p>The Mail &amp; Newsgroups icon on the status bar displays a green arrow to
+  notify you when new messages have arrived.</p>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/task_newmail.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td style="width: 20px;"></td>
+    <td><strong>New mail notification</strong></td>
+  </tr>
+</table>
+
+<p>To set up a mail account to automatically check for new messages, begin from
+  the Mail window:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>If you have multiple accounts, select an account and click the Server
+    Settings category for that account.</li>
+  <li>Select one or both of the following options in the Server Settings
+    section:
+    <ul>
+      <li><strong>Check for new mail at startup</strong>: Select this checkbox
+        if you want to check this account automatically for new messages
+        whenever you start Mail &amp; Newsgroups. For POP accounts, Mail &amp;
+        Newsgroups checks for new mail, but doesn&apos;t download new messages
+        until you click Get Msgs or unless you choose <q>Automatically download
+        any new messages</q>.</li>
+      <li><strong>Check for new messages every [__] minutes</strong>: Select
+        this checkbox if you want to specify the number of minutes between mail
+        checks. You can also check for new messages at any time by clicking Get
+        Msgs in the Mail window.</li>
+    </ul>
+  </li>
+  <li>Click OK. Your settings take effect the next time you start
+    &brandShortName; Mail &amp; Newsgroups.</li>
+</ol>
+
+<p>To set up &brandShortName; Mail &amp; Newsgroups to play a sound or display
+  an alert when new mail arrives, see <a
+  href="mailnews_preferences.xhtml#notifications">Mail &amp; Newsgroups
+  Preferences - Notifications</a>.</p>
+
+<p>You can always retrieve messages manually at any time. To get new messages
+  for the selected account or newsgroup, do one of the following:</p>
+
+<ul>
+  <li>Click Get Msgs on the Mail toolbar.</li>
+  <li>Open the File menu (in the Mail window) and choose Get New Messages.</li>
+</ul>
+
+<p>To get new messages for all your mail accounts, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>Click the triangle on the Get Msgs button in the Mail toolbar.</li>
+  <li>Choose Get All New Messages. &brandShortName; Mail &amp; Newsgroups
+    retrieves new messages for all your mail accounts.
+
+    <p>If you are not currently logged into one of your mail accounts, Mail
+      &amp; Newsgroups first prompts you to enter your user name and password
+      before retrieving new messages for that account. (If you have already
+      stored your user name and password using the Password Manager, Mail &amp;
+      Newsgroups doesn&apos;t prompt you for this information.)</p>
+  </li>
+</ol>
+
+<p><strong>Note</strong>: You can also open the File menu (in the Mail window)
+  and choose <q>Get New Messages for</q>.</p>
+
+<p>To get new messages for a specific mail account, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>Click the triangle on the Get Msgs button on the Mail toolbar.</li>
+  <li>Choose the account for which you want to retrieve mail.</li>
+</ol>
+
+<p><strong>Note</strong>: Mail &amp; Newsgroups prompts you for your password
+  the first time you retrieve messages for an account. You can choose to have
+  Mail &amp; Newsgroups store your password in the Password Manager at that
+  time.</p>
+
+<p>Password Manager can save all your user names and passwords on your own
+  computer and enter them for you automatically. For more information, see
+  <a href="using_priv_help.xhtml#using_the_password_manager">Using the Password
+  Manager</a>.</p>
+
+<p>[<a href="#reading_messages">Return to beginning of section</a>]</p>
+
+<h2 id="choosing_how_you_view_the_mail_window">Choosing How You View the Mail
+  Window</h2>
+
+<p>You can customize the layout of the Mail window (the window you see when you
+  choose Mail &amp; Newsgroups from the Window menu):</p>
+
+<ul>
+  <li>Open the View menu and choose Show/Hide to show or hide the Mail toolbar,
+    search bar, or the status bar.</li>
+  <li>Open the View menu and choose Layout to select the type of three-pane
+    window layout to use.</li>
+  <li>Expand and collapse any pane to switch between a three-pane or two-pane
+    view.</li>
+</ul>
+
+<p>[<a href="#reading_messages">Return to beginning of section</a>]</p>
+
+<h2 id="sorting_and_threading_messages">Sorting and Threading Messages</h2>
+
+<p>To sort messages by categories such as subject, sender, date, or priority,
+  begin from the Mail window:</p>
+
+<ul>
+  <li>Click the appropriate column heading in the message list window. Or, open
+    the View menu, choose Sort by, and then select the column you want to sort
+    by.</li>
+</ul>
+
+<p>To reorder column headings, begin from the Mail window:</p>
+
+<ul>
+  <li>Click and drag a column heading to the left or right to reposition the
+    column.</li>
+</ul>
+
+<p>To change which columns are displayed, begin from the Mail window:</p>
+
+<ul>
+  <li>Click the Show/Hide Columns icon <img src="images/columns.png" alt=""/>
+    and select the column to be added/removed from the list.</li>
+</ul>
+
+<p>To group messages by threading (subject), so each message is grouped with
+  all its responses:</p>
+
+<ul>
+  <li>Click the thread button to the left of the Subject, Sender, and Date
+    column headings. Or, open the View menu, choose Sort by, and then select
+    Threaded.</li>
+</ul>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/threadbutton.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td style="width: 20px;"></td>
+    <td><strong>Thread button</strong></td>
+  </tr>
+</table>
+
+<p><strong>Tip</strong>: The thread button automatically sorts the threads by
+  the age of their parent messages. If you want to use another sort criterion
+  for the threads, open the View menu and select the desired option from the
+  Sort by submenu.</p>
+
+<p><strong>Tip</strong>: Select <q>Preserve threading when sorting messages</q>
+  in the <a href="mailnews_preferences.xhtml#mail_and_newsgroups">Mail &amp;
+  Newsgroups Preferences</a> if you want &brandShortName; to preserve the
+  threaded message grouping when sorting messages with column header clicks. The
+  thread button just toggles between threaded and unthreaded message grouping in
+  this mode. If <q>Preserve threading when sorting messages</q> is not selected,
+  &brandShortName; automatically displays the messages unthreaded when you sort
+  them by clicking on a column header.</p>
+
+<p><strong>Tip</strong>: To help you identify unread messages in a collapsed
+  thread where you&apos;ve read the parent message, &brandShortName; Mail &amp;
+  Newsgroups underlines the parent message.</p>
+
+<p>[<a href="#reading_messages">Return to beginning of section</a>]</p>
+
+<h2 id="saving_and_printing_messages">Saving and Printing Messages</h2>
+
+<p>To save a mail message as a plain-text, HTML, or Outlook Express file:</p>
+
+<ol>
+  <li>In the Mail window, select the message.</li>
+  <li>Open the File menu and choose Save As, and then choose File.</li>
+  <li>For <q>Save as type</q>, choose a file type (HTML, Text, or Mail file).
+    Choose Mail file if you want to save the message so it can be opened by
+    Microsoft Outlook or Outlook Express.</li>
+  <li>Change the filename&apos;s extension to end in .html, .txt, or .eml,
+    depending on the file type you chose in step 3.</li>
+  <li>Choose a destination for the file and click Save.</li>
+</ol>
+
+<p>To print a selected message:</p>
+
+<ul>
+  <li>Click Print.</li>
+</ul>
+
+<p>[<a href="#reading_messages">Return to beginning of section</a>]</p>
+
+<h2 id="controlling_images_scripts_and_plugins">Controlling Images, Scripts,
+  and Plugins</h2>
+
+<p>By default, images and other content, that is hosted remotely, will not
+  display in messages you receive, except from senders in your address books
+  whom you have allowed. To change these settings:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Mail &amp; Newsgroups category, click Message Display. (If
+    no subcategories are visible, double-click Mail &amp; Newsgroups to
+    expand the list.)</li>
+  <li>Uncheck <q>Block images and other content from remote sources</q>.</li>
+  <li>Click OK to have your change take effect.</li>
+</ol>
+
+<p><strong>Note</strong>: See <q>Allow remote images in HTML mail</q> in <a
+  href="mailnews_addressbooks.xhtml#creating_a_new_address_book_card">Creating
+  a New Address Book Card</a> for details of how to change which senders can
+  show remote content.</p>
+
+<p>By default, plugins are not enabled for mail messages you receive. To change
+  this setting:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Advanced category, click Scripts &amp; Plugins. (If no
+    subcategories are visible, double-click Advanced to expand the
+    list.)
+    <ul>
+      <li>Under <q>Enable Plugins for</q>, check <q>Mail &amp; Newsgroups</q>
+        to enable plugins.</li>
+    </ul>
+  </li>
+  <li>Click OK to have your changes take effect.</li>
+</ol>
+
+<p>[<a href="#reading_messages">Return to beginning of section</a>]</p>
+
+<h1 id="sending_messages">Sending Messages</h1>
+
+<div class="contentsBox">In this section:
+  <ul>
+    <li><a href="#composing_mail_and_newsgroup_messages">Composing Mail and
+      Newsgroup Messages</a></li>
+    <li><a href="#using_the_message_composition_window">Using the Message
+      Composition Window</a></li>
+    <li><a href="#addressing_a_message">Addressing a Message</a></li>
+    <li><a href="#selecting_message_sending_options">Selecting Message
+      Sending Options</a></li>
+    <li><a href="#replying_to_a_message">Replying to a Message</a></li>
+    <li><a href="#forwarding_a_message">Forwarding a Message</a></li>
+    <li><a href="#confirming_that_your_message_was_opened">Confirming That Your
+      Message Was Opened</a></li>
+    <li><a href="#saving_and_editing_a_message_draft">Saving and Editing a
+      Message Draft</a></li>
+    <li><a href="#creating_and_using_templates">Creating and Using
+      Templates</a></li>
+  </ul>
+</div>
+
+<h2 id="composing_mail_and_newsgroup_messages">Composing Mail and Newsgroup
+  Messages</h2>
+
+<p>You can address, compose, reply to, or send a new message by doing one of
+  the following:</p>
+
+<ul>
+  <li>In any &brandShortName; window, open the File menu and choose New, then
+    Message.</li>
+  <li>Click Compose on the Mail toolbar.</li>
+  <li>While displaying a message, click Reply, Forward, or Reply All on the
+    Mail toolbar.</li>
+  <li>From the Address Book window, select an address and click Compose on the
+    Address Book.</li>
+</ul>
+
+<p><strong>Tip</strong>: Use the Mail &amp; Newsgroups Account Settings - 
+  <a href="mailnews_account_settings.xhtml#addressing">Composition &amp;
+  Addressing</a> dialog box to specify the HTML text editor to use for
+  composing messages sent from this account. (You can specify a different
+  editor for each of your accounts.) See
+  <a href="mailnews_getting_started.xhtml#changing_the_settings_for_an_account">Changing
+  the Settings for an Account</a> for more information.</p>
+
+<p><strong>Note</strong>: It is generally not possible to compose messages for
+  them to be published in blogs &amp; news feeds accounts. If you want to
+  publish posts in a blog (and you have the appropiate rights to do it), you
+  will need to use the mechanisms provided by the specific blog system. In some
+  cases, this can even include sending a mail message to a specific address.</p>
+
+<p>Composing messages in HTML format allows you to use different fonts, text
+  styles (such as bold or italic) and text colors, tables, numbered or bulleted
+  lists, and pictures in your messages. However, some recipients may only be
+  able to read messages composed in plain text format. If you want to use the
+  plain-text editor occasionally, you can hold down the Shift key while
+  clicking the Compose or the Reply button to use the plain-text editor on an
+  as-needed basis.</p>
+
+<p>[<a href="#sending_messages">Return to beginning of section</a>]</p>
+
+<h2 id="using_the_message_composition_window">Using the Message Composition
+  Window</h2>
+
+<p>Use the Compose window to address, compose, and send mail and newsgroup
+  messages. First specify whether you want to compose messages in plain text or
+  HTML by default in the <a
+  href="mailnews_account_settings.xhtml#addressing">Composition &amp;
+  Addressing</a> Preferences panel (open the Edit menu and choose Mail &amp;
+  Newsgroups Account Settings).</p>
+
+<p>To view the Compose window, click the Compose button on the Mail
+  toolbar.</p>
+
+<p>The Compose window contains the following:</p>
+
+<ul>
+  <li>Mail Toolbar
+
+    <p>You can click the following buttons:</p>
+    <ul>
+      <li><strong>Send</strong>: To send a completed message.</li>
+      <li><strong>Address</strong>: To search for names in your address
+        books.</li>
+      <li><strong>Attach</strong>: To attach a file to a message. See
+        <a href="#using_attachments">Using Attachments</a> for more
+        information.</li>
+      <li><strong>Spell</strong>: To check the spelling of your message
+        text.</li>
+      <li><strong>Security</strong>: To display information about whether
+        your message will be sent encrypted or digitally signed (or
+        both).</li>
+      <li><strong>Save</strong>: To save the message as a draft.</li>
+    </ul>
+  </li>
+  <li>Addressing area: Where you enter the email addresses of recipients.</li>
+  <li>Attachments area: When you attach files to a message (by clicking in this
+    area or by clicking the Attach button), the filenames will be listed in the
+    Attachments area to the right of the Addressing area.</li>
+  <li>Message body area: Where you type the contents of your message.</li>
+</ul>
+
+<p>If you&apos;ve chosen to compose messages using the HTML editor, you see an
+  additional toolbar with text formatting buttons similar to those in
+  &brandShortName; Composer.</p>
+
+<p>For help using the HTML editor, see
+  <a href="composer_help.xhtml#formatting_your_web_pages">Formatting Your Web
+  Pages</a>.</p>
+
+<p>[<a href="#sending_messages">Return to beginning of section</a>]</p>
+
+<h2 id="addressing_a_message">Addressing a Message</h2>
+
+<p>To address a mail message:</p>
+
+<ol>
+  <li>Type the name in the addressing area.
+
+    <p>If you have <a
+      href="mailnews_preferences.xhtml#address_autocompletion">address
+      autocompletion</a> enabled (it&apos;s enabled by default), type the first
+      few letters of the recipient&apos;s name and wait for Mail &amp;
+      Newsgroups to complete the address. (Or you can type part of the name and
+      immediately press <kbd class="mac">Return</kbd><kbd
+      class="noMac">Enter</kbd> to have Mail &amp; Newsgroups try to complete
+      the address.)</p>
+  </li>
+  <li>If multiple addresses are displayed, select an address and press
+    <kbd class="mac">Return</kbd><kbd class="noMac">Enter</kbd>.
+
+    <p><strong>Note</strong>: Use a comma to separate multiple addresses on the
+      same line. Do not use a comma to separate first or last names. For
+      example, multiple entries might be:</p>
+
+    <p><tt>user1@netscape.net,user2@netscape.net</tt></p>
+  </li>
+  <li>If you want this message to be sent from a different account, click the
+    <q>From</q> field to select the account you want. See
+    <a href="#changing_the_account_from_which_a_message_is_sent">Changing the
+    Account From Which a Message is Sent</a> for more information.</li>
+  <li>If necessary, click <q>To</q> to choose a different recipient type:
+    <ul>
+      <li><strong>To</strong>: For primary recipients of your message.</li>
+      <li><strong>Cc</strong>: For secondary recipients (carbon copy).</li>
+      <li><strong>Bcc</strong>: For secondary recipients not identified to the
+        other recipients, including those in the cc list (blind carbon
+        copy).</li>
+      <li><strong>Reply-To</strong>: For recipients to reply to a different
+        email address other than the one the message is sent from.</li>
+      <li><strong>Newsgroup</strong>: For posting to a newsgroup.</li>
+      <li><strong>Followup-To</strong>: For redirecting a newsgroup posting, so
+        that subsequent replies go directly to the redirected newsgroup instead
+        of the original newsgroup.</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Tip</strong>: You can quickly address a message by clicking the
+  email address contained in a message you&apos;re reading, and then selecting
+  Compose Mail To from the pop-up menu.</p>
+
+<p id="changing_the_account_from_which_a_message_is_sent"><strong>Changing the
+  Account From Which a Message is Sent</strong></p>
+
+<p>If you have multiple mail accounts, the account listed in the From field is
+  based on the account (or server) you selected when you choose to create a new
+  message. However, &brandShortName; Mail &amp; Newsgroups also allows you to
+  change the account a message is sent from while you&apos;re composing a
+  message. Click the From field to view a list of your accounts and then select
+  the account you want. A copy of the message is saved in the Sent folder of
+  the account where you sent the message from.</p>
+
+<p><strong>About Address Autocompletion</strong></p>
+
+<p>Address autocompletion allows you to address mail easily from the Compose
+  window without having to search for names or type complete names. Mail &amp;
+  Newsgroups automatically checks your address books and an
+  <a href="glossary.xhtml#ldap">LDAP</a> directory server (if available) and
+  completes the name if it finds a unique match. It also prevents mistakes by
+  showing all possible choices with additional information if it finds multiple
+  matches. Address autocompletion is enabled by default.</p>
+
+<p>If you don&apos;t want to use an address that Mail &amp; Newsgroups
+  provides, press Backspace or Delete to remove characters and then enter an
+  alternate address.</p>
+
+<p>To disable address autocompletion:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Mail &amp; Newsgroups category, click Addressing. (If no
+    subcategories are visible, double-click Mail &amp; Newsgroups to expand
+    the list).</li>
+  <li>In the Address Autocompletion section, deselect <q>Local Address
+    Books</q> and <q>Directory Server</q>.</li>
+  <li>Click OK.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Return to beginning of section</a>]</p>
+
+<h2 id="selecting_message_sending_options">Selecting Message Sending
+  Options</h2>
+
+<p>While you&apos;re composing a message, you can select these additional
+  message sending options from the Options menu:</p>
+
+<ul>
+  <li><strong>Select Addresses</strong>: The Select Addresses option lets you
+    choose the recipient&apos;s email address from your Address Books or a
+    remote directory. To look up an address in an address book or directory,
+    enter the first few letters of the recipient&apos;s first or last name to
+    start the search. Select an address and then click To:, Cc:, or Bcc: to
+    address your message.</li>
+  <li><strong>Check Spelling</strong>: Checks the spelling of the message text
+    before you send it. You can also click Spell.</li>
+  <li><strong>Spellcheck As You Type</strong>: Choose this option to have the
+    spelling of the message text checked as you type.</li>
+  <li><strong>Quote Message</strong>: Choose this option to have the selection
+    of the message text shown as quoted text.</li>
+  <li><strong>Return Receipt</strong>: Choose this option to request a
+    confirmation message when the recipient displays (opens) the message. Keep
+    in mind that the recipient may choose not to send you a return receipt.
+    This option lets you enable or disable return receipt requests on a
+    per-message basis. To automatically request return receipts for all
+    messages you send, use the return receipts preferences. See
+    <a href="mailnews_preferences.xhtml#return_receipts_preferences">Mail &amp;
+    Newsgroups Preferences - Return Receipts</a> for more information.</li>
+  <li><strong>Format</strong>: Send the message as plain text, or HTML
+    (formatted), or both. If you choose <q>Auto-Detect</q>, Mail &amp;
+    Newsgroups prompts you for the format to use if it&apos;s unknown whether
+    the recipient&apos;s mail program can display an HTML message. The format
+    you choose here overrides the send format you specified using the
+    Preferences command on the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu.</li>
+  <li><strong>Priority</strong>: Choose a priority to indicate whether the
+    message has lowest, low, normal, high, or highest priority.</li>
+  <li><strong>Character Encoding</strong>: Choose a character encoding used for
+    this message.</li>
+  <li><strong>Send a Copy To</strong>: Choose this if you want to file an
+    additional copy of the sent message in a different folder than your default
+    Sent folder. Then select the folder you want.</li>
+  <li><strong>Security</strong>: Choose this to change the default security
+    options for this message.</li>
+</ul>
+
+<p>An additional message formatting option is available from the Edit menu:</p>
+
+<ul>
+  <li><strong>Rewrap</strong>: If you are composing a message using the
+    plain-text editor, you can use the Rewrap command to rewrap long lines of
+    quoted text to fit the Compose window. This command rewraps selected quoted
+    text to the number of characters specified by the
+    <a href="mailnews_preferences.xhtml#composition">Composition</a>
+    preferences. This command is primarily useful when you are replying to a
+    message where the original message is quoted in your reply, and the original
+    message contains long lines.
+
+    <p>You use the Mail &amp; Newsgroups Account Settings command on the Edit
+      menu to specify that you want to use the plain-text editor for composing
+      messages. Select the Composition &amp; Addressing panel of the account
+      and uncheck <q>Compose messages in HTML format</q> to use the plain-text
+      editor for all messages. If you only want to use the plain-text editor
+      occasionally, you can hold down the Shift key while clicking the Compose
+      or the Reply button to use the plain-text editor on an as-needed
+      basis.</p>
+  </li>
+</ul>
+
+<p>[<a href="#sending_messages">Return to beginning of section</a>]</p>
+
+<h2 id="replying_to_a_message">Replying to a Message</h2>
+
+<p>To reply to a mail message:</p>
+
+<ul>
+  <li>Select the message.</li>
+  <li>Click Reply to respond to the sender alone.</li>
+  <li>Click Reply All to respond to all addressees in the message.</li>
+</ul>
+
+<p>To include the original message each time you reply to any message, and to
+  specify how to place the original message in the reply:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings.
+    You see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>If you have multiple accounts, select an account and click the
+    <a href="mailnews_account_settings.xhtml#addressing">Composition &amp;
+    Addressing</a> category for that account.</li>
+  <li>Select <q>Automatically quote the original message when
+    replying</q>.</li>
+  <li>Specify where in the message to place your reply. <q>Start my reply below
+    the quote</q> is the default.</li>
+  <li>If you have decided to <a
+    href="mailnews_account_settings.xhtml#account_settings">attach a
+    signature</a> to every outgoing message and selected to start your reply
+    above the quote here, you can additionally configure where your signature
+    is placed:
+    <ul>
+      <li>Select <q>below the quote (recommended)</q> to place your signature
+        at the very end of the message below the quoted text.</li>
+      <li>Select <q>below my reply (above the quote)</q> to place your
+        signature between your reply and the quoted text.</li>
+    </ul>
+
+    <p><strong>Note</strong>: If you have created a signature, you can
+      optionally <a href="mailnews_account_settings.xhtml#addressing">omit
+      it</a> when replying to a message.</p>
+  </li>
+  <li>Click OK.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Return to beginning of section</a>]</p>
+
+<h2 id="forwarding_a_message">Forwarding a Message</h2>
+
+<p>When you forward a message, you can specify how its contents are included
+  in the new message: <em>inline</em> (in the body of the message), or as an
+  <em>attachment</em>.</p>
+
+<p>To forward a message:</p>
+
+<ol>
+  <li>Select the message and click Forward.</li>
+  <li>Type the name or email address of the recipient.</li>
+  <li>Click Send.</li>
+</ol>
+
+<p>To set the default for forwarding messages:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Mail &amp; Newsgroups category, click
+    <a href="mailnews_preferences.xhtml#composition">Composition</a>. (If no
+    subcategories are visible, double-click Mail &amp; Newsgroups to expand the
+    list.)</li>
+  <li>For forwarding messages, choose Inline (in the message body) or As
+    Attachment.
+
+    <p><strong>Note</strong>: If you have created a signature and forward
+      inline, its placement depends on the respective reply setting. You can
+      optionally <a href="mailnews_account_settings.xhtml#addressing">omit the
+      signature</a> when forwarding a message.</p>
+  </li>
+  <li>Click OK.</li>
+</ol>
+
+<p><strong>Tip</strong>: To override the default for forwarding a message,
+  select the message, open the Message menu, and choose Forward As, then
+  choose Inline or Attachment.</p>
+
+<p>[<a href="#sending_messages">Return to beginning of section</a>]</p>
+
+<h2 id="confirming_that_your_message_was_opened">Confirming That Your Message
+  Was Opened</h2>
+
+<p>You can use return receipts to notify you when a recipient has displayed
+  (opened) your message. The recipient must be using a mail program that
+  supports the Message Disposition Notification (MDN) standard. Keep in mind
+  that the recipient may choose not to send you a return receipt, even if
+  you&apos;ve requested one. Messages you send to a newsgroup address will not
+  include a return receipt request, since news servers don&apos;t support this
+  feature.</p>
+
+<p>To request return receipts for all messages you send, you can use the global
+  <a href="mailnews_preferences.xhtml#return_receipts_preferences">Return
+  Receipt</a> preferences to specify how to manage requests you receive for
+  return receipts. You can override these global preferences for individual
+  accounts.</p>
+
+<p>To request a return receipt on a per-message basis:</p>
+
+<ul>
+  <li>From a Mail Compose window, open the Options menu, and choose Return
+    Receipt.</li>
+</ul>
+
+<p>To automatically request return receipts when sending messages from each of
+  your mail accounts:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Mail &amp; Newsgroups category, click
+    <a href="mailnews_preferences.xhtml#return_receipts_preferences">Return
+    Receipts</a>. (If no subcategories are visible, double-click Mail &amp;
+    Newsgroups to expand the list.)</li>
+  <li>Select <q>When sending messages, always request a return receipt</q>.</li>
+  <li>Click OK.</li>
+</ol>
+
+<p>For more information on setting return receipt preferences, see
+  <a href="mailnews_preferences.xhtml#return_receipts_preferences">Mail &amp;
+  Newsgroups Preferences - Return Receipts</a>.</p>
+
+<p>[<a href="#sending_messages">Return to beginning of section</a>]</p>
+
+<h2 id="saving_and_editing_a_message_draft">Saving and Editing a Message
+  Draft</h2>
+
+<p>To save a mail message as a draft so you can complete it later:</p>
+
+<ul>
+  <li>In the Compose window, click Save, or open the File menu and choose Save
+    as Draft. By default, the message is saved in the Drafts folder for the
+    current account.
+
+    <p><strong>Note</strong>: Your mail message will stay open after you save
+      it as a draft.</p>
+  </li>
+</ul>
+
+<p>To edit or send a message draft, begin from the Mail window:</p>
+
+<ol>
+  <li>Click the Drafts folder for the account where you created the message
+    draft.</li>
+  <li>Click the message that you want to edit.</li>
+  <li>In the top-right corner of the message, click the Edit Draft
+    button.</li>
+  <li>Edit the message as necessary.</li>
+  <li>Click Send to send the message or click Save to save the message so you
+    can complete it later.
+
+    <p><strong>Note</strong>: Sending the message removes it from the Drafts
+      folder.</p>
+  </li>
+</ol>
+
+<p><strong>Tip</strong>: You can also double-click the message to open it for
+  editing. This is especially useful if the message pane is closed.</p>
+
+<p>To delete one or more unwanted message drafts, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>Click the Drafts folder for the account where you created the message
+    drafts.</li>
+  <li>Select the message drafts that you want to delete.</li>
+  <li>Click Delete in the Mail toolbar.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Return to beginning of section</a>]</p>
+
+<h2 id="creating_and_using_templates">Creating and Using Templates</h2>
+
+<p>Templates are useful for setting the default format for messages that you
+  send regularly, such as weekly status reports. You can save a message as a
+  template from any window in which it is displayed, including from within a
+  Mail compose window.</p>
+
+<p>To save a message to use as a template:</p>
+
+<ol>
+  <li>In the Mail window, click Compose to create a new message and then set
+    the default font, text size, text color, background color, and any other
+    default formatting you want.
+
+    <p>Alternatively, open an existing message that already has the formatting
+      you want.</p>
+  </li>
+  <li>While displaying the message, open the File menu, choose Save As, then
+    choose Template. The message is stored as a template in the Templates
+    folder for the current mail account.</li>
+</ol>
+
+<p>To compose a message using a template:</p>
+
+<ol>
+  <li>In the Mail window, select the Templates folder for the account where you
+    created the message template.</li>
+  <li>Double-click the message template to open it.</li>
+  <li>Edit the message, then save it (to put it in the Drafts folder) or send
+    it.
+
+    <p><strong>Note</strong>: Sending the message does not remove the template
+      from the Templates folder. The template is preserved for future use.</p>
+  </li>
+</ol>
+
+<p>To delete one or more unwanted message templates, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>Click the Templates folder for the account where you created the message
+    templates.</li>
+  <li>Select the message templates that you want to delete.</li>
+  <li>Click Delete in the Mail toolbar.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Return to beginning of section</a>]</p>
+
+<h1 id="creating_html_mail_messages">Creating HTML Mail Messages</h1>
+
+<div class="contentsBox">In this section:
+  <ul>
+    <li><a href="#using_html_in_your_messages">Using HTML in Your
+      Messages</a></li>
+    <li><a href="#choosing_html_mail_sending_options">Choosing HTML Message
+      Sending Options</a></li>
+    <li><a href="#specifying_recipients_for_html_messages">Specifying
+      Recipients for HTML Messages</a></li>
+    <li><a href="#viewing_the_message_source_for_html_messages">Viewing the
+      Message Source for HTML Messages</a></li>
+    <li><a href="#using_the_html_mail_question_dialog_box">Using the HTML Mail
+      Question Dialog Box</a></li>
+  </ul>
+</div>
+
+<h2 id="using_html_in_your_messages">Using HTML in Your Messages</h2>
+
+<p>HTML messages can include formatted text, links, images, and
+  tables&mdash;just like a web page. However, some recipients may not be able
+  to receive HTML messages. &brandShortName; Mail &amp; Newsgroups allows you
+  to compose mail and newsgroup messages using either the HTML (rich-text)
+  formatting editor or the plain-text editor for each mail account you have.
+  In addition, you can choose whether your addressees should receive HTML or
+  plain-text messages by default, and how Mail &amp; Newsgroups should handle
+  messages when it&apos;s not known if an addressee can receive HTML-formatted
+  mail.</p>
+
+<p>To specify whether to use the HTML editor as the default for composing
+  messages, begin from the Mail window:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Select the mail or newsgroup account you want to use.</li>
+  <li>Go to the Composition &amp; Addressing panel and select <q>Compose
+    messages in HTML format</q>. You see the Formatting toolbar in the Compose
+    window. Leave this box unchecked to use the plain-text editor for this
+    account.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Return to beginning of
+  section</a>]</p>
+
+<h3 id="editing_or_inserting_html_elements">Editing or Inserting HTML
+  Elements</h3>
+
+<p>If you understand how to work with HTML source code, you can edit or insert
+  additional HTML tags, style attributes, and JavaScript in your mail message.
+  If you are not sure how to work with HTML source code, it&apos;s best not to
+  change it. To work with HTML code, use one of these methods:</p>
+
+<ul>
+  <li>Place the insertion point where you want to insert the HTML code, then
+    open the Insert menu and choose HTML. In the Insert HTML dialog box, enter
+    HTML tags and text, and then click Insert to insert your changes.</li>
+  <li>Select the HTML source code that you want to edit, then open the Insert
+    menu and choose HTML. In the Insert HTML dialog box, edit HTML tags and
+    text, and then click Insert to insert your changes.</li>
+  <li>Select an element such as a table, named anchor, image, link, or
+    horizontal line. Double-click the element to open the associated properties
+    dialog box for that item. Click Advanced Edit to open the Advanced Property
+    Editor. You can use the Advanced Property Editor to add HTML attributes and
+    JavaScript to objects.</li>
+</ul>
+
+<p>For more information on editing HTML source code, see
+  <a href="composer_help.xhtml#using_the_advanced_property_editor">Using the
+  Advanced Property Editor</a>.</p>
+
+<p>[<a href="#creating_html_mail_messages">Return to beginning of
+  section</a>]</p>
+
+<h2 id="choosing_html_mail_sending_options">Choosing HTML Mail Sending
+  Options</h2>
+
+<p>By default, Mail &amp; Newsgroups prompts you before sending HTML messages
+  when it&apos;s not known whether the recipient&apos;s mail program can
+  display HTML-formatted messages.</p>
+
+<p>To choose sending-format options for mail messages, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Mail &amp; Newsgroups category, click
+    <a href="mailnews_preferences.xhtml#send_format">Send Format</a>. (If no
+    subcategories are visible, double-click Mail &amp; Newsgroups to expand the
+    list).
+
+    <p><strong>Note</strong>: This preference applies only to mail messages,
+      not to newsgroup messages.</p>
+  </li>
+  <li>Select the option you want and then click OK.</li>
+</ol>
+
+<p>If while composing a message you realize that one or more recipients may not
+  be able to receive HTML-formatted mail, you can easily convert the message to
+  a different format when you click Send:</p>
+
+<ol>
+  <li>In the Compose window, open the Options menu and choose Format.</li>
+  <li>Select the format you want to use for sending the message from the
+    submenu:
+    <ul>
+      <li><strong>Auto Detect</strong>: Mail &amp; Newsgroups chooses the
+        appropriate format for the message text. If it can&apos;t determine the
+        format, it asks you to choose a format.</li>
+      <li><strong>Plain Text Only</strong>: The message may not display
+        formatting such as bold text, but all mail programs will be able to
+        display the message.</li>
+      <li><strong>Rich Text (HTML) Only</strong>: Some mail programs may have
+        trouble displaying an HTML-formatted message. Choose this option only
+        if you are sure the recipient&apos;s mail program can display
+        HTML-formatted mail.</li>
+      <li><strong>Plain and Rich (HTML) Text</strong>: This uses more disk
+        space, but may be the best choice if you are not sure whether the
+        recipient&apos;s mail program can display HTML-formatted mail.</li>
+    </ul>
+  </li>
+  <li>When you&apos;ve finished composing the message, click Send.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Return to beginning of
+  section</a>]</p>
+
+<h2 id="specifying_recipients_for_html_messages">Specifying Recipients for HTML
+  Messages</h2>
+
+<p>You can save time by indicating whether individuals in your address books
+  prefer to receive either HTML messages or plain text messages.</p>
+
+<ol>
+  <li>Open the Window menu and choose Address Book.</li>
+  <li>Select the address book on the left and then select the individual&apos;s
+    card on the right.</li>
+  <li>Click Properties to display the <q>Card for</q> dialog box.</li>
+  <li>In the Contact tab, use the <q>Prefers to receive messages formatted
+    as</q> drop-down list to select HTML if you know this recipient can read
+    HTML-formatted messages (such as messages that include links, images, or
+    tables).
+
+    <p>If this recipient can only read messages sent as plain text (no
+      formatting), then choose Plain Text. If you don&apos;t know or are not
+      sure, choose Unknown.</p>
+
+    <p>If you choose Unknown, &brandShortName; Mail &amp; Newsgroups determines
+      the sending format based on the Send Format settings for Mail &amp;
+      Newsgroups in the Preferences dialog box. If Mail &amp; Newsgroups still
+      can&apos;t determine the correct format, it will prompt you to choose a
+      sending format when you send the message.</p>
+  </li>
+  <li>Click OK.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Return to beginning of
+  section</a>]</p>
+
+<h2 id="viewing_the_message_source_for_html_messages">Viewing the Message
+  Source for HTML Messages</h2>
+
+<p>You can quickly view the HTML and other code that generates an HTML message
+  you&apos;ve received:</p>
+
+<ol>
+  <li>In the message list window, open the message.</li>
+  <li>Open the View menu and choose Message Source.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Return to beginning of
+  section</a>]</p>
+
+<h2 id="using_the_html_mail_question_dialog_box">Using the HTML Mail Question
+  Dialog Box</h2>
+
+<p>The HTML Mail Question dialog box appears when you try to send a message to
+  someone whose mail program may not be able to display HTML messages or when
+  Mail &amp; Newsgroups cannot determine whether your recipient can display
+  HTML messages. If you are in doubt, send the message in both HTML and
+  plain-text formats.</p>
+
+<p>[<a href="#creating_html_mail_messages">Return to beginning of
+  section</a>]</p>
+
+<h1 id="using_attachments">Using Attachments</h1>
+
+<div class="contentsBox">In this section:
+  <ul>
+    <li><a href="#attaching_a_file_or_web_page">Attaching a File or Web
+      Page</a></li>
+    <li><a href="#viewing_and_opening_attachments">Viewing and Opening
+      Attachments</a></li>
+    <li><a href="#saving_attachments">Saving Attachments</a></li>
+  </ul>
+</div>
+
+<h2 id="attaching_a_file_or_web_page">Attaching a File or Web Page</h2>
+
+<p>To attach a file to an outgoing mail message:</p>
+
+<ol>
+  <li>In the Compose window, click Attach or open the File menu and choose
+    Attach File. You see the <q>Enter file to attach</q> dialog box.
+
+    <p><strong>Tip</strong>: You can also click inside the Attachments area to
+      attach a file.</p>
+  </li>
+  <li>Type the name of the file you want to attach, or select a file from your
+    hard drive that you want to attach.</li>
+  <li>Click Open. The filename appears in the Attachments area.</li>
+</ol>
+
+<p><strong>Tip</strong>: You can also drag and drop one or more files from your
+  desktop into the Attachments area in the Compose window.</p>
+
+<p>To attach a web page to an outgoing mail message:</p>
+
+<ol>
+  <li>In the Compose window, open the File menu and choose Attach Web Page.</li>
+  <li>In the dialog box, enter the URL of the page and then click OK. The web
+    page URL appears in the Attachments area.</li>
+</ol>
+
+<p><strong>Tip</strong>: When you are viewing a page in the browser,
+  you can send the page to someone by opening the File menu and choosing Send
+  Page.</p>
+
+<p>[<a href="#using_attachments">Return to beginning of section</a>]</p>
+
+<h2 id="viewing_and_opening_attachments">Viewing and Opening Attachments</h2>
+
+<p>If you receive a mail attachment that consists of a file type that
+  &brandShortName; can display (such as graphic files and HTML files), you see
+  the attachment displayed inline (in the body of the message). For other file
+  types, Mail &amp; Newsgroups lets you open the attachment using another
+  application, or you can save the attachment on your hard disk.</p>
+
+<p>To open the attachment, make sure you have a program on your computer that
+  can open files of the same type as the attachment&apos;s file format. For
+  example, if you want to open a .DOC file, make sure you have a program on
+  your computer that can open .DOC files.</p>
+
+<p>To open an attachment:</p>
+
+<ol>
+  <li>Double-click the attachment you want (if there is more than one).</li>
+  <li>In the Downloading dialog box, choose what you want &brandShortName; to
+    do with the attachment:
+    <ul>
+      <li>If &brandShortName; finds an application on your hard disk that can
+        open the attachment, you can open the attachment using that
+        application. Click <q>Choose</q> to use a different application to open
+        the attachment.</li>
+      <li>If &brandShortName; can&apos;t find an application on your hard disk
+        that can open the attachment, you can save the attachment. You
+        won&apos;t be able to open the  attachment, but at least you can save
+        it on your hard disk until you can install an application that can open
+        it.</li>
+      <li>Click <q>Advanced</q> to add a new file type to the list of helper
+        applications. &brandShortName; uses helper applications to determine
+        how different file types are opened by other applications from within
+        &brandShortName;. For more information, see
+        <a href="nav_help.xhtml#plugins_and_downloads">Plugins and
+        Downloads</a>.</li>
+    </ul>
+  </li>
+  <li>Click OK.</li>
+</ol>
+
+<p><strong>Note</strong>: If you are viewing your mail using an IMAP mail
+  server, all attachments remain on the server.</p>
+
+<p>[<a href="#using_attachments">Return to beginning of section</a>]</p>
+
+<h2 id="saving_attachments">Saving Attachments</h2>
+
+<p>To save an attachment:</p>
+
+<ol>
+  <li>In the right side of the message envelope, under <q>Attachments</q>,
+    select the attachment that you want to save.</li>
+  <li>Right-click <span class="mac">or, if you have a one-button mouse,
+    <kbd>Ctrl</kbd>-click</span>the attachment and choose Save As from the
+    pop-up menu.</li>
+  <li>Choose a filename and location for the attachment on your hard disk and
+    then click OK. Mail &amp; Newsgroups downloads the attachment and saves it
+    to the specified location.</li>
+</ol>
+
+<p><strong>Tip</strong>: To save all attachments, right-click
+  <span class="mac">or, if you have a one-button mouse,
+  <kbd>Ctrl</kbd>-click</span>the first one in the attachment list, and choose
+  Save All. You can then specify the location where you want all the
+  attachments to be saved.</p>
+
+<p>[<a href="#using_attachments">Return to beginning of section</a>]</p>
+
+<h1 id="deleting_messages">Deleting Messages</h1>
+
+<div class="contentsBox">In this section:
+  <ul>
+    <li><a href="#deleting_pop_or_imap_messages">Deleting POP or IMAP
+      Messages</a></li>
+    <li><a href="#moving_messages_to_and_from_the_trash">Moving Messages to and
+      from the Trash</a></li>
+  </ul>
+</div>
+
+<h2 id="deleting_pop_or_imap_messages">Deleting POP or IMAP Messages</h2>
+
+<p>How you delete messages depends on your mail server type: POP or IMAP.
+  Deleted POP messages are automatically moved to the Trash folder. IMAP users
+  can set different options for deleting messages.</p>
+
+<p>To delete messages from your Inbox or other folders, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>In the message list, select the messages and click Delete. By default,
+    Mail &amp; Newsgroups moves the selected messages to the Trash folder.</li>
+  <li>To delete messages permanently, open the File menu and choose Empty
+    Trash.</li>
+</ol>
+
+<p>To delete messages without opening them, begin from the Mail window:</p>
+
+<ol>
+  <li>Open the View menu and choose Layout, and then uncheck Message Pane.
+
+    <p>Alternatively, click the Message Pane handle (the ridged area centered
+      at the bottom of the message list) to close the message pane.</p>
+  </li>
+  <li>In the message list, select the messages and click Delete.</li>
+</ol>
+
+<p>To set deletion preferences for IMAP messages:</p>
+
+<ol>
+  <li>Open the Edit menu and choose Mail &amp; Newsgroups Account Settings. You
+    see the Mail &amp; Newsgroups Account Settings dialog box.</li>
+  <li>Locate the IMAP account you want, and then click the Server Settings
+    category under the account name.</li>
+  <li>Select the <a
+    href="mailnews_account_settings.xhtml#when_i_delete_a_message">options</a>
+    you want for deleting messages and click OK.</li>
+</ol>
+
+<p>[<a href="#deleting_messages">Return to beginning of section</a>]</p>
+
+<h2 id="moving_messages_to_and_from_the_trash">Moving Messages To and From the
+  Trash</h2>
+
+<p>If you use a POP server to deliver your mail, or if you set up IMAP to use
+  the Trash folder, follow these steps to delete messages from your Inbox or
+  other folders:</p>
+
+<ol>
+  <li>In the message list, select the messages you want to delete.</li>
+  <li>Click Delete. Mail &amp; Newsgroups moves the messages to the Trash
+    folder.</li>
+</ol>
+
+<p>To recover messages from the Trash:</p>
+
+<ol>
+  <li>Click the Trash folder.</li>
+  <li>Select the messages you want to recover and drag them to another
+    folder.</li>
+</ol>
+
+<p>To delete messages permanently:</p>
+
+<ul>
+  <li>Open the File menu and choose Empty Trash.</li>
+</ul>
+
+<p>[<a href="#deleting_messages">Return to beginning of section</a>]</p>
+</body>
+</html>

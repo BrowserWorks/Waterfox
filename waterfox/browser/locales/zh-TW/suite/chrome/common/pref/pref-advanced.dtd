@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "進階">
+
+<!ENTITY prefCheckDefault.caption         "系統整合">
+<!ENTITY prefCheckDefaultClient.label     "檢查啟動時的預設應用程式設定">
+<!ENTITY prefCheckDefaultClient.accesskey "C">
+
+<!ENTITY defaultClientFor.description     "將 &brandShortName; 設定為下列項目的應用程式:">
+<!ENTITY setDefaultBrowser.label          "瀏覽器">
+<!ENTITY setDefaultBrowser.accesskey      "B">
+<!ENTITY setDefaultMail.label             "郵件">
+<!ENTITY setDefaultMail.accesskey         "M">
+<!ENTITY setDefaultNews.label             "新聞群組">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "消息來源">
+<!ENTITY setDefaultFeed.accesskey         "F">
+<!ENTITY useInternalSettings.description  "使用 &brandShortName; 內建的郵件與新聞群組功能開啟下列訊息類型中的瀏覽器鏈結:">
+<!ENTITY useInternalMail.label            "郵件（mailto:）">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "新聞群組（news:、snews:、nntp:）">
+<!ENTITY useInternalNews.accesskey        "e">
+
+<!ENTITY printing.label                   "列印">
+<!ENTITY useNativePrintDialog.label       "若支援，使用原生的列印對話框">
+<!ENTITY useNativePrintDialog.accesskey   "U">
+<!ENTITY useGlobalPrintSettings.label     "使用全域列印設定">
+<!ENTITY useGlobalPrintSettings.accesskey "G">
+
+<!ENTITY crashReports.caption             "程式錯誤回報員">
+<!ENTITY submitCrashes.label              "送出錯誤報告">
+<!ENTITY submitCrashes.accesskey          "S">
+
+<!ENTITY devTools.caption                 "開發者工具">
+<!ENTITY allowDebugger.label              "允許除錯器連線至 &brandShortName;">
+<!ENTITY allowDebugger.accesskey          "A">
+<!ENTITY allowRemoteConnections.label     "允許來自其他電腦的連線">
+<!ENTITY allowRemoteConnections.accesskey "o">
+<!ENTITY connectionPrompt.label           "連入連線提示">
+<!ENTITY connectionPrompt.accesskey       "P">
+<!ENTITY remoteDebuggerPort.label         "用來連線的埠號:">
+<!ENTITY remoteDebuggerPort.accesskey     "n">
