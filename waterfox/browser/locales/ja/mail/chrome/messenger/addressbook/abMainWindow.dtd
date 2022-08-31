@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY showAsDefault.label			"初期表示ディレクトリー">
+<!ENTITY showAsDefault.accesskey		"S">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label		"名前またはメールアドレス">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label				"アドレス帳">
+<!ENTITY GeneratedName.label			"名前">
+<!ENTITY PrimaryEmail.label			"メールアドレス">

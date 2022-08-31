@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from AccountManager.xhtml -->
+
+<!ENTITY accountManagerTitle.label "Параметры учётной записи">
+<!ENTITY  accountManagerCloseButton.label "Закрыть">
+
+<!ENTITY accountActionsButton.label "Действия для учётной записи">
+<!ENTITY accountActionsButton.accesskey "в">
+<!ENTITY addMailAccountButton.label "Добавить учётную запись почты…">
+<!ENTITY addMailAccountButton.accesskey "и">
+<!ENTITY addIMAccountButton.label "Добавить учётную запись чата…">
+<!ENTITY addIMAccountButton.accesskey "а">
+<!ENTITY addFeedAccountButton.label "Добавить учётную запись лент новостей…">
+<!ENTITY addFeedAccountButton.accesskey "о">
+<!ENTITY setDefaultButton.label "Установить по умолчанию">
+<!ENTITY setDefaultButton.accesskey "п">
+<!ENTITY removeButton.label "Удалить учётную запись">
+<!ENTITY removeButton.accesskey "д">
+
+<!ENTITY addonsButton.label "Расширения и темы">
+
+<!-- AccountManager.xhtml -->
