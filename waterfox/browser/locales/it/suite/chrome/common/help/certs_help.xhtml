@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Gestione Certificati</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<div class="boilerPlate">Questo documento &egrave; fornito esclusivamente a scopo 
+  informativo. Dovrebbe aiutarvi a prendere le misure necessarie per proteggere la 
+  privacy e la sicurezza dei vostri dati personali su Internet. Questo documento, 
+  tuttavia, non affronta tutte le problematiche di privacy e sicurezza online, e 
+  neppure rappresenta una raccomandazione riguardo cosa costituisca una protezione 
+  adeguata della privacy e della sicurezza su Internet.</div>
+
+<h1 id="certificate_manager">Gestione certificati</h1>
+
+<p>Questa sezione descrive come usare la Gestione certificati. Per maggiori 
+  informazioni sull&apos;uso dei certificati, consultare <a href="using_certs_help.xhtml">
+  Usare i certificati</a>.</p>
+
+<p>Se al momento non &egrave; visualizzata la finestra Gestione certificati, eseguire 
+  questa procedura:</p>
+
+<ol>
+  <li>Aprire il menu <span class="mac">&brandShortName;</span>
+    <span class="noMac">Modifica</span> e scegliere Preferenze.</li>
+  <li>Sotto la categoria Privacy e sicurezza, fare clic su Certificati. 
+    (Se non sono visibili sottocategorie, fare doppio clic su Privacy e sicurezza 
+    per espandere la lista.)</li>
+  <li>Fare clic su Gestione certificati.</li>
+</ol>
+
+<div class="contentsBox">In questa sezione:
+  <ul>
+    <li><a href="#your_certificates">Certificati personali</a></li>
+    <li><a href="#people">Persone</a></li>
+    <li><a href="#servers">Server</a></li>
+    <li><a href="#authorities">Autorit&agrave;</a></li>
+    <li><a href="#others">Altro</a></li>
+  </ul>
+</div>
+
+<h2 id="your_certificates">Certificati personali</h2>
+
+<p>La scheda Certificati personali in <a href="#certs_first">Gestione certificati</a>
+  visualizza i certificati memorizzati per la propria identificazione. I 
+  certificati personali sono elencati sotto al nome dell&apos;organizzazione che li
+  ha emessi. Se non si possono vedere i nomi dei certificati sotto al nome di una
+  organizzazione, fare doppio clic sul nome dell&apos;organizzazione.</p>
+
+<p>Utilizzare i seguenti pulsanti per visualizzare e gestire i certificati (la maggior parte
+  delle azioni prevede la selezione di uno o pi&ugrave; certificati):</p>
+
+<ul>
+  <li><strong>Visualizza</strong>: Mostra informazioni dettagliate riguardo i 
+    certificati selezionati.</li>
+  <li><strong>Archivia</strong>: Avvia la procedura di salvataggio dei 
+    certificati selezionati. Appare una finestra che permette di scegliere 
+    una password per proteggere il file di archiviazione. Si pu&ograve; poi 
+    salvare il file di archiviazione in una directory di propria scelta.</li>
+  <li><strong>Archivia tutti</strong>: Avvia la procedura per salvare tutti 
+    i certificati presenti nel 
+    <a href="glossary.xhtml#software_security_device">
+    Dispositivo software di sicurezza</a>.
+
+    <p><strong>Nota</strong>: I certificati presenti su smart card non possono essere archiviati. 
+      Anche selezionando alcuni certificati e facendo clic su Archivia, o facendo clic su Archivia 
+      tutti, il file di archiviazione risultante non includer&agrave; alcun certificato che sia 
+      memorizzato su smart card o su altre periferiche esterne di sicurezza. Si possono archiviare 
+      solamente i certificati che sono memorizzati nel Dispositivo software di sicurezza
+      incorporato.</p>
+  </li>
+  <li><strong>Importa</strong>: Importa uno o pi&ugrave; certificati che erano 
+    stati precedentemente archiviati. Quando si fa clic su Importa, Gestione 
+    certificati per prima cosa chiede di indicare la directory dove si trova il 
+    file di archiviazione. I nomi dei files di archiviazione di certificati 
+    solitamente terminano in <tt>.p12</tt>; ad esempio, <tt>MioCertif.p12</tt>. 
+    Dopo aver selezionato il file da importare, Gestione certificati chiede di 
+    digitare la password scelta al momento di archiviare il certificato.</li>
+  <li><strong>Elimina</strong>: Elimina i certificati selezionati.</li>
+</ul>
+
+<h3 id="choose_a_certificate_backup_password">Scegliere la password di archiviazione 
+  di un certificato</h3>
+
+<p>La password di archiviazione di un certificato protegge uno o pi&ugrave; 
+  certificati che sono stati archiviati tramite la scheda <a href="#your_certificates">
+  Certificati personali</a> in Gestione certificati.</p>
+
+<p>Gestione certificati chiede di impostare questa password quando si archiviano dei 
+  certificati, e la richiede quando si cerca di importare certificati che erano stati 
+  precedentemente archiviati.</p>
+
+<ul>
+  <li><strong>Password di archiviazione del certificato</strong>: Digitare la propria 
+    password di archiviazione in questo campo.</li>
+  <li><strong>Password di archiviazione del certificato (ancora)</strong>: Digitare 
+    di nuovo la propria password di archiviazione. Se non viene digitata una seconda 
+    volta esattamente come &egrave; stata digitata la prima volta, il pulsante OK 
+    rimane inattivo. Se succede, provare a digitare ancora un volta la nuova password.</li>
+</ul>
+
+<p>Se qualcuno ottiene il file contenente un certificato che avevate archiviato e 
+  successivamente lo importa, questa persona pu&ograve; inviare messaggi e accedere 
+  a siti web facendosi passare per voi. Potrebbe essere un problema, ad esempio, se 
+  si firmano digitalmente e-mail importanti oppure si gestiscono attraverso questi 
+  certificati account o investimenti bancari tramite Internet.</p>
+
+<p>Quindi, &egrave; importante scegliere una password di archiviazione del certificato 
+  che sia difficile da indovinare. Il <strong>misuratore di qualit&agrave; della password</strong> 
+  fornisce un&apos;idea approssimativa della qualit&agrave; della password 
+  nel momento stesso in cui viene digitata, basandosi su parametri come lunghezza e uso 
+  di lettere maiuscole, lettere minuscole, numeri e simboli. Non garantisce comunque che 
+  la password non possa essere indovinata.</p>
+
+<p>Per maggiori informazioni, consultare 
+  <a href="passwords_help.xhtml#choosing_a_good_password">
+  Scegliere una buona password</a>.</p>
+
+<p>&Egrave; altres&igrave; importante conservare la password in un posto sicuro, e non in 
+  un luogo qualsiasi facilmente accessibile a chiunque. Se si dimentica la password 
+  sar&agrave; impossibile importare il file di archiviazione del proprio certificato.</p>
+
+<h3 id="delete_your_certificates">Eliminare i Certificati personali</h3>
+
+<p>Prima di eliminare uno dei propri certificati personali scaduti dalla scheda 
+  <a href="#your_certificates">Certificati personali</a> in Gestione certificati, 
+  assicurarsi di non averne in futuro bisogno per poter leggere vecchi messaggi e-mail 
+  cifrati con la chiave privata corrispondente a quel
+  certificato.</p>
+
+<h2 id="people">Persone</h2>
+
+<p>La scheda Persone in <a href="#certificate_manager"> Gestione certificati</a> mostra
+  i certificati e-mail memorizzati che identificano altre persone.</p>
+
+<p>Quando altre persone vi inviano messaggi e-mail firmati digitalmente, 
+  Gestione certificati importa automaticamente i loro certificati. Si possono 
+  usare questi certificati per inviare messaggi e-mail cifrati a queste persone.</p>
+
+<p>I certificati altrui sono elencati sotto al nome dell&apos;organizzazione 
+  che li ha emessi. Se non si possono vedere i nomi dei certificati sotto al nome
+  di una organizzazione, fare doppio clic sul nome dell&apos;organizzazione.</p>
+
+<p>Utilizzare i seguenti pulsanti per visualizzare e gestire i certificati (la maggior parte
+  delle azioni prevede la selezione di uno o pi&ugrave; certificati):</p>
+
+<ul>
+  <li><strong>Visualizza</strong>: Mostra informazioni dettagliate riguardo i 
+    certificati selezionati.</li>
+  <li><strong>Modifica</strong>: Visualizza o cambia le impostazioni di affidabilit&agrave; 
+    che Gestione certificati associa ai certificati selezionati. Si possono usare queste 
+    impostazioni per contrassegnare il certificato di un sito web come ritenuto o non 
+    ritenuto attendibile ai fini della identificazione.</li>
+  <li><strong>Importa</strong>: Importa un file contenenti uno o pi&ugrave;
+    certificati. Quando si fa clic su Importa, Gestione certificati richiede di
+    individuare il file che contiene il/i certificato(i).</li>
+  <li><strong>Esporta</strong>: Esporta i certificati selezionati. Si possono
+    scegliere diversi formati.</li>
+  <li><strong>Elimina</strong>: Elimina i certificati selezionati.</li>
+</ul>
+
+<h3 id="delete_e-mail_certificates">Eliminare i certificati e-mail</h3>
+
+<p>Prima di cancellare il certificato di qualcun altro nella scheda <a href="#people">Persone</a>
+  in Gestione certificati, assicurarsi di non averne pi&ugrave; bisogno in futuro per inviare
+  messaggi e-mail cifrati a questa persona o per verificare la firma digitale dei messaggi
+  provenienti da questa persona.</p>
+
+<h2 id="servers">Server</h2>
+
+<p>La scheda Server in Gestione certificati mostra i certificati memorizzati 
+che identificano i server (siti web, server di posta).</p>
+
+<p>I certificati che identificano server sono raggruppati sotto i nomi delle organizzazioni
+  che li hanno emessi. Se non si possono vedere i nomi dei certificati sotto al nome
+  di una organizzazione, fare doppio clic sul nome dell&apos;organizzazione.</p>
+
+<p>Utilizzare i seguenti pulsanti per visualizzare e gestire i certificati (la maggior parte
+  delle azioni prevede la selezione di uno o pi&ugrave; certificati):</p>
+
+<ul>
+  <li><strong>Visualizza</strong>: Mostra informazioni dettagliate riguardo ai 
+    certificati selezionati.</li>
+  <li><strong>Modifica</strong>: Visualizza o cambia le impostazioni di affidabilit&agrave; 
+    che Gestione certificati associa ai certificati selezionati. Si possono usare queste 
+    impostazioni per contrassegnare il certificato di un sito web come ritenuto o non 
+    ritenuto attendibile ai fini della identificazione.</li>
+  <li><strong>Importa</strong>: Importa un file contenenti uno o pi&ugrave;
+    certificati. Quando si fa clic su Importa, Gestione certificati richiede di
+    individuare il file che contiene il/i certificato(i).</li>
+  <li><strong>Esporta</strong>: Esporta i certificati selezionati. Si possono
+    scegliere diversi formati.</li>
+  <li><strong>Elimina</strong>: Elimina i certificati selezionati.</li>
+  <li><strong>Aggiungi eccezione</strong>: Aggiunge una eccezione di sicurezza per un server
+    (sito web, server di posta) che si identifica con informazioni non valide.
+    Questa &egrave; una funzione avanzata, procedere con cautela.</li>
+</ul>
+
+<h3 id="edit_web_site_certificate_trust_settings">Modifica delle impostazioni di 
+  affidabilit&agrave; del certificato di un sito web</h3>
+
+<p>Quando si seleziona il certificato di un sito web nella scheda <a href="#servers">Server</a>
+  in Gestione certificati e si fa clic su Modifica, viene visualizzata la finestra <q>Modifica
+  impostazioni fiducia cert. sito web</q>. Qui si pu&ograve; specificare se il certificato
+  selezionato &egrave; da considerare attendibile ai fini della identificazione del sito web
+  e della predisposizione di una connessione cifrata con il sito.</p>
+
+<p>La finestra di dialogo contiene questi elementi:</p>
+
+<ul>
+  <li><strong>Il certificato <q><em>nome del certificato</em></q> &egrave; stato
+    rilasciato da</strong>: Fornisce informazioni circa l&apos;
+    <a href="glossary.xhtml#certificate_authority">Autorit&agrave; di Certificazione</a> 
+    che ha emesso questo certificato.</li>
+  <li><strong>Modifica delle impostazioni di affidabilit&agrave; di un certificato</strong>:
+    <ul>
+      <li><strong>Dai fiducia sull&apos;autenticit&agrave; di questo certificato</strong>: Se 
+        si seleziona questa opzione, Gestione certificati d&apos;ora in avanti riterr&agrave; 
+        attendibile questo certificato ai fini della identificazione del sito web e della 
+        predisposizione di una connessione cifrata con il sito. Se si seleziona questa 
+        opzione e si prova a visitare il sito, il browser vi acceder&agrave; con pochi 
+        avvisi, sempre che ve ne siano.</li>
+      <li><strong>Non dare fiducia sull&apos;autenticit&agrave; di questo certificato</strong>: 
+        Se si seleziona questa opzione, Gestione certificati non riterr&agrave; pi&ugrave; 
+        attendibile questo certificato ai fini dell&apos;identificazione del sito web e della 
+        predisposizione di una connessione cifrata con il sito. Se si seleziona questa 
+        opzione e si prova a visitare il sito, verranno visualizzati uno o pi&ugrave; 
+        messaggi di avviso prima di poter accedere al sito.</li>
+    </ul>
+  </li>
+  <li><strong>Modifica affidabilit&agrave; CA</strong>: Fare clic su questo pulsante per specificare le 
+    impostazioni di affidabilit&agrave; per l&apos;Autorit&agrave; di Certificazione (CA) che ha emesso il 
+    certificato del sito web. Queste impostazioni permettono di contrassegnare come attendibili o non 
+    attendibili differenti tipologie di certificati emessi da quella autorit&agrave; di certificazione. 
+    Ad esempio, si pu&ograve; scegliere di ritenere attendibili tutti i certificati di siti web emessi 
+    dall&apos;autorit&agrave;.</li>
+</ul>
+
+<p>Fare clic su OK per confermare la propria scelta.</p>
+
+<h3 id="delete_web_site_certificates">Eliminare i certificati di un sito web</h3>
+
+<p>Prima di eliminare il certificato di un server dalla scheda 
+  <a href="#servers">Server</a> in Gestione certificati, assicurarsi di 
+  non averne pi&ugrave; bisogno ai fini dell&apos;identificazione del sito web e della 
+  predisposizione di una connessione cifrata col sito.</p>
+
+<h2 id="authorities">Autorit&agrave;</h2>
+
+<p>La scheda Autorit&agrave; in <a href="#certificate_manager">Gestione certificati</a> 
+  mostra i certificati memorizzati che identificano le 
+  <a href="glossary.xhtml#certificate_authority_(CA)">Autorit&agrave; di Certificazione 
+  (CA)</a>.</p>
+
+<p>I certificati che identificano server sono raggruppati sotto i nomi delle organizzazioni
+  che li hanno emessi. Se non si possono vedere i nomi dei certificati sotto al nome
+  di una organizzazione, fare doppio clic sul nome dell&apos;organizzazione.</p>
+
+<p>Utilizzare i seguenti pulsanti per visualizzare e gestire i certificati (la maggior parte
+  delle azioni prevede la selezione di uno o pi&ugrave; certificati):</p>
+
+<ul>
+  <li><strong>Visualizza</strong>: Mostra informazioni dettagliate riguardo i 
+    certificati selezionati.</li>
+  <li><strong>Modifica</strong>: Visualizza o modifica le impostazioni che Gestione 
+    certificati associa ai certificati selezionati. Si possono usare queste impostazioni 
+    al fine di indicare per quali tipologie di certificati, o per nessuna tipologia, si 
+    ritiene attendibile che i certificati siano stati emessi dalle corrispondenti CA.</li>
+  <li><strong>Importa</strong>: Importa un file contenenti uno o pi&ugrave;
+    certificati. Quando si fa clic su Importa, Gestione certificati richiede di
+    individuare il file che contiene il/i certificato(i).</li>
+  <li><strong>Esporta</strong>: Esporta i certificati selezionati. Si possono
+    scegliere diversi formati.</li>
+  <li><strong>Elimina</strong>: Elimina i certificati selezionati.</li>
+</ul>
+
+<p>Per assicurarsi che una intera <a href="glossary.xhtml#certificate_chain">catena 
+  di certificazione</a> di CA sia attendibile, si deve modificare solamente il 
+  certificato CA radice.</p>
+
+<p>Per importare la catena, fare clic su un collegamento in una pagina web messa a 
+  disposizione dalla CA. Si pu&ograve; poi usare la scheda Autorit&agrave; per localizzare 
+  il certificato radice e modificare le sue impostazioni di affidabilit&agrave;.</p>
+
+<p>Le CA radice e quelle intermedie compaiono tutte sotto la stessa organizzazione. 
+  Il certificato radice &egrave; quello che elenca se stesso come emittente.</p>
+
+<p><strong>Se si scarica un certificato CA intermedio</strong>: Se si scarica un 
+  certificato CA intermedio che si ricollega a un certificato radice gi&agrave; 
+  contrassegnato come attendibile nel proprio browser, non si deve indicare per quale scopo 
+  lo si ritiene attendibile. I certificati intermedi automaticamente ereditano le 
+  impostazioni di affidabilit&agrave; dei rispettivi certificati radice.</p>
+
+<h3 id="edit_ca_certificate_trust_settings">Modifica delle impostazioni di 
+  affidabilit&agrave; di un certificato CA</h3>
+
+<p>Quando si seleziona un certificato CA dalla scheda <a href="#authorities">
+  Autorit&agrave;</a> in Gestione certificati e si fa clic su Modifica, viene visualizzata 
+  la finestra <q>Modifica impostazioni fiducia certificato CA</q>. Qui si specificano le 
+  tipologie di certificati per cui si ritiene attendibile la certificazione della CA. Se si 
+  deselezionano tutte le caselle, Gestione certificati non riterr&agrave; attendibile 
+  nessun certificato emesso da questa CA.</p>
+
+<p>Le impostazioni hanno questi effetti:</p>
+
+<ul>
+  <li><strong>Questo certificato pu&ograve; identificare siti web</strong>: Gestione 
+    certificati riterr&agrave; affidabili i certificati rilasciati da questa CA ai fini 
+    dell&apos;identificazione di siti web e della predisposizione di connessioni cifrate con 
+    questi siti. Se si deseleziona questa casella, Gestione certificati non riterr&agrave; 
+    attendibili i certificati di siti web emessi da questa CA.</li>
+  <li><strong>Questo certificato pu&ograve; identificare utenti di posta</strong>: Gestione 
+    certificati riterr&agrave; attendibili i certificati emessi da questa CA ai fini di 
+    firmare e cifrare messaggi e-mail. Se si deseleziona questa casella, Gestione certificati 
+    non riterr&agrave; attendibili i certificati e-mail emessi da questa CA. </li>
+  <li><strong>Questo certificato pu&ograve; identificare produttori di software</strong>: Gestione 
+    certificati riterr&agrave; attendibili i certificati emessi da questa CA ai fini dell&apos;identificazione 
+    di produttori di software. Se si deseleziona questa casella, Gestione certificati non 
+    riterr&agrave; attendibili i certificati di produttori di software emessi da questa
+    CA.</li>
+</ul>
+
+<p>Fare clic su OK per confermare le impostazioni selezionate.</p>
+
+<h3 id="delete_ca_certificates">Eliminare certificati CA</h3>
+
+<p>Prima di eliminare un certificato CA dalla scheda 
+  <a href="#authorities">Autorit&agrave;</a> in Gestione certificati, assicurarsi 
+  di non averne pi&ugrave; bisogno per convalidare certificati rilasciati da questa 
+  CA. Se si elimina l&apos;unico certificato che si possiede per una CA, Gestione 
+  certificati non riterr&agrave; pi&ugrave; attendibile nessun certificato 
+  rilasciato da questa CA.</p>
+
+<h2 id="others">Altro</h2>
+
+<p>La scheda Altro nella Gesione certificati visualizza i certificati memorizzati
+  che non rientrano nelle altre categorie, ad es. i certificati che non n&egrave;
+  sono personali, n&egrave; di altre persone, n&egrave; di server o di CA.</p>
+
+<p>I certificati che identificano altro sono raggruppati sotto i nomi delle organizzazioni
+  che li hanno emessi. Se non si possono vedere i nomi dei certificati sotto al nome
+  di una organizzazione, fare doppio clic sul nome dell&apos;organizzazione.</p>
+
+<p>Utilizzare i seguenti pulsanti per visualizzare e gestire i certificati:</p>
+
+<ul>
+  <li><strong>Visualizza</strong>: Mostra informazioni dettagliate riguardo i 
+    certificati selezionati.</li>
+  <li><strong>Esporta</strong>: Esporta i certificati selezionati. Si possono
+    scegliere diversi formati.</li>
+  <li><strong>Elimina</strong>: Elimina i certificati selezionati.</li>
+</ul>
+
+<h2 id="device_manager">Gestione dispositivi</h2>
+
+<p>Questa sezione descrive le opzioni disponibili nella finestra Gestione 
+  dispositivi. Per informazioni pi&ugrave; dettagliate e istruzioni passo-passo 
+  sull&apos;uso di Gestione dispositivi, consultare 
+  <a href="using_certs_help.xhtml#managing_smart_cards_and_other_security_devices">Gestire 
+  smart card e altri dispositivi di sicurezza</a>.</p>
+
+<p>Se al momento non si sta visualizzando la finestra di Gestione dispositivi, 
+  eseguire questa procedura:</p>
+
+<ol>
+  <li>Aprire il menu <span class="mac">&brandShortName;</span>
+    <span class="noMac">Modifica</span> e scegliere Preferenze.</li>
+  <li>Sotto la categoria Privacy e sicurezza, fare clic su Certificati. 
+    (Se non sono visibili sottocategorie, fare doppio clic su Privacy e sicurezza 
+    per espandere la lista.)</li>
+  <li>Nel pannello Certificati, fare clic su Gestione dispositivi di sicurezza.</li>
+</ol>
+
+<p>Gestione dispositivi elenca ogni modulo PKCS #11 disponibile, ed elenca sotto il nome 
+  del modulo i dispositivi di sicurezza gestiti da ogni modulo.</p>
+
+<p>Quando si seleziona un modulo o un dispositivo, le informazioni riguardo 
+  all&apos;oggetto selezionato appaiono a met&agrave; della finestra, e alcuni dei 
+  pulsanti sulla parte destra della finestra diventano attivi. In generale si 
+  esegue un&apos;azione su un modulo o su un dispositivo selezionandone il nome e 
+  facendo clic sul pulsante appropriato:</p>
+
+<ul>
+  <li><strong>Accedi</strong>: Accedi al dispositivo di sicurezza selezionato. 
+    Una volta avuto accesso al dispositivo, la frequenza con cui viene chiesto 
+    di digitare la password principale dipende dalle impostazioni di 
+    <a href="passwords_help.xhtml#master_password_timeout">Timeout password 
+    principale</a>.</li>
+  <li><strong>Esci</strong>: Esci dal dispositivo di sicurezza selezionato. 
+    Una volta usciti dal dispositivo, la periferica e i certificati che contiene 
+    non saranno pi&ugrave; disponibili fino a che non vi si accede nuovamente.</li>
+  <li><strong>Cambia password</strong>: Cambia la password principale per il dispositivo 
+    di sicurezza selezionato.</li>
+  <li><strong>Carica</strong>: Mostra un riquadro di dialogo che permette di 
+    specificare nome e percorso di un nuovo modulo PKCS #11. Prima di aggiungere 
+    un nuovo modulo, si dovrebbe prima installare il modulo software sul computer 
+    e se necessario connettere ogni periferica hardware associata. Seguire le 
+    istruzioni fornite dal produttore del dispositivo (software e/o hardware).</li>
+  <li><strong>Scarica</strong>: Disconnette il modulo selezionato. Se si disconnette 
+    un modulo, sia il modulo che i suoi dispositivi di sicurezza non saranno disponibili 
+    per per essere usati dal browser.</li>
+  <li><strong>Attiva FIPS</strong>: Attiva e disattiva la modalit&agrave; FIPS. Per 
+    maggiori informazioni, consultare 
+    <a href="using_certs_help.xhtml#enable_fips_mode">Attiva modalit&agrave; 
+    FIPS</a>.</li>
+</ul>
+
+</body>
+</html>

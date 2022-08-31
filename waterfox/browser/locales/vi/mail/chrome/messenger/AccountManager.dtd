@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from AccountManager.xhtml -->
+
+<!ENTITY accountManagerTitle.label "Cài đặt tài khoản">
+<!ENTITY  accountManagerCloseButton.label "Đóng">
+
+<!ENTITY accountActionsButton.label "Hành động tài khoản">
+<!ENTITY accountActionsButton.accesskey "A">
+<!ENTITY addMailAccountButton.label "Thêm tài khoản thư…">
+<!ENTITY addMailAccountButton.accesskey "A">
+<!ENTITY addIMAccountButton.label "Thêm tài khoản trò chuyện…">
+<!ENTITY addIMAccountButton.accesskey "C">
+<!ENTITY addFeedAccountButton.label "Thêm tài khoản nguồn cấp dữ liệu…">
+<!ENTITY addFeedAccountButton.accesskey "F">
+<!ENTITY setDefaultButton.label "Đặt làm mặc định">
+<!ENTITY setDefaultButton.accesskey "D">
+<!ENTITY removeButton.label "Xóa tài khoản">
+<!ENTITY removeButton.accesskey "R">
+
+<!ENTITY addonsButton.label "Tiện ích mở rộng &amp; chủ đề">
+
+<!-- AccountManager.xhtml -->

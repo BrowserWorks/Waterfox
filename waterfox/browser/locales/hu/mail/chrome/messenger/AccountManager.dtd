@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from AccountManager.xhtml -->
+
+<!ENTITY accountManagerTitle.label "Postafiók beállításai">
+<!ENTITY  accountManagerCloseButton.label "Bezárás">
+
+<!ENTITY accountActionsButton.label "Postafiók-műveletek">
+<!ENTITY accountActionsButton.accesskey "P">
+<!ENTITY addMailAccountButton.label "Postafiók hozzáadása…">
+<!ENTITY addMailAccountButton.accesskey "o">
+<!ENTITY addIMAccountButton.label "Csevegőfiók hozzáadása…">
+<!ENTITY addIMAccountButton.accesskey "C">
+<!ENTITY addFeedAccountButton.label "Hírforrásfiók hozzáadása…">
+<!ENTITY addFeedAccountButton.accesskey "f">
+<!ENTITY setDefaultButton.label "Legyen ez az alapértelmezett">
+<!ENTITY setDefaultButton.accesskey "L">
+<!ENTITY removeButton.label "Postafiók eltávolítása">
+<!ENTITY removeButton.accesskey "e">
+
+<!ENTITY addonsButton.label "Kiegészítők és témák">
+
+<!-- AccountManager.xhtml -->
