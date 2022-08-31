@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Erweitert">
+
+<!ENTITY prefCheckDefault.caption         "System-Integration">
+<!ENTITY prefCheckDefaultClient.label     "Standardprogramm-Einstellungen beim Start prüfen">
+<!ENTITY prefCheckDefaultClient.accesskey "S">
+
+<!ENTITY defaultClientFor.description     "&brandShortName; als Standardanwendung setzen für:">
+<!ENTITY setDefaultBrowser.label          "Browser">
+<!ENTITY setDefaultBrowser.accesskey      "B">
+<!ENTITY setDefaultMail.label             "Mail">
+<!ENTITY setDefaultMail.accesskey         "M">
+<!ENTITY setDefaultNews.label             "News">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "Feeds">
+<!ENTITY setDefaultFeed.accesskey         "F">
+<!ENTITY useInternalSettings.description  "&brandShortName; Mail &amp; News bei Öffnung von Browser-Links verwenden für:">
+<!ENTITY useInternalMail.label            "Mail (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "News (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "e">
+
+<!ENTITY printing.label                   "Drucken">
+<!ENTITY useNativePrintDialog.label       "Nativer Druck Dialog (sofern unterstützt)">
+<!ENTITY useNativePrintDialog.accesskey   "t">
+<!ENTITY useGlobalPrintSettings.label     "Globale Drucker Einstellungen">
+<!ENTITY useGlobalPrintSettings.accesskey "G">
+
+<!ENTITY crashReports.caption             "Absturzmelder">
+<!ENTITY submitCrashes.label              "Absturzberichte senden">
+<!ENTITY submitCrashes.accesskey          "A">
+
+<!ENTITY devTools.caption                 "Entwicklerwerkzeuge">
+<!ENTITY allowDebugger.label              "Einem Debugger erlauben, sich mit &brandShortName; zu verbinden">
+<!ENTITY allowDebugger.accesskey          "D">
+<!ENTITY allowRemoteConnections.label     "Verbindungen von anderen Computern erlauben">
+<!ENTITY allowRemoteConnections.accesskey "V">
+<!ENTITY connectionPrompt.label           "Meldung für eingehende Verbindungen">
+<!ENTITY connectionPrompt.accesskey       "M">
+<!ENTITY remoteDebuggerPort.label         "Portnummer für die Verbindung:">
+<!ENTITY remoteDebuggerPort.accesskey     "P">

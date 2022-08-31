@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Λογαριασμοί - &brandShortName;">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Κατάσταση άμεσων μηνυμάτων">
+
+<!ENTITY accountManager.newAccount.label     "Νέος λογαριασμός">
+<!ENTITY accountManager.newAccount.accesskey "Ν">
+<!ENTITY accountManager.close.label          "Κλείσιμο">
+<!ENTITY accountManager.close.accesskey      "λ">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Δεν έχει ρυθμιστεί ακόμα λογαριασμός">
+<!ENTITY accountManager.noAccount.description "Κάντε κλικ στο κουμπί «&accountManager.newAccount.label;» και το &brandShortName; θα σας βοηθήσει να ρυθμίσετε έναν νέο.">
+<!ENTITY account.autoSignOn.label     "Σύνδεση κατά την εκκίνηση">
+<!ENTITY account.autoSignOn.accesskey "Σ">
+<!ENTITY account.connect.label        "Σύνδεση">
+<!ENTITY account.connect.accesskey    "ν">
+<!ENTITY account.disconnect.label     "Αποσύνδεση">
+<!ENTITY account.disconnect.accesskey "ο">
+<!ENTITY account.edit.label           "Ιδιότητες">
+<!ENTITY account.edit.accesskey       "Ι">
+<!ENTITY account.cancelReconnection.label         "Ακύρωση επανασύνδεσης">
+<!ENTITY account.cancelReconnection.accesskey     "Α">
+<!ENTITY account.copyDebugLog.label     "Αντιγραφή αρχείου ελέγχου σφαλμάτων">
+<!ENTITY account.copyDebugLog.accesskey "Α">
+<!ENTITY account.connecting           "Σύνδεση…">
+<!ENTITY account.disconnecting        "Αποσύνδεση…">
+<!ENTITY account.disconnected         "Εκτός σύνδεσης">

@@ -1,0 +1,155 @@
+# Affix file for Indonesian dictionary
+# Built from scratch for MySpell. Released under GPL 
+# See text of license at: http://www.gnu.org/copyleft/gpl.html.
+#
+# Benitius Brevoort E-mail: benitius.brevoort@kapusin.org
+# 30 Januari 2004
+# Uppercase letters are used for Prefixes, 
+# undercase for suffixes.
+#
+# Daftar awalan dan akhiran untuk kamus Indonesia "MySpell"
+# diciptakan dari dasarnya dan diterbitkan dibawah lisensi GPL.
+# Awalan disingkat dengan huruf BESAR, akhiran dengan huruf kecil.
+# Sejauh mungkin sesuai bunyinya, misalnya: B = ber, T = ter
+# u = ku, m = mu, n = nya 
+#
+SET ISO8859-1
+TRY aeinrstkumlgopbdhjcyfwzqvxAEINRSTKUMLGOPBDHJCYFWZQVX
+
+PFX A Y 1
+PFX A 0 adi   .
+PFX B Y 2
+PFX B 0 ber  [^r]
+PFX B 0 be    r
+PFX C Y 2
+PFX C 0 seper [^r]
+PFX C 0 sepe   r
+PFX D Y 1
+PFX D 0 di     .
+PFX E Y 2
+PFX E 0 diper [^r]
+PFX E 0 dipe   r
+PFX F Y 1
+PFX F 0 pasca  .
+PFX G Y 1
+PFX G 0 para   .
+PFX H Y 1
+PFX H 0 serba  .
+PFX K Y 1
+PFX K 0 ke     . 
+PFX M Y 11
+PFX M 0 me    [lmnryw]
+PFX M 0 mem   [b]
+PFX M f mem   [f]
+PFX M p mem   [p]
+PFX M per memper per
+PFX M 0 men   [cdj]
+PFX M t men   [t]
+PFX M 0 meng  [aeghiuo]
+PFX M k meng  [k]
+PFX M s meny  [s]
+PFX M z meny  [z]
+PFX O Y 1
+PFX O 0 kon    . 
+PFX P Y 11
+PFX P 0 pe    [jlmnryw]
+PFX P 0 pem   [b]
+PFX P f pem   [f]
+PFX P p pem   [p]
+PFX P 0 pen   [cd]
+PFX P t pen   [t]
+PFX P 0 peng  [aeghiuo]
+PFX P k peng   k
+PFX P 0 peng   kh
+PFX P s peny  [s]
+PFX P z peny  [z]
+PFX Q Y 2
+PFX Q 0 memper [^r]
+PFX Q 0 mempe   r
+PFX R Y 2
+PFX R 0 per   [^r]
+PFX R 0 pe     r
+PFX S Y 1
+PFX S 0 se     . 
+PFX T Y 2
+PFX T 0 ter   [^r]
+PFX T 0 te     r
+PFX U Y 1
+PFX U 0 ku     . 
+PFX W Y 1
+PFX W 0 kau    . 
+PFX X Y 1
+PFX X 0 maha   . 
+PFX Y Y 1
+PFX Y 0 pra    . 
+PFX Z Y 1
+PFX Z 0 swa    . 
+
+SFX a Y 1
+SFX a 0 an     . 
+SFX b Y 1
+SFX b 0 belas  . 
+SFX c Y 1
+SFX c 0 wan    . 
+SFX d Y 1
+SFX d 0 wati   . 
+SFX e Y 1
+SFX e 0 anlah  .
+SFX f Y 1
+SFX f 0 kanlah .
+SFX g Y 1
+SFX g 0 nyalah . 
+SFX h Y 1
+SFX h 0 kah    . 
+SFX i Y 1
+SFX i 0 i      .
+SFX j Y 1
+SFX j 0 inya   .
+SFX k Y 3
+SFX k 0 kan   [^k] 
+SFX k k kan    k 
+SFX k an kan   an 
+SFX l Y 1
+SFX l 0 lah    . 
+SFX m Y 1
+SFX m 0 mu     . 
+SFX n Y 1
+SFX n 0 nya    . 
+SFX o Y 1
+SFX o 0 pun    . 
+SFX p Y 1
+SFX p 0 puluh  . 
+SFX q Y 1
+SFX q 0 ratus  .
+SFX r Y 1
+SFX r 0 ribu   .
+SFX s Y 1
+SFX s 0 Nya    .
+SFX t Y 1
+SFX t 0 Mu     .
+SFX u Y 1
+SFX u 0 ku     . 
+SFX v Y 1
+SFX v 0 Ku     . 
+SFX w Y 1
+SFX w 0 kannya .
+SFX x Y 1
+SFX x 0 asi    .
+SFX y Y 1
+SFX y 0 annya  .
+SFX z Y 1
+SFX z 0 isme   .
+
+REP 12
+REP p    v
+REP p    f
+REP f    p
+REP o    u
+REP kh   k
+REP g    j
+REP z    j
+REP e    a
+REP is   ik
+REP ua   au
+REP kna  kan
+REP dna  dan
