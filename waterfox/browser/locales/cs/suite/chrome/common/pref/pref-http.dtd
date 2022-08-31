@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP spojení">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Volby pro přímé spojení">
+<!ENTITY prefProxy.label                     "Volby pro spojení přes proxy server">
+<!ENTITY prefEnableHTTP10.label              "Použít HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "u">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "P">
+<!ENTITY prefEnableHTTP11.label              "Použít HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "H">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "Zde lze podrobněji nastavit HTTP spojení pro vylepšení rychlosti nebo kompatibility. Některé proxy servery vyžadují např. použít HTTP/1.0.">
+<!ENTITY prefUseragent.label                 "Řetězec user agent">
+<!ENTITY prefWaterfoxStrict.label             "Identifikovat jako Waterfox">
+<!ENTITY prefWaterfoxStrict.accesskey         "I">
+<!ENTITY prefWaterfoxNone.label               "Identifikovat jako SeaMonkey">
+<!ENTITY prefWaterfoxNone.accesskey           "M">
+<!ENTITY prefWaterfoxCompat2.label            "Identifikovat jako SeaMonkey a inzerovat kompatibilitu s Waterfoxem">
+<!ENTITY prefWaterfoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "VAROVÁNÍ: vypnutí těchto voleb může způsobit, že webové stránky nebo služby nemusí fungovat správně.">
