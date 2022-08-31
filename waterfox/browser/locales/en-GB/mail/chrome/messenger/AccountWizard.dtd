@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Account Wizard">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identity">
+<!ENTITY identityDesc.label "Each account has an identity, which is the information that identifies you to others when they receive your messages.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Enter the name you would like to appear in the &quot;From&quot; field of your outgoing messages">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(for example, &quot;John Smith&quot;).">
+<!ENTITY fullnameLabel.label "Your Name:">
+<!ENTITY fullnameLabel.accesskey "Y">
+
+<!ENTITY emailLabel.label "Email Address:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Incoming Server Information">
+<!ENTITY incomingUsername.label "User Name:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Enter the name of your news server (NNTP) (for example, &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "Newsgroup Server:">
+<!ENTITY newsServerLabel.accesskey "S">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Account Name">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Enter the name by which you would like to refer to this account (for example, &quot;Work Account&quot;, &quot;Home Account&quot; or &quot;News Account&quot;).">
+<!ENTITY accnameLabel.label "Account Name:">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Congratulations!">
+<!ENTITY completionText.label "Please verify that the information below is correct.">
+<!ENTITY newsServerNamePrefix.label "News Server Name (NNTP):">
+<!ENTITY clickFinish.label "Click Finish to save these settings and exit the Account Wizard.">
+<!ENTITY clickFinish.labelMac "Click Done to save these settings and exit the Account Wizard.">

@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Konten-Assistent">
+<!ENTITY accountWizard.size "width: 50em; height: 40em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identität">
+<!ENTITY identityDesc.label "Diese Informationen erhalten Empfänger Ihrer Nachrichten.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Geben Sie den Namen an, der im Feld &quot;Von&quot; Ihrer gesendeten Nachrichten erscheinen soll">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+	1, do not translate two of "&quot;"
+	2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(zum Beispiel &quot;Hermann Maier&quot;).">
+<!ENTITY fullnameLabel.label "Ihr Name:">
+<!ENTITY fullnameLabel.accesskey "N">
+
+<!ENTITY emailLabel.label "E-Mail-Adresse:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Server page -->
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Informationen über Posteingangs-Server">
+<!ENTITY incomingUsername.label "Posteingangs-Server Benutzername:">
+
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Geben Sie den News-Server (NNTP) ein (zum Beispiel &quot;news.example.com&quot;).">
+<!ENTITY newsServerLabel.label "Newsgruppen-Server:">
+<!ENTITY newsServerLabel.accesskey "N">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Login page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Konten-Bezeichnung">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Geben Sie eine Bezeichnung für das Konto ein, mit der das Konto im Programm erscheinen soll (zum Beispiel &quot;Arbeits-Konto&quot;, &quot;Privat-Konto&quot; oder &quot;News-Konto&quot;).">
+<!ENTITY accnameLabel.label "Konten-Bezeichnung:">
+<!ENTITY accnameLabel.accesskey "K">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Zusammenfassung">
+<!ENTITY completionText.label "Bitte prüfen Sie, ob die Angaben korrekt sind:">
+<!ENTITY newsServerNamePrefix.label "News-Server (NNTP):">
+<!ENTITY clickFinish.label "Klicken Sie &quot;Fertigstellen&quot;, um diese Einstellungen zu speichern und den Konten-Assistenten zu beenden.">
+<!ENTITY clickFinish.labelMac "Klicken Sie &quot;Fertigstellen&quot;, um diese Einstellungen zu speichern und den Konten-Assistenten zu beenden.">

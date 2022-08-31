@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref-irc.window.title "ChatZilla">
+
+<!ENTITY pref-irc.open.title     "ChatZilla-voorkeuren">
+<!ENTITY pref-irc.open.desc      "De voorkeuren van ChatZilla zijn te uitgebreid om in dit voorkeurenvenster te passen. In plaats daarvan kunt u het voorkeurenvenster hier openen.">
+<!ENTITY pref-irc.open.label     "ChatZilla-voorkeuren openen">
+<!ENTITY pref-irc.open.accesskey "O">
+<!ENTITY startup.chat.label "ChatZilla">
+<!ENTITY startup.chat.accesskey "Z">

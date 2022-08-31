@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Used in networks-edit dialog -->
+<!ENTITY networksEditDialog.title     "Netwerkeditor">
+<!-- LOCALIZATION NOTE
+     - width should be 62ch + length of longest serverList*.label -->
+<!ENTITY networksEditDialog.size      "width: 80ch; height: 28em;">
+
+<!ENTITY restoreButton.label          "Standaardwaarden herstellen">
+<!ENTITY restoreButton.accesskey      "d">
+<!ENTITY connectNetwork.label         "Verbinding maken met netwerk">
+<!ENTITY connectNetwork.accesskey     "k">
+
+<!ENTITY networkListAdd.label         "Netwerk toevoegen…">
+<!ENTITY networkListAdd.accesskey     "t">
+<!ENTITY networkListAdd.tooltip       "Een nieuw netwerk toevoegen">
+<!ENTITY networkListEdit.label        "Netwerk bewerken…">
+<!ENTITY networkListEdit.accesskey    "b">
+<!ENTITY networkListEdit.tooltip      "Bewerk het geselecteerde netwerk">
+<!ENTITY networkListRemove.label      "Netwerk verwijderen">
+<!ENTITY networkListRemove.accesskey  "v">
+<!ENTITY networkListRemove.tooltip    "Het geselecteerde netwerk verwijderen">
+
+<!ENTITY serverListUp.label           "Omhoog verplaatsen">
+<!ENTITY serverListUp.accesskey       "m">
+<!ENTITY serverListUp.tooltip         "Verplaats de geselecteerde server omhoog">
+<!ENTITY serverListDown.label         "Omlaag verplaatsen">
+<!ENTITY serverListDown.accesskey     "a">
+<!ENTITY serverListDown.tooltip       "Verplaats de geselecteerde server omlaag">
+<!ENTITY serverListAdd.label          "Server toevoegen…">
+<!ENTITY serverListAdd.accesskey      "S">
+<!ENTITY serverListAdd.tooltip        "Een nieuwe server toevoegen">
+<!ENTITY serverListEdit.label         "Server bewerken…">
+<!ENTITY serverListEdit.accesskey     "e">
+<!ENTITY serverListEdit.tooltip       "Bewerk de geselecteerde server">
+<!ENTITY serverListRemove.label       "Server verwijderen">
+<!ENTITY serverListRemove.accesskey   "r">
+<!ENTITY serverListRemove.tooltip     "De geselecteerde server verwijderen">
+
+<!-- LOCALIZATION NOTE:
+   - *.label are shared between networks-edit and networks-server dialogs
+   - *.accesskey are only used in network-servers dialog -->
+<!ENTITY serverDetails.label          "Details van geselecteerde server:">
+<!ENTITY serverName.label             "Server:">
+<!ENTITY serverName.accesskey         "S">
+<!ENTITY serverPort.label             "Poort:">
+<!ENTITY serverPort.accesskey         "P">
+<!ENTITY connectionSecurity.label     "Verbindingsbeveiliging:">
+<!ENTITY connectionSecurity.accesskey "V">
+
+<!-- Used in networks-server dialog -->
+<!ENTITY serverEditDialog.title       "IRC-server">
+<!ENTITY settings.caption             "Instellingen">
+<!ENTITY security.caption             "Beveiliging">
+<!ENTITY serverPortDefault.label      "Standaard:">
