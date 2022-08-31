@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Accountwizard">
+<!ENTITY accountWizard.size "width: 50em; height: 40em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identiteit">
+<!ENTITY identityDesc.label "Elke account heeft een identiteit. Dit zijn de gegevens waarmee anderen u herkennen als uw berichten worden ontvangen.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Voer de naam in die u wilt gebruiken in het ‘Van’-veld van uw uitgaande berichten">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(bijvoorbeeld ‘Jan Smit’).">
+<!ENTITY fullnameLabel.label "Uw naam:">
+<!ENTITY fullnameLabel.accesskey "U">
+
+<!ENTITY emailLabel.label "E-mailadres:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Gegevens van inkomende server">
+<!ENTITY incomingUsername.label "Gebruikersnaam:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Voer de naam in van uw (NNTP-)nieuwsserver (bijvoorbeeld ‘news.example.net’).">
+<!ENTITY newsServerLabel.label "Nieuwsgroepserver:">
+<!ENTITY newsServerLabel.accesskey "N">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Accountnaam">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Voer de naam in voor deze account (bijvoorbeeld ‘Werkaccount’, ‘Thuisaccount’ of ‘Nieuwsaccount’).">
+<!ENTITY accnameLabel.label "Accountnaam:">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Gefeliciteerd!">
+<!ENTITY completionText.label "Controleer of de gegevens hieronder juist zijn.">
+<!ENTITY newsServerNamePrefix.label "Naam van (NNTP-)nieuwsserver:">
+<!ENTITY clickFinish.label "Klik op Voltooien om de instellingen te bewaren en de Accountwizard af te sluiten.">
+<!ENTITY clickFinish.labelMac "Klik op Gereed om de instellingen te bewaren en de Accountwizard af te sluiten.">
