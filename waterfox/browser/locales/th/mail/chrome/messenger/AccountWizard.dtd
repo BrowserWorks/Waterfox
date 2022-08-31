@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "ตัวช่วยบัญชี">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "ข้อมูลประจำตัว">
+<!ENTITY identityDesc.label "แต่ละบัญชีจะมีข้อมูลประจำตัว ซึ่งเป็นข้อมูลที่ระบุตัวตนคุณแก่ผู้อื่นเมื่อพวกเขาได้รับข้อความจากคุณ">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "ป้อนชื่อที่คุณต้องการให้ปรากฏในช่อง &quot;จาก&quot; ของข้อความขาออกของคุณ">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(ตัวอย่างเช่น &quot;John Smith&quot;)">
+<!ENTITY fullnameLabel.label "ชื่อของคุณ:">
+<!ENTITY fullnameLabel.accesskey "ช">
+
+<!ENTITY emailLabel.label "ที่อยู่อีเมล:">
+<!ENTITY emailLabel.accesskey "ท">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "ข้อมูลเซิร์ฟเวอร์ขาเข้า">
+<!ENTITY incomingUsername.label "ชื่อผู้ใช้:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "ป้อนชื่อเซิร์ฟเวอร์ข่าวของคุณ (NNTP) (ตัวอย่างเช่น &quot;news.example.net&quot;)">
+<!ENTITY newsServerLabel.label "เซิร์ฟเวอร์กลุ่มข่าว:">
+<!ENTITY newsServerLabel.accesskey "เ">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "ชื่อบัญชี">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "ป้อนชื่อที่คุณต้องการอ้างถึงบัญชีนี้ (ตัวอย่างเช่น &quot;บัญชีที่ทำงาน&quot;, &quot;บัญชีที่บ้าน&quot; หรือ &quot;บัญชีข่าว&quot;)">
+<!ENTITY accnameLabel.label "ชื่อบัญชี:">
+<!ENTITY accnameLabel.accesskey "บ">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "ขอแสดงความยินดี!">
+<!ENTITY completionText.label "โปรดยืนยันว่าข้อมูลด้านล่างถูกต้อง">
+<!ENTITY newsServerNamePrefix.label "ชื่อเซิร์ฟเวอร์ข่าว (NNTP):">
+<!ENTITY clickFinish.label "คลิก เสร็จสิ้น เพื่อบันทึกการตั้งค่าเหล่านี้และออกจากตัวช่วยบัญชี">
+<!ENTITY clickFinish.labelMac "คลิก เสร็จสิ้น เพื่อบันทึกการตั้งค่าเหล่านี้และออกจากตัวช่วยบัญชี">

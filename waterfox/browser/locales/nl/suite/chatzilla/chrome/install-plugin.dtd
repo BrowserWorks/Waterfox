@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle                    "Plug-in installeren…">
+
+<!ENTITY name.label                     "Naam:">
+<!ENTITY name.accesskey                 "N">
+
+<!ENTITY name.autopick.label            "Kies automatisch een naam voor mij">
+<!ENTITY name.autopick.accesskey        "K">
+
+<!ENTITY source.label                   "Bron:">
+<!ENTITY source.accesskey               "B">
+
+<!ENTITY browse.label                   "Bladeren…">
+<!ENTITY browse.accesskey               "a">

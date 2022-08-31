@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Kreator kont">
+<!ENTITY accountWizard.size "width: 63em; height: 44em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Tożsamość">
+<!ENTITY identityDesc.label "Poniższe dane określają tożsamość posiadacza konta i umożliwiają odbiorcom wiadomości identyfikację nadawcy.">
+
+<!ENTITY fullnameDesc.label "Wprowadź imię, nazwisko lub pseudonim, który będzie używany w polu „Od:” wysyłanych wiadomości">
+<!ENTITY fullnameExample.label "(na przykład: „Michał Wołodyjowski”).">
+<!ENTITY fullnameLabel.label "Twoje imię, nazwisko lub pseudonim:">
+<!ENTITY fullnameLabel.accesskey "T">
+
+<!ENTITY emailLabel.label "Adres e-mail:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Informacje o serwerze poczty przychodzącej">
+
+<!ENTITY incomingUsername.label "Nazwa użytkownika:">
+
+<!ENTITY newsServerNameDesc.label "Podaj nazwę serwera grup dyskusyjnych (NNTP) (na przykład: „news.example.net”).">
+<!ENTITY newsServerLabel.label "Serwer grup dyskusyjnych:">
+<!ENTITY newsServerLabel.accesskey "n">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Nazwa konta">
+<!ENTITY accnameDesc.label "Wprowadź nazwę, która będzie używana do oznaczenia tego konta (na przykład: „Konto osobiste”, „Konto służbowe”, „Grupy dyskusyjne”).">
+<!ENTITY accnameLabel.label "Nazwa konta:">
+<!ENTITY accnameLabel.accesskey "N">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Konfiguracja zakończona">
+<!ENTITY completionText.label "Kreator kont utworzy nowe konto używając poniższych danych. Czy wprowadzone dane są poprawne?">
+<!ENTITY newsServerNamePrefix.label "Nazwa serwera grup dyskusyjnych (NNTP):">
+<!ENTITY clickFinish.label "Kliknij przycisk „Zakończ”, aby zapamiętać wprowadzone dane i zakończyć konfigurację konta.">
+<!ENTITY clickFinish.labelMac "Kliknij przycisk „Zakończ”, aby zapamiętać wprowadzone dane i zakończyć konfigurację konta.">

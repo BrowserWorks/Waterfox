@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Průvodce vytvářením účtu">
+<!ENTITY accountWizard.size "width: 44em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identita">
+<!ENTITY identityDesc.label "Každý účet obsahuje identifikační informace, které ostatní lidé vidí při čtení vašich zpráv.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Zadejte vaše jméno ve tvaru, v jakém se bude objevovat v poli „Od“ při odesílání zpráv.">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(například: „Jiří Novák“).">
+<!ENTITY fullnameLabel.label "Vaše jméno:">
+<!ENTITY fullnameLabel.accesskey "V">
+
+<!ENTITY emailLabel.label "E-mailová adresa:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Informace o příchozím serveru">
+<!ENTITY incomingUsername.label "Uživatelské jméno:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Vložte název serveru diskusních skupin (NNTP) (např. „news.example.net“).">
+<!ENTITY newsServerLabel.label "Server diskusních skupin:">
+<!ENTITY newsServerLabel.accesskey "S">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Název účtu">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Zadejte název, pod kterým chcete tento účet vést (např. „Pracovní účet“, „Domácí“ nebo „Diskusní skupiny“).">
+<!ENTITY accnameLabel.label "Název účtu:">
+<!ENTITY accnameLabel.accesskey "N">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Blahopřejeme!">
+<!ENTITY completionText.label "Ověřte prosím, zda jsou níže uvedené položky v pořádku.">
+<!ENTITY newsServerNamePrefix.label "Název diskusního serveru (NNTP):">
+<!ENTITY clickFinish.label "Klepnutím na tlačítko Dokončit uložíte nastavení a ukončíte tohoto průvodce.">
+<!ENTITY clickFinish.labelMac "Klepnutím na tlačítko Hotovo uložíte nastavení a ukončíte tohoto průvodce.">
