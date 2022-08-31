@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Postafiók varázsló">
+<!ENTITY accountWizard.size "width: 45em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Felhasználó">
+<!ENTITY identityDesc.label "Minden postafiókhoz tartozik egy személyazonosság. Az itt megadott név megjelenik a másoknak küldött levelek fejlécében.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Adja meg azt a nevet, amelyet a kézbesítendő levelek „Feladó” sorában akar megjelentetni.">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(például: „Kovács János”)">
+<!ENTITY fullnameLabel.label "Név:">
+<!ENTITY fullnameLabel.accesskey "N">
+
+<!ENTITY emailLabel.label "E-mail cím:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Kiszolgálóinformációk">
+<!ENTITY incomingUsername.label "Felhasználói név:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Írja be a hírcsoport-kiszolgáló (NNTP) nevét (pl.: „news.example.net”).">
+<!ENTITY newsServerLabel.label "Hírcsoport-kiszolgáló:">
+<!ENTITY newsServerLabel.accesskey "H">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Postafiók neve">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Írja be milyen néven szeretne hivatkozni erre a postafiókra (pl.: „Munka”, „Otthon” vagy „Hírek”).">
+<!ENTITY accnameLabel.label "Postafiók neve:">
+<!ENTITY accnameLabel.accesskey "P">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Gratulálunk!">
+<!ENTITY completionText.label "Ellenőrizze, hogy az alábbi adatok helyesek-e.">
+<!ENTITY newsServerNamePrefix.label "Hírcsoport-kiszolgáló (NTTP) neve:">
+<!ENTITY clickFinish.label "Az adatok mentéséhez és a Postafiók varázslóból kilépéshez kattintson a Befejezés gombra.">
+<!ENTITY clickFinish.labelMac "Az adatok mentéséhez és a Postafiók varázslóból kilépéshez kattintson a Done gombra.">
