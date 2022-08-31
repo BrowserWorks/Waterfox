@@ -1,0 +1,779 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" [
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Benutzung von Zertifikaten</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css" />
+</head>
+<body>
+
+<h1 id="using_certificates">Benutzung von Zertifikaten</h1>
+
+<p>Ein Zertikat ist das digitale Gegenst&#252;ck zu einer ID-Karte. Genauso wie
+Sie mehrere ID-Karten f&#252;r verschiedene Zwecke haben k&#246;nnen, wie einen
+F&#252;hrerschein, eine Besch&#228;ftigungs-ID-Karte oder eine Kreditkarte,
+k&#246;nnen Sie auch mehrere verschiedene Zertifikate besitzen, die Sie f&#252;r
+verschiedene Zwecke identifizieren.</p>
+
+<p>Dieser Abschnitt beschreibt, wie verschiedene auf Zertifikate bezogene
+Operationen durchgef&#252;hrt werden.</p>
+
+<div class="contentsBox">In diesem Abschnitt:
+<ul>
+  <li><a href="#getting_your_own_certificate">Erhalt Ihres eigenen Zertifikates</a></li>
+  <li><a href="#checking_security_for_a_web_page">Sicherheit einer Webseite &#252;berpr&#252;fen</a></li>
+  <li><a href="#managing_certificates">Zertifikate verwalten</a></li>
+  <li><a href="#managing_smart_cards_and_other_security_devices">
+      Verwaltung von Smart-Cards und anderen Sicherheitseinrichtungen</a></li>
+  <li><a href="#managing_ssl_warnings_and_settings">Verwaltung von SSL-Warnungen und -Einstellungen</a></li>
+  <li><a href="#controlling_validation">Steuerung der Validierung</a></li>
+</ul>
+</div>
+
+<h1 id="getting_your_own_certificate">Erhalt Ihres eigenen Zertifikates</h1>
+
+<p>&#196;hnlich wie eine Kreditkarte oder ein F&#252;hrerschein ist ein
+Zertifikat eine Form der Identifikation, die Sie nutzen k&#246;nenn, um sich
+selbst &#252;ber das Internet oder andere Netzwerke zu identifizieren. Wie
+andere h&#228;ufig genutzte pers&#246;nliche Identifikationen, wird ein
+Zertifikat typischerweise von einer Organisation mit einer anerkannten
+Autorit&#228;t, solche Identifikation auszustellen, ausgegeben. Eine
+Organisation, die Zertifikate ausstellt, wird als
+<strong>Zertifizierungsstelle (certificate authority (CA))</strong> bezeichnet.</p>
+
+<p>Sie k&#246;nnen Sie identifizierende Zertifikate von &#246;ffentlichen CAs,
+System-Administratoren, speziellen CAs innerhalb Ihrer Organisation oder von
+Webseiten erhalten, die eine verl&#228;&#223;lichere Art der Identifikation
+als Ihren Namen und Ihr Passwort erfordern.</p>
+
+<p>Genauso wie die Erfordernisse f&#252;r einen F&#252;hrerschen in
+Abh&#228;ngigkeit von dem Fahrzeugtyp variieren, das Sie fahren m&#246;chten,
+sind auch die Erfordernisse zum Erhalt eines Zertifikates abh&#228;ngig davon,
+wof&#252;r Sie es benutzen m&#246;chten. In einigen F&#228;llen kann der Erhalt
+des Zertifikates so einfach sein wie der Besuch einer Webseite, Eingabe einiger
+pers&#246;nlicher Informationen und dem automatischen Abruf des Zertifikats in
+Ihren Browser. In anderen F&#228;llen m&#252;ssen Sie einen komplizierteren
+Prozess durchlaufen.</p>
+
+<p>Heute k&#246;nnen Sie ein Zertifikat erhalten, indem Sie die URL einer
+Zertifizierungsstelle aufsuchen und den Online-Anweisungen folgen. Wegen einer
+Liste von Zertifizierungsstellen welche von &brandShortName; erkannt werden,
+siehe das Online-Dokument 
+<a href="http://www.mozilla.org/projects/security/certs/included/">
+Inkludierte Client-Zertifikate</a>.</p>
+
+<p>Sobald Sie ein Zertifikat erhalten, wird es automatisch in einer
+<a href="glossary.xhtml#security_device">Sicherheitseinrichtung</a> gespeichert.
+Ihr Browser hat bereits seine eigene eingebaute Software-Sicherheitseinrichtung.
+Eine Sicherheitseinrichtung kann auch ein St&#252;ck Hardware sein, wie z. B.
+eine Smart-Card.</p>
+
+<p>Wie ein F&#252;hrerschein ode eine Kreditkarte ist ein Zertifikat eine
+wertvolle Form der Identifikation, die mi&#223;braucht werden kann, wenn sie
+in die falschen H&#228;nde f&#228;llt. Sobald Sie ein Zertifikat erhalten haben,
+das Sie identifiziert, sollten Sie es auf zweierlei Art sichern: indem Sie eine
+Kopie erstellen und durch das Setzen Ihres
+<a href="glossary.xhtml#master_password">Master-Passwortes</a>.</p>
+
+<p>Wenn Sie zum ersten Mal ein Zertifikat erhalten, k&#246;nnten Sie
+aufgefordert werden, eine Kopie zu erstellen. Wenn Sie bisher noch kein
+Master-Passwort erstellt haben, werden Sie aufgefordert, eines zu erstellen.</p>
+
+<p>F&#252;r ausf&#252;hrlicher Informationen &#252;ber das Sichern eines
+Zertifikates und Setzen Ihres Master-Passwortes, siehe
+ <a href="certs_help.xhtml#your_certificates">Ihre Zertifikate</a>.</p>
+
+<p>[<a href="#using_certificates">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h1 id="checking_security_for_a_web_page">Sicherheit einer Webseite &#252;berpr&#252;fen</h1>
+
+<p>Wenn Sie irgendeine Webseite betrachten, informiert Sie das Schloss-Icon
+neben der rechten unteren Ecke des Fensters dar&#252;ber, ob der gesamte Inhalt
+der Seite durch <a href="glossary.xhtml#encryption">Verschl&#252;sselung</a>
+gesch&#252;tzt war, w&#228;hrend sie von Ihrem Computer empfangen wurde.</p>
+
+<table summary="Schlosssymbole">
+  <tr>
+    <td><img alt="geschlossenes Schlosssymbol" src="chrome://communicator/skin/icons/lock-secure.png" /></td>
+    <td>Ein geschlossenes Schloss bedeutet, das die Seite w&#228;hrend des
+	    Empfangs durch Verschl&#252;sselung gesch&#252;tzt war.</td></tr>
+  <tr>
+    <td><img alt="offenes Schlosssymbol" src="chrome://communicator/skin/icons/lock-insecure.png" /></td>
+    <td>Ein offenes Schloss bedeutet, das die Seite w&#228;hrend des Empfangs
+	    nicht durch Verschl&#252;sselung gesch&#252;tzt war.</td></tr>
+  <tr>
+    <td><img alt="zerbrochenes Schlosssymbol" src="chrome://communicator/skin/icons/lock-broken.png" /></td>
+    <td>Ein zerbrochenes Schloss bedeutet, das einige oder alle der Elemente
+	    innerhalb der Seite w&#228;hrend des Empfangs nicht durch
+		Verschl&#252;sselung gesch&#252;tzt war, selbst wenn die
+		&#228;u&#223;erste HTML-Seite verschl&#252;sselt war.</td></tr>
+</table>
+
+<p>Wegen weiterer Einzelheiten &#252;ber den Verschl&#252;sselungsstatus der
+Seite w&#228;hrend des Empfangs klicken Sie auf das Schloss-Icon (oder
+&#246;ffnen Sie das Ansicht-Men&#252;, w&#228;hlen Seiten-Information und dann
+den Tab Sicherheit).</p>
+
+<p>Der Tab Sicherheit der Seiten-Informationen bietet zwei Arten von
+Informationen:</p>
+
+<ul>
+  <li>Die obere H&#228;lfte beschreibt, ob die Webseite verifiziert wurde.
+      (Wegen Informationen &#252;ber Zertifikat-Validierung siehe
+	  <a href="#controlling_validation">Steuerung der Validierung</a>.)</li>
+  <li>Die untere H&#228;lfte beschreibt, ob der Inhalt der Seite, die Sie
+      betrachen, w&#228;hrend der &#220;bertragung &#252;ber das Netzwerk durch
+	  Verschl&#252;sselung gesichert ist.</li>
+</ul>
+
+<p><strong>Wichtig</strong>: Das Schloss-Icon beschreibt nur den
+Verschl&#252;sselungs-Status der Seite, w&#228;hrend sie von Ihrem Computer
+empfangen wurde. Wenn Sie benachrichtigt werden wollen, bevor Sie Informationen
+ohne Verschl&#252;sselung senden oder empfangen, w&#228;hlen Sie die
+entsprechenden SSL-Warnungs-Optionen. Siehe
+<a href="ssl_help.xhtml">Datenschutz &amp; Sicherheitseinstellungen - SSL</a>
+wegen Einzelheiten.</p>
+
+<p>[<a href="#using_certificates">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h1 id="managing_certificates">Zertifikate verwalten</h1>
+
+<p>Sie k&#246;nnen den Zertifikat-Manger zur Verwaltung Ihrer Zertifikate
+nutzen. Zertifikate k&#246;nnen auf der Festplatte Ihres Computers oder auf
+einer  <a href="glossary.xhtml#smart_card">Smart-Card</a> oder einer anderen,
+an Ihrem Computer angebrachten Sicherheitseinrichtung gespeichert werden.</p>
+
+<p>Um den Zertifikat-Manager aufzurufen:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das <span class="mac">&brandShortName;</span>
+      <span class="noMac">Bearbeiten</span>-Men&#252; und w&#228;hlen Sie Einstellungen.</li>
+  <li>Unter Datenschutz &amp; Sicherheit klicken Sie auf Zertifikate. (Wenn
+      keine Unterkategorien sichtbar sind, klicken Sie doppelt auf Datenschutz
+	  &amp; Sicherheit, um die Liste zu erweitern.)</li>
+  <li>Im Abschnitt Zertifikate w&#228;hlen Sie Zertifikate verwalten. Der
+      Zertifikat-Manager wird ge&#246;ffnet.</li>
+</ol>
+
+<div class="contentsBox">In diesem Abschnitt:
+<ul>
+  <li><a href="#managing_certificates_that_identify_you">Verwaltung von Zertifikaten, die Sie identifizieren</a></li>
+  <li><a href="#managing_certificates_that_identify_people">Verwaltung von Zertifikaten, die Personen identifizieren</a></li>
+  <li><a href="#managing_certificates_that_identify_servers">Verwaltung von Zertifikaten, die Server identifizieren</a></li>
+  <li><a href="#managing_certificates_that_identify_certificate_authorities">Verwaltung von Zertifikaten, 
+    die Zertifizierungsstellen identifizieren</a></li>
+  <li><a href="#managing_certificates_that_identify_others">Verwaltung von Zertifikaten, welche sonstiges identifizieren</a></li>
+</ul>
+</div>
+
+<h2 id="managing_certificates_that_identify_you">Verwaltung von Zertifikaten,
+die Sie identifizieren</h2>
+
+<p>Wenn Sie den Zertifikat-Manager &#246;ffnen, werden Sie bemerken, das sich
+am oberen Rand des Fensters mehrere Tabs befinden. Der erste wird Ihre
+Zertifikate genannt, und er zeigt die Zertifikate an, die Ihr Browser oder Ihr Mailclient
+zu Ihrer Zertifizierung zur Verf&#252;gung hat. Ihre Zertifikate sind unter den Namen der
+Orgainisationen aufgef&#252;hrt, von denen sie ausgegeben wurden.</p>
+
+<p>Um eine Aktion mit einem oder mehrere Zertifikaten durchzuf&#252;hren,
+klicken Sie auf den Eintrag f&#252;r das Zertifikat (oder
+<kbd class="mac">Cmd</kbd><kbd class="noMac">Strg</kbd>-Klick um
+mehr als ein Zertifikat auszuw&#228;hlen), dann klicken Sie auf eine der Schaltfl&#228;chen 
+im unteren Bereich des Zertifikat-Manager Fensters. Jede der Schaltfl&#228;chen
+&#246;ffnet ein weiteres Fenster, das Ihnen die Durchf&#252;hrung der jeweiligen 
+Aktion gestattet. Klicken Sie auf den Hilfe-Button in jedem Fenster, 
+um weitere Informationen &#252;ber die Benutzung des jeweiligen Fensters 
+zu erhalten.</p>
+
+<p>Weiteren Einzelheiten wie Sie Ihre Zertifikate anzeigen und verwalten k&#246;nnen finden Sie
+im Abschnitt <a href="certs_help.xhtml#your_certificates">Ihre Zertifikate</a>.</p>
+
+<p>[<a href="#managing_certificates">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="managing_certificates_that_identify_people">Verwaltung von Zertifikaten,
+die Personen identifizieren</h2>
+
+<p>Wenn Sie eine Email erstellen, k&#246;nnen Sie Ihre digitale Signatur
+anh&#228;ngen. Eine
+<a href="glossary.xhtml#digital_signature">digitale Signatur</a> erlaubt es den
+Empf&#228;ngern der Nachricht zu verifizieren, das die Nachricht wirklich von
+Ihnen kommt und nicht ver&#228;ndert wurde, seitdem sie von Ihnen versandt wurde.</p>
+
+<p>Jedes Mal, wenn Sie eine digital signierte Nachricht versenden, wird Ihr
+Verschl&#252;sselungszertifikat automatisch in die Nachricht eingef&#252;gt.
+Dieses Zertifikat erlaubt es den Nachrichten-Empf&#228;ngern, Ihnen
+verschl&#252;sselte Nachrichten zu senden.</p>
+
+<p>Einer der einfachsten Wege, das Verschl&#252;sselungszertifikat von jemand
+anders zu erhalten, ist es, wenn diese Person Ihnen eine digital signierte
+Nachricht sendet. Der Zertifikat-Manager speichert die Zertifikate anderer
+Leute, wenn sie auf diesem Weg empfangen werden.</p>
+
+<p>Um alle Zertifikate zu sehen, die andere Personen identifizieren und die dem
+Zertifikat-Manager zur Verf&#252;gung stehen, klicken Sie auf Personen im 
+oberen Teil des Zertifikat-Manager-Fensters. Sie k&#246;nnen jeder Person 
+verschl&#252;sselte Nachrichten senden, f&#252;r die ein
+g&#252;ltiges Zertifikat aufgef&#252;hrt ist. Zertifikate sind unter den Namen
+der Organisationen aufgef&#252;hrt, die diese Zertifikate ausgegeben haben.</p>
+
+<p>Um Aktionen auf einem oder mehreren Zertifikaten auszuf&#252;hren,
+w&#228;hlen Sie den Eintrag f&#252;r das Zertifikat (oder <kbd class="mac">Cmd</kbd>
+<kbd class="noMac">Strg</kbd>-Klick um mehr als ein Zertifikat auszuw&#228;hlen), 
+dann klicken Sie auf eine der Schaltfl&#228;chen im unteren Bereich des Zertifikat-Manager
+Fensters. Jede der Schaltfl&#228;chen &#246;ffnet ein weiteres Fenster, das Ihnen die 
+Durchf&#252;hrung der jeweiligen Aktion gestattet. Klicken Sie auf den Hilfe-Button 
+in jedem Fenster, um weitere Informationen &#252;ber die Benutzung des jeweiligen Fensters 
+zu erhalten.</p>
+
+<p>Weiteren Einzelheiten wie Sie Ihre Zertifikate anzeigen und verwalten k&#246;nnen finden Sie
+in der Beschreibung des <a href="certs_help.xhtml#people">Personen</a>-Tabs des Zertifikat-Managers.</p>
+
+<p>[<a href="#managing_certificates">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="managing_certificates_that_identify_servers">Verwaltung von
+Zertifikaten, die Server identifizieren</h2>
+
+<p>Einige Webseiten oder Mail-Server benutzten Zertifikate, um sich selbst zu 
+identifizieren. Solche Identifikation ist erforderlich, bevor die zwischen dem
+Server und Ihrem Computer (oder umgekehrt) &#252;bertragene Informationen
+verschl&#252;sselt werden k&#246;nnen, so dass niemand die Daten w&#228;hrend der
+&#220;bertragung lesen kann.</p>
+
+<p>Wenn die URL einer Webseite mit <tt>https://</tt> beginnt, verf&#252;gt die
+Webseite &#252;ber ein Zertifikat. Wenn Sie solch eine Webseite aufsuchen und
+deren Zertifikat von einer CA ausgegeben wurde, die der Zertifikat-Manager
+nicht kennt oder der er nicht vertraut, werden Sie gefragt, ob Sie das
+Zertifikat der Webseite akzeptieren wollen. Wenn Sie ein neues
+Webseiten-Zertifikat akzeptieren, f&#252;gt der Zertifikat-Manager es zu seiner
+Liste von Webseiten-Zertifikaten hinzu.</p>
+
+<p>Um alle Webseiten-Zertifikate zu sehen, die in Ihrem Browser verf&#252;gbar
+sind, klicken Sie auf das Tab Server am oberen Rand des
+Zertifikat-Manager-Fensters.</p>
+
+<p>Um eine Aktion mit einem oder mehreren Zertifikaten
+durchzuf&#252;hren, klicken Sie auf den Eintrag f&#252;r das Zertifikat (oder
+<kbd class="mac">Cmd</kbd><kbd class="noMac">Strg</kbd>-Klick
+um mehr als eins auszuw&#228;hlen), dann klicken Sie auf eine der 
+Schaltfl&#228;chen im unteren Bereich des Zertifikat-Manager Fensters. Jede der 
+Schaltfl&#228;chen &#246;ffnet ein weiteres Fenster, das Ihnen die 
+Durchf&#252;hrung der jeweiligen Aktion gestattet. Klicken Sie auf den Hilfe-Button 
+in jedem Fenster, um weitere Informationen &#252;ber die Benutzung des jeweiligen Fensters 
+zu erhalten.</p>
+
+<p>Weiteren Einzelheiten wie Sie Ihre Zertifikate anzeigen und verwalten k&#246;nnen finden Sie
+in der Beschreibung des <a href="certs_help.xhtml#servers">Server</a>-Tabs des Zertifikat-Managers.</p>
+
+<p>[<a href="#managing_certificates">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="managing_certificates_that_identify_certificate_authorities">Verwaltung
+von Zertifikaten, die Zertifizierungsstellen identifizieren</h2>
+
+<p>Wie andere allgemein genutzte Identifikations-Formen, wird ein Zertifikat
+von einer Organisation ausgestellt, die als dazu berechtigt anerkannt ist. Eine
+Organisation, die Zertifikate ausstellt, wird als
+<a href="glossary.xhtml#certificate_authority">Zertifizierungsstelle (certificate authority (CA))</a>
+bezeichnet. Ein Zertifikat, das eine Zertifikatsstelle identifiziert, wird als
+CA-Zertifikat bezeichnet.</p>
+
+<p>Der Zertifikat-Manager hat normalerweise viele CA-Zertifikate gespeichert.
+Diese CA-Zertifikate erlauben es dem Zertifikat-Manager, Zertifkate zu erkennen
+und damit zu arbeiten, die von den entsprechenden CAs ausgestellt wurden. Die
+Anwesenheit eines CA-Zertifikates garantiert jedoch <em>nicht</em>, das den von
+der CA ausgegebenen Zertifikaten vertraut werden kann. Sie oder Ihr
+Systemadministrator m&#252;ssen in Abh&#228;ngigkeit von Ihren
+Sicherheitserfordernissen dar&#252;ber entscheiden, welchen Arten von
+Zertifikaten Sie vertrauen.</p>
+
+<p>Um alle in Ihrem Browser verf&#252;gbaren CA-Zertifikate anzuzeigen, klicken
+Sie auf das Tab Authorities am oberen Rand des Zertifikat-Manager-Fensters.</p>
+
+<p>Um eine Aktion mit einem oder mehreren Ca-Zertifikaten durchzuf&#252;hren,
+w&#228;hlen Sie den Eintrag f&#252;r das Zertifikat (oder
+<kbd class="mac">Cmd</kbd><kbd class="noMac">Strg</kbd>-Klick um mehr
+als eins zu w&#228;hlen), dann klicken Sie auf eine der 
+Schaltfl&#228;chen im unteren Bereich des Zertifikat-Manager Fensters. Jede der 
+Schaltfl&#228;chen &#246;ffnet ein weiteres Fenster, das Ihnen die 
+Durchf&#252;hrung der jeweiligen Aktion gestattet. Klicken Sie auf den Hilfe-Button 
+in jedem Fenster, um weitere Informationen &#252;ber die Benutzung des jeweiligen Fensters 
+zu erhalten.</p>
+
+<p>Weiteren Einzelheiten wie Sie Ihre Zertifikate anzeigen und verwalten k&#246;nnen finden Sie
+in der Beschreibung des <a href="certs_help.xhtml#authorities">Autorit&#228;ten</a>-Tabs des Zertifikat-Managers.</p>
+
+<p>[<a href="#managing_certificates">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="managing_certificates_that_identify_others">Verwaltung
+von Zertifikaten, die sonstiges identifizieren</h2>
+
+<p>Um alle Zertifikate anzusehen, welche in keine der anderen Kategorien passen,
+  klicken Sie auf das Tab Sonstige im oberen Teil des Zertifikat-Manager Fensters.</p>
+
+<p>Weiteren Einzelheiten wie Sie Ihre Zertifikate anzeigen und verwalten k&#246;nnen finden Sie
+in der Beschreibung des <a href="certs_help.xhtml#others">Sonstige</a>-Tabs des Zertifikat-Managers.</p>
+
+<p>[<a href="#managing_certificates">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h1 id="managing_smart_cards_and_other_security_devices">Verwaltung von
+Smart-Cards und anderen Sicherheitseinrichtungen</h1>
+
+<p>Eine Smart-Card ist ein kleines Ger&#228;t, ungef&#228;hr in der
+Gr&#246;&#223;e einer Kreditkarte, das einen Mikroprozessor enth&#228;lt und
+Informationen &#252;ber Ihre Identit&#228;t (wie Ihre
+<a href="glossary.xhtml#private_key">privaten Schl&#252;ssel</a> und
+<a href="glossary.xhtml#certificate">Zertifikate</a>) speichert und
+kryptografische Operationen durchf&#252;hrt.</p>
+
+<p>Zur Benutzung einer Smart-Card ben&#246;tigen Sie einen Smart-Card-Leser
+(ein St&#252;ck Hardware), der mit Ihrem Computer verbunden ist wie auch
+Softwarte auf Ihrem Computer, die den Leser steuert.</p>
+
+<p>Eine Smart-Card ist einfach eine Sicherheitseinrichtung. Eine
+Sicherheitseinrichtung (manchmal als Token bezeichnet) ist eine Hardware- oder
+Software-Einrichtung, die kryptografische Dienste bereitstellt und Informationen
+&#252;ber Ihre Identit&#228;t speichert. Benutzen Sie den Ger&#228;te-Manager,
+um mit Smart-Cards und anderen Sicherheitseinrichtungen zu arbeiten.</p>
+
+<div class="contentsBox">In diesem Abschnitt:
+<ul>
+  <li><a href="#about_security_devices_and_modules">&#220;ber Sicherheitseinrichtungen und Module</a></li>
+  <li><a href="#using_security_devices">Benutzung von Sicherheitseinrichtungen</a></li>
+  <li><a href="#using_security_modules">Benutzung von Sicherheitsmodulen</a></li>
+  <li><a href="#enable_fips_mode">FIPS-Modus aktivieren</a></li>
+</ul>
+</div>
+
+<h2 id="about_security_devices_and_modules">&#220;ber Sicherheitseinrichtungen
+und Module</h2>
+
+<p>Der Einrichtungs-Manager &#246;ffnet ein Fenster, das die verf&#252;gbaren
+Sicherheitseinrichtungen anzeigt. Sie k&#246;nnen den Einrichtungs-Manager dazu
+verwenden, um beliebige Sicherheitseinrichtungen (einschlie&#223;lich
+Smart-Cards) zu verwalten, die den Public Key Cryptography Standard
+(PKCS) #11 unterst&#252;tzen.</p>
+
+<p>Ein <a href="glossary.xhtml#pkcs_11_module">PKCS #11-Modul</a> (manchmal als
+Sicherheitsmodul bezeichnet) steuert ein oder mehrere Sicherheitseinrichtungen
+genauso wie ein Software-Treiber ein externes Ger&#228;t wie einen Drucker oder
+ein Modem kontrolliert. Wenn sie eine Smart-Card installieren, m&#252;ssen Sie
+sowohl das PKCS #11-Modul f&#252;r die Smart-Card auf Ihrem Computer
+installieren als auch den Smart-Card-Leser verbinden.</p>
+
+<p>Standardm&#228;&#223;ig steuert dieser Tab zwei interne PKCS #11-Module,
+die drei Sicherheitseinrichtungen verwalten:</p>
+
+<ul>
+  <li><strong>&brandShortName; Internal PKCS #11 Modul</strong>: Steuert zwei
+      Sicherheitseinrichtungen:
+    <ul>
+      <li><strong>Generische Krypto-Dienste</strong>: Eine spezielle
+	      Sicherheitseinrichtung, die alle kryptografischen Operationen
+		  durchf&#252;hrt, die vom &brandShortName;-internen PKCS #11-Modul
+		  angefordert werden.</li>
+      <li><strong>Software-Sicherheitseinrichtung</strong>: Speichert Ihre
+	      Zertifikate und Schl&#252;ssel, die nicht auf externen
+		  Sicherheitseinrichtungen gespeichert werden, einschlie&#223;lich
+		  aller CA-Zertifikate, die Sie zus&#228;tzlich zu dem mit dem Browser
+		  gelieferten installiert haben.</li>
+    </ul></li>
+  <li><strong>Eingebautes Roots-Modul</strong>: Steuert eine spezielle
+      Sicherheitseinrichtung, die als Eingebautes Objekt-Token bezeichnet wird.
+	  Diese Sicherheitseinrichtung speichert die
+	  Standard-<a href="glossary.xhtml#ca_certificate">CA-Zertifikate</a>, die
+	  bereits im Browser enthalten sind.</li>
+</ul>
+
+<p>[<a href="#managing_certificates">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="using_security_devices">Benutzung von Sicherheitseinrichtungen</h2>
+
+<p>Der Einrichtungs-Manager gestattet es Ihnen, Aktionen an den
+Sicherheitseinrichtungen durchzuf&#252;hren. Um das Tab zu &#246;ffnen,
+befolgen Sie folgende Schritte.</p>
+
+<ol>
+  <li>&#214;ffnen Sie das <span class="mac">&brandShortName;</span>
+      <span class="noMac">Bearbeiten</span>-Men&#252; und w&#228;hlen Sie Einstellungen.</li>
+  <li>Unter Datenschutz &amp; Sicherheit klicken Sie auf Zertifikate. (Wenn
+      keine Unterkategorien sichtbar sind, klicken Sie doppelt auf Datenschutz
+	  &amp; Sicherheit, um die Liste zu erweitern.)</li>
+  <li>Im Abschnitt Zertifikate w&#228;hlen Sie <q>Kryptographie-Module
+      verwalten...</q>. </li>
+</ol>
+
+<p>Dieses Fenster zeigt jedes verf&#252;gbare PKCS #11-Modul in Fettschrift und
+die von jedem Modul verwalteteten Sicherheitseinrichtungen unter dem Namen des
+Moduls.</p>
+
+<p>Wenn Sie eine Sicherheitseinrichtung selektieren, erscheinen Informationen
+dar&#252;ber in der Mitte des Fensters, und einige der Schaltfl&#228;che rechts
+im Fenster werden aktiviert. Wenn Sie z. B. die Software-Sicherheitseinrichtung
+w&#228;hlen, k&#246;nnen Sie folgende Aktionen durchf&#252;hren:</p>
+
+<ul>
+  <li>Klicken Sie auf Anmelden oder Abmelden, um sich bei der
+      Software-Sicherheitseinrichtung an- oder abzumelden. Wenn sie angemeldet
+	  sind, werden Sie nach dem Master-Passwort f&#252;r die Einrichtung
+	  gefragt. Sie m&#252;ssen angemeldet sein, bevor Ihre Browser-Software die
+	  Einrichtung f&#252;r kryptografische Dienste nutzen kann.</li>
+  <li>Klicken Sie auf Passwort &#228;ndern, um das Master-Passwort f&#252;r die
+      Einrichtung zu &#228;ndern.</li>
+</ul>
+
+<p>Sie k&#246;nnen diese Aktion auf den meisten Sicherheitseinrichtungen
+anwenden, jedoch nicht auf dem Eingebauten Objekt-Token der Generischen
+Krypto-Dienste, da es sich um spezielle Sicherheitseinrichtungen handelt, die
+zu allen Zeiten verf&#252;gbar sein m&#252;ssen.</p>
+
+<p>Zu weiteren Einzelzeiten siehe
+<a href="certs_help.xhtml#device_manager">Verwaltung von Sicherheitseinrichtungen</a>.</p>
+
+<p>[<a href="#managing_smart_cards_and_other_security_devices">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="using_security_modules">Benutzung von Sicherheitsmodulen</h2>
+
+<p>Wenn Sie eine Smart-Card oder andere externe Sicherheitseinrichtung verwenden
+wollen, m&#252;ssen Sie zuerst die Modul-Software auf Ihrem Computer
+installieren und, wenn n&#246;tig, die erforderliche Hardware verbinden.
+Befolgen Sie die Anweisungen, die mit der Hardware geliefert werden.</p>
+
+<p>Nachdem ein neues Modul auf Ihrem Computer installiert ist, folgen Sie diesen
+Schritten, um es zu laden:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das <span class="mac">&brandShortName;</span>
+      <span class="noMac">Bearbeiten</span>-Men&#252; und w&#228;hlen Sie Einstellungen.</li>
+  <li>Unter Datenschutz &amp; Sicherheit klicken Sie auf Zertifikate. (Wenn
+      keine Unterkategorien sichtbar sind, klicken Sie doppelt auf Datenschutz
+	  &amp; Sicherheit, um die Liste zu erweitern.)</li>
+  <li>Im Abschnitt Zertifikate w&#228;hlen Sie <q>Kryptographie-Module
+      verwalten...</q>. </li>
+  <li>W&#228;hlen Sie Laden.</li>
+  <li>In der Dialog-Box PKCS #11-Einrichtung laden klicken Sie auf die
+      Schaltfl&#228;che Durchsuchen, lokalisieren Sie die Modul-Datei und
+	  klicken Sie dann auf &#214;ffnen.</li>
+  <li>Geben Sie den Modulnamen in das Feld Modulname ein und w&#228;hlen Sie
+      OK.</li>
+</ol>
+
+<p>Das neue Modul erscheint dann in der Liste der Module mit dem Namen, dem Sie
+ihm zugewiesen haben.</p>
+
+<p>Um ein PKCS #11-Modul zu entladen, selektieren Sie dessen Namen und klicken
+Sie auf Entladen.</p>
+
+<h2 id="enable_fips_mode">FIPS-Modus aktivieren</h2>
+
+<p>Federal Information Processing Standards Publications (FIPS PUBS) 140-1 ist
+ein Standard der US-amerikanischen Regierung &#252;ber Implementationen von
+kryptografischen Modulen - das hei&#223;t Hard- oder Software, die Daten
+ver- und entschl&#252;sselt oder andere kryptografische Operationen vornimmt
+(wie Erstellung oder Verifizierung digitaler Signaturen). Viele Produkte, die an
+die US-amerikanische Regierung verkauft werden, m&#252;ssen einem oder mehreren
+FIPS-Standards entsprechen.</p>
+
+<p>Um den FIPS-Modus f&#252;r den Browser zu aktivieren, benutzen Sie den
+Einrichtungs-Manager:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das <span class="mac">&brandShortName;</span>
+      <span class="noMac">Bearbeiten</span>-Men&#252; und w&#228;hlen Sie Einstellungen.</li>
+  <li>Unter Datenschutz &amp; Sicherheit klicken Sie auf Zertifikate. (Wenn
+      keine Unterkategorien sichtbar sind, klicken Sie doppelt auf Datenschutz
+	  &amp; Sicherheit, um die Liste zu erweitern.)</li>
+  <li>Im Abschnitt Zertifikate w&#228;hlen Sie <q>Kryptographie-Module
+      verwalten...</q>. </li>
+  <li>Klicken Sie auf den Button FIPS aktivieren. Wenn FIPS aktiviert ist,
+      &#228;ndert sich der Name NSS Internal PKCS #11 Module zu NSS Internal
+	  FIPS PKCS #11 Module und der Button FIPS aktivieren wechselt zu FIPS
+	  deaktivieren.</li>
+</ol>
+
+<p>Um den FIPS-Modus zu deaktivieren, klicken Sie auf FIPS deaktivieren.</p>
+
+<p>[<a href="#managing_smart_cards_and_other_security_devices">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h1 id="managing_ssl_warnings_and_settings">Verwaltung von SSL-Warnungen und
+-Einstellungen</h1>
+
+<p>Das Protokoll Secure Sockets Layer (SSL) erlaubt es Ihrem Computer,
+Informationen mit anderen Computern &#252;ber das Internet in
+verschl&#252;sselter Form auszutauschen- d. h. die Information ist
+w&#228;hrend der &#220;bertragung zerhackt, so dass niemand sonst damit etwas
+anfangen kann. SSL wird auch benutzt, um Computer im Internet durch
+<a href="glossary.xhtml#certificate">Zertifikate</a> zu identifizieren.</p>
+
+<p>Das Protokoll Transport Layer Security (TLS) ist ein neuer, auf SSL
+basierender Standard. Standardm&#228;&#223;ig unterst&#252;tzt der Browser
+sowohl SSL wie auch TLS. Dieser Weg funktioniert f&#252;r die meisten Personen,
+weil er sicherstellt, dass der Browser mit wirklich jeder anderen Software im
+Internet zusammenarbeitet, die irgendeine Version von SSL oder TLS
+unterst&#252;tzt.</p>
+
+<p>Es kann jedoch unter Umst&#228;nden vorkommen, das Systemadministratoren oder
+andere f&#228;hige Personen die SSL-Einstellungen anpassen m&#246;chten f&#252;r
+spezielle Sicherheitsbed&#252;rfnisse oder um Fehlern in &#228;lteren
+Software-Produkten Rechnung zu tragen.</p>
+
+<p>Sie sollten die SSL-Einstellungen f&#252;r Ihren Browser nicht &#228;ndern,
+wenn Sie nicht genau wissen, was Sie tun oder Sie Hilfe von jemandem haben, die
+Ahnung davon hat. Wenn Sie aus irgendwelchen Gr&#252;nden &#196;nderungen
+vornehmen m&#252;ssen, folgen Sie diesen Schritten:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das <span class="mac">&brandShortName;</span>
+      <span class="noMac">Bearbeiten</span>-Men&#252; und w&#228;hlen Sie Einstellungen.</li>
+  <li>Unter Datenschutz &amp; Sicherheit klicken Sie auf SSL. (Wenn keine
+      Unterkategorien sichtbar sind, klicken Sie doppelt auf Datenschutz &amp;
+	  Sicherheit, um die Liste zu erweitern.)</li>
+</ol>
+
+<p>Zu weiteren Einstellungen siehe <a href="ssl_help.xhtml">SSL-Einstellungen</a>.</p>
+
+<p>[<a href="#managing_smart_cards_and_other_security_devices">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h1 id="controlling_validation">Steuerung der Validierung</h1>
+
+<p>Wie oben unter <a href="#getting_your_own_certificate">Erhalt Ihres eigenen Zertifikates</a>
+diskutiert, ist ein Zertifikat wie ein F&#252;hrerschein eine Form der
+Identifikation, die Sie benutzen k&#246;nnen, um sich selbst &#252;ber das
+Internet und andere Netzwerke zu identifizieren. Aber &#228;hnlich wie ein
+F&#252;hrerschein kann ein Zertifikat ablaufen oder aus anderen Gr&#252;nden
+ung&#252;ltig werden. Daher muss Ihre Browser-Software die G&#252;ltigkeit
+eines Zertifikates best&#228;tigen k&#246;nnen, bevor es ihm f&#252;r
+Identifikationszwecke vertraut.</p>
+
+<p>Dieser Abschnitt beschreibt, wie der Zertifikat-Manager Zertifikate validiert
+und wie dieser Proze&#223; gesteuert wird. Um den Proze&#223; zu verstehen,
+sollten Sie mit
+<a href="glossary.xhtml#public-key_cryptography">Public-Key-Kryptografie</a>
+vertraut sein. Wenn Sie nicht mit der Benutzung von Zertifikaten vertraut sind,
+sollten Sie mit Ihrem Systemadministrator sprechen, bevor Sie versuchen, die
+Validierungs-Einstellungen Ihres Browsers zu &#228;ndern.</p>
+
+<div class="contentsBox">In diesem Abschnitt:
+<ul>
+  <li><a href="#how_validation_works">Wie Validierung funktioniert</a></li>
+  <li><a href="#managing_crls">CRLs verwalten</a></li>
+  <li><a href="#configuring_ocsp">OCSP konfigurieren</a></li>
+  <li><a href="validation_help.xhtml">Validierungs-Einstellungen</a></li>
+</ul>
+</div>
+
+<h2 id="how_validation_works">Wie Validierung funktionert</h2>
+
+<p>Wann immer Sie ein vom Zertifikat-Manager gespeichertes Zertifikat ansehen
+oder benutzen, unternimmt er verschiedene Schritte zur Validierung des
+Zertifikats. Zumindest best&#228;tigt er, dass die digitale Signatur auf dem
+Zertifikat von einer CA erstellt wurde, deren eigenes Zertifikat (1) in der
+Liste des Zertifikats-Managers &#252;ber verf&#252;gbare CA-Zertifikate
+enthalten ist und (2) als vertrauensw&#252;rdig markiert ist f&#252;r die
+Ausstellung von Zertifikaten der Art, die verifiziert wird.</p>
+
+<p>Wenn das CA-Zertifikat selbst nicht gespeichert ist, muss die
+<a href="glossary.xhtml#certificate_chain">Zertifikats-Kette</a> f&#252;r das
+CA-Zertifikat ein h&#246;heres CA-Zertifikat enthalten, das verf&#252;gbar ist
+und dem korrekt vertraut wird. Der Zertifikat-Manager stellt auch sicher, dass
+das verifizierte Zertifikat im Zertifikats-Speicher derzeit als
+vertrauensw&#252;rdig markiert ist. Wenn eine dieser Pr&#252;fungen versagt,
+markiert der Zertifikat-Manager das Zertifikat als unverifiziert und wird die
+dadurch zertifizierte Identit&#228;t nicht anerkennen.</p>
+
+<p>Ein Zertifikat kann alle diese Tests bestehen und trotzdem noch
+komprimittiert sein: Z. B. kann ein Zertifikat zur&#252;ckgenommen worden sein,
+weil eine nicht berechtigte Person Zugriff auf den privaten Schl&#252;ssel des
+Zertifikats hat. Ein komprimittiertes Zertifikat kann einer unberechtigten
+Person (oder Webseite) erlauben, sich als der Zertifikat-Eigent&#252;mer
+auszugeben.</p>
+
+<p>Eine M&#246;glichkeit, dieser Bedrohung zu begegnen, ist es, das der
+Zertifikat-Manager als Teil des Verifizierungs-Prozesses eine
+Zertifikats-R&#252;ckruf-Liste (certificate revocation list (CRL))
+&#252;berpr&#252;ft (siehe <a href="#managing_crls">CRLs verwalten</a>, unten).
+Normalerweise speichern Sie eine CRL in Ihrem Browser durch Anwahl eines Links.
+Wenn eine CRL vorhanden ist, &#252;berpr&#252;ft Zertifikat-Manager jedes
+Zertifikat, das von der gleichen CA ausgestellt wurde, als Teil des
+Validierungsprozesses.</p>
+
+<p>Die Verl&#228;&#223;lichkeit von CRLs h&#228;ngt von der Frequenz ab, mit
+der sie von einem Server aktualisiert und vom Client &#252;berpr&#252;ft
+werden. Sie k&#246;nnen Ihre
+<a href="validation_help.xhtml#automatic_crl_update_preferences">Automatischen
+CRL-Aktualisierungs-Einstellungen</a> konfigurieren, so dass eine CRL
+regelm&#228;ssig automatisch mit der aktuellen Version des Servers aktualisiert
+wird.</p>
+
+<p>Eine andere M&#246;glichkeit, um der Gefahr komprimittierter Zertifikate zu
+begegnen, ist es, einen speziellen Server zu nutzen, der das Online Certificate
+Status Protocol (OCSP) unterst&#252;tzt. Solch ein Server kann Client-Anfragen
+&#252;ber individuelle Zertifikate beantworten (siehe
+<a href="#configuring_ocsp">OCSP konfigurieren</a>, unten).</p>
+
+<p>Der Server, als OCSP-Responder bezeichnet, erh&#228;lt periodisch eine
+aktualiserte CRL von der CA, die die zu verifizierenden Zertifikate ausgegeben
+hat. Sie k&#246;nnen den Zertifikat-Manager so konfigurieren, das er eine
+Statusanfrage f&#252;r ein Zertifikat an den OCSP-Responder sendet, und der
+OCSP-Responder best&#228;tigt, ob das Zertifikat g&#252;ltig ist.</p>
+
+<p>[<a href="#controlling_validation">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="managing_crls">CRLs verwalten</h2>
+
+<p>Eine Zertifikat-R&#252;ckruf-Liste (certificate revocation list (CRL)) ist
+eine Liste z&#252;r&#252;ckgenommener Zertifikate. Eine
+<a href="glossary.xhtml#certificate_authority">Zertifizierungsstelle
+(certificate authority (CA))</a> kann z. B. ein Zertifikat zur&#252;cknehmen,
+wenn es irgendwie komprimittiert wurde - so &#228;hnlich, wie eine
+Kreditkartengesellschaft Ihre Kreditkarte zur&#252;ckrufen kann, wenn diese
+gestohlen wurde.</p>
+
+<p>Dieser Abschnitt beschreibt, wie Sie CRLs importieren und verwalten.</p>
+
+<p>Zu Hintergrund-Informationen siehe
+<a href="#how_validation_works">Wie Validierung funktioniert</a>.</p>
+
+<p>Wegen detaillierter Beschreibungen der CRL-Einstellungen, die Sie anpassen
+k&#246;nnen, siehe <a href="validation_help.xhtml">Validierungs-Einstellungen</a>.</p>
+
+<div class="contentsBox">In diesem Abschnitt:
+<ul>
+  <li><a href="#about_the_next_update_date">&#220;ber das <q>N&#228;chste
+      Update</q>-Datum</a></li>
+  <li><a href="#importing_crls">CRLs importieren</a></li>
+  <li><a href="#viewing_and_managing_crls">CRLs anzeigen und verwalten</a></li>
+</ul>
+</div>
+
+<h3 id="about_the_next_update_date">&#220;ber das <q>N&#228;chste
+Update</q>-Datum</h3>
+
+<p>Der Browser benutzt die ihm zur Verf&#252;gung stehenden CRLs, um die
+G&#252;ltigkeit von Zertifikaten zu pr&#252;fen, die von den entsprechenden CAs
+ausgestellt wurden. Wenn ein Zertifikat als zur&#252;ckgenommen aufgef&#252;hrt
+wird, akzeptiert der Browser dieses nicht mehr als Identit&#228;ts-Beweis.</p>
+
+<p>Eine Zertifizierungsstelle ver&#246;ffentlicht eine aktualisierte CRL in
+regelm&#228;&#223;igen Intervallen. Jede CRL enth&#228;lt ein im Feld
+N&#228;chstes Update angegebenes Datum, zu dem die Zertifizierungsstelle die
+n&#228;chste Aktualisierung der CRL ver&#246;ffenlicht. Allgemein gesagt, wenn
+das Datum im Feld N&#228;chstes Update vor dem aktuellen Datum liegt, sollten
+Sie die aktuellste Version der CRL abrufen. Um CRL-Informationen anzuzeigen und
+das automatisierte CRL-Aktualisieren einzustellen, siehe
+<a href="#viewing_and_managing_crls">CRLs anzeigen und verwalten</a>.</p>
+
+<p>Zertifizierungsstelle sind verpflichtet, zum Datum N&#228;chstes Update eine
+neue CRL zu produzieren. Die Abwesenheit der aktuellsten CRL bedeutet jedoch
+nicht, dass ein Zertifikat ung&#252;ltig ist. Aus diesem Grund - falls die
+aktuellste CRL nicht verf&#252;gbar ist - kann ein Zertifikat g&#252;ltig sein,
+obwohl die letzte CRL es als abgelaufen anzeigt. Automatisierte
+CRL-Aktualisierung kann helfen, diese Situation zu vermeiden.</p>
+
+<h3 id="importing_crls">CRLs importieren</h3>
+
+<p>Sie k&#246;nnen die aktuellste CRL einer Zertifizierungsstelle in Ihren
+Browser importieren. Zum Import einer CRL folgen Sie diesen Schritten:</p>
+
+<ol>
+  <li>Gehen Sie zur URL, die von der Zertifizierungsstelle oder Ihrem
+      Systemadministrator angegeben wurde und klicken Sie auf den Link der CRL,
+	  die Sie importieren m&#246;chten.
+    
+	  <p>Die Dialogbox Import-Status erscheint.</p></li>
+  <li>Best&#228;tigen Sie, das die CRL erfolgreich importiert wurde und das es
+      sich um diejenige handelt, die Sie importieren wollten. In den meisten
+	  F&#228;llen sollten Sie auch Ja anklicken, wodurch die automatische
+	  Aktualisierung der gerade importierten CRL aktiviert wird.</li>
+  <li>Der n&#228;chste Schritt h&#228;ngt davon ab, ob Sie Ja oder Nein in der
+      Dialogbox Import-Status angeklickt haben: 
+    <ul>
+      <li><strong>Ja</strong>: Die Dialogbox Automatische
+	      CRL-Aktualisierungs-Einstellungen erscheint. Gehen Sie zu Schritt 4.</li>
+      <li><strong>Nein</strong>: Die Dialogbox Import-Status wird geschlossen.
+	      Wenn Sie sich anders entschliessen und entscheiden, automatische
+		  Aktualisierungen doch zu aktivieren, siehe
+		  <a href="#viewing_and_managing_crls">CRLs anzeigen und verwalten</a>.</li>
+    </ul></li>
+  <li>W&#228;hlen Sie die Option <q>Automatische Aktualisierungen f&#252;r
+      diese CRL aktivieren</q>.</li>
+  <li>Entscheiden Sie sich, wie Sie die automatisierten Aktualisierungen planen:
+    <ul>
+      <li><strong>Aktualisiere [__] Tage vor N&#228;chstem Update-Datum</strong>:
+	      W&#228;hlen Sie diese Option, wenn Sie die Aktualisierungsfrequenz
+		  von der H&#228;ufigkeit abh&#228;ngig machen wollen, mit der die
+		  Zertifizierungsstelle eine neue Version der CRL ver&#246;ffentlicht.</li>
+      <li><strong>Aktualisiere alle  [__] Tage</strong>: W&#228;hlen Sie diese
+	      Option, wenn Sie ein Aktualisierungs-Intervall spezifizieren
+		  m&#246;chten, das unabh&#228;ngig ist vom N&#228;chsten Update-Datum
+		  der CRL.</li>
+    </ul></li>
+  <li>Klicken Sie OK um Ihre Einstellungen zu best&#228;tigen.</li>
+</ol>
+
+<h3 id="viewing_and_managing_crls">CRLs anzeigen und verwalten</h3>
+
+<p>Sie k&#246;nnen die dem Browser verf&#252;gbaren CRLs &#252;ber die
+Validierungseinstellungen des Browsers anzeigen und verwalten:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das <span class="mac">&brandShortName;</span>
+      <span class="noMac">Bearbeiten</span>-Men&#252; und w&#228;hlen Sie Einstellungen.</li>
+  <li>Unter Datenschutz &amp; Sicherheit w&#228;hlen Sie Validierung. (Wenn
+      keine Unterkategorien sichtbar sind, klicken Sie doppelt auf Datenschutz
+	  &amp; Sicherheit, um die Liste zu erweitern.)</li>
+  <li>Klicken Sie auf CRLs verwalten im Validierungs-Panel, um eine Liste der
+      CRLs zu sehen, die dem Zertifikat-Manager zur Verf&#252;gung stehen.</li>
+</ol>
+
+<p>Um eine CRL zu l&#246;schen oder zu aktualisieren, selektieren Sie diese und
+w&#228;hlen die entsprechende Schaltfl&#228;che.</p>
+
+<p>Um automatische Aktualisierungen f&#252;r eine CRL einzustellen, selektieren
+Sie die CRL und w&#228;hlen Einstellungen. Die Dialogbox Automatische
+CRL-Akualisierungs-Einstellungen erscheint:</p>
+
+<ol>
+  <li>W&#228;hlen Sie die Option <q>Automatische Aktualisierungen f&#252;r
+      diese CRL aktivieren</q>.</li>
+  <li>Entscheiden Sie sich, wie Sie die automatisierten Aktualisierungen planen:
+    <ul>
+      <li><strong>Aktualisiere [__] Tage vor N&#228;chstem Update-Datum</strong>:
+	      W&#228;hlen Sie diese Option, wenn Sie die Aktualisierungsfrequenz
+		  von der H&#228;ufigkeit abh&#228;ngig machen wollen, mit der die
+		  Zertifizierungsstelle eine neue Version der CRL ver&#246;ffentlicht.</li>
+      <li><strong>Aktualisiere alle  [__] Tage</strong>: W&#228;hlen Sie diese
+	      Option, wenn Sie ein Aktualisierungs-Intervall spezifizieren
+		  m&#246;chten, das unabh&#228;ngig ist vom N&#228;chsten Update-Datum
+		  der CRL.</li>
+    </ul></li>
+  <li>Klicken Sie OK um Ihre Einstellungen zu best&#228;tigen.</li>
+</ol>
+
+<p>[<a href="#controlling_validation">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="configuring_ocsp">OCSP konfigurieren</h2>
+
+<p>Die Einstellungen, die OCSP steuern, sind Teil der Validierungs-Einstellungen.
+Um die Validierungseinstellungen anzuzeigen, folgen Sie diesen Schritten:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das <span class="mac">&brandShortName;</span>
+      <span class="noMac">Bearbeiten</span>-Men&#252; und w&#228;hlen Sie Einstellungen.</li>
+  <li>Unter Datenschutz &amp; Sicherheit w&#228;hlen Sie Validierung. (Wenn
+      keine Unterkategorien sichtbar sind, klicken Sie doppelt auf Datenschutz
+	  &amp; Sicherheit, um die Liste zu erweitern.)</li>
+</ol>
+
+<p>Zu Informationen &#252;ber die verf&#252;gbaren OCSP-Optionen siehe
+<a href="validation_help.xhtml#ocsp">OCSP</a>.</p>
+
+<p>[<a href="#controlling_validation">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+<!-- Aktualisierung und Konvertierung (HTML -> XHTML) auf v1.43 von Michael Stadlbauer (mozilla@mista.at) 2004-10-28 -->
+
+</body>
+</html>
