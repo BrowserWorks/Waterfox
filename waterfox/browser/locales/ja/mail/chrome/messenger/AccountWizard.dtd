@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label		"アカウントウィザード">
+<!ENTITY accountWizard.size		"width: 42em; height: 39em;"><!-- (^^; en-US: width: 40em; height: 38em; -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label		"差出人情報">
+<!ENTITY identityDesc.label		"メッセージの差出人を表す情報を入力してください。これはアカウントごとに別のものを設定して使い分けることができます。"><!-- (^^; 表現変更 en-US: Each account has an identity, which is the information that identifies you to others when they receive your messages. -->
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label		"あなたの名前を入力してください。ここで設定した名前が送信するメッセージの [差出人] (From) に表示されます。">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+    1, do not translate two of "&quot;"
+    2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label		"(例: 山田 太郎)">
+<!ENTITY fullnameLabel.label		"あなたのお名前:">
+<!ENTITY fullnameLabel.accesskey	"Y">
+
+<!ENTITY emailLabel.label		"メールアドレス:">
+<!ENTITY emailLabel.accesskey		"E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label		"受信サーバー情報">
+<!ENTITY incomingUsername.label		"ユーザー名:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label	"ニュース (NNTP) サーバーの名前を入力してください。(例: news.example.jp)">
+<!ENTITY newsServerLabel.label		"ニュースサーバー:">
+<!ENTITY newsServerLabel.accesskey	"S">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label		"アカウント名">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label		"このアカウントに分かりやすい名前を付けてください。(例: 仕事用、プライベート、ニュース)">
+<!ENTITY accnameLabel.label		"アカウント名:">
+<!ENTITY accnameLabel.accesskey		"A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label		"設定完了">
+<!ENTITY completionText.label		"以下の設定情報が正しいか確認してください。">
+<!ENTITY newsServerNamePrefix.label	"ニュース (NNTP) サーバー名:">
+<!ENTITY clickFinish.label		"[完了] をクリックすると、設定を保存してアカウントを作成します。">
+<!ENTITY clickFinish.labelMac		"[完了] をクリックすると、設定を保存してアカウントを作成します。">
