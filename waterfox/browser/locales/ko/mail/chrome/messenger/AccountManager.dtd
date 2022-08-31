@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from AccountManager.xhtml -->
+
+<!ENTITY accountManagerTitle.label "계정 설정">
+<!ENTITY  accountManagerCloseButton.label "닫기">
+
+<!ENTITY accountActionsButton.label "계정 작업">
+<!ENTITY accountActionsButton.accesskey "A">
+<!ENTITY addMailAccountButton.label "메일 계정 추가…">
+<!ENTITY addMailAccountButton.accesskey "A">
+<!ENTITY addIMAccountButton.label "채팅 계정 추가…">
+<!ENTITY addIMAccountButton.accesskey "C">
+<!ENTITY addFeedAccountButton.label "피드 계정 추가…">
+<!ENTITY addFeedAccountButton.accesskey "F">
+<!ENTITY setDefaultButton.label "기본값으로 설정">
+<!ENTITY setDefaultButton.accesskey "D">
+<!ENTITY removeButton.label "삭제">
+<!ENTITY removeButton.accesskey "R">
+
+<!ENTITY addonsButton.label "확장기능과 테마">
+
+<!-- AccountManager.xhtml -->
