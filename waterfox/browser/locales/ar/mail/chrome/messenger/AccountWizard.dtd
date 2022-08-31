@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "مرشد الحسابات">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "الهويّة">
+<!ENTITY identityDesc.label "لكلّ حساب هويّة، و هي المعلومات التّي تعرّف هويتك للآخرين عند استقبالهم لرسائلك.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "أدخل الاسم الذي تريد أن يظهر في حقل &quot;مِن&quot; في رسائلك الصّادرة">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(مثلًا، ”فلان الفلاني“).">
+<!ENTITY fullnameLabel.label "اسمك:">
+<!ENTITY fullnameLabel.accesskey "س">
+
+<!ENTITY emailLabel.label "عنوان البريد:">
+<!ENTITY emailLabel.accesskey "ع">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "معلومات خادوم الوارد">
+<!ENTITY incomingUsername.label "اسم المستخدم:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "أدخل اسم خادوم الأخبار (NNTP) لديك (مثلًا، ”news.example.net“).">
+<!ENTITY newsServerLabel.label "خادوم مجموعة الأخبار:">
+<!ENTITY newsServerLabel.accesskey "خ">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "اسم الحساب">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "أدخل اسمًا تريد أن تستخدمه ليُشير إلى هذا الحساب (مثلًا، ”حساب العمل“ أو ”حساب المنزل“ أو ”حساب الأخبار“).">
+<!ENTITY accnameLabel.label "اسم الحساب:">
+<!ENTITY accnameLabel.accesskey "ب">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "تهانينا!">
+<!ENTITY completionText.label "رجاءً تأكّد من صحة المعلومات أدناه.">
+<!ENTITY newsServerNamePrefix.label "اسم خادوم الأخبار (NNTP):‏">
+<!ENTITY clickFinish.label "اضغط ”أنهِ“ لحفظ هذه الإعدادات و  إنهاء مرشد الحسابات.">
+<!ENTITY clickFinish.labelMac "انقر على ”تمّ“ لحفظ هذه الإعدادات و الخروج من مرشد الحسابات.">

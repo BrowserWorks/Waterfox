@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "メールとニュースグループ">
+<!ENTITY generalSettings.caption          "一般設定">
+<!ENTITY confirmMove.label                "フォルダーをごみ箱へ移動するときに確認する"><!--Confirm when moving folders to the Trash-->
+<!ENTITY confirmMove.accesskey            "C">
+<!ENTITY preserveThreading.label          "メッセージを並べ替えるときにスレッド表示を維持する">
+<!ENTITY preserveThreading.accesskey      "v">
+<!ENTITY mailAutoHide.label               "開いているタブが 1 つだけのときはメールタブを隠す">
+<!ENTITY mailAutoHide.accesskey           "b">
+<!ENTITY loadInBackground.label           "新しいタブを開いたら前面に表示する">
+<!ENTITY loadInBackground.accesskey       "t">
+<!ENTITY mailOpenTabsFor.label            "ウィンドウの代わりにタブを開く場合">
+<!ENTITY mailMiddleClick.label            "メッセージやフォルダーを中クリックまたは Ctrl+Enter">
+<!ENTITY mailMiddleClick.accesskey        "M">
+<!ENTITY mailMiddleClickMac.label         "メッセージやフォルダーを中クリックまたは &#8984;+Return">
+<!ENTITY mailMiddleClickMac.accesskey     "M">
+<!ENTITY mailDoubleClick.label            "メッセージをダブルクリック">
+<!ENTITY mailDoubleClick.accesskey        "k">
+<!ENTITY mailBiffOnNewWindow.label        "メールとニュースグループを起動したときにだけ新着メールを確認する"><!--Only check for new mail after opening Mail &amp; Newsgroups-->
+<!ENTITY mailBiffOnNewWindow.accesskey    "O">
+
+<!ENTITY messengerStartPage.caption       "メールスタートページ">
+<!ENTITY enableStartPage.label            "起動時にメッセージペインにスタートページを表示する">
+<!ENTITY enableStartPage.accesskey        "W">
+<!ENTITY location.label                   "URL:">
+<!ENTITY location.accesskey               "L">
+<!ENTITY useDefault.label                 "既定値に戻す">
+<!ENTITY useDefault.accesskey             "D">
+<!ENTITY rememberLastMsg.label            "最後に選択したメッセージを記憶させる">
+<!ENTITY rememberLastMsg.accesskey        "R">
