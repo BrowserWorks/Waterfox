@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY month.1.name "一月" >
+<!ENTITY month.2.name "二月" >
+<!ENTITY month.3.name "三月" >
+<!ENTITY month.4.name "四月" >
+<!ENTITY month.5.name "五月" >
+<!ENTITY month.6.name "六月" >
+<!ENTITY month.7.name "七月" >
+<!ENTITY month.8.name "八月" >
+<!ENTITY month.9.name "九月" >
+<!ENTITY month.10.name "十月" >
+<!ENTITY month.11.name "十一月" >
+<!ENTITY month.12.name "十二月" >
+
+<!ENTITY onemonthbackward.tooltip "上一月" >
+<!ENTITY onemonthforward.tooltip "下一月" >
+<!ENTITY oneyearbackward.tooltip "前一年" >
+<!ENTITY oneyearforward.tooltip "后一年" >
+<!ENTITY showToday.tooltip "转至今日">
+<!ENTITY onedayforward.tooltip "后一天">
+<!ENTITY onedaybackward.tooltip "前一天">
+<!ENTITY showselectedday.tooltip "显示所选日期的事件">

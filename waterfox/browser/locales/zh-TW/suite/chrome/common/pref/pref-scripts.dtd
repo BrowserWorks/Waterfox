@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts' preferences dialog -->
+<!ENTITY pref.scripts2.title             "指令碼">
+
+<!ENTITY navigator.label                 "網頁瀏覽器">
+<!ENTITY navigator.accesskey             "B">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "下列情形可使用 JavaScript:">
+<!ENTITY allowScripts.label              "允許網頁指令碼執行下列操作:">
+<!ENTITY allowScripts.accesskey          "s">
+<!ENTITY allowWindowMoveResize.label     "移動或改變視窗大小">
+<!ENTITY allowWindowFlip.label           "顯示視窗於最上層或移至下層">
+<!ENTITY allowWindowStatusChange.label   "改變狀態列文字">
+<!ENTITY allowContextmenuDisable.label   "停用或取代右鍵選單">
+<!ENTITY allowHideStatusBar.label        "隱藏狀態列">
+
+<!ENTITY debugging.label                  "JavaScript 除錯">
+<!ENTITY debugEnableDump.label            "開啟 JavaScript dump() 輸出">
+<!ENTITY debugEnableDump.accesskey        "E">
+<!ENTITY debugStrictJavascript.label      "顯示嚴格的 JavaScript 警告">
+<!ENTITY debugStrictJavascript.accesskey  "J">
+<!ENTITY debugConsoleJavascript.label     "顯示 chrome 的 JavaScript 錯誤與警告">
+<!ENTITY debugConsoleJavascript.accesskey "c">
+
