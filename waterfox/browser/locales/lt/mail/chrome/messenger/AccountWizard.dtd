@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Paskyros vediklis">
+<!ENTITY accountWizard.size "width: 50em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Tapatumo duomenys">
+<!ENTITY identityDesc.label "Pagal čia pateiktą informaciją jus galės atpažinti laiškų gavėjai.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Surinkite vardą ir pavardę (asmenvardį), kuriuos matys laiškų gavėjai lauke „Kas“">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(pvz., „Vardenis Pavardenis“).">
+<!ENTITY fullnameLabel.label "Asmenvardis:">
+<!ENTITY fullnameLabel.accesskey "A">
+
+<!ENTITY emailLabel.label "El. pašto adresas:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Informacija apie laiškų gavimo serverį">
+<!ENTITY incomingUsername.label "Abonento vardas:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Įveskite naujienų (NNTP) serverio vardą (pvz., „news.example.net“).">
+<!ENTITY newsServerLabel.label "Naujienų serveris:">
+<!ENTITY newsServerLabel.accesskey "s">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Paskyros pavadinimas">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Surinkite paskyros pavadinimą. Tai gali būti el. pašto adresas, interneto paslaugų teikėjo vardas arba bet koks jūsų pasirinktas vardas (pvz., „Darbas“, „Namai“).">
+<!ENTITY accnameLabel.label "Paskyros pavadinimas:">
+<!ENTITY accnameLabel.accesskey "v">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Sveikiname!">
+<!ENTITY completionText.label "Visa jūsų pateikta informacija abonentui pašto programoje užregistruoti yra tokia:">
+<!ENTITY newsServerNamePrefix.label "Naujienų serverio (NNTP) vardas:">
+<!ENTITY clickFinish.label "Spustelėkite mygtuką „Baigti“, ir šie duomenys bus įrašyti.">
+<!ENTITY clickFinish.labelMac "Spustelėkite mygtuką „Baigta“, ir šie duomenys bus įrašyti.">
