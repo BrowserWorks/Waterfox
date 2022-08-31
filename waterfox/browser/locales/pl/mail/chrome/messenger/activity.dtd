@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width2 "600">
+<!ENTITY window.height "300">
+
+<!ENTITY activity.title "Monitor aktywności">
+
+<!ENTITY cmd.close.commandkey "w">
+<!ENTITY cmd.close2.commandkey "j">
+<!ENTITY cmd.close2Unix.commandkey "y">
+<!ENTITY cmd.clearList.label "Wyczyść listę">
+<!ENTITY cmd.clearList.tooltip "Usunie z listy pozycje oznaczone jako ukończone, anulowane i nieudane">
+<!ENTITY cmd.clearList.accesskey "z">
+

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "ChatZilla 首选项">
+
+<!ENTITY loading.label  "请稍候，正在加载...">
+
+<!ENTITY homepage.url   "http://chatzilla.hacksrus.com/">
+<!ENTITY homepage.label "ChatZilla 主页">
+
+<!ENTITY object.add.label       "添加…">
+<!ENTITY object.add.hint        "添加要设置首选项的网络、频道或用户">
+<!ENTITY object.add.accesskey   "A">
+
+<!ENTITY object.del.label       "移除">
+<!ENTITY object.del.hint        "移除当前的对象，清除其所有首选项">
+<!ENTITY object.del.accesskey   "R">
+
+<!ENTITY object.reset.label     "重置">
+<!ENTITY object.reset.hint      "将此对象的首选项重置为默认值">
+<!ENTITY object.reset.accesskey "s">
+
+<!ENTITY dialog.apply   "应用">
+
+<!ENTITY network "网络">
+<!ENTITY channel "频道">
+<!ENTITY user    "用户">
+
+<!ENTITY config.add.title "添加首选项对象">
+
+<!ENTITY config.type.label        "类型：">
+<!ENTITY config.type.hint         "要添加首选项的对象类型">
+<!ENTITY config.type.accesskey    "T">
+<!ENTITY config.network.label     "网络：">
+<!ENTITY config.network.hint      "已知的网络或服务器名称">
+<!ENTITY config.network.accesskey "N">
+<!ENTITY config.target.label      "目标：">
+<!ENTITY config.target.hint       "目标频道或用户名">
+<!ENTITY config.target.accesskey  "g">
