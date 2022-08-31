@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Imagens">
+
+<!ENTITY imageBlocking.label            "Carregamento">
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+
+<!ENTITY imageDetails                   "Determine como o &brandShortName; manipula imagens.">
+
+<!ENTITY loadAllImagesRadio.label       "Carregar todas as imagens">
+<!ENTITY loadAllImagesRadio.accesskey   "C">
+<!ENTITY loadOrgImagesRadio.label       "Apenas carregar imagens quando vierem do mesmo servidor que a página">
+<!ENTITY loadOrgImagesRadio.accesskey   "n">
+<!ENTITY loadNoImagesRadio.label        "Não carregar nenhuma imagem">
+<!ENTITY loadNoImagesRadio.accesskey    "h">
+<!ENTITY viewPermissions.label          "Gerenciar permissão de imagens">
+<!ENTITY viewPermissions.accesskey      "P">

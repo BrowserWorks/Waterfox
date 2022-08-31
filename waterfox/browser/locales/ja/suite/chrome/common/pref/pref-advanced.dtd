@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "詳細">
+
+<!ENTITY prefCheckDefault.caption         "システム統合">
+<!ENTITY prefCheckDefaultClient.label     "起動時に既定のプログラムの設定を確認する">
+<!ENTITY prefCheckDefaultClient.accesskey "C">
+<!ENTITY defaultClientFor.description     "&brandShortName; を既定のアプリケーションに設定する:">
+<!ENTITY setDefaultBrowser.label          "ブラウザー">
+<!ENTITY setDefaultBrowser.accesskey      "B">
+<!ENTITY setDefaultMail.label             "メール">
+<!ENTITY setDefaultMail.accesskey         "M">
+<!ENTITY setDefaultNews.label             "ニュース">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "フィード">
+<!ENTITY setDefaultFeed.accesskey         "F">
+<!ENTITY useInternalSettings.description  "ブラウザーで次のリンクを開いた場合に &brandShortName; Mail &amp; News を使用する:">
+<!ENTITY useInternalMail.label            "メール (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "ニュース (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "e">
+
+<!ENTITY printing.label                   "印刷">
+<!ENTITY useNativePrintDialog.label       "システムの印刷ダイアログを使用">
+<!ENTITY useNativePrintDialog.accesskey   "U">
+<!ENTITY useGlobalPrintSettings.label     "グローバルの印刷設定を使用">
+<!ENTITY useGlobalPrintSettings.accesskey "G">
+
+<!ENTITY crashReports.caption             "クラッシュレポーター">
+<!ENTITY submitCrashes.label              "クラッシュレポートを送信する">
+<!ENTITY submitCrashes.accesskey          "S">
+
+<!ENTITY devTools.caption                 "開発ツール">
+<!ENTITY allowDebugger.label              "&brandShortName; にデバッガーの接続を許可する">
+<!ENTITY allowDebugger.accesskey          "d">
+<!ENTITY allowRemoteConnections.label     "他のコンピューターからの接続を許可する">
+<!ENTITY allowRemoteConnections.accesskey "o">
+<!ENTITY connectionPrompt.label           "接続要求があったときは確認する">
+<!ENTITY connectionPrompt.accesskey       "P">
+<!ENTITY remoteDebuggerPort.label         "接続ポート番号:">
+<!ENTITY remoteDebuggerPort.accesskey     "r">

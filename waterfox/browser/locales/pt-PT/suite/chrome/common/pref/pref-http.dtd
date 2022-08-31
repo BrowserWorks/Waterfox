@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "Rede HTTP">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Opções de ligação direta">
+<!ENTITY prefProxy.label                     "Opções de ligação proxy">
+<!ENTITY prefEnableHTTP10.label              "Utilizar HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "U">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "S">
+<!ENTITY prefEnableHTTP11.label              "Usar HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "a">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "As ligações HTTP podem ser ajustadas utilizando estas opções para melhorar o desempenho ou compatibilidade. Alguns servidores proxy são conhecidos por necessitar de HTTP/1.0 (veja as notas de lançamento para mais detalhes).">
+<!ENTITY prefUseragent.label                 "String de User Agent">
+<!ENTITY prefWaterfoxStrict.label             "Identificar como Waterfox">
+<!ENTITY prefWaterfoxStrict.accesskey         "I">
+<!ENTITY prefWaterfoxNone.label               "Identificar como SeaMonkey">
+<!ENTITY prefWaterfoxNone.accesskey           "M">
+<!ENTITY prefWaterfoxCompat2.label            "Identificar como SeaMonkey e anunciar compatibilidade com o Waterfox">
+<!ENTITY prefWaterfoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "AVISO: alterar esta definição pode fazer com que os sites ou serviços não funcionem corretamente.">

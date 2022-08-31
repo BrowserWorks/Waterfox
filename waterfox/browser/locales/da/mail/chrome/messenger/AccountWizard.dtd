@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Kontoguide">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identitet">
+<!ENTITY identityDesc.label "Hver konto har en identitet, som er de oplysninger andre ser om dig, når de læser dine meddelelser.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Indtast det navn du gerne vil have vist i &quot;Fra&quot; feltet i de meddelelser du sender">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(fx &quot;Jens Hansen&quot;).">
+<!ENTITY fullnameLabel.label "Dit navn:">
+<!ENTITY fullnameLabel.accesskey "n">
+
+<!ENTITY emailLabel.label "Mailadresse:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Oplysninger om indgående server">
+<!ENTITY incomingUsername.label "Indgående brugernavn:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Indtast navnet på din nyhedsgruppeserver (NNTP) (fx &quot;news.eksempel.dk&quot;).">
+<!ENTITY newsServerLabel.label "Nyhedsgruppeserver:">
+<!ENTITY newsServerLabel.accesskey "N">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Kontonavn">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Indtast det navn du vil bruge til at referere til denne konto (fx &quot;Arbejdskonto&quot;, &quot;Hjemmekonto&quot; eller &quot;Nyhedskonto&quot;).">
+<!ENTITY accnameLabel.label "Kontonavn:">
+<!ENTITY accnameLabel.accesskey "n">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Tillykke!">
+<!ENTITY completionText.label "Bekræft at nedenstående oplysninger er korrekte.">
+<!ENTITY newsServerNamePrefix.label "Nyhedsgruppeservernavn (NNTP):">
+<!ENTITY clickFinish.label "Klik på Afslut for at gemme disse indstillinger og afslutte Kontoguiden">
+<!ENTITY clickFinish.labelMac "Klik på Færdig for at gemme disse indstillinger og afslutte Kontoguiden.">
