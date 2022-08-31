@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from AccountManager.xhtml -->
+
+<!ENTITY accountManagerTitle.label "Paramètres des comptes Courrier et Groupes">
+<!ENTITY  accountManagerCloseButton.label "Fermer">
+
+<!ENTITY accountActionsButton.label "Gestion des comptes">
+<!ENTITY accountActionsButton.accesskey "G">
+<!ENTITY addMailAccountButton.label "Ajouter un compte de messagerie…">
+<!ENTITY addMailAccountButton.accesskey "A">
+<!ENTITY addIMAccountButton.label "Ajouter un compte de messagerie instantanée…">
+<!ENTITY addIMAccountButton.accesskey "m">
+<!ENTITY addFeedAccountButton.label "Ajouter un compte de flux…">
+<!ENTITY addFeedAccountButton.accesskey "f">
+<!ENTITY setDefaultButton.label "Compte par défaut">
+<!ENTITY setDefaultButton.accesskey "d">
+<!ENTITY removeButton.label "Supprimer le compte">
+<!ENTITY removeButton.accesskey "S">
+
+<!ENTITY addonsButton.label "Extensions et thèmes">
+
+<!-- AccountManager.xhtml -->

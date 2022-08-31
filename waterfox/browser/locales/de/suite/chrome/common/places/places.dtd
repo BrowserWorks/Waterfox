@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Bibliothek">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Verwalten">
+<!ENTITY organize.accesskey    "V">
+<!ENTITY organize.tooltip      "Lesezeichen verwalten">
+
+<!ENTITY file.close.label               "Schließen">
+<!ENTITY file.close.accesskey           "c">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Ansichten">
+<!ENTITY views.accesskey                "A">
+<!ENTITY views.tooltip                  "Ansicht ändern">
+<!ENTITY view.columns.label             "Spalten anzeigen">
+<!ENTITY view.columns.accesskey         "p">
+<!ENTITY view.sort.label                "Sortieren">
+<!ENTITY view.sort.accesskey            "s">
+<!ENTITY view.unsorted.label            "Unsortiert">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "Aufsteigend">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Absteigend">
+<!ENTITY view.sortDescending.accesskey  "b">
+
+<!ENTITY importBookmarksFromHTML.label     "Lesezeichen von HTML importieren…">
+<!ENTITY importBookmarksFromHTML.accesskey "L">
+<!ENTITY exportBookmarksToHTML.label       "Lesezeichen nach HTML exportieren…">
+<!ENTITY exportBookmarksToHTML.accesskey   "n">
+<!ENTITY importOtherBrowser.label          "Daten von einem anderen Browser importieren…">
+<!ENTITY importOtherBrowser.accesskey      "D">
+
+<!ENTITY cmd.backup.label               "Sichern…">
+<!ENTITY cmd.backup.accesskey           "S">
+<!ENTITY cmd.restore2.label             "Wiederherstellen">
+<!ENTITY cmd.restore2.accesskey         "W">
+<!ENTITY cmd.restoreFromFile.label      "Datei wählen…">
+<!ENTITY cmd.restoreFromFile.accesskey  "D">
+
+<!ENTITY cmd.deleteDomainData.label     "Gesamte Website vergessen">
+<!ENTITY cmd.deleteDomainData.accesskey "v">
+
+<!ENTITY cmd.open.label                  "Öffnen">
+<!ENTITY cmd.open.accesskey              "Ö">
+<!ENTITY cmd.open_window.label           "In neuem Fenster öffnen">
+<!ENTITY cmd.open_window.accesskey       "F">
+<!ENTITY cmd.open_private_window.label     "In neuem privaten Fenster öffnen">
+<!ENTITY cmd.open_private_window.accesskey "p">
+<!ENTITY cmd.open_tab.label              "In neuem Tab öffnen">
+<!ENTITY cmd.open_tab.accesskey          "T">
+<!ENTITY cmd.open_all_in_tabs.label      "Alle in Tabs öffnen">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "ö">
+
+<!ENTITY cmd.properties.label      "Eigenschaften">
+<!ENTITY cmd.properties.accesskey  "g">
+
+<!ENTITY cmd.sortby_name.label              "Nach Name sortieren">
+<!ENTITY cmd.sortby_name.accesskey          "s">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "Neues Lesezeichen…">
+<!ENTITY cmd.new_bookmark.accesskey        "N">
+<!ENTITY cmd.new_folder.label              "Neuer Ordner…">
+<!ENTITY cmd.new_folder.accesskey          "O">
+<!ENTITY cmd.context_new_folder.accesskey  "O">
+<!ENTITY cmd.new_separator.label           "Neue Trennlinie">
+<!ENTITY cmd.new_separator.accesskey       "T">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Dynamisches Lesezeichen neu laden">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "d">
+
+<!ENTITY col.name.label          "Name">
+<!ENTITY col.tags.label          "Schlagwörter">
+<!ENTITY col.url.label           "Adresse">
+<!ENTITY col.mostrecentvisit.label "Zuletzt besucht">
+<!ENTITY col.visitcount.label    "Meistbesucht">
+<!ENTITY col.description.label   "Beschreibung">
+<!ENTITY col.dateadded.label     "Hinzugefügt">
+<!ENTITY col.lastmodified.label  "Zuletzt verändert">
+
+<!ENTITY search.placeholder  "Suchen">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY detailsPane.more.label "Mehr">
+<!ENTITY detailsPane.more.accesskey "e">
+<!ENTITY detailsPane.less.label "Weniger">
+<!ENTITY detailsPane.less.accesskey "e">
+<!ENTITY detailsPane.selectAnItemText.description "Wählen Sie einen Eintrag, um seine Eigenschaften zu sehen und zu bearbeiten">
+
+<!ENTITY view.label               "Sortieren">
+<!ENTITY view.accesskey           "o">
+<!ENTITY byDate.label             "Nach Datum">
+<!ENTITY byDate.accesskey         "D">
+<!ENTITY bySite.label             "Nach Website">
+<!ENTITY bySite.accesskey         "S">
+<!ENTITY byMostVisited.label      "Nach meistbesucht">
+<!ENTITY byMostVisited.accesskey  "m">
+<!ENTITY byLastVisited.label      "Nach zuletzt besucht">
+<!ENTITY byLastVisited.accesskey  "z">
+<!ENTITY byDayAndSite.label       "Nach Datum und Website">
+<!ENTITY byDayAndSite.accesskey   "h">

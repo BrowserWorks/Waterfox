@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from pref-eventdebugging.xul -->
+
+<!ENTITY pref.debugging.title "Debuggen">
+
+<!-- Render Debugging -->
+<!ENTITY debugRendering.label             "Rendering">
+<!ENTITY debugXULBox.label                "XUL Boxen debuggen">
+<!ENTITY debugXULBox.accesskey            "X">
+<!ENTITY debugDisableXULCache.label       "XUL Cache deaktivieren">
+<!ENTITY debugDisableXULCache.accesskey   "L">
+
+<!-- Event Debugging -->
+<!ENTITY debugEvents.label "Ereignisse">
+<!ENTITY debugPaintFlashing.label "Paint Flashing (Umschalten mit Feststelltaste)">
+<!ENTITY debugPaintFlashing.accesskey "P">
+<!ENTITY debugPaintFlashingChrome.label "Paint Flashing Chrome">
+<!ENTITY debugPaintFlashingChrome.accesskey "F">
+<!ENTITY debugPaintDumping.label "Paint Dumping">
+<!ENTITY debugPaintDumping.accesskey "a">
+<!ENTITY debugInvalidateDumping.label "Invalidate Dumping">
+<!ENTITY debugInvalidateDumping.accesskey "n">
+<!ENTITY debugEventDumping.label "Event Dumping">
+<!ENTITY debugEventDumping.accesskey "E">
+<!ENTITY debugMotionEventDumping.label "Motion Event Dumping">
+<!ENTITY debugMotionEventDumping.accesskey "M">
+<!ENTITY debugCrossingEventDumping.label "Crossing Event Dumping">
+<!ENTITY debugCrossingEventDumping.accesskey "C">
+
+<!-- Reflow Event Debugging -->
+<!ENTITY debugReflowEvents.label                 "Reflow Ereignisse">
+<!ENTITY debugReflowShowFrameCounts.label        "Show frame counts">
+<!ENTITY debugReflowShowFrameCounts.accesskey    "S">
+<!ENTITY debugReflowDumpFrameCounts.label        "Dump frame counts">
+<!ENTITY debugReflowDumpFrameCounts.accesskey    "D">
+<!ENTITY debugReflowDumpFrameByFrameCounts.label "Dump frame by frame counts">
+<!ENTITY debugReflowDumpFrameByFrameCounts.accesskey "u">

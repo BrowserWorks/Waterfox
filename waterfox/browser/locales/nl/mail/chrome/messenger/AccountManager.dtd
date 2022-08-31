@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from AccountManager.xhtml -->
+
+<!ENTITY accountManagerTitle.label "Accountinstellingen">
+<!ENTITY  accountManagerCloseButton.label "Sluiten">
+
+<!ENTITY accountActionsButton.label "Accountacties">
+<!ENTITY accountActionsButton.accesskey "o">
+<!ENTITY addMailAccountButton.label "E-mailaccount toevoegen…">
+<!ENTITY addMailAccountButton.accesskey "E">
+<!ENTITY addIMAccountButton.label "Chataccount toevoegen…">
+<!ENTITY addIMAccountButton.accesskey "C">
+<!ENTITY addFeedAccountButton.label "Feedaccount toevoegen…">
+<!ENTITY addFeedAccountButton.accesskey "F">
+<!ENTITY setDefaultButton.label "Als standaard instellen">
+<!ENTITY setDefaultButton.accesskey "d">
+<!ENTITY removeButton.label "Account verwijderen">
+<!ENTITY removeButton.accesskey "v">
+
+<!ENTITY addonsButton.label "Extensies &amp; thema’s">
+
+<!-- AccountManager.xhtml -->

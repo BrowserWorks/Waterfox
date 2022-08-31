@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Penuntun Pembuatan Akun">
+<!ENTITY accountWizard.size "width: 45em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identitas">
+<!ENTITY identityDesc.label "Setiap akun memiliki satu identitas. Identitas ini akan digunakan oleh orang lain untuk mengenali Anda saat mereka menerima pesan Anda.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Masukkan nama yang ingin ditampilkan pada kolom &quot;Dari&quot; pada setiap pesan keluar Anda">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(contohnya, &quot;Budi Putra&quot;).">
+<!ENTITY fullnameLabel.label "Nama Anda:">
+<!ENTITY fullnameLabel.accesskey "N">
+
+<!ENTITY emailLabel.label "Alamat Email:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Informasi Server Penerima">
+<!ENTITY incomingUsername.label "Nama Pengguna:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Masukkan nama server news (NNTP) Anda (contohnya, &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "Server Newsgroup:">
+<!ENTITY newsServerLabel.accesskey "N">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Nama Akun">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Masukkan nama yang ingin Anda jadikan sebagai referensi akun ini (contohnya, &quot;Akun Kantor&quot;, &quot;Akun Pribadi&quot;, atau &quot;Akun News&quot;).">
+<!ENTITY accnameLabel.label "Nama Akun:">
+<!ENTITY accnameLabel.accesskey "a">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Selamat!">
+<!ENTITY completionText.label "Periksa apakah informasi berikut telah sesuai.">
+<!ENTITY newsServerNamePrefix.label "Nama Server news NNTP):">
+<!ENTITY clickFinish.label "Klik Selesai untuk menyimpan pengaturan dan keluar dari Penuntun Pembuatan Akun.">
+<!ENTITY clickFinish.labelMac "Klik Selesai untuk menyimpan pengaturan dan keluar dari Penuntun Pembuatan Akun.">

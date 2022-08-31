@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Assistente de contas">
+<!ENTITY accountWizard.size "width: 55em; height: 44em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identidade">
+<!ENTITY identityDesc.label "Cada conta tem uma identidade, que é o seu identificador perante terceiros quando estes recebem as suas mensagens.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Introduza o nome que gostaria de mostrar no campo &quot;De&quot;, ao enviar mensagens">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(exemplo: &quot;Seu nome&quot;).">
+<!ENTITY fullnameLabel.label "O seu nome:">
+<!ENTITY fullnameLabel.accesskey "n">
+
+<!ENTITY emailLabel.label "Endereço de e-mail:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Informações do servidor de receção">
+<!ENTITY incomingUsername.label "Nome de utilizador:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Introduza o nome do servidor de notícias (NNTP) (por exemplo, &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "Servidor do grupo de notícias:">
+<!ENTITY newsServerLabel.accesskey "S">
+
+<!-- Entities for Outgoing Server page -->
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Nome da conta">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Introduza o nome que identifica esta conta (por exemplo: &quot;Conta profissional&quot;, &quot;Conta pessoal&quot; ou &quot;Conta de notícias&quot;).">
+<!ENTITY accnameLabel.label "Nome da conta:">
+<!ENTITY accnameLabel.accesskey "a">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Parabéns!">
+<!ENTITY completionText.label "Verifique se a informações estão corretas.">
+<!ENTITY newsServerNamePrefix.label "Nome do servidor de notícias (NNTP):">
+<!ENTITY clickFinish.label "Clique em Concluir para guardar estas definições e sair do assistente.">
+<!ENTITY clickFinish.labelMac "Clique em Terminar para guardar estas definições e sair do assistente.">
