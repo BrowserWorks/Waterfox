@@ -126,8 +126,8 @@ locales = [
     l10n = "{l}browser/**"
 
 [[paths]]
-    reference = "browser/branding/official/locales/en-US/**"
-    l10n = "{l}browser/branding/official/**"
+    reference = "waterfox/browser/branding/locales/en-US/**"
+    l10n = "{l}waterfox/browser/branding/**"
 
 [[paths]]
     reference = "browser/extensions/formautofill/locales/en-US/**"
@@ -147,6 +147,9 @@ locales = [
 
 [[includes]]
     path = "devtools/client/locales/l10n.toml"
+
+[[includes]]
+    path = "waterfox/browser/locales/l10n.toml"
 
 [[paths]]
     reference = "devtools/startup/locales/en-US/**"
