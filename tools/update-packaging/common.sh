@@ -96,8 +96,7 @@ check_for_add_if_not_update() {
   if [ "$add_if_not_file_chk" = "Contents/Resources/defaults/pref/channel-prefs.js" ]; then
     return 1
   fi
-  if [ `basename $add_if_not_file_chk` = "channel-prefs.js" -o \
-       `basename $add_if_not_file_chk` = "update-settings.ini" ]; then
+  if [ `basename $add_if_not_file_chk` = "update-settings.ini" ]; then
     ## "true" *giggle*
     return 0;
   fi
