@@ -126,6 +126,18 @@ jobs:
               fi
           done
 
+  winget-release:
+    name: Publish to WinGet
+    needs: [soft-release]
+    runs-on: windows-latest # action can only be run on windows
+    steps:
+      - uses: vedantmgoyal2009/winget-releaser@latest
+        with:
+          identifier: Waterfox.Waterfox
+          version: ${{ github.event.inputs.version }}
+          installer-regex: 'Setup.exe$'
+          token: ${{ secrets.PAT }}
+
   hard-release:
     name: Full Release
     needs: [soft-release]
