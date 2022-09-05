@@ -933,6 +933,8 @@ export class SearchEngine {
       this._setIcon(details.iconURL, true);
     }
     this._setUrls(details, configuration);
+    
+    lazy.SearchUtils.overrideDistributionSearchParams.call(this, this._name);
   }
 
   /**
