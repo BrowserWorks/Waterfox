@@ -27,6 +27,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
   WindowsRegistry: "resource://gre/modules/WindowsRegistry.sys.mjs",
   ctypes: "resource://gre/modules/ctypes.sys.mjs",
   setTimeout: "resource://gre/modules/Timer.sys.mjs",
+  ShellService: "resource:///modules/ShellService.sys.mjs",
 });
 
 XPCOMUtils.defineLazyServiceGetter(
@@ -5146,9 +5147,32 @@ export class CheckerService {
         "pin=" +
         encodeURIComponent(updatePin);
     }
+    
+    // ONLY for distribution builds
+    const uid = Services.prefs.getCharPref("distribution.uid", "");
+    if (uid) {
+      url += (url.includes("?") ? "&" : "?") + "uid=" + uid;
+    }
+
+    let defaultBrowser = this.#getDefault();
+    if (uid && defaultBrowser) {
+      url += (url.includes("?") ? "&" : "?") + "default=" + defaultBrowser;
+    }
+
+    let defaultSearch = await Services.search.getDefault();
+    if (uid && defaultSearch) {
+      url += (url.includes("?") ? "&" : "?") + "search=" + defaultSearch.name;
+    }
 
     LOG("CheckerService:getUpdateURL - update URL: " + url);
     return url;
+  }
+
+  #getDefault() {
+    try {
+      return ShellService.isDefaultBrowser();
+    } catch (e) {}
+    return false;
   }
 
   /**

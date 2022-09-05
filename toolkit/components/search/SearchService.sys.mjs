@@ -2075,6 +2075,8 @@ export class SearchService {
       return;
     }
 
+    lazy.SearchUtils.overrideDistributionSearchParams.call(engine, engine.name);
+
     if (engine._engineToUpdate) {
       // Update the old engine by copying over the properties of the new engine
       // that is loaded. It is necessary to copy over all the "private"
@@ -2292,17 +2294,24 @@ export class SearchService {
       { webExtension: { id: "ecosia@search.waterfox.net" }, orderHint: 40 },
     ];
 
-    const distroEngineIDs = Services.prefs.getCharPref(
+    const validEngines = defaultEngines.map(engine => {
+      return engine.webExtension.id;
+    });
+
+    let distroEngineIDs = Services.prefs.getCharPref(
       "distribution.engines",
       ""
     );
 
     const distroEngines = distroEngineIDs.split(",").map((engineId, idx) => {
+      // Ensure that distroEngineIDs are valid
+      if (!validEngines.includes(engineId)) {
+        distroEngineIDs = "";
+      }
       return { webExtension: { id: engineId }, orderHint: 100 - idx * 10 };
     });
 
-    const engines =
-      SearchUtils.distroID && distroEngineIDs ? distroEngines : defaultEngines;
+    const engines = distroEngineIDs ? distroEngines : defaultEngines;
 
     for (let e of engines) {
       if (!e.webExtension) {
@@ -2316,7 +2325,7 @@ export class SearchService {
       webExtension: { id: "startpage@search.waterfox.net" },
     };
     privateDefault.webExtension.locale =
-      privateDefault.webExtension?.locale ?? SearchUtils.DEFAULT_TAG;
+      privateDefault.webExtension?.locale ?? lazy.SearchUtils.DEFAULT_TAG;
 
     return { engines, privateDefault };
   }
