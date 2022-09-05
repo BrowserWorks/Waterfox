@@ -966,6 +966,8 @@ class SearchEngine {
       }
     }
     this._setUrls(searchProvider, configuration);
+    // Perform overrides here
+    SearchUtils.overrideDistributionSearchParams.call(this, this._name);
   }
 
   /**
