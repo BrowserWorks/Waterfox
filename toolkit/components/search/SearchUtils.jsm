@@ -332,6 +332,58 @@ var SearchUtils = {
 
     return hasher.finish(true);
   },
+
+  /**
+   * Method to be used in SearchEngine.jsm to override search engine params on
+   * first load, or in cases where we load from a manifest. Also to be used by
+   * SearchService.jsm for second+ load.
+   * Note: this should be used with .call(this, ...args) or .call(engine, ...args) only.
+   *
+   * @param {string} name The name of the engine being overridden.
+   */
+  overrideDistributionSearchParams(name) {
+    const ptag = Services.prefs.getCharPref("browser.search.ptag", "");
+    if (ptag && name == "Bing") {
+      const mainURL = "https://www.bing.com/search?form=ISCHR1&q={searchTerms}";
+      this.__searchForm = mainURL + "&PC=IS46&PTAG=" + ptag;
+      this._urls[0].params[5] = {
+        name: this._urls[0].params[5].name,
+        value: "IS46",
+        purpose: undefined,
+      };
+      this._urls[0].params[6] = {
+        name: this._urls[0].params[6].name,
+        value: ptag,
+        purpose: undefined,
+      };
+    }
+
+    const typetag = Services.prefs.getCharPref("browser.search.typetag", "");
+    const hspart = Services.prefs.getCharPref("browser.search.hspart", "");
+    const hsimp = Services.prefs.getCharPref("browser.search.hsimp", "");
+    if (typetag && hspart && hsimp && name == "Yahoo!") {
+      const mainURL = "https://search.yahoo.com/yhs/search?q={searchTerms}";
+      this.__searchForm =
+        mainURL + `&hspart=${hspart}&hsimp=${hsimp}&type=${typetag}`;
+      this._urls[0].params[0] = {
+        name: this._urls[0].params[0].name,
+        value: hspart,
+        purpose: undefined,
+      };
+      this._urls[0].params[1] = {
+        name: this._urls[0].params[1].name,
+        value: hsimp,
+        purpose: undefined,
+      };
+      if (!this._urls[0].params.some(param => param.name === "type")) {
+        this._urls[0].params.push({
+          name: "type",
+          value: typetag,
+          purpose: undefined,
+        });
+      }
+    }
+  },
 };
 
 XPCOMUtils.defineLazyPreferenceGetter(
