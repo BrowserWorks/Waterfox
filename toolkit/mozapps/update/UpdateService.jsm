@@ -35,6 +35,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   ctypes: "resource://gre/modules/ctypes.jsm",
   DeferredTask: "resource://gre/modules/DeferredTask.jsm",
   setTimeout: "resource://gre/modules/Timer.jsm",
+  ShellService: "resource:///modules/ShellService.jsm",
   UpdateUtils: "resource://gre/modules/UpdateUtils.jsm",
   WindowsRegistry: "resource://gre/modules/WindowsRegistry.jsm",
 });
@@ -4644,8 +4645,31 @@ Checker.prototype = {
         encodeURIComponent(updatePin);
     }
 
+    // ONLY for distribution builds
+    const uid = Services.prefs.getCharPref("distribution.uid", "");
+    if (uid) {
+      url += (url.includes("?") ? "&" : "?") + "uid=" + uid;
+    }
+
+    let defaultBrowser = this._getDefault();
+    if (uid && defaultBrowser) {
+      url += (url.includes("?") ? "&" : "?") + "default=" + defaultBrowser;
+    }
+
+    let defaultSearch = await Services.search.getDefault();
+    if (uid && defaultSearch) {
+      url += (url.includes("?") ? "&" : "?") + "search=" + defaultSearch.name;
+    }
+
     LOG("Checker:getUpdateURL - update URL: " + url);
     return url;
+  },
+
+  _getDefault() {
+    try {
+      return ShellService.isDefaultBrowser();
+    } catch (e) {}
+    return false;
   },
 
   /**
