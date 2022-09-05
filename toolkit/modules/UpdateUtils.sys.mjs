@@ -75,7 +75,6 @@ export var UpdateUtils = {
    */
   async formatUpdateURL(url) {
     const locale = await this.getLocale();
-
     return url
       .replace(/%(\w+)%/g, (match, name) => {
         switch (name) {
