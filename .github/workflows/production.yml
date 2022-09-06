@@ -71,7 +71,7 @@ jobs:
                   then
                       for OS in "${OSA[@]}"
                       do
-                          rclone moveto ./aus_tmp/"$OS"/update.xml :s3:aus/update/production/${{ env.CHANNEL }}/"$VER"/"$OS"/update.xml --dry-run
+                          rclone moveto ./aus_tmp/"$OS"/update.xml :s3:aus/update/production/${{ env.CHANNEL }}/"$VER"/"$OS"/update.xml --log-level DEBUG --dry-run
                       done
                   fi
               fi
@@ -82,7 +82,7 @@ jobs:
               <?xml version="1.0"?>
               <updates></updates>
           END
-              rclone moveto ./update.xml :s3:aus/update/production/${{ env.CHANNEL }}/${{ inputs.DISPLAY_VERSION }}/"$OS"/update.xml --dry-run
+              rclone moveto ./update.xml :s3:aus/update/production/${{ env.CHANNEL }}/${{ inputs.DISPLAY_VERSION }}/"$OS"/update.xml --log-level DEBUG --dry-run
           done
       - name: "\U0001F9EA Move installers from staging to production"
         run: >
