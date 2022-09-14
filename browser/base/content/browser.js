@@ -1712,7 +1712,10 @@ var gBrowserInit = {
     areas.splice(areas.indexOf(CustomizableUI.AREA_FIXED_OVERFLOW_PANEL), 1);
     for (let area of areas) {
       let node = document.getElementById(area);
-      CustomizableUI.registerToolbarNode(node);
+      // Make sure we don't error out if a node hasn't been included with an overlay yet.
+      if (node) {
+        CustomizableUI.registerToolbarNode(node);
+      }
     }
     BrowserSearch.initPlaceHolder();
 
