@@ -71,12 +71,12 @@ let ShellServiceInternal = {
     if (AppConstants.platform == "win") {
       let optOutValue = WindowsRegistry.readRegKey(
         Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-        "Software\\Mozilla\\Firefox",
+        "Software\\WaterfoxLimited\\Waterfox",
         "DefaultBrowserOptOut"
       );
       WindowsRegistry.removeRegKey(
         Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-        "Software\\Mozilla\\Firefox",
+        "Software\\WaterfoxLimited\\Waterfox",
         "DefaultBrowserOptOut"
       );
       if (optOutValue == "True") {
@@ -271,10 +271,10 @@ let ShellServiceInternal = {
       const exeArgs = ["set-default-browser-user-choice", aumi];
       if (NimbusFeatures.shellService.getVariable("setDefaultPDFHandler")) {
         if (this._shouldSetDefaultPDFHandler()) {
-          log.info("Setting Firefox as default PDF handler");
-          exeArgs.push(".pdf", "FirefoxPDF");
+          log.info("Setting Waterfox as default PDF handler");
+          exeArgs.push(".pdf", "WaterfoxPDF");
         } else {
-          log.info("Not setting Firefox as default PDF handler");
+          log.info("Not setting Waterfox as default PDF handler");
         }
       }
       const exeProcess = await this._callExternalDefaultBrowserAgent({
