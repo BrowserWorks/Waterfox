@@ -25,7 +25,7 @@ const DEFAULT_WELCOME_CONTENT = {
     true
   ),
   backdrop:
-    "#212121 url('chrome://activity-stream/content/data/content/assets/proton-bkg.avif') center/cover no-repeat fixed",
+    "#212121 url('chrome://activity-stream/content/data/content/assets/wf-bkg.jpg') center/cover no-repeat fixed",
   screens: [
     {
       id: "AW_PIN_FIREFOX",
