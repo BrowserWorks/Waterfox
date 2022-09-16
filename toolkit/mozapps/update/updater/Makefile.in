@@ -24,5 +24,5 @@ libs::
 	rsync -a -C $(DIST)/bin/Info.plist $(DIST)/bin/updater.app/Contents
 	$(call py_action,preprocessor,-Fsubstitution --output-encoding utf-16 -DAPP_NAME='$(MOZ_APP_DISPLAYNAME)' $(srcdir)/macbuild/Contents/Resources/English.lproj/InfoPlist.strings.in -o $(DIST)/bin/updater.app/Contents/Resources/English.lproj/InfoPlist.strings)
 	$(NSINSTALL) -D $(DIST)/bin/updater.app/Contents/MacOS
-	$(NSINSTALL) $(DIST)/bin/org.mozilla.updater $(DIST)/bin/updater.app/Contents/MacOS
+	$(NSINSTALL) $(DIST)/bin/net.waterfox.updater $(DIST)/bin/updater.app/Contents/MacOS
 endif

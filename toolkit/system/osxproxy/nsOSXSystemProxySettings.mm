@@ -95,7 +95,7 @@ nsresult nsOSXSystemProxySettings::Init() {
   // See:
   // http://developer.apple.com/documentation/Networking/Conceptual/CFNetwork/CFStreamTasks/chapter_4_section_5.html
   mSystemDynamicStore =
-      SCDynamicStoreCreate(NULL, CFSTR("Mozilla"), ProxyHasChangedWrapper, &mContext);
+      SCDynamicStoreCreate(NULL, CFSTR("WaterfoxLimited"), ProxyHasChangedWrapper, &mContext);
   if (!mSystemDynamicStore) return NS_ERROR_FAILURE;
 
   // Set up the store to monitor any changes to the proxies
