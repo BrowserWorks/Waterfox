@@ -67,12 +67,12 @@ let ShellServiceInternal = {
     if (AppConstants.platform == "win") {
       let optOutValue = lazy.WindowsRegistry.readRegKey(
         Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-        "Software\\Mozilla\\Firefox",
+        "Software\\WaterfoxLimited\\Waterfox",
         "DefaultBrowserOptOut"
       );
       lazy.WindowsRegistry.removeRegKey(
         Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-        "Software\\Mozilla\\Firefox",
+        "Software\\WaterfoxLimited\\Waterfox",
         "DefaultBrowserOptOut"
       );
       if (optOutValue == "True") {
@@ -294,10 +294,10 @@ let ShellServiceInternal = {
         lazy.NimbusFeatures.shellService.getVariable("setDefaultPDFHandler")
       ) {
         if (this._shouldSetDefaultPDFHandler()) {
-          lazy.log.info("Setting Firefox as default PDF handler");
-          exeArgs.push(".pdf", "FirefoxPDF");
+          lazy.log.info("Setting Waterfox as default PDF handler");
+          exeArgs.push(".pdf", "WaterfoxPDF");
         } else {
-          lazy.log.info("Not setting Firefox as default PDF handler");
+          lazy.log.info("Not setting Waterfox as default PDF handler");
         }
       }
       const exeProcess = await this._callExternalDefaultBrowserAgent({
