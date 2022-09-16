@@ -41,9 +41,9 @@ Var BrandFullName
 ; And anyone that wants to run tests themselves should already have 
 ; this installed.
 !define FallbackKey \
-  "SOFTWARE\Mozilla\MaintenanceService\3932ecacee736d366d6436db0f55bce4"
+  "SOFTWARE\WaterfoxLimited\MaintenanceService\3932ecacee736d366d6436db0f55bce4"
 
-!define CompanyName "Mozilla Corporation"
+!define CompanyName "WaterfoxLimited"
 !define BrandFullNameInternal ""
 
 ; The following includes are custom.
@@ -66,12 +66,12 @@ Name "${MaintFullName}"
 OutFile "maintenanceservice_installer.exe"
 
 ; Get installation folder from registry if available
-InstallDirRegKey HKLM "Software\Mozilla\MaintenanceService" ""
+InstallDirRegKey HKLM "Software\WaterfoxLimited\MaintenanceService" ""
 
 SetOverwrite on
 
 !define MaintUninstallKey \
- "Software\Microsoft\Windows\CurrentVersion\Uninstall\MozillaMaintenanceService"
+ "Software\Microsoft\Windows\CurrentVersion\Uninstall\WaterfoxMaintenanceService"
 
 ; Always install into the 32-bit location even if we have a 64-bit build.
 ; This is because we use only 1 service for all Firefox channels.
@@ -180,7 +180,7 @@ Section "MaintenanceService"
   WriteRegStr HKLM "${MaintUninstallKey}" "DisplayIcon" \
                    "$INSTDIR\Uninstall.exe,0"
   WriteRegStr HKLM "${MaintUninstallKey}" "DisplayVersion" "${AppVersion}"
-  WriteRegStr HKLM "${MaintUninstallKey}" "Publisher" "Mozilla"
+  WriteRegStr HKLM "${MaintUninstallKey}" "Publisher" "WaterfoxLimited"
   WriteRegStr HKLM "${MaintUninstallKey}" "Comments" "${BrandFullName}"
   WriteRegDWORD HKLM "${MaintUninstallKey}" "NoModify" 1
   ${GetSize} "$INSTDIR" "/S=0K" $R2 $R3 $R4
@@ -197,15 +197,15 @@ Section "MaintenanceService"
   ${OrIf} ${IsNativeARM64}
     SetRegView 64
   ${EndIf}
-  WriteRegDWORD HKLM "Software\Mozilla\MaintenanceService" "Attempted" 1
-  WriteRegDWORD HKLM "Software\Mozilla\MaintenanceService" "Installed" 1
-  DeleteRegValue HKLM "Software\Mozilla\MaintenanceService" "FFPrefetchDisabled"
+  WriteRegDWORD HKLM "Software\WaterfoxLimited\MaintenanceService" "Attempted" 1
+  WriteRegDWORD HKLM "Software\WaterfoxLimited\MaintenanceService" "Installed" 1
+  DeleteRegValue HKLM "Software\WaterfoxLimited\MaintenanceService" "FFPrefetchDisabled"
 
   ; Included here for debug purposes only.  
   ; These keys are used to bypass the installation dir is a valid installation
   ; check from the service so that tests can be run.
-  WriteRegStr HKLM "${FallbackKey}\0" "name" "Mozilla Corporation"
-  WriteRegStr HKLM "${FallbackKey}\0" "issuer" "DigiCert SHA2 Assured ID Code Signing CA"
+  WriteRegStr HKLM "${FallbackKey}\0" "name" "WATERFOX LIMITED"
+  WriteRegStr HKLM "${FallbackKey}\0" "issuer" "GlobalSign GCC R45 EV CodeSigning CA 2020"
   WriteRegStr HKLM "${FallbackKey}\1" "name" "Mozilla Fake SPC"
   WriteRegStr HKLM "${FallbackKey}\1" "issuer" "Mozilla Fake CA"
   ${If} ${RunningX64}
@@ -258,8 +258,8 @@ Section "Uninstall"
   ${OrIf} ${IsNativeARM64}
     SetRegView 64
   ${EndIf}
-  DeleteRegValue HKLM "Software\Mozilla\MaintenanceService" "Installed"
-  DeleteRegValue HKLM "Software\Mozilla\MaintenanceService" "FFPrefetchDisabled"
+  DeleteRegValue HKLM "Software\WaterfoxLimited\MaintenanceService" "Installed"
+  DeleteRegValue HKLM "Software\WaterfoxLimited\MaintenanceService" "FFPrefetchDisabled"
   DeleteRegKey HKLM "${FallbackKey}\"
   ${If} ${RunningX64}
   ${OrIf} ${IsNativeARM64}
