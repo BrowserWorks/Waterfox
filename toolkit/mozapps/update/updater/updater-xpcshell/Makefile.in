@@ -32,7 +32,7 @@ ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
 	$(NSINSTALL) $(FINAL_TARGET)/updater-xpcshell $(XPCSHELLTESTDIR)/data/updater-xpcshell.app/Contents/MacOS
 	rm -Rf $(XPCSHELLTESTDIR)/data/updater.app
 	mv $(XPCSHELLTESTDIR)/data/updater-xpcshell.app $(XPCSHELLTESTDIR)/data/updater.app
-	mv $(XPCSHELLTESTDIR)/data/updater.app/Contents/MacOS/updater-xpcshell $(XPCSHELLTESTDIR)/data/updater.app/Contents/MacOS/org.mozilla.updater
+	mv $(XPCSHELLTESTDIR)/data/updater.app/Contents/MacOS/updater-xpcshell $(XPCSHELLTESTDIR)/data/updater.app/Contents/MacOS/net.waterfox.updater
 
 ifdef MOCHITESTBROWSERDIR
 	rsync -a -C $(XPCSHELLTESTDIR)/data/updater.app $(MOCHITESTBROWSERDIR)/

@@ -31,6 +31,10 @@ const TYPES = {
 const NATIVE_MANIFEST_SCHEMA =
   "chrome://extensions/content/schemas/native_manifest.json";
 
+// WATERFOX
+// Future rebase take note: leave this so extensions
+// can communicate with software without being
+// made specifically for Waterfox.
 const REGPATH = "Software\\Mozilla";
 
 var NativeManifests = {
