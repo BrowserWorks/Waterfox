@@ -15,6 +15,7 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyModuleGetters(this, {
   AddonManager: "resource://gre/modules/AddonManager.jsm",
   AttributionCode: "resource:///modules/AttributionCode.jsm",
+  BrowserUtils: "resource:///modules/BrowserUtils.jsm",
   ChromeManifest: "resource:///modules/ChromeManifest.jsm",
   Overlays: "resource:///modules/Overlays.jsm",
   PrivateTab: "resource:///modules/PrivateTab.jsm",
@@ -29,6 +30,11 @@ const WaterfoxGlue = {
   async init() {
     // Parse attribution data
     this._setAttributionData();
+
+    // Load the Waterfox custom css
+    BrowserUtils.registerStylesheet(
+      "chrome://browser/skin/waterfox/general.css"
+    );
 
     // Parse chrome.manifest
     this.startupManifest = await this.getChromeManifest("startup");
