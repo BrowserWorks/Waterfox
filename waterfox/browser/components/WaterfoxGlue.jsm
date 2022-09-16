@@ -18,6 +18,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   BrowserUtils: "resource:///modules/BrowserUtils.jsm",
   ChromeManifest: "resource:///modules/ChromeManifest.jsm",
   Overlays: "resource:///modules/Overlays.jsm",
+  PrefUtils: "resource:///modules/PrefUtils.jsm",
   PrivateTab: "resource:///modules/PrivateTab.jsm",
   StatusBar: "resource:///modules/StatusBar.jsm",
   TabFeatures: "resource:///modules/TabFeatures.jsm",
@@ -30,6 +31,9 @@ const WaterfoxGlue = {
   async init() {
     // Parse attribution data
     this._setAttributionData();
+
+    // Set pref observers
+    this._setPrefObservers();
 
     // Load the Waterfox custom css
     BrowserUtils.registerStylesheet(
@@ -132,6 +136,17 @@ const WaterfoxGlue = {
     } catch (ex) {
       // Minor issue, carry on
     }
+  },
+
+  async _setPrefObservers() {
+    this.pinnedTabListener = PrefUtils.addObserver(
+      "browser.tabs.pinnedIconOnly",
+      isEnabled => {
+        // Pref being true actually means we need to unload the sheet, so invert.
+        const uri = "chrome://browser/content/tabfeatures/pinnedtab.css";
+        BrowserUtils.registerOrUnregisterSheet(uri, !isEnabled);
+      }
+    );
   },
 
   async getChromeManifest(manifest) {

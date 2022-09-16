@@ -1,4 +1,5 @@
 /* Add any imports of other css here. */
+@import url("../../content/tabfeatures/pinnedtab.css");
 
 %ifndef XP_MACOSX
   /* Ensure that bottom positioned tabs are colored according to theme */
