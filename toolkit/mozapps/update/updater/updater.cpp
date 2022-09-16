@@ -2881,7 +2881,7 @@ int NS_main(int argc, NS_tchar** argv) {
   mozilla::UniquePtr<UmaskContext> umaskContext(new UmaskContext(0));
 
   bool isElevated =
-      strstr(argv[0], "/Library/PrivilegedHelperTools/org.mozilla.updater") !=
+      strstr(argv[0], "/Library/PrivilegedHelperTools/net.waterfox.updater") !=
       0;
   if (isElevated) {
     if (!ObtainUpdaterArguments(&argc, &argv)) {
