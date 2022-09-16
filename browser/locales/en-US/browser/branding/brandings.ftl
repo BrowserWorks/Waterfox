@@ -15,20 +15,20 @@
 ## https://mozilla-l10n.github.io/styleguides/mozilla_general/#brands-copyright-and-trademark
 
 -facebook-container-brand-name = Facebook Container
--lockwise-brand-name = Firefox Lockwise
+-lockwise-brand-name = Lockwise
 -lockwise-brand-short-name = Lockwise
--monitor-brand-name = Firefox Monitor
+-monitor-brand-name = Monitor
 -monitor-brand-short-name = Monitor
 -pocket-brand-name = Pocket
--send-brand-name = Firefox Send
--screenshots-brand-name = Firefox Screenshots
+-send-brand-name = Send
+-screenshots-brand-name = Screenshots
 -mozilla-vpn-brand-name = Mozilla VPN
--profiler-brand-name = Firefox Profiler
--translations-brand-name = Firefox Translations
--rally-brand-name = Mozilla Rally
+-profiler-brand-name = Profiler
+-translations-brand-name = Translations
+-rally-brand-name = Rally
 -rally-short-name = Rally
--focus-brand-name = Firefox Focus
+-focus-brand-name = Focus
 
 # “Suggest” can be localized, “Firefox” must be treated as a brand
 # and kept in English.
--firefox-suggest-brand-name = Firefox Suggest
+-firefox-suggest-brand-name = Suggest

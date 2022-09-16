@@ -21,18 +21,18 @@
 !endif
 
 # These defines should match application.ini settings
-!define AppName               "Firefox"
+!define AppName               "Waterfox"
 !define AppVersion            "@APP_VERSION@"
 !define GREVersion            @MOZILLA_VERSION@
 !define AB_CD                 "@AB_CD@"
 
 !define FileMainEXE           "@MOZ_APP_NAME@.exe"
-!define MainWindowClass       "MozillaWindowClass"
-!define DialogWindowClass     "MozillaDialogClass"
-!define DDEApplication        "Firefox"
-!define AppRegName            "Firefox"
+!define MainWindowClass       "WaterfoxWindowClass"
+!define DialogWindowClass     "WaterfoxDialogClass"
+!define DDEApplication        "Waterfox"
+!define AppRegName            "Waterfox"
 
-!define BrandProductName      "Firefox"
+!define BrandProductName      "Waterfox"
 !ifndef DEV_EDITION
 !define BrandShortName        "@MOZ_APP_DISPLAYNAME@"
 !endif
@@ -46,12 +46,12 @@
 !define IDI_DOCUMENT_ZERO_BASED     "1"
 !define IDI_DOCUMENT_PDF_ZERO_BASED "5"
 
-!define CERTIFICATE_NAME            "Mozilla Corporation"
-!define CERTIFICATE_ISSUER          "DigiCert SHA2 Assured ID Code Signing CA"
+!define CERTIFICATE_NAME            "WATERFOX LIMITED"
+!define CERTIFICATE_ISSUER          "GlobalSign GCC R45 EV CodeSigning CA 2020"
 ; Changing the name or issuer requires us to have both the old and the new
 ;  in the registry at the same time, temporarily.
-!define CERTIFICATE_NAME_PREVIOUS   "Mozilla Corporation"
-!define CERTIFICATE_ISSUER_PREVIOUS "DigiCert Assured ID Code Signing CA-1"
+!define CERTIFICATE_NAME_PREVIOUS   "WATERFOX LIMITED"
+!define CERTIFICATE_ISSUER_PREVIOUS "GlobalSign GCC R45 EV CodeSigning CA 2020"
 
 # LSP_CATEGORIES is the permitted LSP categories for the application. Each LSP
 # category value is ANDed together to set multiple permitted categories.
@@ -69,7 +69,7 @@
 
 #ifdef MOZ_LAUNCHER_PROCESS
 !define MOZ_LAUNCHER_PROCESS
-!define MOZ_LAUNCHER_SUBKEY "Software\Mozilla\${AppName}\Launcher"
+!define MOZ_LAUNCHER_SUBKEY "Software\WaterfoxLimited\${AppName}\Launcher"
 #endif
 
 #ifdef RELEASE_OR_BETA
