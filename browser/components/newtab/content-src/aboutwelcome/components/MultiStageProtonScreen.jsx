@@ -197,7 +197,7 @@ export class ProtonScreen extends React.PureComponent {
               <div className="spacer-bottom" />
             </div>
             <Localized text={content.help_text}>
-              <span className="attrib-text" />
+              <a href="https://flic.kr/p/AYfRz1" className="attrib-text" />
             </Localized>
           </div>
         ) : null}
