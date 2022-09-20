@@ -35,11 +35,16 @@ const WaterfoxGlue = {
     // Set pref observers
     this._setPrefObservers();
 
-    // Load always on Waterfox custom CSS.
-    // Add additional CSS here.
+    // Load always-on Waterfox custom CSS.
     BrowserUtils.registerStylesheet(
       "chrome://browser/skin/waterfox/general.css"
     );
+    if (PrefUtils.get("userChrome.theme.enable", true)) {
+      const userChromeSheet = "chrome://browser/skin/userChrome.css";
+      const userContentSheet = "chrome://browser/skin/userContent.css";
+      BrowserUtils.registerStylesheet(userChromeSheet);
+      BrowserUtils.registerStylesheet(userContentSheet);
+    }
 
     // Parse chrome.manifest
     this.startupManifest = await this.getChromeManifest("startup");
@@ -145,7 +150,7 @@ const WaterfoxGlue = {
       isEnabled => {
         // Pref being false means we need to unload the sheet.
         const userChromeSheet = "chrome://browser/skin/userChrome.css";
-        const userContentSheet = "chrome://browser/skin/userContent.css"
+        const userContentSheet = "chrome://browser/skin/userContent.css";
         BrowserUtils.registerOrUnregisterSheet(userChromeSheet, isEnabled);
         BrowserUtils.registerOrUnregisterSheet(userContentSheet, isEnabled);
       }
