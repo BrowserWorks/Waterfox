@@ -14,8 +14,12 @@ env:
   AWS_REGION: us-west-2
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
+permissions: {}
 jobs:
   soft-release:
+    permissions:
+      contents: write # to create a release (ncipollo/release-action)
+
     name: Soft Release
     runs-on: ubuntu-latest
     steps:
