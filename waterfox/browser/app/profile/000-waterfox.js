@@ -243,6 +243,7 @@ pref("userContent.page.dark_mode",        true); // Need proton_color
 pref("userContent.page.proton",           true); // Need proton_color
 
 // -- Hide promos -------------------------------------------------------------
+pref("browser.preferences.moreFromMozilla", false, locked);
 pref("browser.vpn_promo.enabled", false, locked);
 pref("browser.promo.focus.enabled", false, locked);
 pref("browser.contentblocking.report.lockwise.enabled", false, locked);
