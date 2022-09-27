@@ -26,6 +26,7 @@ ChromeUtils.defineModuleGetter(
   "PlacesBackups",
   "resource://gre/modules/PlacesBackups.jsm"
 );
+
 ChromeUtils.defineModuleGetter(
   this,
   "SessionMigration",
@@ -37,13 +38,8 @@ ChromeUtils.defineModuleGetter(
   "FileUtils",
   "resource://gre/modules/FileUtils.jsm"
 );
-ChromeUtils.defineModuleGetter(
-  this,
-  "ProfileAge",
-  "resource://gre/modules/ProfileAge.jsm"
-);
 
-var { AppConstants } = ChromeUtils.import(
+const { AppConstants } = ChromeUtils.import(
   "resource://gre/modules/AppConstants.jsm"
 );
 
@@ -78,21 +74,6 @@ function FirefoxProfileMigrator() {
 
 FirefoxProfileMigrator.prototype = Object.create(MigratorPrototype);
 
-function getAllProfilesNative() {
-  let allProfiles = new Map();
-  let profileService = Cc["@mozilla.org/toolkit/profile-service;1"].getService(
-    Ci.nsIToolkitProfileService
-  );
-  for (let profile of profileService.profiles) {
-    let rootDir = profile.rootDir;
-
-    if (rootDir.exists() && rootDir.isReadable()) {
-      allProfiles.set(profile.name, rootDir);
-    }
-  }
-  return allProfiles;
-}
-
 FirefoxProfileMigrator.prototype._getAllProfiles = function() {
   //return getAllProfilesNative();
 
@@ -113,7 +94,6 @@ FirefoxProfileMigrator.prototype._getAllProfiles = function() {
     path = profileConfigObj.getString("Profile0", "Path");
   }
   // get PathProfile default
-  let rootDir = this._firefoxUserDataFolder.clone();
   let profileDefault = "";
   let profileName = path;
   let rootFolder = "";
@@ -245,10 +225,6 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
   }
 
   let types = MigrationUtils.resourceTypes;
-  let places = getFileResource(types.HISTORY, [
-    "places.sqlite",
-    "places.sqlite-wal",
-  ]);
   let favicons = getFileResource(types.HISTORY, [
     "favicons.sqlite",
     "favicons.sqlite-wal",
@@ -267,6 +243,33 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
     "formhistory.sqlite",
     "autofill-profiles.json",
   ]);
+
+  let bookmarks;
+  let places;
+  // don't try to import if places.sqlite doesn't exist
+  if (this._getFileObject(sourceProfileDir, "places.sqlite")) {
+    places = {
+      name: "history",
+      type: types.HISTORY,
+      migrate: aCallback => {
+        MigrationUtils.migrateFirefoxStyleHistory(aCallback, sourceProfileDir);
+      },
+    };
+
+    bookmarks = {
+      name: "bookmarks", // name is used only by tests.
+      type: types.BOOKMARKS,
+      migrate: aCallback => {
+        MigrationUtils.migrateFirefoxStyleBookmarks(
+          aCallback,
+          sourceProfileDir
+        );
+      },
+    };
+  } else {
+    places = getFileResource(types.HISTORY, ["places.sqlite"]);
+  }
+
   let bookmarksBackups = getFileResource(types.OTHERDATA, [
     PlacesBackups.profileRelativeFolderPath,
   ]);
@@ -387,64 +390,6 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
     },
   };
 
-  // Telemetry related migrations.
-  let times = {
-    name: "times", // name is used only by tests.
-    type: types.OTHERDATA,
-    migrate: aCallback => {
-      let file = this._getFileObject(sourceProfileDir, "times.json");
-      if (file) {
-        file.copyTo(currentProfileDir, "");
-      }
-      // And record the fact a migration (ie, a reset) happened.
-      let recordMigration = async () => {
-        try {
-          let profileTimes = await ProfileAge(currentProfileDir.path);
-          await profileTimes.recordProfileReset();
-          aCallback(true);
-        } catch (e) {
-          aCallback(false);
-        }
-      };
-
-      recordMigration();
-    },
-  };
-  let telemetry = {
-    name: "telemetry", // name is used only by tests...
-    type: types.OTHERDATA,
-    migrate: aCallback => {
-      let createSubDir = name => {
-        let dir = currentProfileDir.clone();
-        dir.append(name);
-        dir.create(Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
-        return dir;
-      };
-
-      // If the 'datareporting' directory exists we migrate files from it.
-      let dataReportingDir = this._getFileObject(
-        sourceProfileDir,
-        "datareporting"
-      );
-      if (dataReportingDir && dataReportingDir.isDirectory()) {
-        // Copy only specific files.
-        let toCopy = ["state.json", "session-state.json"];
-
-        let dest = createSubDir("datareporting");
-        let enumerator = dataReportingDir.directoryEntries;
-        while (enumerator.hasMoreElements()) {
-          let file = enumerator.nextFile;
-          if (file.isDirectory() || !toCopy.includes(file.leafName)) {
-            continue;
-          }
-          file.copyTo(dest, "");
-        }
-      }
-
-      aCallback(true);
-    },
-  };
-
   return [
     places,
     cookies,
@@ -454,9 +399,8 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
     bookmarksBackups,
     session,
     sync,
-    times,
-    telemetry,
     favicons,
+    bookmarks,
   ].filter(r => r);
 };
 

@@ -1287,4 +1287,258 @@ var MigrationUtils = Object.seal({
   SOURCE_BOOKMARK_ROOTS_BOOKMARKS_MENU: 2,
   SOURCE_BOOKMARK_ROOTS_READING_LIST: 4,
   SOURCE_BOOKMARK_ROOTS_UNFILED: 8,
+
+  // Waterfox Additions
+  /**
+   * Get all the rows corresponding to a select query from a database, while
+   * requiring a lock on the database. If fetching data fails (because someone
+   * else tried to write to the DB at the same time, for example), we will
+   * retry the fetch after a 100ms timeout, up to 10 times.
+   * We fetch with a lock as this is only used to get data from places.sqlite,
+   * which has journal_mode=WAL set. This requires write access even when only
+   * performing reads.
+   *
+   * @param path
+   *        the file path to the database we want to open.
+   * @param description
+   *        a developer-readable string identifying what kind of database we're
+   *        trying to open.
+   * @param selectQuery
+   *        the SELECT query to use to fetch the rows.
+   *
+   * @return a promise that resolves to an array of rows. The promise will be
+   *         rejected if the read/fetch failed even after retrying.
+   */
+  async getRowsFromDBWithLocks(path, description, selectQuery) {
+    let dbOptions = {
+      readOnly: false,
+      ignoreLockingMode: false,
+      path,
+    };
+
+    const RETRYLIMIT = 10;
+    const RETRYINTERVAL = 100;
+    return (async function innerGetRows() {
+      let rows = null;
+      let retryCount = RETRYLIMIT;
+      while (retryCount && !rows) {
+        // Attempt to get the rows. If this succeeds, we will bail out of the loop,
+        // close the database in a failsafe way, and pass the rows back.
+        // If fetching the rows throws, we will wait RETRYINTERVAL ms
+        // and try again. This will repeat a maximum of RETRYLIMIT times.
+        let db;
+        let didOpen = false;
+        let exceptionSeen;
+        try {
+          db = await Sqlite.openConnection(dbOptions);
+          didOpen = true;
+          rows = await db.execute(selectQuery);
+        } catch (ex) {
+          Cu.reportError(ex);
+          exceptionSeen = ex;
+        } finally {
+          try {
+            if (didOpen) {
+              await db.close();
+            }
+          } catch (ex) {}
+        }
+        if (exceptionSeen) {
+          await new Promise(resolve =>
+            setTimeout(() => resolve(), RETRYINTERVAL)
+          );
+        }
+        retryCount--;
+      }
+      if (!rows) {
+        throw new Error(
+          "Couldn't get rows from the " + description + " database."
+        );
+      }
+      return rows;
+    })();
+  },
+
+  formatHistoryRows(rows) {
+    let pageInfos = [];
+    for (let row of rows) {
+      try {
+        // if having typed_count, we changes transition type to typed.
+        let transition = PlacesUtils.history.TRANSITIONS.LINK;
+        if (row.getResultByName("typed") > 0) {
+          transition = PlacesUtils.history.TRANSITIONS.TYPED;
+        }
+
+        pageInfos.push({
+          title: row.getResultByName("title"),
+          url: new URL(row.getResultByName("url")),
+          visits: [
+            {
+              transition,
+              date: row.getResultByName("last_visit_date"),
+            },
+          ],
+        });
+      } catch (ex) {
+        Cu.reportError(ex);
+      }
+    }
+    return pageInfos;
+  },
+
+  /**
+   * Format raw query results for bookmarks and folders.
+   * @param rows Raw query results from getRowsFromDBWithoutLocks()
+   * @returns Object containing guid: {item} mappings.
+   */
+  formatBookmarkRows(rows) {
+    let unsortedRows = {};
+    rows.forEach(row => {
+      let type = row.getResultByName("type");
+      let item = {
+        type,
+        parentGuid: row.getResultByName("parentGuid"),
+        guid: row.getResultByName("guid"),
+        title: row.getResultByName("title"),
+      };
+      type == PlacesUtils.bookmarks.TYPE_BOOKMARK
+        ? (item.url = row.getResultByName("url"))
+        : null;
+      unsortedRows[item.guid] = item;
+    });
+    return unsortedRows;
+  },
+
+  /**
+   * As folders can be created after bookmarks, and bookmarks moved inside these younger folders,
+   * we need to sequentially loop through items to ensure parents are added before children.
+   * @param unsortedRows A formattedRows Object returned from formatBookmarkRows()
+   * @param presentIds Array of item guids in unsortedRows
+   * @param nextLevelItems Array of items at the current level of nesting
+   * @param rowsToInsert Object of guid: {children: []} to be inserted with insertManyBookmarksWrapper()
+   * @returns rowsToInsert
+   */
+  sortBookmarkRows(
+    unsortedRows,
+    presentIds,
+    nextLevelItems = [],
+    rowsToInsert = {}
+  ) {
+    // Top level items
+    if (Object.keys(rowsToInsert).length === 0) {
+      let parentIds = Object.values(unsortedRows)
+        .filter(item => !presentIds.includes(item.parentGuid))
+        .map(item => {
+          // Add top level, existing guids
+          item.parentGuid in rowsToInsert
+            ? rowsToInsert[item.parentGuid].children.push(item)
+            : (rowsToInsert[item.parentGuid] = { children: [item] });
+          // Assign children
+          return item.guid;
+        });
+      nextLevelItems = Object.values(unsortedRows).filter(item =>
+        parentIds.includes(item.parentGuid)
+      );
+    } else {
+      // Bottom level items
+      if (Array.isArray(nextLevelItems) && !nextLevelItems.length) {
+        return rowsToInsert;
+      }
+      // Mid level items
+      let nextLevelIds = nextLevelItems.map(item => {
+        if (unsortedRows[item.parentGuid].children) {
+          unsortedRows[item.parentGuid].children.push(item);
+        } else {
+          unsortedRows[item.parentGuid].children = [item];
+        }
+        return item.guid;
+      });
+      nextLevelItems = Object.values(unsortedRows).filter(item =>
+        nextLevelIds.includes(item.parentGuid)
+      );
+    }
+    return this.sortBookmarkRows(
+      unsortedRows,
+      presentIds,
+      nextLevelItems,
+      rowsToInsert
+    );
+  },
+
+  async migrateFirefoxStyleHistory(callback, sourceProfileDir) {
+    try {
+      // get history from places.sqlite
+      let sourceDir = sourceProfileDir.clone();
+      sourceDir.append("places.sqlite");
+      let query =
+        "SELECT url, title, last_visit_date, typed FROM moz_places WHERE hidden = 0";
+      let getRows =
+        AppConstants.platform == "macosx"
+          ? this.getRowsFromDBWithLocks
+          : this.getRowsFromDBWithoutLocks;
+      let rows = await getRows(sourceDir.path, "history", query);
+      let formattedRows = this.formatHistoryRows(rows);
+      if (formattedRows.length) {
+        await this.insertVisitsWrapper(formattedRows);
+      }
+      callback(true);
+    } catch (ex) {
+      callback(false);
+    }
+  },
+
+  async migrateFirefoxStyleBookmarks(callback, sourceProfileDir) {
+    try {
+      // get bookmarks from places.sqlite
+      let sourceDir = sourceProfileDir.clone();
+      sourceDir.append("places.sqlite");
+      // get raw rows from db
+      let getRows =
+        AppConstants.platform == "macosx"
+          ? this.getRowsFromDBWithLocks
+          : this.getRowsFromDBWithoutLocks;
+      let rows = await getRows(
+        sourceDir.path,
+        "bookmarks",
+        `SELECT
+            b.type,
+            b.position,
+            (SELECT guid FROM moz_bookmarks WHERE id = b.parent) as parentGuid,
+            b.parent,
+            b.title,
+            b.guid,
+            p.url,
+            p.hidden
+          FROM moz_bookmarks b
+          LEFT JOIN moz_places p
+          ON b.fk = p.id
+          WHERE
+            parentGuid != 'root________' AND (b.type == 2 OR (p.url IS NOT NULL AND p.hidden != 1));`
+      );
+      let formattedRows = this.formatBookmarkRows(rows);
+      let ids = Object.values(formattedRows).map(row => {
+        return row.guid;
+      });
+      // No bookmarks to import
+      if (ids.length === 0) {
+        callback(true);
+        return;
+      }
+      let itemsToInsert = this.sortBookmarkRows(formattedRows, ids);
+      // insert bookmarks
+      for (let [parentGuid, parent] of Object.entries(itemsToInsert)) {
+        // do not attempt to insert if empty
+        if (parent.children && parent.children.length) {
+          await MigrationUtils.insertManyBookmarksWrapper(
+            parent.children,
+            parentGuid
+          );
+        }
+      }
+      callback(true);
+    } catch (ex) {
+      Cu.reportError(ex);
+      callback(false);
+    }
+  },
 });
