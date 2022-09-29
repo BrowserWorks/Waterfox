@@ -1421,6 +1421,7 @@ var MigrationUtils = Object.seal({
   sortBookmarkRows(
     unsortedRows,
     presentIds,
+    duplicateIds,
     nextLevelItems = [],
     rowsToInsert = {}
   ) {
@@ -1433,17 +1434,15 @@ var MigrationUtils = Object.seal({
           item.parentGuid in rowsToInsert
             ? rowsToInsert[item.parentGuid].children.push(item)
             : (rowsToInsert[item.parentGuid] = { children: [item] });
+
           // Assign children
           return item.guid;
         });
+
       nextLevelItems = Object.values(unsortedRows).filter(item =>
         parentIds.includes(item.parentGuid)
       );
     } else {
-      // Bottom level items
-      if (Array.isArray(nextLevelItems) && !nextLevelItems.length) {
-        return rowsToInsert;
-      }
       // Mid level items
       let nextLevelIds = nextLevelItems.map(item => {
         if (unsortedRows[item.parentGuid].children) {
@@ -1451,15 +1450,22 @@ var MigrationUtils = Object.seal({
         } else {
           unsortedRows[item.parentGuid].children = [item];
         }
+
         return item.guid;
       });
+
       nextLevelItems = Object.values(unsortedRows).filter(item =>
         nextLevelIds.includes(item.parentGuid)
       );
+      // Bottom level items
+      if (Array.isArray(nextLevelItems) && !nextLevelItems.length) {
+        return rowsToInsert;
+      }
     }
     return this.sortBookmarkRows(
       unsortedRows,
       presentIds,
+      duplicateIds,
       nextLevelItems,
       rowsToInsert
     );
@@ -1487,11 +1493,17 @@ var MigrationUtils = Object.seal({
     }
   },
 
-  async migrateFirefoxStyleBookmarks(callback, sourceProfileDir) {
+  async migrateFirefoxStyleBookmarks(
+    callback,
+    sourceProfileDir,
+    targetProfileDir
+  ) {
     try {
       // get bookmarks from places.sqlite
       let sourceDir = sourceProfileDir.clone();
+      let targetDir = targetProfileDir.clone();
       sourceDir.append("places.sqlite");
+      targetDir.append("places.sqlite");
       // get raw rows from db
       let getRows =
         AppConstants.platform == "macosx"
@@ -1516,16 +1528,36 @@ var MigrationUtils = Object.seal({
             parentGuid != 'root________' AND (b.type == 2 OR (p.url IS NOT NULL AND p.hidden != 1));`
       );
       let formattedRows = this.formatBookmarkRows(rows);
-      let ids = Object.values(formattedRows).map(row => {
-        return row.guid;
-      });
+      let ids = Object.keys(formattedRows);
+
       // No bookmarks to import
       if (ids.length === 0) {
         callback(true);
         return;
       }
-      let itemsToInsert = this.sortBookmarkRows(formattedRows, ids);
-      // insert bookmarks
+
+      // Check for existing duplicates
+      let condition = ids.join("' OR guid == '");
+      let query =
+        "SELECT guid FROM moz_bookmarks WHERE(guid == '" + condition + "');";
+      let duplicates = (await getRows(targetDir.path, "bookmarks", query)).map(
+        row => {
+          return row.getResultByName("guid");
+        }
+      );
+
+      // Delete duplicates - so that if a user added a new bookmark in a deeply nested folder, we can still import that.
+      if (duplicates.length) {
+        condition = duplicates.join("' OR guid == '");
+        query =
+          "DELETE FROM moz_bookmarks WHERE (guid == '" + condition + "');";
+        await this.getRowsFromDBWithLocks(targetDir.path, "bookmarks", query);
+      }
+
+      // Insert items, minus duplicates
+      let itemsToInsert = this.sortBookmarkRows(formattedRows, ids, duplicates);
+
+      // Insert bookmarks
       for (let [parentGuid, parent] of Object.entries(itemsToInsert)) {
         // do not attempt to insert if empty
         if (parent.children && parent.children.length) {
