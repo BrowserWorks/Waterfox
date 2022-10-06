@@ -11,3 +11,8 @@
 :root[inDOMFullscreen] #browser-bottombox {
   visibility: collapse;
 }
+
+/* about:preferences Look & Feel icon */
+#category-theme > .category-icon {
+  list-style-image: url("chrome://browser/skin/customize.svg");
+}
