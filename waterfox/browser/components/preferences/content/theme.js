@@ -17,6 +17,8 @@ XPCOMUtils.defineLazyServiceGetter(
 var gThemePane = {
   WATERFOX_THEME_PREF: "userChrome.theme.enable",
 
+  _prefObservers: [],
+
   get preferences() {
     return [
       // Waterfox Customizations
@@ -181,8 +183,6 @@ var gThemePane = {
     window.Preferences.addAll(this.preferences);
     const userChromeEnabled = PrefUtils.get(this.WATERFOX_THEME_PREF);
 
-    // Save user prefs at time of page load
-
     // Init presets
     for (let preset of this.presets) {
       let button = document.getElementById(preset.id);
@@ -227,10 +227,22 @@ var gThemePane = {
       );
       themeGroup.hidden = !userChromeEnabled;
 
-      PrefUtils.addObserver(this.WATERFOX_THEME_PREF, isEnabled => {
-        presetBox.hidden = !isEnabled;
-        themeGroup.hidden = !isEnabled;
-      });
+      this._prefObservers.push(
+        PrefUtils.addObserver(this.WATERFOX_THEME_PREF, isEnabled => {
+          presetBox.hidden = !isEnabled;
+          themeGroup.hidden = !isEnabled;
+        })
+      );
+    }
+
+    // Register unload listener
+    window.addEventListener("unload", this);
+  },
+
+  destroy() {
+    window.removeEventListener("unload", this);
+    for (let obs of this._prefObservers) {
+      PrefUtils.removeObserver(obs);
     }
   },
 
@@ -239,7 +251,7 @@ var gThemePane = {
     switch (event.type) {
       case "mouseover":
       case "mouseout":
-        event.target.nextElementSibling.classList.toggle("show");
+        event.target.nextElementSibling?.classList.toggle("show");
         break;
       case "click":
         switch (event.target.id) {
@@ -253,6 +265,10 @@ var gThemePane = {
             this.refreshTheme();
             break;
         }
+        break;
+      case "unload":
+        this.destroy();
+        break;
     }
   },
 
