@@ -77,6 +77,102 @@ var gThemePane = {
 
       // Font
       { id: "userContent.page.monospace", type: "bool" },
+      { id: "userContent.theme.monospace", type: "bool" },
+    ];
+  },
+
+  get presets() {
+    return [
+      {
+        id: "smoothCorners",
+        prefs: [
+          { id: "userChrome.rounding.square_tab", value: false },
+          { id: "userChrome.rounding.square_button", value: false },
+          { id: "userChrome.rounding.square_panel", value: false },
+          { id: "userChrome.rounding.square_panelitem", value: false },
+          { id: "userChrome.rounding.square_menupopup", value: false },
+          { id: "userChrome.rounding.square_menuitem", value: false },
+          { id: "userChrome.rounding.square_field", value: false },
+          { id: "userChrome.rounding.square_checklabel", value: false },
+        ],
+      },
+      {
+        id: "squareCorners",
+        prefs: [
+          { id: "userChrome.rounding.square_tab", value: true },
+          { id: "userChrome.rounding.square_button", value: true },
+          { id: "userChrome.rounding.square_panel", value: true },
+          { id: "userChrome.rounding.square_panelitem", value: true },
+          { id: "userChrome.rounding.square_menupopup", value: true },
+          { id: "userChrome.rounding.square_menuitem", value: true },
+          { id: "userChrome.rounding.square_field", value: true },
+          { id: "userChrome.rounding.square_checklabel", value: true },
+        ],
+      },
+      {
+        id: "autohideAll",
+        prefs: [
+          { id: "userChrome.autohide.tab", value: true },
+          { id: "userChrome.autohide.tab.blur", value: true },
+          { id: "userChrome.autohide.tabbar", value: true },
+          { id: "userChrome.autohide.back_button", value: true },
+          { id: "userChrome.autohide.forward_button", value: true },
+          { id: "userChrome.autohide.page_action", value: true },
+          { id: "userChrome.autohide.bookmarkbar", value: true },
+          { id: "userChrome.autohide.sidebar", value: true },
+        ],
+      },
+      {
+        id: "autohideNone",
+        prefs: [
+          { id: "userChrome.autohide.tab", value: false },
+          { id: "userChrome.autohide.tab.blur", value: false },
+          { id: "userChrome.autohide.tabbar", value: false },
+          { id: "userChrome.autohide.back_button", value: false },
+          { id: "userChrome.autohide.forward_button", value: false },
+          { id: "userChrome.autohide.page_action", value: false },
+          { id: "userChrome.autohide.bookmarkbar", value: false },
+          { id: "userChrome.autohide.sidebar", value: false },
+        ],
+      },
+      {
+        id: "centerAll",
+        prefs: [
+          { id: "userChrome.centered.tab", value: true },
+          { id: "userChrome.centered.tab.label", value: true },
+          { id: "userChrome.centered.urlbar", value: true },
+          { id: "userChrome.centered.bookmarkbar", value: true },
+        ],
+      },
+      {
+        id: "centerNone",
+        prefs: [
+          { id: "userChrome.centered.tab", value: false },
+          { id: "userChrome.centered.tab.label", value: false },
+          { id: "userChrome.centered.urlbar", value: false },
+          { id: "userChrome.centered.bookmarkbar", value: false },
+        ],
+      },
+      {
+        id: "reducePadding",
+        prefs: [
+          { id: "userChrome.padding.drag_space", value: false },
+          { id: "userChrome.padding.urlView_expanding", value: false },
+          { id: "userChrome.padding.menu_compact", value: false },
+          { id: "userChrome.padding.bookmark_menu.compact", value: false },
+          { id: "userChrome.padding.panel_header", value: false },
+        ],
+      },
+      {
+        id: "increasePadding",
+        prefs: [
+          { id: "userChrome.padding.drag_space", value: true },
+          { id: "userChrome.padding.urlView_expanding", value: true },
+          { id: "userChrome.padding.menu_compact", value: true },
+          { id: "userChrome.padding.bookmark_menu.compact", value: true },
+          { id: "userChrome.padding.panel_header", value: true },
+        ],
+      },
     ];
   },
 
@@ -85,17 +181,38 @@ var gThemePane = {
     window.Preferences.addAll(this.preferences);
     const userChromeEnabled = PrefUtils.get(this.WATERFOX_THEME_PREF);
 
+    // Save user prefs at time of page load
+
+    // Init presets
+    for (let preset of this.presets) {
+      let button = document.getElementById(preset.id);
+      if (button) {
+        button.addEventListener("click", () => {
+          for (let pref of preset.prefs) {
+            PrefUtils.set(pref.id, pref.value);
+          }
+          this.refreshTheme();
+        });
+      }
+    }
+
+    // Init default button
+    let defaultButton = document.getElementById("waterfoxDefaults");
+    if (defaultButton) {
+      defaultButton.addEventListener("click", this);
+    }
+
     // Init refresh button
     let refreshButton = document.getElementById("refreshWaterfoxCustomTheme");
     if (refreshButton) {
-      refreshButton.addEventListener("click", e => {
-        this.refreshTheme();
-        e.preventDefault;
-      });
-      refreshButton.hidden = !userChromeEnabled;
-      PrefUtils.addObserver(this.WATERFOX_THEME_PREF, isEnabled => {
-        refreshButton.hidden = !isEnabled;
-      });
+      refreshButton.addEventListener("click", this);
+    }
+
+    // Init popups
+    let popups = document.getElementsByClassName("popup-container");
+    for (let popup of popups) {
+      popup.addEventListener("mouseover", this);
+      popup.addEventListener("mouseout", this);
     }
 
     // Init theme customizations
@@ -103,10 +220,39 @@ var gThemePane = {
       "waterfoxUserChromeCustomizations"
     );
     if (waterfoxCustomizations) {
-      refreshButton.hidden = !userChromeEnabled;
+      let presetBox = document.getElementById("waterfoxUserChromePresets");
+      presetBox.hidden = !userChromeEnabled;
+      let themeGroup = document.getElementById(
+        "waterfoxUserChromeCustomizations"
+      );
+      themeGroup.hidden = !userChromeEnabled;
+
       PrefUtils.addObserver(this.WATERFOX_THEME_PREF, isEnabled => {
-        refreshButton.hidden = !isEnabled;
+        presetBox.hidden = !isEnabled;
+        themeGroup.hidden = !isEnabled;
       });
+    }
+  },
+
+  // nsIDOMEventListener
+  handleEvent(event) {
+    switch (event.type) {
+      case "mouseover":
+      case "mouseout":
+        event.target.nextElementSibling.classList.toggle("show");
+        break;
+      case "click":
+        switch (event.target.id) {
+          case "refreshWaterfoxCustomTheme":
+            this.refreshTheme();
+            break;
+          case "waterfoxDefaults":
+            this.preferences.map(pref => {
+              Services.prefs.clearUserPref(pref.id);
+            });
+            this.refreshTheme();
+            break;
+        }
     }
   },
 
