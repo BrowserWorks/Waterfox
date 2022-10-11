@@ -262,7 +262,8 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
       migrate: aCallback => {
         MigrationUtils.migrateFirefoxStyleBookmarks(
           aCallback,
-          sourceProfileDir
+          sourceProfileDir,
+          currentProfileDir
         );
       },
     };
