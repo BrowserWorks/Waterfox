@@ -6,6 +6,8 @@ var EXPORTED_SYMBOLS = ["PrivateBrowsingUtils"];
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
+const { PrefUtils } = ChromeUtils.import("resource:///modules/PrefUtils.jsm");
+
 const kAutoStartPref = "browser.privatebrowsing.autostart";
 
 // This will be set to true when the PB mode is autostarted from the command
@@ -33,7 +35,10 @@ var PrivateBrowsingUtils = {
 
   // This should be used only in frame scripts.
   isContentWindowPrivate: function pbu_isWindowPrivate(aWindow) {
-    return this.privacyContextFromWindow(aWindow).usePrivateBrowsing;
+    // Waterfox: Essential to prevent form data from being saved.
+    return this.privacyContextFromWindow(aWindow).usePrivateBrowsing
+      ? true
+      : PrefUtils.get("browser.tabs.selectedTabPrivate", false);
   },
 
   isBrowserPrivate(aBrowser) {
