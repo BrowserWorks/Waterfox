@@ -55,7 +55,6 @@ var gThemePane = {
 
       // Bookmarks Bar
       { id: "userChrome.autohide.bookmarkbar", type: "bool" },
-      { id: "userChrome.centered.bookmarkbar", type: "bool" },
       { id: "userChrome.hidden.bookmarkbar_icon", type: "bool" },
       { id: "userChrome.hidden.bookmarkbar_label", type: "bool" },
 
@@ -167,7 +166,6 @@ var gThemePane = {
           { id: "userChrome.centered.tab", value: true },
           { id: "userChrome.centered.tab.label", value: true },
           { id: "userChrome.centered.urlbar", value: true },
-          { id: "userChrome.centered.bookmarkbar", value: true },
         ],
       },
       {
@@ -176,7 +174,6 @@ var gThemePane = {
           { id: "userChrome.centered.tab", value: false },
           { id: "userChrome.centered.tab.label", value: false },
           { id: "userChrome.centered.urlbar", value: false },
-          { id: "userChrome.centered.bookmarkbar", value: false },
         ],
       },
       {
