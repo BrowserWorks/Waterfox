@@ -165,6 +165,7 @@ pref("trailhead.firstrun.branches", "", locked);
 pref("xpinstall.signatures.required", false);
 
 // ** Theme Related Options ****************************************************
+pref("userChrome.compatibility.accent_color", true, locked); // ESR102 Compatibility Options
 // == Theme Distribution Settings ==============================================
 pref("userChrome.theme.enable",                   true); // Original, Photon
 pref("userChrome.tab.connect_to_window",          true); // Original, Photon
