@@ -301,6 +301,8 @@
                     </div>
                 </hbox>
 
+                <!-- MacOS uses native context menus, so we cannot modify them with userChrome. Moz listed allowing this as a WONTFIX. -->
+#ifndef XP_MACOSX
                 <hbox>
                     <checkbox id="squareMenuPopup" preference="userChrome.rounding.square_menupopup"
                         data-l10n-id="square-menu-popup" />
@@ -314,6 +316,7 @@
 
                 <checkbox id="squareMenuItem" preference="userChrome.rounding.square_menuitem"
                     data-l10n-id="square-menu-item" />
+#endif
 
                 <hbox>
                     <vbox>
