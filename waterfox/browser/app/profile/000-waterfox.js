@@ -165,6 +165,7 @@ pref("trailhead.firstrun.branches", "", locked);
 pref("xpinstall.signatures.required", false);
 
 // ** Theme Related Options ****************************************************
+pref("browser.theme.enableWaterfoxCustomizations", 1);
 // == Theme Distribution Settings ==============================================
 pref("userChrome.theme.enable",                   true); // Original, Photon
 pref("userChrome.tab.connect_to_window",          true); // Original, Photon
