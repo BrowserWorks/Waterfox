@@ -165,7 +165,7 @@ pref("trailhead.firstrun.branches", "", locked);
 pref("xpinstall.signatures.required", false);
 
 // ** Theme Related Options ****************************************************
-pref("userChrome.compatibility.accent_color", true, locked); // ESR102 Compatibility Options
+pref("browser.theme.enableWaterfoxCustomizations", 1);
 // == Theme Distribution Settings ==============================================
 pref("userChrome.theme.enable",                   true); // Original, Photon
 pref("userChrome.tab.connect_to_window",          true); // Original, Photon
@@ -196,6 +196,7 @@ pref("userChrome.rounding.square_tab",            true);
 
 // == Theme Default Settings ===================================================
 // -- User Chrome --------------------------------------------------------------
+pref("userChrome.compatibility.accent_color", true, locked); // ESR102 Compatibility Options
 pref("userChrome.compatibility.theme",       true);
 pref("userChrome.compatibility.os",          true);
 

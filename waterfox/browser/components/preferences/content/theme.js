@@ -15,14 +15,21 @@ XPCOMUtils.defineLazyServiceGetter(
 );
 
 var gThemePane = {
-  WATERFOX_THEME_PREF: "userChrome.theme.enable",
+  WATERFOX_THEME_PREF: "browser.theme.enableWaterfoxCustomizations",
+  WATERFOX_CUSTOMIZATIONS_PREF: "browser.theme.enableWaterfoxCustomizations",
+  WATERFOX_DEFAULT_THEMES: [
+    "default-theme@mozilla.org",
+    "firefox-compact-light@mozilla.org",
+    "firefox-compact-dark@mozilla.org",
+    "firefox-alpenglow@mozilla.org",
+  ],
 
   _prefObservers: [],
 
   get preferences() {
     return [
       // Waterfox Customizations
-      { id: "userChrome.theme.enable", type: "bool" },
+      { id: "browser.theme.enableWaterfoxCustomizations", type: "int" },
 
       // Tab Bar
       { id: "userChrome.autohide.tab", type: "bool" },
@@ -222,16 +229,16 @@ var gThemePane = {
     );
     if (waterfoxCustomizations) {
       let presetBox = document.getElementById("waterfoxUserChromePresets");
-      presetBox.hidden = !userChromeEnabled;
+      presetBox.hidden = userChromeEnabled === 2;
       let themeGroup = document.getElementById(
         "waterfoxUserChromeCustomizations"
       );
-      themeGroup.hidden = !userChromeEnabled;
+      themeGroup.hidden = userChromeEnabled === 2;
 
       this._prefObservers.push(
         PrefUtils.addObserver(this.WATERFOX_THEME_PREF, isEnabled => {
-          presetBox.hidden = !isEnabled;
-          themeGroup.hidden = !isEnabled;
+          presetBox.hidden = isEnabled === 2;
+          themeGroup.hidden = isEnabled === 2;
         })
       );
     }
@@ -270,14 +277,23 @@ var gThemePane = {
     }
   },
 
-  refreshTheme() {
-    const userChromeSheet = "chrome://browser/skin/userChrome.css";
-    const userContentSheet = "chrome://browser/skin/userContent.css";
+  async refreshTheme() {
+    // Only refresh theme if Waterfox customizations should be applied
+    if (
+      PrefUtils.get(this.WATERFOX_CUSTOMIZATIONS_PREF, 0) === 0 ||
+      (PrefUtils.get(this.WATERFOX_CUSTOMIZATIONS_PREF, 0) === 1 &&
+        this.WATERFOX_DEFAULT_THEMES.includes(
+          PrefUtils.get("extensions.activeThemeID", "")
+        ))
+    ) {
+      const userChromeSheet = "chrome://browser/skin/userChrome.css";
+      const userContentSheet = "chrome://browser/skin/userContent.css";
 
-    this.unregisterStylesheet(userChromeSheet);
-    this.unregisterStylesheet(userContentSheet);
-    this.registerStylesheet(userChromeSheet);
-    this.registerStylesheet(userContentSheet);
+      this.unregisterStylesheet(userChromeSheet);
+      this.unregisterStylesheet(userContentSheet);
+      this.registerStylesheet(userChromeSheet);
+      this.registerStylesheet(userContentSheet);
+    }
   },
 
   registerStylesheet(uri) {
