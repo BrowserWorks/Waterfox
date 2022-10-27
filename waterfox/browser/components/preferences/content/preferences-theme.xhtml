@@ -278,7 +278,7 @@
                 </hbox>
 
                 <!-- MacOS uses native context menus, so we cannot modify them with userChrome. Moz listed allowing this as a WONTFIX. -->
-                #ifndef XP_MACOSX
+#ifndef XP_MACOSX
                 <hbox>
                     <checkbox id="squareMenuPopup" preference="userChrome.rounding.square_menupopup"
                         data-l10n-id="square-menu-popup" />
@@ -292,7 +292,7 @@
 
                 <checkbox id="squareMenuItem" preference="userChrome.rounding.square_menuitem"
                     data-l10n-id="square-menu-item" />
-                #endif
+#endif
 
                 <hbox>
                     <vbox>
@@ -370,7 +370,7 @@
                 <checkbox id="hideAllIcons" preference="userChrome.icon.disabled" data-l10n-id="hide-all-icons" />
                 <checkbox id="hideTabIcons" preference="userChrome.hidden.tab_icon" data-l10n-id="hide-tab-icons" />
                 <!-- <checkbox id="showMenuIcons" preference="userChrome.icon.menu.full" data-l10n-id="show-menu-icons" /> This does not do what one would expect, i.e. show/remove all icons -->
-                #ifdef XP_MACOSX
+#ifdef XP_MACOSX
                 <hbox>
                     <checkbox id="showMacMenuIcons" preference="userChrome.icon.global_menu.mac"
                         data-l10n-id="show-mac-menu-icons" />
@@ -380,7 +380,7 @@
                         <img id="showMacMenuIconsImage" class="info-popup" />
                     </div>
                 </hbox>
-                #endif
+#endif
 
             </vbox>
             <vbox id="waterfoxUserChromePresets">
