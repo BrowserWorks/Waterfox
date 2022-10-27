@@ -103,15 +103,25 @@ const BrowserUtils = {
   },
 
   registerStylesheet(uri) {
-    let url = Services.io.newURI(uri);
-    let type = styleSheetService.USER_SHEET;
-    styleSheetService.loadAndRegisterSheet(url, type);
+    if (!this.sheetRegistered(uri)) {
+      let url = Services.io.newURI(uri);
+      let type = styleSheetService.USER_SHEET;
+      styleSheetService.loadAndRegisterSheet(url, type);
+    }
   },
 
   unregisterStylesheet(uri) {
+    if (this.sheetRegistered(uri)) {
+      let url = Services.io.newURI(uri);
+      let type = styleSheetService.USER_SHEET;
+      styleSheetService.unregisterSheet(url, type);
+    }
+  },
+
+  sheetRegistered(uri) {
     let url = Services.io.newURI(uri);
     let type = styleSheetService.USER_SHEET;
-    styleSheetService.unregisterSheet(url, type);
+    return styleSheetService.sheetRegistered(url, type);
   },
 
   setStyle(aStyleSheet) {
