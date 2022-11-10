@@ -123,22 +123,31 @@ category-theme =
 preset-title = Presets
 waterfox-defaults =
     .label = Waterfox Defaults
-smooth-corners =
+rounded-corners =
     .label = Rounded Corners
-square-corners =
-    .label = Sharp Corners
+    .label =
+        { $isRounded ->
+            [true] Toggle Square Corners
+            *[false] Toggle Smooth Corners
+        }
 autohide-all =
-    .label = Autohide All
-autohide-none =
-    .label = Autohide None
+    .label =
+        { $isAutohide ->
+            [true] Toggle Autohide Off
+            *[false] Toggle Autohide On
+        }
 center-all =
-    .label = Center Text
-center-none =
-    .label = Left Align Text
+    .label =
+        { $isCentered ->
+            [true] Toggle Centered Off
+            *[false] Toggle Centered On
+        }
 reduce-padding =
-    .label = Compact
-increase-padding =
-    .label = Spacious
+    .label =
+        { $isPadded ->
+            [true] Toggle Compact Off
+            *[false] Toggle Compact On
+        }
 enable-waterfox-theme-0 =
     .label = Enable Waterfox theme customisations on all themes
 enable-waterfox-theme-1 =
