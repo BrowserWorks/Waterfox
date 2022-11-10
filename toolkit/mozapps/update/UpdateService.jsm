@@ -2502,7 +2502,7 @@ UpdateService.prototype = {
         // This pref was not cleared out of profiles after it stopped being used
         // (Bug 1420514), so clear it out on the next update to avoid confusion
         // regarding its use.
-        Services.prefs.clearUserPref("app.update.enabled");
+        // Services.prefs.clearUserPref("app.update.enabled");
         Services.prefs.clearUserPref("app.update.BITS.inTrialGroup");
 
         // Background tasks do not notify any delayed startup notifications.
