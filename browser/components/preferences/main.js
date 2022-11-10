@@ -169,7 +169,6 @@ Preferences.addAll([
   // WATERFOX
   // Enable auto update checking
   { id: "app.update.enabled", type: "bool" },
-
 ]);
 
 if (AppConstants.HAVE_SHELL_SERVICE) {
@@ -1886,11 +1885,19 @@ var gMainPane = {
       let radiogroup = document.getElementById("updateRadioGroup");
 
       radiogroup.disabled = true;
-      let enabled = await UpdateUtils.getAppUpdateAutoEnabled();
+      let autoPref = await UpdateUtils.getAppUpdateAutoEnabled();
       // WATERFOX
       // If user sets app.update.enabled to false, set value to disabled, else use enabled
-      let manualUpdates = Services.prefs.getBoolPref(PREF_UPDATE_ENABLED, true);
-      radiogroup.value = !manualUpdates ? "disabled" : enabled;
+      var enabledPref = Preferences.get("app.update.enabled");
+
+      if (!enabledPref.value) {
+        // Don't care for autoPref.value in this case.
+        radiogroup.value = "disabled"; // 3. Never check for updates.
+      } else if (autoPref.value) {
+        radiogroup.value = "true"; //1. Automatically install updates
+      } else {
+        radiogroup.value = "false"; // 2. Check, but let me choose
+      }
       radiogroup.disabled = false;
 
       this.maybeDisableBackgroundUpdateControls();
@@ -1913,14 +1920,15 @@ var gMainPane = {
       );
       radiogroup.disabled = true;
       try {
-        await UpdateUtils.setAppUpdateAutoEnabled(updateAutoValue);
-        await _disableTimeOverPromise;
-        // WATERFOX
-        // Ensure enabled pref is updated based on radiogroup value
+        // We need to set this pref first so that the auto pref observer
+        // has access to the correct enabled pref value.
         Services.prefs.setBoolPref(
           PREF_UPDATE_ENABLED,
           radiogroup.value != "disabled"
         );
+        await UpdateUtils.setAppUpdateAutoEnabled(updateAutoValue);
+        await _disableTimeOverPromise;
+
         radiogroup.disabled = false;
       } catch (error) {
         Cu.reportError(error);
@@ -2131,16 +2139,14 @@ var gMainPane = {
         throw new Error("Invalid preference value for app.update.auto");
       }
       // WATERFOX
-      // Going from Auto to Disable needs to be correctly reflected here
-      // At this point app.update.enabled has not yet been set, so we
-      // want to set disabled if it is going from true->false and is
-      // currently true
       let manualUpdates = Services.prefs.getBoolPref(
         "app.update.enabled",
         true
       );
+      // Only if enabledPref and autoPref are false should we select
+      // disabled, otherwise we just use the value of autoPref.
       document.getElementById("updateRadioGroup").value =
-        manualUpdates && !(aData === "true") ? "disabled" : aData;
+        !manualUpdates && !(aData === "true") ? "disabled" : aData;
       this.maybeDisableBackgroundUpdateControls();
     } else if (aTopic == BACKGROUND_UPDATE_CHANGED_TOPIC) {
       if (!AppConstants.MOZ_UPDATER || !AppConstants.MOZ_UPDATE_AGENT) {
