@@ -131,7 +131,7 @@ jobs:
     needs: [soft-release]
     runs-on: windows-latest # action can only be run on windows
     steps:
-      - uses: vedantmgoyal2009/winget-releaser@v1
+      - uses: vedantmgoyal2009/winget-releaser@v2
         with:
           identifier: Waterfox.Waterfox
           version: ${{ github.event.inputs.version }}
