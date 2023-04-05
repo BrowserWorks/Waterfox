@@ -93,6 +93,9 @@ mozbuild = { path = "build/rust/mozbuild" }
 # Patch itoa 0.4 to 1.0.
 itoa = { path = "build/rust/itoa" }
 
+# Patch ntapi 0.3 to 0.4
+ntapi = { path = "build/rust/ntapi" }
+
 # Patch autocfg to hide rustc output. Workaround for https://github.com/cuviper/autocfg/issues/30
 autocfg = { path = "third_party/rust/autocfg" }
 
