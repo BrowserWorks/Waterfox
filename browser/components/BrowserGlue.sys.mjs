@@ -957,7 +957,7 @@ BrowserGlue.prototype = {
         const { BootstrapLoader } = ChromeUtils.import(
           "resource:///modules/BootstrapLoader.jsm"
         );
-        AddonManager.addExternalExtensionLoader(BootstrapLoader);
+        lazy.AddonManager.addExternalExtensionLoader(BootstrapLoader);
       break;
       case "notifications-open-settings":
         this._openPreferences("privacy-permissions");
@@ -1195,7 +1195,7 @@ BrowserGlue.prototype = {
       JawsScreenReaderVersionCheck.init();
     }
 
-    WaterfoxGlue.init();
+    lazy.WaterfoxGlue.init();
   },
 
   // cleanup (called on application shutdown)
