@@ -160,6 +160,10 @@
   -moz-default-appearance: toolbox;
 }
 
+#browser-bottombox:not(:-moz-lwtheme) {
+  background-color: -moz-dialog;
+}
+
 /* Titlebar */
 
 :root[tabsintitlebar][sizemode="normal"] #titlebar {
