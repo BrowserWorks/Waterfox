@@ -129,6 +129,9 @@ packed_simd = { package = "packed_simd_2", git = "https://github.com/hsivonen/pa
 midir = { git = "https://github.com/mozilla/midir.git", rev = "e1b4dcb767f9e69afe95a860374aaa9635d81e3d" }
 minidump_writer_linux = { git = "https://github.com/rust-minidump/minidump-writer.git", rev = "75ada456c92a429704691a85e1cb42fef8cafc0d" }
 
+# Manually added patch for rust 1.70.0
+mp4parse = { git = "https://github.com/mozilla/mp4parse-rust", rev = "3bfc47d9a571d0842676043ba60716318e946c06" }
+
 # Patch mio 0.6 to use winapi 0.3 and miow 0.3, getting rid of winapi 0.2.
 # There is not going to be new version of mio 0.6, mio now being >= 0.7.11.
 [patch.crates-io.mio]
