@@ -148,7 +148,7 @@ const BASE_MESSAGES = () => [
             },
             progress_bar: "true",
             background:
-              "url('chrome://activity-stream/content/data/content/assets/mr-pintaskbar.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
+              "url('chrome://onboarding/content/assets/loving-doodle.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
             logo: {},
             title: {
               string_id: "mr2022-onboarding-existing-pin-header",
@@ -209,7 +209,7 @@ const BASE_MESSAGES = () => [
             },
             progress_bar: "true",
             background:
-              "url('chrome://activity-stream/content/data/content/assets/mr-settodefault.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
+              "url('chrome://onboarding/content/assets/loving-doodle.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
             logo: {},
             title: {
               string_id: "mr2022-onboarding-set-default-title",
@@ -306,7 +306,7 @@ const BASE_MESSAGES = () => [
               action: {
                 type: "OPEN_URL",
                 data: {
-                  args: "https://www.mozilla.org/firefox/mobile/get-app/?utm_medium=firefox-desktop&utm_source=onboarding-modal&utm_campaign=mr2022&utm_content=existing-global",
+                  args: "https://www.waterfox.net/download/",
                   where: "tab",
                 },
               },
@@ -433,7 +433,7 @@ const BASE_MESSAGES = () => [
               string_id: "mr2022-onboarding-gratitude-image-alt",
             },
             background:
-              "url('chrome://activity-stream/content/data/content/assets/mr-gratitude.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
+              "url('chrome://onboarding/content/assets/plant-doodle.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
             logo: {},
             title: {
               string_id: "mr2022-onboarding-gratitude-title",
@@ -1266,8 +1266,13 @@ const OnboardingMessageProvider = {
     if (lazy.usesFirefoxSync && lazy.mobileDevices > 0) {
       removeScreens(screen => screen.id === "UPGRADE_MOBILE_DOWNLOAD");
     } else {
-      prepareMobileDownload();
+      removeScreens(screen => screen.id === "UPGRADE_MOBILE_DOWNLOAD");
     }
+
+    // Remove screens we don't want to show
+    removeScreens(screen => screen.id === "PB_NEWTAB_FOCUS_PROMO");
+    removeScreens(screen => screen.id === "PB_NEWTAB_KLAR_PROMO");
+    removeScreens(screen => screen.id === "PB_NEWTAB_KLAR_PROMO_DE");
 
     return message;
   },
