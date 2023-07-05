@@ -34,7 +34,7 @@ const MR_ABOUT_WELCOME_DEFAULT = {
     true
   ),
   backdrop:
-    "var(--mr-welcome-background-color) var(--mr-welcome-background-gradient)",
+    "url('chrome://branding/content/background.svg')",
   screens: [
     {
       id: "AW_WELCOME_BACK",
@@ -46,7 +46,7 @@ const MR_ABOUT_WELCOME_DEFAULT = {
           string_id: "onboarding-device-migration-image-alt",
         },
         background:
-          "url('chrome://activity-stream/content/data/content/assets/device-migration.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
+          "url('c') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
         progress_bar: true,
         logo: {},
         title: {
@@ -95,7 +95,7 @@ const MR_ABOUT_WELCOME_DEFAULT = {
           string_id: "mr2022-onboarding-default-image-alt",
         },
         background:
-          "url('chrome://activity-stream/content/data/content/assets/mr-settodefault.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
+          "url('chrome://onboarding/content/assets/loving-doodle.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
         progress_bar: true,
         logo: {},
         title: {
@@ -179,7 +179,7 @@ const MR_ABOUT_WELCOME_DEFAULT = {
           string_id: "mr2022-onboarding-pin-image-alt",
         },
         background:
-          "url('chrome://activity-stream/content/data/content/assets/mr-pintaskbar.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
+          "url('chrome://onboarding/content/assets/loving-doodle.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
         progress_bar: true,
         logo: {},
         title: {
@@ -271,7 +271,7 @@ const MR_ABOUT_WELCOME_DEFAULT = {
           string_id: "mr2022-onboarding-default-image-alt",
         },
         background:
-          "url('chrome://activity-stream/content/data/content/assets/mr-settodefault.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
+          "url('chrome://onboarding/content/assets/loving-doodle.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
         progress_bar: true,
         logo: {},
         title: {
@@ -311,7 +311,7 @@ const MR_ABOUT_WELCOME_DEFAULT = {
           string_id: "mr2022-onboarding-import-image-alt",
         },
         background:
-          "url('chrome://activity-stream/content/data/content/assets/mr-import.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
+          "url('chrome://onboarding/content/assets/roller-skating-doodle.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
         progress_bar: true,
         logo: {},
         title: {
@@ -354,7 +354,7 @@ const MR_ABOUT_WELCOME_DEFAULT = {
           string_id: "mr2022-onboarding-import-image-alt",
         },
         background:
-          "url('chrome://activity-stream/content/data/content/assets/mr-import.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
+          "url('chrome://onboarding/content/assets/roller-skating-doodle.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
         progress_bar: true,
         migrate_start: {
           action: {},
@@ -375,54 +375,54 @@ const MR_ABOUT_WELCOME_DEFAULT = {
         },
       },
     },
-    {
-      id: "AW_MOBILE_DOWNLOAD",
-      // The mobile download screen should only be shown to users who
-      // are either not logged into FxA, or don't have any mobile devices syncing
-      targeting: "!isFxASignedIn || sync.mobileDevices == 0",
-      content: {
-        position: "split",
-        split_narrow_bkg_position: "-160px",
-        image_alt_text: {
-          string_id: "mr2022-onboarding-mobile-download-image-alt",
-        },
-        background:
-          "url('chrome://activity-stream/content/data/content/assets/mr-mobilecrosspromo.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
-        progress_bar: true,
-        logo: {},
-        title: {
-          string_id: "mr2022-onboarding-mobile-download-title",
-        },
-        subtitle: {
-          string_id: "mr2022-onboarding-mobile-download-subtitle",
-        },
-        hero_image: {
-          url: "chrome://activity-stream/content/data/content/assets/mobile-download-qr-new-user.svg",
-        },
-        cta_paragraph: {
-          text: {
-            string_id: "mr2022-onboarding-mobile-download-cta-text",
-            string_name: "download-label",
-          },
-          action: {
-            type: "OPEN_URL",
-            data: {
-              args: "https://www.mozilla.org/firefox/mobile/get-app/?utm_medium=firefox-desktop&utm_source=onboarding-modal&utm_campaign=mr2022&utm_content=new-global",
-              where: "tab",
-            },
-          },
-        },
-        secondary_button: {
-          label: {
-            string_id: "mr2022-onboarding-secondary-skip-button-label",
-          },
-          action: {
-            navigate: true,
-          },
-          has_arrow_icon: true,
-        },
-      },
-    },
+    // {
+    //   id: "AW_MOBILE_DOWNLOAD",
+    //   // The mobile download screen should only be shown to users who
+    //   // are either not logged into FxA, or don't have any mobile devices syncing
+    //   targeting: "!isFxASignedIn || sync.mobileDevices == 0",
+    //   content: {
+    //     position: "split",
+    //     split_narrow_bkg_position: "-160px",
+    //     image_alt_text: {
+    //       string_id: "mr2022-onboarding-mobile-download-image-alt",
+    //     },
+    //     background:
+    //       "url('chrome://activity-stream/content/data/content/assets/mr-mobilecrosspromo.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
+    //     progress_bar: true,
+    //     logo: {},
+    //     title: {
+    //       string_id: "mr2022-onboarding-mobile-download-title",
+    //     },
+    //     subtitle: {
+    //       string_id: "mr2022-onboarding-mobile-download-subtitle",
+    //     },
+    //     hero_image: {
+    //       url: "chrome://activity-stream/content/data/content/assets/mobile-download-qr-new-user.svg",
+    //     },
+    //     cta_paragraph: {
+    //       text: {
+    //         string_id: "mr2022-onboarding-mobile-download-cta-text",
+    //         string_name: "download-label",
+    //       },
+    //       action: {
+    //         type: "OPEN_URL",
+    //         data: {
+    //           args: "https://www.mozilla.org/firefox/mobile/get-app/?utm_medium=firefox-desktop&utm_source=onboarding-modal&utm_campaign=mr2022&utm_content=new-global",
+    //           where: "tab",
+    //         },
+    //       },
+    //     },
+    //     secondary_button: {
+    //       label: {
+    //         string_id: "mr2022-onboarding-secondary-skip-button-label",
+    //       },
+    //       action: {
+    //         navigate: true,
+    //       },
+    //       has_arrow_icon: true,
+    //     },
+    //   },
+    // },
     {
       id: "AW_GRATITUDE",
       content: {
@@ -432,14 +432,14 @@ const MR_ABOUT_WELCOME_DEFAULT = {
           string_id: "mr2022-onboarding-gratitude-image-alt",
         },
         background:
-          "url('chrome://activity-stream/content/data/content/assets/mr-gratitude.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
+          "url('chrome://onboarding/content/assets/plant-doodle.svg') var(--mr-secondary-position) no-repeat var(--mr-screen-background-color)",
         progress_bar: true,
         logo: {},
         title: {
-          string_id: "mr2022-onboarding-gratitude-title",
+          string_id: "onboarding-grassroots-title",
         },
         subtitle: {
-          string_id: "mr2022-onboarding-gratitude-subtitle",
+          string_id: "onboarding-grassroots-subtitle",
         },
         primary_button: {
           label: {

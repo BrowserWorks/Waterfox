@@ -207,7 +207,7 @@ mr2022-onboarding-pin-primary-button-label = { PLATFORM() ->
 # has not set it as their default browser.
 # When translating "zip", please feel free to pick a verb that signifies movement and/or exploration
 # and makes sense in the context of navigating the web.
-mr2022-onboarding-set-default-only-subtitle = Start with a browser backed by a non-profit. We defend your privacy while you zip around the web.
+mr2022-onboarding-set-default-only-subtitle = Start with a browser created by an independent, grassroots company. We defend your privacy while you zip around the web.
 
 ## MR2022 Existing User Pin Firefox Screen Strings
 
@@ -317,7 +317,7 @@ mr2022-onboarding-privacy-segmentation-button-secondary-label = Show detailed in
 ## MR2022 Multistage Gratitude screen strings
 
 mr2022-onboarding-gratitude-title = You’re helping us build a better web
-mr2022-onboarding-gratitude-subtitle = Thank you for using { -brand-short-name }, backed by the Mozilla Foundation. With your support, we’re working to make the internet more open, accessible, and better for everyone.
+mr2022-onboarding-gratitude-subtitle = Thank you for using { -brand-short-name }, create by BrowserWorks. Small, independent and grassroots. We're here making a better web.
 mr2022-onboarding-gratitude-primary-button-label = See what’s new
 mr2022-onboarding-gratitude-secondary-button-label = Start browsing
 
