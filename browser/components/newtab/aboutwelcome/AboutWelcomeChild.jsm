@@ -268,7 +268,7 @@ class AboutWelcomeChild extends JSWindowActorChild {
       ).then(() => {
         const formatting = [];
         const l10n = new Localization(
-          ["branding/brand.ftl", "browser/newtab/onboarding.ftl"],
+          ["branding/brand.ftl", "browser/newtab/onboarding.ftl", "browser/waterfox.ftl"],
           false,
           undefined,
           // Use the system-ish then app then default locale.
