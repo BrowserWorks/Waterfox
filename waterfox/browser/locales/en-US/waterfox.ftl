@@ -252,3 +252,6 @@ media-player-header = Media Player
 ## about:telemetry
 telemetry-page-subtitle = Waterfox does not collect telemetry about your installation - any telemetry modules are disabled when the browser is built. What you do in your browser is only known by you.
 telemetry-privacy-policy = Privacy Policy
+
+onboarding-grassroots-title = Supporting the grassroots
+onboarding-grassroots-subtitle = Thank you for using Waterfox, an independent, grassroots browser. With your support, we’re building a sustainable alternative to the big players out there.
