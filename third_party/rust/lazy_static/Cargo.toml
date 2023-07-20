@@ -20,7 +20,7 @@ documentation = "https://docs.rs/lazy_static"
 readme = "README.md"
 keywords = ["macro", "lazy", "static"]
 categories = ["no-std", "rust-patterns", "memory-management"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/rust-lang-nursery/lazy-static.rs"
 [dependencies.spin]
 version = "0.5.0"

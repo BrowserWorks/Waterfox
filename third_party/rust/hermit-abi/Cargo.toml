@@ -25,7 +25,7 @@ keywords = [
     "libos",
 ]
 categories = ["os"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/hermitcore/rusty-hermit"
 resolver = "1"
 

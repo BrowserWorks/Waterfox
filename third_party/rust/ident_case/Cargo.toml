@@ -17,7 +17,7 @@ authors = ["Ted Driggs <ted.driggs@outlook.com>"]
 description = "Utility for applying case rules to Rust identifiers."
 documentation = "https://docs.rs/ident_case/1.0.1"
 readme = "README.md"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/TedDriggs/ident_case"
 [badges.travis-ci]
 repository = "TedDriggs/ident_case"

@@ -17,7 +17,7 @@ version = "0.2.3"
 authors = ["The rust-url developers"]
 autotests = false
 description = "IDNA (Internationalizing Domain Names in Applications) and Punycode."
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/servo/rust-url/"
 
 [lib]

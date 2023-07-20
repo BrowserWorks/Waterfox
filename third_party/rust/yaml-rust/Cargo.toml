@@ -19,7 +19,7 @@ description = "The missing YAML 1.2 parser for rust"
 homepage = "http://chyh1990.github.io/yaml-rust/"
 documentation = "https://docs.rs/yaml-rust"
 readme = "README.md"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/chyh1990/yaml-rust"
 [dependencies.linked-hash-map]
 version = "0.5.3"

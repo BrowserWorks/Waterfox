@@ -18,7 +18,7 @@ description = "An unsafe marker trait for types like Box and Rc that dereference
 documentation = "https://docs.rs/stable_deref_trait/1.2.0/stable_deref_trait"
 readme = "README.md"
 categories = ["memory-management", "no-std"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/storyyeller/stable_deref_trait"
 
 [features]

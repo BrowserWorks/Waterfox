@@ -22,7 +22,7 @@ keywords = [
     "bitset",
 ]
 categories = ["data-structures"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/Lymia/enumset"
 
 [dependencies.enumset_derive]

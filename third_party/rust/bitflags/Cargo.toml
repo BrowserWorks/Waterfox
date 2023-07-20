@@ -22,7 +22,7 @@ documentation = "https://docs.rs/bitflags"
 readme = "README.md"
 keywords = ["bit", "bitmask", "bitflags", "flags"]
 categories = ["no-std"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/bitflags/bitflags"
 [package.metadata.docs.rs]
 features = ["example_generated"]

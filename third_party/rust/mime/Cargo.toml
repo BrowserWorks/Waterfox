@@ -17,7 +17,7 @@ authors = ["Sean McArthur <sean@seanmonstar.com>"]
 description = "Strongly Typed Mimes"
 documentation = "https://docs.rs/mime"
 keywords = ["mime", "media-extensions", "media-types"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/hyperium/mime"
 
 [dependencies]

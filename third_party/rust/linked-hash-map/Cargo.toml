@@ -25,7 +25,7 @@ homepage = "https://github.com/contain-rs/linked-hash-map"
 documentation = "https://docs.rs/linked-hash-map"
 readme = "README.md"
 keywords = ["data-structures"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/contain-rs/linked-hash-map"
 
 [dependencies.heapsize]

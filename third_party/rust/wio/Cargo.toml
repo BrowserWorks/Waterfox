@@ -19,7 +19,7 @@ description = "Windows IO wrapper"
 readme = "README.md"
 keywords = ["windows", "ffi", "win32", "com"]
 categories = ["api-bindings", "os::windows-apis"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/retep998/wio-rs"
 [dependencies.winapi]
 version = "0.3"

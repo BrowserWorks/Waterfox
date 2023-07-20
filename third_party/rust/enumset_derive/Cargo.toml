@@ -17,7 +17,7 @@ authors = ["Alissa Rao <lymia@lymiahugs.com>"]
 description = "An internal helper crate for enumset. Not public API."
 documentation = "https://lymia.moe/doc/enumset/enumset/"
 readme = "README.md"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/Lymia/enumset"
 
 [lib]

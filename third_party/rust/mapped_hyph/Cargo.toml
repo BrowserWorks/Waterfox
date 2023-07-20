@@ -16,7 +16,7 @@ version = "0.4.3"
 authors = ["Jonathan Kew <jfkthame@gmail.com>"]
 description = "Hyphenation using precompiled memory-mapped tables"
 readme = "README.md"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 
 [[bench]]
 name = "bench"

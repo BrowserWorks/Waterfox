@@ -17,7 +17,7 @@ authors = ["Adam Gashlin <agashlin@mozilla.com>"]
 description = "Windows FILETIME and SYSTEMTIME string and binary serialization"
 keywords = ["windows", "com", "win32"]
 categories = ["api-bindings", "date-and-time", "os::windows-apis"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/agashlin/filetime_win"
 [package.metadata.docs.rs]
 default-target = "x86_64-pc-windows-msvc"

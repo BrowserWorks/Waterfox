@@ -21,7 +21,7 @@ documentation = "https://docs.rs/itertools/"
 readme = "README.md"
 keywords = ["iterator", "data-structure", "zip", "product", "group-by"]
 categories = ["algorithms", "rust-patterns"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/rust-itertools/itertools"
 [package.metadata.release]
 no-dev-version = true

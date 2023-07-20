@@ -24,7 +24,7 @@ categories = [
     "cryptography",
     "no-std",
 ]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/cryptocorrosion/cryptocorrosion"
 
 [dependencies]

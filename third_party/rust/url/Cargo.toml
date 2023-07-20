@@ -19,7 +19,7 @@ documentation = "https://docs.rs/url"
 readme = "README.md"
 keywords = ["url", "parser"]
 categories = ["parser-implementations", "web-programming", "encoding"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/servo/rust-url"
 
 [lib]

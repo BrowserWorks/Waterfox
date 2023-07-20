@@ -18,7 +18,7 @@ description = "A RAII scope guard that will run a given closure when it goes out
 documentation = "https://docs.rs/scopeguard/"
 keywords = ["scope-guard", "defer", "panic", "unwind"]
 categories = ["rust-patterns", "no-std"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/bluss/scopeguard"
 [package.metadata.release]
 no-dev-version = true

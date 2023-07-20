@@ -19,7 +19,7 @@ description = "A library providing a lazily filled Cell struct"
 documentation = "http://indiv0.github.io/lazycell/lazycell/"
 readme = "README.md"
 keywords = ["lazycell", "lazy", "cell", "library"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/indiv0/lazycell"
 [dependencies.clippy]
 version = "0.0"

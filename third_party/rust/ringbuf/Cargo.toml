@@ -20,7 +20,7 @@ documentation = "https://docs.rs/ringbuf"
 readme = "README.md"
 keywords = ["lock-free", "spsc", "ring-buffer", "rb", "fifo"]
 categories = ["concurrency", "data-structures", "no-std"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/nthend/ringbuf.git"
 resolver = "2"
 

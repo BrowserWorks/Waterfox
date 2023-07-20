@@ -19,7 +19,7 @@ description = "CBOR support for serde."
 readme = "README.md"
 keywords = ["serde", "cbor", "serialization", "no_std"]
 categories = ["encoding"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/pyfisch/cbor"
 [dependencies.half]
 version = "1.2.0"

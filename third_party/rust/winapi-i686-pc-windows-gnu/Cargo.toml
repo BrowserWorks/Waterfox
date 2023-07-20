@@ -18,5 +18,5 @@ build = "build.rs"
 include = ["src/*", "lib/*", "Cargo.toml", "build.rs"]
 description = "Import libraries for the i686-pc-windows-gnu target. Please don't use this crate directly, depend on winapi instead."
 keywords = ["windows"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/retep998/winapi-rs"

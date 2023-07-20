@@ -20,7 +20,7 @@ homepage = "https://github.com/yoshuawuyts/miow"
 documentation = "https://docs.rs/miow/0.3/x86_64-pc-windows-msvc/miow/"
 readme = "README.md"
 keywords = ["iocp", "windows", "io", "overlapped"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/yoshuawuyts/miow"
 [package.metadata.docs.rs]
 default-target = "x86_64-pc-windows-msvc"

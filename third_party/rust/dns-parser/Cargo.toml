@@ -20,7 +20,7 @@ documentation = "https://docs.rs/dns-parser"
 readme = "README.md"
 keywords = ["dns", "domain", "name", "parser"]
 categories = ["parser-implementations"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 [dependencies.byteorder]
 version = "1"
 

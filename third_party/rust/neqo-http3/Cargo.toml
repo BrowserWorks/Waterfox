@@ -15,7 +15,7 @@ rust-version = "1.57.0"
 name = "neqo-http3"
 version = "0.6.4"
 authors = ["Dragana Damjanovic <dragana.damjano@gmail.com>"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 enumset = "1.0.8"

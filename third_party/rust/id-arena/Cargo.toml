@@ -18,7 +18,7 @@ description = "A simple, id-based arena."
 documentation = "https://docs.rs/id-arena"
 readme = "README.md"
 categories = ["memory-management", "rust-patterns", "no-std"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/fitzgen/id-arena"
 [package.metadata.docs.rs]
 features = ["rayon"]

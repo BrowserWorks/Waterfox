@@ -32,7 +32,7 @@ keywords = [
     "width",
     "unicode",
 ]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/unicode-rs/unicode-width"
 
 [dependencies.compiler_builtins]

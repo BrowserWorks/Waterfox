@@ -19,5 +19,5 @@ homepage = "http://github.com/tailhook/quick-error"
 documentation = "http://docs.rs/quick-error"
 keywords = ["macro", "error", "type", "enum"]
 categories = ["rust-patterns"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "http://github.com/tailhook/quick-error"

@@ -21,7 +21,7 @@ documentation = "https://docs.rs/unicase"
 readme = "README.md"
 keywords = ["lowercase", "case", "case-insensitive", "case-folding", "no_std"]
 categories = ["internationalization", "text-processing", "no-std"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/seanmonstar/unicase"
 [build-dependencies.version_check]
 version = "0.9"

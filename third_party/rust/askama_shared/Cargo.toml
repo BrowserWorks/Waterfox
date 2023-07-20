@@ -16,7 +16,7 @@ version = "0.12.2"
 description = "Shared code for Askama"
 homepage = "https://github.com/djc/askama"
 readme = "README.md"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/djc/askama"
 [package.metadata.docs.rs]
 features = ["config", "humansize", "num-traits", "json", "yaml", "percent-encoding"]

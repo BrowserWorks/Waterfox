@@ -19,7 +19,7 @@ description = "A library for querying the version of a installed rustc compiler"
 documentation = "https://docs.rs/rustc_version/"
 readme = "README.md"
 keywords = ["version", "rustc"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/Kimundi/rustc-version-rs"
 [dependencies.semver]
 version = "1.0"

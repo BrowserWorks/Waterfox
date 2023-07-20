@@ -17,7 +17,7 @@ authors = ["Adam Gashlin <agashlin@mozilla.com>"]
 description = "Windows error handling, COM, and handles"
 keywords = ["windows", "com", "win32"]
 categories = ["api-bindings", "os::windows-apis"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/agashlin/comedy-rs"
 [package.metadata.docs.rs]
 default-target = "x86_64-pc-windows-msvc"

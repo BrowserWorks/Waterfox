@@ -18,7 +18,7 @@ authors = ["Nicolas Silva <nical@fastmail.com>"]
 description = "Very simple debugging utilities to dump shapes in SVG format."
 documentation = "https://docs.rs/svg_fmt/"
 keywords = ["2d", "graphics", "svg"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/nical/rust_debug"
 
 [dependencies]

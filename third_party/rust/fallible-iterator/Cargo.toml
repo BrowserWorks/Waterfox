@@ -18,7 +18,7 @@ authors = ["Steven Fackler <sfackler@gmail.com>"]
 description = "Fallible iterator traits"
 readme = "README.md"
 categories = ["algorithms", "no-std"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/sfackler/rust-fallible-iterator"
 
 [features]

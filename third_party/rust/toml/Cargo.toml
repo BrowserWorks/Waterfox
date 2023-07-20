@@ -42,7 +42,7 @@ categories = [
     "parsing",
     "config",
 ]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/toml-rs/toml"
 
 [[package.metadata.release.pre-release-replacements]]

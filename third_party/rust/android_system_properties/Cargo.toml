@@ -19,7 +19,7 @@ homepage = "https://github.com/nical/android_system_properties"
 documentation = "https://docs.rs/android_system_properties"
 readme = "README.md"
 keywords = ["android"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/nical/android_system_properties"
 
 [package.metadata.docs.rs]

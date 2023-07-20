@@ -21,7 +21,7 @@ documentation = "https://docs.rs/cc"
 readme = "README.md"
 keywords = ["build-dependencies"]
 categories = ["development-tools::build-utils"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/alexcrichton/cc-rs"
 [dependencies.jobserver]
 version = "0.1.16"

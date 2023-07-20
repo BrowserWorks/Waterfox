@@ -19,7 +19,7 @@ documentation = "https://docs.rs/error-chain"
 readme = "README.md"
 keywords = ["error"]
 categories = ["rust-patterns"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/rust-lang-nursery/error-chain"
 [dependencies.backtrace]
 version = "0.3.3"

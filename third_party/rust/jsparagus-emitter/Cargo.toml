@@ -14,7 +14,7 @@ edition = "2018"
 name = "jsparagus-emitter"
 version = "0.1.0"
 authors = ["khyperia <github@khyperia.com>"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 bumpalo = "3.4.0"

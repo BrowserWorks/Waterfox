@@ -2,7 +2,7 @@
 name = "bits"
 version = "0.2.0"
 authors = ["Adam Gashlin <agashlin@mozilla.com>"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 publish = false
 
 [features]

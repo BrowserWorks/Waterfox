@@ -21,7 +21,7 @@ documentation = "https://docs.rs/winapi/"
 readme = "README.md"
 keywords = ["windows", "ffi", "win32", "com", "directx"]
 categories = ["external-ffi-bindings", "no-std", "os::windows-apis"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/retep998/winapi-rs"
 [package.metadata.docs.rs]
 default-target = "x86_64-pc-windows-msvc"

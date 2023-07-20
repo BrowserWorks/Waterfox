@@ -19,7 +19,7 @@ description = "Rust bindings for EGL"
 documentation = "https://docs.rs/khronos-egl"
 readme = "README.md"
 keywords = ["egl", "gl", "khronos", "opengl"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/timothee-haudebourg/khronos-egl"
 
 [[example]]

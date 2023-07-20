@@ -15,7 +15,7 @@ name = "foreign-types-shared"
 version = "0.1.1"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
 description = "An internal crate used by foreign-types"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/sfackler/foreign-types"
 
 [dependencies]

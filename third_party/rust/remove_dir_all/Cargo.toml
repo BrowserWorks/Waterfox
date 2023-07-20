@@ -19,7 +19,7 @@ description = "A safe, reliable implementation of remove_dir_all for Windows"
 readme = "README.md"
 keywords = ["utility", "filesystem", "remove_dir", "windows"]
 categories = ["filesystem"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/XAMPPRocky/remove_dir_all.git"
 [dev-dependencies.doc-comment]
 version = "0.3"

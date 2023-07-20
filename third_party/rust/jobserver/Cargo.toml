@@ -20,7 +20,7 @@ An implementation of the GNU make jobserver for Rust
 homepage = "https://github.com/alexcrichton/jobserver-rs"
 documentation = "https://docs.rs/jobserver"
 readme = "README.md"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/alexcrichton/jobserver-rs"
 
 [[test]]

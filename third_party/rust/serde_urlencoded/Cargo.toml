@@ -19,7 +19,7 @@ description = "`x-www-form-urlencoded` meets Serde"
 documentation = "https://docs.rs/serde_urlencoded/0.7.1/serde_urlencoded/"
 keywords = ["serde", "serialization", "urlencoded"]
 categories = ["encoding", "web-programming"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/nox/serde_urlencoded"
 
 [lib]
