@@ -24,7 +24,7 @@ export WINEDEBUG=-all
 mk_add_options "export PATH=$EXTRA_PATH$PATH"
 
 if test "$WFX_RELEASE" || test "$WFX_PRE_RELEASE"; then
-    ac_add_options --enable-lto
+    ac_add_options --enable-lto=cross
     ac_add_options --enable-optimize="-O2 -Qvec -w -clang:-ftree-vectorize -clang:-march=core2 -clang:-mtune=haswell"
     ac_add_options --enable-release
     ac_add_options --enable-rust-simd
