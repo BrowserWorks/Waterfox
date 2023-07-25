@@ -1,6 +1,6 @@
 #!/bin/sh
 export CROSS_BUILD=1
-POLLY="-mllvm -polly -mllvm -polly-loopfusion-greedy -mllvm -polly-run-inliner -mllvm -polly-vectorizer=stripmine -mllvm -polly-parallel -mllvm -polly-omp-backend=LLVM -mllvm -polly-scheduling=static"
+POLLY="-mllvm -polly -mllvm -polly-position=before-vectorizer -mllvm -polly-process-unprofitable -mllvm -polly-vectorizer=stripmine -mllvm -polly-parallel -mllvm -polly-omp-backend=LLVM -mllvm -polly-scheduling=static"
 TOOLS=$HOME/win-cross
 WINSYSROOT="$HOME/win-root"
 
