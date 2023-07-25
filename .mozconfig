@@ -72,3 +72,4 @@ fi
 mk_add_options AUTOCLOBBER=1
 mk_add_options MOZ_OBJDIR=./obj-"$(uname -s)"-"$(uname -m)"
 export MOZ_REQUIRE_SIGNING=
+export MOZ_TELEMETRY_REPORTING=
