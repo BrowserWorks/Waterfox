@@ -490,7 +490,7 @@ class nsWSAdmissionManager {
 
     nsCString mAddress;
     nsCString mOriginSuffix;
-    WebSocketChannel* mChannel;
+    RefPtr<WebSocketChannel> mChannel;
   };
 
   void ConnectNext(nsCString& hostName, nsCString& originSuffix) {
