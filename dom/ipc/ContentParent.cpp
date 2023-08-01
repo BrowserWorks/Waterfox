@@ -7316,7 +7316,8 @@ mozilla::ipc::IPCResult ContentParent::RecvHistoryGo(
     uint64_t aHistoryEpoch, bool aRequireUserInteraction, bool aUserActivation,
     HistoryGoResolver&& aResolveRequestedIndex) {
   if (!aContext.IsDiscarded()) {
-    aContext.get_canonical()->HistoryGo(
+    RefPtr<CanonicalBrowsingContext> canonical = aContext.get_canonical();
+    canonical->HistoryGo(
         aOffset, aHistoryEpoch, aRequireUserInteraction, aUserActivation,
         Some(ChildID()), std::move(aResolveRequestedIndex));
   }
@@ -7541,7 +7542,8 @@ mozilla::ipc::IPCResult ContentParent::RecvHistoryReload(
     const MaybeDiscarded<BrowsingContext>& aContext,
     const uint32_t aReloadFlags) {
   if (!aContext.IsDiscarded()) {
-    nsISHistory* shistory = aContext.get_canonical()->GetSessionHistory();
+    nsCOMPtr<nsISHistory> shistory =
+        aContext.get_canonical()->GetSessionHistory();
     if (shistory) {
       shistory->Reload(aReloadFlags);
     }

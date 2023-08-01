@@ -2225,7 +2225,7 @@ bool DocumentLoadListener::DocShellWillDisplayContent(nsresult aStatus) {
 }
 
 bool DocumentLoadListener::MaybeHandleLoadErrorWithURIFixup(nsresult aStatus) {
-  auto* bc = GetDocumentBrowsingContext();
+  RefPtr<CanonicalBrowsingContext> bc = GetDocumentBrowsingContext();
   if (!bc) {
     return false;
   }
