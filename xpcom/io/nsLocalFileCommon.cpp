@@ -129,7 +129,8 @@ const char* const sExecutableExts[] = {
   ".ws",
   ".wsc",
   ".wsf",
-  ".wsh"
+  ".wsh",
+  ".xll"         // MS Excel dynamic link library
     // clang-format on
 };
 
