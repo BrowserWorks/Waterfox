@@ -349,7 +349,7 @@ class WebSocketChannel : public BaseWebSocketChannel,
   // (after mDataStarted), cleared in DoStopSession on IOThread or on
   // MainThread (if mDataStarted == false).
   Mutex mCompressorMutex;
-  UniquePtr<PMCECompression> mPMCECompressor MOZ_GUARDED_BY(mCompressorMutex);
+  UniquePtr<PMCECompression> mPMCECompressor GUARDED_BY(mCompressorMutex);
 
   // Used by EnsureHdrOut, which isn't called anywhere
   uint32_t mDynamicOutputSize;
