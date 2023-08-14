@@ -32,7 +32,7 @@ class ColorPickerParent : public PColorPickerParent {
 
    private:
     ~ColorPickerShownCallback() = default;
-    ColorPickerParent* mColorPickerParent;
+    RefPtr<ColorPickerParent> mColorPickerParent;
   };
 
  private:
