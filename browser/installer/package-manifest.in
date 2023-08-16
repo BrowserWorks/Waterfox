@@ -268,7 +268,11 @@
 @RESPATH@/browser/defaults/settings/blocklists
 @RESPATH@/browser/defaults/settings/main
 @RESPATH@/browser/defaults/settings/security-state
-@RESPATH@/browser/@PREF_DIR@/000-waterfox.js
+@RESPATH@/browser/@PREF_DIR@/00-waterfox.js
+@RESPATH@/browser/@PREF_DIR@/01-theme.js
+@RESPATH@/browser/@PREF_DIR@/02-speed.js
+@RESPATH@/browser/@PREF_DIR@/03-privacy.js
+@RESPATH@/browser/@PREF_DIR@/04-features.js
 
 ; Warning: changing the path to channel-prefs.js can cause bugs (Bug 756325)
 ; Technically this is an app pref file, but we are keeping it in the original
