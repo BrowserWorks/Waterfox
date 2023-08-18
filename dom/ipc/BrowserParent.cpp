@@ -8,6 +8,7 @@
 
 #include "BrowserParent.h"
 #include "mozilla/EventForwards.h"
+#include "mozilla/AlreadyAddRefed.h"
 
 #ifdef ACCESSIBILITY
 #  include "mozilla/a11y/DocAccessibleParent.h"
@@ -1427,14 +1428,9 @@ mozilla::ipc::IPCResult BrowserParent::RecvPDocAccessibleConstructor(
 }
 #endif
 
-PFilePickerParent* BrowserParent::AllocPFilePickerParent(const nsString& aTitle,
-                                                         const int16_t& aMode) {
-  return new FilePickerParent(aTitle, aMode);
-}
-
-bool BrowserParent::DeallocPFilePickerParent(PFilePickerParent* actor) {
-  delete actor;
-  return true;
+already_AddRefed<PFilePickerParent> BrowserParent::AllocPFilePickerParent(
+    const nsString& aTitle, const int16_t& aMode) {
+  return MakeAndAddRef<FilePickerParent>(aTitle, aMode);
 }
 
 IPCResult BrowserParent::RecvIndexedDBPermissionRequest(
@@ -3526,14 +3522,9 @@ BrowserParent::GetAuthPrompt(uint32_t aPromptReason, const nsIID& iid,
   return NS_OK;
 }
 
-PColorPickerParent* BrowserParent::AllocPColorPickerParent(
+already_AddRefed<PColorPickerParent> BrowserParent::AllocPColorPickerParent(
     const nsString& aTitle, const nsString& aInitialColor) {
-  return new ColorPickerParent(aTitle, aInitialColor);
-}
-
-bool BrowserParent::DeallocPColorPickerParent(PColorPickerParent* actor) {
-  delete actor;
-  return true;
+  return MakeAndAddRef<ColorPickerParent>(aTitle, aInitialColor);
 }
 
 already_AddRefed<nsFrameLoader> BrowserParent::GetFrameLoader(

@@ -23,7 +23,11 @@ class FilePickerParent : public PFilePickerParent {
   FilePickerParent(const nsString& aTitle, const int16_t& aMode)
       : mTitle(aTitle), mMode(aMode), mResult(nsIFilePicker::returnOK) {}
 
+ private:
   virtual ~FilePickerParent();
+
+ public:
+  NS_INLINE_DECL_REFCOUNTING(FilePickerParent, final)
 
   void Done(int16_t aResult);
 

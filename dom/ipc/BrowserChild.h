@@ -447,17 +447,7 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
   bool DeallocPDocAccessibleChild(PDocAccessibleChild*);
 #endif
 
-  PColorPickerChild* AllocPColorPickerChild(const nsString& aTitle,
-                                            const nsString& aInitialColor);
-
-  bool DeallocPColorPickerChild(PColorPickerChild* aActor);
-
-  PFilePickerChild* AllocPFilePickerChild(const nsString& aTitle,
-                                          const int16_t& aMode);
-
   RefPtr<VsyncMainChild> GetVsyncChild();
-
-  bool DeallocPFilePickerChild(PFilePickerChild* aActor);
 
   nsIWebNavigation* WebNavigation() const { return mWebNav; }
 

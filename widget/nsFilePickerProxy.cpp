@@ -35,7 +35,6 @@ nsFilePickerProxy::Init(mozIDOMWindowProxy* aParent, const nsAString& aTitle,
 
   mMode = aMode;
 
-  NS_ADDREF_THIS();
   browserChild->SendPFilePickerConstructor(this, nsString(aTitle), aMode);
 
   mIPCActive = true;
