@@ -954,8 +954,8 @@ BrowserGlue.prototype = {
   observe: async function BG_observe(subject, topic, data) {
     switch (topic) {
       case "app-startup":
-        const { BootstrapLoader } = ChromeUtils.import(
-          "resource:///modules/BootstrapLoader.jsm"
+        const { BootstrapLoader } = ChromeUtils.importESModule(
+          "resource:///modules/BootstrapLoader.sys.mjs"
         );
         lazy.AddonManager.addExternalExtensionLoader(BootstrapLoader);
       break;
