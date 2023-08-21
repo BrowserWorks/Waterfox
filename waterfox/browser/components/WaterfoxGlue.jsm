@@ -12,7 +12,9 @@ const { XPCOMUtils } = ChromeUtils.import(
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-XPCOMUtils.defineLazyModuleGetters(this, {
+const lazy = {};
+
+XPCOMUtils.defineLazyModuleGetters(lazy, {
   AddonManager: "resource://gre/modules/AddonManager.jsm",
   AttributionCode: "resource:///modules/AttributionCode.jsm",
   BrowserUtils: "resource:///modules/BrowserUtils.jsm",
@@ -25,8 +27,6 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   TabFeatures: "resource:///modules/TabFeatures.jsm",
   UICustomizations: "resource:///modules/UICustomizations.jsm",
 });
-
-XPCOMUtils.defineLazyGlobalGetters(this, ["fetch"]);
 
 const WATERFOX_CUSTOMIZATIONS_PREF =
   "browser.theme.enableWaterfoxCustomizations";
@@ -52,7 +52,7 @@ const WaterfoxGlue = {
     this._setPrefObservers();
 
     // Load always-on Waterfox custom CSS.
-    BrowserUtils.registerStylesheet(
+    lazy.BrowserUtils.registerStylesheet(
       "chrome://browser/skin/waterfox/general.css"
     );
 
@@ -65,7 +65,7 @@ const WaterfoxGlue = {
           this.updateCustomStylesheets({ id: activeThemeId, type: "theme" });
           amInitialized = true;
         } catch (ex) {
-          await new Promise(res => setTimeout(res, 500, {}));
+          await new Promise(res => lazy.setTimeout(res, 500, {}));
         }
       }
     })();
@@ -90,7 +90,7 @@ const WaterfoxGlue = {
   async _setAttributionData() {
     // Kick off async process to set attribution code preference
     try {
-      let attrData = await AttributionCode.getAttrDataAsync();
+      let attrData = await lazy.AttributionCode.getAttrDataAsync();
       if (Object.keys(attrData).length) {
         let attributionStr = "";
         for (const [key, value] of Object.entries(attrData)) {
@@ -172,19 +172,19 @@ const WaterfoxGlue = {
   },
 
   async _setPrefObservers() {
-    this.leptonListener = PrefUtils.addObserver(
+    this.leptonListener = lazy.PrefUtils.addObserver(
       WATERFOX_CUSTOMIZATIONS_PREF,
       async _ => {
         const activeThemeId = await this.getActiveThemeId();
         this.updateCustomStylesheets({ id: activeThemeId, type: "theme" });
       }
     );
-    this.pinnedTabListener = PrefUtils.addObserver(
+    this.pinnedTabListener = lazy.PrefUtils.addObserver(
       "browser.tabs.pinnedIconOnly",
       isEnabled => {
         // Pref being true actually means we need to unload the sheet, so invert.
         const uri = "chrome://browser/content/tabfeatures/pinnedtab.css";
-        BrowserUtils.registerOrUnregisterSheet(uri, !isEnabled);
+        lazy.BrowserUtils.registerOrUnregisterSheet(uri, !isEnabled);
       }
     );
   },
@@ -207,7 +207,7 @@ const WaterfoxGlue = {
         uri = "resource://waterfox/overlays/preferences-other.overlay";
         break;
     }
-    let chromeManifest = new ChromeManifest(async () => {
+    let chromeManifest = new lazy.ChromeManifest(async () => {
       let res = await fetch(uri);
       let text = await res.text();
       if (privateWindow) {
@@ -242,16 +242,16 @@ const WaterfoxGlue = {
           const window = subject.defaultView;
           // Do not load non-private overlays in private window
           if (window.PrivateBrowsingUtils.isWindowPrivate(window)) {
-            Overlays.load(this.privateManifest, window);
+            lazy.Overlays.load(this.privateManifest, window);
           } else {
-            Overlays.load(this.startupManifest, window);
+            lazy.Overlays.load(this.startupManifest, window);
             // Only load in non-private browser windows
-            PrivateTab.init(window);
+            lazy.PrivateTab.init(window);
           }
           // Load in all browser windows (private and normal)
-          TabFeatures.init(window);
-          StatusBar.init(window);
-          UICustomizations.init(window);
+          lazy.TabFeatures.init(window);
+          lazy.StatusBar.init(window);
+          lazy.UICustomizations.init(window);
         }
         break;
       case "main-pane-loaded":
@@ -261,7 +261,7 @@ const WaterfoxGlue = {
           // exists before we attempt to load our overlay. If we are loading directly on privacy
           // this exists before overlaying occurs, so we have no issues. Loading overlays on
           // #general is fine regardless of which pane we refresh/initially load.
-          await Overlays.load(
+          await lazy.Overlays.load(
             await this.getChromeManifest("preferences-general"),
             subject
           );
@@ -270,14 +270,14 @@ const WaterfoxGlue = {
             !subject.document.getElementById("homeContentsGroup")
           ) {
             subject.setTimeout(async () => {
-              await Overlays.load(
+              await lazy.Overlays.load(
                 await this.getChromeManifest("preferences-other"),
                 subject
               );
               subject.privacyInitialized = true;
             }, 500);
           } else {
-            await Overlays.load(
+            await lazy.Overlays.load(
               await this.getChromeManifest("preferences-other"),
               subject
             );
@@ -299,7 +299,7 @@ const WaterfoxGlue = {
   async _beforeUIStartup() {
     this._migrateUI();
 
-    AddonManager.maybeInstallBuiltinAddon(
+    lazy.AddonManager.maybeInstallBuiltinAddon(
       "addonstores@waterfox.net",
       "1.0.0",
       "resource://builtin-addons/addonstores/"
@@ -312,13 +312,13 @@ const WaterfoxGlue = {
       128
     );
 
-    const waterfoxUIVersion = PrefUtils.get(
+    const waterfoxUIVersion = lazy.PrefUtils.get(
       "browser.migration.waterfox_version",
       0
     );
 
     async function enableTheme(id) {
-      const addon = await AddonManager.getAddonByID(id);
+      const addon = await lazy.AddonManager.getAddonByID(id);
       // If we found it, enable it.
       addon?.enable();
     }
@@ -346,18 +346,18 @@ const WaterfoxGlue = {
     }
     if (waterfoxUIVersion < 1) {
       const themeEnablePref = "userChrome.theme.enable";
-      const enabled = PrefUtils.get(themeEnablePref);
-      PrefUtils.set(WATERFOX_CUSTOMIZATIONS_PREF, enabled ? 1 : 2);
+      const enabled = lazy.PrefUtils.get(themeEnablePref);
+      lazy.PrefUtils.set(WATERFOX_CUSTOMIZATIONS_PREF, enabled ? 1 : 2);
     }
 
-    PrefUtils.set("browser.migration.waterfox_version", 1);
+    lazy.PrefUtils.set("browser.migration.waterfox_version", 1);
   },
 
   async _delayedTasks() {
     let tasks = [
       {
         task: () => {
-          AttributionCode.deleteFileAsync();
+          lazy.AttributionCode.deleteFileAsync();
           // Reset prefs
           Services.prefs.clearUserPref(
             "startup.homepage_welcome_url.additional"
@@ -374,12 +374,12 @@ const WaterfoxGlue = {
 
   async getActiveThemeId() {
     // Try to get active theme from the pref
-    const activeThemeID = PrefUtils.get("extensions.activeThemeID", "");
+    const activeThemeID = lazy.PrefUtils.get("extensions.activeThemeID", "");
     if (activeThemeID) {
       return activeThemeID;
     }
     // Otherwise just grab it from AddonManager
-    const themes = await AddonManager.getAddonsByTypes(["theme"]);
+    const themes = await lazy.AddonManager.getAddonsByTypes(["theme"]);
     return themes.find(addon => addon.isActive).id;
   },
 
@@ -389,12 +389,12 @@ const WaterfoxGlue = {
       onEnabled: addon => this.updateCustomStylesheets(addon),
     };
     this._addonManagersListeners.push(listener);
-    AddonManager.addAddonListener(listener);
+    lazy.AddonManager.addAddonListener(listener);
   },
 
   removeAddonListeners() {
     for (let listener of this._addonManagersListeners) {
-      AddonManager.removeAddonListener(listener);
+      lazy.AddonManager.removeAddonListener(listener);
     }
   },
 
@@ -404,8 +404,8 @@ const WaterfoxGlue = {
       // If WF theme and WF customisations, then reload stylesheets.
       // If no customizations, unregister sheets for every theme enable.
       if (
-        PrefUtils.get(WATERFOX_CUSTOMIZATIONS_PREF, 0) === 0 ||
-        (PrefUtils.get(WATERFOX_CUSTOMIZATIONS_PREF, 0) === 1 &&
+        lazy.PrefUtils.get(WATERFOX_CUSTOMIZATIONS_PREF, 0) === 0 ||
+        (lazy.PrefUtils.get(WATERFOX_CUSTOMIZATIONS_PREF, 0) === 1 &&
           WATERFOX_DEFAULT_THEMES.includes(addon.id))
       ) {
         this.loadWaterfoxStylesheets();
@@ -416,12 +416,12 @@ const WaterfoxGlue = {
   },
 
   loadWaterfoxStylesheets() {
-    BrowserUtils.registerStylesheet(WATERFOX_USERCHROME);
-    BrowserUtils.registerStylesheet(WATERFOX_USERCONTENT);
+    lazy.BrowserUtils.registerStylesheet(WATERFOX_USERCHROME);
+    lazy.BrowserUtils.registerStylesheet(WATERFOX_USERCONTENT);
   },
 
   unloadWaterfoxStylesheets() {
-    BrowserUtils.unregisterStylesheet(WATERFOX_USERCHROME);
-    BrowserUtils.unregisterStylesheet(WATERFOX_USERCONTENT);
+    lazy.BrowserUtils.unregisterStylesheet(WATERFOX_USERCHROME);
+    lazy.BrowserUtils.unregisterStylesheet(WATERFOX_USERCONTENT);
   },
 };
