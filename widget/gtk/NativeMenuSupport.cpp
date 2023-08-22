@@ -7,6 +7,8 @@
 
 #include "MainThreadUtils.h"
 #include "NativeMenuGtk.h"
+#include "nsINativeMenuService.h"
+#include "nsServiceManagerUtils.h"
 
 namespace mozilla::widget {
 
@@ -14,7 +16,14 @@ void NativeMenuSupport::CreateNativeMenuBar(nsIWidget* aParent,
                                             dom::Element* aMenuBarElement) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread(),
                      "Attempting to create native menu bar on wrong thread!");
-  // TODO
+
+  nsCOMPtr<nsINativeMenuService> nms =
+      do_GetService("@mozilla.org/widget/nativemenuservice;1");
+  if (!nms) {
+    return;
+  }
+
+  nms->CreateNativeMenuBar(aParent, aMenuBarElement);
 }
 
 already_AddRefed<NativeMenu> NativeMenuSupport::CreateNativeContextMenu(
