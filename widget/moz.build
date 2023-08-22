@@ -164,6 +164,11 @@ EXPORTS += [
     "PuppetWidget.h",
 ]
 
+if toolkit == "gtk":
+    EXPORTS += [
+        "nsINativeMenuService.h",
+    ]
+
 EXPORTS.mozilla += [
     "BasicEvents.h",
     "ClipboardWriteRequestChild.h",
