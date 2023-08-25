@@ -192,7 +192,7 @@ jobs:
 
           chmod +x ./sign/sign.sh
 
-          ./sign/sign.sh -k "$PWD"/sign/1 -p ${{ secrets.ONE_PEM }} -c "$PWD"/sign/2 -i "$PWD"/obj-${{ env.ARCH }}/dist/waterfox
+          ./sign/sign.sh -k "$PWD"/sign/1 -p ${{ secrets.ONE_PEM }} -c "$PWD"/sign/2 -i "$PWD"/obj-${{ env.ARCH }}/dist/waterfox -t windows
 
           rm -rf ./sign/
 
