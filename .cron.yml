@@ -213,7 +213,6 @@ jobs:
           - mozilla-beta
           - mozilla-release
           - mozilla-esr91
-          - mozilla-esr102
       when:
           - {weekday: 'Monday', hour: 8, minute: 0}
           - {weekday: 'Thursday', hour: 8, minute: 0}
