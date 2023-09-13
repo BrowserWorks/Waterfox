@@ -431,6 +431,7 @@ var CustomizableUIInternal = {
         // This widget no longer exists as of 2023, see Bug 1799009.
         "add-ons-button",
         "sync-button",
+        "unified-extensions-button",
       ];
 
       if (!AppConstants.MOZ_DEV_EDITION) {

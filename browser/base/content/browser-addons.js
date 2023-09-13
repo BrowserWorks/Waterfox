@@ -1238,7 +1238,7 @@ var gUnifiedExtensions = {
   },
 
   getPopupAnchorID(aBrowser, aWindow) {
-    const anchorID = "unified-extensions-button";
+    const anchorID = "tracking-protection-icon-box";
     const attr = anchorID + "popupnotificationanchor";
 
     if (!aBrowser[attr]) {
