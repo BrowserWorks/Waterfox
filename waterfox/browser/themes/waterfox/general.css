@@ -181,3 +181,11 @@
 #preferences-body .main-content {
   overflow-x: hidden !important;
 }
+
+:is(panel, menupopup)[type="arrow"] {
+  background: var(--toolbar-bgcolor) !important;
+  opacity: 0.95;
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+}
