@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -51,7 +51,6 @@ about-processes-socket-process = 网络（{ $pid }）
 about-processes-remote-sandbox-broker-process = 远程沙箱中介（{ $pid }）
 about-processes-fork-server-process = Fork 服务器（{ $pid }）
 about-processes-preallocated-process = 预分配（{ $pid }）
-
 about-processes-utility-process = 工具（{ $pid }）
 
 # Unknown process names
@@ -123,9 +122,16 @@ about-processes-frame-name-one = 子帧：{ $url }
 #   $shortUrl (String) The shared prefix for the subframes in the group.
 about-processes-frame-name-many = 子帧（{ $number }）：{ $shortUrl }
 
-# Utility process actor names
+## Utility process actor names
+
 about-processes-utility-actor-unknown = 未知角色
-about-processes-utility-actor-audio-decoder = 音频解码器
+about-processes-utility-actor-audio-decoder-generic = 通用音频解码器
+about-processes-utility-actor-audio-decoder-applemedia = Apple 媒体音频解码器
+about-processes-utility-actor-audio-decoder-wmf = Windows 媒体框架音频解码器
+about-processes-utility-actor-mf-media-engine = Windows Media Foundation 媒体引擎 CDM
+# "Oracle" refers to an internal Waterfox process and should be kept in English
+about-processes-utility-actor-js-oracle = Oracle
+about-processes-utility-actor-windows-utils = Windows 工具
 
 ## Displaying CPU (percentage and total)
 ## Variables:

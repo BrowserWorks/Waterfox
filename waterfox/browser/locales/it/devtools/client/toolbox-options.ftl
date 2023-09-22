@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -45,6 +45,12 @@ options-collapse-attrs-tooltip =
 options-inspector-draggable-properties-label = Fai clic e trascina per modificare il valore di una dimensione
 options-inspector-draggable-properties-tooltip =
     .title = Fai clic e trascina per modificare il valore di una dimensione per le regole in Analisi pagina.
+
+# The label for the checkbox option to enable simplified highlighting on page elements
+# within the inspector for users who enabled prefers-reduced-motion = reduce
+options-inspector-simplified-highlighters-label = Utilizza evidenziatori semplificati con prefers-reduced-motion
+options-inspector-simplified-highlighters-tooltip =
+    .title = Attiva evidenziatori semplificati quando prefers-reduced-motion è attivo. Verranno disegnate linee al posto di rettangoli con sfondo colorato intorno agli elementi selezionati per evitare lampeggiamenti.
 
 ## "Default Color Unit" options for the Inspector
 
@@ -123,6 +129,11 @@ options-enable-remote-label = Attiva debug remoto
 options-enable-remote-tooltip2 =
     .title = Attivando questa opzione è possibile effettuare il debug remoto di questa istanza del browser
 
+# The label for checkbox that enables F12 as a shortcut to open DevTools
+options-enable-f12-label = Utilizza il tasto F12 per aprire o chiudere DevTools
+options-enable-f12-tooltip =
+    .title = Attivando questa opzione il tasto F12 verrà associato all’apertura e chiusura degli strumenti di sviluppo
+
 # The label for checkbox that toggles custom formatters for objects
 options-enable-custom-formatters-label = Attiva formattatori personalizzati
 options-enable-custom-formatters-tooltip =
@@ -140,4 +151,5 @@ options-source-maps-tooltip =
 
 # The message shown for settings that trigger page reload
 options-context-triggers-page-refresh = * solo sessione corrente, ricarica la pagina
+
 

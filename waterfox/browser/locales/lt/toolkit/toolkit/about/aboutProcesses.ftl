@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -126,6 +126,8 @@ about-processes-frame-name-one = Sub-kadras: { $url }
 #   $number (Number) The number of subframes in this group. Always ≥ 1.
 #   $shortUrl (String) The shared prefix for the subframes in the group.
 about-processes-frame-name-many = Sub-kadrai ({ $number }): { $shortUrl }
+
+## Utility process actor names
 
 ## Displaying CPU (percentage and total)
 ## Variables:

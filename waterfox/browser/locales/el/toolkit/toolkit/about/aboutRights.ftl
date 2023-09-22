@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = Σχετικά με τα δικαιώματά σας
 rights-intro = Το { -brand-full-name } είναι ελεύθερο λογισμικό ανοικτού κώδικα που δημιουργείται από μια κοινότητα χιλιάδων ατόμων από όλο τον κόσμο. Υπάρχουν μερικά πράγματα που πρέπει να γνωρίζετε:
-rights-intro-point-1 = Το { -brand-short-name } είναι διαθέσιμο σε εσάς υπό τους όρους της <a data-l10n-name="mozilla-public-license-link">Δημόσιας Άδειας της Waterfox</a>. Αυτό σημαίνει ότι μπορείτε να κάνετε χρήση, αντιγραφή και διανομή του { -brand-short-name } σε τρίτους.  Είστε ακόμα ελεύθεροι να τροποποιήσετε τον πηγαίο κώδικα του { -brand-short-name } όπως επιθυμείτε, ώστε να καλύπτει τις ανάγκες σας. Η Δημόσια Άδεια της Waterfox σάς δίνει το δικαίωμα να διανέμετε τις τροποποιημένες εκδόσεις σας.
-rights-intro-point-2 = Ωστόσο, δεν σας παραχωρούνται δικαιώματα ή άδειες για τα εμπορικά σήματα του Ιδρύματος Waterfox ή οποιουδήποτε τρίτου, συμπεριλαμβανομένων, χωρίς περιορισμούς, των ονομάτων ή των λογότυπων του Waterfox. Μπορείτε να βρείτε περισσότερες πληροφορίες για τα εμπορικά σήματα <a data-l10n-name="mozilla-trademarks-link">εδώ</a>.
+rights-intro-point-1 = Το { -brand-short-name } είναι διαθέσιμο σε εσάς υπό τους όρους της <a data-l10n-name="mozilla-public-license-link">Δημόσιας Άδειας της BrowserWorks</a>. Αυτό σημαίνει ότι μπορείτε να κάνετε χρήση, αντιγραφή και διανομή του { -brand-short-name } σε τρίτους.  Είστε ακόμα ελεύθεροι να τροποποιήσετε τον πηγαίο κώδικα του { -brand-short-name } όπως επιθυμείτε, ώστε να καλύπτει τις ανάγκες σας. Η Δημόσια Άδεια της BrowserWorks σάς δίνει το δικαίωμα να διανέμετε τις τροποποιημένες εκδόσεις σας.
+rights-intro-point-2 = Ωστόσο, δεν σας παραχωρούνται δικαιώματα ή άδειες για τα εμπορικά σήματα του Ιδρύματος BrowserWorks ή οποιουδήποτε τρίτου, συμπεριλαμβανομένων, χωρίς περιορισμούς, των ονομάτων ή των λογότυπων του Waterfox. Μπορείτε να βρείτε περισσότερες πληροφορίες για τα εμπορικά σήματα <a data-l10n-name="mozilla-trademarks-link">εδώ</a>.
 rights-intro-point-3 =
     Μερικές λειτουργίες του { -brand-short-name }, όπως η Αναφορά καταρρεύσεων, προσφέρουν
     την επιλογή υποβολής σχολίων στη { -vendor-short-name }. Αν επιλέξετε να κάνετε υποβολή

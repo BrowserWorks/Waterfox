@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,12 +20,13 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = Pesquisar
     .aria-label = Pesquisar
-# Variables
-#  $engine (String): the name of the user's default search engine
+
+# Variables:
+#   $engine (string) - The name of the user's default search engine
 newtab-search-box-handoff-text = Pesquise com { $engine } ou digite um endereço
 newtab-search-box-handoff-text-no-engine = Pesquise ou digite um endereço
-# Variables
-#  $engine (String): the name of the user's default search engine
+# Variables:
+#   $engine (string) - The name of the user's default search engine
 newtab-search-box-handoff-input =
     .placeholder = Pesquise com { $engine } ou digite um endereço
     .title = Pesquise com { $engine } ou digite um endereço
@@ -34,6 +35,7 @@ newtab-search-box-handoff-input-no-engine =
     .placeholder = Pesquise ou digite um endereço
     .title = Pesquise ou digite um endereço
     .aria-label = Pesquise ou digite um endereço
+
 newtab-search-box-text = Pesquisar na internet
 newtab-search-box-input =
     .placeholder = Pesquisar na web
@@ -48,10 +50,12 @@ newtab-topsites-edit-shortcut-header = Editar atalho
 newtab-topsites-title-label = Título
 newtab-topsites-title-input =
     .placeholder = Digite um título
+
 newtab-topsites-url-label = URL
 newtab-topsites-url-input =
     .placeholder = Digite ou cole uma URL
 newtab-topsites-url-validation = É necessário uma URL válida
+
 newtab-topsites-image-url-label = URL de imagem personalizada
 newtab-topsites-use-image-link = Usar uma imagem personalizada…
 newtab-topsites-image-validation = Não foi possível carregar a imagem. Tente uma URL diferente.
@@ -80,13 +84,15 @@ newtab-topsite-sponsored = Patrocinado
 newtab-menu-section-tooltip =
     .title = Abrir menu
     .aria-label = Abrir menu
+
 # Tooltip for dismiss button
 newtab-dismiss-button-tooltip =
     .title = Remover
     .aria-label = Remover
+
 # This tooltip is for the context menu of Pocket cards or Topsites
 # Variables:
-#  $title (String): The label or hostname of the site. This is for screen readers when the context menu button is focused/active.
+#   $title (string) - The label or hostname of the site. This is for screen readers when the context menu button is focused/active.
 newtab-menu-content-tooltip =
     .title = Abrir menu
     .aria-label = Abrir menu de contexto para { $title }
@@ -152,18 +158,21 @@ newtab-label-removed-bookmark = Favorito removido
 newtab-label-recommended = Em alta
 newtab-label-saved = Salvo no { -pocket-brand-name }
 newtab-label-download = Baixado
+
 # This string is used in the story cards to indicate sponsored content
 # Variables:
-#  $sponsorOrSource (String): This is the name of a company or their domain
+#   $sponsorOrSource (string) - The name of a company or their domain
 newtab-label-sponsored = { $sponsorOrSource } · Patrocinado
+
 # This string is used at the bottom of story cards to indicate sponsored content
 # Variables:
-#  $sponsor (String): This is the name of a sponsor
+#   $sponsor (string) - The name of a sponsor
 newtab-label-sponsored-by = Patrocinado por { $sponsor }
+
 # This string is used under the image of story cards to indicate source and time to read
 # Variables:
-#  $source (String): This is the name of a company or their domain
-#  $timeToRead (Number): This is the estimated number of minutes to read this story
+#   $source (string) - The name of a company or their domain
+#   $timeToRead (number) - The estimated number of minutes to read this story
 newtab-label-source-read-time = { $source } · { $timeToRead } min
 
 ## Section Menu: These strings are displayed in the section context menu and are
@@ -192,15 +201,16 @@ newtab-section-expand-section-label =
 newtab-section-header-topsites = Sites preferidos
 newtab-section-header-recent-activity = Atividade recente
 # Variables:
-#  $provider (String): Name of the corresponding content provider.
+#   $provider (string) - Name of the corresponding content provider.
 newtab-section-header-pocket = Recomendado pelo { $provider }
 
 ## Empty Section States: These show when there are no more items in a section. Ex. When there are no more Pocket story recommendations, in the space where there would have been stories, this is shown instead.
 
 newtab-empty-section-highlights = Comece a navegar e mostraremos aqui alguns ótimos artigos, vídeos e outras páginas que você visitou recentemente ou adicionou aos favoritos.
+
 # Ex. When there are no more Pocket story recommendations, in the space where there would have been stories, this is shown instead.
 # Variables:
-#  $provider (String): Name of the content provider for this section, e.g "Pocket".
+#   $provider (string) - Name of the content provider for this section, e.g "Pocket".
 newtab-empty-section-topstories = Você já viu tudo. Volte mais tarde para mais histórias do { $provider }. Não consegue esperar? Escolha um assunto popular para encontrar mais grandes histórias através da web.
 
 ## Empty Section (Content Discovery Experience). These show when there are no more stories or when some stories fail to load.
@@ -222,19 +232,18 @@ newtab-pocket-learn-more = Saiba mais
 newtab-pocket-cta-button = Adicionar o { -pocket-brand-name }
 newtab-pocket-cta-text = Salve as histórias que você gosta no { -pocket-brand-name } e abasteça sua mente com leituras fascinantes.
 newtab-pocket-pocket-firefox-family = O { -pocket-brand-name } faz parte da família { -brand-product-name }
-# A save to Pocket button that shows over the card thumbnail on hover.
-newtab-pocket-save-to-pocket = Salvar no { -pocket-brand-name }
-newtab-pocket-saved-to-pocket = Salvo no { -pocket-brand-name }
-# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
-newtab-pocket-load-more-stories-button = Carregar mais histórias
 
 ## Pocket Final Card Section.
 ## This is for the final card in the Pocket grid.
 
-newtab-pocket-last-card-title = Você está em dia!
-newtab-pocket-last-card-desc = Volte mais tarde para ver mais.
-newtab-pocket-last-card-image =
-    .alt = Você está em dia
+# A save to Pocket button that shows over the card thumbnail on hover.
+newtab-pocket-save = Salvar
+newtab-pocket-saved = Salvo
+
+## Pocket content onboarding experience dialog and modal for new users seeing the Pocket section for the first time, shown as the first item in the Pocket section.
+
+newtab-pocket-onboarding-discover = Conheça o melhor da web
+newtab-pocket-onboarding-cta = O { -pocket-brand-name } explora uma ampla variedade de publicações para trazer os conteúdos mais informativos, inspiradores e confiáveis direto para seu navegador { -brand-product-name }.
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -246,6 +255,8 @@ newtab-error-fallback-refresh-link = Atualize a página para tentar novamente.
 
 newtab-custom-shortcuts-title = Atalhos
 newtab-custom-shortcuts-subtitle = Sites que você salva ou visita
+# Variables
+#   $num (number) - Number of rows to display
 newtab-custom-row-selector =
     { $num ->
         [one] { $num } linha

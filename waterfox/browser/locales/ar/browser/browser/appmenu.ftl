@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -140,8 +140,11 @@ profiler-popup-button-recording =
     .label = محلّل الأداء
     .tooltiptext = يُسجّل المحلّل تحليلًا
 
-profiler-popup-title =
-    .value = { -profiler-brand-name }
+profiler-popup-button-capturing =
+    .label = محلّل الأداء
+    .tooltiptext = محلّل الأداء يلتقط ملفًا شخصيًا
+
+profiler-popup-header-text = { -profiler-brand-name }
 
 profiler-popup-reveal-description-button =
     .aria-label = اعرض معلومات أكثر
@@ -192,6 +195,11 @@ profiler-popup-capture-shortcut =
 # devtools/client/performance-new/popup/background.jsm.js
 # Please take care that the same values are also defined in devtools' perftools.ftl.
 
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/shared/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
 profiler-popup-presets-web-developer-label =
     .label = مطوّري الوب
 
@@ -207,6 +215,10 @@ profiler-popup-presets-media-label =
 profiler-popup-presets-networking-label =
     .label = الشبكة
 
+# "Power" is used in the sense of energy (electricity used by the computer).
+profiler-popup-presets-power-label =
+    .label = طاقة
+
 profiler-popup-presets-custom-label =
     .label = مخصّص
 
@@ -214,8 +226,6 @@ profiler-popup-presets-custom-label =
 
 appmenu-manage-history =
     .label = أدِر التأريخ
-appmenu-reopen-all-tabs = أعِد فتح كل الألسنة
-appmenu-reopen-all-windows = أعِد فتح كل النوافذ
 appmenu-restore-session =
     .label = استعد الجلسة السابقة
 appmenu-clear-history =

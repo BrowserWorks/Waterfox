@@ -1,13 +1,13 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 title-label = Om insticksprogram
-
 installed-plugins-label = Installerade insticksprogram
 no-plugins-are-installed-label = Inga installerade insticksprogram hittades
-
 deprecation-description = Saknar du något? Vissa insticksmoduler stöds inte längre. <a data-l10n-name="deprecation-link">Läs mer.</a>
+deprecation-description2 =
+    .message = Saknar du något? Vissa insticksmoduler stöds inte längre.
 
 ## The information of plugins
 ##
@@ -29,7 +29,6 @@ state-dd-enabled = <span data-l10n-name="state">Status:</span> Aktiverad
 state-dd-enabled-block-list-state = <span data-l10n-name="state">Status:</span> Aktiverad ({ $blockListState })
 state-dd-Disabled = <span data-l10n-name="state">Status:</span> Inaktiverad
 state-dd-Disabled-block-list-state = <span data-l10n-name="state">Status:</span> Inaktiverad ({ $blockListState })
-
 mime-type-label = MIME-typ
 description-label = Beskrivning
 suffixes-label = Filändelse
@@ -38,9 +37,7 @@ suffixes-label = Filändelse
 
 plugins-gmp-license-info = Licensinformation
 plugins-gmp-privacy-info = Sekretessinformation
-
 plugins-openh264-name = OpenH264 Video Codec tillhandahållen av Cisco Systems, Inc.
-plugins-openh264-description = Denna insticksmodul installeras automatiskt av Waterfox för att följa WebRTC-specifikationen och möjliggöra WebRTC-samtal med enheter som kräver H.264 video codec. Besök http://www.openh264.org/ för att visa källkoden för codec och lära dig mer om implementationen.
-
+plugins-openh264-description = Denna insticksmodul installeras automatiskt av BrowserWorks för att följa WebRTC-specifikationen och möjliggöra WebRTC-samtal med enheter som kräver H.264 video codec. Besök http://www.openh264.org/ för att visa källkoden för codec och lära dig mer om implementationen.
 plugins-widevine-name = Widevine Content dekrypteringsmodul tillhandahålls av Google Inc.
 plugins-widevine-description = Denna insticksmodul möjliggör uppspelning av krypterade media i enlighet med specifikationen för krypterad mediautökning. Krypterade medier används vanligtvis av webbplatser för att skydda mot kopiering av premiummedieinnehåll. Besök https://www.w3.org/TR/encrypted-media/ för mer information om Krypterade Media Extensions.

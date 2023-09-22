@@ -1,14 +1,16 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
 
 about-logins-page-title = Zugangsdaten und Passwörter
 
-login-filter =
+about-logins-login-filter =
     .placeholder = Zugangsdaten durchsuchen
+    .key = F
 
-create-login-button = Zugangsdaten hinzufügen
+create-new-login-button =
+    .title = Neue Zugangsdaten erstellen
 
 fxaccounts-sign-in-text = Nutzen Sie Ihre Passwörter auf anderen Geräten
 fxaccounts-sign-in-sync-button = Zum Synchronisieren anmelden
@@ -35,10 +37,20 @@ about-logins-menu-menuitem-help = Hilfe
 
 login-list =
     .aria-label = Mit Suche übereinstimmende Zugangsdaten
+# Variables
+#   $count (number) - Number of logins
 login-list-count =
     { $count ->
         [one] { $count } Zugangsdaten
        *[other] { $count } Zugangsdaten
+    }
+# Variables
+#   $count (number) - Number of filtered logins
+#   $total (number) - Total number of logins
+login-list-filtered-count =
+    { $total ->
+        [one] { $count } von { $total } Zugangsdaten
+       *[other] { $count } von { $total } Zugangsdaten
     }
 login-list-sort-label-text = Sortieren nach:
 login-list-name-option = Name (A-Z)
@@ -99,9 +111,17 @@ login-item-copied-password-button-text = Kopiert
 login-item-save-changes-button = Änderungen speichern
 login-item-save-new-button = Speichern
 login-item-cancel-button = Abbrechen
-login-item-time-changed = Zuletzt geändert: { DATETIME($timeChanged, day: "numeric", month: "long", year: "numeric") }
-login-item-time-created = Erstellt: { DATETIME($timeCreated, day: "numeric", month: "long", year: "numeric") }
-login-item-time-used = Zuletzt verwendet: { DATETIME($timeUsed, day: "numeric", month: "long", year: "numeric") }
+
+## The date is displayed in a timeline showing the password evolution.
+## A label is displayed under the date to describe the type of change.
+## (e.g. updated, created, etc.)
+
+# Variables
+#   $datetime (date) - Event date
+login-item-timeline-point-date = { DATETIME($datetime, day: "numeric", month: "short", year: "numeric") }
+login-item-timeline-action-created = Erstellt
+login-item-timeline-action-updated = Aktualisiert
+login-item-timeline-action-used = Verwendet
 
 ## OS Authentication dialog
 
@@ -152,6 +172,9 @@ about-logins-confirm-remove-dialog-title = Diese Zugangsdaten entfernen?
 confirm-delete-dialog-message = Diese Aktion kann nicht rückgängig gemacht werden.
 about-logins-confirm-remove-dialog-confirm-button = Entfernen
 
+## Variables
+##   $count (number) - Number of items
+
 about-logins-confirm-remove-all-dialog-confirm-button-label =
     { $count ->
         [1] Entfernen
@@ -190,6 +213,8 @@ about-logins-confirm-remove-all-sync-dialog-message =
        *[other] Dadurch werden alle Zugangsdaten entfernt, die Sie in { -brand-short-name } auf allen Geräten gespeichert haben, die mit Ihrem { -fxaccount-brand-name } synchronisiert sind. Dadurch werden auch die hier angezeigten Warnungen zu Datenlecks entfernt. Sie können diese Aktion nicht rückgängig machen.
     }
 
+##
+
 about-logins-confirm-export-dialog-title = Zugangsdaten und Passwörter exportieren
 about-logins-confirm-export-dialog-message = Ihre Passwörter werden als lesbarer Text gespeichert (z.B. P@ssw0rt). Dadurch hat jede Person, welche die exportierte Datei öffnen kann, Zugriff auf das unverschlüsselte Passwort.
 about-logins-confirm-export-dialog-confirm-button = Exportieren…
@@ -209,7 +234,6 @@ about-logins-breach-alert-date = Das Datenleck wurde am { DATETIME($date, day: "
 # Variables:
 #   $hostname (String) - The hostname of the website associated with the login, e.g. "example.com"
 about-logins-breach-alert-link = { $hostname } aufrufen
-about-logins-breach-alert-learn-more-link = Weitere Informationen
 
 ## Vulnerable Password notification
 

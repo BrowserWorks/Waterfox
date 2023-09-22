@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-videocontrols-scrubber =
-    .aria-label = Posizione
 # This label is used by screenreaders and other assistive technology to indicate
 # to users how much of the video has been loaded from the network. It will be
 # followed by the percentage of the video that has loaded (e.g. "Loading: 13%").
@@ -34,16 +32,9 @@ videocontrols-closed-caption-off =
 # the mouse is hovering it.
 videocontrols-picture-in-picture-label = Picture-in-Picture
 
-# This string is used as the label for a variation of the Picture-in-Picture video
-# toggle button when the mouse is hovering over the video.
-videocontrols-picture-in-picture-toggle-label = Guarda con Picture-in-Picture
 videocontrols-picture-in-picture-toggle-label2 = Sgancia questo video
 
-# This string is used as part of a variation of the Picture-in-Picture video toggle
-# button. When using this variation, this string appears below the toggle when the
-# mouse hovers the toggle.
-videocontrols-picture-in-picture-explainer = Riproduci i video in primo piano mentre fai altre cose in { -brand-short-name }
-videocontrols-picture-in-picture-explainer2 = Più sono gli schermi, maggiore è il divertimento. Riproduci questo video in Picture-in-Picture mentre navighi.
+videocontrols-picture-in-picture-explainer3 = Più sono gli schermi, maggiore è il divertimento. Riproduci questo video mentre fai altro.
 
 videocontrols-error-aborted = Il caricamento del video è stato interrotto.
 videocontrols-error-network = La riproduzione del video è stata annullata a causa di un errore di rete.
@@ -66,3 +57,13 @@ videocontrols-status-picture-in-picture = Questo video è riprodotto in modalit�
 # duration video, $position would be "5:00" and the string which is
 # surrounded by <span> would be deleted, result string would be "5:00".
 videocontrols-position-and-duration-labels = { $position }<span data-l10n-name="position-duration-format"> / { $duration }</span>
+
+# This is a plain text version of the videocontrols-position-and-duration-labels
+# string, used by screenreaders.
+#
+# Variables:
+#   $position (String): The current media position
+#   $duration (String): The total video duration
+videocontrols-scrubber-position-and-duration =
+    .aria-label = Posizione
+    .aria-valuetext = { $position } / { $duration }

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -180,6 +180,17 @@ menu-view-full-screen =
     .label = Fullskjerm
     .accesskey = F
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Gå i lesevising
+    .accesskey = l
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Lat att lesevising
+    .accesskey = L
+
 ##
 
 menu-view-show-all-tabs =
@@ -208,8 +219,9 @@ menu-history-undo-menu =
     .label = Nyleg attlatne faner
 menu-history-undo-window-menu =
     .label = Nyleg attlatne vindauge
-menu-history-reopen-all-tabs = Opne alle faner på nytt
-menu-history-reopen-all-windows = Opne alle vindauge på nytt
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = Søk i historikk
 
 ## Bookmarks Menu
 
@@ -218,14 +230,13 @@ menu-bookmarks-menu =
     .accesskey = B
 menu-bookmarks-manage =
     .label = Handsam bokmerke
-menu-bookmark-current-tab =
-    .label = Bokmerk gjeldande fane
-menu-bookmark-edit =
-    .label = Rediger dette bokmerket
 menu-bookmark-tab =
     .label = Bokmerk gjeldande fane…
 menu-edit-bookmark =
     .label = Rediger dette bokmerket…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = Søk i bokmerke
 menu-bookmarks-all-tabs =
     .label = Bokmerk alle faner…
 menu-bookmarks-toolbar =
@@ -319,6 +330,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = Slå av feilsøkingsmodus
     .accesskey = S
+menu-help-switch-device =
+    .label = Byter til ei ny eining
+    .accesskey = B
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =

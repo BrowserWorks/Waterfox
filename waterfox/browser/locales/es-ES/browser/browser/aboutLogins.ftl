@@ -1,14 +1,16 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
 
 about-logins-page-title = Inicios de sesión y contraseñas
 
-login-filter =
+about-logins-login-filter =
     .placeholder = Buscar inicios de sesión
+    .key = F
 
-create-login-button = Crear nuevo inicio de sesión
+create-new-login-button =
+    .title = Crear nuevo inicio de sesión
 
 fxaccounts-sign-in-text = Acceda a sus contraseñas en todos sus dispositivos
 fxaccounts-sign-in-sync-button = Inicie sesión para sincronizar
@@ -35,10 +37,20 @@ about-logins-menu-menuitem-help = Ayuda
 
 login-list =
     .aria-label = Inicios de sesión que coinciden con la búsqueda
+# Variables
+#   $count (number) - Number of logins
 login-list-count =
     { $count ->
         [one] { $count } inicio de sesión
        *[other] { $count } inicios de sesión
+    }
+# Variables
+#   $count (number) - Number of filtered logins
+#   $total (number) - Total number of logins
+login-list-filtered-count =
+    { $total ->
+        [one] { $count } de { $total } inicio de sesión
+       *[other] { $count } de { $total } inicios de sesión
     }
 login-list-sort-label-text = Ordenar por:
 login-list-name-option = Nombre (A-Z)
@@ -99,9 +111,17 @@ login-item-copied-password-button-text = ¡Copiado!
 login-item-save-changes-button = Guardar cambios
 login-item-save-new-button = Guardar
 login-item-cancel-button = Cancelar
-login-item-time-changed = Última modificación: { DATETIME($timeChanged, day: "numeric", month: "long", year: "numeric") }
-login-item-time-created = Creación: { DATETIME($timeCreated, day: "numeric", month: "long", year: "numeric") }
-login-item-time-used = Último acceso: { DATETIME($timeUsed, day: "numeric", month: "long", year: "numeric") }
+
+## The date is displayed in a timeline showing the password evolution.
+## A label is displayed under the date to describe the type of change.
+## (e.g. updated, created, etc.)
+
+# Variables
+#   $datetime (date) - Event date
+login-item-timeline-point-date = { DATETIME($datetime, day: "numeric", month: "short", year: "numeric") }
+login-item-timeline-action-created = Creado
+login-item-timeline-action-updated = Actualizado
+login-item-timeline-action-used = Usado
 
 ## OS Authentication dialog
 
@@ -152,6 +172,9 @@ about-logins-confirm-remove-dialog-title = ¿Eliminar este inicio de sesión?
 confirm-delete-dialog-message = Esta acción no se puede deshacer.
 about-logins-confirm-remove-dialog-confirm-button = Eliminar
 
+## Variables
+##   $count (number) - Number of items
+
 about-logins-confirm-remove-all-dialog-confirm-button-label =
     { $count ->
         [1] Eliminar
@@ -190,6 +213,8 @@ about-logins-confirm-remove-all-sync-dialog-message =
        *[other] Esto eliminará todos los inicios de sesión que guardó en { -brand-short-name } en todos los dispositivos sincronizados con su { -fxaccount-brand-name }. Esto también eliminará las alertas de filtraciones que aparecen aquí. No podrá deshacer esta acción.
     }
 
+##
+
 about-logins-confirm-export-dialog-title = Exportar inicios de sesión y contraseñas
 about-logins-confirm-export-dialog-message = Sus contraseñas se guardarán como texto legible (por ejemplo, BadP@ssw0rd) por lo que cualquiera que pueda abrir el archivo exportado podrá verlas.
 about-logins-confirm-export-dialog-confirm-button = Exportar…
@@ -209,7 +234,6 @@ about-logins-breach-alert-date = Esta filtración ocurrió el { DATETIME($date, 
 # Variables:
 #   $hostname (String) - The hostname of the website associated with the login, e.g. "example.com"
 about-logins-breach-alert-link = Ir a { $hostname }
-about-logins-breach-alert-learn-more-link = Saber más
 
 ## Vulnerable Password notification
 

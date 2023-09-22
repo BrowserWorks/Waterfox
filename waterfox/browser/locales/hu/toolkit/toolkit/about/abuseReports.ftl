@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,20 +8,18 @@
 # Variables:
 #   $addon-name (string) - Name of the add-on being reported
 abuse-report-dialog-title = A(z) { $addon-name } jelentése
-
 abuse-report-title-extension = A kiegészítő jelentése a { -vendor-short-name } felé
 abuse-report-title-sitepermission = Az oldalengedély kiegészítő jelentése a { -vendor-short-name } felé
 abuse-report-title-theme = A téma jelentése a { -vendor-short-name } felé
 abuse-report-subtitle = Mi a probléma?
-
 # Variables:
 #   $author-name (string) - Name of the add-on author
 abuse-report-addon-authored-by = szerző: <a data-l10n-name="author-name">{ $author-name }</a>
-
 abuse-report-learnmore =
     Nem tudja, hogy melyik problémát válassza ki?
     <a data-l10n-name="learnmore-link">További információk a bővítmények és témák jelentéséről</a>
-
+abuse-report-learnmore-intro = Nem tudja, hogy melyik problémát válassza ki?
+abuse-report-learnmore-link = További információk a bővítmények és témák jelentéséről
 abuse-report-submit-description = Írja le a problémát (nem kötelező)
 abuse-report-textarea =
     .placeholder = Könnyebb megoldanunk egy problémát, ha vannak konkrétumok. Írja le, hogy mit tapasztal. Köszönjük, hogy segít minket abban, hogy a web egészséges maradjon.
@@ -48,6 +46,24 @@ abuse-report-messagebar-removed-sitepermission = Köszönjük a bejelentést. El
 abuse-report-messagebar-removed-theme = Köszönjük a bejelentést. Eltávolította a(z) <span data-l10n-name="addon-name">{ $addon-name }</span> témát.
 abuse-report-messagebar-error = Hiba történt a(z) <span data-l10n-name="addon-name">{ $addon-name }</span> kiegészítő jelentésének beküldésekor.
 abuse-report-messagebar-error-recent-submit = A(z) <span data-l10n-name="addon-name">{ $addon-name }</span> kiegészítő jelentése nem lett elküldve, mert a közelmúltban már benyújtott egy másik jelentést.
+abuse-report-messagebar-aborted2 =
+    .message = A(z) { $addon-name } bejelentése megszakítva.
+abuse-report-messagebar-submitting2 =
+    .message = Jelentés küldésre erről: { $addon-name }.
+abuse-report-messagebar-submitted2 =
+    .message = Köszönjük a bejelentést. Eltávolítja a(z) { $addon-name } kiegészítőt?
+abuse-report-messagebar-submitted-noremove2 =
+    .message = Köszönjük a bejelentést.
+abuse-report-messagebar-removed-extension2 =
+    .message = Köszönjük a bejelentést. Eltávolította a(z) { $addon-name } kiegészítőt.
+abuse-report-messagebar-removed-sitepermission2 =
+    .message = Köszönjük a bejelentést. Eltávolította a(z) { $addon-name } oldalengedély kiegészítőt.
+abuse-report-messagebar-removed-theme2 =
+    .message = Köszönjük a bejelentést. Eltávolította a(z) { $addon-name } témát.
+abuse-report-messagebar-error2 =
+    .message = Hiba történt a(z) { $addon-name } kiegészítő jelentésének beküldésekor.
+abuse-report-messagebar-error-recent-submit2 =
+    .message = A(z) { $addon-name } kiegészítő jelentése nem lett elküldve, mert a közelmúltban már benyújtott egy másik jelentést.
 
 ## Message bars actions.
 
@@ -64,18 +80,14 @@ abuse-report-messagebar-action-cancel = Mégse
 
 abuse-report-damage-reason-v2 = Megrongálta a számítógépemet, vagy az adataim biztonsága sérült
 abuse-report-damage-example = Példa: kártékony szoftvert telepített vagy adatokat lopott
-
 abuse-report-spam-reason-v2 = Spamet tartalmaz vagy nem kívánt hirdetéseket szúr be
 abuse-report-spam-example = Példa: Hirdetések beszúrása weboldalakba
-
 abuse-report-settings-reason-v2 = Módosította a keresőszolgáltatásomat, kezdőlapomat vagy az új lap oldalamat a tájékoztatásom vagy megkérdezésem nélkül
 abuse-report-settings-suggestions = A kiegészítő bejelentése előtt megpróbálhatja megváltoztatni a beállításait:
 abuse-report-settings-suggestions-search = Módosítja az alapértelmezett keresési beállításokat
 abuse-report-settings-suggestions-homepage = Módosítja a kezdőlapot vagy az új lap oldalt
-
 abuse-report-deceptive-reason-v2 = Másnak állítja magát, mint ami
 abuse-report-deceptive-example = Példa: Félrevezető leírás vagy képek
-
 abuse-report-broken-reason-extension-v2 = Nem működik, hibákat okoz weblapokon vagy lassítja a { -brand-product-name } működését
 abuse-report-broken-reason-sitepermission-v2 = Nem működik, hibákat okoz weblapokon vagy lassítja a { -brand-product-name } működését
 abuse-report-broken-reason-theme-v2 = Nem működik, vagy hibákat okoz a böngésző megjelenítésében
@@ -92,14 +104,11 @@ abuse-report-broken-suggestions-theme =
     Úgy néz ki, hogy egy hibát azonosított. Az itt beküldött jelentés mellett a legjobb módszer a probléma
     megoldásának az, hogy kapcsolatba lép a téma fejlesztőjével.
     <a data-l10n-name="support-link">Keresse fel a téma weboldalát</a> a fejlesztő információinak megtekintéséhez.
-
 abuse-report-policy-reason-v2 = Gyűlölködő, erőszakos vagy illegális tartalom van benne
 abuse-report-policy-suggestions =
     Megjegyzés: A szerzői jogi és védjegyekkel kapcsolatos problémákat egy külön folyamatban kell jelenteni.
     <a data-l10n-name="report-infringement-link">Használja ezeket az utasításokat</a> a
     probléma bejelentéséhez.
-
 abuse-report-unwanted-reason-v2 = Soha nem akartam, és nem tudom, hogyan lehet megszabadulni tőle
 abuse-report-unwanted-example = Példa: Egy alkalmazás az engedélyem nélkül települt
-
 abuse-report-other-reason = Valami más

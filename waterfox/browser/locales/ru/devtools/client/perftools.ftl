@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -43,7 +43,9 @@ perftools-range-interval-milliseconds = { NUMBER($interval, maxFractionalUnits: 
 
 # The size of the memory buffer used to store things in the profiler.
 perftools-range-entries-label = Размер буфера:
+
 perftools-custom-threads-label = Добавить собственные потоки по имени:
+
 perftools-devtools-interval-label = Интервал:
 perftools-devtools-threads-label = Потоки:
 perftools-devtools-settings-label = Настройки
@@ -81,8 +83,6 @@ perftools-thread-renderer =
     .title = Когда WebRender включён, этот поток выполняет вызовы OpenGL
 perftools-thread-render-backend =
     .title = Поток WebRender RenderBackend
-perftools-thread-paint-worker =
-    .title = Поток, в котором происходит отрисовка, когда включена отрисовка вне основного потока
 perftools-thread-timer =
     .title = Таймеры обработки потока (setTimeout, setInterval, nsITimer)
 perftools-thread-style-thread =
@@ -94,7 +94,7 @@ perftools-thread-socket-thread =
 perftools-thread-img-decoder =
     .title = Потоки декодирования изображений
 perftools-thread-dns-resolver =
-    .title = В этом потоке происходит разрешение DNS
+    .title = В этом потоке происходит поиск в DNS
 perftools-thread-task-controller =
     .title = Потоки пула потоков TaskController
 perftools-thread-jvm-gecko =
@@ -113,6 +113,7 @@ perftools-thread-jvm-pool =
 ##
 
 perftools-record-all-registered-threads = Игнорировать выбор выше и записывать все регистрируемые потоки
+
 perftools-tools-threads-input-label =
     .title = Эти имена потоков представляют собой список разделенный запятыми, который используется для включения профилирования потоков в профайлере. Имя может быть только частичным совпадением с именем потока, который будет включён. Это поле чувствительно к пробелам.
 
@@ -120,6 +121,7 @@ perftools-tools-threads-input-label =
 ## devtools.performance.new-panel-onboarding preference is true.
 
 perftools-onboarding-message = <b>Новое</b>:  В Инструменты разработчика теперь интегрирован { -profiler-brand-name }. <a>Узнайте больше</a> об этом новом, мощном инструменте.
+
 perftools-onboarding-close-button =
     .aria-label = Закрыть приветственное сообщение
 
@@ -130,19 +132,30 @@ perftools-onboarding-close-button =
 # devtools/client/performance-new/popup/background.jsm.js
 # The same labels and descriptions are also defined in appmenu.ftl.
 
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/shared/background.jsm.js
+# The same labels and descriptions are also defined in appmenu.ftl.
+
 perftools-presets-web-developer-label = Веб-разработка
 perftools-presets-web-developer-description = Рекомендуемые настройки для отладки большинства веб-приложений с низкими накладными расходами.
+
 perftools-presets-firefox-label = { -brand-shorter-name }
 perftools-presets-firefox-description = Рекомендуемые настройки для профилирования { -brand-shorter-name }.
+
 perftools-presets-graphics-label = Графика
 perftools-presets-graphics-description = Настройки для выявления ошибок графики в { -brand-shorter-name }.
+
 perftools-presets-media-label = Медиа
 perftools-presets-media-description2 = Настройки для выявления ошибок аудио и видео в { -brand-shorter-name }.
+
 perftools-presets-networking-label = Сеть
 perftools-presets-networking-description = Настройки для выявления сетевых ошибок в { -brand-shorter-name }.
+
 # "Power" is used in the sense of energy (electricity used by the computer).
 perftools-presets-power-label = Электропитание
 perftools-presets-power-description = Настройки для выявления ошибок потребления энергии в { -brand-shorter-name }, с небольшими накладными расходами.
+
 perftools-presets-custom-label = Персональный
 
 ##

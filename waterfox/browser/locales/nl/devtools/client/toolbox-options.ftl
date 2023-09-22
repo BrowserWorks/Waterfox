@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -45,6 +45,12 @@ options-collapse-attrs-tooltip =
 options-inspector-draggable-properties-label = Klik en sleep om de afmetingswaarden te bewerken
 options-inspector-draggable-properties-tooltip =
     .title = Klik en sleep om de afmetingswaarden te bewerken in de inspectorregelweergave.
+
+# The label for the checkbox option to enable simplified highlighting on page elements
+# within the inspector for users who enabled prefers-reduced-motion = reduce
+options-inspector-simplified-highlighters-label = Gebruik eenvoudigere accentueringen met prefers-reduced-motion
+options-inspector-simplified-highlighters-tooltip =
+    .title = Schakelt eenvoudiger accentueringen in als prefers-reduced-motion is ingeschakeld. Trekt lijnen in plaats van opgevulde rechthoeken rond geaccentueerde elementen om knippereffecten te voorkomen.
 
 ## "Default Color Unit" options for the Inspector
 
@@ -124,6 +130,11 @@ options-enable-remote-label = Remote debugging inschakelen
 options-enable-remote-tooltip2 =
     .title = Door deze optie in te schakelen kunt u deze browserinstallatie op afstand debuggen
 
+# The label for checkbox that enables F12 as a shortcut to open DevTools
+options-enable-f12-label = Gebruik de F12-toets om DevTools te openen of te sluiten
+options-enable-f12-tooltip =
+    .title = Als u deze optie inschakelt, wordt de F12-toets gekoppeld om de DevTools-toolbox te openen of te sluiten
+
 # The label for checkbox that toggles custom formatters for objects
 options-enable-custom-formatters-label = Aangepaste opmaakelementen inschakelen
 options-enable-custom-formatters-tooltip =
@@ -141,9 +152,3 @@ options-source-maps-tooltip =
 
 # The message shown for settings that trigger page reload
 options-context-triggers-page-refresh = * Alleen huidige sessie, vernieuwt de pagina
-
-# The label for the checkbox that toggles the display of the platform data in the
-# Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference in about:config
-options-show-platform-data-label = Gecko-platformgegevens tonen
-options-show-platform-data-tooltip =
-    .title = Als u deze optie inschakelt, zullen de JavaScript-profilerrapporten Gecko-platformsymbolen bevatten

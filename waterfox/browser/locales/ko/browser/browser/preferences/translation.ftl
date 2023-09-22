@@ -1,15 +1,15 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-translation-window =
+translation-window2 =
     .title = 예외 - 번역
-    .style = width: 36em
+    .style = min-width: 36em
 
 translation-close-key =
     .key = w
 
-translation-languages-disabled-desc = 다음 언어에 대한 전환은 제공되지 않음
+translation-languages-disabled-desc = 다음 언어에 대한 번역은 제공되지 않음
 
 translation-languages-column =
     .label = 언어
@@ -22,7 +22,7 @@ translation-languages-button-remove-all =
     .label = 모든 언어 제거
     .accesskey = e
 
-translation-sites-disabled-desc = 다음 사이트에 대한 전환은 제공되지 않음
+translation-sites-disabled-desc = 다음 사이트에 대한 번역은 제공되지 않음
 
 translation-sites-column =
     .label = 웹 사이트

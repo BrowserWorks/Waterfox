@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,7 +18,6 @@ downloads-panel =
 # in-progress and blocked downloads.
 downloads-panel-items =
     .style = width: 35em
-
 downloads-cmd-pause =
     .label = Szünet
     .accesskey = S
@@ -29,7 +28,6 @@ downloads-cmd-cancel =
     .tooltiptext = Mégse
 downloads-cmd-cancel-panel =
     .aria-label = Mégse
-
 downloads-cmd-show-menuitem-2 =
     .label =
         { PLATFORM() ->
@@ -50,7 +48,6 @@ downloads-cmd-use-system-default =
 downloads-cmd-use-system-default-named =
     .label = Megnyitás itt: { $handler }
     .accesskey = M
-
 # We can use the same accesskey as downloads-cmd-always-open-similar-files.
 # Both should not be visible in the downloads context menu at the same time.
 downloads-cmd-always-use-system-default =
@@ -70,14 +67,12 @@ downloads-cmd-always-use-system-default-named =
 downloads-cmd-always-open-similar-files =
     .label = Mindig nyissa meg a hasonló fájlokat
     .accesskey = M
-
 downloads-cmd-show-button-2 =
     .tooltiptext =
         { PLATFORM() ->
             [macos] Megjelenítés mappában
            *[other] Megjelenítés mappában
         }
-
 downloads-cmd-show-panel-2 =
     .aria-label =
         { PLATFORM() ->
@@ -90,7 +85,6 @@ downloads-cmd-show-description-2 =
             [macos] Megjelenítés mappában
            *[other] Megjelenítés mappában
         }
-
 downloads-cmd-show-downloads =
     .label = Letöltési mappa megjelenítése
 downloads-cmd-retry =
@@ -115,42 +109,33 @@ downloads-cmd-clear-downloads =
 downloads-cmd-delete-file =
     .label = Törlés
     .accesskey = T
-
 # This command is shown in the context menu when downloads are blocked.
 downloads-cmd-unblock =
     .label = Letöltés engedélyezése
     .accesskey = L
-
 # This is the tooltip of the action button shown when malware is blocked.
 downloads-cmd-remove-file =
     .tooltiptext = Fájl eltávolítása
-
 downloads-cmd-remove-file-panel =
     .aria-label = Fájl eltávolítása
-
 # This is the tooltip of the action button shown when potentially unwanted
 # downloads are blocked. This opens a dialog where the user can choose
 # whether to unblock or remove the download. Removing is the default option.
 downloads-cmd-choose-unblock =
     .tooltiptext = Fájl eltávolítása vagy letöltés engedélyezése
-
 downloads-cmd-choose-unblock-panel =
     .aria-label = Fájl eltávolítása vagy letöltés engedélyezése
-
 # This is the tooltip of the action button shown when uncommon downloads are
 # blocked.This opens a dialog where the user can choose whether to open the
 # file or remove the download. Opening is the default option.
 downloads-cmd-choose-open =
     .tooltiptext = Megnyitás vagy fájl eltávolítása
-
 downloads-cmd-choose-open-panel =
     .aria-label = Megnyitás vagy fájl eltávolítása
-
 # Displayed when hovering a blocked download, indicates that it's possible to
 # show more information for user to take the next action.
 downloads-show-more-information =
     .value = Több információ megjelenítése
-
 # Displayed when hovering a complete download, indicates that it's possible to
 # open the file using an app available in the system.
 downloads-open-file =
@@ -164,11 +149,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = Megnyitás { $days } n { $hours } ó { $minutes } p múlva…
-downloading-file-opens-in-minutes = Megnyitás { $minutes } p múlva…
-downloading-file-opens-in-minutes-and-seconds = Megnyitás { $minutes } p { $seconds } mp múlva…
-downloading-file-opens-in-seconds = Megnyitás { $seconds } mp múlva…
-downloading-file-opens-in-some-time = Megnyitás a befejezése után…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = Megnyitás { $hours } ó { $minutes } p múlva…
+downloading-file-opens-in-minutes-2 =
+    .value = Megnyitás { $minutes } p múlva…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = Megnyitás { $minutes } p { $seconds } mp múlva…
+downloading-file-opens-in-seconds-2 =
+    .value = Megnyitás { $seconds } mp múlva…
+downloading-file-opens-in-some-time-2 =
+    .value = Megnyitás a befejezése után…
 downloading-file-click-to-open =
     .value = Megnyitás, ha kész
 
@@ -178,20 +168,17 @@ downloading-file-click-to-open =
 # indicates that it's possible to download this file again.
 downloads-retry-download =
     .value = Letöltés újrapróbálása
-
 # Displayed when hovering a download which is able to be cancelled by users,
 # indicates that it's possible to cancel and stop the download.
 downloads-cancel-download =
     .value = Letöltés megszakítása
-
 # This string is shown at the bottom of the Downloads Panel when all the
 # downloads fit in the available space, or when there are no downloads in
 # the panel at all.
 downloads-history =
     .label = Minden letöltés megjelenítése
     .accesskey = M
-
-# This string is shown at the top of the Download Details Panel, to indicate
+# This string is shown at the top of the download details sub-panel to indicate
 # that we are showing the details of a single download.
 downloads-details =
     .title = Letöltés részletei
@@ -214,16 +201,13 @@ downloads-blocked-download-detailed-info = A(z) { $url } több fájl automatikus
 downloads-clear-downloads-button =
     .label = Letöltések törlése
     .tooltiptext = Törli a befejezett, megszakított és meghiúsult letöltéseket
-
 # This string is shown when there are no items in the Downloads view, when it
 # is displayed inside a browser tab.
 downloads-list-empty =
     .value = Nincsenek letöltések.
-
 # This string is shown when there are no items in the Downloads Panel.
 downloads-panel-empty =
     .value = Nincs letöltés ebben a munkamenetben.
-
 # This is displayed in an item at the bottom of the Downloads Panel when there
 # are more downloads than can fit in the list in the panel.
 #   $count (number) - number of files being downloaded that are not shown in the
@@ -233,3 +217,17 @@ downloads-more-downloading =
         [one] { $count } további fájl letöltése folyamatban van
        *[other] { $count } további fájl letöltése folyamatban van
     }
+
+## Download errors
+
+downloads-error-alert-title = Letöltési hiba
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = A letöltést nem lehet menteni, mert a(z) { $extension } kiegészítő blokkolja.
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = A letöltést nem lehet menteni, mert egy kiegészítő blokkolja.
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    A letöltés nem menthető, mert ismeretlen hiba történt.
+    
+    Próbálja újra.

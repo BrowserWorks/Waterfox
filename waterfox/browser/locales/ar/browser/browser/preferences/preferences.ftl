@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -87,6 +87,17 @@ restart-later = أعِد التشغيل لاحقًا
 ## Variables:
 ##   $name (String): name of the extension
 
+
+## Extension Control Notifications
+##
+## These strings are used to inform the user
+## about changes made by extensions to browser settings.
+##
+## <img data-l10n-name="icon"/> is going to be replaced by the extension icon.
+##
+## Variables:
+##   $name (string) - Name of the extension
+
 # This string is shown after the user disables an extension to notify the user
 # how to enable an extension that they disabled.
 #
@@ -174,6 +185,10 @@ browser-containers-settings =
     .accesskey = د
 
 containers-disable-alert-title = أأغلق كل الألسنة الحاوية؟
+
+## Variables:
+##   $tabCount (number) - Number of tabs
+
 containers-disable-alert-desc =
     { $tabCount ->
         [one] إذا عطلت الألسنة الحاوية الآن فسيغلق لسان حاو. أمتأكد أنك تريد تعطيل الألسنة الحاوية؟
@@ -191,6 +206,9 @@ containers-disable-alert-ok-button =
         [many] أغلق { $tabCount } لسانًا حاويًا
        *[other] أغلق { $tabCount } لسان حاو
     }
+
+##
+
 containers-disable-alert-cancel-button = أبقها مفعلّة
 
 containers-remove-alert-title = أتريد إزالة هذه الحاوية؟
@@ -278,10 +296,6 @@ check-user-spelling =
 files-and-applications-title = الملفات و التطبيقات
 
 download-header = التّنزيلات
-
-download-save-to =
-    .label = احفظ الملفّات في
-    .accesskey = ظ
 
 download-save-where = احفظ الملفّات في
     .accesskey = ظ
@@ -559,11 +573,6 @@ home-restore-defaults =
     .label = استعد المبدئيات
     .accesskey = س
 
-# "Waterfox" should be treated as a brand and kept in English,
-# while "Home" and "(Default)" can be localized.
-home-mode-choice-default =
-    .label = صفحة بداية Waterfox (المبدئية)
-
 home-mode-choice-custom =
     .label = عناوين مخصصة…
 
@@ -591,9 +600,6 @@ choose-bookmark =
 
 ## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = محتوى Waterfox الرئيسي
-home-prefs-content-description = اختر المحتوى الذي تريد عرضه في شاشة بداية Waterfox.
-
 home-prefs-search-header =
     .label = ابحث في الوِب
 home-prefs-shortcuts-header =
@@ -604,6 +610,10 @@ home-prefs-shortcuts-by-option-sponsored =
 
 ## Variables:
 ##  $provider (String): Name of the corresponding content provider, e.g "Pocket".
+
+
+## Variables:
+##  $provider (string) - Name of the corresponding content provider, e.g "Pocket".
 
 home-prefs-recommended-by-header =
     .label = ينصح به { $provider }
@@ -674,6 +684,7 @@ search-show-suggestions-url-bar-option =
     .label = أظهر اقتراحات البحث في نتائج شريط العناوين
     .accesskey = ت
 
+
 # This string describes what the user will observe when the system
 # prioritizes search suggestions over browsing history in the results
 # that extend down from the address bar. In the original English string,
@@ -740,6 +751,10 @@ containers-remove-button =
 ## Waterfox Account - Signed out. Note that "Sync" and "Waterfox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
+
+## Waterfox account - Signed out. Note that "Sync" and "Waterfox account" are now
+## more discrete ("signed in" no longer means "and sync is connected").
+
 sync-signedout-caption = خُذ الوِب معك
 sync-signedout-description2 = زامن علاماتك، و تأريخك، و ألسنتك، و كلمات سرك، و إضافاتك و الإعدادات بين كل أجهزتك.
 
@@ -759,6 +774,9 @@ sync-mobile-promo = نزّل Waterfox لنظامي <img data-l10n-name="android-
 
 ## Waterfox Account - Signed in
 
+
+## Waterfox account - Signed in
+
 sync-profile-picture =
     .tooltiptext = غيّر صورة الحساب
 
@@ -769,8 +787,13 @@ sync-sign-out =
 sync-manage-account = أدِر الحساب
     .accesskey = س
 
+## Variables
+## $email (string) - Email used for Waterfox account
+
 sync-signedin-unverified = { $email } ليس مؤكّدًا.
 sync-signedin-login-failure = من فضلك لج لإعادة التوصيل { $email }
+
+##
 
 sync-resend-verification =
     .label = أعِد إرسال التأكيد
@@ -801,9 +824,14 @@ prefs-sync-now =
     .accesskeynotsyncing = م
     .labelsyncing = يُزامن…
 
-## The list of things currently syncing.
+prefs-sync-now-button =
+    .label = زامِن الآن
+    .accesskey = م
 
-sync-currently-syncing-heading = تُزامن الآن هذه المعلومات:
+prefs-syncing-button =
+    .label = يُزامن…
+
+## The list of things currently syncing.
 
 sync-currently-syncing-bookmarks = العلامات
 sync-currently-syncing-history = التأريخ
@@ -820,9 +848,9 @@ sync-change-options =
 
 ## The "Choose what to sync" dialog.
 
-sync-choose-what-to-sync-dialog =
+sync-choose-what-to-sync-dialog3 =
     .title = اختر ما تريد مزامنته
-    .style = width: 36em; min-height: 35em;
+    .style = min-width: 36em;
     .buttonlabelaccept = احفظ التغييرات
     .buttonaccesskeyaccept = ح
     .buttonlabelextra2 = اقطع الاتصال…
@@ -883,6 +911,16 @@ sync-device-name-save =
     .accesskey = ح
 
 sync-connect-another-device = صِلْ جهازا آخر
+
+## These strings are shown in a desktop notification after the
+## user requests we resend a verification email.
+
+sync-verification-sent-title = أُرسل رابط التأكّد
+# Variables:
+#   $email (String): Email address of user's Waterfox account.
+sync-verification-sent-body = أُرسل رابط تأكيد إلى { $email }.
+sync-verification-not-sent-title = تعذّر إرسال رسالة التأكيد
+sync-verification-not-sent-body = يتعذّر إرسال بريد التأكيد حاليًا، رجاء إعادة المحاولة لاحقًا.
 
 ## Privacy Section
 
@@ -1041,8 +1079,6 @@ sitedata-option-block-cross-site-tracking-cookies =
     .label = الكعكات التي تتعقّبك بين المواقع
 sitedata-option-block-unvisited =
     .label = الكعكات من المواقع غير المُزارة
-sitedata-option-block-all-third-party =
-    .label = كل كعكات الأطراف الثالثة (يمكن أن تعطب المواقع هكذا)
 sitedata-option-block-all =
     .label = كل الكعكات (يمكن أن تعطب المواقع هكذا)
 
@@ -1057,6 +1093,9 @@ sitedata-settings =
 sitedata-cookies-exceptions =
     .label = أدِر الاستثناءات…
     .accesskey = ت
+
+## Privacy Section - Cookie Banner Handling
+
 
 ## Privacy Section - Address Bar
 
@@ -1116,7 +1155,6 @@ content-blocking-etp-custom-desc = اختر المتعقّبات والسكرب�
 content-blocking-etp-blocking-desc = يحجب { -brand-short-name } الآتي:
 
 content-blocking-private-windows = المحتوى الذي يتعقّبك في النوافذ الخاصة
-content-blocking-cross-site-cookies-in-all-windows = الكعكات بين المواقع في كل النوافذ (بما فيها تلك التي تتعقّبك)
 content-blocking-cross-site-tracking-cookies = كعكات تتعقّبك بين المواقع
 content-blocking-all-cross-site-cookies-private-windows = الكعكات بين المواقع في النوافذ الخاصة
 content-blocking-cross-site-tracking-cookies-plus-isolate = المتعقّبات التي تعبر المواقع، واعزل بقية الكعكات
@@ -1124,9 +1162,10 @@ content-blocking-social-media-trackers = متعقبات مواقع التواص�
 content-blocking-all-cookies = كل الكعكات
 content-blocking-unvisited-cookies = الكعكات من المواقع غير المُزارة
 content-blocking-all-windows-tracking-content = المحتوى الذي يتعقّبك في كل النوافذ
-content-blocking-all-third-party-cookies = كل الكعكات من الأطراف الثالثة
 content-blocking-cryptominers = المُعدّنات المعمّاة
 content-blocking-fingerprinters = مسجّلات البصمات
+
+# The tcp-rollout strings are no longer used for the rollout but for tcp-by-default in the standard section
 
 content-blocking-etp-standard-tcp-rollout-learn-more = اطّلع على المزيد
 
@@ -1316,13 +1355,11 @@ httpsonly-radio-enabled-pbm =
 httpsonly-radio-disabled =
     .label = لا تفعّل وضع HTTPS فقط
 
+## DoH Section
+
+
 ## The following strings are used in the Download section of settings
 
 desktop-folder-name = سطح المكتب
 downloads-folder-name = التّنزيلات
 choose-download-folder-title = اختر مجلّد التّنزيلات:
-
-# Variables:
-#   $service-name (String) - Name of a cloud storage provider like Dropbox, Google Drive, etc...
-save-files-to-cloud-storage =
-    .label = احفظ الملفات في { $service-name }

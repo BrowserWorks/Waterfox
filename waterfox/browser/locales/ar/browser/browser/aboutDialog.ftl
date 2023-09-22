@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,8 +16,15 @@ update-updateButton =
     .accesskey = د
 
 update-checkingForUpdates = يلتمس التحديثات…
-update-downloading = <img data-l10n-name="icon"/>ينزل التحديث — <label data-l10n-name="download-status"/>
-update-downloading-message = يُنزّل التحديث — <label data-l10n-name="download-status"/>
+
+## Variables:
+##   $transfer (string) - Transfer progress.
+
+settings-update-downloading = <img data-l10n-name="icon"/>ينزل التحديث — <label data-l10n-name="download-status">{ $transfer }</label>
+aboutdialog-update-downloading = يُنزّل التحديث — <label data-l10n-name="download-status">{ $transfer }</label>
+
+##
+
 update-applying = يطبّق التحديث…
 
 update-failed = فشل التحديث. <label data-l10n-name="failed-link">نزّل أحدث نسخة</label>
@@ -27,13 +34,23 @@ update-adminDisabled = عطّلَ مدير النظام التحديثات
 update-noUpdatesFound = { -brand-short-name } مُحدَّث
 update-otherInstanceHandlingUpdates = يجري تحديث { -brand-short-name } في سيرورة أخرى
 
-update-manual = التحديثات متاحة في <label data-l10n-name="manual-link"/>
+## Variables:
+##   $displayUrl (String): URL to page with download instructions. Example: www.mozilla.org/firefox/nightly/
+
+aboutdialog-update-manual-with-link = التحديثات متاحة في <label data-l10n-name="manual-link">{ $displayUrl }</label>
+settings-update-manual-with-link = التحديثات متاحة في <a data-l10n-name="manual-link">{ $displayUrl }</a>
 
 update-unsupported = لا يمكنك إجراء أي تحديثات أخرى على هذا النظام. <label data-l10n-name="unsupported-link">اطّلع على المزيد</label>
 
 update-restarting = يُعيد التشغيل…
 
-channel-description = تتلقى التحديثات حاليًا من قناة <label data-l10n-name="current-channel"></label>.
+update-internal-error2 = تعذر التحقق من وجود تحديثات بسبب خطأ داخلي. التحديثات متاحة في <label data-l10n-name="manual-link">{ $displayUrl }</label>
+
+##
+
+# Variables:
+#   $channel (String): description of the update channel (e.g. "release", "beta", "nightly" etc.)
+aboutdialog-channel-description = تتلقى التحديثات حاليًا من قناة <label data-l10n-name="current-channel">{ $channel }</label>.
 
 warningDesc-version = { -brand-short-name } تجريبي و قد لا يكون مستقرا.
 

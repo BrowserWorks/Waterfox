@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -33,6 +33,8 @@ appmenuitem-print =
     .label = Skriv ut…
 appmenuitem-find-in-page =
     .label = Hitta på sidan…
+appmenuitem-translate =
+    .label = Översätt sida…
 appmenuitem-zoom =
     .value = Zoom
 appmenuitem-more-tools =
@@ -126,8 +128,7 @@ profiler-popup-button-recording =
 profiler-popup-button-capturing =
     .label = Profilerare
     .tooltiptext = Profileraren fångar en profil
-profiler-popup-title =
-    .value = { -profiler-brand-name }
+profiler-popup-header-text = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
     .aria-label = Avslöja mer information
 profiler-popup-description-title =
@@ -163,7 +164,7 @@ profiler-popup-capture-shortcut =
 
 
 # Presets and their l10n IDs are defined in the file
-# devtools/client/performance-new/popup/background.jsm.js
+# devtools/client/performance-new/shared/background.jsm.js
 # Please take care that the same values are also defined in devtools' perftools.ftl.
 
 profiler-popup-presets-web-developer-description = Rekommenderad förinställning för de flesta webbappfelsökningar, med lite pålägg.
@@ -192,8 +193,6 @@ profiler-popup-presets-custom-label =
 
 appmenu-manage-history =
     .label = Hantera historik
-appmenu-reopen-all-tabs = Återöppna alla flikar
-appmenu-reopen-all-windows = Återöppna alla fönster
 appmenu-restore-session =
     .label = Återställ föregående session
 appmenu-clear-history =
@@ -203,6 +202,9 @@ appmenu-recently-closed-tabs =
     .label = Nyligen stängda flikar
 appmenu-recently-closed-windows =
     .label = Nyligen stängda fönster
+# This allows to search through the browser's history.
+appmenu-search-history =
+    .label = Sökhistorik
 
 ## Help panel
 
@@ -222,6 +224,8 @@ appmenu-help-report-site-issue =
 appmenu-help-share-ideas =
     .label = Dela idéer och feedback...
     .accesskey = D
+appmenu-help-switch-device =
+    .label = Byta till en ny enhet
 
 ## appmenu-help-enter-troubleshoot-mode and appmenu-help-exit-troubleshoot-mode
 ## are mutually exclusive, so it's possible to use the same accesskey for both.

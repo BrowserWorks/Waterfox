@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -164,11 +164,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = Ouverture dans { $hours } h { $minutes } min…
-downloading-file-opens-in-minutes = Ouverture dans { $minutes } min…
-downloading-file-opens-in-minutes-and-seconds = Ouverture dans { $minutes } min { $seconds } s…
-downloading-file-opens-in-seconds = Ouverture dans { $seconds } s…
-downloading-file-opens-in-some-time = Ouverture lorsque le téléchargement sera terminé…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = Ouverture dans { $hours } h { $minutes } min…
+downloading-file-opens-in-minutes-2 =
+    .value = Ouverture dans { $minutes } min…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = Ouverture dans { $minutes } min { $seconds } s…
+downloading-file-opens-in-seconds-2 =
+    .value = Ouverture dans { $seconds } s…
+downloading-file-opens-in-some-time-2 =
+    .value = Ouverture lorsque le téléchargement sera terminé…
 downloading-file-click-to-open =
     .value = Ouvrir lorsque le téléchargement sera terminé
 
@@ -233,3 +238,17 @@ downloads-more-downloading =
         [one] { $count } téléchargement de fichier supplémentaire
        *[other] { $count } téléchargements de fichiers supplémentaires
     }
+
+## Download errors
+
+downloads-error-alert-title = Erreur de téléchargement
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = Ce téléchargement ne peut pas être enregistré car il est bloqué par { $extension }.
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = Ce téléchargement ne peut pas être enregistré car il est bloqué par une extension.
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    Le téléchargement ne peut pas être enregistré car une erreur inconnue est survenue.
+    
+    Veuillez essayer à nouveau.

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -36,7 +36,7 @@ toolbar-context-menu-remove-extension =
     .accesskey = R
 
 # This label is used in the extensions toolbar buttons context menus,
-# a user can use this command to submit to Waterfox an abuse report
+# a user can use this command to submit to BrowserWorks an abuse report
 # related to that extension. "Report" is a verb.
 toolbar-context-menu-report-extension =
     .label = Segnala estensione
@@ -63,6 +63,12 @@ toolbar-context-menu-view-customize-toolbar =
 toolbar-context-menu-view-customize-toolbar-2 =
     .label = Personalizza barra degli strumenti…
     .accesskey = P
+
+# This is only ever shown when toolbar-context-menu-pin-to-overflow-menu
+# is hidden, so they can share access keys.
+toolbar-context-menu-pin-to-toolbar =
+    .label = Aggiungi alla barra degli strumenti
+    .accesskey = A
 
 toolbar-context-menu-bookmarks-toolbar-always-show-2 =
     .label = Mostra sempre

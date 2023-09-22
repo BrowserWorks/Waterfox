@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,13 +34,6 @@ about-networking-messages-received = Ληφθέντα μηνύματα
 about-networking-bytes-sent = Απεσταλμένα byte
 about-networking-bytes-received = Ληφθέντα byte
 about-networking-logging = Καταγραφή
-about-networking-log-tutorial = Δείτε την <a data-l10n-name="logging">Καταγραφή HTTP</a> για οδηγίες σχετικά με τη χρήση αυτού του εργαλείου.
-about-networking-current-log-file = Τρέχον αρχείο καταγραφής:
-about-networking-current-log-modules = Τρέχουσες μονάδες καταγραφής:
-about-networking-set-log-file = Ορισμός αρχείου καταγραφής
-about-networking-set-log-modules = Ορισμός μονάδων καταγραφής
-about-networking-start-logging = Έναρξη καταγραφής
-about-networking-stop-logging = Τερματισμός καταγραφής
 about-networking-dns-lookup = Αναζήτηση DNS
 about-networking-dns-lookup-button = Επίλυση
 about-networking-dns-domain = Τομέας:
@@ -63,6 +56,8 @@ about-networking-rcwn-cache-slow = Αργή μέτρηση κρυφής μνήμ
 about-networking-rcwn-cache-not-slow = Μη αργή μέτρηση κρυφής μνήμης
 about-networking-networkid = ID δικτύου
 about-networking-networkid-id = ID δικτύου
+# Note: do not translate about:logging, as it is a URL.
+about-networking-moved-about-logging = Αυτή η σελίδα έχει μετακινηθεί στο <a data-l10n-name="about-logging-url">about:logging</a>.
 
 ## Link is intended as "network link"
 

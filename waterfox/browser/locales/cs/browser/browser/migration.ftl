@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,6 +60,9 @@ import-from-firefox =
 import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
 
 no-migration-sources = Nebyl nalezen žádný program, který by obsahoval záložky, historii nebo uložená hesla.
 
@@ -63,21 +72,17 @@ import-items-page-title = Importované položky
 import-items-description = Zvolte položky, které chcete importovat:
 
 import-permissions-page-title =
-    Udělte prosím { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "dat") }
-        [feminine] { -brand-short-name(case: "dat") }
-        [neuter] { -brand-short-name(case: "dat") }
-       *[other] aplikaci { -brand-short-name }
-    } oprávnění
+    { -brand-short-name.case-status ->
+        [with-cases] Udělte prosím { -brand-short-name(case: "dat") } oprávnění
+       *[no-cases] Udělte prosím aplikaci { -brand-short-name } oprávnění
+    }
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description =
-    macOS vyžaduje, abyste { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "dat") }
-        [feminine] { -brand-short-name(case: "dat") }
-        [neuter] { -brand-short-name(case: "dat") }
-       *[other] aplikaci { -brand-short-name }
-    } výslovně povolili přístup k záložkám ze Safari. Klikněte na „Pokračovat“ a v zobrazeném panelu Otevřít soubor vyberte soubor „Bookmarks.plist“.
+# Do not translate "Safari" (the name of the browser on Apple devices)
+import-safari-permissions-string =
+    { -brand-short-name.case-status ->
+        [with-cases] macOS vyžaduje, abyste { -brand-short-name(case: "dat") } výslovně povolili přístup k datům ze Safari. Klepněte na „Pokračovat“, v zobrazeném dialogu Finderu vyberte „Safari“ a pak klepněte na „Otevřít“.
+       *[no-cases] macOS vyžaduje, abyste aplikaci { -brand-short-name } výslovně povolili přístup k datům ze Safari. Klepněte na „Pokračovat“, v zobrazeném dialogu Finderu vyberte „Safari“ a pak klepněte na „Otevřít“.
+    }
 
 import-migrating-page-title = Probíhá import…
 
@@ -224,3 +229,8 @@ browser-data-session-checkbox =
     .label = Okna a panely
 browser-data-session-label =
     .value = Okna a panely
+
+browser-data-payment-methods-checkbox =
+    .label = Způsoby platby
+browser-data-payment-methods-label =
+    .value = Způsoby platby

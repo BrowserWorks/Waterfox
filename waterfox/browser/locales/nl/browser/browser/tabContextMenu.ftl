@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -54,9 +54,6 @@ unpin-selected-tabs =
 bookmark-selected-tabs =
     .label = Bladwijzer voor tabbladen maken…
     .accesskey = t
-bookmark-tab =
-    .label = Bladwijzer voor tabblad maken
-    .accesskey = t
 tab-context-bookmark-tab =
     .label = Bladwijzer voor tabblad maken…
     .accesskey = B
@@ -106,6 +103,7 @@ tab-context-move-tabs =
            *[other] Tabbladen verplaatsen
         }
     .accesskey = v
+
 tab-context-send-tabs-to-device =
     .label =
         { $tabCount ->

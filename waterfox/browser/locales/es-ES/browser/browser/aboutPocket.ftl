@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,14 +22,13 @@ pocket-panel-saved-page-removed = Página eliminada
 pocket-panel-saved-page-saved = Guardado en { -pocket-brand-name }
 pocket-panel-saved-page-saved-b = ¡Guardado en { -pocket-brand-name }!
 pocket-panel-saved-processing-remove = Eliminando página…
-pocket-panel-saved-removed = Página eliminada de mi lista
+pocket-panel-saved-removed-updated = Página eliminada de los elementos guardados
 pocket-panel-saved-processing-tags = Añadiendo etiquetas…
 pocket-panel-saved-remove-page = Eliminar página
 pocket-panel-saved-save-tags = Guardar
 pocket-panel-saved-saving-tags = Guardando…
 pocket-panel-saved-suggested-tags = Etiquetas sugeridas
 pocket-panel-saved-tags-saved = Etiquetas añadidas
-pocket-panel-signup-view-list = Ver lista
 
 # This is displayed above a field where the user can add tags
 pocket-panel-signup-add-tags = Añadir etiquetas:
@@ -47,13 +46,12 @@ pocket-panel-signup-tagline-story-one = Pulse el botón { -pocket-brand-name } p
 pocket-panel-signup-tagline-story-two = Véalo en { -pocket-brand-name } en cualquier dispositivo, en cualquier momento.
 
 pocket-panel-signup-cta-a-fix = Su botón de "guardar" para internet
-pocket-panel-signup-cta-b = Haga clic en el botón { -pocket-brand-name } para guardar artículos, vídeos y enlaces. Vea su lista en cualquier dispositivo, en cualquier momento.
+pocket-panel-signup-cta-b-updated = Haga clic en el botón { -pocket-brand-name } para guardar artículos, vídeos y enlaces. Vea su lista guardada en cualquier dispositivo, en cualquier momento.
 pocket-panel-signup-cta-b-short = Haga clic en el botón { -pocket-brand-name } para guardar artículos, vídeos y enlaces.
-pocket-panel-signup-cta-c = Vea su lista en cualquier dispositivo, en cualquier momento.
+pocket-panel-signup-cta-c-updated = Vea sus elementos guardados en cualquier dispositivo, en cualquier momento.
 
 ## about:pocket-home panel
 
-pocket-panel-home-my-list = Mi lista
 pocket-panel-home-welcome-back = Te damos de nuevo la bienvenida
 pocket-panel-home-paragraph = Puede usar { -pocket-brand-name } para explorar y guardar páginas web, artículos, vídeos, podcasts o regresar a lo que había estado leyendo.
 pocket-panel-home-explore-popular-topics = Explorar temas populares
@@ -67,7 +65,7 @@ pocket-panel-home-new-user-message = Consulte sus elementos guardados recienteme
 
 ## Pocket panel header component
 
-pocket-panel-header-my-list = Ver mi lista
+pocket-panel-header-my-saves = Ver mis elementos guardados
 pocket-panel-header-sign-in = Iniciar sesión
 
 ## Pocket panel buttons

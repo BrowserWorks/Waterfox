@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,6 +60,9 @@ import-from-firefox =
 import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
 
 no-migration-sources = Der blev ikke fundet nogen programmer, der indeholder bogmærker, historik eller adgangskoder.
 
@@ -64,8 +73,8 @@ import-items-description = Vælg hvilke objekter, der skal importeres:
 
 import-permissions-page-title = Giv { -brand-short-name } tilladelser
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = macOS kræver, at du giver { -brand-short-name } eksplicit tilladelse til at tilgå bogmærker i Safari. Klik på "Fortsæt" og vælg filen "Bookmarks.plist" i det viste Åbn fil-panel.
+# Do not translate "Safari" (the name of the browser on Apple devices)
+import-safari-permissions-string = MacOS kræver, at du giver { -brand-short-name } eksplicit tilladelse til at tilgå data i Safari. Klik på "Fortsæt", vælg mappen "Safari" i Finder-vinduet, der dukker op, og klik så på "Åbn".
 
 import-migrating-page-title = Importerer…
 
@@ -158,3 +167,8 @@ browser-data-session-checkbox =
     .label = Vinduer og faneblade
 browser-data-session-label =
     .value = Vinduer og faneblade
+
+browser-data-payment-methods-checkbox =
+    .label = Betalingsmetoder
+browser-data-payment-methods-label =
+    .value = Betalingsmetoder

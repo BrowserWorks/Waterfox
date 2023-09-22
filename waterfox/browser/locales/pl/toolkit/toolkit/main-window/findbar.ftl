@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -36,3 +36,43 @@ findbar-entire-word =
     .label = Całe słowa
     .accesskey = C
     .tooltiptext = Wyszukuj tylko całe słowa
+
+findbar-not-found = Szukany tekst nie został odnaleziony.
+
+findbar-wrapped-to-top = Koniec strony. Wyszukiwanie od początku.
+findbar-wrapped-to-bottom = Początek strony. Wyszukiwanie od końca.
+
+findbar-normal-find =
+    .placeholder = Znajdź na stronie
+findbar-fast-find =
+    .placeholder = Znajdź szybko
+findbar-fast-find-links =
+    .placeholder = Znajdź szybko (tylko odnośniki)
+
+findbar-case-sensitive-status =
+    .value = (z rozróżnianiem wielkości liter)
+findbar-match-diacritics-status =
+    .value = (z rozróżnianiem liter diakrytyzowanych)
+findbar-entire-word-status =
+    .value = (tylko całe słowa)
+
+# Variables:
+#   $current (Number): Index of the currently selected match
+#   $total (Number): Total count of matches
+findbar-found-matches =
+    .value =
+        { $total ->
+            [one] Jedyne trafienie
+            [few] { $current }. z { $total } trafień
+           *[many] { $current }. z { $total } trafień
+        }
+
+# Variables:
+#   $limit (Number): Total count of matches allowed before counting stops
+findbar-found-matches-count-limit =
+    .value =
+        { $limit ->
+            [one] Więcej niż jedno trafienie
+            [few] Więcej niż { $limit } trafienia
+           *[many] Więcej niż { $limit } trafień
+        }

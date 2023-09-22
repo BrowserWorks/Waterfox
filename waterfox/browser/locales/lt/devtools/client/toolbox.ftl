@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -32,4 +32,6 @@ toolbox-meatball-menu-pseudo-locale-accented = Įjungti „kirčiuotą“ lokal�
 toolbox-meatball-menu-pseudo-locale-bidi = Įjungti „dvikryptę“ lokalę
 
 ##
+
+## These labels are shown in the top-toolbar in the Browser Toolbox and Browser Console
 

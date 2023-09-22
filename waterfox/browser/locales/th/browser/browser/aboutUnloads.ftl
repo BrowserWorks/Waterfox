@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -35,8 +35,8 @@ about-unloads-column-sortweight = น้ำหนักรอง
     .title = หากพร้อมใช้งาน แท็บจะถูกเรียงลำดับตามค่านี้หลังจากที่เรียงลำดับตามน้ำหนักฐานแล้ว ค่านี้มาจากการใช้หน่วยความจำของแท็บและจำนวนกระบวนการ
 about-unloads-column-memory = หน่วยความจำ
     .title = การใช้หน่วยความจำโดยประมาณของแท็บ
-about-unloads-column-processes = ID กระบวนการ
-    .title = ID ของกระบวนการที่โฮสต์เนื้อหาของแท็บ
+about-unloads-column-processes = ID โปรเซส
+    .title = ID ของโปรเซสที่โฮสต์เนื้อหาของแท็บ
 
 about-unloads-last-accessed = { DATETIME($date, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric", hour12: "false") }
 about-unloads-memory-in-mb = { NUMBER($mem, maxFractionalUnits: 2) } MB

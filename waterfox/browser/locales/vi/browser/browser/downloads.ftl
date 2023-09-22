@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -164,11 +164,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = Sẽ mở sau { $hours } giờ { $minutes } phút…
-downloading-file-opens-in-minutes = Sẽ mở sau { $minutes } phút…
-downloading-file-opens-in-minutes-and-seconds = Sẽ mở sau { $minutes } phút { $seconds } giây…
-downloading-file-opens-in-seconds = Sẽ mở sau { $seconds } giây…
-downloading-file-opens-in-some-time = Sẽ mở sau khi hoàn thành…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = Sẽ mở sau { $hours } giờ { $minutes } phút…
+downloading-file-opens-in-minutes-2 =
+    .value = Sẽ mở sau { $minutes } phút…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = Sẽ mở sau { $minutes } phút { $seconds } giây…
+downloading-file-opens-in-seconds-2 =
+    .value = Sẽ mở sau { $seconds } giây…
+downloading-file-opens-in-some-time-2 =
+    .value = Sẽ mở sau khi hoàn thành…
 downloading-file-click-to-open =
     .value = Mở khi hoàn thành
 
@@ -231,3 +236,17 @@ downloads-more-downloading =
     { $count ->
        *[other] { $count } tập tin khác đang tải xuống
     }
+
+## Download errors
+
+downloads-error-alert-title = Lỗi Tải Xuống
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = Không thể lưu tải xuống vì bị chặn bởi { $extension }.
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = Không thể lưu tải xuống do bị chặn bởi tiện ích mở rộng.
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    Không thể lưu tập tin tải xuống vì có lỗi xảy ra.
+    
+    Vui lòng thử lại lần nữa.

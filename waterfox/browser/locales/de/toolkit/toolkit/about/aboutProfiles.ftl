@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 profiles-title = Über Profile
 profiles-subtitle = Diese Seite hilft Ihnen beim Verwalten Ihrer Profile. Jedes Profil stellt eine eigene Umgebung dar, in der Chronik, Lesezeichen, Einstellungen und Add-ons unabhängig von anderen Profilen sind.
-profiles-create = Neues Profil anlegen
+profiles-create = Neues Profil erstellen
 profiles-restart-title = Neu starten
 profiles-restart-in-safe-mode = Mit deaktivierten Add-ons neu starten…
 profiles-restart-normal = Normal neu starten…

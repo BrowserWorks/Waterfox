@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -86,38 +86,6 @@ main-context-menu-page-save =
 
 ## Simple menu items
 
-main-context-menu-bookmark-add =
-    .aria-label = Добавить страницу в закладки
-    .accesskey = з
-    .tooltiptext = Добавить страницу в закладки
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-edit-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-add-mac =
-    .label = Добавить страницу в закладки
-    .accesskey = з
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-add-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-edit-mac =
-    .label = Изменить закладку
-    .accesskey = И
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the add bookmark command.
-main-context-menu-bookmark-add-with-shortcut =
-    .aria-label = Добавить страницу в закладки
-    .accesskey = з
-    .tooltiptext = Добавить страницу в закладки ({ $shortcut })
-main-context-menu-bookmark-change =
-    .aria-label = Изменить закладку
-    .accesskey = И
-    .tooltiptext = Изменить закладку
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the edit bookmark command.
-main-context-menu-bookmark-change-with-shortcut =
-    .aria-label = Изменить закладку
-    .accesskey = И
-    .tooltiptext = Изменить закладку ({ $shortcut })
 main-context-menu-bookmark-page =
     .aria-label = Добавить страницу в закладки…
     .accesskey = а
@@ -165,9 +133,6 @@ main-context-menu-open-link-new-window =
 main-context-menu-open-link-new-private-window =
     .label = Открыть ссылку в новом приватном окне
     .accesskey = п
-main-context-menu-bookmark-link =
-    .label = Добавить ссылку в закладки
-    .accesskey = з
 main-context-menu-bookmark-link-2 =
     .label = Добавить ссылку в закладки…
     .accesskey = ы
@@ -183,14 +148,19 @@ main-context-menu-save-link-to-pocket =
 ## are mutually exclusive.
 
 main-context-menu-copy-email =
-    .label = Копировать адрес электронной почты
-    .accesskey = К
+    .label = Скопировать адрес электронной почты
+    .accesskey = а
 main-context-menu-copy-phone =
-    .label = Копировать номер телефона
+    .label = Скопировать номер телефона
     .accesskey = н
 main-context-menu-copy-link-simple =
-    .label = Копировать ссылку
-    .accesskey = К
+    .label = Скопировать ссылку
+    .accesskey = ы
+# This command copies the link, removing additional
+# query parameters used to track users across sites.
+main-context-menu-strip-on-share-link =
+    .label = Скопировать ссылку без отслеживания сайтом
+    .accesskey = н
 
 ## Media (video/audio) controls
 ##
@@ -263,16 +233,16 @@ main-context-menu-video-view-new-tab =
     .label = Открыть видео в новой вкладке
     .accesskey = и
 main-context-menu-image-copy =
-    .label = Копировать изображение
-    .accesskey = и
+    .label = Скопировать изображение
+    .accesskey = ж
 main-context-menu-image-copy-link =
-    .label = Копировать ссылку на изображение
-    .accesskey = р
+    .label = Скопировать ссылку на изображение
+    .accesskey = б
 main-context-menu-video-copy-link =
-    .label = Копировать ссылку на видео
+    .label = Скопировать ссылку на видео
     .accesskey = в
 main-context-menu-audio-copy-link =
-    .label = Копировать ссылку на аудио
+    .label = Скопировать ссылку на аудио
     .accesskey = д
 main-context-menu-image-save-as =
     .label = Сохранить изображение как…
@@ -284,8 +254,8 @@ main-context-menu-image-set-image-as-background =
     .label = Сделать фоновым рисунком рабочего стола…
     .accesskey = у
 main-context-menu-image-copy-text =
-    .label = Копировать текст из изображения
-    .accesskey = ж
+    .label = Скопировать текст из изображения
+    .accesskey = е
 main-context-menu-image-info =
     .label = Информация об изображении
     .accesskey = з
@@ -307,12 +277,6 @@ main-context-menu-video-email =
 main-context-menu-audio-email =
     .label = Отправить аудио по почте…
     .accesskey = а
-main-context-menu-plugin-play =
-    .label = Включить этот плагин
-    .accesskey = ю
-main-context-menu-plugin-hide =
-    .label = Скрыть этот плагин
-    .accesskey = к
 main-context-menu-save-to-pocket =
     .label = Сохранить страницу в { -pocket-brand-name }
     .accesskey = ь
@@ -333,6 +297,9 @@ main-context-menu-use-saved-password =
 
 ##
 
+main-context-menu-use-relay-mask =
+    .label = Использовать псевдоним эл. почты { -relay-brand-short-name }
+    .accesskey = н
 main-context-menu-suggest-strong-password =
     .label = Предложить надежный пароль…
     .accesskey = ж
@@ -360,9 +327,6 @@ main-context-menu-frame-open-window =
 main-context-menu-frame-reload =
     .label = Обновить фрейм
     .accesskey = и
-main-context-menu-frame-bookmark =
-    .label = Добавить фрейм в закладки
-    .accesskey = б
 main-context-menu-frame-add-bookmark =
     .label = Добавить фрейм в закладки…
     .accesskey = й
@@ -378,9 +342,6 @@ main-context-menu-frame-view-source =
 main-context-menu-frame-view-info =
     .label = Информация о фрейме
     .accesskey = ц
-main-context-menu-print-selection =
-    .label = Печать выделенной области
-    .accesskey = ы
 main-context-menu-print-selection-2 =
     .label = Печать выделенной области…
     .accesskey = о
@@ -388,11 +349,11 @@ main-context-menu-view-selection-source =
     .label = Исходный код выделенного фрагмента
     .accesskey = д
 main-context-menu-take-screenshot =
-    .label = Сделать скриншот
-    .accesskey = ш
+    .label = Сделать снимок экрана
+    .accesskey = э
 main-context-menu-take-frame-screenshot =
-    .label = Сделать скриншот
-    .accesskey = ш
+    .label = Сделать снимок экрана
+    .accesskey = н
 main-context-menu-view-page-source =
     .label = Исходный код страницы
     .accesskey = о

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,6 +9,7 @@ refresh-profile-dialog-description = 透過還原回預設選項，來修正效�
 refresh-profile = 保養一下 { -brand-short-name }
 refresh-profile-button = 重新整理 { -brand-short-name }…
 refresh-profile-learn-more = 了解更多
+
 refresh-profile-progress =
     .title = 重新整理 { -brand-short-name }
 refresh-profile-progress-description = 快完成了…

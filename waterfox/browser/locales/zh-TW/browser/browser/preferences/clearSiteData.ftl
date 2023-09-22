@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-clear-site-data-window =
+clear-site-data-window2 =
     .title = 清除資料
-    .style = width: 35em
+    .style = min-width: 35em
 
 clear-site-data-description = 清除 { -brand-short-name } 儲存的所有 Cookie 與網站資料可能會將您從許多網站登出，並清除網頁離線內容。單純清除快取資料則不會影響登入狀態。
 

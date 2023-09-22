@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,10 +22,12 @@ about-private-browsing-not-private = En este momento no estás en una ventana pr
 about-private-browsing-info-description-private-window = Ventana privada: { -brand-short-name } borra tu historial de búsqueda y navegación cuando cierras todas las ventanas privadas. Esto no te hace anónimo.
 about-private-browsing-info-description-simplified = { -brand-short-name } borra tu historial de búsqueda y navegación al cerrar todas las ventanas privadas, pero esto no le hace anónimo.
 about-private-browsing-learn-more-link = Saber más
+
 about-private-browsing-hide-activity = Oculta tu actividad y ubicación, donde sea que estés navegando
 about-private-browsing-get-privacy = Obtén protecciones de privacidad dondequiera que navegues
 about-private-browsing-hide-activity-1 = Oculta la actividad de navegación y la ubicación con { -mozilla-vpn-brand-name }. Un clic crea una conexión segura, incluso en Wi-Fi público.
 about-private-browsing-prominent-cta = Mantente privado con { -mozilla-vpn-brand-name }
+
 about-private-browsing-focus-promo-cta = Descargar { -focus-brand-name }
 about-private-browsing-focus-promo-header = { -focus-brand-name }: Navegación privada en cualquier lugar
 about-private-browsing-focus-promo-text = Nuestra app dedicada a una navegación privada limpia tu historial y cookies.
@@ -36,6 +38,7 @@ about-private-browsing-focus-promo-header-b = Lleva la navegación privada en tu
 about-private-browsing-focus-promo-text-b = Usa { -focus-brand-name } para aquellas búsquedas privadas que no quieres que el navegador principal de tu celular vea.
 about-private-browsing-focus-promo-header-c = Privacidad de nivel superior en dispositivos móviles
 about-private-browsing-focus-promo-text-c = { -focus-brand-name } siempre limpia tu historial cada vez que bloquea anuncios y rastreadores.
+
 # This string is the title for the banner for search engine selection
 # in a private window.
 # Variables:
@@ -48,6 +51,7 @@ about-private-browsing-search-banner-description =
     }
 about-private-browsing-search-banner-close-button =
     .aria-label = Cerrar
+
 about-private-browsing-promo-close-button =
     .title = Cerrar
 
@@ -60,3 +64,11 @@ about-private-browsing-pin-promo-link-text =
        *[other] Fijar en la barra de tareas
     }
 about-private-browsing-pin-promo-title = Sin cookies guardadas ni historial, directamente desde tu escritorio. Navega como si nadie te estuviera mirando.
+
+## Strings used in a promotion message for cookie banner reduction
+
+# Simplified version of the headline if the original text doesn't work
+# in your language: `See fewer cookie requests`.
+about-private-browsing-cookie-banners-promo-header = ¡Se acabaron los banners de cookies!
+about-private-browsing-cookie-banners-promo-button = Reducir banners de cookies
+about-private-browsing-cookie-banners-promo-message = Dejar que { -brand-short-name } responda automáticamente las ventanas emergentes de cookies para que pueda volver a navegar sin distracciones. { -brand-short-name } rechazará todas las solicitudes si es posible.

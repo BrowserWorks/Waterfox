@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,4 @@ screenshots-private-window-error-details = Atsiprašome už nepatogumą. Mes dir
 
 screenshots-generic-error-title = Oi! „{ -screenshots-brand-name }“ sugedo.
 screenshots-generic-error-details = Mes nesame tikri, kas ką tik nutiko. Norite pabandyti dar kartą arba nufotografuoti kitą tinklalapį?
+

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -86,8 +86,8 @@ menu-file-save-page =
     .label = Enregistrer sous…
     .accesskey = E
 menu-file-email-link =
-    .label = Envoyer par courriel un lien vers la page…
-    .accesskey = c
+    .label = Envoyer par e-mail un lien vers la page…
+    .accesskey = m
 menu-file-share-url =
     .label = Partager
     .accesskey = P
@@ -180,6 +180,17 @@ menu-view-full-screen =
     .label = Plein écran
     .accesskey = P
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Passer en mode lecture
+    .accesskey = r
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Quitter le mode lecture
+    .accesskey = r
+
 ##
 
 menu-view-show-all-tabs =
@@ -208,8 +219,9 @@ menu-history-undo-menu =
     .label = Onglets récemment fermés
 menu-history-undo-window-menu =
     .label = Fenêtres récemment fermées
-menu-history-reopen-all-tabs = Rouvrir tous les onglets
-menu-history-reopen-all-windows = Rouvrir toutes les fenêtres
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = Rechercher dans l’historique
 
 ## Bookmarks Menu
 
@@ -218,14 +230,13 @@ menu-bookmarks-menu =
     .accesskey = M
 menu-bookmarks-manage =
     .label = Organiser les marque-pages
-menu-bookmark-current-tab =
-    .label = Marquer l’onglet courant
-menu-bookmark-edit =
-    .label = Modifier ce marque-page
 menu-bookmark-tab =
     .label = Marquer l’onglet courant…
 menu-edit-bookmark =
     .label = Modifier ce marque-page…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = Rechercher des marque-pages
 menu-bookmarks-all-tabs =
     .label = Marquer tous les onglets…
 menu-bookmarks-toolbar =
@@ -319,6 +330,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = Désactiver le mode de dépannage
     .accesskey = m
+menu-help-switch-device =
+    .label = Passer à un nouvel appareil
+    .accesskey = n
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =

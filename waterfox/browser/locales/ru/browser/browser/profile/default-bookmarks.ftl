@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,10 +38,10 @@ default-bookmarks-nightly-heading = Ресурсы Waterfox Nightly
 default-bookmarks-nightly-blog = Блог Waterfox Nightly
 
 # Nightly builds only, link title for https://bugzilla.mozilla.org/
-default-bookmarks-bugzilla = Система отслеживания ошибок Waterfox
+default-bookmarks-bugzilla = Система отслеживания ошибок BrowserWorks
 
 # Nightly builds only, link title for https://developer.mozilla.org/
-default-bookmarks-mdn = Сеть разработчиков Waterfox
+default-bookmarks-mdn = Сеть разработчиков BrowserWorks
 
 # Nightly builds only, link title for https://addons.mozilla.org/firefox/addon/nightly-tester-tools/
 default-bookmarks-nightly-tester-tools = Nightly Tester Tools
@@ -50,4 +50,4 @@ default-bookmarks-nightly-tester-tools = Nightly Tester Tools
 default-bookmarks-crashes = Все ваши падения
 
 # Nightly builds only, link title for https://planet.mozilla.org/
-default-bookmarks-planet = Планета Waterfox
+default-bookmarks-planet = Планета BrowserWorks

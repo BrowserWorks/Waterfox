@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,6 +26,9 @@ policy-Bookmarks = 在书签工具栏，书签菜单或特定文件夹中创建�
 policy-CaptivePortal = 启用或禁用强制门户支持。
 policy-CertificatesDescription = 添加证书或使用内置的证书。
 policy-Cookies = 允许或拒绝网站设置 Cookie。
+# Containers in this context is referring to container tabs in Waterfox.
+policy-Containers = 设置身份标签页相关策略。
+policy-DisableAccounts = 禁用基于账户的服务，包括同步。
 policy-DisabledCiphers = 禁用加密算法。
 policy-DefaultDownloadDirectory = 设置默认下载目录。
 policy-DisableAppUpdate = 阻止浏览器更新。
@@ -41,7 +44,7 @@ policy-DisableForgetButton = 阻止使用“忘记”功能。
 policy-DisableFormHistory = 不要记住搜索和表单的历史记录。
 policy-DisablePrimaryPasswordCreation = 若为 true，将无法创建主密码。
 policy-DisablePasswordReveal = 阻止密码在列表中明文显示
-policy-DisablePocket = 禁用保存网页到 Pocket 的功能。
+policy-DisablePocket2 = 禁用保存网页到 { -pocket-brand-name } 的功能。
 policy-DisablePrivateBrowsing = 禁用隐私浏览功能。
 policy-DisableProfileImport = 禁用自其他浏览器导入数据的菜单命令。
 policy-DisableProfileRefresh = 禁用 about:support 页面中的“翻新 { -brand-short-name }”按钮。
@@ -50,6 +53,7 @@ policy-DisableSecurityBypass = 阻止用户绕过某些安全性警告。
 policy-DisableSetAsDesktopBackground = 禁用将图像“设为桌面背景”的菜单命令。
 policy-DisableSystemAddonUpdate = 阻止浏览器安装或更新“系统附加组件”。
 policy-DisableTelemetry = 关闭“遥测”组件。
+policy-DisableThirdPartyModuleBlocking = 防止用户屏蔽注入 { -brand-short-name } 进程的第三方模块。
 policy-DisplayBookmarksToolbar = 默认显示书签工具栏。
 policy-DisplayMenuBar = 默认显示菜单栏。
 policy-DNSOverHTTPS = 配置基于 HTTPS 的 DNS。
@@ -66,9 +70,8 @@ policy-ExemptDomainFileTypePairsFromFileTypeDownloadWarnings = 针对指定域�
 policy-Extensions = 安装，移除或锁定扩展。安装选项可将网址或路径作为参数。移除和锁定选项则需要扩展 ID 作为参数。
 policy-ExtensionSettings = 管理扩展的各种安装设置。
 policy-ExtensionUpdate = 启用或禁用扩展自动更新。
-policy-WaterfoxHome = 配置 Waterfox 主页。
 policy-WaterfoxHome2 = 配置 { -firefox-home-brand-name }。
-policy-FlashPlugin = 允许或拒绝使用 Flash 插件。
+policy-WaterfoxSuggest = 配置 { -firefox-suggest-brand-name }
 policy-GoToIntranetSiteForSingleWordEntryInAddressBar = 在地址栏输入单个词条时，强制导航至内部网站，而非进行网上搜索。
 policy-Handlers = 配置默认应用程序处理方式。
 policy-HardwareAcceleration = 若为 false，将会关闭硬件加速。
@@ -110,8 +113,8 @@ policy-SanitizeOnShutdown2 = 关机时，清除上网数据。
 policy-SearchBar = 设置搜索栏的默认位置，用户仍可自定义。
 policy-SearchEngines = 配置搜索引擎设置。此策略仅适用于延长支持版（ESR）。
 policy-SearchSuggestEnabled = 启用或禁用搜索建议。
-# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
-policy-SecurityDevices = 安装 PKCS #11 模块。
+# For more information, see https://wikipedia.org/wiki/PKCS_11
+policy-SecurityDevices2 = 添加或删除 PKCS #11 模块。
 policy-ShowHomeButton = 在工具栏显示“主页”按钮
 policy-SSLVersionMax = 设置最高 SSL 版本。
 policy-SSLVersionMin = 设置最低 SSL 版本。

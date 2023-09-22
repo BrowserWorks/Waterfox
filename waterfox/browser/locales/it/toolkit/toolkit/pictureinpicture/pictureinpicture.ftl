@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,57 +7,73 @@ pictureinpicture-player-title = Picture-in-Picture
 ## Variables:
 ##   $shortcut (String) - Keyboard shortcut to execute the command.
 
-pictureinpicture-pause-cmd =
-  .aria-label = Pausa
-  .title = Pausa (barra spaziatrice)
-pictureinpicture-play-cmd =
-  .aria-label = Riproduci
-  .title = Riproduci (barra spaziatrice)
+## Note that this uses .tooltip rather than the standard '.title'
+## or '.tooltiptext' -  but it has the same effect. Code in the
+## picture-in-picture window will read and copy this to an in-document
+## DOM node that then shows the tooltip.
+##
+## Variables:
+##   $shortcut (String) - Keyboard shortcut to execute the command.
 
-pictureinpicture-mute-cmd =
-  .aria-label = Disattiva audio
-  .title = Disattiva audio ({ $shortcut })
-pictureinpicture-unmute-cmd =
-  .aria-label = Attiva audio
-  .title = Attiva audio ({ $shortcut })
+pictureinpicture-pause-btn =
+    .aria-label = Pausa
+    .tooltip = Pausa (barra spaziatrice)
+pictureinpicture-play-btn =
+    .aria-label = Riproduci
+    .tooltip = Riproduci (barra spaziatrice)
 
-pictureinpicture-unpip-cmd =
-  .aria-label = Rimanda alla scheda
-  .title = Rimanda alla scheda
+pictureinpicture-mute-btn =
+    .aria-label = Disattiva audio
+    .tooltip = Disattiva audio ({ $shortcut })
+pictureinpicture-unmute-btn =
+    .aria-label = Attiva audio
+    .tooltip = Attiva audio ({ $shortcut })
 
-pictureinpicture-close-cmd =
-  .aria-label = Chiudi
-  .title = Chiudi ({ $shortcut })
+pictureinpicture-unpip-btn =
+    .aria-label = Rimanda alla scheda
+    .tooltip = Rimanda alla scheda
 
-pictureinpicture-subtitles-cmd =
-  .aria-label = Sottotitoli
-  .title = Sottotitoli
+pictureinpicture-close-btn =
+    .aria-label = Chiudi
+    .tooltip = Chiudi ({ $shortcut })
+
+pictureinpicture-subtitles-btn =
+    .aria-label = Sottotitoli
+    .tooltip = Sottotitoli
+
+pictureinpicture-fullscreen-btn2 =
+    .aria-label = Schermo intero
+    .tooltip = Schermo intero (doppio clic o { $shortcut })
+
+pictureinpicture-exit-fullscreen-btn2 =
+    .aria-label = Esci da schermo intero
+    .tooltip = Esci da schermo intero (doppio clic o { $shortcut })
 
 ##
 
-pictureinpicture-fullscreen-cmd =
-  .aria-label = Schermo intero
-  .title = Schermo intero (doppio clic)
+# Keyboard shortcut to toggle fullscreen mode when Picture-in-Picture is open.
+pictureinpicture-toggle-fullscreen-shortcut =
+  .key = F
 
-pictureinpicture-exit-fullscreen-cmd =
-  .aria-label = Esci da schermo intero
-  .title = Esci da schermo intero (doppio clic)
+## Note that this uses .tooltip rather than the standard '.title'
+## or '.tooltiptext' -  but it has the same effect. Code in the
+## picture-in-picture window will read and copy this to an in-document
+## DOM node that then shows the tooltip.
 
-pictureinpicture-pause =
-    .aria-label = Pausa
-pictureinpicture-play =
-    .aria-label = Riproduci
+pictureinpicture-seekbackward-btn =
+    .aria-label = Indietro
+    .tooltip = Indietro (←)
 
-pictureinpicture-mute =
-    .aria-label = Disattiva audio
-pictureinpicture-unmute =
-    .aria-label = Attiva audio
+pictureinpicture-seekforward-btn =
+    .aria-label = Avanti
+    .tooltip = Avanti (→)
 
-pictureinpicture-unpip =
-  .aria-label = Rimanda alla scheda
+##
 
-pictureinpicture-close =
-  .aria-label = Chiudi
+# This string is never displayed on the window. Is intended to be announced by
+# a screen reader whenever a user opens the subtitles settings panel
+# after selecting the subtitles button.
+pictureinpicture-subtitles-panel-accessible = Impostazioni sottotitoli
 
 pictureinpicture-subtitles-label = Sottotitoli
 
@@ -68,3 +84,4 @@ pictureinpicture-font-size-small = Piccola
 pictureinpicture-font-size-medium = Media
 
 pictureinpicture-font-size-large = Grande
+

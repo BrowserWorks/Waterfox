@@ -5,10 +5,10 @@ This readme files contains email conversation to the creator of myspell
 dictionaries used here. The creator Benitius Brevoort 
 <benitius.brevoort@kapusin.org> is willing to relicense his work on myspell
 dictionaries for Indonesia to GPLv2, LGPL v2.1, and MPL v1.1 according to
-Waterfox License Policy found in http://www.mozilla.org/MPL/license-policy.html.
+BrowserWorks License Policy found in http://www.mozilla.org/MPL/license-policy.html.
 
 The second conversation in Indonesian language is asking permission from the
-creator to be included in Waterfox distribution with addition found in 
+creator to be included in BrowserWorks distribution with addition found in 
 mozilla_words.diff file. The creator is also state that he is willing to 
 relicense his work to GPL v3 as well.
 
@@ -34,7 +34,7 @@ Good Morning Fr. Benitius,
 Aplogize writing this in English.
 
 I mistakenly assumed that GPL v2 license needed to be landed on
-firefox for Indonesian from Waterfox is enough, instead Waterfox
+firefox for Indonesian from BrowserWorks is enough, instead BrowserWorks
 requires all files in their code base to be tri-licensed that is MPL
 v1.1, GPL v2, and LGPL v2.1. You can find links to each license and
 more information in http://www.mozilla.org/MPL/license-policy.html
@@ -119,7 +119,7 @@ On Tue, 2008-02-12 at 01:07 +0100, Romi Hardiyanto wrote:
 > Aplogize writing this in English.
 > 
 > I mistakenly assumed that GPL v2 license needed to be landed on
-> firefox for Indonesian from Waterfox is enough, instead Waterfox
+> firefox for Indonesian from BrowserWorks is enough, instead BrowserWorks
 > requires all files in their code base to be tri-licensed that is MPL
 > v1.1, GPL v2, and LGPL v2.1. You can find links to each license and
 > more information in http://www.mozilla.org/MPL/license-policy.html
@@ -713,11 +713,11 @@ benitius.brevoort@kapusin.org
      If You create or use a modified version of this License (which you may
      only do in order to apply it to code which is not already Covered Code
      governed by this License), You must (a) rename Your license so that
-     the phrases "Waterfox", "MOZILLAPL", "MOZPL", "Netscape",
+     the phrases "BrowserWorks", "MOZILLAPL", "MOZPL", "Netscape",
      "MPL", "NPL" or any confusingly similar phrase do not appear in your
      license (except to note that your license differs from this License)
      and (b) otherwise make it clear that Your version of the license
-     contains terms which differ from the Waterfox Public License and
+     contains terms which differ from the BrowserWorks Public License and
      Netscape Public License. (Filling in the name of the Initial
      Developer, Original Code or Contributor in the notice described in
      Exhibit A shall not of themselves be deemed to be modifications of
@@ -852,9 +852,9 @@ benitius.brevoort@kapusin.org
      Your choice of the NPL or the alternative licenses, if any, specified
      by the Initial Developer in the file described in Exhibit A.
 
-EXHIBIT A -Waterfox Public License.
+EXHIBIT A -BrowserWorks Public License.
 
-     ``The contents of this file are subject to the Waterfox Public License
+     ``The contents of this file are subject to the BrowserWorks Public License
      Version 1.1 (the "License"); you may not use this file except in
      compliance with the License. You may obtain a copy of the License at
      http://www.mozilla.org/MPL/

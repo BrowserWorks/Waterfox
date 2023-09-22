@@ -1,14 +1,16 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
 
 about-logins-page-title = Info Masuk dan Kata Sandi
 
-login-filter =
+about-logins-login-filter =
     .placeholder = Cari Info Masuk
+    .key = F
 
-create-login-button = Buat Info Masuk Baru
+create-new-login-button =
+    .title = Buat info masuk baru
 
 fxaccounts-sign-in-text = Dapatkan kata sandi Anda di perangkat lain
 fxaccounts-sign-in-sync-button = Masuk untuk sinkronisasi
@@ -35,10 +37,16 @@ about-logins-menu-menuitem-help = Bantuan
 
 login-list =
     .aria-label = Info masuk yang cocok dengan permintaan pencarian
+# Variables
+#   $count (number) - Number of logins
 login-list-count =
     { $count ->
        *[other] { $count } info masuk
     }
+# Variables
+#   $count (number) - Number of filtered logins
+#   $total (number) - Total number of logins
+login-list-filtered-count = { $count } dari { $total } info masuk
 login-list-sort-label-text = Urutkan berdasarkan:
 login-list-name-option = Nama (A-Z)
 login-list-name-reverse-option = Nama (Z-A)
@@ -98,9 +106,17 @@ login-item-copied-password-button-text = Tersalin!
 login-item-save-changes-button = Simpan Perubahan
 login-item-save-new-button = Simpan
 login-item-cancel-button = Batal
-login-item-time-changed = Terakhir diubah: { DATETIME($timeChanged, day: "numeric", month: "long", year: "numeric") }
-login-item-time-created = Dibuat: { DATETIME($timeCreated, day: "numeric", month: "long", year: "numeric") }
-login-item-time-used = Terakhir digunakan: { DATETIME($timeUsed, day: "numeric", month: "long", year: "numeric") }
+
+## The date is displayed in a timeline showing the password evolution.
+## A label is displayed under the date to describe the type of change.
+## (e.g. updated, created, etc.)
+
+# Variables
+#   $datetime (date) - Event date
+login-item-timeline-point-date = { DATETIME($datetime, day: "numeric", month: "short", year: "numeric") }
+login-item-timeline-action-created = Dibuat
+login-item-timeline-action-updated = Diperbarui
+login-item-timeline-action-used = Digunakan
 
 ## OS Authentication dialog
 
@@ -151,6 +167,9 @@ about-logins-confirm-remove-dialog-title = Hapus info masuk ini?
 confirm-delete-dialog-message = Tindakan ini tidak dapat diurungkan.
 about-logins-confirm-remove-dialog-confirm-button = Hapus
 
+## Variables
+##   $count (number) - Number of items
+
 about-logins-confirm-remove-all-dialog-confirm-button-label =
     { $count ->
         [1] Hapus
@@ -179,6 +198,8 @@ about-logins-confirm-remove-all-sync-dialog-message =
        *[other] Ini akan menghapus info masuk yang Anda simpan ke { -brand-short-name } di semua perangkat yang disinkronkan ke { -fxaccount-brand-name } Anda. Ini juga akan menghapus peringatan pembobolan yang muncul di sini. Anda tidak akan dapat mengurungkan tindakan ini.
     }
 
+##
+
 about-logins-confirm-export-dialog-title = Ekspor info masuk dan sandi
 about-logins-confirm-export-dialog-message = Kata sandi Anda akan disimpan sebagai teks biasa yang bisa dibaca (contoh: P@sw0rd) sehingga siapa pun yang dapat membuka berkas yang Anda ekspor akan bisa membacanya.
 about-logins-confirm-export-dialog-confirm-button = Ekspor…
@@ -198,7 +219,6 @@ about-logins-breach-alert-date = Pembobolan ini terjadi pada { DATETIME($date, d
 # Variables:
 #   $hostname (String) - The hostname of the website associated with the login, e.g. "example.com"
 about-logins-breach-alert-link = Buka { $hostname }
-about-logins-breach-alert-learn-more-link = Pelajari lebih lanjut
 
 ## Vulnerable Password notification
 

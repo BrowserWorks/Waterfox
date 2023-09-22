@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,6 +18,10 @@ support-addons-type = 類型
 support-addons-enabled = 已啟用
 support-addons-version = 版本
 support-addons-id = ID
+legacy-user-stylesheets-title = 傳統使用者樣式表
+legacy-user-stylesheets-enabled = 啟用
+legacy-user-stylesheets-stylesheet-types = 樣式表
+legacy-user-stylesheets-no-stylesheets-found = 找不到樣式表
 security-software-title = 安全軟體
 security-software-type = 類型
 security-software-name = 名稱
@@ -73,10 +77,11 @@ app-basics-remote-processes-count = 遠端處理程序
 app-basics-enterprise-policies = 企業政策
 app-basics-location-service-key-google = Google Location Service 金鑰
 app-basics-safebrowsing-key-google = Google Safebrowsing 金鑰
-app-basics-key-mozilla = Waterfox Location Service 金鑰
+app-basics-key-mozilla = BrowserWorks Location Service 金鑰
 app-basics-safe-mode = 安全模式
 app-basics-memory-size = 記憶體大小（RAM）
 app-basics-disk-available = 磁碟可用空間大小
+app-basics-pointing-devices = 指向裝置
 # Variables:
 #   $value (number) - Amount of data being stored
 #   $unit (string) - The unit of data being stored (e.g. MB)
@@ -110,11 +115,21 @@ graphics-gpu2-title = GPU #2
 graphics-decision-log-title = 決策紀錄
 graphics-crash-guards-title = 因 Crash Guard 停用的功能
 graphics-workarounds-title = Workarounds
+graphics-device-pixel-ratios = Window 的裝置畫素比例
 # Windowing system in use on Linux (e.g. X11, Wayland).
 graphics-window-protocol = 視窗通訊協定
 # Desktop environment in use on Linux (e.g. GNOME, KDE, XFCE, etc).
 graphics-desktop-environment = 桌面環境
 place-database-title = Places 資料庫
+place-database-stats = 統計資訊
+place-database-stats-show = 顯示統計資訊
+place-database-stats-hide = 隱藏統計資訊
+place-database-stats-entity = 實體
+place-database-stats-count = 數量
+place-database-stats-size-kib = 大小 (KiB)
+place-database-stats-size-perc = 大小 (%)
+place-database-stats-efficiency-perc = 效率 (%)
+place-database-stats-sequentiality-perc = 順序性 (%)
 place-database-integrity = 資料完整
 place-database-verify-integrity = 確認資料完整
 a11y-title = 輔助功能
@@ -164,6 +179,15 @@ media-capabilities-title = 媒體能力
 media-codec-support-info = 解碼器支援資訊
 # List all the entries of the database.
 media-capabilities-enumerate = 列舉資料庫
+
+## Codec support table
+
+media-codec-support-sw-decoding = 軟體解碼
+media-codec-support-hw-decoding = 硬體解碼
+media-codec-support-codec-name = 解碼器名稱
+media-codec-support-supported = 支援
+media-codec-support-unsupported = 不支援
+media-codec-support-error = 無法取得 Codec 支援資訊，請在播放媒體檔案後再試一次。
 
 ##
 
@@ -258,6 +282,8 @@ webgl2-renderer = WebGL2 Renderer
 webgl2-version = WebGL 2 驅動程式 Renderer
 webgl2-driver-extensions = WebGL 2 驅動程式擴充套件
 webgl2-extensions = WebGL 2 擴充套件
+webgpu-default-adapter = WebGPU 預設顯示卡
+webgpu-fallback-adapter = WebGPU 備用顯示卡
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = 由於有已知問題，被加入封鎖名單: <a data-l10n-name="bug-link">bug { $bugNumber }</a>
@@ -287,6 +313,7 @@ can-sandbox-media = 媒體外掛程式沙盒
 content-sandbox-level = 內容程序沙盒等級
 effective-content-sandbox-level = 有效內容處理程序沙盒等級
 content-win32k-lockdown-state = 內容處理程序的 Win32k Lockdown 狀態
+support-sandbox-gpu-level = GPU 處理程序沙盒等級
 sandbox-proc-type-content = 內容
 sandbox-proc-type-file = 檔案內容
 sandbox-proc-type-media-plugin = 媒體外掛程式
@@ -358,3 +385,10 @@ support-remote-experiments-see-about-studies = 若需更多資訊，請參考 <a
 support-remote-features-title = 遠端功能
 support-remote-features-name = 名稱
 support-remote-features-status = 狀態
+
+## Pointing devices
+
+pointing-device-mouse = 滑鼠
+pointing-device-touchscreen = 觸控螢幕
+pointing-device-pen-digitizer = 繪圖板
+pointing-device-none = 無指向裝置

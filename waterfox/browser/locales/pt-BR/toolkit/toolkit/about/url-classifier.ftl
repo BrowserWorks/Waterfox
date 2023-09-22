@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -50,5 +50,9 @@ url-classifier-disabled = Desativado
 url-classifier-updating = atualizando
 url-classifier-cannot-update = não foi possível atualizar
 url-classifier-success = sucesso
+
+## Variables
+##   $error (string) - Error message
+
 url-classifier-update-error = erro de atualização ({ $error })
 url-classifier-download-error = erro de download ({ $error })

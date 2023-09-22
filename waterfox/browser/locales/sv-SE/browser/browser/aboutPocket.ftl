@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,14 +22,13 @@ pocket-panel-saved-page-removed = Sidan borttagen
 pocket-panel-saved-page-saved = Sparad till { -pocket-brand-name }
 pocket-panel-saved-page-saved-b = Sparad till { -pocket-brand-name }!
 pocket-panel-saved-processing-remove = Tar bort sida…
-pocket-panel-saved-removed = Sidan har tagits bort från Min lista
+pocket-panel-saved-removed-updated = Sidan har tagits bort från sparade objekt
 pocket-panel-saved-processing-tags = Lägger till etiketter…
 pocket-panel-saved-remove-page = Ta bort sida
 pocket-panel-saved-save-tags = Spara
 pocket-panel-saved-saving-tags = Sparar…
 pocket-panel-saved-suggested-tags = Föreslagna etiketter
 pocket-panel-saved-tags-saved = Etiketter tillagda
-pocket-panel-signup-view-list = Visa lista
 
 # This is displayed above a field where the user can add tags
 pocket-panel-signup-add-tags = Lägg till taggar:
@@ -47,13 +46,12 @@ pocket-panel-signup-tagline-story-one = Klicka på { -pocket-brand-name }-knappe
 pocket-panel-signup-tagline-story-two = Visa i { -pocket-brand-name } på vilken enhet som helst, när som helst.
 
 pocket-panel-signup-cta-a-fix = Din sparknapp för internet
-pocket-panel-signup-cta-b = Klicka på knappen { -pocket-brand-name } för att spara artiklar, videor och länkar. Visa din lista på vilken enhet som helst, när som helst.
+pocket-panel-signup-cta-b-updated = Klicka på knappen { -pocket-brand-name } för att spara artiklar, videor och länkar. Se dina sparade objekt på vilken enhet som helst, när som helst.
 pocket-panel-signup-cta-b-short = Klicka på knappen { -pocket-brand-name } för att spara artiklar, videor och länkar.
-pocket-panel-signup-cta-c = Visa din lista på vilken enhet som helst, när som helst.
+pocket-panel-signup-cta-c-updated = Visa dina sparade objekt på vilken enhet som helst, när som helst.
 
 ## about:pocket-home panel
 
-pocket-panel-home-my-list = Min lista
 pocket-panel-home-welcome-back = Välkommen tillbaka
 pocket-panel-home-paragraph = Du kan använda { -pocket-brand-name } för att utforska och spara webbsidor, artiklar, videor, poddar eller gå tillbaka till det du har läst.
 pocket-panel-home-explore-popular-topics = Utforska populära ämnen
@@ -67,7 +65,7 @@ pocket-panel-home-new-user-message = Se dina senaste sparningar här.
 
 ## Pocket panel header component
 
-pocket-panel-header-my-list = Visa min lista
+pocket-panel-header-my-saves = Visa mina sparade objekt
 pocket-panel-header-sign-in = Logga in
 
 ## Pocket panel buttons

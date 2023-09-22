@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,17 +13,45 @@ safeb-blocked-harmful-page-short-desc = Questa pagina è stata bloccata da { -br
 safeb-palm-advisory-desc = Servizio fornito da <a data-l10n-name='advisory_provider'>{ $advisoryname }</a>.
 safeb-palm-accept-label = Torna indietro
 safeb-palm-see-details-label = Visualizza dettagli
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-phishing-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> è stato <a data-l10n-name='error_desc_link'>identificato come sito ingannevole</a>. È possibile <a data-l10n-name='report_detection'>segnalare un errore relativo a questo avviso</a> oppure <a data-l10n-name='ignore_warning_link'>ignorare il rischio</a> e visitare il sito non sicuro.
 safeb-blocked-phishing-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> è stato <a data-l10n-name='error_desc_link'>identificato come sito ingannevole</a>. È possibile <a data-l10n-name='report_detection'>segnalare un errore relativo a questo avviso</a>.
+
+##
+
 safeb-blocked-phishing-page-learn-more = Scopri ulteriori informazioni relative a siti ingannevoli e phishing sul sito <a data-l10n-name='learn_more_link'>www.antiphishing.org</a>. Per approfondimenti sulla protezione da phishing e malware di { -brand-short-name } visita <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-malware-page-error-desc-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> è stato <a data-l10n-name='error_desc_link'>identificato come sito contenente software indesiderato</a>. È possibile <a data-l10n-name='ignore_warning_link'>ignorare il rischio</a> e visitare il sito non sicuro.
 safeb-blocked-malware-page-error-desc-no-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> è stato <a data-l10n-name='error_desc_link'>identificato come sito contenente software indesiderato</a>.
+
+##
+
 safeb-blocked-malware-page-learn-more-sumo = Ulteriori informazioni relative alla protezione da phishing e malware di { -brand-short-name } sono disponibili su <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-unwanted-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> è stato <a data-l10n-name='error_desc_link'>identificato come sito contenente software dannoso</a>. È possibile <a data-l10n-name='ignore_warning_link'>ignorare il rischio</a> e visitare il sito non sicuro.
 safeb-blocked-unwanted-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> è stato <a data-l10n-name='error_desc_link'>identificato come sito contenente software dannoso</a>.
+
+##
+
 safeb-blocked-unwanted-page-learn-more = Scopri ulteriori informazioni relative a software dannoso e indesiderato nella pagina <a data-l10n-name='learn_more_link'>Norme relative al software indesiderato</a>. Per approfondimenti sulla protezione da phishing e malware di { -brand-short-name } visita <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-harmful-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> è stato <a data-l10n-name='error_desc_link'>identificato come sito contenente un’applicazione potenzialmente dannosa</a>. È possibile <a data-l10n-name='ignore_warning_link'>ignorare il rischio</a> e visitare il sito non sicuro.
 safeb-blocked-harmful-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> è stato <a data-l10n-name='error_desc_link'>identificato come sito contenente un’applicazione potenzialmente dannosa</a>.
+
+##
+
 safeb-blocked-harmful-page-learn-more = Per ulteriori informazioni sulla protezione da phishing e malware di { -brand-short-name } visita <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
 safeb-palm-notdeceptive =
     .label = Non è un sito ingannevole…

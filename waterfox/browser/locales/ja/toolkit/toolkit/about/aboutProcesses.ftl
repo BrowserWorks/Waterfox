@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -113,9 +113,17 @@ about-processes-frame-name-one = サブフレーム: { $url }
 #   $number (Number) The number of subframes in this group. Always ≥ 1.
 #   $shortUrl (String) The shared prefix for the subframes in the group.
 about-processes-frame-name-many = サブフレーム ({ $number }): { $shortUrl }
-# Utility process actor names
+
+## Utility process actor names
+
 about-processes-utility-actor-unknown = 未知のアクター
-about-processes-utility-actor-audio-decoder = 音声デコーダー
+about-processes-utility-actor-audio-decoder-generic = 一般音声デコーダー
+about-processes-utility-actor-audio-decoder-applemedia = Apple Media 音声デコーダー
+about-processes-utility-actor-audio-decoder-wmf = Windows Media Framework 音声デコーダー
+about-processes-utility-actor-mf-media-engine = Windows Media Foundation Media Engine CDM
+# "Oracle" refers to an internal Waterfox process and should be kept in English
+about-processes-utility-actor-js-oracle = JavaScript Oracle
+about-processes-utility-actor-windows-utils = Windows Utils
 
 ## Displaying CPU (percentage and total)
 ## Variables:

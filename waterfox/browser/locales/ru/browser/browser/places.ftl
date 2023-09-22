@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = Открыть в новом приватном окне
     .accesskey = и
+
+places-empty-bookmarks-folder =
+    .label = (Пусто)
 
 places-add-bookmark =
     .label = Создать закладку…
@@ -67,8 +70,8 @@ places-delete-domain-data =
     .label = Забыть об этом сайте
     .accesskey = б
 places-sortby-name =
-    .label = Сортировать по имени
-    .accesskey = р
+    .label = Упорядочивать по имени
+    .accesskey = ч
 # places-edit-bookmark and places-edit-generic will show one or the other and can have the same access key.
 places-edit-bookmark =
     .label = Изменить закладку…
@@ -79,6 +82,8 @@ places-edit-generic =
 places-edit-folder2 =
     .label = Изменить папку…
     .accesskey = н
+# Variables
+#   $count (number) - Number of folders to delete
 places-delete-folder =
     .label =
         { $count ->
@@ -88,6 +93,15 @@ places-delete-folder =
            *[many] Удалить папки
         }
     .accesskey = л
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] Удалить страницу
+           *[other] Удалить страницы
+        }
+    .accesskey = а
 
 # Managed bookmarks are created by an administrator and cannot be changed by the user.
 managed-bookmarks =
@@ -116,6 +130,20 @@ places-delete-bookmark =
         }
     .accesskey = л
 
+# Variables:
+#   $count (number) - The number of bookmarks being added.
+places-create-bookmark =
+    .label =
+        { $count ->
+            [1] Добавить страницу в закладки…
+           *[other] Добавить страницы в закладки…
+        }
+    .accesskey = н
+
+places-untag-bookmark =
+    .label = Удалить метку
+    .accesskey = и
+
 places-manage-bookmarks =
     .label = Управление закладками
     .accesskey = в
@@ -124,13 +152,12 @@ places-forget-about-this-site-confirmation-title = Забыть об этом с
 
 # Variables:
 # $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
-places-forget-about-this-site-confirmation-message = Это действие удалит все данные, связанные с { $hostOrBaseDomain }, в том числе историю, пароли, куки, кэш и настройки содержимого. Вы уверены, что хотите продолжить?
+places-forget-about-this-site-confirmation-msg = Это действие удалит данные, связанные с { $hostOrBaseDomain }, включая историю, куки, кеш и настройки содержимого. Связанные закладки и пароли не будут удалены. Вы уверены, что хотите продолжить?
 
 places-forget-about-this-site-forget = Забыть
 
-places-library =
+places-library3 =
     .title = Библиотека
-    .style = width:700px; height:500px;
 
 places-organize-button =
     .label = Управление
@@ -158,24 +185,24 @@ places-view-button-mac =
     .tooltiptext = Изменение внешнего вида
 
 places-view-menu-columns =
-    .label = Показать колонки
+    .label = Показать столбцы
     .accesskey = к
 
 places-view-menu-sort =
-    .label = Сортировка
-    .accesskey = р
+    .label = Упорядочивание
+    .accesskey = п
 
 places-view-sort-unsorted =
-    .label = Без сортировки
+    .label = Без упорядочивания
     .accesskey = е
 
 places-view-sort-ascending =
-    .label = Сортировка по алфавиту
-    .accesskey = С
+    .label = По алфавиту
+    .accesskey = в
 
 places-view-sort-descending =
-    .label = В обратном порядке
-    .accesskey = о
+    .label = Обратное
+    .accesskey = б
 
 places-maintenance-button =
     .label = Импорт и резервные копии
@@ -231,6 +258,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = Посл. изменение
 
+places-view-sortby-name =
+    .label = По имени
+    .accesskey = м
+places-view-sortby-url =
+    .label = По расположению
+    .accesskey = р
+places-view-sortby-date =
+    .label = По дате последнего посещения
+    .accesskey = а
+places-view-sortby-visit-count =
+    .label = По числу посещений
+    .accesskey = л
+places-view-sortby-date-added =
+    .label = По дате добавления
+    .accesskey = д
+places-view-sortby-last-modified =
+    .label = По дате последнего изменения
+    .accesskey = з
+places-view-sortby-tags =
+    .label = По меткам
+    .accesskey = т
+
 places-cmd-find-key =
     .key = f
 
@@ -240,4 +289,30 @@ places-back-button =
 places-forward-button =
     .tooltiptext = Перейти вперёд
 
-places-details-pane-select-an-item-description = Выберите элемент для просмотра и редактирования его свойств
+places-details-pane-select-an-item-description = Выберите элемент для просмотра и правки его свойств
+
+places-details-pane-no-items =
+    .value = Нет элементов
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value =
+        { $count ->
+            [one] { $count } элемент
+            [few] { $count } элемента
+           *[many] { $count } элементов
+        }
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = Поиск в закладках
+places-search-history =
+    .placeholder = Поиск в журнале
+places-search-downloads =
+    .placeholder = Поиск в загрузках
+
+##
+
+places-locked-prompt = Работа с закладками и журналом невозможна, так как один из файлов { -brand-short-name } используется другим приложением. Данную проблему могут вызывать некоторые из защитных программ.

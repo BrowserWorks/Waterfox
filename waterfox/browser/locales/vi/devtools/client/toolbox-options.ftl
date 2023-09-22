@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -124,6 +124,11 @@ options-enable-remote-label = Cho phép gỡ lỗi từ xa
 options-enable-remote-tooltip2 =
     .title = Bật tùy chọn này sẽ cho phép gỡ lỗi phiên bản trình duyệt này từ xa
 
+# The label for checkbox that enables F12 as a shortcut to open DevTools
+options-enable-f12-label = Sử dụng phím F12 để mở hoặc đóng DevTools
+options-enable-f12-tooltip =
+    .title = Bật tùy chọn này sẽ liên kết phím F12 để mở hoặc đóng hộp công cụ DevTools
+
 # The label for checkbox that toggles custom formatters for objects
 options-enable-custom-formatters-label = Bật bộ định dạng tùy chỉnh
 options-enable-custom-formatters-tooltip =
@@ -141,11 +146,3 @@ options-source-maps-tooltip =
 
 # The message shown for settings that trigger page reload
 options-context-triggers-page-refresh = * Chỉ phiên hiện tại, tải lại trang
-
-# The label for the checkbox that toggles the display of the platform data in the
-# Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference in about:config
-options-show-platform-data-label = Hiện dữ liệu nền tảng Gecko
-options-show-platform-data-tooltip =
-    .title =
-        Nếu bạn bật tùy chọn này, báo cáo trình cấu hình JavaScript sẽ bao gồm
-        kí hiệu nền tảng Gecko

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -44,7 +44,7 @@ about-processes-file-process = Pliki ({ $pid })
 about-processes-extension-process = Rozszerzenia ({ $pid })
 about-processes-privilegedabout-process = Strony about: ({ $pid })
 about-processes-plugin-process = Wtyczki ({ $pid })
-about-processes-privilegedmozilla-process = Witryny organizacji { -vendor-short-name } ({ $pid })
+about-processes-privilegedmozilla-process = Witryny { -vendor-short-name(case: "gen") } ({ $pid })
 about-processes-gmp-plugin-process = Wtyczki multimedialne Gecko ({ $pid })
 about-processes-gpu-process = Procesor graficzny ({ $pid })
 about-processes-vr-process = Rzeczywistość wirtualna ({ $pid })
@@ -53,7 +53,6 @@ about-processes-socket-process = Sieć ({ $pid })
 about-processes-remote-sandbox-broker-process = Broker zdalnej piaskownicy ({ $pid })
 about-processes-fork-server-process = Serwer rozdzielania ({ $pid })
 about-processes-preallocated-process = Wstępnie przydzielony ({ $pid })
-
 about-processes-utility-process = Narzędziowy ({ $pid })
 
 # Unknown process names
@@ -129,9 +128,16 @@ about-processes-frame-name-one = Ramka podrzędna: { $url }
 #   $shortUrl (String) The shared prefix for the subframes in the group.
 about-processes-frame-name-many = Ramki podrzędne ({ $number }): { $shortUrl }
 
-# Utility process actor names
+## Utility process actor names
+
 about-processes-utility-actor-unknown = Nieznany aktor
-about-processes-utility-actor-audio-decoder = Dekoder dźwięku
+about-processes-utility-actor-audio-decoder-generic = Standardowy dekoder dźwięku
+about-processes-utility-actor-audio-decoder-applemedia = Dekoder dźwięku Apple Media
+about-processes-utility-actor-audio-decoder-wmf = Dekoder dźwięku Windows Media Framework
+about-processes-utility-actor-mf-media-engine = Moduł CDM mechanizmu Windows Media Foundation Media Engine
+# "Oracle" refers to an internal Waterfox process and should be kept in English
+about-processes-utility-actor-js-oracle = Oracle języka JavaScript
+about-processes-utility-actor-windows-utils = Narzędzia systemu Windows
 
 ## Displaying CPU (percentage and total)
 ## Variables:

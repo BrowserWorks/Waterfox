@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -373,7 +373,7 @@ about-debugging-worker-push-service =
 
 # Displayed as title of the inspect button when service worker debugging is disabled.
 about-debugging-worker-inspect-action-disabled =
-    .title = การตรวจสอบตัวทำงานบริการถูกปิดใช้งานอยู่สำหรับ { -brand-shorter-name } แบบหลายกระบวนการในขณะนี้
+    .title = การตรวจสอบตัวทำงานบริการถูกปิดใช้งานอยู่สำหรับ { -brand-shorter-name } แบบมัลติโปรเซสในขณะนี้
 
 # Displayed as title of the inspect button for zombie tabs (e.g. tabs loaded via a session restore).
 about-debugging-zombie-tab-inspect-action-disabled =
@@ -381,18 +381,11 @@ about-debugging-zombie-tab-inspect-action-disabled =
 
 # Displayed as name for the Main Process debug target in the Processes category. Only for
 # remote runtimes, if `devtools.aboutdebugging.process-debugging` is true.
-about-debugging-main-process-name = โปรเซสหลัก
+about-debugging-multiprocess-toolbox-name = กล่องเครื่องมือมัลติโปรเซส
 
 # Displayed as description for the Main Process debug target in the Processes category.
 # Only for remote browsers, if `devtools.aboutdebugging.process-debugging` is true.
-about-debugging-main-process-description2 = โปรเซสหลักสำหรับเบราว์เซอร์เป้าหมาย
-
-# Displayed instead of the Main Process debug target when the preference
-# `devtools.browsertoolbox.fission` is true.
-about-debugging-multiprocess-toolbox-name = กล่องเครื่องมือแบบหลายกระบวนการ
-
-# Description for the Multiprocess Toolbox target.
-about-debugging-multiprocess-toolbox-description = กระบวนการหลักและกระบวนการเนื้อหาสำหรับเบราว์เซอร์เป้าหมาย
+about-debugging-multiprocess-toolbox-description = โปรเซสหลักและโปรเซสเนื้อหาสำหรับเบราว์เซอร์เป้าหมาย
 
 # Alt text used for the close icon of message component (warnings, errors and notifications).
 about-debugging-message-close-icon =

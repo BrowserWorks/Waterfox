@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -19,6 +19,10 @@ support-addons-type = Typ
 support-addons-enabled = Włączone
 support-addons-version = Wersja
 support-addons-id = ID
+legacy-user-stylesheets-title = Przestarzałe arkusze stylów użytkownika
+legacy-user-stylesheets-enabled = Aktywne
+legacy-user-stylesheets-stylesheet-types = Arkusze stylów
+legacy-user-stylesheets-no-stylesheets-found = Nie znaleziono arkuszy stylów
 security-software-title = Oprogramowanie zabezpieczające
 security-software-type = Typ
 security-software-name = Nazwa
@@ -78,6 +82,7 @@ app-basics-key-mozilla = Klucz usługi lokalizacji Mozilli
 app-basics-safe-mode = Tryb awaryjny
 app-basics-memory-size = Rozmiar pamięci (RAM)
 app-basics-disk-available = Dostępne miejsce na dysku
+app-basics-pointing-devices = Urządzenia wskazujące
 # Variables:
 #   $value (number) - Amount of data being stored
 #   $unit (string) - The unit of data being stored (e.g. MB)
@@ -111,11 +116,21 @@ graphics-gpu2-title = GPU 2
 graphics-decision-log-title = Decyzje
 graphics-crash-guards-title = Funkcje wyłączone dla ochrony przed awariami
 graphics-workarounds-title = Obejścia problemów
+graphics-device-pixel-ratios = Współczynniki pikseli urządzenia okna
 # Windowing system in use on Linux (e.g. X11, Wayland).
 graphics-window-protocol = Protokół okien
 # Desktop environment in use on Linux (e.g. GNOME, KDE, XFCE, etc).
 graphics-desktop-environment = Środowisko pulpitu
 place-database-title = Baza danych „Places”
+place-database-stats = Statystyki
+place-database-stats-show = Wyświetl statystyki
+place-database-stats-hide = Ukryj statystyki
+place-database-stats-entity = Obiekt
+place-database-stats-count = Liczba
+place-database-stats-size-kib = Rozmiar (KiB)
+place-database-stats-size-perc = Rozmiar (%)
+place-database-stats-efficiency-perc = Wydajność (%)
+place-database-stats-sequentiality-perc = Sekwencyjność (%)
 place-database-integrity = Integralność
 place-database-verify-integrity = Sprawdź integralność
 a11y-title = Ułatwienia dostępu
@@ -139,7 +154,7 @@ troubleshoot-mode-title = Diagnozuj problemy
 restart-in-troubleshoot-mode-label = Tryb rozwiązywania problemów…
 clear-startup-cache-title = Spróbuj wyczyścić pamięć podręczną uruchamiania
 clear-startup-cache-label = Wyczyść pamięć podręczną uruchamiania…
-startup-cache-dialog-title2 = Uruchomić ponownie, aby wyczyścić pamięć podręczną uruchamiania?
+startup-cache-dialog-title2 = Uruchomić { -brand-short-name(case: "acc") } ponownie, aby wyczyścić pamięć podręczną uruchamiania?
 startup-cache-dialog-body2 = Nie spowoduje to zmiany ustawień ani usunięcia rozszerzeń.
 restart-button-label = Uruchom ponownie
 
@@ -165,6 +180,15 @@ media-capabilities-title = Możliwości medialne
 media-codec-support-info = Informacje o obsłudze kodeków
 # List all the entries of the database.
 media-capabilities-enumerate = Wyświetl zawartość bazy danych
+
+## Codec support table
+
+media-codec-support-sw-decoding = Dekodowanie programowe
+media-codec-support-hw-decoding = Dekodowanie sprzętowe
+media-codec-support-codec-name = Nazwa kodeku
+media-codec-support-supported = Obsługiwane
+media-codec-support-unsupported = Nieobsługiwane
+media-codec-support-error = Informacje o obsłudze kodeków są niedostępne. Spróbuj ponownie po odtworzeniu pliku multimedialnego.
 
 ##
 
@@ -284,6 +308,8 @@ webgl2-renderer = Renderer sterownika WebGL 2
 webgl2-version = Wersja sterownika WebGL 2
 webgl2-driver-extensions = Rozszerzenia sterownika WebGL 2
 webgl2-extensions = Rozszerzenia WebGL 2
+webgpu-default-adapter = Domyślna karta WebGPU
+webgpu-fallback-adapter = Zapasowa karta WebGPU
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = Zablokowano z powodu znanych problemów: <a data-l10n-name="bug-link">zgłoszenie { $bugNumber }</a>
@@ -308,14 +334,15 @@ has-seccomp-bpf = Seccomp-BPF (filtrowanie wywołań systemowych)
 has-seccomp-tsync = Synchronizacja wątków Seccomp
 has-user-namespaces = Przestrzenie nazw użytkownika
 has-privileged-user-namespaces = Przestrzenie nazw użytkownika dla uprzywilejowanych procesów
-can-sandbox-content = Separacja procesów
-can-sandbox-media = Separacja wtyczek
-content-sandbox-level = Poziom separacji treści
-effective-content-sandbox-level = Efektywny poziom separacji treści
-content-win32k-lockdown-state = Stan blokady Win32k dla procesu treści
-sandbox-proc-type-content = zawartość
+can-sandbox-content = Separacja procesów treści
+can-sandbox-media = Separacja wtyczek multimedialnych
+content-sandbox-level = Poziom separacji procesów treści
+effective-content-sandbox-level = Efektywny poziom separacji procesów treści
+content-win32k-lockdown-state = Stan blokady Win32k dla procesów treści
+support-sandbox-gpu-level = Poziom separacji procesu GPU
+sandbox-proc-type-content = treść
 sandbox-proc-type-file = zawartość pliku
-sandbox-proc-type-media-plugin = wtyczka
+sandbox-proc-type-media-plugin = wtyczka multimedialna
 sandbox-proc-type-data-decoder = dekoder danych
 startup-cache-title = Pamięć podręczna uruchamiania
 startup-cache-disk-cache-path = Ścieżka do pamięci podręcznej na dysku
@@ -384,3 +411,10 @@ support-remote-experiments-see-about-studies = <a data-l10n-name="support-about-
 support-remote-features-title = Zdalne funkcje
 support-remote-features-name = Nazwa
 support-remote-features-status = Stan
+
+## Pointing devices
+
+pointing-device-mouse = Mysz
+pointing-device-touchscreen = Ekran dotykowy
+pointing-device-pen-digitizer = Rysik
+pointing-device-none = Brak urządzeń wskazujących

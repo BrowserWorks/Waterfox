@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,14 +22,13 @@ pocket-panel-saved-page-removed = Trang đã bị xóa
 pocket-panel-saved-page-saved = Đã lưu vào { -pocket-brand-name }
 pocket-panel-saved-page-saved-b = Đã lưu vào { -pocket-brand-name }!
 pocket-panel-saved-processing-remove = Đang xóa trang...
-pocket-panel-saved-removed = Đã xóa trang khỏi danh sách của tôi
+pocket-panel-saved-removed-updated = Trang đã bị xóa khỏi mục đã lưu
 pocket-panel-saved-processing-tags = Đang thêm các tag...
 pocket-panel-saved-remove-page = Xóa trang
 pocket-panel-saved-save-tags = Lưu lại
 pocket-panel-saved-saving-tags = Đang lưu lại...
 pocket-panel-saved-suggested-tags = Các tag được đề xuất
 pocket-panel-saved-tags-saved = Các tag đã được thêm vào
-pocket-panel-signup-view-list = Xem danh sách
 
 # This is displayed above a field where the user can add tags
 pocket-panel-signup-add-tags = Thêm tag
@@ -47,13 +46,12 @@ pocket-panel-signup-tagline-story-one = Nhấp vào nút { -pocket-brand-name } 
 pocket-panel-signup-tagline-story-two = Xem trên { -pocket-brand-name } ở bất cứ thiết bị và thời gian nào.
 
 pocket-panel-signup-cta-a-fix = Nút lưu của bạn trên internet
-pocket-panel-signup-cta-b = Nhấp vào nút { -pocket-brand-name } để lưu các bài báo, video và liên kết. Xem danh sách của bạn trên mọi thiết bị, bất kỳ lúc nào.
+pocket-panel-signup-cta-b-updated = Nhấp vào nút { -pocket-brand-name } để lưu các bài báo, video và liên kết. Xem các mục đã lưu của bạn trên mọi thiết bị, bất kỳ lúc nào.
 pocket-panel-signup-cta-b-short = Nhấp vào nút { -pocket-brand-name } để lưu các bài báo, video và liên kết.
-pocket-panel-signup-cta-c = Xem danh sách của bạn trên mọi thiết bị, bất kỳ lúc nào.
+pocket-panel-signup-cta-c-updated = Xem các mục đã lưu của bạn trên mọi thiết bị, bất kỳ lúc nào.
 
 ## about:pocket-home panel
 
-pocket-panel-home-my-list = Danh sách của tôi
 pocket-panel-home-welcome-back = Chào mừng trở lại
 pocket-panel-home-paragraph = Bạn có thể sử dụng { -pocket-brand-name } để khám phá và lưu các trang web, bài viết, video, podcast hoặc quay lại những gì bạn đã đọc.
 pocket-panel-home-explore-popular-topics = Khám phá các chủ đề phổ biến
@@ -67,7 +65,7 @@ pocket-panel-home-new-user-message = Xem các lần lưu gần đây của bạn
 
 ## Pocket panel header component
 
-pocket-panel-header-my-list = Xem danh sách của tôi
+pocket-panel-header-my-saves = Xem các mục đã lưu của tôi
 pocket-panel-header-sign-in = Đăng nhập
 
 ## Pocket panel buttons

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -180,6 +180,17 @@ menu-view-full-screen =
     .label = Πλήρης οθόνη
     .accesskey = Π
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Άνοιγμα προβολής ανάγνωσης
+    .accesskey = Α
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Κλείσιμο προβολής ανάγνωσης
+    .accesskey = Α
+
 ##
 
 menu-view-show-all-tabs =
@@ -208,8 +219,9 @@ menu-history-undo-menu =
     .label = Πρόσφατα κλεισμένες καρτέλες
 menu-history-undo-window-menu =
     .label = Πρόσφατα κλεισμένα παράθυρα
-menu-history-reopen-all-tabs = Επαναφορά όλων των καρτελών
-menu-history-reopen-all-windows = Επαναφορά όλων των παραθύρων
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = Αναζήτηση ιστορικού
 
 ## Bookmarks Menu
 
@@ -218,14 +230,13 @@ menu-bookmarks-menu =
     .accesskey = Σ
 menu-bookmarks-manage =
     .label = Διαχείριση σελιδοδεικτών
-menu-bookmark-current-tab =
-    .label = Προσθήκη καρτέλας στους σελιδοδείκτες
-menu-bookmark-edit =
-    .label = Επεξεργασία σελιδοδείκτη
 menu-bookmark-tab =
     .label = Προσθήκη σελιδοδείκτη…
 menu-edit-bookmark =
     .label = Επεξεργασία σελιδοδείκτη…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = Αναζήτηση σελιδοδεικτών
 menu-bookmarks-all-tabs =
     .label = Αποθήκευση όλων των καρτελών…
 menu-bookmarks-toolbar =
@@ -318,6 +329,9 @@ menu-help-enter-troubleshoot-mode2 =
     .accesskey = Λ
 menu-help-exit-troubleshoot-mode =
     .label = Απενεργοποίηση λειτουργίας επίλυσης προβλημάτων
+    .accesskey = ν
+menu-help-switch-device =
+    .label = Εναλλαγή σε νέα συσκευή
     .accesskey = ν
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.

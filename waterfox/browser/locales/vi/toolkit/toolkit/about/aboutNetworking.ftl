@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,13 +34,6 @@ about-networking-messages-received = Tin nhắn đã nhận
 about-networking-bytes-sent = Byte đã gửi
 about-networking-bytes-received = Byte đã nhận
 about-networking-logging = Nhật ký
-about-networking-log-tutorial = Xem <a data-l10n-name="logging">nhật ký HTTP</a> để biết hướng dẫn về cách sử dụng công cụ này.
-about-networking-current-log-file = Tập tin nhật ký hiện tại:
-about-networking-current-log-modules = Mô-đun nhật ký hiện tại:
-about-networking-set-log-file = Đặt tập tin nhật ký
-about-networking-set-log-modules = Đặt mô-đun nhật ký
-about-networking-start-logging = Bắt đầu ghi
-about-networking-stop-logging = Dừng ghi
 about-networking-dns-lookup = Tra cứu DNS
 about-networking-dns-lookup-button = Xem
 about-networking-dns-domain = Tên miền:
@@ -63,6 +56,8 @@ about-networking-rcwn-cache-slow = Bộ đếm bộ nhớ đệm chậm
 about-networking-rcwn-cache-not-slow = Bộ đếm bộ nhớ đệm không chậm
 about-networking-networkid = ID mạng
 about-networking-networkid-id = ID mạng
+# Note: do not translate about:logging, as it is a URL.
+about-networking-moved-about-logging = Trang này đã được chuyển đến <a data-l10n-name="about-logging-url">about:logging</a>.
 
 ## Link is intended as "network link"
 

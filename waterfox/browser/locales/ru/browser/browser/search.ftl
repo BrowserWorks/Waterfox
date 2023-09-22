@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,7 +20,7 @@ opensearch-error-download-desc = { -brand-short-name } не смог загру�
 ##
 
 searchbar-submit =
-    .tooltiptext = Произвести поиск
+    .tooltiptext = Найти
 
 # This string is displayed in the search box when the input field is empty
 searchbar-input =

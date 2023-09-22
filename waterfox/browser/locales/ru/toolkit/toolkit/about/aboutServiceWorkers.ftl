@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -25,8 +25,8 @@ origin-title = Источник: { $originTitle }
 scope = <strong>Область:</strong> { $name }
 script-spec = <strong>Спецификация сценария:</strong> <a data-l10n-name="link">{ $url }</a>
 current-worker-url = <strong>URL текущего Worker:</strong> <a data-l10n-name="link">{ $url }</a>
-active-cache-name = <strong>Имя активного кэша:</strong> { $name }
-waiting-cache-name = <strong>Имя кэша ожидания:</strong> { $name }
+active-cache-name = <strong>Имя активного кеша:</strong> { $name }
+waiting-cache-name = <strong>Имя кеша ожидания:</strong> { $name }
 push-end-point-waiting = <strong>Конечная точка Push:</strong> { waiting }
 push-end-point-result = <strong>Конечная точка Push:</strong> { $name }
 

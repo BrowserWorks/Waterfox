@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,10 +22,12 @@ about-private-browsing-not-private = 您当前不在隐私窗口中。
 about-private-browsing-info-description-private-window = 隐私窗口：{ -brand-short-name } 会在关闭所有隐私窗口时清除搜索记录与浏览历史，但这并不意味着您是匿名的。
 about-private-browsing-info-description-simplified = { -brand-short-name } 会在关闭所有隐私窗口时清除搜索记录与浏览历史，但这样并不能让您匿名。
 about-private-browsing-learn-more-link = 详细了解
+
 about-private-browsing-hide-activity = 隐藏您的浏览活动和位置
 about-private-browsing-get-privacy = 获得全场景隐私保护
 about-private-browsing-hide-activity-1 = { -mozilla-vpn-brand-name } 可隐藏您的浏览活动和位置。即使在公共 Wi-Fi 下，也可一键建立安全连接。
 about-private-browsing-prominent-cta = { -mozilla-vpn-brand-name } 可提供隐私保护
+
 about-private-browsing-focus-promo-cta = 下载 { -focus-brand-name }
 about-private-browsing-focus-promo-header = { -focus-brand-name }：随手可得的隐私浏览
 about-private-browsing-focus-promo-text = 我们隐私浏览专用 App，可自动清除您每次上网的浏览记录和 Cookie。
@@ -36,6 +38,7 @@ about-private-browsing-focus-promo-header-b = 手机上亦可私密浏览
 about-private-browsing-focus-promo-text-b = 在 { -focus-brand-name } 上隐私搜索不愿被主浏览器记录的内容。
 about-private-browsing-focus-promo-header-c = 移动端更强大的隐私保护
 about-private-browsing-focus-promo-text-c = { -focus-brand-name } 不仅会自动清除浏览记录，且能够拦截广告和跟踪器。
+
 # This string is the title for the banner for search engine selection
 # in a private window.
 # Variables:
@@ -48,6 +51,7 @@ about-private-browsing-search-banner-description =
     }
 about-private-browsing-search-banner-close-button =
     .aria-label = 关闭
+
 about-private-browsing-promo-close-button =
     .title = 关闭
 
@@ -60,3 +64,11 @@ about-private-browsing-pin-promo-link-text =
        *[other] 固定到任务栏
     }
 about-private-browsing-pin-promo-title = 不保存任何 Cookie 和历史记录，隐私浏览不留痕迹。
+
+## Strings used in a promotion message for cookie banner reduction
+
+# Simplified version of the headline if the original text doesn't work
+# in your language: `See fewer cookie requests`.
+about-private-browsing-cookie-banners-promo-header = 消失吧，Cookie 横幅！
+about-private-browsing-cookie-banners-promo-button = 减少 Cookie 横幅
+about-private-browsing-cookie-banners-promo-message = 让 { -brand-short-name } 自动帮您回应 Cookie 弹窗，实现无干扰浏览体验。{ -brand-short-name } 将尽可能拒绝所有请求。

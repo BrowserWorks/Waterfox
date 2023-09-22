@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-blocklist-window =
+blocklist-window2 =
     .title = Списки блокировки
-    .style = width: 58em
+    .style = min-width: 58em
 
 blocklist-description = Выберите список, который { -brand-short-name } будет использовать для блокировки онлайн-трекеров. Списки предоставлены <a data-l10n-name="disconnect-link" title="Disconnect">Disconnect</a>.
 blocklist-close-key =
@@ -28,6 +28,6 @@ blocklist-dialog =
 blocklist-item-list-template = { $listName } { $description }
 
 blocklist-item-moz-std-listName = Список блокировки 1-го уровня (Рекомендуется).
-blocklist-item-moz-std-description = Разрешить некоторые трекеры, чтобы меньше веб-сайтов «сломались».
+blocklist-item-moz-std-description = Разрешить некоторые трекеры, чтобы меньше сайтов «сломалось».
 blocklist-item-moz-full-listName = Список блокировки 2-го уровня.
-blocklist-item-moz-full-description = Блокировать все обнаруженные трекеры. Некоторые веб-сайты или содержимое могут не загружаться.
+blocklist-item-moz-full-description = Блокировать все обнаруженные трекеры. Некоторые сайты или содержимое могут не загружаться.

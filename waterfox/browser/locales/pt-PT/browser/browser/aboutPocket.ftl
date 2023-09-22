@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,14 +22,13 @@ pocket-panel-saved-page-removed = Página removida
 pocket-panel-saved-page-saved = Guardada no { -pocket-brand-name }
 pocket-panel-saved-page-saved-b = Guardado no { -pocket-brand-name }!
 pocket-panel-saved-processing-remove = A remover página…
-pocket-panel-saved-removed = Página removida da minha lista
+pocket-panel-saved-removed-updated = Página removida da lista de Guardadas
 pocket-panel-saved-processing-tags = A adicionar etiquetas…
 pocket-panel-saved-remove-page = Remover página
 pocket-panel-saved-save-tags = Guardar
 pocket-panel-saved-saving-tags = A guardar…
 pocket-panel-saved-suggested-tags = Etiquetas sugeridas
 pocket-panel-saved-tags-saved = Etiquetas adicionadas
-pocket-panel-signup-view-list = Ver lista
 
 # This is displayed above a field where the user can add tags
 pocket-panel-signup-add-tags = Adicionar etiquetas:
@@ -47,13 +46,12 @@ pocket-panel-signup-tagline-story-one = Clique no botão { -pocket-brand-name } 
 pocket-panel-signup-tagline-story-two = Ver no { -pocket-brand-name } em qualquer dispositivo, a qualquer altura.
 
 pocket-panel-signup-cta-a-fix = O seu botão de guardar para a Internet.
-pocket-panel-signup-cta-b = Clique no botão do { -pocket-brand-name } para guardar artigos, vídeos e ligações. Veja a sua lista em qualquer dispositivo, em qualquer momento.
+pocket-panel-signup-cta-b-updated = Clique no botão do { -pocket-brand-name } para guardar artigos, vídeos e ligações. Consulte a sua lista de Guardadas em qualquer dispositivo, a qualquer momento.
 pocket-panel-signup-cta-b-short = Clique no botão do { -pocket-brand-name } para guardar artigos, vídeos e ligações.
-pocket-panel-signup-cta-c = Veja a sua lista em qualquer dispositivo, em qualquer momento.
+pocket-panel-signup-cta-c-updated = Consulte a sua lista de Guardadas em qualquer dispositivo, a qualquer momento.
 
 ## about:pocket-home panel
 
-pocket-panel-home-my-list = A minha lista
 pocket-panel-home-welcome-back = Bem-vindo(a) de volta
 pocket-panel-home-paragraph = Pode utilizar o { -pocket-brand-name } para explorar e guardar páginas de Internet, artigos, vídeos, podcasts ou voltar ao que tem estado a ler.
 pocket-panel-home-explore-popular-topics = Explorar tópicos populares
@@ -67,7 +65,7 @@ pocket-panel-home-new-user-message = Veja o que mais recentemente guardou aqui.
 
 ## Pocket panel header component
 
-pocket-panel-header-my-list = Ver a minha lista
+pocket-panel-header-my-saves = Ver a minha lista de Guardadas
 pocket-panel-header-sign-in = Iniciar sessão
 
 ## Pocket panel buttons

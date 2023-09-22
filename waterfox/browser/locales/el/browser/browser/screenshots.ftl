@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,6 @@ screenshots-private-window-error-details = Λυπούμαστε για την τ
 
 screenshots-generic-error-title = Ωχ! Κάτι πήγε στραβά στην υπηρεσία { -screenshots-brand-name }.
 screenshots-generic-error-details = Δεν είμαστε σίγουροι για το τι ακριβώς συνέβη. Προσπαθήστε ξανά ή κάντε λήψη σε μια άλλη σελίδα.
+
+screenshots-too-large-error-title = Το στιγμιότυπο οθόνης σας περικόπηκε επειδή ήταν πολύ μεγάλο
+screenshots-too-large-error-details = Δοκιμάστε να επιλέξετε μια περιοχή μικρότερη από 32.700 pixel στη μεγαλύτερη πλευρά της ή 124.900.000 pixel σε συνολική επιφάνεια.

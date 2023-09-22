@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -10,11 +10,11 @@ protections-panel-sitefixedsendreport-label = サイトが修正されたこと�
 ## Enhanced Tracking Protection.
 
 protections-popup-footer-protection-label-strict = 厳格
-  .label = 厳格
+    .label = 厳格
 protections-popup-footer-protection-label-custom = カスタム
-  .label = カスタム
+    .label = カスタム
 protections-popup-footer-protection-label-standard = 標準
-  .label = 標準
+    .label = 標準
 
 ##
 
@@ -23,6 +23,20 @@ protections-panel-etp-more-info =
     .aria-label = 強化型トラッキング防止機能についての詳細情報
 protections-panel-etp-on-header = 強化型トラッキング防止機能はこのサイトでオンです
 protections-panel-etp-off-header = 強化型トラッキング防止機能はこのサイトでオフです
+
+## Text for the toggles shown when ETP is enabled/disabled for a given site.
+## .description is transferred into a separate paragraph by the moz-toggle
+## custom element code.
+##   $host (String): the hostname of the site that is being displayed.
+
+protections-panel-etp-on-toggle =
+    .label = 強化型トラッキング防止
+    .description = このサイトでオンです
+    .aria-label = { $host } での保護を無効にします
+protections-panel-etp-off-toggle =
+    .label = 強化型トラッキング防止
+    .description = このサイトでオフです
+    .aria-label = { $host } での保護を有効にします
 # The link to be clicked to open the sub-panel view
 protections-panel-site-not-working = サイトが動作していませんか？
 # The heading/title of the sub-panel view
@@ -38,7 +52,7 @@ protections-panel-not-blocking-why-etp-off-tooltip = 保護がオフになって
 
 ##
 
-protections-panel-no-trackers-found = このページには既知のトラッカーがありません。
+protections-panel-no-trackers-found = このページには { -brand-short-name } に既知のトラッカーがありません。
 protections-panel-content-blocking-tracking-protection = トラッキングコンテンツ
 protections-panel-content-blocking-socialblock = ソーシャルメディアトラッカー
 protections-panel-content-blocking-cryptominers-label = 暗号通貨マイニング
@@ -70,6 +84,7 @@ protections-panel-site-not-working-view-issue-list-forms = フォーム
 protections-panel-site-not-working-view-issue-list-payments = 支払い情報
 protections-panel-site-not-working-view-issue-list-comments = コメント
 protections-panel-site-not-working-view-issue-list-videos = 動画
+protections-panel-site-not-working-view-issue-list-fonts = フォント
 protections-panel-site-not-working-view-send-report = 報告を送信
 
 ##
@@ -79,18 +94,17 @@ protections-panel-cryptominers = 暗号通貨マイニングは仮想通貨の�
 protections-panel-fingerprinters = フィンガープリント採取はブラウザーとコンピューターから設定を集め、あなたのデジタル指紋を作成します。このデジタル指紋を使うと、様々なウェブサイトに渡ってあなたを追跡することができます。
 protections-panel-tracking-content = ウェブサイトはトラッキングコード付きの広告、動画、その他のコンテンツを外部から読み込む場合があります。トラッキングコンテンツをブロックするとサイトの読み込みが速くなる可能性がありますが、一部のボタン、フォーム、ログインフォームが動作しなくなる可能性もあります。
 protections-panel-social-media-trackers = ソーシャルネットワークはオンラインでのあなたの行動を追跡、監視するために、他のウェブサイトにトラッカーを設置しています。これはソーシャルメディア上のあなたのプロフィールで共有している以上の情報を、ソーシャルメディア会社に許容することになります。
-
 protections-panel-description-shim-allowed = ユーザーの操作により、以下のマークされたトラッカーのブロックがこのページ上で部分的に解除されています。
 protections-panel-description-shim-allowed-learn-more = 詳細情報
 protections-panel-shim-allowed-indicator =
-  .tooltiptext = トラッカーのブロックが部分的に解除されました
-
+    .tooltiptext = トラッカーのブロックが部分的に解除されました
 protections-panel-content-blocking-manage-settings =
     .label = 保護設定を管理
     .accesskey = M
 protections-panel-content-blocking-breakage-report-view =
     .title = 動作しないサイトを報告
-protections-panel-content-blocking-breakage-report-view-description = 特定のトラッカーをブロックすると、一部のウェブサイトで問題が起こる可能性があります。これらの問題を報告すると、{ -brand-short-name } を改善する手助けになります。報告とともに URL とあなたのブラウザーの設定に関する情報が Waterfox に送信されます。 <label data-l10n-name="learn-more">詳細情報</label>
+protections-panel-content-blocking-breakage-report-view-description = 特定のトラッカーをブロックすると、一部のウェブサイトで問題が起こる可能性があります。これらの問題を報告すると、{ -brand-short-name } を改善する手助けになります。報告とともに URL とあなたのブラウザーの設定に関する情報が BrowserWorks に送信されます。 <label data-l10n-name="learn-more">詳細情報</label>
+protections-panel-content-blocking-breakage-report-view-description2 = 特定のトラッカーをブロックすると、一部のウェブサイトで問題が起こる可能性があります。これらの問題を報告すると、{ -brand-short-name } を改善する手助けになります。報告とともに URL とあなたのブラウザーの設定に関する情報が { -vendor-short-name } に送信されます。
 protections-panel-content-blocking-breakage-report-view-collection-url = URL
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = URL
@@ -101,3 +115,21 @@ protections-panel-content-blocking-breakage-report-view-cancel =
     .label = キャンセル
 protections-panel-content-blocking-breakage-report-view-send-report =
     .label = レポートを送信
+
+# Cookie Banner Handling
+
+protections-panel-cookie-banner-handling-header = Cookie バナー削減
+protections-panel-cookie-banner-handling-enabled = このサイトでオン
+protections-panel-cookie-banner-handling-disabled = このサイトでオフ
+protections-panel-cookie-banner-handling-undetected = 現在サポートされていないサイトです
+protections-panel-cookie-banner-view-title =
+    .title = Cookie バナー削減
+# Variables
+#  $host (String): the hostname of the site that is being displayed.
+protections-panel-cookie-banner-view-turn-off-for-site = { $host } サイトの Cookie バナー削減をオフにしますか？
+protections-panel-cookie-banner-view-turn-on-for-site = このサイトの Cookie バナー削減をオンにしますか？
+protections-panel-cookie-banner-view-cookie-clear-warning = { -brand-short-name } がこのサイトの Cookie を消去してページを更新します。すべての Cookie を消去するとサイトからログアウトしたり買い物カゴが空になったりする可能性があります。
+protections-panel-cookie-banner-view-turn-on-description = サポートされたサイトのすべての Cookie 同意確認に対して、{ -brand-short-name } が自動的に拒否を試みます。
+protections-panel-cookie-banner-view-cancel = キャンセル
+protections-panel-cookie-banner-view-turn-off = オフにする
+protections-panel-cookie-banner-view-turn-on = オンにする

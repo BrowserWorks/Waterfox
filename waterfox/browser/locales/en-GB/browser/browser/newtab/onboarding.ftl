@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,6 +13,7 @@
 onboarding-welcome-header = Welcome to { -brand-short-name }
 onboarding-start-browsing-button-label = Start Browsing
 onboarding-not-now-button-label = Not now
+mr1-onboarding-get-started-primary-button-label = Get started
 
 ## Custom Return To AMO onboarding strings
 
@@ -25,37 +26,22 @@ return-to-amo-addon-title = Now let’s get you <img data-l10n-name="icon"/> <b>
 return-to-amo-add-extension-label = Add the Extension
 return-to-amo-add-theme-label = Add the Theme
 
+##  Variables: $addon-name (String) - Name of the add-on to be installed
+
+mr1-return-to-amo-subtitle = Say hello to { -brand-short-name }
+mr1-return-to-amo-addon-title = You’ve got a fast, private browser at your fingertips. Now you can add <b>{ $addon-name }</b> and do even more with { -brand-short-name }.
+mr1-return-to-amo-add-extension-label = Add { $addon-name }
+
 ## Multistage onboarding strings (about:welcome pages)
 
 # Aria-label to make the "steps" of multistage onboarding visible to screen readers.
 # Variables:
 #   $current (Int) - Number of the current page
 #   $total (Int) - Total number of pages
-onboarding-welcome-steps-indicator =
-    .aria-label = Getting started: screen { $current } of { $total }
 
-# Aria-label to make the "steps" of multistage onboarding visible to screen readers.
-# Variables:
-#   $current (Int) - Number of the current page
-#   $total (Int) - Total number of pages
+onboarding-welcome-steps-indicator-label =
+    .aria-label = Progress: step { $current } of { $total }
 
-onboarding-welcome-steps-indicator2 =
-    .aria-valuetext = Progress: step { $current } of { $total }
-# "Hero Text" displayed on left side of welcome screen.
-# The "Fire" in "Fire starts here" plays on the "Fire" in "Waterfox".
-# It also signals the passion users bring to Waterfox, how they use
-# Waterfox to pursue those passions, as well as the boldness in their
-# choice to use Waterfox over a larger competitor browser.
-# An alternative title for localization is: "It starts here".
-# This text can be formatted to span multiple lines as needed.
-mr1-welcome-screen-hero-text =
-    Fire starts
-    here
-# Caption for background image in about:welcome. "Soraya Osorio" is the name
-# of the person and shouldn't be translated.
-# In case your language needs to adapt the nouns to a gender, Soraya is a female name (she/her).
-# You can see the picture in about:welcome in Nightly 90.
-mr1-onboarding-welcome-image-caption = Soraya Osorio — Furniture designer, Waterfox fan
 # This button will open system settings to turn on prefers-reduced-motion
 mr1-onboarding-reduce-motion-button-label = Turn off animations
 
@@ -63,74 +49,33 @@ mr1-onboarding-reduce-motion-button-label = Turn off animations
 ## match the OS' application context menu item action where Windows uses "pin"
 ## and "taskbar" while macOS "keep" and "Dock" (proper noun).
 
-# Title used on welcome page when Waterfox is not pinned
-mr1-onboarding-pin-header =
-    { PLATFORM() ->
-        [macos] Keep { -brand-short-name } in your Dock for easy access
-       *[other] Pin { -brand-short-name } to your taskbar for easy access
-    }
-# Primary button string used on welcome page when Waterfox is not pinned.
-mr1-onboarding-pin-primary-button-label =
-    { PLATFORM() ->
-        [macos] Keep in Dock
-       *[other] Pin to taskbar
-    }
-
 ## Multistage MR1 onboarding strings (about:welcome pages)
 
-# This string will be used on welcome page primary button label
-# when Waterfox is both pinned and default
-mr1-onboarding-get-started-primary-button-label = Get started
-mr1-onboarding-welcome-header = Welcome to { -brand-short-name }
-mr1-onboarding-set-default-pin-primary-button-label = Make { -brand-short-name } my primary browser
-    .title = Sets { -brand-short-name } as default browser and pins to taskbar
-# This string will be used on welcome page primary button label
-# when Waterfox is not default but already pinned
-mr1-onboarding-set-default-only-primary-button-label = Make { -brand-short-name } my default browser
-mr1-onboarding-set-default-secondary-button-label = Not now
+# String for the Waterfox Accounts button
 mr1-onboarding-sign-in-button-label = Sign in
 
 ## Title, subtitle and primary button string used on set default onboarding screen
 ## when Waterfox is not default browser
 
-mr1-onboarding-default-header = Make { -brand-short-name } your default
-mr1-onboarding-default-subtitle = Put speed, safety, and privacy on autopilot.
-mr1-onboarding-default-primary-button-label = Make default browser
-
 ## Multistage MR1 onboarding strings (about:welcome pages)
 
-mr1-onboarding-import-header = Bring it all with you
-mr1-onboarding-import-subtitle = Import your passwords, <br/>bookmarks and more.
 # The primary import button label will depend on whether we can detect which browser was used to download Waterfox.
 # Variables:
 #   $previous (Str) - Previous browser name, such as Edge, Chrome
 mr1-onboarding-import-primary-button-label-attribution = Import from { $previous }
-# This string will be used in cases where we can't detect the previous browser name.
-mr1-onboarding-import-primary-button-label-no-attribution = Import from previous browser
-mr1-onboarding-import-secondary-button-label = Not now
-mr2-onboarding-colorway-header = Life in colour
-mr2-onboarding-colorway-subtitle = Vibrant new colourways. Available for a limited time.
-mr2-onboarding-colorway-primary-button-label = Save colourway
-mr2-onboarding-colorway-secondary-button-label = Not now
-mr2-onboarding-colorway-label-soft = Soft
-mr2-onboarding-colorway-label-balanced = Balanced
-# "Bold" is used in the sense of bravery or courage, not in the sense of
-# emphasized text.
-mr2-onboarding-colorway-label-bold = Bold
-# Automatic theme uses operating system color settings
-mr2-onboarding-theme-label-auto = Auto
-# This string will be used for Default theme
-mr2-onboarding-theme-label-default = Default
+
 mr1-onboarding-theme-header = Make it your own
 mr1-onboarding-theme-subtitle = Personalise { -brand-short-name } with a theme.
-mr1-onboarding-theme-primary-button-label = Save theme
 mr1-onboarding-theme-secondary-button-label = Not now
+
 # System theme uses operating system color settings
 mr1-onboarding-theme-label-system = System theme
+
 mr1-onboarding-theme-label-light = Light
 mr1-onboarding-theme-label-dark = Dark
 # "Alpenglow" here is the name of the theme, and should be kept in English.
 mr1-onboarding-theme-label-alpenglow = Alpenglow
+
 onboarding-theme-primary-button-label = Done
 
 ## Please make sure to split the content of the title attribute into lines whose
@@ -143,61 +88,49 @@ mr1-onboarding-theme-tooltip-system =
     .title =
         Follow the operating system theme
         for buttons, menus, and windows.
+
 # Input description for system theme
 mr1-onboarding-theme-description-system =
     .aria-description =
         Follow the operating system theme
         for buttons, menus, and windows.
+
 # Tooltip displayed on hover of light theme
 mr1-onboarding-theme-tooltip-light =
     .title =
         Use a light theme for buttons,
         menus, and windows.
+
 # Input description for light theme
 mr1-onboarding-theme-description-light =
     .aria-description =
         Use a light theme for buttons,
         menus, and windows.
+
 # Tooltip displayed on hover of dark theme
 mr1-onboarding-theme-tooltip-dark =
     .title =
         Use a dark theme for buttons,
         menus, and windows.
+
 # Input description for dark theme
 mr1-onboarding-theme-description-dark =
     .aria-description =
         Use a dark theme for buttons,
         menus, and windows.
+
 # Tooltip displayed on hover of Alpenglow theme
 mr1-onboarding-theme-tooltip-alpenglow =
     .title =
         Use a dynamic, colourful theme for buttons,
         menus, and windows.
+
 # Input description for Alpenglow theme
 mr1-onboarding-theme-description-alpenglow =
     .aria-description =
         Use a dynamic, colourful theme for buttons,
         menus, and windows.
-# Tooltip displayed on hover of non-default colorway theme
-# variations e.g. soft, balanced, bold
-mr2-onboarding-theme-tooltip =
-    .title = Use this colourway.
-# Selector description for non-default colorway theme
-# variations e.g. soft, balanced, bold
-mr2-onboarding-theme-description =
-    .aria-description = Use this colourway.
-# Tooltip displayed on hover of colorway
-# Variables:
-#   $colorwayName (String) - Name of colorway
-mr2-onboarding-colorway-tooltip =
-    .title = Explore { $colorwayName } colourways.
-# Selector description for colorway
-# Variables:
-#   $colorwayName (String) - Name of colorway
-mr2-onboarding-colorway-label = Explore { $colorwayName } colourways.
-# Tooltip displayed on hover of default themes
-mr2-onboarding-default-theme-tooltip =
-    .title = Explore default themes.
+
 # Selector description for default themes
 mr2-onboarding-default-theme-label = Explore default themes.
 
@@ -225,13 +158,18 @@ mr2-onboarding-start-browsing-button-label = Start browsing
 ##   $appLanguage (String) - The name of the language shipping in the browser build, e.g. "English (EN)"
 
 onboarding-live-language-header = Choose your language
+
 mr2022-onboarding-live-language-text = { -brand-short-name } speaks your language
+
 mr2022-language-mismatch-subtitle = Thanks to our community, { -brand-short-name } is translated in over 90 languages. It looks like your system is using { $systemLanguage }, and { -brand-short-name } is using { $appLanguage }.
+
 onboarding-live-language-button-label-downloading = Downloading the language pack for { $negotiatedLanguage }…
 onboarding-live-language-waiting-button = Getting available languages…
 onboarding-live-language-installing = Installing the language pack for { $negotiatedLanguage }…
+
 mr2022-onboarding-live-language-switch-to = Switch to { $negotiatedLanguage }
 mr2022-onboarding-live-language-continue-in = Continue in { $appLanguage }
+
 onboarding-live-language-secondary-cancel-download = Cancel
 onboarding-live-language-skip-button-label = Skip
 
@@ -254,13 +192,24 @@ fx100-thank-you-pin-primary-button-label =
         [macos] Keep { -brand-short-name } in Dock
        *[other] Pin { -brand-short-name } to taskbar
     }
+
 fx100-upgrade-thanks-header = 100 Thank-Yous
 # Message shown with a start-browsing button. Emphasis <em> should be for "you"
 # but "Thank" can be used instead if there's no "you" in the translation.
 fx100-upgrade-thank-you-body = It’s our 100th release of { -brand-short-name }. Thank <em>you</em> for helping us build a better, healthier internet.
 # Message shown with either a pin-to-taskbar or set-default button.
 fx100-upgrade-thanks-keep-body = It’s our 100th release! Thanks for being a part of our community. Keep { -brand-short-name } one click away for the next 100.
+
 mr2022-onboarding-secondary-skip-button-label = Skip this step
+
+## MR2022 New User Easy Setup screen strings
+
+# Primary button string used on new user onboarding first screen showing multiple actions such as Set Default, Import from previous browser.
+mr2022-onboarding-easy-setup-primary-button-label = Save and continue
+# Set Default action checkbox label used on new user onboarding first screen
+mr2022-onboarding-easy-setup-set-default-checkbox-label = Set { -brand-short-name } as default browser
+# Import action checkbox label used on new user onboarding first screen
+mr2022-onboarding-easy-setup-import-checkbox-label = Import from previous browser
 
 ## MR2022 New User Pin Waterfox screen strings
 
@@ -325,35 +274,42 @@ mr2022-onboarding-import-primary-button-label-no-attribution = Import from previ
 
 mr2022-onboarding-colorway-title = Choose the colour that inspires you
 mr2022-onboarding-colorway-subtitle = Independent voices can change culture.
-mr2022-onboarding-colorway-primary-button-label = Set colourway
+mr2022-onboarding-colorway-primary-button-label-continue = Set and continue
 mr2022-onboarding-existing-colorway-checkbox-label = Make { -firefox-home-brand-name } your colourful homepage
+
 mr2022-onboarding-colorway-label-default = Default
-mr2022-onboarding-colorway-tooltip-default =
-    .title = Default
+mr2022-onboarding-colorway-tooltip-default2 =
+    .title = Current { -brand-short-name } colours
 mr2022-onboarding-colorway-description-default = <b>Use my current { -brand-short-name } colours.</b>
+
 mr2022-onboarding-colorway-label-playmaker = Playmaker
-mr2022-onboarding-colorway-tooltip-playmaker =
-    .title = Playmaker
+mr2022-onboarding-colorway-tooltip-playmaker2 =
+    .title = Playmaker (red)
 mr2022-onboarding-colorway-description-playmaker = <b>You are a Playmaker.</b> You create opportunities to win and help everyone around you elevate their game.
+
 mr2022-onboarding-colorway-label-expressionist = Expressionist
-mr2022-onboarding-colorway-tooltip-expressionist =
-    .title = Expressionist
+mr2022-onboarding-colorway-tooltip-expressionist2 =
+    .title = Expressionist (yellow)
 mr2022-onboarding-colorway-description-expressionist = <b>You are an Expressionist.</b> You see the world differently and your creations stir the emotions of others.
+
 mr2022-onboarding-colorway-label-visionary = Visionary
-mr2022-onboarding-colorway-tooltip-visionary =
-    .title = Visionary
+mr2022-onboarding-colorway-tooltip-visionary2 =
+    .title = Visionary (green)
 mr2022-onboarding-colorway-description-visionary = <b>You are a Visionary.</b> You question the status quo and move others to imagine a better future.
+
 mr2022-onboarding-colorway-label-activist = Activist
-mr2022-onboarding-colorway-tooltip-activist =
-    .title = Activist
+mr2022-onboarding-colorway-tooltip-activist2 =
+    .title = Activist (blue)
 mr2022-onboarding-colorway-description-activist = <b>You are an Activist.</b> You leave the world a better place than you found it and lead others to believe.
+
 mr2022-onboarding-colorway-label-dreamer = Dreamer
-mr2022-onboarding-colorway-tooltip-dreamer =
-    .title = Dreamer
+mr2022-onboarding-colorway-tooltip-dreamer2 =
+    .title = Dreamer (purple)
 mr2022-onboarding-colorway-description-dreamer = <b>You are a Dreamer.</b> You believe that fortune favors the bold and inspire others to be brave.
+
 mr2022-onboarding-colorway-label-innovator = Innovator
-mr2022-onboarding-colorway-tooltip-innovator =
-    .title = Innovator
+mr2022-onboarding-colorway-tooltip-innovator2 =
+    .title = Innovator (orange)
 mr2022-onboarding-colorway-description-innovator = <b>You are an Innovator.</b> You see opportunities everywhere and make an impact on the lives of everyone around you.
 
 ## MR2022 Multistage Mobile Download screen strings
@@ -378,16 +334,47 @@ mr2022-upgrade-onboarding-pin-private-window-primary-button-label =
 
 mr2022-onboarding-privacy-segmentation-title = We always respect your privacy
 mr2022-onboarding-privacy-segmentation-subtitle = From intelligent suggestions to smarter search, we’re constantly working to create a better, more personal { -brand-product-name }.
-mr2022-onboarding-privacy-segmentation-cta-text = When we offer new features that use your data to enhance your browsing, do you want to see:
-mr2022-onboarding-privacy-segmentation-primary-button-label = { -brand-product-name } recommendations
-mr2022-onboarding-privacy-segmentation-secondary-button-label = Detailed information
 mr2022-onboarding-privacy-segmentation-text-cta = What do you want to see when we offer new features that use your data to enhance your browsing?
 mr2022-onboarding-privacy-segmentation-button-primary-label = Use { -brand-product-name } recommendations
 mr2022-onboarding-privacy-segmentation-button-secondary-label = Show detailed information
 
 ## MR2022 Multistage Gratitude screen strings
 
-mr2022-onboarding-gratitude-title = You’re helping us build a better web.
-mr2022-onboarding-gratitude-subtitle = Thank you for using { -brand-short-name }, backed by the Waterfox Limited. With your support, we’re working to make the internet more open, accessible, and better for everyone.
+mr2022-onboarding-gratitude-title = You’re helping us build a better web
+mr2022-onboarding-gratitude-subtitle = Thank you for using { -brand-short-name }, backed by the BrowserWorks. With your support, we’re working to make the internet more open, accessible, and better for everyone.
 mr2022-onboarding-gratitude-primary-button-label = See what’s new
 mr2022-onboarding-gratitude-secondary-button-label = Start browsing
+
+## Onboarding spotlight for infrequent users
+
+onboarding-infrequent-import-title = Make yourself at home
+onboarding-infrequent-import-subtitle = Whether you’re settling in or just stopping by, remember you can import your bookmarks, passwords, and more.
+onboarding-infrequent-import-primary-button = Import to { -brand-short-name }
+
+## MR2022 Illustration alt tags
+## Descriptive tags for illustrations used by screen readers and other assistive tech
+
+mr2022-onboarding-pin-image-alt =
+    .aria-label = Person working on a laptop surrounded by stars and flowers
+mr2022-onboarding-default-image-alt =
+    .aria-label = Person hugging the { -brand-product-name } logo
+mr2022-onboarding-import-image-alt =
+    .aria-label = Person riding a skateboard with a box of software icons
+mr2022-onboarding-mobile-download-image-alt =
+    .aria-label = Frogs hopping across lily pads with a QR code to download { -brand-product-name } for mobile in the centre
+mr2022-onboarding-pin-private-image-alt =
+    .aria-label = Magic wand makes { -brand-product-name } private browsing logo appear out of a hat
+mr2022-onboarding-privacy-segmentation-image-alt =
+    .aria-label = Light-skinned and dark-skinned hands high five
+mr2022-onboarding-gratitude-image-alt =
+    .aria-label = View of a sunset through a window with a fox and a house plant on a windowsill
+mr2022-onboarding-colorways-image-alt =
+    .aria-label = A hand spray paints a colourful collage of a green eye, orange shoe, red basketball, purple headphones, blue heart, and yellow crown
+
+## Device migration onboarding
+
+onboarding-device-migration-image-alt =
+    .aria-label = A fox on the screen of a laptop computer waving. The laptop has a mouse plugged into it.
+onboarding-device-migration-title = Welcome back!
+onboarding-device-migration-subtitle = Sign in to your { -fxaccount-brand-name(capitalization: "sentence") } to bring your bookmarks, passwords, and history with you on your new device.
+onboarding-device-migration-primary-button-label = Sign in

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,6 +13,7 @@
 onboarding-welcome-header = Welkom bij { -brand-short-name }
 onboarding-start-browsing-button-label = Beginnen met browsen
 onboarding-not-now-button-label = Niet nu
+mr1-onboarding-get-started-primary-button-label = Beginnen
 
 ## Custom Return To AMO onboarding strings
 
@@ -25,103 +26,32 @@ return-to-amo-addon-title = Laten we nu <img data-l10n-name="icon"/> <b>{ $addon
 return-to-amo-add-extension-label = De extensie toevoegen
 return-to-amo-add-theme-label = Het thema toevoegen
 
+##  Variables: $addon-name (String) - Name of the add-on to be installed
+
+mr1-return-to-amo-subtitle = Hartelijk welkom bij { -brand-short-name }
+mr1-return-to-amo-addon-title = U hebt een snelle privébrowser binnen handbereik. U kunt nu <b>{ $addon-name }</b> toevoegen en nog meer doen met { -brand-short-name }.
+mr1-return-to-amo-add-extension-label = { $addon-name } toevoegen
+
 ## Multistage onboarding strings (about:welcome pages)
 
-# Aria-label to make the "steps" of multistage onboarding visible to screen readers.
-# Variables:
-#   $current (Int) - Number of the current page
-#   $total (Int) - Total number of pages
-onboarding-welcome-steps-indicator =
-    .aria-label = Aan de slag: scherm { $current } van { $total }
 
 # Aria-label to make the "steps" of multistage onboarding visible to screen readers.
 # Variables:
 #   $current (Int) - Number of the current page
 #   $total (Int) - Total number of pages
 
-onboarding-welcome-steps-indicator2 =
-    .aria-valuetext = Voortgang: stap { $current } van { $total }
-# "Hero Text" displayed on left side of welcome screen.
-# The "Fire" in "Fire starts here" plays on the "Fire" in "Waterfox".
-# It also signals the passion users bring to Waterfox, how they use
-# Waterfox to pursue those passions, as well as the boldness in their
-# choice to use Waterfox over a larger competitor browser.
-# An alternative title for localization is: "It starts here".
-# This text can be formatted to span multiple lines as needed.
-mr1-welcome-screen-hero-text = Het vuur begint hier
-# Caption for background image in about:welcome. "Soraya Osorio" is the name
-# of the person and shouldn't be translated.
-# In case your language needs to adapt the nouns to a gender, Soraya is a female name (she/her).
-# You can see the picture in about:welcome in Nightly 90.
-mr1-onboarding-welcome-image-caption = Soraya Osorio – Meubelontwerper, Waterfox-fan
+onboarding-welcome-steps-indicator-label =
+    .aria-label = Voortgang: stap { $current } van { $total }
 # This button will open system settings to turn on prefers-reduced-motion
 mr1-onboarding-reduce-motion-button-label = Animaties uitschakelen
-
-## Title and primary button strings differ between platforms as they
-## match the OS' application context menu item action where Windows uses "pin"
-## and "taskbar" while macOS "keep" and "Dock" (proper noun).
-
-# Title used on welcome page when Waterfox is not pinned
-mr1-onboarding-pin-header =
-    { PLATFORM() ->
-        [macos] { -brand-short-name } aan uw Dock toevoegen voor eenvoudige toegang
-       *[other] { -brand-short-name } aan uw taakbalk vastzetten voor eenvoudige toegang
-    }
-# Primary button string used on welcome page when Waterfox is not pinned.
-mr1-onboarding-pin-primary-button-label =
-    { PLATFORM() ->
-        [macos] Aan Dock toevoegen
-       *[other] Aan taakbalk vastzetten
-    }
-
-## Multistage MR1 onboarding strings (about:welcome pages)
-
-# This string will be used on welcome page primary button label
-# when Waterfox is both pinned and default
-mr1-onboarding-get-started-primary-button-label = Beginnen
-mr1-onboarding-welcome-header = Welkom bij { -brand-short-name }
-mr1-onboarding-set-default-pin-primary-button-label = { -brand-short-name } mijn voorkeursbrowser maken
-    .title = Stelt { -brand-short-name } in als standaardbrowser en maakt het aan de taakbalk vast
-# This string will be used on welcome page primary button label
-# when Waterfox is not default but already pinned
-mr1-onboarding-set-default-only-primary-button-label = { -brand-short-name } mijn voorkeursbrowser maken
-mr1-onboarding-set-default-secondary-button-label = Niet nu
+# String for the Waterfox Accounts button
 mr1-onboarding-sign-in-button-label = Aanmelden
-
-## Title, subtitle and primary button string used on set default onboarding screen
-## when Waterfox is not default browser
-
-mr1-onboarding-default-header = { -brand-short-name } uw standaardbrowser maken
-mr1-onboarding-default-subtitle = Zet snelheid, veiligheid en privacy op de automatische piloot.
-mr1-onboarding-default-primary-button-label = Standaardbrowser maken
-
-## Multistage MR1 onboarding strings (about:welcome pages)
-
-mr1-onboarding-import-header = Neem alles met u mee
-mr1-onboarding-import-subtitle = Importeer uw wachtwoorden, <br/>bladwijzers en meer.
 # The primary import button label will depend on whether we can detect which browser was used to download Waterfox.
 # Variables:
 #   $previous (Str) - Previous browser name, such as Edge, Chrome
 mr1-onboarding-import-primary-button-label-attribution = Importeren uit { $previous }
-# This string will be used in cases where we can't detect the previous browser name.
-mr1-onboarding-import-primary-button-label-no-attribution = Importeren uit vorige browser
-mr1-onboarding-import-secondary-button-label = Niet nu
-mr2-onboarding-colorway-header = Leven in kleur
-mr2-onboarding-colorway-subtitle = Levendige nieuwe kleurstellingen. Beschikbaar gedurende een beperkte tijd.
-mr2-onboarding-colorway-primary-button-label = Kleurstelling opslaan
-mr2-onboarding-colorway-secondary-button-label = Niet nu
-mr2-onboarding-colorway-label-soft = Zacht
-mr2-onboarding-colorway-label-balanced = Gebalanceerd
-# "Bold" is used in the sense of bravery or courage, not in the sense of
-# emphasized text.
-mr2-onboarding-colorway-label-bold = Stevig
-# Automatic theme uses operating system color settings
-mr2-onboarding-theme-label-auto = Automatisch
-# This string will be used for Default theme
-mr2-onboarding-theme-label-default = Standaard
 mr1-onboarding-theme-header = Maak het van uzelf
 mr1-onboarding-theme-subtitle = Personaliseer { -brand-short-name } met een thema.
-mr1-onboarding-theme-primary-button-label = Thema opslaan
 mr1-onboarding-theme-secondary-button-label = Niet nu
 # System theme uses operating system color settings
 mr1-onboarding-theme-label-system = Systeemthema
@@ -176,26 +106,6 @@ mr1-onboarding-theme-description-alpenglow =
     .aria-description =
         Een dynamisch, kleurrijk thema gebruiken voor knoppen,
         menu’s en vensters.
-# Tooltip displayed on hover of non-default colorway theme
-# variations e.g. soft, balanced, bold
-mr2-onboarding-theme-tooltip =
-    .title = Deze kleurstelling gebruiken.
-# Selector description for non-default colorway theme
-# variations e.g. soft, balanced, bold
-mr2-onboarding-theme-description =
-    .aria-description = Deze kleurstelling gebruiken.
-# Tooltip displayed on hover of colorway
-# Variables:
-#   $colorwayName (String) - Name of colorway
-mr2-onboarding-colorway-tooltip =
-    .title = Kleurstellingen { $colorwayName } ontdekken.
-# Selector description for colorway
-# Variables:
-#   $colorwayName (String) - Name of colorway
-mr2-onboarding-colorway-label = Kleurstellingen { $colorwayName } ontdekken.
-# Tooltip displayed on hover of default themes
-mr2-onboarding-default-theme-tooltip =
-    .title = Standaardthema’s ontdekken.
 # Selector description for default themes
 mr2-onboarding-default-theme-label = Standaardthema’s ontdekken.
 
@@ -204,14 +114,6 @@ mr2-onboarding-default-theme-label = Standaardthema’s ontdekken.
 mr2-onboarding-thank-you-header = Bedankt dat u voor ons kiest
 mr2-onboarding-thank-you-text = { -brand-short-name } is een onafhankelijke browser die wordt ondersteund door een non-profitorganisatie. Samen maken we het internet veiliger, gezonder en meer privé.
 mr2-onboarding-start-browsing-button-label = Beginnen met surfen
-
-## Multistage live language reloading onboarding strings (about:welcome pages)
-##
-## The following language names are generated by the browser's Intl.DisplayNames API.
-##
-## Variables:
-##   $negotiatedLanguage (String) - The name of the langpack's language, e.g. "Español (ES)"
-
 
 ## Multistage live language reloading onboarding strings (about:welcome pages)
 ##
@@ -259,6 +161,15 @@ fx100-upgrade-thank-you-body = Het is onze 100e versie van { -brand-short-name }
 # Message shown with either a pin-to-taskbar or set-default button.
 fx100-upgrade-thanks-keep-body = Het is onze 100ste versie! Bedankt dat u deel uitmaakt van onze gemeenschap. Houd { -brand-short-name } één klik verwijderd voor de volgende 100.
 mr2022-onboarding-secondary-skip-button-label = Deze stap overslaan
+
+## MR2022 New User Easy Setup screen strings
+
+# Primary button string used on new user onboarding first screen showing multiple actions such as Set Default, Import from previous browser.
+mr2022-onboarding-easy-setup-primary-button-label = Opslaan en doorgaan
+# Set Default action checkbox label used on new user onboarding first screen
+mr2022-onboarding-easy-setup-set-default-checkbox-label = { -brand-short-name } instellen als standaardbrowser
+# Import action checkbox label used on new user onboarding first screen
+mr2022-onboarding-easy-setup-import-checkbox-label = Importeren uit vorige browser
 
 ## MR2022 New User Pin Waterfox screen strings
 
@@ -323,35 +234,35 @@ mr2022-onboarding-import-primary-button-label-no-attribution = Importeren uit vo
 
 mr2022-onboarding-colorway-title = Kies de kleur die u inspireert
 mr2022-onboarding-colorway-subtitle = Onafhankelijke stemmen kunnen cultuur veranderen.
-mr2022-onboarding-colorway-primary-button-label = Kleurstelling instellen
+mr2022-onboarding-colorway-primary-button-label-continue = Instellen en doorgaan
 mr2022-onboarding-existing-colorway-checkbox-label = Maak van { -firefox-home-brand-name } uw kleurrijke startpagina
 mr2022-onboarding-colorway-label-default = Standaard
-mr2022-onboarding-colorway-tooltip-default =
-    .title = Standaard
+mr2022-onboarding-colorway-tooltip-default2 =
+    .title = Huidige { -brand-short-name }-kleuren
 mr2022-onboarding-colorway-description-default = <b>Mijn huidige { -brand-short-name }-kleuren gebruiken.</b>
 mr2022-onboarding-colorway-label-playmaker = Spelmaker
-mr2022-onboarding-colorway-tooltip-playmaker =
-    .title = Spelmaker
+mr2022-onboarding-colorway-tooltip-playmaker2 =
+    .title = Spelmaker (rood)
 mr2022-onboarding-colorway-description-playmaker = <b>U bent een spelmaker.</b> U creëert kansen om te winnen en helpt iedereen om u heen hun spel te verbeteren.
 mr2022-onboarding-colorway-label-expressionist = Expressionist
-mr2022-onboarding-colorway-tooltip-expressionist =
-    .title = Expressionist
+mr2022-onboarding-colorway-tooltip-expressionist2 =
+    .title = Expressionist (geel)
 mr2022-onboarding-colorway-description-expressionist = <b>U bent een expressionist.</b> U ziet de wereld anders en uw creaties roeren de emoties van anderen.
 mr2022-onboarding-colorway-label-visionary = Visionair
-mr2022-onboarding-colorway-tooltip-visionary =
-    .title = Visionair
+mr2022-onboarding-colorway-tooltip-visionary2 =
+    .title = Visionair (groen)
 mr2022-onboarding-colorway-description-visionary = <b>U bent een visionair.</b> U trekt de status-quo in twijfel en stimuleert anderen om zich een betere toekomst voor te stellen.
 mr2022-onboarding-colorway-label-activist = Activist
-mr2022-onboarding-colorway-tooltip-activist =
-    .title = Activist
+mr2022-onboarding-colorway-tooltip-activist2 =
+    .title = Activist (blauw)
 mr2022-onboarding-colorway-description-activist = <b>U bent een activist.</b> U laat de wereld mooier achter dan u hem aantrof en laat anderen geloven.
 mr2022-onboarding-colorway-label-dreamer = Dromer
-mr2022-onboarding-colorway-tooltip-dreamer =
-    .title = Dromer
+mr2022-onboarding-colorway-tooltip-dreamer2 =
+    .title = Dromer (paars)
 mr2022-onboarding-colorway-description-dreamer = <b>U bent een dromer.</b> U gelooft dat geluk met de stoutmoedigen is en inspireert anderen om dapper te zijn.
 mr2022-onboarding-colorway-label-innovator = Innovator
-mr2022-onboarding-colorway-tooltip-innovator =
-    .title = Innovator
+mr2022-onboarding-colorway-tooltip-innovator2 =
+    .title = Innovator (oranje)
 mr2022-onboarding-colorway-description-innovator = <b>U bent een innovator.</b> U ziet overal kansen en hebt invloed op het leven van iedereen om u heen.
 
 ## MR2022 Multistage Mobile Download screen strings
@@ -382,7 +293,42 @@ mr2022-onboarding-privacy-segmentation-button-secondary-label = Detailinformatie
 
 ## MR2022 Multistage Gratitude screen strings
 
-mr2022-onboarding-gratitude-title = U helpt ons een beter web te bouwen.
-mr2022-onboarding-gratitude-subtitle = Bedankt voor het gebruik van { -brand-short-name }, ondersteund door de Waterfox Limited. Met uw steun werken we eraan om het internet voor iedereen opener, toegankelijker en beter te maken.
+mr2022-onboarding-gratitude-title = U helpt ons een beter web te bouwen
+mr2022-onboarding-gratitude-subtitle = Bedankt voor het gebruik van { -brand-short-name }, ondersteund door de BrowserWorks. Met uw steun werken we eraan om het internet voor iedereen opener, toegankelijker en beter te maken.
 mr2022-onboarding-gratitude-primary-button-label = Zie wat er nieuw is
 mr2022-onboarding-gratitude-secondary-button-label = Beginnen met browsen
+
+## Onboarding spotlight for infrequent users
+
+onboarding-infrequent-import-title = Doe alsof u thuis bent
+onboarding-infrequent-import-subtitle = Of u zich nu aan het settelen bent of gewoon langskomt, onthoud dat u uw bladwijzers, wachtwoorden en meer kunt importeren.
+onboarding-infrequent-import-primary-button = Importeren in { -brand-short-name }
+
+## MR2022 Illustration alt tags
+## Descriptive tags for illustrations used by screen readers and other assistive tech
+
+mr2022-onboarding-pin-image-alt =
+    .aria-label = Persoon die op een laptop werkt, omringd door sterren en bloemen
+mr2022-onboarding-default-image-alt =
+    .aria-label = Persoon die het { -brand-product-name }-logo omhelst
+mr2022-onboarding-import-image-alt =
+    .aria-label = Persoon die op een skateboard rijdt met een doos met softwarepictogrammen
+mr2022-onboarding-mobile-download-image-alt =
+    .aria-label = Kikkers springen over waterlelies met een QR-code om { -brand-product-name } voor mobiel te downloaden in het midden
+mr2022-onboarding-pin-private-image-alt =
+    .aria-label = Toverstaf laat het { -brand-product-name }-privénavigatielogo uit een hoed verschijnen
+mr2022-onboarding-privacy-segmentation-image-alt =
+    .aria-label = Lichte en donkere handen geven een high five
+mr2022-onboarding-gratitude-image-alt =
+    .aria-label = Uitzicht op een zonsondergang door een raam met een vos en een kamerplant op een vensterbank
+mr2022-onboarding-colorways-image-alt =
+    .aria-label = Een hand spuit een kleurrijke collage van een groen oog, oranje schoen, rode basketbal, paarse koptelefoon, blauw hart en gele kroon
+
+## Device migration onboarding
+
+onboarding-device-migration-image-alt =
+    .aria-label = Een zwaaiende vos op het scherm van een laptop. Op de laptop is een muis aangesloten.
+onboarding-device-migration-title = Welkom terug!
+onboarding-device-migration-subtitle = Meld u aan bij uw { -fxaccount-brand-name } om uw bladwijzers, wachtwoorden en geschiedenis mee te nemen op uw nieuwe apparaat.
+onboarding-device-migration-subtitle2 = Meld u aan bij uw account om uw bladwijzers, wachtwoorden en geschiedenis mee te nemen op uw nieuwe apparaat.
+onboarding-device-migration-primary-button-label = Aanmelden

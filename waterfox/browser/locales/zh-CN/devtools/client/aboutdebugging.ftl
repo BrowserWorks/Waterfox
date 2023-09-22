@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,7 +12,8 @@
 about-debugging-page-title-setup-page = 调试 - 设置
 
 # Page title (ie tab title) for the Runtime page
-# { $selectedRuntimeId } is the id of the current runtime, such as "this-firefox", "localhost:6080", ...
+# Variables:
+#   $selectedRuntimeId - ID of the current runtime, such as "this-firefox", "localhost:6080", etc.
 about-debugging-page-title-runtime-page = 调试 - 运行时 / { $selectedRuntimeId }
 
 # Sidebar strings
@@ -71,10 +72,15 @@ about-debugging-sidebar-runtime-item-waiting-for-browser = 正在等待浏览器
 about-debugging-sidebar-runtime-item-unplugged = 已断开
 
 # Title for runtime sidebar items that are related to a specific device (USB, WiFi).
+# Variables:
+#   $displayName (string) - Displayed name
+#   $deviceName (string) - Name of the device
 about-debugging-sidebar-runtime-item-name =
     .title = { $displayName }（{ $deviceName }）
 # Title for runtime sidebar items where we cannot get device information (network
 # locations).
+# Variables:
+#   $displayName (string) - Displayed name
 about-debugging-sidebar-runtime-item-name-no-device =
     .title = { $displayName }
 
@@ -270,7 +276,7 @@ about-debugging-debug-target-inspect-button = 检查
 
 # Text of a button displayed in the "This Waterfox" page, in the Temporary Extension
 # section. Clicking on the button will open a file picker to load a temporary extension
-about-debugging-tmp-extension-install-button = 临时载入附加组件…
+about-debugging-tmp-extension-install-button = 临时加载附加组件…
 
 # Text displayed when trying to install a temporary extension in the "This Waterfox" page.
 about-debugging-tmp-extension-install-error = 安装临时附加组件时出错。
@@ -383,17 +389,10 @@ about-debugging-zombie-tab-inspect-action-disabled =
 
 # Displayed as name for the Main Process debug target in the Processes category. Only for
 # remote runtimes, if `devtools.aboutdebugging.process-debugging` is true.
-about-debugging-main-process-name = 主进程
+about-debugging-multiprocess-toolbox-name = 多进程工具箱
 
 # Displayed as description for the Main Process debug target in the Processes category.
 # Only for remote browsers, if `devtools.aboutdebugging.process-debugging` is true.
-about-debugging-main-process-description2 = 目标浏览器的主进程
-
-# Displayed instead of the Main Process debug target when the preference
-# `devtools.browsertoolbox.fission` is true.
-about-debugging-multiprocess-toolbox-name = 多进程工具箱
-
-# Description for the Multiprocess Toolbox target.
 about-debugging-multiprocess-toolbox-description = 目标浏览器的主进程和内容进程
 
 # Alt text used for the close icon of message component (warnings, errors and notifications).

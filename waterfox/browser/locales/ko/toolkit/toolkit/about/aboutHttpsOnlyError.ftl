@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,6 +20,10 @@ about-httpsonly-link-learn-more = 더 알아보기…
 ## Suggestion Box that only shows up if a secure connection to www can be established
 ## Variables:
 ##   $websiteUrl (String) - Url of the website that can be securely loded with these alternatives. Example: example.com
+
+## Suggestion Box that only shows up if a secure connection to www can be established
+## Variables:
+##   $websiteUrl (String) - Url of the website that can be securely loaded with these alternatives. Example: example.com
 
 about-httpsonly-suggestion-box-header = 대체 가능한 사이트
 about-httpsonly-suggestion-box-www-text = <em>www.{ $websiteUrl }</em>의 보안 버전이 있습니다. <em>{ $websiteUrl }</em> 대신에 이 페이지를 방문 할 수 있습니다.

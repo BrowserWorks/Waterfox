@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,7 +22,7 @@ about-unloads-learn-more =
     Zie <a data-l10n-name="doc-link">Tabbladen lossen</a> voor meer info over
     de functie en deze pagina.
 
-about-unloads-last-updated = Laatst bijgewerkt: { DATETIME($date, day: "numeric", month: "numeric", year: "numeric", hour: "numeric", minute: "numeric", second: "numeric", hour12: "false") }
+about-unloads-last-updated = Laatst bijgewerkt: { DATETIME($date, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric", hour12: "false") }
 about-unloads-button-unload = Lossen
     .title = Tabblad met de hoogste prioriteit lossen
 about-unloads-no-unloadable-tab = Er zijn geen te lossen tabbladen.
@@ -39,7 +39,7 @@ about-unloads-column-memory = Geheugen
 about-unloads-column-processes = Proces-ID’s
     .title = ID’s van de processen die de inhoud van het tabblad hosten
 
-about-unloads-last-accessed = { DATETIME($date, day: "numeric", month: "numeric", year: "numeric", hour: "numeric", minute: "numeric", second: "numeric", hour12: "false") }
+about-unloads-last-accessed = { DATETIME($date, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric", hour12: "false") }
 about-unloads-memory-in-mb = { NUMBER($mem, maxFractionalUnits: 2) } MB
 about-unloads-memory-in-mb-tooltip =
     .title = { NUMBER($mem, maxFractionalUnits: 2) } MB

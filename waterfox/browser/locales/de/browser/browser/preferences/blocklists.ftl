@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-blocklist-window =
+blocklist-window2 =
     .title = Blockierlisten
-    .style = width: 70em
+    .style = min-width: 70em
 
 blocklist-description = Liste auswählen, welche { -brand-short-name } zum Blockieren von Ihre Internetaktivitäten verfolgenden Web-Elementen verwenden soll. Die Listen werden von <a data-l10n-name="disconnect-link" title="Disconnect">Disconnect</a> bereitgestellt.
 blocklist-close-key =

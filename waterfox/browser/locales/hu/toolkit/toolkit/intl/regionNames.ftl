@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,7 @@ region-name-bl = Saint Barthélemy
 region-name-bm = Bermuda
 region-name-bn = Brunei
 region-name-bo = Bolívia
-region-name-bq = Bonaire, Saint Eustasius és Saba
+region-name-bq-2018 = Karibi Hollandia
 region-name-br = Brazília
 region-name-bs = Bahamák
 region-name-bt = Bhután
@@ -57,11 +57,11 @@ region-name-co = Kolumbia
 region-name-cp = Clipperton sziget
 region-name-cr = Costa Rica
 region-name-cu = Kuba
-region-name-cv = Zöldfoki-szigetek
+region-name-cv-2020 = Zöld-foki Köztársaság
 region-name-cw = Curaçao
 region-name-cx = Karácsony-szigetek
 region-name-cy = Ciprus
-region-name-cz = Cseh Köztársaság
+region-name-cz-2019 = Csehország
 region-name-de = Németország
 region-name-dg = Diego Garcia
 region-name-dj = Dzsibuti
@@ -150,7 +150,7 @@ region-name-me = Montenegró
 region-name-mf = Saint Martin
 region-name-mg = Madagaszkár
 region-name-mh = Marshall-szigetek
-region-name-mk = Macedónia
+region-name-mk-2019 = Észak-Macedónia
 region-name-ml = Mali
 region-name-mm = Myanmar
 region-name-mn = Mongólia
@@ -223,7 +223,7 @@ region-name-st = Sao Tome és Principe
 region-name-sv = El Salvador
 region-name-sx = Saint Martin
 region-name-sy = Szíria
-region-name-sz = Szváziföld
+region-name-sz-2019 = Szváziföld
 region-name-tc = Turks és Caicos-szigetek
 region-name-td = Csád
 region-name-tf = Francia déli és antarktiszi területek

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -52,7 +52,6 @@ about-processes-socket-process = Δίκτυο ({ $pid })
 about-processes-remote-sandbox-broker-process = Απομακρυσμένο Sandbox Broker ({ $pid })
 about-processes-fork-server-process = Διακομιστής fork ({ $pid })
 about-processes-preallocated-process = Προκατανεμημένο ({ $pid })
-
 about-processes-utility-process = Εργαλείο ({ $pid })
 
 # Unknown process names
@@ -126,9 +125,16 @@ about-processes-frame-name-one = Υποπλαίσιο: { $url }
 #   $shortUrl (String) The shared prefix for the subframes in the group.
 about-processes-frame-name-many = Υποπλαίσια ({ $number }): { $shortUrl }
 
-# Utility process actor names
+## Utility process actor names
+
 about-processes-utility-actor-unknown = Άγνωστος παράγοντας
-about-processes-utility-actor-audio-decoder = Αποκωδικοποιητής ήχου
+about-processes-utility-actor-audio-decoder-generic = Γενικός αποκωδικοποιητής ήχου
+about-processes-utility-actor-audio-decoder-applemedia = Αποκωδικοποιητής ήχου Apple Media
+about-processes-utility-actor-audio-decoder-wmf = Αποκωδικοποιητής ήχου Windows Media Framework
+about-processes-utility-actor-mf-media-engine = Windows Media Foundation Media Engine CDM
+# "Oracle" refers to an internal Waterfox process and should be kept in English
+about-processes-utility-actor-js-oracle = JavaScript Oracle
+about-processes-utility-actor-windows-utils = Βοηθήματα των Windows
 
 ## Displaying CPU (percentage and total)
 ## Variables:

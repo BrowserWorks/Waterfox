@@ -1,12 +1,9 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 page-title = Informações técnicas
-page-subtitle =
-    Esta página contém informações técnicas que podem ser úteis se você estiver
-    tentando solucionar um problema. Se estiver procurando respostas para as dúvidas mais comuns
-    do { -brand-short-name }, confira o <a data-l10n-name="support-link">site de suporte</a>.
+page-subtitle = Esta página contém informações técnicas que podem ser úteis se você estiver tentando solucionar um problema. Se estiver procurando respostas às dúvidas mais comuns sobre o { -brand-short-name }, consulte o <a data-l10n-name="support-link">site de suporte</a>.
 crashes-title = Relatórios de travamento
 crashes-id = ID do relatório
 crashes-send-date = Envio
@@ -18,6 +15,10 @@ support-addons-type = Tipo
 support-addons-enabled = Ativado
 support-addons-version = Versão
 support-addons-id = ID
+legacy-user-stylesheets-title = Folhas de estilo de usuário legadas
+legacy-user-stylesheets-enabled = Ativo
+legacy-user-stylesheets-stylesheet-types = Folhas de estilo
+legacy-user-stylesheets-no-stylesheets-found = Nenhuma folha de estilo encontrada
 security-software-title = Software de segurança
 security-software-type = Tipo
 security-software-name = Nome
@@ -70,13 +71,14 @@ app-basics-launcher-process-status = Processo de lançamento
 app-basics-multi-process-support = Janelas multiprocessadas
 app-basics-fission-support = Janelas do Fission
 app-basics-remote-processes-count = Processos remotos
-app-basics-enterprise-policies = Diretivas empresariais
+app-basics-enterprise-policies = Diretivas corporativas
 app-basics-location-service-key-google = Chave do Serviço de Localização do Google
 app-basics-safebrowsing-key-google = Chave do Google Safebrowsing
-app-basics-key-mozilla = Chave do serviço de localização da Waterfox
+app-basics-key-mozilla = Chave do serviço de localização da BrowserWorks
 app-basics-safe-mode = Modo de segurança
 app-basics-memory-size = Tamanho da memória (RAM)
 app-basics-disk-available = Espaço em disco disponível
+app-basics-pointing-devices = Dispositivos de apontamento
 # Variables:
 #   $value (number) - Amount of data being stored
 #   $unit (string) - The unit of data being stored (e.g. MB)
@@ -110,11 +112,21 @@ graphics-gpu2-title = GPU #2
 graphics-decision-log-title = Registro de decisões
 graphics-crash-guards-title = Recursos desativados da proteção contra travamentos
 graphics-workarounds-title = Soluções alternativas
+graphics-device-pixel-ratios = Proporções de pixels do dispositivo de janela
 # Windowing system in use on Linux (e.g. X11, Wayland).
 graphics-window-protocol = Protocolo de janelas
 # Desktop environment in use on Linux (e.g. GNOME, KDE, XFCE, etc).
 graphics-desktop-environment = Ambiente de trabalho
 place-database-title = Base de dados de lugares
+place-database-stats = Estatísticas
+place-database-stats-show = Mostrar estatísticas
+place-database-stats-hide = Ocultar estatísticas
+place-database-stats-entity = Entidade
+place-database-stats-count = Quantidade
+place-database-stats-size-kib = Tamanho (KiB)
+place-database-stats-size-perc = Tamanho (%)
+place-database-stats-efficiency-perc = Eficiência (%)
+place-database-stats-sequentiality-perc = Sequencialidade (%)
 place-database-integrity = Integridade
 place-database-verify-integrity = Verificar integridade
 a11y-title = Acessibilidade
@@ -164,6 +176,15 @@ media-capabilities-title = Capacidades de mídia
 media-codec-support-info = Informações de suporte ao codec
 # List all the entries of the database.
 media-capabilities-enumerate = Enumeração de banco de dados
+
+## Codec support table
+
+media-codec-support-sw-decoding = Decodificação de software
+media-codec-support-hw-decoding = Decodificação de hardware
+media-codec-support-codec-name = Nome do codec
+media-codec-support-supported = Suportado
+media-codec-support-unsupported = Não suportado
+media-codec-support-error = Informações de suporte a codec não disponíveis. Tente novamente após reproduzir de novo um arquivo de mídia.
 
 ##
 
@@ -278,6 +299,8 @@ webgl2-renderer = Renderizador do driver WebGL 2
 webgl2-version = Versão do driver WebGL 2
 webgl2-driver-extensions = Extensões do driver WebGL 2
 webgl2-extensions = Extensões WebGL 2
+webgpu-default-adapter = Adaptador padrão de WebGPU
+webgpu-fallback-adapter = Adaptador alternativo de WebGPU
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = Incluído na lista de bloqueio devido a problemas conhecidos: <a data-l10n-name="bug-link">bug { $bugNumber }</a>
@@ -307,6 +330,7 @@ can-sandbox-media = Isolamento (sandbox) de plugins de mídia
 content-sandbox-level = Nível de isolamento (sandbox) de processamento de conteúdo
 effective-content-sandbox-level = Nível efetivo de isolamento (sandbox) de processamento de conteúdo
 content-win32k-lockdown-state = Estado de confinamento de Win32k em processos de conteúdo
+support-sandbox-gpu-level = Nível de isolamento de processamento em GPU
 sandbox-proc-type-content = conteúdo
 sandbox-proc-type-file = conteúdo do arquivo
 sandbox-proc-type-media-plugin = plugin de mídia
@@ -378,3 +402,10 @@ support-remote-experiments-see-about-studies = Consulte mais informações em <a
 support-remote-features-title = Recursos remotos
 support-remote-features-name = Nome
 support-remote-features-status = Status
+
+## Pointing devices
+
+pointing-device-mouse = Mouse
+pointing-device-touchscreen = Touch screen
+pointing-device-pen-digitizer = Caneta digitalizadora
+pointing-device-none = Nenhum dispositivo de apontamento
