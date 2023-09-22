@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,6 +9,7 @@ refresh-profile-dialog-description = Kezdje frissen a teljesítményproblémák 
 refresh-profile = Tuningolja a { -brand-short-name } böngészőt
 refresh-profile-button = { -brand-short-name } felfrissítése…
 refresh-profile-learn-more = További tudnivalók
+
 refresh-profile-progress =
     .title = { -brand-short-name } felfrissítése
 refresh-profile-progress-description = Majdnem kész…

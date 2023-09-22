@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -19,25 +19,23 @@ certmgr-remembered = これらの証明書はウェブサイトがあなたを�
 certmgr-people = 他の人を識別するため以下の証明書が登録されています
 certmgr-server = これらのエントリーはサーバー証明書のエラー例外を識別します
 certmgr-ca = 認証局を識別するため以下の証明書が登録されています
-certmgr-edit-ca-cert =
+certmgr-edit-ca-cert2 =
     .title = 認証局証明書に対する信頼性の設定
-    .style = width: 48em;
+    .style = min-width: 48em;
 certmgr-edit-cert-edit-trust = 証明書の信頼性を設定してください:
 certmgr-edit-cert-trust-ssl =
     .label = この証明書をウェブサイトの識別に使用する
 certmgr-edit-cert-trust-email =
     .label = この証明書をメールユーザーの識別に使用する
-certmgr-delete-cert =
+certmgr-delete-cert2 =
     .title = 証明書の削除
-    .style = width: 48em; height: 24em;
+    .style = min-width: 48em; min-height: 24em;
 certmgr-cert-host =
     .label = ホスト
 certmgr-cert-name =
     .label = 証明書名と発行者名
 certmgr-cert-server =
     .label = サーバー
-certmgr-override-lifetime =
-    .label = 例外承認期間
 certmgr-token-name =
     .label = セキュリティデバイス
 certmgr-begins-label =
@@ -48,6 +46,8 @@ certmgr-email =
     .label = メールアドレス
 certmgr-serial =
     .label = シリアル番号
+certmgr-fingerprint-sha-256 =
+    .label = SHA-256 フィンガープリント
 certmgr-view =
     .label = 表示...
     .accesskey = V
@@ -103,7 +103,7 @@ pkcs12-dup-data = 証明書と秘密鍵はすでにセキュリティデバイ�
 ## PKCS#12 file dialogs
 
 choose-p12-backup-file-dialog = バックアップファイル名
-file-browse-pkcs12-spec = PKCS12 のファイル
+file-browse-pkcs12-spec = PKCS12 ファイル
 choose-p12-restore-file-dialog = インポートする証明書ファイル
 
 ## Import certificate(s) file dialog

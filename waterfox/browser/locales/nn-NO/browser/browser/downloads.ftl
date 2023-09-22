@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -94,9 +94,9 @@ downloads-cmd-show-description-2 =
 downloads-cmd-show-downloads =
     .label = Vis nedlastingsmappe
 downloads-cmd-retry =
-    .tooltiptext = Prøv igjen
+    .tooltiptext = Prøv på nytt
 downloads-cmd-retry-panel =
-    .aria-label = Prøv igjen
+    .aria-label = Prøv på nytt
 downloads-cmd-go-to-download-page =
     .label = Gå til nedlastingssida
     .accesskey = G
@@ -164,11 +164,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = Opnar om { $hours }t { $minutes }m…
-downloading-file-opens-in-minutes = Opnar om { $minutes }m…
-downloading-file-opens-in-minutes-and-seconds = Opnar om { $minutes }m { $seconds }s…
-downloading-file-opens-in-seconds = Opnar om { $seconds }s…
-downloading-file-opens-in-some-time = Opnar når det er klart…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = Opnar om { $hours }t { $minutes }m…
+downloading-file-opens-in-minutes-2 =
+    .value = Opnar om { $minutes }m…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = Opnar om { $minutes }m { $seconds }s…
+downloading-file-opens-in-seconds-2 =
+    .value = Opnar om { $seconds }s…
+downloading-file-opens-in-some-time-2 =
+    .value = Opnar når det er klart…
 downloading-file-click-to-open =
     .value = Opne når det er fullført
 
@@ -191,7 +196,7 @@ downloads-history =
     .label = Vis alle nedlastingar
     .accesskey = V
 
-# This string is shown at the top of the Download Details Panel, to indicate
+# This string is shown at the top of the download details sub-panel to indicate
 # that we are showing the details of a single download.
 downloads-details =
     .title = Nedlastingsdetaljar
@@ -233,3 +238,17 @@ downloads-more-downloading =
         [one] { $count } fil til lastar ned
        *[other] { $count } filer til lastar ned
     }
+
+## Download errors
+
+downloads-error-alert-title = Nedlastingsfeil
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = Nedlastinga kan ikkje lagrast fordi ho er blokkert av { $extension }.
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = Nedlastinga kan ikkje lagrast fordi ho er blokkert av ei utviding.
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    Nedlastinga kan ikkje lagrast fordi det oppstod ein ukjend feil.
+    
+    Prøv på nytt.

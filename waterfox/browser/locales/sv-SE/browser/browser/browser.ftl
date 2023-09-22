@@ -1,50 +1,19 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ## The main browser window's title
 
-# These are the default window titles everywhere except macOS. The first two
-# attributes are used when the web content opened has no title:
+# These are the default window titles everywhere except macOS.
+# .data-title-default and .data-title-private are used when the web content
+# opened has no title:
 #
 # default - "Waterfox"
 # private - "Waterfox (Private Browsing)"
 #
-# The last two are for use when there *is* a content title.
-# Variables:
-#  $content-title (String): the title of the web content.
-browser-main-window =
-    .data-title-default = { -brand-full-name }
-    .data-title-private = { -brand-full-name } (Privat surfning)
-    .data-content-title-default = { $content-title } - { -brand-full-name }
-    .data-content-title-private = { $content-title } - { -brand-full-name } (Privat surfning)
-# These are the default window titles on macOS. The first two are for use when
-# there is no content title:
-#
-# "default" - "Waterfox"
-# "private" - "Waterfox — (Private Browsing)"
-#
-# The last two are for use when there *is* a content title.
-# Do not use the brand name in the last two attributes, as we do on non-macOS.
-#
-# Also note the other subtle difference here: we use a `-` to separate the
-# brand name from `(Private Browsing)`, which does not happen on other OSes.
-#
-# Variables:
-#  $content-title (String): the title of the web content.
-browser-main-window-mac =
-    .data-title-default = { -brand-full-name }
-    .data-title-private = { -brand-full-name } - (Privat surfning)
-    .data-content-title-default = { $content-title }
-    .data-content-title-private = { $content-title } - (Privat surfning)
-# These are the default window titles everywhere except macOS. The first two
-# attributes are used when the web content opened has no title:
-#
-# default - "Waterfox"
-# private - "Waterfox (Private Browsing)"
-#
-# The last two are for use when there *is* a content title.
+# .data-content-title-default and .data-content-title-private are for use when
+# there *is* a content title.
 # Variables:
 #  $content-title (String): the title of the web content.
 browser-main-window-window-titles =
@@ -52,14 +21,17 @@ browser-main-window-window-titles =
     .data-title-private = { -brand-full-name } Privat surfning
     .data-content-title-default = { $content-title } — { -brand-full-name }
     .data-content-title-private = { $content-title } — { -brand-full-name } Privat surfning
-# These are the default window titles on macOS. The first two are for use when
-# there is no content title:
+# These are the default window titles on macOS.
+# .data-title-default and .data-title-private are used when the web content
+# opened has no title:
+#
 #
 # "default" - "Waterfox"
 # "private" - "Waterfox — (Private Browsing)"
 #
-# The last two are for use when there *is* a content title.
-# Do not use the brand name in the last two attributes, as we do on non-macOS.
+# .data-content-title-default and .data-content-title-private are for use when
+# there *is* a content title.
+# Do not use the brand name in these, as we do on non-macOS.
 #
 # Also note the other subtle difference here: we use a `-` to separate the
 # brand name from `(Private Browsing)`, which does not happen on other OSes.
@@ -76,7 +48,9 @@ browser-main-window-mac-window-titles =
 # This should match the `data-title-default` attribute in both
 # `browser-main-window` and `browser-main-window-mac`.
 browser-main-window-title = { -brand-full-name }
-private-browsing-shortcut-text = { -brand-short-name } Privat surfning
+# The non-variable portion of this MUST match the translation of
+# "PRIVATE_BROWSING_SHORTCUT_TITLE" in custom.properties
+private-browsing-shortcut-text-2 = { -brand-shortcut-name } Privat surfning
 
 ##
 
@@ -107,16 +81,12 @@ urlbar-xr-notification-anchor =
     .tooltiptext = Öppna behörighetspanelen för virtuell verklighet
 urlbar-storage-access-anchor =
     .tooltiptext = Öppna behörighetspanelen för surfaktivitet
-urlbar-translate-notification-anchor =
-    .tooltiptext = Översätt denna sida
 urlbar-web-rtc-share-screen-notification-anchor =
     .tooltiptext = Hantera delning av dina fönster eller skärm med webbplatsen
 urlbar-indexed-db-notification-anchor =
     .tooltiptext = Öppna meddelandepanel för lagring offline
 urlbar-password-notification-anchor =
     .tooltiptext = Öppna meddelandepanel för sparade lösenord
-urlbar-translated-notification-anchor =
-    .tooltiptext = Hantera sidöversättning
 urlbar-plugins-notification-anchor =
     .tooltiptext = Hantera insticksmoduler som används
 urlbar-web-rtc-share-devices-notification-anchor =
@@ -134,11 +104,25 @@ urlbar-addons-notification-anchor =
 urlbar-tip-help-icon =
     .title = Få hjälp
 urlbar-search-tips-confirm = Ok, jag förstår
+urlbar-search-tips-confirm-short = Jag förstår
 # Read out before Urlbar Tip text content so screenreader users know the
 # subsequent text is a tip offered by the browser. It should end in a colon or
 # localized equivalent.
 urlbar-tip-icon-description =
     .alt = Tips:
+urlbar-result-menu-button =
+    .title = Öppna meny
+urlbar-result-menu-button-feedback = Feedback
+    .title = Öppna meny
+urlbar-result-menu-learn-more =
+    .label = Läs mer
+    .accesskey = L
+urlbar-result-menu-remove-from-history =
+    .label = Ta bort från historik
+    .accesskey = T
+urlbar-result-menu-tip-get-help =
+    .label = Få hjälp
+    .accesskey = h
 
 ## Prompts users to use the Urlbar when they open a new tab or visit the
 ## homepage of their default search engine.
@@ -147,6 +131,8 @@ urlbar-tip-icon-description =
 
 urlbar-search-tips-onboard = Skriv mindre, hitta mer: Sök med { $engineName } direkt från ditt adressfält.
 urlbar-search-tips-redirect-2 = Starta din sökning i adressfältet för att se förslag från { $engineName } och din surfhistorik.
+# Make sure to match the name of the Search panel in settings.
+urlbar-search-tips-persist = Det har blivit enklare att söka. Försök att göra din sökning mer specifik här i adressfältet. För att visa webbadressen istället, besök Sök i inställningarna.
 # Prompts users to use the Urlbar when they are typing in the domain of a
 # search engine, e.g. google.com or amazon.com.
 urlbar-tabtosearch-onboard = Välj den här genvägen för att hitta det du behöver snabbare.
@@ -195,10 +181,6 @@ urlbar-star-add-bookmark =
 
 ## Page Action Context Menu
 
-page-action-manage-extension =
-    .label = Hantera tillägg…
-page-action-remove-extension =
-    .label = Ta bort tillägg
 page-action-manage-extension2 =
     .label = Hantera tillägg…
     .accesskey = H
@@ -267,42 +249,38 @@ search-one-offs-actions =
     .tooltiptext = Åtgärder ({ $restrict })
 
 ## QuickActions are shown in the urlbar as the user types a matching string
-
-
-## QuickActions are shown in the urlbar as the user types a matching string
 ## The -cmd- strings are comma separated list of keywords that will match
 ## the action.
 
 # Opens the about:addons page in the home / recommendations section
 quickactions-addons = Visa tillägg
-quickactions-cmd-addons = tillägg, teman
 quickactions-cmd-addons2 = tillägg
 # Opens the bookmarks library window
-quickactions-bookmarks = Visa bokmärken
+quickactions-bookmarks2 = Hantera bokmärken
 quickactions-cmd-bookmarks = bokmärken
 # Opens a SUMO article explaining how to clear history
 quickactions-clearhistory = Rensa historik
 quickactions-cmd-clearhistory = rensa historik
 # Opens about:downloads page
-quickactions-downloads = Öppna hämtningar
+quickactions-downloads2 = Visa nedladdningar
 quickactions-cmd-downloads = hämtningar
 # Opens about:addons page in the extensions section
 quickactions-extensions = Hantera tillägg
 quickactions-cmd-extensions = tillägg
 # Opens the devtools web inspector
-quickactions-inspector = Öppna inspektör
+quickactions-inspector2 = Öppna utvecklarverktyg
 quickactions-cmd-inspector = inspektör, utvecklarverktyg
 # Opens about:logins
-quickactions-logins = Visa inloggningar
+quickactions-logins2 = Hantera lösenord
 quickactions-cmd-logins = inloggningar, lösenord
 # Opens about:addons page in the plugins section
 quickactions-plugins = Hantera insticksmoduler
 quickactions-cmd-plugins = insticksmoduler
 # Opens the print dialog
-quickactions-print = Skriv ut
+quickactions-print2 = Skriv ut sida
 quickactions-cmd-print = skriva ut
 # Opens a new private browsing window
-quickactions-private = Öppna fönstret för privat surfning
+quickactions-private2 = Öppna privat fönster
 quickactions-cmd-private = privat surfning
 # Opens a SUMO article explaining how to refresh
 quickactions-refresh = Återställ { -brand-short-name }
@@ -311,10 +289,10 @@ quickactions-cmd-refresh = uppdatera
 quickactions-restart = Starta om { -brand-short-name }
 quickactions-cmd-restart = omstart
 # Opens the screenshot tool
-quickactions-screenshot2 = Ta en skärmbild
+quickactions-screenshot3 = Ta en skärmdump
 quickactions-cmd-screenshot = skärmbild
 # Opens about:preferences
-quickactions-settings = Öppna inställningar
+quickactions-settings2 = Hantera inställningar
 quickactions-cmd-settings = inställningar, alternativ
 # Opens about:addons page in the themes section
 quickactions-themes = Hantera teman
@@ -323,8 +301,11 @@ quickactions-cmd-themes = teman
 quickactions-update = Uppdatera { -brand-short-name }
 quickactions-cmd-update = uppdatera
 # Opens the view-source UI with current pages source
-quickactions-viewsource = Visa källa
+quickactions-viewsource2 = Visa källkod
 quickactions-cmd-viewsource = visa källa, källa
+# Tooltip text for the help button shown in the result.
+quickactions-learn-more =
+    .title = Läs mer om snabbåtgärder
 
 ## Bookmark Panel
 
@@ -369,13 +350,14 @@ identity-connection-internal = Detta är en säker { -brand-short-name } sida.
 identity-connection-file = Den här sidan är lagrad på din dator.
 identity-extension-page = Den här sidan laddas från ett tillägg.
 identity-active-blocked = { -brand-short-name } har blockerat några osäkra komponenter på sidan.
-identity-custom-root = Anslutning verifierad av en certifikatutgivare som inte känns igen av Waterfox.
+identity-custom-root = Anslutning verifierad av en certifikatutgivare som inte känns igen av BrowserWorks.
 identity-passive-loaded = Vissa komponenter av den här sidan är inte säkra (t.ex. bilder).
 identity-active-loaded = Du har stängt av skyddet på den här sidan.
 identity-weak-encryption = Den här sidan använder en svag kryptering.
 identity-insecure-login-forms = Inloggningar som anges på den här sidan kan äventyras.
 identity-https-only-connection-upgraded = (uppgraderad till HTTPS)
 identity-https-only-label = Endast HTTPS-läge
+identity-https-only-label2 = Uppgradera denna webbplats automatiskt till en säker anslutning
 identity-https-only-dropdown-on =
     .label = På
 identity-https-only-dropdown-off =
@@ -384,6 +366,8 @@ identity-https-only-dropdown-off-temporarily =
     .label = Tillfälligt av
 identity-https-only-info-turn-on2 = Aktivera endast HTTPS-läge för den här webbplatsen om du vill att { -brand-short-name } ska uppgradera anslutningen när det är möjligt.
 identity-https-only-info-turn-off2 = Om sidan verkar trasig kanske du vill stänga av endast HTTPS-läge för att den här webbplatsen ska laddas om med osäker HTTP.
+identity-https-only-info-turn-on3 = Aktivera HTTPS-uppgraderingar för den här webbplatsen om du vill att { -brand-short-name } ska uppgradera anslutningen när det är möjligt.
+identity-https-only-info-turn-off3 = Om sidan verkar trasig kanske du vill stänga av HTTPS-uppgraderingar för att den här webbplatsen ska laddas om med osäker HTTP.
 identity-https-only-info-no-upgrade = Det gick inte att uppgradera anslutningen från HTTP.
 identity-permissions-storage-access-header = Globala kakor
 identity-permissions-storage-access-hint = Dessa parter kan använda global kakor och webbplatsinformation medan du är på denna webbplats.
@@ -394,7 +378,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = Du är inte säkert ansluten till den här webbplatsen.
 identity-connection-verified = Du är säkert ansluten till den här webbplatsen.
 identity-ev-owner-label = Certifikat utfärdat till:
-identity-description-custom-root = Waterfox känner inte igen denna certifikatutgivare. Den kan ha lagts till från ditt operativsystem eller av en administratör. <label data-l10n-name="link">Lär dig mer</label>
+identity-description-custom-root2 = BrowserWorks känner inte igen denna certifikatutgivare. Den kan ha lagts till från ditt operativsystem eller av en administratör.
 identity-remove-cert-exception =
     .label = Ta bort undantag
     .accesskey = R
@@ -402,14 +386,12 @@ identity-description-insecure = Din anslutning till den här sidan är inte priv
 identity-description-insecure-login-forms = Inloggningsinformation du anger på denna sida är inte säker och kan äventyras.
 identity-description-weak-cipher-intro = Din anslutning till den här webbsidan använder en svag kryptering och är inte privat.
 identity-description-weak-cipher-risk = Andra personer kan se din information eller ändra webbplatsens beteende.
-identity-description-active-blocked = { -brand-short-name } har blockerat några osäkra komponenter på sidan. <label data-l10n-name="link">Lär dig mer</label>
+identity-description-active-blocked2 = { -brand-short-name } har blockerat några osäkra komponenter på sidan.
 identity-description-passive-loaded = Anslutningen till denna webbplats är inte privat och andra personer kan se din information.
-identity-description-passive-loaded-insecure = Den här webbplatsen har innehåll som inte är säkert (t.ex. bilder). <label data-l10n-name="link">Lär dig mer</label>
-identity-description-passive-loaded-mixed = { -brand-short-name } har blockerat några osäkra komponenter på sidan, men det finns fortfarande osäkra komponenter (såsom bilder). <label data-l10n-name="link">Lär dig mer</label>
+identity-description-passive-loaded-insecure2 = Den här webbplatsen har innehåll som inte är säkert (t.ex. bilder).
+identity-description-passive-loaded-mixed2 = { -brand-short-name } har blockerat några osäkra komponenter på sidan, men det finns fortfarande osäkra komponenter (såsom bilder).
 identity-description-active-loaded = Den här webbplatsen innehåller material som inte är säkra (såsom skript) och din anslutning till det är inte privat.
 identity-description-active-loaded-insecure = Information du delar med den här webbplatsen kan ses av andra (som lösenord, meddelanden, kreditkort, etc.).
-identity-learn-more =
-    .value = Lär dig mer
 identity-disable-mixed-content-blocking =
     .label = Inaktivera skydd tillfälligt
     .accesskey = D
@@ -482,14 +464,10 @@ popup-select-microphone-icon =
     .tooltiptext = Mikrofon
 popup-select-speaker-icon =
     .tooltiptext = Ljudenhet
+popup-select-window-or-screen =
+    .label = Fönster eller skärm:
+    .accesskey = F
 popup-all-windows-shared = Alla synliga fönster på din skärm kommer att delas.
-popup-screen-sharing-block =
-    .label = Blockera
-    .accesskey = B
-popup-screen-sharing-always-block =
-    .label = Blockera alltid
-    .accesskey = a
-popup-mute-notifications-checkbox = Stäng av webbplatsaviseringar när du delar
 
 ## WebRTC window or screen share tab switch warning
 
@@ -502,7 +480,7 @@ sharing-warning-disable-for-session =
 
 ## DevTools F12 popup
 
-enable-devtools-popup-description = För att använda tangentbordskommandot F12, öppnar du först DevTools i Webbutvecklare-menyn.
+enable-devtools-popup-description2 = För att använda F12-genvägen, öppna först DevTools via menyn Webbläsarverktyg.
 
 ## URL Bar
 
@@ -582,6 +560,8 @@ urlbar-result-action-search-w-engine = Sök med { $engine }
 urlbar-result-action-sponsored = Sponsrad
 urlbar-result-action-switch-tab = Växla till flik
 urlbar-result-action-visit = Besök
+# Allows the user to visit a URL that was previously copied to the clipboard.
+urlbar-result-action-visit-from-your-clipboard = Besök från ditt urklipp
 # Directs a user to press the Tab key to perform a search with the specified
 # engine.
 # Variables
@@ -635,6 +615,29 @@ urlbar-group-search-suggestions =
 urlbar-group-quickactions =
     .label = Snabbåtgärder
 
+## Reader View toolbar buttons
+
+# This should match menu-view-enter-readerview in menubar.ftl
+reader-view-enter-button =
+    .aria-label = Öppna läsarvy
+# This should match menu-view-close-readerview in menubar.ftl
+reader-view-close-button =
+    .aria-label = Stäng läsarvy
+
+## Picture-in-Picture urlbar button
+## Variables:
+##   $shortcut (String) - Keyboard shortcut to execute the command.
+
+picture-in-picture-urlbar-button-open =
+    .tooltiptext = Öppna bild-i-bild ({ $shortcut })
+picture-in-picture-urlbar-button-close =
+    .tooltiptext = Stäng bild-i-bild ({ $shortcut })
+picture-in-picture-panel-header = Bild-i-bild
+picture-in-picture-panel-headline = Denna webbplats rekommenderar inte bild-i-bild
+picture-in-picture-panel-body = Videor kanske inte visas som utvecklaren tänkt när bild-i-bild är aktiverat.
+picture-in-picture-enable-toggle =
+    .label = Aktivera ändå
+
 ## Full Screen and Pointer Lock UI
 
 # Please ensure that the domain stays in the `<span data-l10n-name="domain">` markup.
@@ -651,19 +654,6 @@ fullscreen-exit-mac-button = Avsluta helskärm (esc)
 pointerlock-warning-domain = <span data-l10n-name="domain">{ $domain }</span> har kontroll över pekaren. Tryck på Esc för att ta tillbaka kontrollen.
 pointerlock-warning-no-domain = Detta dokument har kontroll över pekaren. Tryck på Esc för att ta tillbaka kontrollen.
 
-## Subframe crash notification
-
-crashed-subframe-message = <strong>En del av den här sidan kraschade.</strong> Skicka en rapport om du vill meddela { -brand-product-name } om problemet och få det åtgärdat snabbare.
-# The string for crashed-subframe-title.title should match crashed-subframe-message,
-# but without any markup.
-crashed-subframe-title =
-    .title = En del av denna sida kraschade. Skicka in en rapport om du vill informera { -brand-product-name } om problemet och åtgärda det snabbare.
-crashed-subframe-learnmore-link =
-    .value = Läs mer
-crashed-subframe-submit =
-    .label = Skicka in rapport
-    .accesskey = S
-
 ## Bookmarks panels, menus and toolbar
 
 bookmarks-manage-bookmarks =
@@ -679,6 +669,11 @@ bookmarks-other-bookmarks-menu =
     .label = Andra bokmärken
 bookmarks-mobile-bookmarks-menu =
     .label = Mobila bokmärken
+
+## Variables:
+##   $isVisible (boolean): if the specific element (e.g. bookmarks sidebar,
+##                         bookmarks toolbar, etc.) is visible or not.
+
 bookmarks-tools-sidebar-visibility =
     .label =
         { $isVisible ->
@@ -703,12 +698,13 @@ bookmarks-tools-menu-button-visibility =
             [true] Ta bort bokmärkesmeny från verktygsfältet
            *[other] Lägg till bokmärkesmeny till verktygsfältet
         }
+
+##
+
 bookmarks-search =
     .label = Sök bokmärken
 bookmarks-tools =
     .label = Verktyg för bokmärken
-bookmarks-bookmark-edit-panel =
-    .label = Redigera bokmärket
 bookmarks-subview-edit-bookmark =
     .label = Redigera detta bokmärke…
 # The aria-label is a spoken label that should not include the word "toolbar" or
@@ -724,9 +720,6 @@ bookmarks-toolbar-placeholder =
     .title = Bokmärkesfältsposter
 bookmarks-toolbar-placeholder-button =
     .label = Bokmärkesfältsposter
-# "Bookmark" is a verb, as in "Add current tab to bookmarks".
-bookmarks-current-tab =
-    .label = Bokmärk aktuell flik
 # "Bookmark" is a verb, as in "Add current tab to bookmarks".
 bookmarks-subview-bookmark-tab =
     .label = Bokmärk aktuell flik…
@@ -753,11 +746,6 @@ repair-text-encoding-button =
 ## Customize Toolbar Buttons
 
 # Variables:
-#  $shortcut (String): keyboard shortcut to open the add-ons manager
-toolbar-addons-themes-button =
-    .label = Tillägg och teman
-    .tooltiptext = Hantera dina tillägg och teman ({ $shortcut })
-# Variables:
 #  $shortcut (String): keyboard shortcut to open settings (only on macOS)
 toolbar-settings-button =
     .label = Inställningar
@@ -772,6 +760,9 @@ toolbar-overflow-customize-button =
 toolbar-button-email-link =
     .label = E-posta länk
     .tooltiptext = Mejla en länk till denna sidan
+toolbar-button-logins =
+    .label = Lösenord
+    .tooltiptext = Visa och hantera dina sparade lösenord
 # Variables:
 #  $shortcut (String): keyboard shortcut to save a copy of the page
 toolbar-button-save-page =
@@ -803,13 +794,6 @@ eme-notifications-drm-content-playing-dismiss-accesskey = g
 
 panel-save-update-username = Användarnamn
 panel-save-update-password = Lösenord
-
-## Add-on removal warning
-
-# Variables:
-#  $name (String): The name of the addon that will be removed.
-addon-removal-title = Ta bort { $name }?
-addon-removal-abuse-report-checkbox = Rapportera detta tillägg till { -vendor-short-name }
 
 ##
 
@@ -878,8 +862,6 @@ navbar-library =
     .tooltiptext = Visa historik, sparade bokmärken och mer
 navbar-search =
     .title = Sök
-navbar-accessibility-indicator =
-    .tooltiptext = Tillgänglighetsfunktioner aktiverade
 # Name for the tabs toolbar as spoken by screen readers. The word
 # "toolbar" is appended automatically and should not be included in
 # in the string
@@ -897,7 +879,7 @@ tabs-toolbar-list-all-tabs =
 restore-session-startup-suggestion-message = <strong>Öppna tidigare flikar?</strong>Du kan återställa din tidigare session från programmenyn i { -brand-short-name } <img data-l10n-name="icon"/>, under Historik.
 restore-session-startup-suggestion-button = Visa mig hur
 
-## Waterfox data reporting notification (Telemetry, Waterfox Health Report, etc)
+## BrowserWorks data reporting notification (Telemetry, Waterfox Health Report, etc)
 
 data-reporting-notification-message = { -brand-short-name } skickar automatiskt viss data till { -vendor-short-name } så att vi kan göra förbättringar.
 data-reporting-notification-button =
@@ -911,3 +893,72 @@ private-browsing-indicator-label = Privat surfning
 unified-extensions-button =
     .label = Tillägg
     .tooltiptext = Tillägg
+
+## Unified extensions button when permission(s) are needed.
+## Note that the new line is intentionally part of the tooltip.
+
+unified-extensions-button-permissions-needed =
+    .label = Tillägg
+    .tooltiptext =
+        Tillägg
+        Behörigheter behövs
+
+## Unified extensions button when some extensions are quarantined.
+## Note that the new line is intentionally part of the tooltip.
+
+unified-extensions-button-quarantined =
+    .label = Tillägg
+    .tooltiptext =
+        Tillägg
+        Vissa tillägg är inte tillåtna
+
+## Autorefresh blocker
+
+refresh-blocked-refresh-label = { -brand-short-name } har förhindrat att den här sidan uppdateras automatiskt.
+refresh-blocked-redirect-label = { -brand-short-name } har förhindrat att den här sidan automatiskt styr om till en annan sida.
+refresh-blocked-allow =
+    .label = Tillåt
+    .accesskey = T
+
+## Waterfox Relay integration
+
+firefox-relay-offer-why-to-use-relay = Våra säkra, lättanvända alias skyddar din identitet och förhindrar skräppost genom att dölja din e-postadress.
+# Variables:
+#  $useremail (String): user email that will receive messages
+firefox-relay-offer-what-relay-provides = Alla e-postmeddelanden som skickas till dina e-postalias kommer att vidarebefordras till <strong>{ $useremail }</strong> (om du inte bestämmer dig för att blockera dem).
+firefox-relay-offer-legal-notice = Genom att klicka på "Använd e-postalias" godkänner du <label data-l10n-name="tos-url">användarvillkoren</label> och <label data-l10n-name="privacy-url">sekretessmeddelandet</label>.
+
+## Add-on Pop-up Notifications
+
+popup-notification-addon-install-unsigned =
+    .value = (Overifierad)
+popup-notification-xpinstall-prompt-learn-more = Läs mer om hur du installerar tillägg säkert
+
+## Pop-up warning
+
+# Variables:
+#   $popupCount (Number): the number of pop-ups blocked.
+popup-warning-message =
+    { $popupCount ->
+        [one] { -brand-short-name } hindrade att denna webbplats öppnar ett popup-fönster.
+       *[other] { -brand-short-name } hindrade att denna webbplats öppnar { $popupCount } popup-fönster.
+    }
+# The singular form is left out for English, since the number of blocked pop-ups is always greater than 1.
+# Variables:
+#   $popupCount (Number): the number of pop-ups blocked.
+popup-warning-exceeded-message = { -brand-short-name } hindrade den här webbplatsen från att öppna fler än { $popupCount } popup-fönster.
+popup-warning-button =
+    .label =
+        { PLATFORM() ->
+            [windows] Inställningar
+           *[other] Inställningar
+        }
+    .accesskey =
+        { PLATFORM() ->
+            [windows] I
+           *[other] I
+        }
+# Variables:
+#   $popupURI (String): the URI for the pop-up window
+popup-show-popup-menuitem =
+    .label = Visa “{ $popupURI }”

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -19,7 +19,7 @@ about-telemetry-current-store = Dabartinė saugykla:
 about-telemetry-more-information = Ieškote daugiau informacijos?
 about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">„Waterfox“ duomenų dokumentacijoje</a> rasite pagalbos apie tai, kaip dirbti su mūsų duomenų įrankiais.
 about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">„Waterfox“ telemetrijos kliento dokumentacijoje</a> rasite sąvokų apibrėžimus, API dokumentaciją bei duomenų rodyklę.
-about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Telemetrijos skydeliai</a> leidžia jums aiškiai matyti „Waterfoxi“ siunčiamus duomenis.
+about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Telemetrijos skydeliai</a> leidžia jums aiškiai matyti „BrowserWorksi“ siunčiamus duomenis.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Zondų žodynas</a> pateikia telemetrijos surinktų zondų informaciją ir aprašus.
 about-telemetry-show-in-Waterfox-json-viewer = Atverti JSON žiūrykle
 about-telemetry-home-section = Pradžia
@@ -68,7 +68,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } ėminių, vidurkis = { $prettyAverage }, suma = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "BrowserWorks"
 about-telemetry-page-subtitle = Šiame tinklalapyje rasite telemetrijai sukauptus duomenis apie kompiuterio aparatinę įrangą, programos našumą, tinklinimą ir naudojamas fukcijas. Ši informacija programos „{ -brand-full-name }“ tobulinimo tikslais siunčiama į „{ $telemetryServerOwner }“.
 about-telemetry-settings-explanation = Telemetrija renka { about-telemetry-data-type }, o jų perdavimas yra <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
 # Variables:
@@ -132,12 +132,6 @@ about-telemetry-category-header = kategorija
 about-telemetry-method-header = metodas
 about-telemetry-object-header = objektas
 about-telemetry-extra-header = papildomai
-about-telemetry-origin-section = „Origin“ telemetrija
-about-telemetry-origin-origin = kilmė
-about-telemetry-origin-count = kiekis
-# Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
-about-telemetry-origins-explanation = Prieš persiųsdama duomenis, <a data-l10n-name="origin-doc-link">„Waterfox Origin Telemetry“</a>  juos užšifruoja taip, kad „{ $telemetryServerOwner }“ galėtų suskaičiuoti dalykus, tačiau nežinotų ar kuris nors konkretus { -brand-product-name } patenka į tą kiekį. (<a data-l10n-name="prio-blog-link">sužinoti daugiau</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = { $process } procesas

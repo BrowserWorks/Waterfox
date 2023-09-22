@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,6 +26,9 @@ policy-Bookmarks = Create bookmarks in the Bookmarks toolbar, Bookmarks menu, or
 policy-CaptivePortal = Enable or disable captive portal support.
 policy-CertificatesDescription = Add certificates or use built-in certificates.
 policy-Cookies = Allow or deny web sites to set cookies.
+# Containers in this context is referring to container tabs in Waterfox.
+policy-Containers = Set policies related to containers.
+policy-DisableAccounts = Disable account-based services, including Sync.
 policy-DisabledCiphers = Disable ciphers.
 policy-DefaultDownloadDirectory = Set the default download directory.
 policy-DisableAppUpdate = Prevent the browser from updating.
@@ -41,7 +44,7 @@ policy-DisableForgetButton = Prevent access to the Forget button.
 policy-DisableFormHistory = Don’t remember search and form history.
 policy-DisablePrimaryPasswordCreation = If true, a Primary Password can’t be created.
 policy-DisablePasswordReveal = Do not allow passwords to be revealed in saved logins.
-policy-DisablePocket = Disable the feature to save web pages to Pocket.
+policy-DisablePocket2 = Disable the feature to save web pages to { -pocket-brand-name }.
 policy-DisablePrivateBrowsing = Disable Private Browsing.
 policy-DisableProfileImport = Disable the menu command to Import data from another browser.
 policy-DisableProfileRefresh = Disable the Refresh { -brand-short-name } button in the about:support page.
@@ -50,6 +53,7 @@ policy-DisableSecurityBypass = Prevent the user from bypassing certain security 
 policy-DisableSetAsDesktopBackground = Disable the menu command Set as Desktop Background for images.
 policy-DisableSystemAddonUpdate = Prevent the browser from installing and updating system add-ons.
 policy-DisableTelemetry = Turn off Telemetry.
+policy-DisableThirdPartyModuleBlocking = Prevent the user from blocking third-party modules that get injected into the { -brand-short-name } process.
 policy-DisplayBookmarksToolbar = Display the Bookmarks Toolbar by default.
 policy-DisplayMenuBar = Display the Menu Bar by default.
 policy-DNSOverHTTPS = Configure DNS over HTTPS.
@@ -66,9 +70,8 @@ policy-ExemptDomainFileTypePairsFromFileTypeDownloadWarnings = Disable warnings 
 policy-Extensions = Install, uninstall or lock extensions. The Install option takes URLs or paths as parameters. The Uninstall and Locked options take extension IDs.
 policy-ExtensionSettings = Manage all aspects of extension installation.
 policy-ExtensionUpdate = Enable or disable automatic extension updates.
-policy-WaterfoxHome = Configure Waterfox Home.
 policy-WaterfoxHome2 = Configure { -firefox-home-brand-name }.
-policy-FlashPlugin = Allow or deny usage of the Flash plugin.
+policy-WaterfoxSuggest = Configure { -firefox-suggest-brand-name }.
 policy-GoToIntranetSiteForSingleWordEntryInAddressBar = Force direct intranet site navigation instead of searching when typing single word entries in the address bar.
 policy-Handlers = Configure default application handlers.
 policy-HardwareAcceleration = If false, turn off hardware acceleration.
@@ -110,8 +113,8 @@ policy-SanitizeOnShutdown2 = Clear navigation data on shutdown.
 policy-SearchBar = Set the default location of the search bar. The user is still allowed to customise it.
 policy-SearchEngines = Configure search engine settings. This policy is only available on the Extended Support Release (ESR) version.
 policy-SearchSuggestEnabled = Enable or disable search suggestions.
-# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
-policy-SecurityDevices = Install PKCS #11 modules.
+# For more information, see https://wikipedia.org/wiki/PKCS_11
+policy-SecurityDevices2 = Add or delete PKCS #11 modules.
 policy-ShowHomeButton = Show the home button on the toolbar.
 policy-SSLVersionMax = Set the maximum SSL version.
 policy-SSLVersionMin = Set the minimum SSL version.

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -168,11 +168,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = Otevře se za { $hours } h { $minutes } m…
-downloading-file-opens-in-minutes = Otevře se za { $minutes } m…
-downloading-file-opens-in-minutes-and-seconds = Otevře se za { $minutes } m { $seconds } s…
-downloading-file-opens-in-seconds = Otevře se za { $seconds } s…
-downloading-file-opens-in-some-time = Otevře se po dokončení stahování…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = Otevře se za { $hours } h { $minutes } m…
+downloading-file-opens-in-minutes-2 =
+    .value = Otevře se za { $minutes } m…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = Otevře se za { $minutes } m { $seconds } s…
+downloading-file-opens-in-seconds-2 =
+    .value = Otevře se za { $seconds } s…
+downloading-file-opens-in-some-time-2 =
+    .value = Otevře se po dokončení stahování…
 downloading-file-click-to-open =
     .value = Otevřít po dokončení stahování
 
@@ -239,3 +244,17 @@ downloads-more-downloading =
         [few] Stahují se { $count } další soubory
        *[other] Stahuje se { $count } dalších souborů
     }
+
+## Download errors
+
+downloads-error-alert-title = Chyba stahování
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = Stahovaný soubor nelze uložit, protože byl zablokován rozšířením { $extension }.
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = Stahovaný soubor nelze uložit, protože byl zablokován rozšířením.
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    Nastala neznámá chyba a stahovaný soubor se nepodařilo uložit.
+    
+    Zkuste to prosím znovu.

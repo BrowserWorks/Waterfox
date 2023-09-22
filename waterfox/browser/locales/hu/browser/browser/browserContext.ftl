@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -86,38 +86,6 @@ main-context-menu-page-save =
 
 ## Simple menu items
 
-main-context-menu-bookmark-add =
-    .aria-label = Oldal hozzáadása a könyvjelzőkhöz
-    .accesskey = k
-    .tooltiptext = Oldal a könyvjelzők közé
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-edit-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-add-mac =
-    .label = Lap könyvjelzőzése
-    .accesskey = k
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-add-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-edit-mac =
-    .label = Könyvjelző szerkesztése
-    .accesskey = K
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the add bookmark command.
-main-context-menu-bookmark-add-with-shortcut =
-    .aria-label = Oldal hozzáadása a könyvjelzőkhöz
-    .accesskey = k
-    .tooltiptext = Oldal a könyvjelzők közé ({ $shortcut })
-main-context-menu-bookmark-change =
-    .aria-label = Könyvjelző szerkesztése
-    .accesskey = k
-    .tooltiptext = Könyvjelző szerkesztése
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the edit bookmark command.
-main-context-menu-bookmark-change-with-shortcut =
-    .aria-label = Könyvjelző szerkesztése
-    .accesskey = k
-    .tooltiptext = Könyvjelző szerkesztése ({ $shortcut })
 main-context-menu-bookmark-page =
     .aria-label = Lap könyvjelzőzése…
     .accesskey = k
@@ -165,9 +133,6 @@ main-context-menu-open-link-new-window =
 main-context-menu-open-link-new-private-window =
     .label = Hivatkozás megnyitása új privát ablakban
     .accesskey = p
-main-context-menu-bookmark-link =
-    .label = Hivatkozás könyvjelzőzése
-    .accesskey = H
 main-context-menu-bookmark-link-2 =
     .label = Hivatkozás könyvjelzőzése…
     .accesskey = H
@@ -191,6 +156,11 @@ main-context-menu-copy-phone =
 main-context-menu-copy-link-simple =
     .label = Hivatkozás másolása
     .accesskey = m
+# This command copies the link, removing additional
+# query parameters used to track users across sites.
+main-context-menu-strip-on-share-link =
+    .label = Hivatkozás másolása oldalkövetés nélkül
+    .accesskey = v
 
 ## Media (video/audio) controls
 ##
@@ -307,12 +277,6 @@ main-context-menu-video-email =
 main-context-menu-audio-email =
     .label = Hang küldése e-mailben…
     .accesskey = a
-main-context-menu-plugin-play =
-    .label = Ezen bővítmény aktiválása
-    .accesskey = k
-main-context-menu-plugin-hide =
-    .label = Bővítmény elrejtése
-    .accesskey = r
 main-context-menu-save-to-pocket =
     .label = Oldal mentése a { -pocket-brand-name }be
     .accesskey = k
@@ -333,6 +297,9 @@ main-context-menu-use-saved-password =
 
 ##
 
+main-context-menu-use-relay-mask =
+    .label = { -relay-brand-short-name } e-mail-maszk használata
+    .accesskey = e
 main-context-menu-suggest-strong-password =
     .label = Erős jelszó javaslata…
     .accesskey = E
@@ -360,9 +327,6 @@ main-context-menu-frame-open-window =
 main-context-menu-frame-reload =
     .label = Keret frissítése
     .accesskey = r
-main-context-menu-frame-bookmark =
-    .label = Keret hozzáadása a könyvjelzőkhöz
-    .accesskey = h
 main-context-menu-frame-add-bookmark =
     .label = Keret könyvjelzőzése…
     .accesskey = K
@@ -378,9 +342,6 @@ main-context-menu-frame-view-source =
 main-context-menu-frame-view-info =
     .label = Keret adatainak megjelenítése
     .accesskey = d
-main-context-menu-print-selection =
-    .label = Kijelölés nyomtatása
-    .accesskey = K
 main-context-menu-print-selection-2 =
     .label = Kijelölés nyomtatása…
     .accesskey = n

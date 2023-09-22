@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -180,6 +180,17 @@ menu-view-full-screen =
     .label = Layar Penuh
     .accesskey = P
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Masuk ke Tampilan Baca
+    .accesskey = B
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Tutup Tampilan Pembaca
+    .accesskey = T
+
 ##
 
 menu-view-show-all-tabs =
@@ -208,8 +219,6 @@ menu-history-undo-menu =
     .label = Tab yang Baru Saja Ditutup
 menu-history-undo-window-menu =
     .label = Jendela yang Baru Saja Ditutup
-menu-history-reopen-all-tabs = Buka Ulang Semua Tab
-menu-history-reopen-all-windows = Buka Ulang Semua Jendela
 
 ## Bookmarks Menu
 
@@ -218,10 +227,6 @@ menu-bookmarks-menu =
     .accesskey = M
 menu-bookmarks-manage =
     .label = Kelola Markah
-menu-bookmark-current-tab =
-    .label = Markahi Tab Saat Ini
-menu-bookmark-edit =
-    .label = Edit Markah Ini
 menu-bookmark-tab =
     .label = Markahi Tab Saat Ini…
 menu-edit-bookmark =
@@ -319,6 +324,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = Nonaktifkan Mode Pemecahan Masalah
     .accesskey = N
+menu-help-switch-device =
+    .label = Beralih ke Perangkat Baru
+    .accesskey = B
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =

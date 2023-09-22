@@ -1,17 +1,17 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-create-profile-window =
+create-profile-window2 =
     .title = Průvodce vytvořením profilu
-    .style = width: 45em; height: 32em;
+    .style = min-width: 45em; min-height: 32em;
 
 ## First wizard page
 
-create-profile-first-page-header =
+create-profile-first-page-header2 =
     { PLATFORM() ->
         [macos] Úvod
-       *[other] { create-profile-window.title } - Vítejte
+       *[other] { create-profile-window2.title } - Vítejte
     }
 
 profile-creation-explanation-1 = { -brand-short-name } ukládá informace o vašem nastavení a předvolbách do vašeho osobního profilu.
@@ -28,10 +28,10 @@ profile-creation-explanation-4 =
 
 ## Second wizard page
 
-create-profile-last-page-header =
+create-profile-last-page-header2 =
     { PLATFORM() ->
         [macos] Závěr
-       *[other] { create-profile-window.title } - Dokončování
+       *[other] { create-profile-window2.title } - Dokončování
     }
 
 profile-creation-intro = Pokud vytváříte profily, musíte si je nějak nazvat. Můžete použít buď předvolený název nebo si zvolit vlastní.

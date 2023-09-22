@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -31,7 +31,7 @@ customize-mode-uidensity-menu-compact-unsupported =
     .tooltiptext = กะทัดรัด (ไม่รองรับ)
 customize-mode-undo-cmd =
     .label = เลิกทำ
-customize-mode-lwthemes-link = จัดการชุดตกแต่ง
+customize-mode-lwthemes-link = จัดการชุดรูปแบบ
 customize-mode-touchbar-cmd =
     .label = ปรับแต่งแถบสัมผัส…
 customize-mode-downloads-button-autohide =

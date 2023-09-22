@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,9 +9,8 @@ failed-pp-change = No se pudo cambiar la contraseña primaria.
 incorrect-pp = No ingresaste correctamente la contraseña primaria. Por favor, vuelve a intentarlo.
 pp-change-ok = La contraseña primaria ha sido cambiada exitosamente.
 
-pp-empty-warning = Tus contraseñas almacenadas y claves privadas no estarán protegidas.
-pp-erased-ok = Has eliminado tu contraseña primaria. { pp-empty-warning }
-pp-not-wanted = ¡Advertencia! Has decidido no usar una contraseña primaria. { pp-empty-warning }
+settings-pp-erased-ok = Has eliminado tu contraseña principal. Las contraseñas almacenadas y las claves privadas de certificado administradas por { -brand-short-name } ya no estarán protegidas.
+settings-pp-not-wanted = ¡Advertencia! Has decidido no usar una contraseñas principal. Contraseñas almacenadas y las claves privadas de certificados administradas por { -brand-short-name } ya no estarán protegidas.
 
 pp-change2empty-in-fips-mode = Actualmente estás en modo FIPS. FIPS requiere de una contraseña primaria que no esté en blanco.
 pw-change-success-title = Cambio de contraseña correcto
@@ -26,7 +25,6 @@ set-password-new-password = Introducir nueva contraseña:
 set-password-reenter-password = Confirmar contraseña:
 set-password-meter = Calidad de la contraseña
 set-password-meter-loading = Cargando
-
 primary-password-admin = Tu administrador requiere que tengas configurada una contraseña primaria para guardar las credenciales y contraseñas.
 primary-password-description = Una contraseña primaria se usa para proteger cierta información sensible como credenciales y contraseñas, en este dispositivo. Si creas una contraseña primaria, deberás introducirla una vez por sesión cuando { -brand-short-name } recupere la información que estás protegiendo.
 primary-password-warning = Procura recordar bien o escribir en un lugar seguro esta contraseña primaria ya que, si la olvidas, no podrás acceder a ninguna información protegida por ésta en este dispositivo.
