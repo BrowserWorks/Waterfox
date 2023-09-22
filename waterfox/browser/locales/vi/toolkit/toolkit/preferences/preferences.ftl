@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,9 +9,8 @@ failed-pp-change = Không thể thay đổi mật khẩu chính.
 incorrect-pp = Bạn đã không nhập đúng mật khẩu chính hiện tại. Vui lòng thử lại.
 pp-change-ok = Đã thay đổi mật khẩu chính.
 
-pp-empty-warning = Mật khẩu được lưu trữ và khóa riêng của bạn sẽ không được bảo vệ.
-pp-erased-ok = Bạn đã xóa mật khẩu chính của mình. { pp-empty-warning }
-pp-not-wanted = Cảnh báo! Bạn vừa quyết định không dùng mật khẩu chính. { pp-empty-warning }
+settings-pp-erased-ok = Bạn đã xóa mật khẩu chính của mình. Mật khẩu được lưu trữ và khóa riêng của chứng chỉ do { -brand-short-name } quản lý sẽ không được bảo vệ.
+settings-pp-not-wanted = Cảnh báo! Bạn đã quyết định không sử dụng mật khẩu chính. Mật khẩu được lưu trữ và khóa riêng của chứng chỉ do { -brand-short-name } quản lý sẽ không được bảo vệ.
 
 pp-change2empty-in-fips-mode = Bạn hiện đang ở chế độ FIPS. FIPS yêu cầu tính năng mật khẩu chính.
 pw-change-success-title = Đã thay đổi mật khẩu
@@ -26,7 +25,6 @@ set-password-new-password = Nhập mật khẩu mới:
 set-password-reenter-password = Nhập lại mật khẩu mới:
 set-password-meter = Độ an toàn mật khẩu
 set-password-meter-loading = Đang tải
-
 primary-password-admin = Quản trị viên của bạn yêu cầu bạn phải đặt mật khẩu chính để lưu thông tin đăng nhập và mật khẩu.
 primary-password-description = Mật khẩu chính được sử dụng để bảo vệ một số thông tin nhạy cảm, như thông tin đăng nhập và mật khẩu, trên thiết bị này. Nếu bạn tạo mật khẩu chính, bạn sẽ được yêu cầu nhập mật khẩu một lần mỗi phiên khi { -brand-short-name } lấy thông tin đã lưu được bảo vệ bởi mật khẩu.
 primary-password-warning = Vui lòng đảm bảo rằng bạn nhớ mật khẩu chính bạn đã đặt. Nếu bạn quên mật khẩu chính, bạn sẽ không thể truy cập bất kỳ thông tin nào được bảo vệ bởi nó trên thiết bị này.

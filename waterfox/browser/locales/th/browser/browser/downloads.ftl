@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -164,11 +164,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = จะเปิดในอีก { $hours } ชั่วโมง { $minutes } นาที…
-downloading-file-opens-in-minutes = จะเปิดในอีก { $minutes } นาที…
-downloading-file-opens-in-minutes-and-seconds = จะเปิดในอีก { $minutes } นาที { $seconds } วินาที…
-downloading-file-opens-in-seconds = จะเปิดในอีก { $seconds } วินาที…
-downloading-file-opens-in-some-time = จะเปิดเมื่อเสร็จสมบูรณ์แล้ว…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = จะเปิดในอีก { $hours } ชั่วโมง { $minutes } นาที…
+downloading-file-opens-in-minutes-2 =
+    .value = จะเปิดในอีก { $minutes } นาที…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = จะเปิดในอีก { $minutes } นาที { $seconds } วินาที…
+downloading-file-opens-in-seconds-2 =
+    .value = จะเปิดในอีก { $seconds } วินาที…
+downloading-file-opens-in-some-time-2 =
+    .value = จะเปิดเมื่อเสร็จสมบูรณ์แล้ว…
 downloading-file-click-to-open =
     .value = เปิดเมื่อเสร็จสมบูรณ์แล้ว
 
@@ -232,3 +237,17 @@ downloads-more-downloading =
     { $count ->
        *[other] อีก { $count } ไฟล์กำลังดาวน์โหลดอยู่
     }
+
+## Download errors
+
+downloads-error-alert-title = ข้อผิดพลาดการดาวน์โหลด
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = ไม่สามารถบันทึกการดาวน์โหลดได้เนื่องจากถูกปิดกั้นโดย { $extension }
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = ไม่สามารถบันทึกการดาวน์โหลดได้เนื่องจากถูกปิดกั้นโดยส่วนขยาย
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    ไม่สามารถบันทึกการดาวน์โหลดเนื่องจากเกิดข้อผิดพลาดที่ไม่รู้จัก
+    
+    โปรดลองอีกครั้ง

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,11 +6,16 @@ addons-page-title = ตัวจัดการส่วนเสริม
 search-header =
     .placeholder = ค้นหา addons.mozilla.org
     .searchbuttonlabel = ค้นหา
-search-header-shortcut =
-    .key = f
-list-empty-get-extensions-message = รับส่วนขยายและชุดตกแต่งบน <a data-l10n-name="get-extensions">{ $domain }</a>
+
+## Variables
+##   $domain - Domain name where add-ons are available (e.g. addons.mozilla.org)
+
+list-empty-get-extensions-message = รับส่วนขยายและชุดรูปแบบใน <a data-l10n-name="get-extensions">{ $domain }</a>
 list-empty-get-dictionaries-message = รับพจนานุกรมบน <a data-l10n-name="get-extensions">{ $domain }</a>
 list-empty-get-language-packs-message = รับชุดภาษาบน <a data-l10n-name="get-extensions">{ $domain }</a>
+
+##
+
 list-empty-installed =
     .value = คุณไม่ได้ติดตั้งส่วนเสริมประเภทนี้ไว้
 list-empty-available-updates =
@@ -121,9 +126,9 @@ addon-category-discover-title =
 addon-category-extension = ส่วนขยาย
 addon-category-extension-title =
     .title = ส่วนขยาย
-addon-category-theme = ชุดตกแต่ง
+addon-category-theme = ชุดรูปแบบ
 addon-category-theme-title =
-    .title = ชุดตกแต่ง
+    .title = ชุดรูปแบบ
 addon-category-plugin = ปลั๊กอิน
 addon-category-plugin-title =
     .title = ปลั๊กอิน
@@ -142,16 +147,30 @@ addon-category-recent-updates-title =
 addon-category-sitepermission = สิทธิอนุญาตไซต์
 addon-category-sitepermission-title =
     .title = สิทธิอนุญาตไซต์
+# String displayed in about:addons in the Site Permissions section
+# Variables:
+#  $host (string) - DNS host name for which the webextension enables permissions
+addon-sitepermission-host = สิทธิอนุญาตไซต์สำหรับ { $host }
 
 ## These are global warnings
 
 extensions-warning-safe-mode = ส่วนเสริมทั้งหมดถูกปิดใช้งานโดยโหมดปลอดภัย
 extensions-warning-check-compatibility = การตรวจสอบความเข้ากันได้ของส่วนเสริมถูกปิดใช้งาน คุณอาจมีส่วนเสริมที่เข้ากันไม่ได้
+extensions-warning-safe-mode2 =
+    .message = ส่วนเสริมทั้งหมดถูกปิดใช้งานโดยโหมดปลอดภัย
+extensions-warning-check-compatibility2 =
+    .message = การตรวจสอบความเข้ากันได้ของส่วนเสริมถูกปิดใช้งาน คุณอาจมีส่วนเสริมที่เข้ากันไม่ได้
 extensions-warning-check-compatibility-button = เปิดใช้งาน
     .title = เปิดใช้งานการตรวจสอบความเข้ากันได้ของส่วนเสริม
 extensions-warning-update-security = การตรวจสอบความปลอดภัยของการอัปเดตส่วนเสริมถูกปิดใช้งาน คุณอาจถูกบุกรุกโดยการอัปเดต
+extensions-warning-update-security2 =
+    .message = การตรวจสอบความปลอดภัยของการอัปเดตส่วนเสริมถูกปิดใช้งาน คุณอาจถูกบุกรุกโดยการอัปเดต
 extensions-warning-update-security-button = เปิดใช้งาน
     .title = เปิดใช้งานการตรวจสอบความปลอดภัยของการอัปเดตส่วนเสริม
+extensions-warning-imported-addons = โปรดติดตั้งส่วนขยายที่นำเข้าไปยัง { -brand-short-name } ให้เสร็จสิ้น
+extensions-warning-imported-addons2 =
+    .message = โปรดติดตั้งส่วนขยายที่นำเข้าไปยัง { -brand-short-name } ให้เสร็จสิ้น
+extensions-warning-imported-addons-button = ติดตั้งส่วนขยาย
 
 ## Strings connected to add-on updates
 
@@ -216,10 +235,17 @@ shortcuts-duplicate = ทางลัดซ้ำกัน
 # Variables:
 #   $shortcut (string) - Shortcut string for the add-on
 shortcuts-duplicate-warning-message = { $shortcut } กำลังถูกใช้เป็นทางลัดในกรณีมากกว่าหนึ่งกรณี ทางลัดที่ซ้ำกันอาจทำให้เกิดลักษณะการทำงานที่ไม่คาดคิด
+# String displayed when a keyboard shortcut is already assigned to more than one add-on
+# Variables:
+#   $shortcut (string) - Shortcut string for the add-on
+shortcuts-duplicate-warning-message2 =
+    .message = { $shortcut } กำลังถูกใช้เป็นทางลัดในกรณีมากกว่าหนึ่งกรณี ทางลัดที่ซ้ำกันอาจทำให้เกิดลักษณะการทำงานที่ไม่คาดคิด
 # String displayed when a keyboard shortcut is already used by another add-on
 # Variables:
 #   $addon (string) - Name of the add-on
 shortcuts-exists = มีการใช้งานอยู่แล้วโดย { $addon }
+# Variables:
+#   $numberToShow (number) - Number of other elements available to show
 shortcuts-card-expand-button =
     { $numberToShow ->
        *[other] แสดงเพิ่มเติมอีก { $numberToShow }
@@ -233,7 +259,7 @@ header-back-button =
 # Explanatory introduction to the list of recommended add-ons. The action word
 # ("recommends") in the final sentence is a link to external documentation.
 discopane-intro =
-    ส่วนขยายและชุดตกแต่งเป็นเหมือนแอปสำหรับเบราว์เซอร์ของคุณ ซึ่งให้คุณป้องกัน
+    ส่วนขยายและธีมเป็นเหมือนแอปสำหรับเบราว์เซอร์ของคุณ ซึ่งให้คุณป้องกัน
     รหัสผ่าน, ดาวน์โหลดวิดีโอ, ค้นหาดีล, ปิดกั้นโฆษณาที่น่ารำคาญ, เปลี่ยนรูปลักษณ์ของ
     เบราว์เซอร์ของคุณ, และอื่น ๆ อีกมากมาย โปรแกรมซอฟต์แวร์ขนาดเล็กเหล่านั้นมักถูก
     พัฒนาโดยบุคคลที่สาม นี่คือตัวเลือกที่ { -brand-product-name } <a data-l10n-name="learn-more-trigger">แนะนำ</a>เพื่อ
@@ -242,6 +268,11 @@ discopane-intro =
 discopane-notice-recommendations =
     บางคำแนะนำเหล่านี้ถูกปรับเปลี่ยนตามแบบส่วนบุคคล ซึ่งขึ้นอยู่กับส่วนขยายอื่นที่คุณติดตั้ง,
     ค่ากำหนดโปรไฟล์, และสถิติการใช้งาน
+# Notice to make user aware that the recommendations are personalized.
+discopane-notice-recommendations2 =
+    .message =
+        บางคำแนะนำเหล่านี้ถูกปรับเปลี่ยนตามแบบส่วนบุคคล ซึ่งขึ้นอยู่กับส่วนขยายอื่นที่คุณติดตั้ง,
+        ค่ากำหนดโปรไฟล์, และสถิติการใช้งาน
 discopane-notice-learn-more = เรียนรู้เพิ่มเติม
 privacy-policy = นโยบายความเป็นส่วนตัว
 # Refers to the author of an add-on, shown below the name of the add-on.
@@ -253,12 +284,12 @@ created-by-author = โดย <a data-l10n-name="author">{ $author }</a>
 #   $dailyUsers (number) - The number of daily users.
 user-count = ผู้ใช้: { $dailyUsers }
 install-extension-button = เพิ่มลงใน { -brand-product-name }
-install-theme-button = ติดตั้งชุดตกแต่ง
+install-theme-button = ติดตั้งชุดรูปแบบ
 # The label of the button that appears after installing an add-on. Upon click,
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = จัดการ
 find-more-addons = ค้นหาส่วนเสริมเพิ่มเติม
-find-more-themes = ค้นหาชุดตกแต่งเพิ่มเติม
+find-more-themes = ค้นหาชุดรูปแบบเพิ่มเติม
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
 addon-options-button =
@@ -286,13 +317,8 @@ release-notes-addon-button = บันทึกประจำรุ่น
 permissions-addon-button = การอนุญาต
 extension-enabled-heading = ถูกเปิดใช้งาน
 extension-disabled-heading = ถูกปิดใช้งาน
-theme-enabled-heading = ถูกเปิดใช้งาน
-theme-disabled-heading = ถูกปิดใช้งาน
-theme-disabled-heading2 = ชุดตกแต่งที่บันทึกไว้
-theme-monochromatic-heading = ชุดรูปแบบสี
-theme-monochromatic-subheading = ชุดรูปแบบใหม่ที่สดใสจาก { -brand-product-name } มีให้ใช้ในช่วงเวลาจำกัด
-# Refers to the button label for the colorways card when a user does not have a colorway theme enabled.
-theme-colorways-button = ลอง Colorways
+theme-enabled-heading = เปิดใช้งาน
+theme-disabled-heading2 = ชุดรูปแบบที่บันทึกไว้
 plugin-enabled-heading = ถูกเปิดใช้งาน
 plugin-disabled-heading = ถูกปิดใช้งาน
 dictionary-enabled-heading = ถูกเปิดใช้งาน
@@ -310,6 +336,9 @@ addon-detail-homepage-label = หน้าแรก
 addon-detail-rating-label = การจัดอันดับ
 # Message for add-ons with a staged pending update.
 install-postponed-message = ส่วนขยายนี้จะถูกอัปเดตเมื่อ { -brand-short-name } เริ่มการทำงานใหม่
+# Message for add-ons with a staged pending update.
+install-postponed-message2 =
+    .message = ส่วนขยายนี้จะถูกอัปเดตเมื่อ { -brand-short-name } เริ่มการทำงานใหม่
 install-postponed-button = อัปเดตตอนนี้
 # The average rating that the add-on has received.
 # Variables:
@@ -340,6 +369,10 @@ addon-detail-updates-radio-on = เปิด
 addon-detail-updates-radio-off = ปิด
 addon-detail-update-check-label = ตรวจสอบการอัปเดต
 install-update-button = อัปเดต
+# aria-label associated to the updates row to help screen readers to announce the group
+# of input controls being entered.
+addon-detail-group-label-updates =
+    .aria-label = { addon-detail-updates-label }
 # This is the tooltip text for the private browsing badge in about:addons. The
 # badge is the private browsing icon included next to the extension's name.
 addon-badge-private-browsing-allowed2 =
@@ -348,6 +381,24 @@ addon-badge-private-browsing-allowed2 =
 addon-detail-private-browsing-help = เมื่อได้รับอนุญาต ส่วนขยายจะสามารถเข้าถึงกิจกรรมออนไลน์ของคุณได้ในขณะที่เรียกดูแบบส่วนตัว <a data-l10n-name="learn-more">เรียนรู้เพิ่มเติม</a>
 addon-detail-private-browsing-allow = อนุญาต
 addon-detail-private-browsing-disallow = ไม่อนุญาต
+# aria-label associated to the private browsing row to help screen readers to announce the group
+# of input controls being entered.
+addon-detail-group-label-private-browsing =
+    .aria-label = { detail-private-browsing-label }
+
+## "sites with restrictions" (internally called "quarantined") are special domains
+## where add-ons are normally blocked for security reasons.
+
+# Used as a description for the option to allow or block an add-on on quarantined domains.
+addon-detail-quarantined-domains-label = เรียกใช้งานบนไซต์ที่มีข้อจำกัด
+# Used as help text part of the quarantined domains UI controls row.
+addon-detail-quarantined-domains-help = เมื่ออนุญาตแล้ว ส่วนขยายจะสามารถเข้าถึงไซต์ที่ { -vendor-short-name } จำกัดไว้ได้ ให้อนุญาตก็ต่อเมื่อคุณไว้ใจส่วนขยายนี้เท่านั้น
+# Used as label and tooltip text on the radio inputs associated to the quarantined domains UI controls.
+addon-detail-quarantined-domains-allow = อนุญาต
+addon-detail-quarantined-domains-disallow = ไม่อนุญาต
+# aria-label associated to the quarantined domains exempt row to help screen readers to announce the group.
+addon-detail-group-label-quarantined-domains =
+    .aria-label = { addon-detail-quarantined-domains-label }
 
 ## This is the tooltip text for the recommended badges for an extension in about:addons. The
 ## badge is a small icon displayed next to an extension when it is recommended on AMO.
@@ -355,10 +406,10 @@ addon-detail-private-browsing-disallow = ไม่อนุญาต
 addon-badge-recommended2 =
     .title = { -brand-product-name } แนะนำเฉพาะส่วนขยายที่ตรงตามมาตรฐานของเราเท่านั้นเพื่อความปลอดภัยและประสิทธิภาพ
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Waterfox" in the string below because the extensions are built
-# by Waterfox and we don't want forks to display "by Fork".
+# We hard code "BrowserWorks" in the string below because the extensions are built
+# by BrowserWorks and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = ส่วนขยายอย่างเป็นทางการที่สร้างขึ้นโดย Waterfox ซึ่งตรงตามมาตรฐานความปลอดภัยและประสิทธิภาพ
+    .title = ส่วนขยายอย่างเป็นทางการที่สร้างขึ้นโดย BrowserWorks ซึ่งตรงตามมาตรฐานความปลอดภัยและประสิทธิภาพ
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = ส่วนขยายนี้ได้รับการตรวจสอบว่าเป็นไปตามมาตรฐานด้านความปลอดภัยและประสิทธิภาพของเรา
@@ -375,16 +426,18 @@ addon-permissions-required = สิทธิอนุญาตที่ต้อ
 addon-permissions-optional = สิทธิอนุญาตที่เลือกได้สำหรับฟังก์ชันการทำงานที่เพิ่ม:
 addon-permissions-learnmore = เรียนรู้เพิ่มเติมเกี่ยวกับสิทธิอนุญาต
 recommended-extensions-heading = ส่วนขยายที่แนะนำ
-recommended-themes-heading = ชุดตกแต่งที่แนะนำ
+recommended-themes-heading = ชุดรูปแบบที่แนะนำ
+# Variables:
+#   $hostname (string) - Host where the permissions are granted
 addon-sitepermissions-required = มอบความสามารถต่อไปนี้ให้ <span data-l10n-name="hostname">{ $hostname }</span>:
 # A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Waterfox Color" name itself should not be translated.
-recommended-theme-1 = รู้สึกสร้างสรรค์ใช่ไหม? <a data-l10n-name="link">สร้างชุดตกแต่งในรูปแบบของคุณเองด้วย Waterfox Color</a>
+recommended-theme-1 = รู้สึกสร้างสรรค์ใช่ไหม? <a data-l10n-name="link">สร้างธีมในรูปแบบของคุณเองด้วย Waterfox Color</a>
 
 ## Page headings
 
 extension-heading = จัดการส่วนขยายของคุณ
-theme-heading = จัดการชุดตกแต่งของคุณ
+theme-heading = จัดการชุดรูปแบบของคุณ
 plugin-heading = จัดการปลั๊กอินของคุณ
 dictionary-heading = จัดการพจนานุกรมของคุณ
 locale-heading = จัดการภาษาของคุณ
@@ -400,18 +453,32 @@ addon-page-options-button =
 
 ## Detail notifications
 ## Variables:
-##   $name (String): name of the add-on.
+##   $name (string) - Name of the add-on.
 
 # Variables:
-#   $version (String): application version.
+#   $version (string) - Application version.
 details-notification-incompatible = { $name } เข้ากันไม่ได้กับ { -brand-short-name } { $version }
+# Variables:
+#   $version (string) - Application version.
+details-notification-incompatible2 =
+    .message = { $name } เข้ากันไม่ได้กับ { -brand-short-name } { $version }
 details-notification-incompatible-link = ข้อมูลเพิ่มเติม
 details-notification-unsigned-and-disabled = { $name } ไม่สามารถยืนยันสำหรับใช้ใน { -brand-short-name } และถูกปิดใช้งาน
+details-notification-unsigned-and-disabled2 =
+    .message = { $name } ไม่สามารถยืนยันสำหรับใช้ใน { -brand-short-name } และถูกปิดใช้งาน
 details-notification-unsigned-and-disabled-link = ข้อมูลเพิ่มเติม
 details-notification-unsigned = { $name } ไม่สามารถยืนยันสำหรับใช้ใน { -brand-short-name } ดำเนินการต่อด้วยความระมัดระวัง
+details-notification-unsigned2 =
+    .message = { $name } ไม่สามารถยืนยันสำหรับใช้ใน { -brand-short-name } ดำเนินการต่อด้วยความระมัดระวัง
 details-notification-unsigned-link = ข้อมูลเพิ่มเติม
 details-notification-blocked = { $name } ถูกปิดใช้งานเนื่องจากปัญหาด้านความปลอดภัยหรือเสถียรภาพ
+details-notification-blocked2 =
+    .message = { $name } ถูกปิดใช้งานเนื่องจากปัญหาด้านความปลอดภัยหรือเสถียรภาพ
 details-notification-blocked-link = ข้อมูลเพิ่มเติม
 details-notification-softblocked = { $name } เป็นที่ทราบว่าก่อให้เกิดปัญหาด้านความปลอดภัยหรือเสถียรภาพ
+details-notification-softblocked2 =
+    .message = { $name } เป็นที่ทราบว่าก่อให้เกิดปัญหาด้านความปลอดภัยหรือเสถียรภาพ
 details-notification-softblocked-link = ข้อมูลเพิ่มเติม
 details-notification-gmp-pending = { $name } จะถูกติดตั้งในไม่ช้า
+details-notification-gmp-pending2 =
+    .message = { $name } จะถูกติดตั้งในไม่ช้า

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,11 +34,15 @@ options-show-user-agent-styles-tooltip =
 options-collapse-attrs-label = DOM 属性値を省略
 options-collapse-attrs-tooltip =
     .title = 値の長い属性を省略します
-
 # The label for the checkbox option to enable the "drag to update" feature
 options-inspector-draggable-properties-label = ドラッグでサイズの値を編集
 options-inspector-draggable-properties-tooltip =
     .title = インスペクターのルール表示で、サイズの値をクリックしてドラッグすると値を編集できます。
+# The label for the checkbox option to enable simplified highlighting on page elements
+# within the inspector for users who enabled prefers-reduced-motion = reduce
+options-inspector-simplified-highlighters-label = Use simpler highlighters with prefers-reduced-motion
+options-inspector-simplified-highlighters-tooltip =
+    .title = prefers-reduced-motion が有効な場合、簡易強調を有効にします。フラッシュ効果を避けるため、強調された要素の周りに塗りつぶされた四角形ではなく直線を描画します。
 
 ## "Default Color Unit" options for the Inspector
 
@@ -57,18 +61,16 @@ options-styleeditor-label = スタイルエディター
 # The label for the checkbox that toggles autocompletion of css in the Style Editor
 options-stylesheet-autocompletion-label = CSS 自動補完
 options-stylesheet-autocompletion-tooltip =
-    .title = スタイルエディターで CSS プロパティ、値、セレクター入力時に自動補完します
+    .title = スタイルエディターで、CSS プロパティ、値、セレクターの入力時に自動補完します
 
 ## Screenshot section
 
 # The heading
 options-screenshot-label = スクリーンショットの動作
-
 # Label for the checkbox that toggles screenshot to clipboard feature
 options-screenshot-clipboard-only-label = スクリーンショットをクリップボードだけにコピー
 options-screenshot-clipboard-tooltip2 =
     .title = スクリーンショットをクリップボードに直接保存します
-
 # Label for the checkbox that toggles the camera shutter audio for screenshot tool
 options-screenshot-audio-label = カメラのシャッター音を再生
 options-screenshot-audio-tooltip =
@@ -107,17 +109,18 @@ options-disable-javascript-tooltip =
 options-enable-chrome-label = ブラウザーとアドオンのデバッガーを有効化
 options-enable-chrome-tooltip =
     .title = さまざまな開発ツールがブラウザーコンテキスト (ツール > ウェブ開発 > ブラウザーツールボックス) とアドオンマネージャーからのアドオンデバッグで使えるようになります
-
 # The label for checkbox that toggles remote debugging, i.e. the devtools.debugger.remote-enabled preference
 options-enable-remote-label = リモートデバッガーを有効化
 options-enable-remote-tooltip2 =
     .title = このオプションを有効にすると、このブラウザーインスタンスをリモートでデバッグできるようになります
-
+# The label for checkbox that enables F12 as a shortcut to open DevTools
+options-enable-f12-label = Use the F12 key to open or close DevTools
+options-enable-f12-tooltip =
+    .title = このオプションを有効にすると、F12 キーに DevTools ツールボックスの開閉を割り当てます
 # The label for checkbox that toggles custom formatters for objects
 options-enable-custom-formatters-label = カスタムフォーマッターを有効化
 options-enable-custom-formatters-tooltip =
     .title = このオプションを有効にすると、DOM オブジェクトに対するカスタムフォーマッターの定義をサイトに許可します。
-
 # The label for checkbox that toggles the service workers testing over HTTP on or off.
 options-enable-service-workers-http-label = HTTP による Service Worker を有効化 (ツールボックスを開いたとき)
 options-enable-service-workers-http-tooltip =

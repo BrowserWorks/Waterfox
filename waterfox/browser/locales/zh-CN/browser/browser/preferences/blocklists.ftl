@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-blocklist-window =
+blocklist-window2 =
     .title = 拦截列表
-    .style = width: 50em
+    .style = min-width: 50em
 
 blocklist-description = 选择 { -brand-short-name } 用于拦截在线跟踪器的列表。列表由 <a data-l10n-name="disconnect-link" title="Disconnect">Disconnect</a> 提供。
 blocklist-close-key =
@@ -30,4 +30,4 @@ blocklist-item-list-template = { $listName } { $description }
 blocklist-item-moz-std-listName = 一级拦截列表（推荐）。
 blocklist-item-moz-std-description = 允许部分跟踪器，以减少网站故障率。
 blocklist-item-moz-full-listName = 二级拦截列表。
-blocklist-item-moz-full-description = 拦截检测到的所有跟踪器。可能无法正常载入部分网站或内容。
+blocklist-item-moz-full-description = 拦截检测到的所有跟踪器。可能无法正常加载部分网站或内容。

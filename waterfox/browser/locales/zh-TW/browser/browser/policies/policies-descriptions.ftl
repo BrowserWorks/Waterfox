@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,6 +26,9 @@ policy-Bookmarks = 在書籤工具列、選單或當中的資料夾建立書籤�
 policy-CaptivePortal = 開啟或關閉支援 Captive portal。
 policy-CertificatesDescription = 新增憑證，或使用內建憑證。
 policy-Cookies = 允許或拒絕網站設定 Cookie。
+# Containers in this context is referring to container tabs in Waterfox.
+policy-Containers = 設定容器分頁相關政策。
+policy-DisableAccounts = 停用需要帳號才可使用的服務，包含 Sync。
 policy-DisabledCiphers = 停用加密演算法。
 policy-DefaultDownloadDirectory = 設定預設下載資料夾。
 policy-DisableAppUpdate = 防止瀏覽器更新。
@@ -41,7 +44,7 @@ policy-DisableForgetButton = 防止使用「忘記」功能。
 policy-DisableFormHistory = 不要記住搜尋與表單填寫紀錄。
 policy-DisablePrimaryPasswordCreation = 若為 true，將無法建立主控密碼。
 policy-DisablePasswordReveal = 不允許於儲存的登入資訊畫面中顯示密碼。
-policy-DisablePocket = 停用儲存網頁到 Pocket 的功能。
+policy-DisablePocket2 = 停用儲存網頁到 { -pocket-brand-name } 的功能。
 policy-DisablePrivateBrowsing = 停用隱私瀏覽功能。
 policy-DisableProfileImport = 停用自其他瀏覽器匯入資料的選單功能。
 policy-DisableProfileRefresh = 停用 about:support 頁面中的「重新整理 { -brand-short-name }」按鈕。
@@ -50,6 +53,7 @@ policy-DisableSecurityBypass = 防止使用者忽略某些安全性警告。
 policy-DisableSetAsDesktopBackground = 停用將圖片「設為桌布」的選單功能。
 policy-DisableSystemAddonUpdate = 防止瀏覽器安裝或更新系統附加元件。
 policy-DisableTelemetry = 關閉 Telemetry。
+policy-DisableThirdPartyModuleBlocking = 防止使用者封鎖插入 { -brand-short-name } 處理程序的第三方模組。
 policy-DisplayBookmarksToolbar = 預設顯示書籤工具列。
 policy-DisplayMenuBar = 預設顯示選單列。
 policy-DNSOverHTTPS = 設定 DNS over HTTPS。
@@ -66,9 +70,8 @@ policy-ExemptDomainFileTypePairsFromFileTypeDownloadWarnings = 針對特定網�
 policy-Extensions = 安裝、移除或鎖定擴充套件。安裝選項可加入網址或路徑作為參數。移除和鎖定選項則需要擴充套件 ID 作為參數。
 policy-ExtensionSettings = 管理擴充套件的各種安裝設定。
 policy-ExtensionUpdate = 開啟或關閉擴充套件自動更新。
-policy-WaterfoxHome = 設定 Waterfox Home。
 policy-WaterfoxHome2 = 設定 { -firefox-home-brand-name }。
-policy-FlashPlugin = 允許或拒絕使用 Flash 擴充套件。
+policy-WaterfoxSuggest = 設定 { -firefox-suggest-brand-name }。
 policy-GoToIntranetSiteForSingleWordEntryInAddressBar = 在網址列輸入單一文字時，強制導航到企業內部網站，而非進行線上搜尋。
 policy-Handlers = 設定預設應用程式處理方式。
 policy-HardwareAcceleration = 若為 false，就會關閉硬體加速。
@@ -101,7 +104,7 @@ policy-PasswordManagerExceptions = 防止 { -brand-short-name } 儲存特定網�
 policy-PDFjs = 停用或設定 { -brand-short-name } 內建的 PDF 閱讀器 PDF.js。
 policy-Permissions2 = 設定攝影機、麥克風、地理位置、通知、自動播放等權限。
 policy-PictureInPicture = 開啟或關閉子母畫面功能。
-policy-PopupBlocking = 允許某些網站預設可顯示彈出視窗。
+policy-PopupBlocking = 允許某些網站預設可顯示彈出型視窗。
 policy-Preferences = 鎖定部分偏好設定的內容。
 policy-PromptForDownloadLocation = 下載檔案時，詢問要將檔案儲存至何處。
 policy-Proxy = 設定代理伺服器選項。
@@ -110,8 +113,8 @@ policy-SanitizeOnShutdown2 = 關閉瀏覽器時，清除上網資料。
 policy-SearchBar = 設定搜尋列的預設位置，使用者仍然可以自訂。
 policy-SearchEngines = 調整搜尋引擎設定。此原則僅對 Extended Support Release（ESR）版本有效。
 policy-SearchSuggestEnabled = 啟用或停用搜尋建議。
-# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
-policy-SecurityDevices = 安裝 PKCS #11 模組。
+# For more information, see https://wikipedia.org/wiki/PKCS_11
+policy-SecurityDevices2 = 新增或刪除 PKCS #11 模組。
 policy-ShowHomeButton = 於工具列顯示首頁按鈕。
 policy-SSLVersionMax = 設定最大 SSL 版本。
 policy-SSLVersionMin = 設定最小 SSL 版本。

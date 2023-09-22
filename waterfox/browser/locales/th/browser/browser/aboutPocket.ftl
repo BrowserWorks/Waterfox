@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -10,11 +10,11 @@
 
 # Placeholder text for tag input
 pocket-panel-saved-add-tags =
-    .placeholder = เพิ่มป้ายกำกับ
+    .placeholder = เพิ่มแท็ก
 
-pocket-panel-saved-error-generic = เกิดข้อผิดพลาดระหว่างการบันทึกไปยัง { -pocket-brand-name }
-pocket-panel-saved-error-tag-length = ป้ายกำกับถูกจำกัดไว้ที่ 25 ตัวอักษร
-pocket-panel-saved-error-only-links = ลิงก์เท่านั้นที่สามารถถูกบันทึกได้
+pocket-panel-saved-error-generic = เกิดข้อผิดพลาดขณะบันทึกไปยัง { -pocket-brand-name }
+pocket-panel-saved-error-tag-length = แท็กถูกจำกัดไว้ที่ 25 ตัวอักษร
+pocket-panel-saved-error-only-links = สามารถบันทึกได้เฉพาะลิงก์เท่านั้น
 pocket-panel-saved-error-not-saved = หน้าไม่ถูกบันทึก
 pocket-panel-saved-error-no-internet = คุณต้องเชื่อต่อกับอินเทอร์เน็ตเพื่อบันทึกไปยัง { -pocket-brand-name } กรุณาเชื่อมต่ออินเทอร์เน็ตและลองใหม่อีกครั้ง
 pocket-panel-saved-error-remove = เกิดข้อผิดพลาดขณะพยายามลบหน้านี้
@@ -22,17 +22,16 @@ pocket-panel-saved-page-removed = ลบหน้าแล้ว
 pocket-panel-saved-page-saved = บันทึกไปยัง { -pocket-brand-name } แล้ว
 pocket-panel-saved-page-saved-b = บันทึกไปยัง { -pocket-brand-name } แล้ว!
 pocket-panel-saved-processing-remove = กำลังลบหน้า…
-pocket-panel-saved-removed = ลบหน้าออกจาก “รายการของฉัน” แล้ว
-pocket-panel-saved-processing-tags = กำลังเพิ่มป้ายกำกับ…
+pocket-panel-saved-removed-updated = ลบหน้าออกจากรายการที่บันทึกไว้แล้ว
+pocket-panel-saved-processing-tags = กำลังเพิ่มแท็ก…
 pocket-panel-saved-remove-page = ลบหน้า
 pocket-panel-saved-save-tags = บันทึก
 pocket-panel-saved-saving-tags = กำลังบันทึก…
-pocket-panel-saved-suggested-tags = ป้ายกำกับที่ถูกแนะนำ
-pocket-panel-saved-tags-saved = ป้ายกำกับถูกเพิ่มแล้ว
-pocket-panel-signup-view-list = ดูรายการ
+pocket-panel-saved-suggested-tags = แท็กที่แนะนำ
+pocket-panel-saved-tags-saved = เพิ่มแท็กแล้ว
 
 # This is displayed above a field where the user can add tags
-pocket-panel-signup-add-tags = เพิ่มป้ายกำกับ:
+pocket-panel-signup-add-tags = เพิ่มแท็ก:
 
 ## about:pocket-signup panel
 
@@ -47,13 +46,12 @@ pocket-panel-signup-tagline-story-one = คลิกปุ่ม { -pocket-brand
 pocket-panel-signup-tagline-story-two = ดูใน { -pocket-brand-name } บนอุปกรณ์ต่าง ๆ เวลาไหนก็ได้
 
 pocket-panel-signup-cta-a-fix = ปุ่มบันทึกของคุณสำหรับอินเทอร์เน็ต
-pocket-panel-signup-cta-b = คลิกปุ่ม { -pocket-brand-name } เพื่อบันทึกบทความ วิดีโอ และลิงก์ ดูรายการของคุณบนอุปกรณ์ต่าง ๆ เวลาไหนก็ได้
+pocket-panel-signup-cta-b-updated = คลิกปุ่ม { -pocket-brand-name } เพื่อบันทึกบทความ วิดีโอ และลิงก์ ดูรายการที่บันทึกไว้ของคุณบนอุปกรณ์ต่าง ๆ เวลาไหนก็ได้
 pocket-panel-signup-cta-b-short = คลิกปุ่ม { -pocket-brand-name } เพื่อบันทึกบทความ วิดีโอ และลิงก์
-pocket-panel-signup-cta-c = ดูรายการของคุณบนอุปกรณ์ต่าง ๆ เวลาไหนก็ได้
+pocket-panel-signup-cta-c-updated = ดูรายการที่บันทึกไว้ของคุณบนอุปกรณ์ต่าง ๆ เวลาไหนก็ได้
 
 ## about:pocket-home panel
 
-pocket-panel-home-my-list = รายการของฉัน
 pocket-panel-home-welcome-back = ยินดีต้อนรับกลับ
 pocket-panel-home-paragraph = คุณสามารถใช้ { -pocket-brand-name } สำรวจและบันทึกหน้าเว็บ บทความ วิดีโอ พอดแคสต์ หรือกลับไปอ่านสิ่งที่คุณกำลังอ่านอยู่ได้
 pocket-panel-home-explore-popular-topics = สำรวจหัวข้อยอดนิยม
@@ -67,7 +65,7 @@ pocket-panel-home-new-user-message = ดูรายการที่บัน�
 
 ## Pocket panel header component
 
-pocket-panel-header-my-list = ดูรายการของฉัน
+pocket-panel-header-my-saves = ดูบันทึกของฉัน
 pocket-panel-header-sign-in = ลงชื่อเข้า
 
 ## Pocket panel buttons

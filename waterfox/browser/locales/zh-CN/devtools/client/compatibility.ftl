@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -10,13 +10,13 @@ compatibility-all-elements-header = 所有问题
 
 ## Message used as labels for the type of issue
 
-compatibility-issue-deprecated = （不赞成使用）
-compatibility-issue-experimental = （实验性）
-compatibility-issue-prefixneeded = （需要前缀）
-compatibility-issue-deprecated-experimental = （不赞成使用，实验性）
-compatibility-issue-deprecated-prefixneeded = （不赞成使用，需要前缀）
-compatibility-issue-experimental-prefixneeded = （实验性，需要前缀）
-compatibility-issue-deprecated-experimental-prefixneeded = （不赞成使用、实验性，需要前缀）
+compatibility-issue-deprecated = (已弃用)
+compatibility-issue-experimental = (实验性)
+compatibility-issue-prefixneeded = (需加前缀)
+compatibility-issue-deprecated-experimental = (已弃用，实验性)
+compatibility-issue-deprecated-prefixneeded = (已弃用，需加前缀)
+compatibility-issue-experimental-prefixneeded = (实验性，需加前缀)
+compatibility-issue-deprecated-experimental-prefixneeded = (已弃用，实验性，需加前缀)
 
 ## Messages used as labels and titles for buttons in the footer
 

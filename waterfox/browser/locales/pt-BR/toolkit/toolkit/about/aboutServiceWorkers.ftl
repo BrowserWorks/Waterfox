@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ### The term "Service Workers" and "Workers" should not be translated
 
-about-service-workers-title = Sobre os Service Workers
+about-service-workers-title = Service Workers
 about-service-workers-main-title = Service Workers registrados
 about-service-workers-warning-not-enabled = Os Service Workers não estão ativados.
 about-service-workers-warning-no-service-workers = Nenhum Service Workers registrado.

@@ -1,23 +1,23 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-sanitize-prefs =
+sanitize-prefs2 =
     .title = Ρυθμίσεις απαλοιφής ιστορικού
-    .style = width: 34em
+    .style = min-width: 34em
 
 sanitize-prefs-style =
     .style = width: 17em
 
-dialog-title =
+sanitize-dialog-title =
     .title = Απαλοιφή πρόσφατου ιστορικού
-    .style = width: 34em
+    .style = min-width: 34em
 
 # When "Time range to clear" is set to "Everything", this message is used for the
 # title instead of dialog-title.
-dialog-title-everything =
+sanitize-dialog-title-everything =
     .title = Απαλοιφή όλου του ιστορικού
-    .style = width: 34em
+    .style = min-width: 34em
 
 clear-data-settings-label = Όταν κλείνει, το { -brand-short-name } να κάνει αυτόματη απαλοιφή των παρακάτω
 
@@ -57,7 +57,7 @@ clear-time-duration-suffix =
 history-section-label = Ιστορικό
 
 item-history-and-downloads =
-    .label = Ιστορικό περιήγησης & λήψεων
+    .label = Ιστορικό περιήγησης και λήψεων
     .accesskey = π
 
 item-cookies =
@@ -73,7 +73,7 @@ item-cache =
     .accesskey = ρ
 
 item-form-search-history =
-    .label = Ιστορικό αναζήτησης & φορμών
+    .label = Ιστορικό φορμών και αναζήτησης
     .accesskey = φ
 
 data-section-label = Δεδομένα

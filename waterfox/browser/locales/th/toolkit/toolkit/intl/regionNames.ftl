@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,7 @@ region-name-bl = แซ็ง-บาร์เตเลมี
 region-name-bm = เบอร์มิวดา
 region-name-bn = บรูไน
 region-name-bo = โบลิเวีย
-region-name-bq = โบแนเรอ, ซินต์เอิสตาซียึส และซาบา
+region-name-bq-2018 = แคริบเบียนเนเธอร์แลนด์
 region-name-br = บราซิล
 region-name-bs = บาฮามาส
 region-name-bt = ภูฏาน
@@ -57,11 +57,11 @@ region-name-co = โคลอมเบีย
 region-name-cp = เกาะกลีแปร์ตอน
 region-name-cr = คอสตาริกา
 region-name-cu = คิวบา
-region-name-cv = กาบูเวร์ดี
+region-name-cv-2020 = กาบูเวร์ดี
 region-name-cw = กือราเซา
 region-name-cx = เกาะคริสต์มาส
 region-name-cy = ไซปรัส
-region-name-cz = สาธารณรัฐเช็ก
+region-name-cz-2019 = เช็ก
 region-name-de = เยอรมนี
 region-name-dg = ดีเอโกการ์ซีอา
 region-name-dj = จิบูตี
@@ -150,7 +150,7 @@ region-name-me = มอนเตเนโกร
 region-name-mf = เซนต์มาร์ติน
 region-name-mg = มาดากัสการ์
 region-name-mh = หมู่เกาะมาร์แชลล์
-region-name-mk = มาซิโดเนีย
+region-name-mk-2019 = มาซิโดเนียเหนือ
 region-name-ml = มาลี
 region-name-mm = พม่า
 region-name-mn = มองโกเลีย
@@ -223,7 +223,7 @@ region-name-st = เซาตูเมและปรินซิปี
 region-name-sv = เอลซัลวาดอร์
 region-name-sx = ซินต์มาร์เติน
 region-name-sy = ซีเรีย
-region-name-sz = สวาซิแลนด์
+region-name-sz-2019 = เอสวาตีนี
 region-name-tc = หมู่เกาะเติกส์และหมู่เกาะเคคอส
 region-name-td = ชาด
 region-name-tf = เฟรนช์เซาเทิร์นและแอนตาร์กติกแลนดส์

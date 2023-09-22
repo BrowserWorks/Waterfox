@@ -1,17 +1,17 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-create-profile-window =
+create-profile-window2 =
     .title = Trình tạo mới hồ sơ
-    .style = width: 45em; height: 32em;
+    .style = min-width: 45em; min-height: 32em;
 
 ## First wizard page
 
-create-profile-first-page-header =
+create-profile-first-page-header2 =
     { PLATFORM() ->
         [macos] Giới thiệu
-       *[other] Chào mừng đến với { create-profile-window.title }
+       *[other] Chào mừng đến với { create-profile-window2.title }
     }
 
 profile-creation-explanation-1 = { -brand-short-name } lưu các thông tin thiết lập và tùy chọn của bạn trong hồ sơ cá nhân.
@@ -28,10 +28,10 @@ profile-creation-explanation-4 =
 
 ## Second wizard page
 
-create-profile-last-page-header =
+create-profile-last-page-header2 =
     { PLATFORM() ->
         [macos] Kết thúc
-       *[other] Đang hoàn tất { create-profile-window.title }
+       *[other] Đang hoàn tất { create-profile-window2.title }
     }
 
 profile-creation-intro = Nếu tạo vài hồ sơ, bạn có thể tách biệt chúng bằng cách đặt tên. Có thể dùng tên được cung cấp ở đây hoặc tự đặt theo ý bạn.

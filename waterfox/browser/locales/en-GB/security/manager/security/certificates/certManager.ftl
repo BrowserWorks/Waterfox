@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,9 +26,9 @@ certmgr-people = You have certificates on file that identify these people
 certmgr-server = These entries identify server certificate error exceptions
 certmgr-ca = You have certificates on file that identify these certificate authorities
 
-certmgr-edit-ca-cert =
+certmgr-edit-ca-cert2 =
     .title = Edit CA certificate trust settings
-    .style = width: 48em;
+    .style = min-width: 48em;
 
 certmgr-edit-cert-edit-trust = Edit trust settings:
 
@@ -38,9 +38,9 @@ certmgr-edit-cert-trust-ssl =
 certmgr-edit-cert-trust-email =
     .label = This certificate can identify mail users.
 
-certmgr-delete-cert =
+certmgr-delete-cert2 =
     .title = Delete Certificate
-    .style = width: 48em; height: 24em;
+    .style = min-width: 48em; min-height: 24em;
 
 certmgr-cert-host =
     .label = Host
@@ -50,9 +50,6 @@ certmgr-cert-name =
 
 certmgr-cert-server =
     .label = Server
-
-certmgr-override-lifetime =
-    .label = Lifetime
 
 certmgr-token-name =
     .label = Security Device
@@ -68,6 +65,9 @@ certmgr-email =
 
 certmgr-serial =
     .label = Serial Number
+
+certmgr-fingerprint-sha-256 =
+    .label = SHA-256 Fingerprint
 
 certmgr-view =
     .label = View…
@@ -185,8 +185,6 @@ delete-email-cert-impact = If you delete a person's email certificate, you will 
 #   $serialNumber : the serial number of the cert in AA:BB:CC hex format.
 cert-with-serial =
     .value = Certificate with serial number: { $serialNumber }
-
-## Cert Viewer
 
 # Used to indicate that the user chose not to send a client authentication certificate to a server that requested one in a TLS handshake.
 send-no-client-certificate = Send no client certificate

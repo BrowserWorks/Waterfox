@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -130,13 +130,6 @@ cfr-doorhanger-doh-secondary-button = عطّل
 
 ## Fission Experiment Message
 
-cfr-doorhanger-fission-body-approved = خصوصيتك فوق كل شيء. بات { -brand-short-name } يعزل (أو بالإنجليزية، sandbox) المواقع عن بعضها بعض، ما يصعّب على المخترقين سرقة كلمات السر أو أرقام البطاقات الائتمانية أو غيرها من معلومات حساسة.
-cfr-doorhanger-fission-header = عزل المواقع
-cfr-doorhanger-fission-primary-button = حسنًا، فهمت
-    .accesskey = ح
-cfr-doorhanger-fission-secondary-button = اطّلع على المزيد
-    .accesskey = ط
-
 ## Full Video Support CFR message
 
 cfr-doorhanger-video-support-body = قد لا تعمل الڤِديوهات في هذا الموقع كما ينبغي في إصدارة { -brand-short-name } هذه. من فضلك حدّث { -brand-short-name } الآن لتحصل على الدعم الكامل للڤِديوهات.
@@ -146,16 +139,11 @@ cfr-doorhanger-video-support-primary-button = حدّث الآن
 
 ## Spotlight modal shared strings
 
-spotlight-learn-more-collapsed = اطّلع على المزيد
-    .title = وسّع القسم للاطّلاع على المزيد بخصوص الميزة
-spotlight-learn-more-expanded = اطّلع على المزيد
-    .title = أغلِق
-
 ## VPN promotion dialog for public Wi-Fi users
 ##
 ## If a user is detected to be on a public Wi-Fi network, they are given a
 ## bit of info about how to improve their privacy and then offered a button
-## to the Waterfox VPN page and a link to dismiss the dialog.
+## to the BrowserWorks VPN page and a link to dismiss the dialog.
 
 # This header text can be explicitly wrapped.
 spotlight-public-wifi-vpn-header = يبدو أنك تستخدم شبكة Wi-Fi عامة
@@ -167,7 +155,34 @@ spotlight-public-wifi-vpn-link = ليس الآن
 
 ## Total Cookie Protection Rollout
 
-spotlight-total-cookie-protection-secondary-button = ليس الآن
-
 ## Emotive Continuous Onboarding
+
+## MR2022 Background Update Windows native toast notification strings.
+##
+## These strings will be displayed by the Windows operating system in
+## a native toast, like:
+##
+## <b>multi-line title</b>
+## multi-line text
+## <img>
+## [ primary button ] [ secondary button ]
+##
+## The button labels are fitted into narrow fixed-width buttons by
+## Windows and therefore must be as narrow as possible.
+
+## Waterfox View CFR
+
+## Waterfox View Spotlight
+
+## Colorways expiry reminder CFR
+
+## Cookie Banner Handling CFR
+
+## These strings are used in the Fox doodle Pin/set default spotlights
+
+## These strings are used in the Set Waterfox as Default PDF Handler for Existing Users experiment
+
+## FxA sync CFR
+
+## Device Migration FxA Spotlight
 

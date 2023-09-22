@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,6 +9,7 @@ refresh-profile-dialog-description = Riparti da zero per risolvere problemi di p
 refresh-profile = Esegui una messa a punto di { -brand-short-name }
 refresh-profile-button = Ripristina { -brand-short-name }…
 refresh-profile-learn-more = Ulteriori informazioni
+
 refresh-profile-progress =
     .title = Ripristino di { -brand-short-name }
 refresh-profile-progress-description = Quasi completato…

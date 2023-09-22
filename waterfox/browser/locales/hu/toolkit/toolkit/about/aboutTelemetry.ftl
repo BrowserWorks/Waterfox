@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -19,7 +19,7 @@ about-telemetry-current-store = Jelenlegi bolt:
 about-telemetry-more-information = Több információt keres?
 about-telemetry-firefox-data-doc = A <a data-l10n-name="data-doc-link">Waterfox adatok dokumentáció</a> útmutatókat tartalmaz arról, hogyan dolgozzon az adateszközeinkkel.
 about-telemetry-telemetry-client-doc = A <a data-l10n-name="client-doc-link">Waterfox telemetria ügyfél dokumentáció</a> fogalomdefiníciókat, API dokumentációkat és adathivatkozásokat tartalmaz.
-about-telemetry-telemetry-dashboard = A <a data-l10n-name="dashboard-link">Telemetria vezérlőpultokkal</a> vizualizálhatóak a Waterfox által kapott telemetria adatok.
+about-telemetry-telemetry-dashboard = A <a data-l10n-name="dashboard-link">Telemetria vezérlőpultokkal</a> vizualizálhatóak a BrowserWorks által kapott telemetria adatok.
 about-telemetry-telemetry-probe-dictionary = A <a data-l10n-name="probe-dictionary-link">Szonda szótár</a> részleteket és leírást ad a telemetria által gyűjtött szondákról.
 about-telemetry-show-in-Waterfox-json-viewer = Megnyitás a JSON megjelenítővel
 about-telemetry-home-section = Kezdőlap
@@ -67,7 +67,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } minta, átlag = { $prettyAverage }, összeg = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "BrowserWorks"
 about-telemetry-page-subtitle = Ez az oldal megjeleníti a telemetria által gyűjtött teljesítmény-, hardver-, és funkcióhasználati adatokat és testreszabásokat. Ezek az információk a { $telemetryServerOwner }nak a { -brand-full-name } tökéletesítése érdekében kerülnek elküldésre.
 about-telemetry-settings-explanation = A telemetria { about-telemetry-data-type } gyűjt, és a feltöltés <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
 # Variables:
@@ -131,12 +131,6 @@ about-telemetry-category-header = kategória
 about-telemetry-method-header = metódus
 about-telemetry-object-header = objektum
 about-telemetry-extra-header = extra
-about-telemetry-origin-section = Eredettel kapcsolatos telemetria
-about-telemetry-origin-origin = eredet
-about-telemetry-origin-count = darabszám
-# Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
-about-telemetry-origins-explanation = A <a data-l10n-name="origin-doc-link">Waterfox eredettel kapcsolatos telemetria</a> kódolja az adatokat az elküldés előtt, így a { $telemetryServerOwner } csak összeszámolhat dolgokat, de nem tudja, hogy pontosan mely { -brand-product-name } járult hozzá ahhoz a számhoz. (<a data-l10n-name="prio-blog-link">további információk</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = { $process } folyamat

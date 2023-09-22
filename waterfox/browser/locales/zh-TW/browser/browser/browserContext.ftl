@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -86,38 +86,6 @@ main-context-menu-page-save =
 
 ## Simple menu items
 
-main-context-menu-bookmark-add =
-    .aria-label = 將本頁加入書籤
-    .accesskey = m
-    .tooltiptext = 將本頁加入書籤
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-edit-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-add-mac =
-    .label = 將頁面加入書籤
-    .accesskey = m
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-add-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-edit-mac =
-    .label = 編輯書籤
-    .accesskey = m
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the add bookmark command.
-main-context-menu-bookmark-add-with-shortcut =
-    .aria-label = 將本頁加入書籤
-    .accesskey = m
-    .tooltiptext = 將本頁加入書籤 ({ $shortcut })
-main-context-menu-bookmark-change =
-    .aria-label = 編輯此書籤
-    .accesskey = m
-    .tooltiptext = 編輯此書籤
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the edit bookmark command.
-main-context-menu-bookmark-change-with-shortcut =
-    .aria-label = 編輯此書籤
-    .accesskey = m
-    .tooltiptext = 編輯此書籤 ({ $shortcut })
 main-context-menu-bookmark-page =
     .aria-label = 將頁面加入書籤…
     .accesskey = m
@@ -165,9 +133,6 @@ main-context-menu-open-link-new-window =
 main-context-menu-open-link-new-private-window =
     .label = 用新隱私視窗開啟鏈結
     .accesskey = P
-main-context-menu-bookmark-link =
-    .label = 將鏈結加入書籤
-    .accesskey = B
 main-context-menu-bookmark-link-2 =
     .label = 將鏈結加入書籤…
     .accesskey = B
@@ -191,6 +156,11 @@ main-context-menu-copy-phone =
 main-context-menu-copy-link-simple =
     .label = 複製鏈結
     .accesskey = L
+# This command copies the link, removing additional
+# query parameters used to track users across sites.
+main-context-menu-strip-on-share-link =
+    .label = 複製不含追蹤碼的鏈結
+    .accesskey = y
 
 ## Media (video/audio) controls
 ##
@@ -307,12 +277,6 @@ main-context-menu-video-email =
 main-context-menu-audio-email =
     .label = 郵寄音訊…
     .accesskey = a
-main-context-menu-plugin-play =
-    .label = 啟用此外掛程式
-    .accesskey = c
-main-context-menu-plugin-hide =
-    .label = 隱藏此外掛程式
-    .accesskey = H
 main-context-menu-save-to-pocket =
     .label = 將頁面儲存至 { -pocket-brand-name }
     .accesskey = k
@@ -333,6 +297,9 @@ main-context-menu-use-saved-password =
 
 ##
 
+main-context-menu-use-relay-mask =
+    .label = 使用 { -relay-brand-short-name } 轉寄信箱
+    .accesskey = E
 main-context-menu-suggest-strong-password =
     .label = 建議一組安全的密碼…
     .accesskey = S
@@ -360,9 +327,6 @@ main-context-menu-frame-open-window =
 main-context-menu-frame-reload =
     .label = 重新載入頁框
     .accesskey = R
-main-context-menu-frame-bookmark =
-    .label = 將此頁框加入書籤
-    .accesskey = m
 main-context-menu-frame-add-bookmark =
     .label = 將頁框加入書籤…
     .accesskey = m
@@ -378,9 +342,6 @@ main-context-menu-frame-view-source =
 main-context-menu-frame-view-info =
     .label = 檢視頁框資訊
     .accesskey = I
-main-context-menu-print-selection =
-    .label = 僅列印選取區域
-    .accesskey = r
 main-context-menu-print-selection-2 =
     .label = 列印選取區域…
     .accesskey = r

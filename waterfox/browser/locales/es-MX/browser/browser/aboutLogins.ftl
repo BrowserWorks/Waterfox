@@ -1,14 +1,16 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
 
 about-logins-page-title = Inicios de sesión y contraseñas
 
-login-filter =
+about-logins-login-filter =
     .placeholder = Buscar inicios de sesión
+    .key = F
 
-create-login-button = Crear nuevo inicio de sesión
+create-new-login-button =
+    .title = Crear nuevo inicio de sesión
 
 fxaccounts-sign-in-text = Recibe tus contraseñas en tus dispositivos
 fxaccounts-sign-in-sync-button = Inicia sesión para sincronizar
@@ -20,7 +22,7 @@ fxaccounts-avatar-button =
 menu =
     .title = Abrir menú
 # This menuitem is only visible on Windows and macOS
-about-logins-menu-menuitem-import-from-another-browser = Importar desde otro navegador...
+about-logins-menu-menuitem-import-from-another-browser = Importar desde otro navegador…
 about-logins-menu-menuitem-import-from-a-file = Importar desde un archivo…
 about-logins-menu-menuitem-export-logins = Exportar inicios de sesión...
 about-logins-menu-menuitem-remove-all-logins = Eliminar todos los inicios de sesión…
@@ -35,10 +37,21 @@ about-logins-menu-menuitem-help = Ayuda
 
 login-list =
     .aria-label = Inicios de sesión que coinciden con la consulta de búsqueda
+# Variables
+#   $count (number) - Number of logins
 login-list-count =
     { $count ->
         [one] { $count } inicio de sesión
        *[other] { $count } inicios de sesión
+    }
+# Variables
+#   $count (number) - Number of filtered logins
+#   $total (number) - Total number of logins
+login-list-filtered-count =
+    { $total ->
+        [one] { $count } de { $total } Inicio de sesión
+        [many] { $count } de { $total } Inicios de sesión
+       *[other] { $count } de { $total } Inicios de sesión
     }
 login-list-sort-label-text = Ordenar por:
 login-list-name-option = Nombre (A-Z)
@@ -72,7 +85,7 @@ about-logins-login-intro-heading-logged-out2 = ¿Buscas tus inicios de sesión g
 about-logins-login-intro-heading-logged-in = No se encontraron inicios de sesión sincronizados.
 login-intro-description = Si salvaste tus inicios de sesión en { -brand-product-name } en un dispositivo diferente, aquí se muestra como obtenerlas para aquí también:
 login-intro-instructions-fxa = Crea o inicia sesión en tu { -fxaccount-brand-name } en el dispositivo donde se guardan tus inicios de sesión.
-login-intro-instructions-fxa-settings = Ve a Configuración> Sincronizar > Activar sincronización… Marca la casilla Inicios de sesión y contraseñas.
+login-intro-instructions-fxa-settings = Ve a Ajustes> Sincronizar > Activar sincronización… Marca la casilla Inicios de sesión y contraseñas.
 login-intro-instructions-fxa-passwords-help = Visita <a data-l10n-name="passwords-help-link">soporte para contraseñas</a> para más ayuda.
 about-logins-intro-browser-only-import = Si tus inicios de sesión se guardan en otro navegador, puedes <a data-l10n-name="import-link">importarlos en { -brand-product-name }</a>
 about-logins-intro-import2 = Si tus credenciales se guardan fuera de { -brand-product-name }, puedes <a data-l10n-name="import-browser-link">importarlas desde otro navegador</a> o <a data-l10n-name="import-file-link">desde un archivo</a>
@@ -99,9 +112,17 @@ login-item-copied-password-button-text = ¡Copiado!
 login-item-save-changes-button = Guardar cambios
 login-item-save-new-button = Guardar
 login-item-cancel-button = Cancelar
-login-item-time-changed = Última modificación: { DATETIME($timeChanged, day: "numeric", month: "long", year: "numeric") }
-login-item-time-created = Creado: { DATETIME($timeCreated, day: "numeric", month: "long", year: "numeric") }
-login-item-time-used = Último uso: { DATETIME($timeUsed, day: "numeric", month: "long", year: "numeric") }
+
+## The date is displayed in a timeline showing the password evolution.
+## A label is displayed under the date to describe the type of change.
+## (e.g. updated, created, etc.)
+
+# Variables
+#   $datetime (date) - Event date
+login-item-timeline-point-date = { DATETIME($datetime, day: "numeric", month: "short", year: "numeric") }
+login-item-timeline-action-created = Creado
+login-item-timeline-action-updated = Actualizado
+login-item-timeline-action-used = Usado
 
 ## OS Authentication dialog
 
@@ -152,6 +173,9 @@ about-logins-confirm-remove-dialog-title = ¿Eliminar este inicio de sesión?
 confirm-delete-dialog-message = Esta acción no se puede deshacer
 about-logins-confirm-remove-dialog-confirm-button = Eliminar
 
+## Variables
+##   $count (number) - Number of items
+
 about-logins-confirm-remove-all-dialog-confirm-button-label =
     { $count ->
         [1] Eliminar
@@ -190,9 +214,11 @@ about-logins-confirm-remove-all-sync-dialog-message =
        *[other] Esto eliminará todos los inicios de sesión que guardó en { -brand-short-name } en todos los dispositivos sincronizados con su { -fxaccount-brand-name }. Esto también eliminará las alertas de filtraciones que aparecen aquí. No podrá deshacer esta acción.
     }
 
+##
+
 about-logins-confirm-export-dialog-title = Exportar inicios de sesión y contraseñas
 about-logins-confirm-export-dialog-message = Tus contraseñas se guardarán como texto legible (por ejemplo, BadP@ssw0rd) de modo que cualquiera que abra el archivo exportado podrá verlas.
-about-logins-confirm-export-dialog-confirm-button = Exportar...
+about-logins-confirm-export-dialog-confirm-button = Exportar…
 
 about-logins-alert-import-title = Importación completa
 about-logins-alert-import-message = Ver resumen detallado de la importación
@@ -209,7 +235,6 @@ about-logins-breach-alert-date = La filtración ocurrió el { DATETIME($date, da
 # Variables:
 #   $hostname (String) - The hostname of the website associated with the login, e.g. "example.com"
 about-logins-breach-alert-link = Ir a { $hostname }
-about-logins-breach-alert-learn-more-link = Saber más
 
 ## Vulnerable Password notification
 
@@ -306,7 +331,7 @@ about-logins-import-dialog-error-file-permission-description = { -brand-short-na
 about-logins-import-dialog-error-unable-to-read-title = No se puede analizar el archivo
 about-logins-import-dialog-error-unable-to-read-description = Asegúrate de haber seleccionado un archivo CSV o TSV.
 about-logins-import-dialog-error-no-logins-imported = No se importaron los inicios de sesión
-about-logins-import-dialog-error-learn-more = Aprender más
+about-logins-import-dialog-error-learn-more = Saber más
 about-logins-import-dialog-error-try-import-again = Intenta importar de nuevo…
 about-logins-import-dialog-error-cancel = Cancelar
 

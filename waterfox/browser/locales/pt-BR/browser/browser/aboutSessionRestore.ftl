@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,9 +6,9 @@ restore-page-tab-title = Restaurar sessão
 
 # The title is intended to be apologetic and disarming, expressing dismay
 # and regret that we are unable to restore the session for the user
-restore-page-error-title = Desculpe, houve um problema ao restaurar suas páginas.
+restore-page-error-title = Houve um problema ao restaurar suas páginas.
 restore-page-problem-desc = Houve um problema ao restaurar sua última sessão de navegação. Clique abaixo em 'Restaurar sessão' para tentar novamente.
-restore-page-try-this = Ainda não conseguiu restaurar a sessão? Às vezes uma aba pode estar causando o problema. Veja as abas que estavam abertas, desmarque as que você não precisa recuperar e depois restaure.
+restore-page-try-this = Ainda não conseguiu? Uma aba pode estar causando problema. Veja as abas que estavam abertas, desmarque as que você não precisa recuperar e tente novamente.
 
 restore-page-hide-tabs = Ocultar abas da sessão anterior
 restore-page-show-tabs = Exibir abas da sessão anterior

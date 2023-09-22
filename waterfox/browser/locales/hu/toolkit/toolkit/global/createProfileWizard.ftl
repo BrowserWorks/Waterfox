@@ -1,17 +1,17 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-create-profile-window =
+create-profile-window2 =
     .title = Profil létrehozása
-    .style = width: 45em; height: 32em;
+    .style = min-width: 45em; min-height: 32em;
 
 ## First wizard page
 
-create-profile-first-page-header =
+create-profile-first-page-header2 =
     { PLATFORM() ->
         [macos] Első lépés
-       *[other] { create-profile-window.title } első lépése
+       *[other] { create-profile-window2.title } első lépése
     }
 
 profile-creation-explanation-1 = A { -brand-short-name } a személyes profilban tárolja a beállításait.
@@ -28,10 +28,10 @@ profile-creation-explanation-4 =
 
 ## Second wizard page
 
-create-profile-last-page-header =
+create-profile-last-page-header2 =
     { PLATFORM() ->
         [macos] Befejezés
-       *[other] { create-profile-window.title } befejezése
+       *[other] { create-profile-window2.title } befejezése
     }
 
 profile-creation-intro = Ha több profilt hoz létre, akkor a nevük alapján különböztetheti meg azokat. Használhatja az itt megadott nevet, vagy beírhat egy másikat.
