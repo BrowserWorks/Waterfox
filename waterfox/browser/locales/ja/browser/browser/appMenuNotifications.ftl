@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,22 +22,21 @@ appmenu-update-unsupported2 =
     .buttonaccesskey = L
     .secondarybuttonlabel = 閉じる
     .secondarybuttonaccesskey = m
-appmenu-update-unsupported-message2 = あなたの OS は { -brand-shorter-name } の最新版と互換性がありません。
+appmenu-update-unsupported-message2 = ご使用の OS は { -brand-shorter-name } の最新版と互換性がありません。
 appmenu-update-restart2 =
     .label = 更新可能
     .buttonlabel = 更新して再起動
     .buttonaccesskey = U
     .secondarybuttonlabel = 閉じる
     .secondarybuttonaccesskey = m
-appmenu-update-restart-message2 = { -brand-shorter-name } の最新版をインストールしましょう。開いたタブとウィンドウは復元されます。
+appmenu-update-restart-message2 = { -brand-shorter-name } の最新版をインストールしましょう。開いているタブとウィンドウは復元されます。
 appmenu-update-other-instance =
     .label = { -brand-shorter-name } は自動で最新バージョンに更新できません。
-    .buttonlabel = とにかく更新
+    .buttonlabel = とにかく { -brand-shorter-name } を更新
     .buttonaccesskey = U
     .secondarybuttonlabel = 後で
     .secondarybuttonaccesskey = N
 appmenu-update-other-instance-message = { -brand-shorter-name } の更新がありますが、他のプロファイルの { -brand-shorter-name } が実行中のため、インストールできません。そちらを閉じて更新するか、とにかく更新するか選択してください。(他のプロファイルのものは、再起動するまで正常に動作しません)
-
 appmenu-addon-private-browsing-installed2 =
     .buttonlabel = OK
     .buttonaccesskey = O
@@ -45,7 +44,6 @@ appmenu-addon-post-install-message3 = アプリケーションメニューから
 appmenu-addon-post-install-incognito-checkbox =
     .label = この拡張機能のプライベートウィンドウでの実行を許可する
     .accesskey = A
-
 appmenu-new-tab-controlled-changes =
     .label = 新しいタブ設定が変更されました。
     .buttonlabel = 変更を維持

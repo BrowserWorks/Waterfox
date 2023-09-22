@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -60,3 +60,17 @@ about-private-browsing-pin-promo-link-text =
        *[other] Rögzítés a tálcára
     }
 about-private-browsing-pin-promo-title = Nincsenek mentett sütik vagy előzmények, közvetlenül az asztaláról. Böngésszen úgy, mintha senki sem nézné.
+
+## Strings used in a promotion message for cookie banner reduction
+
+# Simplified version of the headline if the original text doesn't work
+# in your language: `See fewer cookie requests`.
+about-private-browsing-cookie-banners-promo-header = Elég a sütibannerekből!
+about-private-browsing-cookie-banners-promo-button = A sütibannerek számának csökkentése
+about-private-browsing-cookie-banners-promo-message = Hagyja, hogy a { -brand-short-name } automatikusan válaszoljon a sütik előugró ablakaira, így visszatérhet a zavartalan böngészéshez. A { -brand-short-name } elutasítja az összes kérést, ha az lehetséges.
+
+## Strings for Felt Privacy v1 experiments in 119
+
+about-private-browsing-felt-privacy-v1-info-header = Ne hagyjon nyomot ezen az eszközön
+about-private-browsing-felt-privacy-v1-info-body = A { -brand-short-name } törli a sütiket, előzményeket és oldaladatokat, amikor bezárja az összes privát ablakot.
+about-private-browsing-felt-privacy-v1-info-link = Ki láthatja a tevékenységemet?

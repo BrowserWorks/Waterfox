@@ -1,44 +1,9 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ## The main browser window's title
-
-# These are the default window titles everywhere except macOS. The first two
-# attributes are used when the web content opened has no title:
-#
-# default - "Waterfox"
-# private - "Waterfox (Private Browsing)"
-#
-# The last two are for use when there *is* a content title.
-# Variables:
-#  $content-title (String): the title of the web content.
-browser-main-window =
-    .data-title-default = { -brand-full-name }
-    .data-title-private = { -brand-full-name } (التصفح الخاص)
-    .data-content-title-default = { $content-title } - { -brand-full-name }
-    .data-content-title-private = { $content-title } - { -brand-full-name } (التصفح الخاص)
-
-# These are the default window titles on macOS. The first two are for use when
-# there is no content title:
-#
-# "default" - "Waterfox"
-# "private" - "Waterfox — (Private Browsing)"
-#
-# The last two are for use when there *is* a content title.
-# Do not use the brand name in the last two attributes, as we do on non-macOS.
-#
-# Also note the other subtle difference here: we use a `-` to separate the
-# brand name from `(Private Browsing)`, which does not happen on other OSes.
-#
-# Variables:
-#  $content-title (String): the title of the web content.
-browser-main-window-mac =
-    .data-title-default = { -brand-full-name }
-    .data-title-private = { -brand-full-name } - (التصفح الخاص)
-    .data-content-title-default = { $content-title }
-    .data-content-title-private = { $content-title } - (التصفح الخاص)
 
 # This gets set as the initial title, and is overridden as soon as we start
 # updating the titlebar based on loaded tabs or private browsing state.
@@ -75,16 +40,12 @@ urlbar-xr-notification-anchor =
     .tooltiptext = افتح لوحة تصاريح الواقع الافتراضي
 urlbar-storage-access-anchor =
     .tooltiptext = افتح لوحة تصاريح نشاط التصفّح
-urlbar-translate-notification-anchor =
-    .tooltiptext = ترجم هذه الصفحة
 urlbar-web-rtc-share-screen-notification-anchor =
     .tooltiptext = أدر مشاركة نوافذك أو شاشتك مع هذا الموقع
 urlbar-indexed-db-notification-anchor =
     .tooltiptext = افتح لوحة رسائل مساحة التخزين دون اتصال
 urlbar-password-notification-anchor =
     .tooltiptext = افتح لوحة رسائل حفظ كلمة السر
-urlbar-translated-notification-anchor =
-    .tooltiptext = أدِر ترجمة الصفحة
 urlbar-plugins-notification-anchor =
     .tooltiptext = أدر الملحقات المستخدمة
 urlbar-web-rtc-share-devices-notification-anchor =
@@ -125,6 +86,7 @@ urlbar-tabtosearch-onboard = اختر هذا الاختصار لتجد ما تر
 urlbar-search-mode-bookmarks = العلامات
 urlbar-search-mode-tabs = الألسنة
 urlbar-search-mode-history = التأريخ
+urlbar-search-mode-actions = الإجراءات
 
 ##
 
@@ -164,11 +126,6 @@ urlbar-star-add-bookmark =
     .tooltiptext = علّم هذه الصفحة ({ $shortcut })
 
 ## Page Action Context Menu
-
-page-action-manage-extension =
-    .label = أدِر الامتدادات…
-page-action-remove-extension =
-    .label = أزِل الامتداد
 
 ## Auto-hide Context Menu
 
@@ -231,6 +188,20 @@ search-one-offs-tabs =
     .tooltiptext = الألسنة ({ $restrict })
 search-one-offs-history =
     .tooltiptext = التأريخ ({ $restrict })
+search-one-offs-actions =
+    .tooltiptext = الإجراءات ({ $restrict })
+
+## QuickActions are shown in the urlbar as the user types a matching string
+## The -cmd- strings are comma separated list of keywords that will match
+## the action.
+
+# Opens the about:addons page in the home / recommendations section
+quickactions-addons = اعرض الإضافات
+quickactions-cmd-addons2 = الإضافات
+
+quickactions-cmd-bookmarks = العلامات
+
+quickactions-cmd-extensions = الامتدادات
 
 ## Bookmark Panel
 
@@ -280,7 +251,7 @@ identity-connection-internal = هذه صفحة { -brand-short-name } آمنة.
 identity-connection-file = هذه الصفحة مخزنة على حاسوبك.
 identity-extension-page = حمِّلت هذه الصفحة من امتداد.
 identity-active-blocked = حجب { -brand-short-name } الأجزاء غير الآمنة في هذه الصفحة.
-identity-custom-root = تثبّت من هذا الاتصال مُصْدِر شهادات لا تعرفه Waterfox.
+identity-custom-root = تثبّت من هذا الاتصال مُصْدِر شهادات لا تعرفه BrowserWorks.
 identity-passive-loaded = بعض أجزاء هذه الصفحة غير آمنة (مثل الصور).
 identity-active-loaded = لقد أوقفت الحماية على هذه الصفحة.
 identity-weak-encryption = تستخدم هذه الصفحة تعمية ضعيفة.
@@ -308,7 +279,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = لست متصلا مع هذا الموقع بأمان.
 identity-connection-verified = أنت متصل مع هذا الموقع بأمان.
 identity-ev-owner-label = أُصدرت الشّهادة إلى:
-identity-description-custom-root = لم تتعرّف Waterfox على مُصْدِر الشهادات هذا. لربّما أضافه نظام التشغيل أو أحد المدراء. <label data-l10n-name="link">اطّلع على المزيد</label>
+identity-description-custom-root2 = لم تتعرّف BrowserWorks على مُصْدِر الشهادات هذا. لربّما أضافه نظام التشغيل أو أحد المدراء.
 identity-remove-cert-exception =
     .label = أزِل الاستثناء
     .accesskey = س
@@ -316,14 +287,12 @@ identity-description-insecure = اتصالك بهذا الموقع ليس خاص
 identity-description-insecure-login-forms = معلومات الولوج التي تُدخلها في هذه الصفحة ليست مُؤمّنة و قد تكون مخترقة.
 identity-description-weak-cipher-intro = اتصالك بهذا الموقع يستخدم تعمية ضعيفة وليس خاصًّا أيضًا.
 identity-description-weak-cipher-risk = يمكن للآخرين الاطلاع على معلوماتك أو تغيير سلوك الموقع.
-identity-description-active-blocked = حجب { -brand-short-name } الأجزاء غير الآمنة في هذه الصفحة. <label data-l10n-name="link">اطّلع على المزيد</label>
+identity-description-active-blocked2 = حجب { -brand-short-name } الأجزاء غير الآمنة في هذه الصفحة.
 identity-description-passive-loaded = اتصالك ليس خاصًا و يمكن للآخرين مطالعة المعلومات التي تشاركها مع الموقع.
-identity-description-passive-loaded-insecure = يحوي هذا الموقع محتوى غير آمن (مثل الصور). <label data-l10n-name="link">اطّلع على المزيد</label>
-identity-description-passive-loaded-mixed = مع أنّ { -brand-short-name } حجب بعض المحتويات، إلا أن هناك أخرى غير آمنة ما زالت في الصفحة (مثل الصور). <label data-l10n-name="link">اطّلع على المزيد</label>
+identity-description-passive-loaded-insecure2 = يحوي هذا الموقع محتوى غير آمن (مثل الصور).
+identity-description-passive-loaded-mixed2 = مع أنّ { -brand-short-name } حجب بعض المحتويات، إلا أن هناك أخرى غير آمنة ما زالت في الصفحة (مثل الصور).
 identity-description-active-loaded = يحوي هذا الموقع محتوى غير آمن (مثل السكربتات) و اتصالك به ليس خاصا.
 identity-description-active-loaded-insecure = يمكن للآخرين مطالعة المعلومات التي تشاركها مع الموقع (مثل كلمات السر، و الرسائل، و بطاقات الائتمان و غيرها).
-identity-learn-more =
-    .value = اطّلع على المزيد
 identity-disable-mixed-content-blocking =
     .label = عطّل الحماية في الوقت الحالي
     .accesskey = ع
@@ -414,17 +383,10 @@ popup-select-microphone-icon =
     .tooltiptext = الميكروفون
 popup-select-speaker-icon =
     .tooltiptext = السماعات
+popup-select-window-or-screen =
+    .label = النافذة أو الشاشة:
+    .accesskey = ن
 popup-all-windows-shared = ستُشارك كل النوافذ الظاهرة على شاشتك.
-
-popup-screen-sharing-block =
-    .label = احجبه
-    .accesskey = ح
-
-popup-screen-sharing-always-block =
-    .label = احجبه دائمًا
-    .accesskey = د
-
-popup-mute-notifications-checkbox = اكتم تنبيهات المواقع أثناء المشاركة
 
 ## WebRTC window or screen share tab switch warning
 
@@ -436,8 +398,6 @@ sharing-warning-disable-for-session =
     .label = أوقِف حماية المشاركة لهذه الجلسة
 
 ## DevTools F12 popup
-
-enable-devtools-popup-description = افتح أولا أدوات المطورين من قائمة مطوّري الوِب لاستعمال الاختصار F12.
 
 ## URL Bar
 
@@ -566,11 +526,25 @@ urlbar-group-firefox-suggest =
     .label = { -firefox-suggest-brand-name }
 
 # A label shown above the search suggestions group in the urlbar results. It
-# should use title case.
+# should use sentence case.
 # Variables
 #  $engine (String): the name of the search engine providing the suggestions
 urlbar-group-search-suggestions =
     .label = اقتراحات { $engine }
+
+## Reader View toolbar buttons
+
+# This should match menu-view-enter-readerview in menubar.ftl
+reader-view-enter-button =
+    .aria-label = ادخل منظور القارئ
+# This should match menu-view-close-readerview in menubar.ftl
+reader-view-close-button =
+    .aria-label = أغلق منظور القارئ
+
+## Picture-in-Picture urlbar button
+## Variables:
+##   $shortcut (String) - Keyboard shortcut to execute the command.
+
 
 ## Full Screen and Pointer Lock UI
 
@@ -593,18 +567,6 @@ pointerlock-warning-no-domain = يتحكم هذا المستند في مؤشرك
 
 ## Subframe crash notification
 
-crashed-subframe-message = <strong>انهار جزء من هذه الصفحة.</strong> لإبلاغ { -brand-product-name } بهذه المشكلة وإصلاحها أسرع، رجاء أرسل بلاغا.
-
-# The string for crashed-subframe-title.title should match crashed-subframe-message,
-# but without any markup.
-crashed-subframe-title =
-    .title = انهار جزء من هذه الصفحة. لإبلاغ { -brand-product-name } بهذه المشكلة وإصلاحها أسرع، رجاء أرسل بلاغا.
-crashed-subframe-learnmore-link =
-    .value = اطّلع على المزيد
-crashed-subframe-submit =
-    .label = أرسِل تقريرًا
-    .accesskey = س
-
 ## Bookmarks panels, menus and toolbar
 
 bookmarks-manage-bookmarks =
@@ -620,6 +582,11 @@ bookmarks-other-bookmarks-menu =
     .label = العلامات الأخرى
 bookmarks-mobile-bookmarks-menu =
     .label = علامات المحمول
+
+## Variables:
+##   $isVisible (boolean): if the specific element (e.g. bookmarks sidebar,
+##                         bookmarks toolbar, etc.) is visible or not.
+
 bookmarks-tools-sidebar-visibility =
     .label =
         { $isVisible ->
@@ -644,12 +611,13 @@ bookmarks-tools-menu-button-visibility =
             [true] أزِل قائمة العلامات من شريط الأدوات
            *[other] أضِف قائمة العلامات إلى شريط الأدوات
         }
+
+##
+
 bookmarks-search =
     .label = ابحث في العلامات
 bookmarks-tools =
     .label = أدوات العلامات
-bookmarks-bookmark-edit-panel =
-    .label = حرّر هذه العلامة
 
 # The aria-label is a spoken label that should not include the word "toolbar" or
 # such, because screen readers already know that this container is a toolbar.
@@ -664,10 +632,6 @@ bookmarks-toolbar-placeholder =
     .title = عناصر شريط العلامات
 bookmarks-toolbar-placeholder-button =
     .label = عناصر شريط العلامات
-
-# "Bookmark" is a verb, as in "Add current tab to bookmarks".
-bookmarks-current-tab =
-    .label = علّم اللسان الحالي
 
 ## Library Panel items
 
@@ -691,12 +655,6 @@ repair-text-encoding-button =
 ## Customize Toolbar Buttons
 
 # Variables:
-#  $shortcut (String): keyboard shortcut to open the add-ons manager
-toolbar-addons-themes-button =
-    .label = الإضافات والسمات
-    .tooltiptext = أدِر الإضافات والسمات لديك ({ $shortcut })
-
-# Variables:
 #  $shortcut (String): keyboard shortcut to open settings (only on macOS)
 toolbar-settings-button =
     .label = الإعدادات
@@ -705,8 +663,6 @@ toolbar-settings-button =
             [macos] افتح الإعدادات ({ $shortcut })
            *[other] الإعدادات
         }
-
-## More items
 
 toolbar-overflow-customize-button =
     .label = خصّص شريط الأدوات…
@@ -752,13 +708,6 @@ panel-save-update-username = اسم المستخدم
 panel-save-update-password = كلمة السر
 
 ## Add-on removal warning
-
-# Variables:
-#  $name (String): The name of the addon that will be removed.
-addon-removal-title = أتريد إزالة { $name }؟
-addon-removal-abuse-report-checkbox = أبلِغ { -vendor-short-name } عن هذا الامتداد
-
-## Remote / Synced tabs
 
 ##
 
@@ -838,9 +787,6 @@ navbar-library =
 navbar-search =
     .title = ابحث
 
-navbar-accessibility-indicator =
-    .tooltiptext = مزايا الإتاحة مفعّلة
-
 # Name for the tabs toolbar as spoken by screen readers. The word
 # "toolbar" is appended automatically and should not be included in
 # in the string
@@ -860,9 +806,79 @@ tabs-toolbar-list-all-tabs =
 restore-session-startup-suggestion-message = <strong>أتريد فتح الألسنة الأخيرة؟</strong> يمكنك استعادة الجلسة السابقة من قائمة تطبيق { -brand-short-name } <img data-l10n-name="icon"/>، ضمن قائمة التأريخ.
 restore-session-startup-suggestion-button = ما الطريقة؟
 
-## Waterfox data reporting notification (Telemetry, Waterfox Health Report, etc)
+## BrowserWorks data reporting notification (Telemetry, Waterfox Health Report, etc)
 
 data-reporting-notification-message = يُرسل { -brand-short-name } بعض البيانات تلقائيا إلى { -vendor-short-name } لمساعدتنا في تحسين متصفّحك.
 data-reporting-notification-button =
     .label = اختر ما الذي أشاركه
     .accesskey = خ
+
+## Unified extensions (toolbar) button
+
+
+## Unified extensions button when permission(s) are needed.
+## Note that the new line is intentionally part of the tooltip.
+
+
+## Unified extensions button when some extensions are quarantined.
+## Note that the new line is intentionally part of the tooltip.
+
+## Autorefresh blocker
+
+refresh-blocked-refresh-label = منع { -brand-short-name } هذه الصفحة من إعادة التحميل تلقائيًا.
+refresh-blocked-redirect-label = منع { -brand-short-name } هذه الصفحة من إعادة التوجيه تلقائيًا إلى صفحة أخرى.
+
+refresh-blocked-allow =
+    .label = اسمح
+    .accesskey = س
+
+## Waterfox Relay integration
+
+
+## Popup Notification
+
+
+## Add-on Pop-up Notifications
+
+popup-notification-addon-install-unsigned =
+    .value = (لم يُتحقق منها)
+popup-notification-xpinstall-prompt-learn-more = اطّلع على المزيد حول طريقة تثبيت الإضافات بأمان تام
+
+## Pop-up warning
+
+# Variables:
+#   $popupCount (Number): the number of pop-ups blocked.
+popup-warning-message =
+    { $popupCount ->
+        [one] منع { -brand-short-name } هذا الموقع من فتح نافذة منبثقة.
+        [two] منع { -brand-short-name } هذا الموقع من فتح نافذتين منبثقتين.
+        [few] منع { -brand-short-name } هذا الموقع من فتح { $popupCount } نوافذ منبثقة.
+        [many] منع { -brand-short-name } هذا الموقع من فتح { $popupCount } نافذة منبثقة.
+       *[other] منع { -brand-short-name } هذا الموقع من فتح { $popupCount } نافذة منبثقة.
+    }
+# The singular form is left out for English, since the number of blocked pop-ups is always greater than 1.
+# Variables:
+#   $popupCount (Number): the number of pop-ups blocked.
+popup-warning-exceeded-message =
+    { $popupCount ->
+        [two] منع { -brand-short-name } هذا الموقع من فتح ما يزيد عن نافذتين منبثقتين.
+        [few] منع { -brand-short-name } هذا الموقع من فتح ما يزيد عن { $popupCount } نوافذ منبثقة.
+        [many] منع { -brand-short-name } هذا الموقع من فتح ما يزيد عن { $popupCount } نافذة منبثقة.
+       *[other] منع { -brand-short-name } هذا الموقع من فتح ما يزيد عن { $popupCount } نافذة منبثقة.
+    }
+popup-warning-button =
+    .label =
+        { PLATFORM() ->
+            [windows] الخيارات
+           *[other] التفضيلات
+        }
+    .accesskey =
+        { PLATFORM() ->
+            [windows] خ
+           *[other] ت
+        }
+
+# Variables:
+#   $popupURI (String): the URI for the pop-up window
+popup-show-popup-menuitem =
+    .label = أظهر ”{ $popupURI }“

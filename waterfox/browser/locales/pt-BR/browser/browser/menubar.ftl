@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -161,7 +161,7 @@ menu-view-page-style-no-style =
     .label = Sem estilo
     .accesskey = m
 menu-view-page-basic-style =
-    .label = Estilo de página básico
+    .label = Estilo básico de página
     .accesskey = b
 menu-view-repair-text-encoding =
     .label = Reparar codificação de texto
@@ -179,6 +179,17 @@ menu-view-exit-full-screen =
 menu-view-full-screen =
     .label = Tela inteira
     .accesskey = T
+
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Ativar leitor
+    .accesskey = l
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Desativar leitor
+    .accesskey = l
 
 ##
 
@@ -208,8 +219,9 @@ menu-history-undo-menu =
     .label = Abas fechadas recentemente
 menu-history-undo-window-menu =
     .label = Janelas fechadas recentemente
-menu-history-reopen-all-tabs = Reabrir todas as abas
-menu-history-reopen-all-windows = Reabrir todas as janelas
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = Pesquisar no histórico
 
 ## Bookmarks Menu
 
@@ -218,14 +230,13 @@ menu-bookmarks-menu =
     .accesskey = v
 menu-bookmarks-manage =
     .label = Gerenciar favoritos
-menu-bookmark-current-tab =
-    .label = Adicionar aba atual aos favoritos
-menu-bookmark-edit =
-    .label = Editar este favorito
 menu-bookmark-tab =
     .label = Adicionar aba atual aos favoritos…
 menu-edit-bookmark =
     .label = Editar este favorito…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = Pesquisar nos favoritos
 menu-bookmarks-all-tabs =
     .label = Adicionar todas as abas…
 menu-bookmarks-toolbar =
@@ -250,7 +261,7 @@ menu-tools-fxa-sign-in2 =
     .label = Entrar
     .accesskey = E
 menu-tools-turn-on-sync2 =
-    .label = Ativar o Sync…
+    .label = Ativar sincronização…
     .accesskey = n
 menu-tools-sync-now =
     .label = Sincronizar agora
@@ -319,6 +330,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = Desativar modo de solução de problemas
     .accesskey = m
+menu-help-switch-device =
+    .label = Mudança para outro dispositivo
+    .accesskey = M
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =

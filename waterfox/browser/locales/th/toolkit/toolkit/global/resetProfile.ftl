@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,6 +9,7 @@ refresh-profile-dialog-description = ล้างใหม่เพื่อแ�
 refresh-profile = รีดประสิทธิภาพ { -brand-short-name }
 refresh-profile-button = ล้าง { -brand-short-name } ใหม่…
 refresh-profile-learn-more = เรียนรู้เพิ่มเติม
+
 refresh-profile-progress =
     .title = ล้าง { -brand-short-name } ใหม่
 refresh-profile-progress-description = เกือบเสร็จสิ้น…

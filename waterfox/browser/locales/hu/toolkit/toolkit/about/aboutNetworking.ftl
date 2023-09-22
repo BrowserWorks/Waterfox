@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,15 +34,6 @@ about-networking-messages-received = Fogadott üzenetek
 about-networking-bytes-sent = Küldött bájtok
 about-networking-bytes-received = Fogadott bájtok
 about-networking-logging = Naplózás
-about-networking-log-tutorial =
-    Az eszköz használatáról lásd a
-    <a data-l10n-name="logging">HTTP Logging</a> leírást.
-about-networking-current-log-file = Jelenlegi naplófájl:
-about-networking-current-log-modules = Jelenlegi naplómodulok:
-about-networking-set-log-file = Naplófájl beállítása
-about-networking-set-log-modules = Naplómodulok beállítása
-about-networking-start-logging = Naplózás elkezdése
-about-networking-stop-logging = Naplózás leállítása
 about-networking-dns-lookup = DNS kikeresés
 about-networking-dns-lookup-button = Feloldás
 about-networking-dns-domain = Tartomány:
@@ -65,6 +56,8 @@ about-networking-rcwn-cache-slow = A gyorsítótár hányszor volt lassú
 about-networking-rcwn-cache-not-slow = A gyorsítótár hányszor nem volt lassú
 about-networking-networkid = Hálózati azonosító
 about-networking-networkid-id = Hálózati azonosító
+# Note: do not translate about:logging, as it is a URL.
+about-networking-moved-about-logging = Ez az oldal átkerült az <a data-l10n-name="about-logging-url">about:logging</a> oldalra.
 
 ## Link is intended as "network link"
 

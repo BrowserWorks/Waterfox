@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,8 +16,15 @@ update-updateButton =
     .accesskey = R
 
 update-checkingForUpdates = Checking for updates…
-update-downloading = <img data-l10n-name="icon"/>Downloading update — <label data-l10n-name="download-status"/>
-update-downloading-message = Downloading update — <label data-l10n-name="download-status"/>
+
+## Variables:
+##   $transfer (string) - Transfer progress.
+
+settings-update-downloading = <img data-l10n-name="icon"/>Downloading update — <label data-l10n-name="download-status">{ $transfer }</label>
+aboutdialog-update-downloading = Downloading update — <label data-l10n-name="download-status">{ $transfer }</label>
+
+##
+
 update-applying = Applying update…
 
 update-failed = Update failed. <label data-l10n-name="failed-link">Download the latest version</label>
@@ -25,15 +32,26 @@ update-failed-main = Update failed. <a data-l10n-name="failed-link-main">Downloa
 
 update-adminDisabled = Updates disabled by your system administrator
 update-noUpdatesFound = { -brand-short-name } is up to date
+aboutdialog-update-checking-failed = Failed to check for updates.
 update-otherInstanceHandlingUpdates = { -brand-short-name } is being updated by another instance
 
-update-manual = Updates available at <label data-l10n-name="manual-link"/>
+## Variables:
+##   $displayUrl (String): URL to page with download instructions. Example: www.mozilla.org/firefox/nightly/
+
+aboutdialog-update-manual-with-link = Updates available at <label data-l10n-name="manual-link">{ $displayUrl }</label>
+settings-update-manual-with-link = Updates available at <a data-l10n-name="manual-link">{ $displayUrl }</a>
 
 update-unsupported = You can not perform further updates on this system. <label data-l10n-name="unsupported-link">Learn more</label>
 
 update-restarting = Restarting…
 
-channel-description = You are currently on the <label data-l10n-name="current-channel"></label> update channel.
+update-internal-error2 = Unable to check for updates due to internal error. Updates available at <label data-l10n-name="manual-link">{ $displayUrl }</label>
+
+##
+
+# Variables:
+#   $channel (String): description of the update channel (e.g. "release", "beta", "nightly" etc.)
+aboutdialog-channel-description = You are currently on the <label data-l10n-name="current-channel">{ $channel }</label> update channel.
 
 warningDesc-version = { -brand-short-name } is experimental and may be unstable.
 

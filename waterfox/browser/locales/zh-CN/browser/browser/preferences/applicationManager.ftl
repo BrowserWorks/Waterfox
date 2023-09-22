@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-app-manager-window =
+app-manager-window2 =
     .title = 应用程序详细信息
-    .style = width: 30em; min-height: 20em;
+    .style = min-width: 30em; min-height: 20em;
 
 app-manager-remove =
     .label = 移除

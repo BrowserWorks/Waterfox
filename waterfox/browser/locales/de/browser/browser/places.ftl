@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = In neuem privaten Fenster öffnen
     .accesskey = p
+
+places-empty-bookmarks-folder =
+    .label = (Leer)
 
 places-add-bookmark =
     .label = Lesezeichen hinzufügen…
@@ -86,6 +89,15 @@ places-delete-folder =
            *[other] Ordner löschen
         }
     .accesskey = s
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] Seite entfernen
+           *[other] Seiten entfernen
+        }
+    .accesskey = e
 
 # Managed bookmarks are created by an administrator and cannot be changed by the user.
 managed-bookmarks =
@@ -112,6 +124,20 @@ places-delete-bookmark =
         }
     .accesskey = s
 
+# Variables:
+#   $count (number) - The number of bookmarks being added.
+places-create-bookmark =
+    .label =
+        { $count ->
+            [1] Lesezeichen für Seiten hinzufügen…
+           *[other] Lesezeichen für Seiten hinzufügen…
+        }
+    .accesskey = L
+
+places-untag-bookmark =
+    .label = Schlagwort entfernen
+    .accesskey = e
+
 places-manage-bookmarks =
     .label = Lesezeichen verwalten
     .accesskey = v
@@ -120,13 +146,12 @@ places-forget-about-this-site-confirmation-title = Diese Website vergessen
 
 # Variables:
 # $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
-places-forget-about-this-site-confirmation-message = Diese Aktion entfernt alle Daten, die sich auf { $hostOrBaseDomain } beziehen, einschließlich Chronik, Passwörter, Cookies, Cache und Inhaltseinstellungen. Sind Sie sicher, dass Sie fortfahren möchten?
+places-forget-about-this-site-confirmation-msg = Diese Aktion entfernt Daten, die sich auf { $hostOrBaseDomain } beziehen, einschließlich Chronik, Cookies, Cache und Inhaltseinstellungen. Zugehörige Lesezeichen und Passwörter werden nicht entfernt. Sind Sie sicher, dass Sie fortfahren möchten?
 
 places-forget-about-this-site-forget = Vergessen
 
-places-library =
+places-library3 =
     .title = Bibliothek
-    .style = width:700px; height:500px;
 
 places-organize-button =
     .label = Verwalten
@@ -227,6 +252,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = Zuletzt verändert
 
+places-view-sortby-name =
+    .label = Sortieren nach Name
+    .accesskey = N
+places-view-sortby-url =
+    .label = Sortieren nach Adresse
+    .accesskey = r
+places-view-sortby-date =
+    .label = Sortieren nach zuletzt besucht
+    .accesskey = z
+places-view-sortby-visit-count =
+    .label = Sortieren nach meistbesucht
+    .accesskey = o
+places-view-sortby-date-added =
+    .label = Sortieren nach hinzugefügt
+    .accesskey = h
+places-view-sortby-last-modified =
+    .label = Sortieren nach zuletzt geändert
+    .accesskey = d
+places-view-sortby-tags =
+    .label = Sortieren nach Schlagwörtern
+    .accesskey = w
+
 places-cmd-find-key =
     .key = f
 
@@ -237,3 +284,28 @@ places-forward-button =
     .tooltiptext = Eine Seite vor
 
 places-details-pane-select-an-item-description = Wählen Sie einen Eintrag, um seine Eigenschaften zu sehen und zu bearbeiten
+
+places-details-pane-no-items =
+    .value = Keine Einträge
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value =
+        { $count ->
+            [one] Ein Eintrag
+           *[other] { $count } Einträge
+        }
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = Lesezeichen durchsuchen
+places-search-history =
+    .placeholder = Chronik durchsuchen
+places-search-downloads =
+    .placeholder = Downloads durchsuchen
+
+##
+
+places-locked-prompt = Das Lesezeichen- und Chronik-System wird nicht funktionieren, da eine der Dateien von { -brand-short-name } von einer anderen Anwendung verwendet wird. Dieses Problem könnte von einer Sicherheitssoftware verursacht werden, beispielsweise von einem Virenscanner.

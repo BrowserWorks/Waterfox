@@ -1,13 +1,19 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 do-not-track-description = Αποστολή σήματος «Αποτροπή καταγραφής», ώστε να μην καταγράφεστε από ιστοτόπους
+do-not-track-description2 =
+    .label = Αποστολή αιτήματος «Αποτροπή καταγραφής» στους ιστοτόπους
+    .accesskey = τ
 do-not-track-learn-more = Μάθετε περισσότερα
 do-not-track-option-default-content-blocking-known =
     .label = Μόνο όταν το { -brand-short-name } έχει ρυθμιστεί για φραγή γνωστών ιχνηλατών
 do-not-track-option-always =
     .label = Πάντα
+global-privacy-control-description =
+    .label = Αποστολή αιτήματος μη πώλησης ή κοινοποίησης των δεδομένων μου στους ιστοτόπους
+    .accesskey = σ
 settings-page-title = Ρυθμίσεις
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
@@ -32,7 +38,7 @@ category-home =
 pane-search-title = Αναζήτηση
 category-search =
     .tooltiptext = { pane-search-title }
-pane-privacy-title = Απόρρητο & ασφάλεια
+pane-privacy-title = Απόρρητο και ασφάλεια
 category-privacy =
     .tooltiptext = { pane-privacy-title }
 pane-sync-title3 = Συγχρονισμός
@@ -48,7 +54,7 @@ pane-experimental-reset =
     .label = Επαναφορά προεπιλογών
     .accesskey = Ε
 help-button-label = Υποστήριξη { -brand-short-name }
-addons-button-label = Επεκτάσεις & θέματα
+addons-button-label = Επεκτάσεις και θέματα
 focus-search =
     .key = f
 close-button =
@@ -71,7 +77,7 @@ restart-later = Επανεκκίνηση αργότερα
 ## <img data-l10n-name="icon"/> is going to be replaced by the extension icon.
 ##
 ## Variables:
-##   $name (String): name of the extension
+##   $name (string) - Name of the extension
 
 # This string is shown to notify the user that the password manager setting
 # is being controlled by an extension
@@ -106,10 +112,10 @@ search-results-help-link = Χρειάζεστε βοήθεια; Επισκεφθ
 
 startup-header = Εκκίνηση
 always-check-default =
-    .label = Να γίνεται πάντα έλεγχος για το αν το { -brand-short-name } είναι το προεπιλεγμένο πρόγραμμα περιήγησής σας
-    .accesskey = Π
-is-default = Το { -brand-short-name } είναι το προεπιλεγμένο πρόγραμμα περιήγησής σας
-is-not-default = Το { -brand-short-name } δεν είναι το προεπιλεγμένο πρόγραμμα περιήγησης
+    .label = Να ελέγχεται πάντα εάν το { -brand-short-name } είναι το προεπιλεγμένο πρόγραμμα περιήγησης
+    .accesskey = γ
+is-default = Το { -brand-short-name } έχει οριστεί ως προεπιλογή
+is-not-default = Το { -brand-short-name } δεν έχει οριστεί ως προεπιλογή
 set-as-my-default-browser =
     .label = Ορισμός ως προεπιλογή…
     .accesskey = Π
@@ -120,6 +126,11 @@ startup-restore-warn-on-quit =
     .label = Προειδοποίηση κατά την έξοδο από το πρόγραμμα περιήγησης
 disable-extension =
     .label = Απενεργοποίηση επέκτασης
+preferences-data-migration-header = Εισαγωγή δεδομένων προγράμματος περιήγησης
+preferences-data-migration-description = Εισαγάγετε τους σελιδοδείκτες, τους κωδικούς πρόσβασης, το ιστορικό και τα δεδομένα αυτόματης συμπλήρωσης στο { -brand-short-name }.
+preferences-data-migration-button =
+    .label = Εισαγωγή δεδομένων
+    .accesskey = ι
 tabs-group-header = Καρτέλες
 ctrl-tab-recently-used-order =
     .label = Εναλλαγή καρτελών με το Ctrl+Tab σε σειρά πρόσφατης χρήσης
@@ -132,7 +143,7 @@ confirm-on-close-multiple-tabs =
     .accesskey = β
 # This string is used for the confirm before quitting preference.
 # Variables:
-#   $quitKey (String) - the quit keyboard shortcut, and formatted
+#   $quitKey (string) - the quit keyboard shortcut, and formatted
 #                       in the same manner as it would appear,
 #                       for example, in the File menu.
 confirm-on-quit-with-key =
@@ -142,8 +153,8 @@ warn-on-open-many-tabs =
     .label = Προειδοποίηση όταν το άνοιγμα πολλαπλών καρτελών ενδέχεται να επιβραδύνει το { -brand-short-name }
     .accesskey = β
 switch-to-new-tabs =
-    .label = Κατά το άνοιγμα ενός συνδέσμου, εικόνας ή πολυμέσου σε νέα καρτέλα, άμεση εναλλαγή σε αυτή
-    .accesskey = η
+    .label = Κατά το άνοιγμα συνδέσμου, εικόνας ή πολυμέσου σε νέα καρτέλα, να γίνεται άμεση εναλλαγή σε αυτή
+    .accesskey = μ
 show-tabs-in-taskbar =
     .label = Προβολή προεπισκόπησης καρτελών στη γραμμή εργασιών των Windows
     .accesskey = ε
@@ -155,6 +166,10 @@ browser-containers-settings =
     .label = Ρυθμίσεις…
     .accesskey = ι
 containers-disable-alert-title = Κλείσιμο όλων των θεματικών καρτελών;
+
+## Variables:
+##   $tabCount (number) - Number of tabs
+
 containers-disable-alert-desc =
     { $tabCount ->
         [one] Αν απενεργοποιήσετε τις θεματικές καρτέλες τώρα, θα κλείσει { $tabCount } θεματική καρτέλα. Θέλετε σίγουρα να απενεργοποιήσετε τις θεματικές καρτέλες;
@@ -165,10 +180,13 @@ containers-disable-alert-ok-button =
         [one] Κλείσιμο { $tabCount } θεματικής καρτέλας
        *[other] Κλείσιμο { $tabCount } θεματικών καρτελών
     }
+
+##
+
 containers-disable-alert-cancel-button = Να παραμείνουν ενεργές
 containers-remove-alert-title = Αφαίρεση θεματικής καρτέλας;
 # Variables:
-#   $count (Number) - Number of tabs that will be closed.
+#   $count (number) - Number of tabs that will be closed.
 containers-remove-alert-msg =
     { $count ->
         [one] Αν αφαιρέσετε αυτήν τη θεματική ενότητα τώρα, θα κλείσει { $count } θεματική καρτέλα. Θέλετε σίγουρα να αφαιρέσετε αυτήν τη θεματική ενότητα;
@@ -182,22 +200,17 @@ containers-remove-cancel-button = Διατήρηση θεματικής ενότ
 language-and-appearance-header = Γλώσσα και εμφάνιση
 preferences-web-appearance-header = Εμφάνιση ιστοτόπου
 preferences-web-appearance-description = Ορισμένοι ιστότοποι προσαρμόζουν το σύνολο χρωμάτων τους με βάση τις προτιμήσεις σας. Επιλέξτε ποιο σύνολο χρωμάτων θέλετε να χρησιμοποιήσετε για αυτούς τους ιστοτόπους.
-preferences-web-appearance-choice-browser = Θέμα του { -brand-short-name }
-preferences-web-appearance-choice-system = Θέμα συστήματος
+preferences-web-appearance-choice-auto = Αυτόματο
 preferences-web-appearance-choice-light = Ανοιχτόχρωμο
 preferences-web-appearance-choice-dark = Σκουρόχρωμο
-preferences-web-appearance-choice-tooltip-browser =
-    .title = Χρήση ρυθμίσεων θέματος { -brand-short-name } για φόντο και περιεχόμενο ιστοτόπων.
-preferences-web-appearance-choice-tooltip-system =
-    .title = Χρήση ρυθμίσεων συστήματος για φόντο και περιεχόμενο ιστοτόπων.
+preferences-web-appearance-choice-tooltip-auto =
+    .title = Αυτόματη αλλαγή παρασκηνίου και περιεχομένου ιστοτόπων βάσει των ρυθμίσεων του συστήματός σας και του θέματος του { -brand-short-name }.
 preferences-web-appearance-choice-tooltip-light =
     .title = Χρήση ανοιχτόχρωμης εμφάνισης για φόντο και περιεχόμενο ιστοτόπων.
 preferences-web-appearance-choice-tooltip-dark =
     .title = Χρήση σκουρόχρωμης εμφάνισης για φόντο και περιεχόμενο ιστοτόπων.
-preferences-web-appearance-choice-input-browser =
-    .aria-description = { preferences-web-appearance-choice-tooltip-browser.title }
-preferences-web-appearance-choice-input-system =
-    .aria-description = { preferences-web-appearance-choice-tooltip-system.title }
+preferences-web-appearance-choice-input-auto =
+    .aria-description = { preferences-web-appearance-choice-tooltip-auto.title }
 preferences-web-appearance-choice-input-light =
     .aria-description = { preferences-web-appearance-choice-tooltip-light.title }
 preferences-web-appearance-choice-input-dark =
@@ -207,7 +220,7 @@ preferences-web-appearance-choice-input-dark =
 preferences-web-appearance-override-warning = Οι επιλογές χρωμάτων σας υπερισχύουν της εμφάνισης του ιστοτόπου. <a data-l10n-name="colors-link">Διαχείριση χρωμάτων</a>
 # This message contains one link. It can be moved within the sentence as needed
 # to adapt to your language, but should not be changed.
-preferences-web-appearance-footer = Διαχειριστείτε τα θέματα του { -brand-short-name } στην ενότητα <a data-l10n-name="themes-link">Επεκτάσεις & θέματα</a>
+preferences-web-appearance-footer = Διαχειριστείτε τα θέματα του { -brand-short-name } στην ενότητα <a data-l10n-name="themes-link">Επεκτάσεις και θέματα</a>
 preferences-colors-header = Χρώματα
 preferences-colors-description = Αντικατάσταση των προεπιλεγμένων χρωμάτων του { -brand-short-name } για κείμενο, παρασκήνια ιστοτόπων και συνδέσμους.
 preferences-colors-manage-button =
@@ -225,6 +238,8 @@ advanced-fonts =
 preferences-zoom-header = Ζουμ
 preferences-default-zoom = Προεπιλεγμένο ζουμ
     .accesskey = ζ
+# Variables:
+#   $percentage (number) - Zoom percentage value
 preferences-default-zoom-value =
     .label = { $percentage }%
 preferences-zoom-text-only =
@@ -317,15 +332,15 @@ applications-manage-app =
 applications-always-ask =
     .label = Ερώτηση πάντα
 # Variables:
-#   $type-description (String) - Description of the type (e.g "Portable Document Format")
-#   $type (String) - the MIME type (e.g application/binary)
+#   $type-description (string) - Description of the type (e.g "Portable Document Format")
+#   $type (string) - The MIME type (e.g application/binary)
 applications-type-description-with-type = { $type-description } ({ $type })
 # Variables:
-#   $extension (String) - file extension (e.g .TXT)
-#   $type (String) - the MIME type (e.g application/binary)
+#   $extension (string) - File extension (e.g .TXT)
+#   $type (string) - The MIME type (e.g application/binary)
 applications-file-ending-with-type = { applications-file-ending } ({ $type })
 # Variables:
-#   $plugin-name (String) - Name of a plugin (e.g Adobe Flash)
+#   $plugin-name (string) - Name of a plugin (e.g Adobe Flash)
 applications-use-plugin-in =
     .label = Χρήση { $plugin-name } (στο { -brand-short-name })
 applications-open-inapp =
@@ -368,6 +383,8 @@ play-drm-content =
 play-drm-content-learn-more = Μάθετε περισσότερα
 update-application-title = Ενημερώσεις του { -brand-short-name }
 update-application-description = Διατηρείτε το { -brand-short-name } ενημερωμένο για καλύτερη απόδοση, σταθερότητα και ασφάλεια.
+# Variables:
+# $version (string) - Waterfox version
 update-application-version = Έκδοση { $version } <a data-l10n-name="learn-more">Τι νέο υπάρχει</a>
 update-history =
     .label = Εμφάνιση ιστορικού ενημερώσεων…
@@ -380,7 +397,7 @@ update-application-check-choose =
     .label = Έλεγχος για ενημερώσεις, αλλά με δυνατότητα επιλογής για εγκατάσταση
     .accesskey = Ε
 update-application-manual =
-    .label = Να μην γίνεται ποτέ έλεγχος για ενημερώσεις (δεν προτείνεται)
+    .label = Να μη γίνεται ποτέ έλεγχος για ενημερώσεις (δεν προτείνεται)
     .accesskey = Ν
 update-application-background-enabled =
     .label = Όταν δεν εκτελείται το { -brand-short-name }
@@ -394,7 +411,7 @@ update-application-suppress-prompts =
     .accesskey = λ
 update-setting-write-failure-title2 = Σφάλμα αποθήκευσης ρυθμίσεων ενημερώσεων
 # Variables:
-#   $path (String) - Path to the configuration file
+#   $path (string) - Path to the configuration file
 # The newlines between the main text and the line containing the path is
 # intentional so the path is easier to identify.
 update-setting-write-failure-message2 =
@@ -424,7 +441,7 @@ performance-limit-content-process-option = Όριο διεργασιών περ�
 performance-limit-content-process-enabled-desc = Οι επιπρόσθετες διεργασίες περιεχομένου μπορούν να βελτιώσουν τις επιδόσεις κατά τη χρήση πολλαπλών καρτελών, αλλά θα χρησιμοποιούν περισσότερη μνήμη.
 performance-limit-content-process-blocked-desc = Η τροποποίηση του αριθμού των διεργασιών περιεχομένου είναι δυνατή μόνο στο { -brand-short-name } με τη δυνατότητα πολλαπλών διεργασιών. <a data-l10n-name="learn-more">Μάθετε πώς μπορείτε να ελέγξετε εάν είναι ενεργοποιημένη η λειτουργία πολλαπλών διεργασιών</a>
 # Variables:
-#   $num - default value of the `dom.ipc.processCount` pref.
+#   $num (number) - Default value of the `dom.ipc.processCount` pref.
 performance-default-content-process-count =
     .label = { $num } (προεπιλογή)
 
@@ -446,6 +463,9 @@ browsing-use-onscreen-keyboard =
 browsing-use-cursor-navigation =
     .label = Πάντα χρήση των πλήκτρων κέρσορα για πλοήγηση στις σελίδες
     .accesskey = π
+browsing-use-full-keyboard-navigation =
+    .label = Χρήση του πλήκτρου Tab για μετακίνηση της εστίασης μεταξύ κουμπιών φόρμας και συνδέσμων
+    .accesskey = T
 browsing-search-on-start-typing =
     .label = Αναζήτηση κειμένου κατά την έναρξη πληκτρολόγησης
     .accesskey = ν
@@ -486,10 +506,6 @@ home-newtabs-mode-label = Νέες καρτέλες
 home-restore-defaults =
     .label = Επαναφορά προεπιλογών
     .accesskey = Ε
-# "Waterfox" should be treated as a brand and kept in English,
-# while "Home" and "(Default)" can be localized.
-home-mode-choice-default =
-    .label = Αρχική σελίδα Waterfox (Προεπιλογή)
 home-mode-choice-default-fx =
     .label = { -firefox-home-brand-name } (Προεπιλογή)
 home-mode-choice-custom =
@@ -515,8 +531,6 @@ choose-bookmark =
 
 ## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Περιεχόμενο αρχικής σελίδας Waterfox
-home-prefs-content-description = Επιλέξτε τι περιεχόμενο θέλετε στην αρχική σελίδα του Waterfox σας.
 home-prefs-content-header2 = Περιεχόμενο οθόνης «{ -firefox-home-brand-name }»
 home-prefs-content-description2 = Επιλέξτε το περιεχόμενο που θέλετε στην οθόνη «{ -firefox-home-brand-name }».
 home-prefs-search-header =
@@ -528,7 +542,7 @@ home-prefs-shortcuts-by-option-sponsored =
     .label = Χορηγούμενες συντομεύσεις
 
 ## Variables:
-##  $provider (String): Name of the corresponding content provider, e.g "Pocket".
+##  $provider (string) - Name of the corresponding content provider, e.g "Pocket".
 
 home-prefs-recommended-by-header =
     .label = Προτάσεις του { $provider }
@@ -559,6 +573,8 @@ home-prefs-recent-activity-description = Μια συλλογή πρόσφατω�
 home-prefs-snippets-header =
     .label = Αποσπάσματα
 home-prefs-snippets-description-new = Συμβουλές και νέα από τη { -vendor-short-name } και το { -brand-product-name }
+# Variables:
+#   $num (number) - Number of rows displayed
 home-prefs-sections-rows-option =
     .label =
         { $num ->
@@ -587,6 +603,11 @@ search-suggestions-option =
 search-show-suggestions-url-bar-option =
     .label = Εμφάνιση προτάσεων αναζήτησης στα αποτελέσματα της γραμμής διευθύνσεων
     .accesskey = τ
+# With this option enabled, on the search results page
+# the URL will be replaced by the search terms in the address bar
+# when using the current default search engine.
+search-show-search-term-option =
+    .label = Εμφάνιση όρων αναζήτησης αντί του URL στη σελίδα αποτελεσμάτων της προεπιλεγμένης μηχανής αναζήτησης
 # This string describes what the user will observe when the system
 # prioritizes search suggestions over browsing history in the results
 # that extend down from the address bar. In the original English string,
@@ -597,7 +618,7 @@ search-show-suggestions-above-history-option =
 search-show-suggestions-private-windows =
     .label = Εμφάνιση προτάσεων αναζήτησης σε ιδιωτικά παράθυρα
 suggestions-addressbar-settings-generic2 = Αλλαγή ρυθμίσεων για άλλες προτάσεις της γραμμής διευθύνσεων
-search-suggestions-cant-show = Οι προτάσεις αναζήτησης δεν θα εμφανίζονται στη γραμμή διευθύνσεων, καθώς έχετε ρυθμίσει το { -brand-short-name } ώστε να μην διατηρεί ποτέ το ιστορικό.
+search-suggestions-cant-show = Οι προτάσεις αναζήτησης δεν θα εμφανίζονται στη γραμμή διευθύνσεων, καθώς έχετε ρυθμίσει το { -brand-short-name } ώστε να μη διατηρεί ποτέ το ιστορικό.
 search-one-click-header2 = Συντομεύσεις αναζήτησης
 search-one-click-desc = Επιλέξτε τις εναλλακτικές μηχανές αναζήτησης που εμφανίζονται κάτω από τη γραμμή διευθύνσεων και τη γραμμή αναζήτησης όταν αρχίσετε να πληκτρολογείτε μια λέξη-κλειδί.
 search-choose-engine-column =
@@ -618,7 +639,7 @@ search-find-more-link = Εύρεση περισσότερων μηχανών α�
 # ('Duplicate' is an adjective)
 search-keyword-warning-title = Διπλή λέξη-κλειδί
 # Variables:
-#   $name (String) - Name of a search engine.
+#   $name (string) - Name of a search engine.
 search-keyword-warning-engine = Έχετε επιλέξει μια λέξη-κλειδί που χρησιμοποιείται ήδη από το «{ $name }». Παρακαλώ επιλέξτε κάποια άλλη.
 search-keyword-warning-bookmark = Έχετε επιλέξει μια λέξη-κλειδί που χρησιμοποιείται ήδη από ένα σελιδοδείκτη. Παρακαλώ επιλέξτε κάποια άλλη.
 
@@ -638,7 +659,7 @@ containers-settings-button =
 containers-remove-button =
     .label = Αφαίρεση
 
-## Waterfox Account - Signed out. Note that "Sync" and "Waterfox Account" are now
+## Waterfox account - Signed out. Note that "Sync" and "Waterfox account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Πάρτε μαζί σας το διαδίκτυο
@@ -656,7 +677,7 @@ sync-signedout-account-signin3 =
 # to your language, but should not be changed or translated.
 sync-mobile-promo = Κάντε λήψη του Waterfox για <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ή <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> για συγχρονισμό με την κινητή σας συσκευή.
 
-## Waterfox Account - Signed in
+## Waterfox account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Αλλαγή εικόνας προφίλ
@@ -665,8 +686,15 @@ sync-sign-out =
     .accesskey = ν
 sync-manage-account = Διαχείριση λογαριασμού
     .accesskey = η
+
+## Variables
+## $email (string) - Email used for Waterfox account
+
 sync-signedin-unverified = { $email } Μη επαληθευμένος.
 sync-signedin-login-failure = Παρακαλούμε συνδεθείτε ξανά για επανασύνδεση { $email }
+
+##
+
 sync-resend-verification =
     .label = Εκ νέου αποστολή επαλήθευσης
     .accesskey = λ
@@ -689,10 +717,15 @@ prefs-sync-now =
     .labelnotsyncing = Συγχρονισμός τώρα
     .accesskeynotsyncing = τ
     .labelsyncing = Συγχρονισμός…
+prefs-sync-now-button =
+    .label = Συγχρονισμός τώρα
+    .accesskey = τ
+prefs-syncing-button =
+    .label = Συγχρονισμός…
 
 ## The list of things currently syncing.
 
-sync-currently-syncing-heading = Αυτή τη στιγμή, συγχρονίζονται τα εξής στοιχεία:
+sync-syncing-across-devices-heading = Μπορείτε να συγχρονίσετε αυτά τα στοιχεία σε όλες τις συνδεδεμένες συσκευές σας:
 sync-currently-syncing-bookmarks = Σελιδοδείκτες
 sync-currently-syncing-history = Ιστορικό
 sync-currently-syncing-tabs = Ανοικτές καρτέλες
@@ -707,13 +740,14 @@ sync-change-options =
 
 ## The "Choose what to sync" dialog.
 
-sync-choose-what-to-sync-dialog =
+sync-choose-what-to-sync-dialog3 =
     .title = Επιλέξτε στοιχεία για συγχρονισμό
-    .style = width: 36em; min-height: 35em;
+    .style = min-width: 36em;
     .buttonlabelaccept = Αποθήκευση αλλαγών
     .buttonaccesskeyaccept = π
     .buttonlabelextra2 = Αποσύνδεση…
     .buttonaccesskeyextra2 = Α
+sync-choose-dialog-subtitle = Οι αλλαγές στη λίστα των στοιχείων προς συγχρονισμό θα αντικατοπτρίζονται σε όλες τις συνδεδεμένες συσκευές σας.
 sync-engine-bookmarks =
     .label = Σελιδοδείκτες
     .accesskey = δ
@@ -759,6 +793,16 @@ sync-device-name-save =
     .accesskey = θ
 sync-connect-another-device = Σύνδεση άλλης συσκευής
 
+## These strings are shown in a desktop notification after the
+## user requests we resend a verification email.
+
+sync-verification-sent-title = Η επιβεβαίωση εστάλη
+# Variables:
+#   $email (String): Email address of user's Waterfox account.
+sync-verification-sent-body = Έχει σταλεί ένα σύνδεσμος επαλήθευσης στην διεύθυνση { $email }.
+sync-verification-not-sent-title = Αδυναμία αποστολής επιβεβαίωσης
+sync-verification-not-sent-body = Δεν μπορέσαμε να στείλουμε ένα email επαλήθευσης, παρακαλούμε δοκιμάστε ξανά αργότερα.
+
 ## Privacy Section
 
 privacy-header = Απόρρητο προγράμματος περιήγησης
@@ -766,7 +810,7 @@ privacy-header = Απόρρητο προγράμματος περιήγησης
 ## Privacy Section - Logins and Passwords
 
 # The search keyword isn't shown to users but is used to find relevant settings in about:preferences.
-pane-privacy-logins-and-passwords-header = Συνδέσεις & κωδικοί πρόσβασης
+pane-privacy-logins-and-passwords-header = Συνδέσεις και κωδικοί πρόσβασης
     .searchkeywords = { -lockwise-brand-short-name }
 # Checkbox to control whether UI is shown to users to save or fill logins/passwords.
 forms-ask-to-save-logins =
@@ -782,6 +826,9 @@ forms-breach-alerts =
     .label = Εμφάνιση ειδοποιήσεων για κωδικούς πρόσβασης από παραβιασμένους ιστοτόπους
     .accesskey = μ
 forms-breach-alerts-learn-more-link = Μάθετε περισσότερα
+preferences-relay-integration-checkbox =
+    .label = Πρόταση μασκών email του { -relay-brand-name } για την προστασία της διεύθυνσης email σας
+relay-integration-learn-more-link = Μάθετε περισσότερα
 # Checkbox which controls filling saved logins into fields automatically when they appear, in some cases without user interaction.
 forms-fill-logins-and-passwords =
     .label = Αυτόματη συμπλήρωση συνδέσεων και κωδικών πρόσβασης
@@ -811,7 +858,7 @@ forms-master-pw-fips-desc = Αποτυχία αλλαγής κωδικού
 forms-windows-sso =
     .label = Να επιτρέπεται η καθολική σύνδεση των Windows για λογαριασμούς Microsoft, εργασίας και σχολείου.
 forms-windows-sso-learn-more-link = Μάθετε περισσότερα
-forms-windows-sso-desc = Διαχείριση λογαριασμών στις ρυθμίσεις συσκευής
+forms-windows-sso-desc = Διαχειριστείτε τους λογαριασμούς σας στις ρυθμίσεις συσκευής
 
 ## OS Authentication dialog
 
@@ -870,8 +917,8 @@ history-clear-button =
 sitedata-header = Cookies και δεδομένα ιστοτόπων
 sitedata-total-size-calculating = Υπολογισμός μεγέθους δεδομένων ιστοτόπου και προσωρινής μνήμης…
 # Variables:
-#   $value (Number) - Value of the unit (for example: 4.6, 500)
-#   $unit (String) - Name of the unit (for example: "bytes", "KB")
+#   $value (number) - Value of the unit (for example: 4.6, 500)
+#   $unit (string) - Name of the unit (for example: "bytes", "KB")
 sitedata-total-size = Αυτή τη στιγμή, τα αποθηκευμένα cookies, τα δεδομένα ιστοτόπων και η κρυφή μνήμη καταλαμβάνουν { $value } { $unit } χώρου στον δίσκο.
 sitedata-learn-more = Μάθετε περισσότερα
 sitedata-delete-on-close =
@@ -896,8 +943,8 @@ sitedata-option-block-cross-site-cookies =
     .label = Cookies καταγραφής μεταξύ ιστοτόπων και απομόνωση άλλων cookies μεταξύ ιστοτόπων
 sitedata-option-block-unvisited =
     .label = Cookies από ιστοτόπους που δεν έχετε επισκεφθεί
-sitedata-option-block-all-third-party =
-    .label = Όλα τα cookies τρίτων (πιθανή δυσλειτουργία ιστοτόπων)
+sitedata-option-block-all-cross-site-cookies =
+    .label = Όλα τα cookies μεταξύ ιστοτόπων (πιθανή δυσλειτουργία ιστοτόπων)
 sitedata-option-block-all =
     .label = Όλα τα cookies (προκαλεί δυσλειτουργία ιστοτόπων)
 sitedata-clear =
@@ -910,6 +957,14 @@ sitedata-cookies-exceptions =
     .label = Διαχείριση εξαιρέσεων…
     .accesskey = σ
 
+## Privacy Section - Cookie Banner Handling
+
+cookie-banner-handling-header = Μείωση μηνυμάτων για cookies
+cookie-banner-handling-description = Το { -brand-short-name } προσπαθεί να απορρίψει αυτόματα όλα τα μηνύματα αιτημάτων για cookies σε υποστηριζόμενους ιστότοπους.
+cookie-banner-learn-more = Μάθετε περισσότερα
+forms-handle-cookie-banners =
+    .label = Μείωση μηνυμάτων για cookies
+
 ## Privacy Section - Address Bar
 
 addressbar-header = Γραμμή διευθύνσεων
@@ -920,6 +975,9 @@ addressbar-locbar-history-option =
 addressbar-locbar-bookmarks-option =
     .label = Σελιδοδεικτών
     .accesskey = δ
+addressbar-locbar-clipboard-option =
+    .label = Πρόχειρο
+    .accesskey = Π
 addressbar-locbar-openpage-option =
     .label = Ανοικτών καρτελών
     .accesskey = Ο
@@ -934,7 +992,7 @@ addressbar-locbar-engines-option =
     .label = Μηχανών αναζήτησης
     .accesskey = α
 addressbar-locbar-quickactions-option =
-    .label = Γρήγορες ενέργειες
+    .label = Γρήγορων ενεργειών
     .accesskey = Γ
 addressbar-suggestions-settings = Αλλαγή προτιμήσεων για τις προτάσεις μηχανών αναζήτησης
 addressbar-quickactions-learn-more = Μάθετε περισσότερα
@@ -967,7 +1025,6 @@ content-blocking-etp-strict-desc = Ισχυρότερη προστασία, αλ
 content-blocking-etp-custom-desc = Επιλέξτε ιχνηλάτες και σενάρια για αποκλεισμό.
 content-blocking-etp-blocking-desc = Το { -brand-short-name } αποκλείει τα εξής:
 content-blocking-private-windows = Περιεχόμενο καταγραφής σε ιδιωτικά παράθυρα
-content-blocking-cross-site-cookies-in-all-windows = Cookies μεταξύ ιστοτόπων σε όλα τα παράθυρα (και cookies καταγραφής)
 content-blocking-cross-site-cookies-in-all-windows2 = Cookies μεταξύ ιστοτόπων σε όλα τα παράθυρα
 content-blocking-cross-site-tracking-cookies = Cookies καταγραφής μεταξύ ιστοτόπων
 content-blocking-all-cross-site-cookies-private-windows = Cookies μεταξύ ιστοτόπων σε ιδιωτικά παράθυρα
@@ -976,14 +1033,16 @@ content-blocking-social-media-trackers = Ιχνηλάτες κοινωνικών
 content-blocking-all-cookies = Όλα τα cookies
 content-blocking-unvisited-cookies = Cookies από ιστοτόπους που δεν έχετε επισκεφθεί
 content-blocking-all-windows-tracking-content = Περιεχόμενο καταγραφής σε όλα τα παράθυρα
-content-blocking-all-third-party-cookies = Όλα τα cookies τρίτων
+content-blocking-all-cross-site-cookies = Όλα τα cookies μεταξύ ιστοτόπων
 content-blocking-cryptominers = Cryptominers
 content-blocking-fingerprinters = Fingerprinters
-# "Test pilot" is used as a verb. Possible alternatives:
-# "Be the first to try", "Join an early experiment".
-content-blocking-etp-standard-tcp-rollout-checkbox =
-    .label = Δοκιμάστε την πιο ισχυρή λειτουργία απορρήτου μας
-    .accesskey = Δ
+# The known fingerprinters are those that are known for collecting browser fingerprints from user devices. And
+# the suspected fingerprinters are those that we are uncertain about browser fingerprinting activities. But they could
+# possibly acquire browser fingerprints because of the behavior on accessing APIs that expose browser fingerprints.
+content-blocking-known-and-suspected-fingerprinters = Γνωστά και ύποπτα fingerprinter
+
+# The tcp-rollout strings are no longer used for the rollout but for tcp-by-default in the standard section
+
 # "Contains" here means "isolates", "limits".
 content-blocking-etp-standard-tcp-rollout-description = Η Ολική προστασία cookie περιορίζει τα cookies στον ιστότοπο που βρίσκεστε, ώστε να μην μπορούν να χρησιμοποιηθούν από ιχνηλάτες για την καταγραφή της δραστηριότητάς σας.
 content-blocking-etp-standard-tcp-rollout-learn-more = Μάθετε περισσότερα
@@ -1019,6 +1078,18 @@ content-blocking-cryptominers-label =
 content-blocking-fingerprinters-label =
     .label = Fingerprinters
     .accesskey = F
+# Browser fingerprinting is a method of tracking users by the configuration and settings information (their "digital fingerprint")
+# that is visible to websites they browse, rather than traditional tracking methods such as IP addresses and unique cookies.
+#
+# The known fingerprinters are those that are known for collecting browser fingerprints from user devices.
+content-blocking-known-fingerprinters-label =
+    .label = Γνωστά fingerprinter
+    .accesskey = Γ
+# The suspected fingerprinters are those that we are uncertain about browser fingerprinting activities. But they could
+# possibly acquire browser fingerprints because of the behavior on accessing APIs that expose browser fingerprints.
+content-blocking-suspected-fingerprinters-label =
+    .label = Πιθανά fingerprinter
+    .accesskey = Π
 
 ## Privacy Section - Tracking
 
@@ -1043,6 +1114,11 @@ permissions-camera-settings =
     .accesskey = θ
 permissions-microphone = Μικρόφωνο
 permissions-microphone-settings =
+    .label = Ρυθμίσεις…
+    .accesskey = θ
+# Short form for "the act of choosing sound output devices and redirecting audio to the chosen devices".
+permissions-speaker = Επιλογή ηχείου
+permissions-speaker-settings =
     .label = Ρυθμίσεις…
     .accesskey = θ
 permissions-notification = Ειδοποιήσεις
@@ -1076,6 +1152,8 @@ permissions-addon-exceptions =
 ## Privacy Section - Data Collection
 
 collection-header = Συλλογή και χρήση δεδομένων { -brand-short-name }
+collection-header2 = Συλλογή και χρήση δεδομένων { -brand-short-name }
+    .searchkeywords = τηλεμετρία
 collection-description = Αγωνιζόμαστε για να σας παρέχουμε επιλογές και συλλέγουμε μόνο αυτά που χρειαζόμαστε, ώστε να παρέχουμε και να βελτιώσουμε το { -brand-short-name } για όλους. Ζητούμε πάντα την άδεια πριν λάβουμε προσωπικές πληροφορίες.
 collection-privacy-notice = Σημείωση απορρήτου
 collection-health-report-telemetry-disabled = Δεν επιτρέπεται πλέον στη { -vendor-short-name } η συλλογή τεχνικών δεδομένων και δεδομένων αλληλεπίδρασης. Όλα τα προηγούμενα δεδομένα θα διαγραφούν μέσα σε 30 ημέρες.
@@ -1135,7 +1213,7 @@ certs-devices =
 space-alert-over-5gb-settings-button =
     .label = Άνοιγμα ρυθμίσεων
     .accesskey = Ά
-space-alert-over-5gb-message2 = <strong>Το { -brand-short-name } δεν διαθέτει επαρκή χώρο στον δίσκο.</strong> Το περιεχόμενο των ιστοτόπων ενδέχεται να μην εμφανίζεται κανονικά. Μπορείτε να διαγράψετε τα αποθηκευμένα δεδομένα στις Ρυθμίσεις > Απόρρητο & ασφάλεια > Cookies και δεδομένα ιστοτόπων.
+space-alert-over-5gb-message2 = <strong>Το { -brand-short-name } δεν διαθέτει επαρκή χώρο στον δίσκο.</strong> Το περιεχόμενο των ιστοτόπων ενδέχεται να μην εμφανίζεται κανονικά. Μπορείτε να διαγράψετε τα αποθηκευμένα δεδομένα στις Ρυθμίσεις > Απόρρητο και ασφάλεια > Cookies και δεδομένα ιστοτόπων.
 space-alert-under-5gb-message2 = <strong>Το { -brand-short-name } δεν διαθέτει επαρκή χώρο στον δίσκο.</strong> Το περιεχόμενο των ιστοτόπων ενδέχεται να μην εμφανίζεται κανονικά. Επισκεφθείτε το «Μάθετε περισσότερα» για να βελτιστοποιήσετε τη χρήση δίσκου σας για μια καλύτερη εμπειρία περιήγησης.
 
 ## Privacy Section - HTTPS-Only
@@ -1149,6 +1227,63 @@ httpsonly-radio-enabled-pbm =
     .label = Ενεργοποίηση λειτουργίας «Μόνο HTTPS» μόνο σε ιδιωτικά παράθυρα
 httpsonly-radio-disabled =
     .label = Να μην ενεργοποιηθεί η λειτουργία «Μόνο HTTPS»
+
+## DoH Section
+
+preferences-doh-header = DNS over HTTPS
+preferences-doh-description = Το DNS (Domain Name System) over HTTPS στέλνει το αίτημά σας για όνομα τομέα μέσω κρυπτογραφημένης σύνδεσης, δημιουργώντας ένα ασφαλές DNS και δυσκολεύοντας τους άλλους να δουν σε ποιον ιστότοπο πρόκειται να αποκτήσετε πρόσβαση.
+# Variables:
+#   $status (string) - The status of the DoH connection
+preferences-doh-status = Κατάσταση: { $status }
+# Variables:
+#   $name (string) - The name of the DNS over HTTPS resolver. If a custom resolver is used, the name will be the domain of the URL.
+preferences-doh-resolver = Πάροχος: { $name }
+# This is displayed instead of $name in preferences-doh-resolver
+# when the DoH URL is not a valid URL
+preferences-doh-bad-url = Μη έγκυρο URL
+preferences-doh-steering-status = Χρήση τοπικού παρόχου
+preferences-doh-status-active = Ενεργό
+preferences-doh-status-disabled = Ανενεργό
+# Variables:
+#   $reason (string) - A string representation of the reason DoH is not active. For example NS_ERROR_UNKNOWN_HOST or TRR_RCODE_FAIL.
+preferences-doh-status-not-active = Μη ενεργό ({ $reason })
+preferences-doh-group-message = Ενεργοποίηση ασφαλούς DNS με:
+preferences-doh-expand-section =
+    .tooltiptext = Περισσότερες πληροφορίες
+preferences-doh-setting-default =
+    .label = Προεπιλεγμένη προστασία
+    .accesskey = Π
+preferences-doh-default-desc = Το { -brand-short-name } αποφασίζει πότε θα χρησιμοποιεί ασφαλές DNS για την προστασία του απορρήτου σας.
+preferences-doh-default-detailed-desc-1 = Χρήση ασφαλούς DNS σε περιοχές όπου είναι διαθέσιμο
+preferences-doh-default-detailed-desc-2 = Χρήση προεπιλεγμένης ανάλυσης DNS εάν υπάρχει πρόβλημα με τον πάροχο ασφαλούς DNS
+preferences-doh-default-detailed-desc-3 = Χρήση τοπικού παρόχου εάν είναι δυνατόν
+preferences-doh-default-detailed-desc-4 = Απενεργοποίηση όταν είναι ενεργό το VPN, ο γονικός έλεγχος ή οι εταιρικές πολιτικές
+preferences-doh-default-detailed-desc-5 = Απενεργοποίηση όταν ένα δίκτυο ενημερώνει το { -brand-short-name } ότι δεν πρέπει να χρησιμοποιεί ασφαλές DNS
+preferences-doh-setting-enabled =
+    .label = Αυξημένη προστασία
+    .accesskey = Α
+preferences-doh-enabled-desc = Εσείς ελέγχετε πότε θα χρησιμοποιείται ασφαλές DNS και επιλέγετε τον πάροχό σας.
+preferences-doh-enabled-detailed-desc-1 = Χρήση του παρόχου της επιλογής σας
+preferences-doh-enabled-detailed-desc-2 = Χρήση προεπιλεγμένης ανάλυσης DNS μόνο εάν υπάρχει πρόβλημα με το ασφαλές DNS
+preferences-doh-setting-strict =
+    .label = Μέγιστη προστασία
+    .accesskey = Μ
+preferences-doh-strict-desc = Το { -brand-short-name } θα χρησιμοποιεί πάντα ασφαλές DNS. Θα βλέπετε μια προειδοποίηση πριν χρησιμοποιήσουμε το DNS του συστήματός σας.
+preferences-doh-strict-detailed-desc-1 = Χρήση μόνο του παρόχου της επιλογής σας
+preferences-doh-strict-detailed-desc-2 = Πάντα προειδοποίηση εάν το ασφαλές DNS δεν είναι διαθέσιμο
+preferences-doh-strict-detailed-desc-3 = Εάν δεν διατίθεται ασφαλές DNS, οι ιστότοποι δεν θα φορτώνονται ή δεν θα λειτουργούν σωστά
+preferences-doh-setting-off =
+    .label = Ανενεργή προστασία
+    .accesskey = Α
+preferences-doh-off-desc = Χρήση προεπιλεγμένης ανάλυσης DNS
+preferences-doh-checkbox-warn =
+    .label = Προειδοποίηση εάν ένα τρίτο μέρος εμποδίζει ενεργά το ασφαλές DNS
+    .accesskey = Π
+preferences-doh-select-resolver = Επιλογή παρόχου:
+preferences-doh-exceptions-description = Το { -brand-short-name } δεν θα χρησιμοποιεί ασφαλές DNS σε αυτούς τους ιστοτόπους
+preferences-doh-manage-exceptions =
+    .label = Διαχείριση εξαιρέσεων…
+    .accesskey = χ
 
 ## The following strings are used in the Download section of settings
 

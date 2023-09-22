@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -36,3 +36,41 @@ findbar-entire-word =
     .label = Ολόκληρες λέξεις
     .accesskey = ξ
     .tooltiptext = Αναζήτηση μόνο ολόκληρων λέξεων
+
+findbar-not-found = Η φράση δεν βρέθηκε
+
+findbar-wrapped-to-top = Τέλος της σελίδας, συνέχεια από την αρχή
+findbar-wrapped-to-bottom = Αρχή της σελίδας, συνέχεια από το τέλος
+
+findbar-normal-find =
+    .placeholder = Εύρεση στη σελίδα
+findbar-fast-find =
+    .placeholder = Γρήγορη εύρεση
+findbar-fast-find-links =
+    .placeholder = Γρήγορη εύρεση (μόνο δεσμοί)
+
+findbar-case-sensitive-status =
+    .value = (Συμφωνία πεζών/κεφαλαίων)
+findbar-match-diacritics-status =
+    .value = (Αντιστοίχιση διακριτικών)
+findbar-entire-word-status =
+    .value = (Μόνο ολόκληρες λέξεις)
+
+# Variables:
+#   $current (Number): Index of the currently selected match
+#   $total (Number): Total count of matches
+findbar-found-matches =
+    .value =
+        { $total ->
+            [one] { $current } από { $total } αποτέλεσμα
+           *[other] { $current } από { $total } αποτελέσματα
+        }
+
+# Variables:
+#   $limit (Number): Total count of matches allowed before counting stops
+findbar-found-matches-count-limit =
+    .value =
+        { $limit ->
+            [one] Περισσότερα από { $limit } αποτέλεσμα
+           *[other] Περισσότερα από { $limit } αποτελέσματα
+        }

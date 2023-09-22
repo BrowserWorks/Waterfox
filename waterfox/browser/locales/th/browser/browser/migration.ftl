@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,6 +60,9 @@ import-from-firefox =
 import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
 
 no-migration-sources = ไม่พบโปรแกรมที่มีข้อมูลที่คั่นหน้า, ประวัติ หรือรหัสผ่าน
 
@@ -64,8 +73,8 @@ import-items-description = เลือกรายการที่จะน�
 
 import-permissions-page-title = โปรดมอบสิทธิอนุญาตแก่ { -brand-short-name }
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = macOS ต้องการให้คุณอนุญาตให้ { -brand-short-name } เข้าถึงที่คั่นหน้าของ Safari อย่างชัดเจน คลิก “ดำเนินการต่อ” แล้วเลือกไฟล์ “Bookmarks.plist” ในแผงการเปิดไฟล์ที่ปรากฏ
+# Do not translate "Safari" (the name of the browser on Apple devices)
+import-safari-permissions-string = macOS ต้องการให้คุณอนุญาต { -brand-short-name } ให้เข้าถึงข้อมูลของ Safari อย่างชัดเจน กรุณาคลิก “ดำเนินการต่อ” จากนั้นเลือกโฟลเดอร์ “Safari“ ในกล่องโต้ตอบของ Finder ที่จะปรากฏขึ้น แล้วคลิก “เปิด”
 
 import-migrating-page-title = กำลังนำเข้า…
 
@@ -77,7 +86,7 @@ import-select-profile-description = โปรไฟล์ดังต่อไ�
 
 import-done-page-title = การนำเข้าเสร็จสมบูรณ์
 
-import-done-description = รายการดังต่อไปนี้ถูกนำเข้าได้สำเร็จ:
+import-done-description = นำเข้ารายการต่อไปนี้สำเร็จ:
 
 import-close-source-browser = โปรดแน่ใจว่าเบราว์เซอร์ที่เลือกถูกปิดแล้วก่อนดำเนินการต่อ
 
@@ -158,3 +167,8 @@ browser-data-session-checkbox =
     .label = หน้าต่างและแท็บ
 browser-data-session-label =
     .value = หน้าต่างและแท็บ
+
+browser-data-payment-methods-checkbox =
+    .label = วิธีการชำระเงิน
+browser-data-payment-methods-label =
+    .value = วิธีการชำระเงิน

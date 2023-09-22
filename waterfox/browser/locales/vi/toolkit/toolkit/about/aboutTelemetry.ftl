@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -19,7 +19,7 @@ about-telemetry-current-store = Cửa hàng hiện tại:
 about-telemetry-more-information = Tìm kiếm thêm thông tin?
 about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Tài liệu dữ liệu Waterfox</a> chứa các hướng dẫn về cách làm việc với các công cụ dữ liệu của chúng tôi.
 about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Tài liệu ứng dụng khách từ xa của Waterfox</a> bao gồm các định nghĩa cho các khái niệm, tài liệu API và tham chiếu dữ liệu.
-about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Bảng điều khiển từ xa</a> cho phép bạn trực quan hóa dữ liệu Waterfox nhận được thông qua từ xa.
+about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Bảng điều khiển từ xa</a> cho phép bạn trực quan hóa dữ liệu BrowserWorks nhận được thông qua từ xa.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Từ điển thăm dò</a> cung cấp chi tiết và mô tả cho các thăm dò được thu thập bởi Telemetry.
 about-telemetry-show-in-Waterfox-json-viewer = Mở trong trình xem JSON
 about-telemetry-home-section = Trang chủ
@@ -66,7 +66,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } mẫu, trung bình = { $prettyAverage }, tổng = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "BrowserWorks"
 about-telemetry-page-subtitle = Trang này hiển thị thông tin về hiệu năng, phần cứng, việc sử dụng và các tùy chỉnh, được thu thập bởi Telemetry. Các thông tin này được gửi tới { $telemetryServerOwner } để giúp hoàn thiện { -brand-full-name }.
 about-telemetry-settings-explanation = Telemetry đang thu thập { about-telemetry-data-type } và tải lên là <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
 # Variables:
@@ -130,12 +130,6 @@ about-telemetry-category-header = thể loại
 about-telemetry-method-header = phương thức
 about-telemetry-object-header = đối tượng
 about-telemetry-extra-header = thêm
-about-telemetry-origin-section = Origin Telemetry
-about-telemetry-origin-origin = gốc
-about-telemetry-origin-count = đếm
-# Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Waterfox Origin Telemetry</a> mã hóa dữ liệu trước khi nó được gửi để { $telemetryServerOwner } có thể đếm tất cả mọi thứ, nhưng không rõ nó có đếm cả { -brand-product-name } hay không. (<a data-l10n-name="prio-blog-link">tìm hiểu thêm</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = { $process } tiến trình

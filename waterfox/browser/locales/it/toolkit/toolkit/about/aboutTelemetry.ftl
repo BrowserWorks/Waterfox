@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -19,7 +19,7 @@ about-telemetry-current-store = Store corrente:
 about-telemetry-more-information = Per approfondire:
 about-telemetry-firefox-data-doc = La <a data-l10n-name="data-doc-link">documentazione Waterfox Data</a> include guide sull’utilizzo degli strumenti dedicati alla gestione dei dati.
 about-telemetry-telemetry-client-doc = La <a data-l10n-name="client-doc-link">documentazione del client Waterfox Telemetry</a> include definizioni, documentazione relativa alle API e fonti di riferimento per i dati.
-about-telemetry-telemetry-dashboard = Le <a data-l10n-name="dashboard-link">dashboard di Telemetry</a> permettono di visualizzare i dati ricevuti da Waterfox attraverso la telemetria.
+about-telemetry-telemetry-dashboard = Le <a data-l10n-name="dashboard-link">dashboard di Telemetry</a> permettono di visualizzare i dati ricevuti da BrowserWorks attraverso la telemetria.
 about-telemetry-telemetry-probe-dictionary = Il <a data-l10n-name="probe-dictionary-link">dizionario delle sonde</a> contiene dettagli e descrizioni delle sonde (“probe”) gestite da Telemetry.
 about-telemetry-show-in-Waterfox-json-viewer = Apri nel visualizzatore JSON
 about-telemetry-home-section = Introduzione
@@ -67,7 +67,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } campioni, media = { $prettyAverage }, totale = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "BrowserWorks"
 about-telemetry-page-subtitle = In questa pagina sono disponibili i dati relativi alle prestazioni e all’utilizzo delle caratteristiche raccolti dalla telemetria. Queste informazioni vengono inviate a { $telemetryServerOwner } in forma anonima per migliorare { -brand-full-name }.
 about-telemetry-settings-explanation = La telemetria sta raccogliendo { about-telemetry-data-type } e il caricamento è <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
 # Variables:
@@ -130,8 +130,4 @@ about-telemetry-category-header = Categoria
 about-telemetry-method-header = Metodo
 about-telemetry-object-header = Oggetto
 about-telemetry-extra-header = Altro
-about-telemetry-origin-section = Telemetria “Origin”
-about-telemetry-origin-origin = origine
-about-telemetry-origin-count = totale
-about-telemetry-origins-explanation = La <a data-l10n-name="origin-doc-link">telemetria “Origin” in Waterfox</a> codifica i dati prima dell’invio. In questo modo { $telemetryServerOwner } può effettuare conteggi, ma non può determinare se una specifica istanza di { -brand-product-name } abbia contribuito o meno a quel totale. <a data-l10n-name="prio-blog-link">Ulteriori informazioni</a>.
 about-telemetry-process = Processo “{ $process }”

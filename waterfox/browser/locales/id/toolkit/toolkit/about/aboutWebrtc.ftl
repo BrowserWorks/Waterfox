@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,6 +13,9 @@ about-webrtc-document-title = Internal WebRTC
 # translated. This string is used as a title for a file save dialog box.
 about-webrtc-save-page-dialog-title = simpan about:webrtc dengan nama
 
+## These labels are for a disclosure which contains the information for closed PeerConnection sections
+
+
 ## AEC is an abbreviation for Acoustic Echo Cancellation.
 
 about-webrtc-aec-logging-msg-label = Log AEC
@@ -20,10 +23,16 @@ about-webrtc-aec-logging-off-state-label = Mulai Pencatatan AEC
 about-webrtc-aec-logging-on-state-label = Hentikan Pencatatan AEC
 about-webrtc-aec-logging-on-state-msg = Pencatatan AEC aktif (bicara dengan pemanggil selama beberapa menit lalu hentikan penangkapan)
 
+about-webrtc-aec-logging-toggled-on-state-msg = Pencatatan AEC aktif (bicara dengan pemanggil selama beberapa menit lalu hentikan penangkapan)
+# Variables:
+#  $path (String) - The path to which the aec log file is saved.
+about-webrtc-aec-logging-toggled-off-state-msg = Berkas log tangkapan dapat ditemukan di: { $path }
+
+##
+
 # The autorefresh checkbox causes the page to autorefresh its content when checked
 about-webrtc-auto-refresh-label = Segarkan Otomatis
 
-##
 
 # "PeerConnection" is a proper noun associated with the WebRTC module. "ID" is
 # an abbreviation for Identifier. This string should not normally be translated
@@ -62,8 +71,6 @@ about-webrtc-ice-pair-bytes-sent = Bita terkirim:
 about-webrtc-ice-pair-bytes-received = Bita diterima:
 about-webrtc-ice-component-id = ID komponen
 
-## "Avg." is an abbreviation for Average. These are used as data labels.
-
 ## These adjectives are used to label a line of statistics collected for a peer
 ## connection. The data represents either the local or remote end of the
 ## connection.
@@ -95,6 +102,11 @@ about-webrtc-log-show-msg = tampilkan log
 about-webrtc-log-hide-msg = sembunyikan log
     .title = klik untuk menciutkan bagian ini
 
+about-webrtc-log-section-show-msg = Tampilkan log
+    .title = Klik untuk membentangkan bagian ini
+about-webrtc-log-section-hide-msg = Sembunyikan log
+    .title = Klik untuk menciutkan bagian ini
+
 ## These are used to display a header for a PeerConnection.
 ## Variables:
 ##  $browser-id (Number) - A numeric id identifying the browser tab for the PeerConnection.
@@ -104,6 +116,11 @@ about-webrtc-log-hide-msg = sembunyikan log
 
 about-webrtc-connection-open = [ { $browser-id } | { $id } ] { $url } { $now }
 about-webrtc-connection-closed = [ { $browser-id } | { $id } ] { $url } (ditutup) { $now }
+
+## These are used to indicate what direction media is flowing.
+## Variables:
+##  $codecs - a list of media codecs
+
 
 ##
 
@@ -116,11 +133,19 @@ about-webrtc-raw-cand-show-msg = tampilkan kandidat mentah
     .title = klik untuk membentangkan bagian ini
 about-webrtc-raw-cand-hide-msg = sembunyikan kandidat mentah
     .title = klik untuk menciutkan bagian ini
+about-webrtc-raw-cand-section-show-msg = Tampilkan kandidat mentah
+    .title = Klik untuk membentangkan bagian ini
+about-webrtc-raw-cand-section-hide-msg = Sembunyikan kandidat mentah
+    .title = Klik untuk menciutkan bagian ini
 about-webrtc-priority = Prioritas
 about-webrtc-fold-show-msg = tampilkan detail
     .title = klik untuk membentangkan bagian ini
 about-webrtc-fold-hide-msg = sembunyikan detail
     .title = klik untuk menciutkan bagian ini
+about-webrtc-fold-default-show-msg = Tampilkan detail
+    .title = Klik untuk membentangkan bagian ini
+about-webrtc-fold-default-hide-msg = Sembunyikan detail
+    .title = Klik untuk menciutkan bagian ini
 about-webrtc-dropped-frames-label = Frame yang dihilangkan:
 about-webrtc-discarded-packets-label = Paket yang dibuang:
 about-webrtc-decoder-label = Dekoder
@@ -142,6 +167,10 @@ about-webrtc-last-frame-timestamp = Stempel Waktu Penerimaan Frame Terakhir
 about-webrtc-local-receive-ssrc = Penerimaan SSRC Lokal
 # This is an SSRC on the remote side of the connection that is sending RTP
 about-webrtc-remote-send-ssrc = Pengiriman SSRC Jarak Jauh
+
+## These are displayed on the button that shows or hides the
+## PeerConnection configuration disclosure
+
 
 ##
 
@@ -193,6 +222,10 @@ about-webrtc-save-page-msg = halaman disimpan ke: { $path }
 about-webrtc-debug-mode-off-state-msg = log pelacakan dapat ditemukan di: { $path }
 about-webrtc-debug-mode-on-state-msg = mode debug aktif, log pelacakan di: { $path }
 about-webrtc-aec-logging-off-state-msg = berkas log tangkapan dapat ditemukan di: { $path }
+
+about-webrtc-save-page-complete-msg = Halaman disimpan ke: { $path }
+about-webrtc-debug-mode-toggled-off-state-msg = Log pelacakan dapat ditemukan di: { $path }
+about-webrtc-debug-mode-toggled-on-state-msg = Mode debug aktif, log pelacakan di: { $path }
 
 ##
 
@@ -265,6 +298,14 @@ about-webrtc-sdp-set-at-timestamp-remote = Setel SDP Jarak Jauh pada stempel wak
 #  $timestamp (Number) - The Unix Epoch time at which the SDP was set.
 #  $relative-timestamp (Number) - The timestamp relative to the timestamp of the earliest received SDP.
 about-webrtc-sdp-set-timestamp = Stempel waktu { NUMBER($timestamp, useGrouping: "false") } (+ { $relative-timestamp } md)
+
+## These are displayed on the button that shows or hides the SDP information disclosure
+
+
+## These are displayed on the button that shows or hides the Media Context information disclosure.
+## The Media Context is the set of preferences and detected capabilities that informs
+## the negotiated CODEC settings.
+
 
 ##
 

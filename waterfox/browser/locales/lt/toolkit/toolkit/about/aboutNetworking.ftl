@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,13 +34,6 @@ about-networking-messages-received = Gauta pranešimų
 about-networking-bytes-sent = Išsiųsta baitų
 about-networking-bytes-received = Gauta baitų
 about-networking-logging = Žurnalizavimas
-about-networking-log-tutorial = Paskaitykite apie <a data-l10n-name="logging">HTTP žurnalizavimą</a> norėdami gauti instrukcijų kaip naudotis šiuo įrankiu.
-about-networking-current-log-file = Dabartinis žurnalo failas:
-about-networking-current-log-modules = Dabartiniai žurnalo moduliai:
-about-networking-set-log-file = Parinkti žurnalo failą
-about-networking-set-log-modules = Parinkti žurnalo modulius
-about-networking-start-logging = Pradėti žurnalizavimą
-about-networking-stop-logging = Baigti žurnalizavimą
 about-networking-dns-lookup = DNS paieška
 about-networking-dns-lookup-button = Nustatyti
 about-networking-dns-domain = Sritis:

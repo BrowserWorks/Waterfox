@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -25,4 +25,4 @@ install-failed-message = { -brand-short-name } 설치에 실패했지만 계속 
 prompt-to-launch-existing-app-title = 기존 { -brand-short-name } 애플리케이션을 여시겠습니까?
 prompt-to-launch-existing-app-message = 이미 { -brand-short-name }가 설치되어 있습니다. 설치된 애플리케이션을 사용하여 최신 상태를 유지하고 데이터 손실을 방지하세요.
 prompt-to-launch-existing-app-yes-button = 기존 열기
-prompt-to-launch-existing-app-no-button = 아니오
+prompt-to-launch-existing-app-no-button = 아니요

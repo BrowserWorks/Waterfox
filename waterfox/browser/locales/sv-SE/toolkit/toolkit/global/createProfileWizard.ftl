@@ -1,17 +1,17 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-create-profile-window =
+create-profile-window2 =
     .title = Guiden skapa profil
-    .style = width: 45em; height: 34em;
+    .style = min-width: 45em; min-height: 34em;
 
 ## First wizard page
 
-create-profile-first-page-header =
+create-profile-first-page-header2 =
     { PLATFORM() ->
         [macos] Introduktion
-       *[other] Välkommen till { create-profile-window.title }
+       *[other] Välkommen till { create-profile-window2.title }
     }
 
 profile-creation-explanation-1 = { -brand-short-name } lagrar information om inställningar i din personliga profil.
@@ -28,10 +28,10 @@ profile-creation-explanation-4 =
 
 ## Second wizard page
 
-create-profile-last-page-header =
+create-profile-last-page-header2 =
     { PLATFORM() ->
         [macos] Avslutning
-       *[other] Slutför { create-profile-window.title }
+       *[other] Slutför { create-profile-window2.title }
     }
 
 profile-creation-intro = Om du skapar flera olika profiler kan du skilja dem åt med hjälp av profilnamnen. Du kan använda namnet som givits här, eller ange ett eget.

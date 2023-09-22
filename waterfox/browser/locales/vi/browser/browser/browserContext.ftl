@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -86,38 +86,6 @@ main-context-menu-page-save =
 
 ## Simple menu items
 
-main-context-menu-bookmark-add =
-    .aria-label = Đánh dấu trang này
-    .accesskey = m
-    .tooltiptext = Đánh dấu trang này
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-edit-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-add-mac =
-    .label = Đánh dấu trang
-    .accesskey = m
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-add-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-edit-mac =
-    .label = Chỉnh sửa dấu trang
-    .accesskey = m
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the add bookmark command.
-main-context-menu-bookmark-add-with-shortcut =
-    .aria-label = Đánh dấu trang này
-    .accesskey = m
-    .tooltiptext = Đánh dấu trang này ({ $shortcut })
-main-context-menu-bookmark-change =
-    .aria-label = Chỉnh sửa dấu trang này
-    .accesskey = m
-    .tooltiptext = Chỉnh sửa dấu trang này
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the edit bookmark command.
-main-context-menu-bookmark-change-with-shortcut =
-    .aria-label = Chỉnh sửa dấu trang này
-    .accesskey = m
-    .tooltiptext = Chỉnh sửa dấu trang này ({ $shortcut })
 main-context-menu-bookmark-page =
     .aria-label = Đánh dấu trang…
     .accesskey = m
@@ -157,17 +125,14 @@ main-context-menu-open-link-new-tab =
     .label = Mở liên kết trong thẻ mới
     .accesskey = T
 main-context-menu-open-link-container-tab =
-    .label = Mở lên kết trong thẻ chứa mới
-    .accesskey = b
+    .label = Mở liên kết trong thẻ ngăn chứa mới
+    .accesskey = w
 main-context-menu-open-link-new-window =
     .label = Mở liên kết trong cửa sổ mới
     .accesskey = W
 main-context-menu-open-link-new-private-window =
     .label = Mở liên kết trong cửa sổ riêng tư mới
     .accesskey = P
-main-context-menu-bookmark-link =
-    .label = Đánh dấu liên kết
-    .accesskey = B
 main-context-menu-bookmark-link-2 =
     .label = Đánh dấu liên kết…
     .accesskey = B
@@ -191,6 +156,11 @@ main-context-menu-copy-phone =
 main-context-menu-copy-link-simple =
     .label = Sao chép liên kết
     .accesskey = L
+# This command copies the link, removing additional
+# query parameters used to track users across sites.
+main-context-menu-strip-on-share-link =
+    .label = Sao chép liên kết (không tham số theo dõi)
+    .accesskey = y
 
 ## Media (video/audio) controls
 ##
@@ -307,12 +277,6 @@ main-context-menu-video-email =
 main-context-menu-audio-email =
     .label = Gửi âm thanh qua email…
     .accesskey = a
-main-context-menu-plugin-play =
-    .label = Kích hoạt phần bổ trợ này
-    .accesskey = c
-main-context-menu-plugin-hide =
-    .label = Ẩn phần bổ trợ này
-    .accesskey = H
 main-context-menu-save-to-pocket =
     .label = Lưu trang vào { -pocket-brand-name }
     .accesskey = k
@@ -333,6 +297,9 @@ main-context-menu-use-saved-password =
 
 ##
 
+main-context-menu-use-relay-mask =
+    .label = Sử dụng mặt nạ email { -relay-brand-short-name }
+    .accesskey = E
 main-context-menu-suggest-strong-password =
     .label = Đề xuất mật khẩu mạnh…
     .accesskey = S
@@ -360,9 +327,6 @@ main-context-menu-frame-open-window =
 main-context-menu-frame-reload =
     .label = Tải lại khung
     .accesskey = R
-main-context-menu-frame-bookmark =
-    .label = Đánh dấu khung này
-    .accesskey = m
 main-context-menu-frame-add-bookmark =
     .label = Đánh dấu khung…
     .accesskey = m
@@ -378,9 +342,6 @@ main-context-menu-frame-view-source =
 main-context-menu-frame-view-info =
     .label = Xem thông tin khung
     .accesskey = I
-main-context-menu-print-selection =
-    .label = Lựa chọn in
-    .accesskey = i
 main-context-menu-print-selection-2 =
     .label = In phần lựa chọn…
     .accesskey = r

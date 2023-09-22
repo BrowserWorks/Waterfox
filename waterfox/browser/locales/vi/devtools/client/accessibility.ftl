@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,6 +12,22 @@ accessibility-text-label-header = Nhãn và tên văn bản
 accessibility-keyboard-header = Bàn phím
 
 ## Text entries that are used as text alternative for icons that depict accessibility isses.
+
+
+## These strings are used in the overlay displayed when running an audit in the accessibility panel
+
+accessibility-progress-initializing = Đang khởi tạo…
+    .aria-valuetext = Đang khởi tạo…
+
+# This string is displayed in the audit progress bar in the accessibility panel.
+# Variables:
+#   $nodeCount (Integer) - The number of nodes for which the audit was run so far.
+accessibility-progress-progressbar = Đang kiểm tra { $nodeCount } node
+
+accessibility-progress-finishing = Kết thúc lên...
+    .aria-valuetext = Kết thúc lên...
+
+## Text entries that are used as text alternative for icons that depict accessibility issues.
 
 accessibility-warning =
     .alt = Cảnh báo
@@ -36,7 +52,7 @@ accessibility-text-label-issue-embed = Nội dung nhúng phải được dán nh
 
 accessibility-text-label-issue-figure = Số liệu với chú thích tùy chọn nên được dán nhãn. <a>Tìm hiểu thêm</a>
 
-accessibility-text-label-issue-fieldset = Các phần tử </code>fieldset</code> phải được dán nhãn. <a>Tìm hiểu thêm</a>
+accessibility-text-label-issue-fieldset = Các phần tử <code>fieldset</code> phải được dán nhãn. <a>Tìm hiểu thêm</a>
 
 accessibility-text-label-issue-fieldset-legend2 = Sử dụng một phần tử <code>legend</code> để gắn nhãn <span>fieldset</span>. <a>Tìm hiểu thêm</a>
 

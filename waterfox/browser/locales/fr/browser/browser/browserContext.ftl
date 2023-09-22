@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -86,38 +86,6 @@ main-context-menu-page-save =
 
 ## Simple menu items
 
-main-context-menu-bookmark-add =
-    .aria-label = Marquer cette page
-    .accesskey = c
-    .tooltiptext = Marquer cette page
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-edit-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-add-mac =
-    .label = Marquer cette page
-    .accesskey = m
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-add-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-edit-mac =
-    .label = Modifier le marque-page
-    .accesskey = m
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the add bookmark command.
-main-context-menu-bookmark-add-with-shortcut =
-    .aria-label = Marquer cette page
-    .accesskey = c
-    .tooltiptext = Marquer cette page ({ $shortcut })
-main-context-menu-bookmark-change =
-    .aria-label = Modifier ce marque-page
-    .accesskey = c
-    .tooltiptext = Modifier ce marque-page
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the edit bookmark command.
-main-context-menu-bookmark-change-with-shortcut =
-    .aria-label = Modifier ce marque-page
-    .accesskey = c
-    .tooltiptext = Modifier ce marque-page ({ $shortcut })
 main-context-menu-bookmark-page =
     .aria-label = Marquer cette page…
     .accesskey = m
@@ -165,9 +133,6 @@ main-context-menu-open-link-new-window =
 main-context-menu-open-link-new-private-window =
     .label = Ouvrir le lien dans une fenêtre de navigation privée
     .accesskey = n
-main-context-menu-bookmark-link =
-    .label = Marque-page sur le lien
-    .accesskey = M
 main-context-menu-bookmark-link-2 =
     .label = Marquer le lien…
     .accesskey = l
@@ -183,7 +148,7 @@ main-context-menu-save-link-to-pocket =
 ## are mutually exclusive.
 
 main-context-menu-copy-email =
-    .label = Copier l’adresse électronique
+    .label = Copier l’adresse e-mail
     .accesskey = C
 main-context-menu-copy-phone =
     .label = Copier le numéro de téléphone
@@ -191,6 +156,11 @@ main-context-menu-copy-phone =
 main-context-menu-copy-link-simple =
     .label = Copier le lien
     .accesskey = C
+# This command copies the link, removing additional
+# query parameters used to track users across sites.
+main-context-menu-strip-on-share-link =
+    .label = Copier le lien sans le pistage du site
+    .accesskey = r
 
 ## Media (video/audio) controls
 ##
@@ -278,7 +248,7 @@ main-context-menu-image-save-as =
     .label = Enregistrer l’image sous…
     .accesskey = s
 main-context-menu-image-email =
-    .label = Envoyer l’image par courriel…
+    .label = Envoyer l’image par e-mail…
     .accesskey = v
 main-context-menu-image-set-image-as-background =
     .label = Choisir l’image comme fond d’écran
@@ -302,17 +272,11 @@ main-context-menu-video-take-snapshot =
     .label = Prendre un instantané…
     .accesskey = P
 main-context-menu-video-email =
-    .label = Envoyer la vidéo par courriel…
+    .label = Envoyer la vidéo par e-mail…
     .accesskey = v
 main-context-menu-audio-email =
-    .label = Envoyer le fichier audio par courriel…
+    .label = Envoyer le fichier audio par e-mail…
     .accesskey = v
-main-context-menu-plugin-play =
-    .label = Activer ce plugin
-    .accesskey = v
-main-context-menu-plugin-hide =
-    .label = Masquer ce plugin
-    .accesskey = q
 main-context-menu-save-to-pocket =
     .label = Enregistrer la page dans { -pocket-brand-name }
     .accesskey = k
@@ -333,6 +297,9 @@ main-context-menu-use-saved-password =
 
 ##
 
+main-context-menu-use-relay-mask =
+    .label = Utiliser un alias de messagerie { -relay-brand-short-name }
+    .accesskey = m
 main-context-menu-suggest-strong-password =
     .label = Suggérer un mot de passe fort…
     .accesskey = S
@@ -360,9 +327,6 @@ main-context-menu-frame-open-window =
 main-context-menu-frame-reload =
     .label = Actualiser le cadre
     .accesskey = c
-main-context-menu-frame-bookmark =
-    .label = Marque-page sur ce cadre
-    .accesskey = M
 main-context-menu-frame-add-bookmark =
     .label = Marquer ce cadre…
     .accesskey = M
@@ -378,9 +342,6 @@ main-context-menu-frame-view-source =
 main-context-menu-frame-view-info =
     .label = Informations sur le cadre
     .accesskey = n
-main-context-menu-print-selection =
-    .label = Imprimer la sélection
-    .accesskey = I
 main-context-menu-print-selection-2 =
     .label = Imprimer la sélection…
     .accesskey = I

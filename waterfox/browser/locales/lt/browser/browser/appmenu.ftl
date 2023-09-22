@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,14 +7,19 @@
 
 appmenuitem-banner-update-downloading =
     .label = Atsiunčiamas „{ -brand-shorter-name }“ naujinimas
+
 appmenuitem-banner-update-available =
     .label = Išleistas naujinimas – atsiųsti dabar
+
 appmenuitem-banner-update-manual =
     .label = Išleistas naujinimas – atsiųsti dabar
+
 appmenuitem-banner-update-unsupported =
     .label = Nepavyko atnaujinti – sistema nesuderinama
+
 appmenuitem-banner-update-restart =
     .label = Išleistas naujinimas – paleisti iš naujo dabar
+
 appmenuitem-new-tab =
     .label = Nauja kortelė
 appmenuitem-new-window =
@@ -51,6 +56,7 @@ appmenu-menu-button-closed2 =
 appmenu-menu-button-opened2 =
     .tooltiptext = Užverti programos meniu
     .label = { -brand-short-name }
+
 # Settings is now used to access the browser settings across all platforms,
 # instead of Options or Preferences.
 appmenuitem-settings =
@@ -71,23 +77,30 @@ appmenu-remote-tabs-sign-into-sync =
     .label = Prisijungti sinchronizavimui…
 appmenu-remote-tabs-turn-on-sync =
     .label = Įjungti sinchronizavimą…
+
 # This is shown after the tabs list if we can display more tabs by clicking on the button
 appmenu-remote-tabs-showmore =
     .label = Rodyti daugiau kortelių
     .tooltiptext = Rodyti daugiau kortelių iš šio įrenginio
+
 # This is shown beneath the name of a device when that device has no open tabs
 appmenu-remote-tabs-notabs = Nėra atvirų kortelių
+
 # This is shown when Sync is configured but syncing tabs is disabled.
 appmenu-remote-tabs-tabsnotsyncing = Įjunkite kortelių sinchronizavimą, norėdami peržiūrėti kituose įrenginiuose esančias korteles.
+
 appmenu-remote-tabs-opensettings =
     .label = Nustatymai
+
 # This is shown when Sync is configured but this appears to be the only device attached to
 # the account. We also show links to download Waterfox for android/ios.
 appmenu-remote-tabs-noclients = Norite čia matyti savo korteles iš kitų įrenginių?
+
 appmenu-remote-tabs-connectdevice =
     .label = Susieti kitą įrenginį
 appmenu-remote-tabs-welcome = Peržiūrėkite kituose įrenginiuose esančias korteles.
 appmenu-remote-tabs-unverified = Jūsų paskyra turi būti patvirtinta.
+
 appmenuitem-fxa-toolbar-sync-now2 = Sinchronizuoti dabar
 appmenuitem-fxa-sign-in = Prisijungti prie „{ -brand-product-name }“
 appmenuitem-fxa-manage-account = Tvarkyti paskyrą
@@ -101,12 +114,14 @@ appmenu-fxa-sync-and-save-data2 = Sinchronizuoti ir įrašyti duomenis
 appmenu-fxa-signed-in-label = Prisijungti
 appmenu-fxa-setup-sync =
     .label = Įjungti sinchronizavimą…
+
 appmenuitem-save-page =
     .label = Įrašyti kaip…
 
 ## What's New panel in App menu.
 
 whatsnew-panel-header = Kas naujo
+
 # Checkbox displayed at the bottom of the What's New panel, allowing users to
 # enable/disable What's New notifications.
 whatsnew-panel-footer-checkbox =
@@ -120,38 +135,52 @@ whatsnew-panel-footer-checkbox =
 profiler-popup-button-idle =
     .label = Profiliuoklė
     .tooltiptext = Įrašyti našumo profilį
+
 profiler-popup-button-recording =
     .label = Profiliuoklė
     .tooltiptext = Profiliuoklė įrašinėja profilį
+
 profiler-popup-button-capturing =
     .label = Profiliuoklė
     .tooltiptext = Profiliuoklė fiksuoja profilį
-profiler-popup-title =
-    .value = { -profiler-brand-name }
+
+profiler-popup-header-text = { -profiler-brand-name }
+
 profiler-popup-reveal-description-button =
     .aria-label = Rodyti daugiau informacijos
+
 profiler-popup-description-title =
     .value = Įrašykite, analizuokite, dalinkitės
+
 profiler-popup-description = Bendraukite spręsdami našumo problemas, paskelbdami profilius pasidalinimui su savo komanda.
+
 profiler-popup-learn-more-button =
     .label = Sužinoti daugiau
+
 profiler-popup-settings =
     .value = Nuostatos
+
 # This link takes the user to about:profiling, and is only visible with the Custom preset.
 profiler-popup-edit-settings-button =
     .label = Keisti nuostatas…
+
 profiler-popup-recording-screen = Įrašinėjama…
+
 profiler-popup-start-recording-button =
     .label = Pradėti įrašinėjimą
+
 profiler-popup-discard-button =
     .label = Atmesti
+
 profiler-popup-capture-button =
     .label = Užfiksuoti
+
 profiler-popup-start-shortcut =
     { PLATFORM() ->
         [macos] ⌃⇧1
        *[other] Ctrl+Shift+1
     }
+
 profiler-popup-capture-shortcut =
     { PLATFORM() ->
         [macos] ⌃⇧2
@@ -166,21 +195,35 @@ profiler-popup-capture-shortcut =
 # devtools/client/performance-new/popup/background.jsm.js
 # Please take care that the same values are also defined in devtools' perftools.ftl.
 
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/shared/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
 profiler-popup-presets-web-developer-description = Rekomenduojamas nustatymas daugelio saityno programų derinimui, su nedidelėmis sąnaudomis.
 profiler-popup-presets-web-developer-label =
     .label = Saityno kūrėjams
+
 profiler-popup-presets-firefox-description = Rekomenduojamas nustatymas „{ -brand-shorter-name }“ profiliavimui.
 profiler-popup-presets-firefox-label =
     .label = { -brand-shorter-name }
+
 profiler-popup-presets-graphics-description = Nustatymas „{ -brand-shorter-name }“ grafikos problemų diagnozavimui.
 profiler-popup-presets-graphics-label =
     .label = Grafika
+
 profiler-popup-presets-media-description2 = Nustatymas „{ -brand-shorter-name }“ garso ir vaizdo problemų diagnozavimui.
 profiler-popup-presets-media-label =
     .label = Medija
+
 profiler-popup-presets-networking-description = Nustatymas „{ -brand-shorter-name }“ tinklo problemų diagnozavimui.
 profiler-popup-presets-networking-label =
     .label = Tinklas
+
+profiler-popup-presets-power-description = Nustatymas „{ -brand-shorter-name }“ energijos suvartojimo problemų diagnozavimui, su nedidelėmis sąnaudomis.
+# "Power" is used in the sense of energy (electricity used by the computer).
+profiler-popup-presets-power-label =
+    .label = Energija
+
 profiler-popup-presets-custom-label =
     .label = Kitas
 
@@ -188,8 +231,6 @@ profiler-popup-presets-custom-label =
 
 appmenu-manage-history =
     .label = Tvarkyti žurnalą
-appmenu-reopen-all-tabs = Įkelti visas korteles
-appmenu-reopen-all-windows = Įkelti visus langus
 appmenu-restore-session =
     .label = Atkurti paskiausiąjį seansą
 appmenu-clear-history =
@@ -243,6 +284,7 @@ appmenu-help-not-deceptive =
 
 appmenu-customizetoolbar =
     .label = Tvarkyti priemonių juostą…
+
 appmenu-developer-tools-subheader = Naršyklės įrankiai
 appmenu-developer-tools-extensions =
     .label = Priedai programuotojams

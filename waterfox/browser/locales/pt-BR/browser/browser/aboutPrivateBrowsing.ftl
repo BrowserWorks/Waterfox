@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,7 +20,7 @@ about-private-browsing-handoff-text = Pesquise com { $engine } ou digite um ende
 about-private-browsing-handoff-text-no-engine = Pesquise ou digite um endereço
 about-private-browsing-not-private = No momento você não está em uma janela privativa.
 about-private-browsing-info-description-private-window = Janela privativa: O { -brand-short-name } limpa o histórico de pesquisa e navegação quando você fecha todas as janelas privativas. Isso não torna você anônimo.
-about-private-browsing-info-description-simplified = O { -brand-short-name } limpa seu histórico de pesquisa e navegação quando você fecha todas as janelas privativas, mas isso não o torna anônimo.
+about-private-browsing-info-description-simplified = O { -brand-short-name } limpa o histórico de pesquisa e navegação quando você fecha todas as janelas privativas, mas isso não significa anonimato na internet.
 about-private-browsing-learn-more-link = Saiba mais
 about-private-browsing-hide-activity = Oculte sua atividade e localização, onde quer que navegue
 about-private-browsing-get-privacy = Tenha proteções de privacidade onde quer que navegue
@@ -34,8 +34,8 @@ about-private-browsing-focus-promo-text = Nosso aplicativo móvel de navegação
 
 about-private-browsing-focus-promo-header-b = Leve a navegação privativa para seu celular
 about-private-browsing-focus-promo-text-b = Use o { -focus-brand-name } naquelas pesquisas privativas que você não quer que seu navegador principal para celular veja.
-about-private-browsing-focus-promo-header-c = Privacidade de nível superior em dispositivos móveis
-about-private-browsing-focus-promo-text-c = O { -focus-brand-name } limpa o histórico toda vez, além de bloquear anúncios e rastreadores.
+about-private-browsing-focus-promo-header-c = Privacidade de superior em dispositivos móveis
+about-private-browsing-focus-promo-text-c = O { -focus-brand-name } sempre limpa o histórico, além de bloquear anúncios e rastreadores.
 # This string is the title for the banner for search engine selection
 # in a private window.
 # Variables:
@@ -60,3 +60,17 @@ about-private-browsing-pin-promo-link-text =
        *[other] Fixar na barra de tarefas
     }
 about-private-browsing-pin-promo-title = Não salva cookies nem histórico, direto da sua área de trabalho. Navegue como se ninguém estivesse vendo.
+
+## Strings used in a promotion message for cookie banner reduction
+
+# Simplified version of the headline if the original text doesn't work
+# in your language: `See fewer cookie requests`.
+about-private-browsing-cookie-banners-promo-header = Chega de avisos de cookies!
+about-private-browsing-cookie-banners-promo-button = Redução de avisos de cookies
+about-private-browsing-cookie-banners-promo-message = Deixe o { -brand-short-name } responder automaticamente a avisos de cookies para que você possa voltar a navegar sem distrações. O { -brand-short-name } rejeita todas as solicitações, se possível.
+
+## Strings for Felt Privacy v1 experiments in 119
+
+about-private-browsing-felt-privacy-v1-info-header = Não deixe rastros neste dispositivo
+about-private-browsing-felt-privacy-v1-info-body = O { -brand-short-name } exclui seus cookies, histórico e dados de sites quando você fecha todas as janelas privativas.
+about-private-browsing-felt-privacy-v1-info-link = Quem pode ver minha atividade?

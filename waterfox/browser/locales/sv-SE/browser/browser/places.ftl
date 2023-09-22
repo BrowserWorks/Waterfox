@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = Öppna i nytt privat fönster
     .accesskey = p
+
+places-empty-bookmarks-folder =
+    .label = (Tom)
 
 places-add-bookmark =
     .label = Lägg till bokmärke…
@@ -87,6 +90,15 @@ places-delete-folder =
            *[other] Ta bort mappar
         }
     .accesskey = b
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] Ta bort sida
+           *[other] Ta bort sidor
+        }
+    .accesskey = T
 
 # Managed bookmarks are created by an administrator and cannot be changed by the user.
 managed-bookmarks =
@@ -114,6 +126,20 @@ places-delete-bookmark =
         }
     .accesskey = b
 
+# Variables:
+#   $count (number) - The number of bookmarks being added.
+places-create-bookmark =
+    .label =
+        { $count ->
+            [1] Bokmärk sida…
+           *[other] Bokmärk sidor…
+        }
+    .accesskey = B
+
+places-untag-bookmark =
+    .label = Ta bort tagg
+    .accesskey = T
+
 places-manage-bookmarks =
     .label = Hantera bokmärken
     .accesskey = H
@@ -122,13 +148,12 @@ places-forget-about-this-site-confirmation-title = Glöm bort den här webbplats
 
 # Variables:
 # $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
-places-forget-about-this-site-confirmation-message = Denna åtgärd kommer att ta bort all data som är relaterade till { $hostOrBaseDomain } inklusive historik, lösenord, kakor, cache och innehållspreferenser. Är du säker på att du vill fortsätta?
+places-forget-about-this-site-confirmation-msg = Den här åtgärden tar bort data relaterade till { $hostOrBaseDomain } inklusive historik, kakor, cache och innehållsinställningar. Relaterade bokmärken och lösenord kommer inte att tas bort. Är du säker på att du vill fortsätta?
 
 places-forget-about-this-site-forget = Glöm
 
-places-library =
+places-library3 =
     .title = Bibliotek
-    .style = width:700px; height:500px;
 
 places-organize-button =
     .label = Ordna
@@ -229,6 +254,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = Senast ändrad
 
+places-view-sortby-name =
+    .label = Sortera efter namn
+    .accesskey = N
+places-view-sortby-url =
+    .label = Sortera efter plats
+    .accesskey = P
+places-view-sortby-date =
+    .label = Sortera efter senaste besök
+    .accesskey = B
+places-view-sortby-visit-count =
+    .label = Sortera på antal besök
+    .accesskey = A
+places-view-sortby-date-added =
+    .label = Sortera på tillagd
+    .accesskey = T
+places-view-sortby-last-modified =
+    .label = Sortera efter senast uppdaterad
+    .accesskey = u
+places-view-sortby-tags =
+    .label = Sortera efter etiketter
+    .accesskey = e
+
 places-cmd-find-key =
     .key = f
 
@@ -239,3 +286,28 @@ places-forward-button =
     .tooltiptext = Gå framåt
 
 places-details-pane-select-an-item-description = Markera en post för att visa och redigera dess egenskaper
+
+places-details-pane-no-items =
+    .value = Inga poster
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value =
+        { $count ->
+            [one] En post
+           *[other] { $count } poster
+        }
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = Sök bokmärken
+places-search-history =
+    .placeholder = Sök i historik
+places-search-downloads =
+    .placeholder = Sök hämtade filer
+
+##
+
+places-locked-prompt = Systemet med bokmärken och historik kommer inte att fungera eftersom en av { -brand-short-name } filer används av ett annat program. Vissa säkerhetsprogram kan orsaka detta problem.

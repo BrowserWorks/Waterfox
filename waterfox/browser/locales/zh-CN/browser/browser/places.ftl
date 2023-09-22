@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = 新建隐私窗口打开
     .accesskey = P
+
+places-empty-bookmarks-folder =
+    .label = (空)
 
 places-add-bookmark =
     .label = 新建书签…
@@ -86,6 +89,15 @@ places-delete-folder =
            *[other] 删除文件夹
         }
     .accesskey = D
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] 删除页面
+           *[other] 删除页面
+        }
+    .accesskey = D
 
 # Managed bookmarks are created by an administrator and cannot be changed by the user.
 managed-bookmarks =
@@ -112,6 +124,20 @@ places-delete-bookmark =
         }
     .accesskey = D
 
+# Variables:
+#   $count (number) - The number of bookmarks being added.
+places-create-bookmark =
+    .label =
+        { $count ->
+            [1] 将页面加入书签…
+           *[other] 将页面加入书签…
+        }
+    .accesskey = B
+
+places-untag-bookmark =
+    .label = 移除标签
+    .accesskey = R
+
 places-manage-bookmarks =
     .label = 管理书签
     .accesskey = M
@@ -120,13 +146,12 @@ places-forget-about-this-site-confirmation-title = 清除此网站相关信息
 
 # Variables:
 # $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
-places-forget-about-this-site-confirmation-message = 此操作将移除与 { $hostOrBaseDomain } 相关的所有数据，包括历史记录、密码、Cookie、缓存和内容首选项。您确定要继续吗？
+places-forget-about-this-site-confirmation-msg = 此操作将移除与 { $hostOrBaseDomain } 相关的数据，包括历史记录、Cookie、缓存和内容首选项。书签和密码将会保留。您确定要继续吗？
 
 places-forget-about-this-site-forget = 清除
 
-places-library =
+places-library3 =
     .title = 我的足迹
-    .style = width:700px; height:500px;
 
 places-organize-button =
     .label = 管理
@@ -227,6 +252,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = 修改日期
 
+places-view-sortby-name =
+    .label = 按名称排序
+    .accesskey = N
+places-view-sortby-url =
+    .label = 按网址排序
+    .accesskey = L
+places-view-sortby-date =
+    .label = 按上次访问时间排序
+    .accesskey = V
+places-view-sortby-visit-count =
+    .label = 按访问次数排序
+    .accesskey = C
+places-view-sortby-date-added =
+    .label = 按添加时间排序
+    .accesskey = e
+places-view-sortby-last-modified =
+    .label = 按最后修改日期排序
+    .accesskey = M
+places-view-sortby-tags =
+    .label = 按标签排序
+    .accesskey = T
+
 places-cmd-find-key =
     .key = f
 
@@ -237,3 +284,24 @@ places-forward-button =
     .tooltiptext = 转到下一页
 
 places-details-pane-select-an-item-description = 选择一个条目来查看或编辑其属性
+
+places-details-pane-no-items =
+    .value = 无
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value = { $count }个项目
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = 搜索书签
+places-search-history =
+    .placeholder = 搜索历史记录
+places-search-downloads =
+    .placeholder = 搜索下载
+
+##
+
+places-locked-prompt = 由于某个 { -brand-short-name } 的文件正被其他应用程序使用，书签和历史记录系统无法运行。某些安全软件可能引起这类问题。

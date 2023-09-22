@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,9 +26,9 @@ certmgr-people = U hebt certificaten gearchiveerd die deze personen identificere
 certmgr-server = Deze vermeldingen identificeren uitzonderingen op servercertificaatfouten
 certmgr-ca = U hebt certificaten gearchiveerd die deze certificaatautoriteiten identificeren
 
-certmgr-edit-ca-cert =
+certmgr-edit-ca-cert2 =
     .title = CA-certificaat-vertrouwensinstellingen bewerken
-    .style = width: 48em;
+    .style = min-width: 48em;
 
 certmgr-edit-cert-edit-trust = Vertrouwensinstellingen bewerken:
 
@@ -38,9 +38,9 @@ certmgr-edit-cert-trust-ssl =
 certmgr-edit-cert-trust-email =
     .label = Dit certificaat kan e-mailgebruikers identificeren.
 
-certmgr-delete-cert =
+certmgr-delete-cert2 =
     .title = Certificaat verwijderen
-    .style = width: 48em; height: 24em;
+    .style = min-width: 48em; min-height: 24em;
 
 certmgr-cert-host =
     .label = Host
@@ -50,9 +50,6 @@ certmgr-cert-name =
 
 certmgr-cert-server =
     .label = Server
-
-certmgr-override-lifetime =
-    .label = Levensduur
 
 certmgr-token-name =
     .label = Beveiligingsapparaat
@@ -68,6 +65,9 @@ certmgr-email =
 
 certmgr-serial =
     .label = Serienummer
+
+certmgr-fingerprint-sha-256 =
+    .label = SHA-256-vingerafdruk
 
 certmgr-view =
     .label = Weergeven…
@@ -185,8 +185,6 @@ delete-email-cert-impact = Als u een e-mailcertificaat van een persoon verwijder
 #   $serialNumber : the serial number of the cert in AA:BB:CC hex format.
 cert-with-serial =
     .value = Certificaat met serienummer: { $serialNumber }
-
-## Cert Viewer
 
 # Used to indicate that the user chose not to send a client authentication certificate to a server that requested one in a TLS handshake.
 send-no-client-certificate = Geen clientcertificaat verzenden
