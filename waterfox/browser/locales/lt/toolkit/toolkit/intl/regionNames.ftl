@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,6 @@ region-name-bl = Šv. Bartolomėjaus sala
 region-name-bm = Bermudai
 region-name-bn = Brunėjus
 region-name-bo = Bolivija
-region-name-bq = Boneras, Sint Eustatijus ir Saba
 region-name-br = Brazilija
 region-name-bs = Bahamos
 region-name-bt = Butanas
@@ -57,11 +56,9 @@ region-name-co = Kolumbija
 region-name-cp = Klipertono sala
 region-name-cr = Kosta Rika
 region-name-cu = Kuba
-region-name-cv = Žaliasis Kyšulys
 region-name-cw = Kiurasao
 region-name-cx = Kalėdų sala
 region-name-cy = Kipras
-region-name-cz = Čekija
 region-name-de = Vokietija
 region-name-dg = Diego Garsija
 region-name-dj = Džibutis
@@ -150,7 +147,6 @@ region-name-me = Juodkalnija
 region-name-mf = Sen Martenas
 region-name-mg = Madagaskaras
 region-name-mh = Maršalo salos
-region-name-mk = Makedonija
 region-name-ml = Malis
 region-name-mm = Mianmaras (Birma)
 region-name-mn = Mongolija
@@ -223,7 +219,6 @@ region-name-st = San Tomė ir Prinsipė
 region-name-sv = Salvadoras
 region-name-sx = Sint Martenas
 region-name-sy = Sirija
-region-name-sz = Svazilandas
 region-name-tc = Terkso ir Kaiko salos
 region-name-td = Čadas
 region-name-tf = Prancūzijos Pietų ir Antarkties žemės

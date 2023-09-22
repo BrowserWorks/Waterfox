@@ -1,17 +1,19 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 page-title = Technické informace
 page-subtitle =
-    Tato stránka obsahuje technické informace, které mohou být užitečné, pokud se snažíte
-    vyřešit nějaký složitější problém s aplikací. Odpovědi na často kladené otázky ohledně
-    { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "gen") }
-        [feminine] { -brand-short-name(case: "gen") }
-        [neuter] { -brand-short-name(case: "gen") }
-       *[other] aplikace { -brand-short-name }
-    } naleznete na <a data-l10n-name="support-link">webových stránkách podpory</a>.
+    { -brand-short-name.case-status ->
+        [with-cases]
+            Tato stránka obsahuje technické informace, které mohou být užitečné, pokud se snažíte
+            vyřešit nějaký složitější problém s aplikací. Odpovědi na často kladené otázky ohledně
+            { -brand-short-name(case: "gen") } naleznete na <a data-l10n-name="support-link">webových stránkách podpory</a>.
+       *[no-cases]
+            Tato stránka obsahuje technické informace, které mohou být užitečné, pokud se snažíte
+            vyřešit nějaký složitější problém s aplikací. Odpovědi na často kladené otázky ohledně
+            aplikace { -brand-short-name } naleznete na <a data-l10n-name="support-link">webových stránkách podpory</a>.
+    }
 crashes-title = Hlášení pádů
 crashes-id = ID hlášení
 crashes-send-date = Odeslaná
@@ -23,6 +25,10 @@ support-addons-type = Typ
 support-addons-enabled = Povoleno
 support-addons-version = Verze
 support-addons-id = ID
+legacy-user-stylesheets-title = Starší uživatelské kaskádové styly
+legacy-user-stylesheets-enabled = Aktivní
+legacy-user-stylesheets-stylesheet-types = Kaskádové styly
+legacy-user-stylesheets-no-stylesheets-found = Nebyly nalezeny žádné kaskádové styly
 security-software-title = Bezpečnostní software
 security-software-type = Typ
 security-software-name = Název
@@ -30,11 +36,9 @@ security-software-antivirus = Antivir
 security-software-antispyware = Antispyware
 security-software-firewall = Firewall
 features-title =
-    Funkce { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "gen") }
-        [feminine] { -brand-short-name(case: "gen") }
-        [neuter] { -brand-short-name(case: "gen") }
-       *[other] aplikace { -brand-short-name }
+    { -brand-short-name.case-status ->
+        [with-cases] Funkce { -brand-short-name(case: "gen") }
+       *[no-cases] Funkce aplikace { -brand-short-name }
     }
 features-name = Název
 features-version = Verze
@@ -76,10 +80,11 @@ app-basics-remote-processes-count = Vzdálené procesy
 app-basics-enterprise-policies = Podniková pravidla
 app-basics-location-service-key-google = Klíč služby Google Location Service
 app-basics-safebrowsing-key-google = Klíč služby Google Safebrowsing
-app-basics-key-mozilla = Klíč Waterfox Location Service
+app-basics-key-mozilla = Klíč BrowserWorks Location Service
 app-basics-safe-mode = Nouzový režim
 app-basics-memory-size = Velikost paměti (RAM)
 app-basics-disk-available = Dostupné místo na disku
+app-basics-pointing-devices = Polohovací zařízení
 # Variables:
 #   $value (number) - Amount of data being stored
 #   $unit (string) - The unit of data being stored (e.g. MB)
@@ -100,12 +105,10 @@ modified-prefs-name = Název
 modified-prefs-value = Hodnota
 user-js-title = Předvolby user.js
 user-js-description =
-    Složka s profilem obsahuje <a data-l10n-name="user-js-link">soubor user.js</a>, který obsahuje předvolby, které nebyly vytvořeny { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "ins") }
-        [feminine] { -brand-short-name(case: "ins") }
-        [neuter] { -brand-short-name(case: "ins") }
-       *[other] aplikací { -brand-short-name }
-    }.
+    { -brand-short-name.case-status ->
+        [with-cases] Složka s profilem obsahuje <a data-l10n-name="user-js-link">soubor user.js</a>, který obsahuje předvolby, které nebyly vytvořeny { -brand-short-name(case: "ins") }.
+       *[no-cases] Složka s profilem obsahuje <a data-l10n-name="user-js-link">soubor user.js</a>, který obsahuje předvolby, které nebyly vytvořeny aplikací { -brand-short-name }.
+    }
 locked-key-prefs-title = Důležité uzamčené předvolby
 locked-prefs-name = Název
 locked-prefs-value = Hodnota
@@ -118,11 +121,21 @@ graphics-gpu2-title = GPU #2
 graphics-decision-log-title = Protokol rozhodování
 graphics-crash-guards-title = Zakázat funkce Crash Guard
 graphics-workarounds-title = Možná řešení
+graphics-device-pixel-ratios = Poměr pixelů zařízení okna
 # Windowing system in use on Linux (e.g. X11, Wayland).
 graphics-window-protocol = Protokol zobrazování oken
 # Desktop environment in use on Linux (e.g. GNOME, KDE, XFCE, etc).
 graphics-desktop-environment = Desktopové prostředí
 place-database-title = Databáze Places
+place-database-stats = Statistiky
+place-database-stats-show = Zobrazit statistiku
+place-database-stats-hide = Skrýt statistiku
+place-database-stats-entity = Entita
+place-database-stats-count = Počet
+place-database-stats-size-kib = Velikost (KiB)
+place-database-stats-size-perc = Velikost (%)
+place-database-stats-efficiency-perc = Efektivita (%)
+place-database-stats-sequentiality-perc = Sekvence (%)
 place-database-integrity = Integrita
 place-database-verify-integrity = Zkontrolovat integritu
 a11y-title = Přístupnost
@@ -147,12 +160,10 @@ restart-in-troubleshoot-mode-label = Režim řešení potíží…
 clear-startup-cache-title = Zkuste vymazat mezipaměť spouštění
 clear-startup-cache-label = Vymazat mezipaměť spouštění…
 startup-cache-dialog-title2 =
-    Chcete restartovat { -brand-shorter-name.gender ->
-        [masculine] { -brand-short-name(case: "acc") }
-        [feminine] { -brand-short-name(case: "acc") }
-        [neuter] { -brand-short-name(case: "acc") }
-       *[other] aplikaci { -brand-short-name }
-    } a vymazat mezipaměť spouštění?
+    { -brand-shorter-name.case-status ->
+        [with-cases] Chcete restartovat { -brand-short-name(case: "acc") } a vymazat mezipaměť spouštění?
+       *[no-cases] Chcete restartovat aplikaci { -brand-short-name } a vymazat mezipaměť spouštění?
+    }
 startup-cache-dialog-body2 = Vaše nastavení i nainstalována rozšíření nebudou nijak ovlivněna.
 restart-button-label = Restartovat
 
@@ -178,6 +189,15 @@ media-capabilities-title = Podpora médií
 media-codec-support-info = Informace o podpoře kodeků
 # List all the entries of the database.
 media-capabilities-enumerate = Vypsat databázi
+
+## Codec support table
+
+media-codec-support-sw-decoding = Softwarové dekódování
+media-codec-support-hw-decoding = Hardwarové dekódování
+media-codec-support-codec-name = Název kodeku
+media-codec-support-supported = Podporované
+media-codec-support-unsupported = Nepodporováné
+media-codec-support-error = Informace o podpoře kodeků není k dispozici. Zkuste to znovu po přehrání mediálního souboru.
 
 ##
 
@@ -297,6 +317,8 @@ webgl2-renderer = Zobrazování WebGL2
 webgl2-version = Verze ovladače WebGL 2
 webgl2-driver-extensions = Rozšíření ovladače WebGL 2
 webgl2-extensions = Rozšíření WebGL 2
+webgpu-default-adapter = Výchozí adaptér WebGPU
+webgpu-fallback-adapter = Záložní adaptér WebGPU
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = Zablokováno kvůli známým problémům: <a data-l10n-name="bug-link">bug { $bugNumber }</a>
@@ -326,6 +348,7 @@ can-sandbox-media = Sandbox zásuvných modulů médií
 content-sandbox-level = Úroveň sandboxu procesů pro obsah
 effective-content-sandbox-level = Účinná úroveň sandboxu procesů pro obsah
 content-win32k-lockdown-state = Stav uzamčení Win32k procesů pro obsah
+support-sandbox-gpu-level = Úroveň sandboxu procesů GPU
 sandbox-proc-type-content = obsah
 sandbox-proc-type-file = obsah souboru
 sandbox-proc-type-media-plugin = zásuvný modul médií
@@ -397,3 +420,10 @@ support-remote-experiments-see-about-studies = Podrobnosti o experimentech { -br
 support-remote-features-title = Vzdálené funkce
 support-remote-features-name = Název
 support-remote-features-status = Stav
+
+## Pointing devices
+
+pointing-device-mouse = Myš
+pointing-device-touchscreen = Dotyková obrazovka
+pointing-device-pen-digitizer = Digitální pero
+pointing-device-none = Žádná polohovací zařízení

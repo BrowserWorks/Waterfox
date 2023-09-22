@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,12 +16,16 @@ learn-more = <span data-l10n-name="link">En savoir plus </ span>
 
 inactive-css-not-grid-or-flex-container = <strong>{ $property }</strong> n’a aucun effet sur cet élément, car il ne s’agit ni d’un conteneur flex, ni d’un conteneur de grille.
 inactive-css-not-grid-or-flex-container-or-multicol-container = <strong>{ $property }</strong> n’a aucun effet sur cet élément, car ce n’est ni un conteneur flex, ni un conteneur de grille ni un conteneur de plusieurs colonnes.
+inactive-css-not-multicol-container = <strong>{ $property }</strong> n’a aucun effet sur cet élément, car il ne s’agit pas d’un conteneur multicolonne.
 inactive-css-not-grid-or-flex-item = <strong>{ $property }</strong> n’a aucun effet sur cet élément, car il ne s’agit ni d’un élément de grille ni d’un élément flexible.
 inactive-css-not-grid-item = <strong>{ $property }</strong> n’a aucun effet sur cet élément, car il ne s’agit pas d’un élément de grille.
 inactive-css-not-grid-container = <strong>{ $property }</strong> n’a aucun effet sur cet élément, car il ne s’agit pas d’un conteneur de grille.
 inactive-css-not-flex-item = <strong>{ $property }</strong> n’a aucun effet sur cet élément, car il ne s’agit pas d’un élément flexible.
 inactive-css-not-flex-container = <strong>{ $property }</strong> n’a aucun effet sur cet élément, car il ne s’agit pas d’un conteneur d’éléments flexibles.
 inactive-css-not-inline-or-tablecell = <strong>{ $property }</strong> n’a aucun effet sur cet élément, car il ne s’agit ni d’un élément « inline » ni d’un élément « table-cell ».
+inactive-css-first-line-pseudo-element-not-supported = La propriété <strong>{ $property }</strong> n’est pas prise en charge par les pseudo-éléments ::first-line.
+inactive-css-first-letter-pseudo-element-not-supported = La propriété <strong>{ $property }</strong> n’est pas prise en charge par les pseudo-éléments ::first-letter.
+inactive-css-placeholder-pseudo-element-not-supported = La propriété <strong>{ $property }</strong> n’est pas prise en charge par les pseudo-éléments ::placeholder.
 inactive-css-property-because-of-display = <strong>{ $property }</strong> n’a aucun effet sur cet élément car la valeur de sa propriété « display » est <strong>{ $display }</strong>.
 inactive-css-not-display-block-on-floated = La valeur <strong>display</strong> a été modifiée par le moteur en <strong>block</strong> car l’élément est <strong>flottant</strong>.
 inactive-css-property-is-impossible-to-override-in-visited = Il n’est pas possible de redéfinir <strong>{ $property }</strong> en raison de restrictions sur <strong>:visited</strong>.
@@ -30,9 +34,12 @@ inactive-text-overflow-when-no-overflow = <strong>{ $property }</strong> n’a a
 inactive-css-not-for-internal-table-elements = <strong>{ $property }</strong> n’a aucun effet sur les éléments contenus dans un élément table.
 inactive-css-not-for-internal-table-elements-except-table-cells = <strong>{ $property }</strong> n’a aucun effet sur les éléments contenus dans un élément table à l’exception de ses cellules.
 inactive-css-not-table = <strong>{ $property }</strong> n’a aucun effet sur cet élément, car il ne s’agit pas d’un tableau.
+inactive-css-not-table-cell = <strong>{ $property }</strong> n’a aucun effet sur cet élément, car il ne s’agit pas d’une cellule de tableau.
 inactive-scroll-padding-when-not-scroll-container = <strong>{ $property }</strong> n’a aucun effet sur cet élément, car il ne s’agit pas d’un élément défilable.
 inactive-css-border-image = </strong>{ $property }<strong> n’a aucun effet sur cet élément comme cette propriété ne peut s’appliquer à des éléments internes d’un tableau quand <strong>border-collapse</strong> est défini à <strong>collapse</strong> sur l’élément parent dans le tableau.
 inactive-css-ruby-element = <strong>{ $property }</strong> n’a aucun effet sur cet élément, car il s’agit d’un élément ruby. Sa taille est déterminée par celle de la police utilisée pour le texte ruby.
+inactive-css-highlight-pseudo-elements-not-supported = La propriété <strong>{ $property }</strong> n’est pas prise en charge par les pseudo-éléments highlight.
+inactive-css-cue-pseudo-element-not-supported = La propriété <strong>{ $property }</strong> n’est pas prise en charge par les pseudo-éléments ::cue.
 
 ## In the Rule View when a CSS property cannot be successfully applied we display
 ## an icon. When this icon is hovered this message is displayed to explain how
@@ -40,6 +47,7 @@ inactive-css-ruby-element = <strong>{ $property }</strong> n’a aucun effet sur
 
 inactive-css-not-grid-or-flex-container-fix = Essayez d’ajouter <strong>display: grid</strong> ou <strong>display: flex</strong>. { learn-more }
 inactive-css-not-grid-or-flex-container-or-multicol-container-fix = Essayez d’ajouter <strong>display:grid</strong>, <strong>display:flex</strong>, ou <strong>columns:2</strong>. { learn-more }
+inactive-css-not-multicol-container-fix = Essayez d’ajouter <strong>column-count</strong> ou <strong>column-width</strong>. { learn-more }
 inactive-css-not-grid-or-flex-item-fix-3 = Essayez en ajoutant <strong>display:grid</strong>, <strong>display:flex</strong>, <strong>display:inline-grid</strong> ou <strong>display:inline-flex</strong> à l’élément parent. { learn-more }
 inactive-css-not-grid-item-fix-2 = Essayez d’ajouter <strong>display:grid</strong> ou <strong>display:inline-grid</strong> au parent de l’élément. { learn-more }
 inactive-css-not-grid-container-fix = Essayez d’ajouter <strong>display: grid</strong> ou <strong>display:inline-grid</strong>. { learn-more }
@@ -54,6 +62,7 @@ inactive-text-overflow-when-no-overflow-fix = Essayez d’ajouter <strong>overfl
 inactive-css-not-for-internal-table-elements-fix = Essayez d’affecter à la propriété <strong>display</strong> une valeur autre que <strong>table-cell</strong>, <strong>table-column</strong>, <strong>table-row</strong>, <strong>table-column-group</strong>, <strong>table-row-group</strong> ou <strong>table-footer-group</strong>. { learn-more }
 inactive-css-not-for-internal-table-elements-except-table-cells-fix = Essayez d’affecter à la propriété <strong>display</strong> une valeur autre que <strong>table-column</strong>, <strong>table-row</strong>, <strong>table-column-group</strong>, <strong>table-row-group</strong> ou <strong>table-footer-group</strong>. { learn-more }
 inactive-css-not-table-fix = Essayez d’ajouter <strong>display:table</strong> ou <strong>display:inline-table</strong>. { learn-more }
+inactive-css-not-table-cell-fix = Essayez d’ajouter <strong>display:table-cell</strong>. { learn-more }
 inactive-scroll-padding-when-not-scroll-container-fix = Essayez d’ajouter <strong>overflow:auto</strong>, <strong>overflow:scroll</strong> ou <strong>overflow:hidden</strong>. { learn-more }
 inactive-css-border-image-fix = Sur l’élément parent dans le tableau, supprimez la propriété <strong>border-collapse</strong> ou modifiez sa valeur pour autre chose que <strong>collapse</strong>. { learn-more }
 inactive-css-ruby-element-fix = Essayez de modifier la <strong>taille de police</strong> du texte ruby. { learn-more }

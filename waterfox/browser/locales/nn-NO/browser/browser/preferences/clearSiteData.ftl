@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-clear-site-data-window =
+clear-site-data-window2 =
     .title = Fjern data
-    .style = width: 35em
+    .style = min-width: 35em
 
 clear-site-data-description = Om du fjernar alle infokapslar og nettstad-data som er lagra av { -brand-short-name } vil kunne logge deg ut av nettstadar og fjerne fråkopla nettinnhald. Fjerning av snøgglager- (cache-) data vil ikkje påverke innloggingane dine.
 

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -164,11 +164,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = Opening in { $hours }h { $minutes }m…
-downloading-file-opens-in-minutes = Opening in { $minutes }m…
-downloading-file-opens-in-minutes-and-seconds = Opening in { $minutes }m { $seconds }s…
-downloading-file-opens-in-seconds = Opening in { $seconds }s…
-downloading-file-opens-in-some-time = Opening when completed…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = Opening in { $hours }h { $minutes }m…
+downloading-file-opens-in-minutes-2 =
+    .value = Opening in { $minutes }m…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = Opening in { $minutes }m { $seconds }s…
+downloading-file-opens-in-seconds-2 =
+    .value = Opening in { $seconds }s…
+downloading-file-opens-in-some-time-2 =
+    .value = Opening when completed…
 downloading-file-click-to-open =
     .value = Open when completed
 
@@ -194,7 +199,7 @@ downloads-history =
 # This string is shown at the top of the Download Details Panel, to indicate
 # that we are showing the details of a single download.
 downloads-details =
-    .title = Download Details
+    .title = Download details
 
 ## Displayed when a site attempts to automatically download many files.
 ## Variables:
@@ -233,3 +238,17 @@ downloads-more-downloading =
         [one] { $count } more file downloading
        *[other] { $count } more files downloading
     }
+
+## Download errors
+
+downloads-error-alert-title = Download Error
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = The download cannot be saved because it is blocked by { $extension }.
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = The download cannot be saved because it is blocked by an extension.
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    The download cannot be saved because an unknown error occurred.
+    
+    Please try again.

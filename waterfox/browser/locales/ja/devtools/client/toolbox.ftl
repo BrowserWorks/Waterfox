@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -24,23 +24,22 @@ toolbox-meatball-menu-community-label = コミュニティ...
 # to stay visible on blur, which is primarily useful for addon developers and Waterfox
 # contributors.
 toolbox-meatball-menu-noautohide-label = ポップアップを自動で隠さない
-
 toolbox-meatball-menu-pseudo-locale-accented = “accented” ロケールを有効化
 toolbox-meatball-menu-pseudo-locale-bidi = “bidi” ロケールを有効化
-
-##
 
 ## These labels are shown in the top-toolbar in the Browser Toolbox and Browser Console
 
 toolbox-mode-browser-toolbox-label = ブラウザーツールボックスモード
 toolbox-mode-browser-console-label = ブラウザーコンソールモード
-
 toolbox-mode-everything-label = マルチプロセス
 toolbox-mode-everything-sub-label = (低速)
 toolbox-mode-everything-container =
-  .title = すべてのプロセスをデバッグできます
-
+    .title = すべてのプロセスをデバッグできます
 toolbox-mode-parent-process-label = 親プロセスのみ
 toolbox-mode-parent-process-sub-label = (高速)
 toolbox-mode-parent-process-container =
-  .title = 親プロセスで動作しているリソースのみデバッグできます。
+    .title = 親プロセスで動作しているリソースのみデバッグできます。
+toolbox-always-on-top-enabled2 = 常に最前面に表示を無効化
+    .title = 開発ツールが再起動されます
+toolbox-always-on-top-disabled2 = 常に最前面に表示を有効化
+    .title = 開発ツールが再起動されます

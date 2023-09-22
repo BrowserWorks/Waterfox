@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,7 +15,7 @@ certificate-viewer-algorithm = Algorithme
 certificate-viewer-certificate-authority = Autorité de certification
 certificate-viewer-cipher-suite = Suite de chiffrement
 certificate-viewer-common-name = Nom courant
-certificate-viewer-email-address = Adresse électronique
+certificate-viewer-email-address = Adresse e-mail
 # Variables:
 #   $firstCertName (String) - Common Name for the displayed certificate
 certificate-viewer-tab-title = Certificat pour { $firstCertName }

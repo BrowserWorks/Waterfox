@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,10 +38,10 @@ default-bookmarks-nightly-heading = ทรัพยากร Waterfox Nightly
 default-bookmarks-nightly-blog = บล็อก Waterfox Nightly
 
 # Nightly builds only, link title for https://bugzilla.mozilla.org/
-default-bookmarks-bugzilla = ตัวติดตามข้อบกพร่อง Waterfox
+default-bookmarks-bugzilla = ตัวติดตามข้อบกพร่อง BrowserWorks
 
 # Nightly builds only, link title for https://developer.mozilla.org/
-default-bookmarks-mdn = Waterfox Developer Network
+default-bookmarks-mdn = BrowserWorks Developer Network
 
 # Nightly builds only, link title for https://addons.mozilla.org/firefox/addon/nightly-tester-tools/
 default-bookmarks-nightly-tester-tools = เครื่องมือทดสอบ Nightly
@@ -50,4 +50,4 @@ default-bookmarks-nightly-tester-tools = เครื่องมือทดส
 default-bookmarks-crashes = ข้อขัดข้องของคุณทั้งหมด
 
 # Nightly builds only, link title for https://planet.mozilla.org/
-default-bookmarks-planet = Planet Waterfox
+default-bookmarks-planet = Planet BrowserWorks

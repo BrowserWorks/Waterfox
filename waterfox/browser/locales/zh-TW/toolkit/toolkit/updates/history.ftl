@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,5 +23,7 @@ state-header = 狀態
 update-full-build-name = { $name } ({ $buildID })
 
 update-details = 詳細資訊
+
 update-installed-on = 安裝於: { $date }
+
 update-status = 狀態: { $status }

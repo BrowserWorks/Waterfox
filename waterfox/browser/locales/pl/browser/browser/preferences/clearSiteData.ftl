@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-clear-site-data-window =
+clear-site-data-window2 =
     .title = Czyszczenie danych
-    .style = width: 35em
+    .style = min-width: 35em
 
 clear-site-data-description = Wyczyszczenie wszystkich ciasteczek i danych witryn przechowywanych przez przeglądarkę { -brand-short-name } może spowodować wylogowanie z witryn i usunąć treści offline. Czyszczenie danych pamięci podręcznej nie wpłynie na zachowane dane logowania.
 

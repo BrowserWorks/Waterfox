@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,13 +34,6 @@ about-networking-messages-received = Mensajes recibidos
 about-networking-bytes-sent = Bytes enviados
 about-networking-bytes-received = Bytes recibidos
 about-networking-logging = Registro
-about-networking-log-tutorial = Vea<a data-l10n-name="logging">Registro HTTP</a> para instrucciones sobre como usar esta herramienta.
-about-networking-current-log-file = Archivo de registro actual:
-about-networking-current-log-modules = Módulos de registro actuales:
-about-networking-set-log-file = Establecer archivo de registro
-about-networking-set-log-modules = Establecer módulos de registro
-about-networking-start-logging = Iniciar registro
-about-networking-stop-logging = Detener registro
 about-networking-dns-lookup = Búsqueda de DNS
 about-networking-dns-lookup-button = Resolver
 about-networking-dns-domain = Dominio:
@@ -63,6 +56,8 @@ about-networking-rcwn-cache-slow = Cuenta lenta de caché
 about-networking-rcwn-cache-not-slow = Cuenta de caché no lenta
 about-networking-networkid = ID de red
 about-networking-networkid-id = ID de red
+# Note: do not translate about:logging, as it is a URL.
+about-networking-moved-about-logging = Esta página se ha movido a <a data-l10n-name="about-logging-url">about:logging</a>.
 
 ## Link is intended as "network link"
 

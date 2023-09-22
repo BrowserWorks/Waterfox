@@ -1,56 +1,86 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pictureinpicture-player-title = Εικόνα εντός εικόνας
-pictureinpicture-pause =
-    .aria-label = Παύση
-pictureinpicture-play =
-    .aria-label = Αναπαραγωγή
-pictureinpicture-mute =
-    .aria-label = Σίγαση
-pictureinpicture-unmute =
-    .aria-label = Άρση σίγασης
-pictureinpicture-unpip =
-    .aria-label = Αποστολή πίσω στην καρτέλα
-pictureinpicture-close =
-    .aria-label = Κλείσιμο
 
 ## Variables:
 ##   $shortcut (String) - Keyboard shortcut to execute the command.
 
-pictureinpicture-pause-cmd =
+## Note that this uses .tooltip rather than the standard '.title'
+## or '.tooltiptext' -  but it has the same effect. Code in the
+## picture-in-picture window will read and copy this to an in-document
+## DOM node that then shows the tooltip.
+##
+## Variables:
+##   $shortcut (String) - Keyboard shortcut to execute the command.
+
+pictureinpicture-pause-btn =
     .aria-label = Παύση
-    .title = Παύση (Spacebar)
-pictureinpicture-play-cmd =
+    .tooltip = Παύση (Spacebar)
+pictureinpicture-play-btn =
     .aria-label = Αναπαραγωγή
-    .title = Αναπαραγωγή (Spacebar)
-pictureinpicture-mute-cmd =
+    .tooltip = Αναπαραγωγή (Spacebar)
+
+pictureinpicture-mute-btn =
     .aria-label = Σίγαση
-    .title = Σίγαση ({ $shortcut })
-pictureinpicture-unmute-cmd =
+    .tooltip = Σίγαση ({ $shortcut })
+pictureinpicture-unmute-btn =
     .aria-label = Άρση σίγασης
-    .title = Άρση σίγασης ({ $shortcut })
-pictureinpicture-unpip-cmd =
+    .tooltip = Άρση σίγασης ({ $shortcut })
+
+pictureinpicture-unpip-btn =
     .aria-label = Αποστολή πίσω στην καρτέλα
-    .title = Πίσω στην καρτέλα
-pictureinpicture-close-cmd =
+    .tooltip = Πίσω στην καρτέλα
+
+pictureinpicture-close-btn =
     .aria-label = Κλείσιμο
-    .title = Κλείσιμο ({ $shortcut })
-pictureinpicture-subtitles-cmd =
+    .tooltip = Κλείσιμο ({ $shortcut })
+
+pictureinpicture-subtitles-btn =
     .aria-label = Υπότιτλοι
-    .title = Υπότιτλοι
+    .tooltip = Υπότιτλοι
+
+pictureinpicture-fullscreen-btn2 =
+    .aria-label = Πλήρης οθόνη
+    .tooltip = Πλήρης οθόνη (διπλό κλικ ή { $shortcut })
+
+pictureinpicture-exit-fullscreen-btn2 =
+    .aria-label = Έξοδος από πλήρη οθόνη
+    .tooltip = Έξοδος από πλήρη οθόνη (διπλό κλικ ή { $shortcut })
 
 ##
 
-pictureinpicture-fullscreen-cmd =
-    .aria-label = Πλήρης οθόνη
-    .title = Πλήρης οθόνη (διπλό κλικ)
-pictureinpicture-exit-fullscreen-cmd =
-    .aria-label = Έξοδος από πλήρη οθόνη
-    .title = Έξοδος από πλήρη οθόνη (διπλό κλικ)
+# Keyboard shortcut to toggle fullscreen mode when Picture-in-Picture is open.
+pictureinpicture-toggle-fullscreen-shortcut =
+    .key = F
+
+## Note that this uses .tooltip rather than the standard '.title'
+## or '.tooltiptext' -  but it has the same effect. Code in the
+## picture-in-picture window will read and copy this to an in-document
+## DOM node that then shows the tooltip.
+
+pictureinpicture-seekbackward-btn =
+    .aria-label = Πίσω
+    .tooltip = Πίσω (←)
+
+pictureinpicture-seekforward-btn =
+    .aria-label = Εμπρός
+    .tooltip = Εμπρός (→)
+
+##
+
+# This string is never displayed on the window. Is intended to be announced by
+# a screen reader whenever a user opens the subtitles settings panel
+# after selecting the subtitles button.
+pictureinpicture-subtitles-panel-accessible = Ρυθμίσεις υπότιτλων
+
 pictureinpicture-subtitles-label = Υπότιτλοι
+
 pictureinpicture-font-size-label = Μέγεθος γραμματοσειράς
+
 pictureinpicture-font-size-small = Μικρό
+
 pictureinpicture-font-size-medium = Μεσαίο
+
 pictureinpicture-font-size-large = Μεγάλο

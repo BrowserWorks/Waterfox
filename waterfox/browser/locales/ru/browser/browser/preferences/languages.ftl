@@ -1,18 +1,18 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-webpage-languages-window =
-    .title = Настройки языка веб-страниц
-    .style = width: 40em
+webpage-languages-window2 =
+    .title = Настройки языка страниц
+    .style = min-width: 40em
 
 languages-close-key =
     .key = w
 
-languages-description = Некоторые веб-страницы могут быть доступны более чем на одном языке. Укажите порядок выбора языка страницы
+languages-description = Некоторые страницы могут быть доступны более чем на одном языке. Укажите порядок выбора языка страницы
 
 languages-customize-spoof-english =
-    .label = Для повышения приватности запрашивать веб-страницы на английском языке
+    .label = Для повышения приватности запрашивать страницы на английском языке
 
 languages-customize-moveup =
     .label = Вверх
@@ -49,9 +49,9 @@ languages-code-format =
 languages-active-code-format =
     .value = { languages-code-format.label }
 
-browser-languages-window =
+browser-languages-window2 =
     .title = Настройки языка { -brand-short-name }
-    .style = width: 40em
+    .style = min-width: 40em
 
 browser-languages-description = { -brand-short-name } будет использовать первый язык из списка по умолчанию, а другие языки в указанном порядке, при необходимости.
 

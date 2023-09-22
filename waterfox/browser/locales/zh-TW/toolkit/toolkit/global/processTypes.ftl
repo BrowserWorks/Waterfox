@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,7 +15,7 @@ process-type-privilegedabout = 有權限的關於頁面
 
 # process used to run privileged mozilla pages,
 # such as accounts.firefox.com
-process-type-privilegedmozilla = 有權限的 Waterfox 內容
+process-type-privilegedmozilla = 有權限的 BrowserWorks 內容
 
 process-type-extension = 擴充套件
 

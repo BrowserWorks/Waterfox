@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,6 +60,9 @@ import-from-firefox =
 import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
 
 no-migration-sources = Δεν βρέθηκαν προγράμματα τα οποία περιέχουν σελιδοδείκτες, ιστορικό ή δεδομένα κωδικών.
 
@@ -64,8 +73,8 @@ import-items-description = Επιλέξτε στοιχεία προς εισαγ
 
 import-permissions-page-title = Παρακαλούμε παραχωρήστε στο { -brand-short-name } δικαιώματα
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = Το macOS απαιτεί τη ρητή έγκρισή σας ώστε το { -brand-short-name } να προσπελάσει τους σελιδοδείκτες του Safari. Κάντε κλικ στο «Συνέχεια» και επιλέξτε το αρχείο «Bookmarks.plist» στο παράθυρο «Άνοιγμα αρχείου».
+# Do not translate "Safari" (the name of the browser on Apple devices)
+import-safari-permissions-string = Το macOS απαιτεί τη ρητή έγκρισή σας ώστε το { -brand-short-name } να προσπελάσει τα δεδομένα του Safari. Κάντε κλικ στο «Συνέχεια», επιλέξτε τον φάκελο του «Safari» στο παράθυρο διαλόγου του Finder και τέλος, κάντε κλικ στο «Άνοιγμα».
 
 import-migrating-page-title = Εισαγωγή…
 
@@ -158,3 +167,8 @@ browser-data-session-checkbox =
     .label = Παράθυρα και καρτέλες
 browser-data-session-label =
     .value = Παράθυρα και καρτέλες
+
+browser-data-payment-methods-checkbox =
+    .label = Μέθοδοι πληρωμής
+browser-data-payment-methods-label =
+    .value = Μέθοδοι πληρωμής

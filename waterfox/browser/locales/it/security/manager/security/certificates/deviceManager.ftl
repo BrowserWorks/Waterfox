@@ -1,13 +1,13 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ## Strings used for device manager
 
-devmgr =
+devmgr-window =
     .title = Gestione dispositivi
-    .style = width: 70em; height: 33em;
+    .style = min-width: 70em; min-height: 33em;
 
 devmgr-devlist =
     .label = Moduli e dispositivi di sicurezza

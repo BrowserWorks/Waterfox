@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,17 +13,45 @@ safeb-blocked-harmful-page-short-desc = { -brand-short-name } blockerade den hä
 safeb-palm-advisory-desc = Rådgivning tillhandahålls av <a data-l10n-name='advisory_provider'>{ $advisoryname }</a>.
 safeb-palm-accept-label = Gå tillbaka
 safeb-palm-see-details-label = Se detaljer
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-phishing-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> har <a data-l10n-name='error_desc_link'>rapporterats som en vilseledande webbplats</a>. Du kan <a data-l10n-name='report_detection'>rapportera ett detektionsproblem</a> eller <a data-l10n-name='ignore_warning_link'>ignorera risken</a> och gå till denna osäkra webbplatsen.
 safeb-blocked-phishing-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> har <a data-l10n-name='error_desc_link'>rapporterats som en vilseledande webbplats</a>. Du kan <a data-l10n-name='report_detection'>rapportera ett detekteringsproblem</a>.
+
+##
+
 safeb-blocked-phishing-page-learn-more = Läs mer om vilseledande webbplatser och nätfiske på <a data-l10n-name='learn_more_link'>www.antiphishing.org</a>. Läs mer om skydd mot nätfiske och skadlig programvara i { -brand-short-name } på <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-malware-page-error-desc-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> har <a data-l10n-name='error_desc_link'>rapporterats innehålla skadlig programvara</a>. Du kan <a data-l10n-name='ignore_warning_link'>ignorera risken</a> och gå till den osäkra webbplatsen.
 safeb-blocked-malware-page-error-desc-no-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> har <a data-l10n-name='error_desc_link'>rapporterats innehålla skadlig programvara</a>.
+
+##
+
 safeb-blocked-malware-page-learn-more-sumo = Läs mer om { -brand-short-name }’s skydd mot nätfiske och skadlig programvara på <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-unwanted-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> har <a data-l10n-name='error_desc_link'>rapporterats innehålla skadlig programvara</a>. Du kan <a data-l10n-name='ignore_warning_link'>ignorera risken</a> och gå till den här osäkra webbplatsen.
 safeb-blocked-unwanted-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> har <a data-l10n-name='error_desc_link'>rapporterats innehålla skadlig programvara</a>.
+
+##
+
 safeb-blocked-unwanted-page-learn-more = Läs mer om skadlig och oönskad programvara på <a data-l10n-name='learn_more_link'>Unwanted Software Policy</a>. Läs mer om skydd mot nätfiske och skadlig programvara i { -brand-short-name } på <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-harmful-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> har <a data-l10n-name='error_desc_link'>rapporterats innehålla ett potentiellt skadligt program</a>. Du kan <a data-l10n-name='ignore_warning_link'>ignorera risken</a> och gå till denna osäkra webbplatsen.
 safeb-blocked-harmful-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> har <a data-l10n-name='error_desc_link'>rapporterats innehålla ett potentiellt skadligt program</a>.
+
+##
+
 safeb-blocked-harmful-page-learn-more = Läs mer om skydd mot nätfiske och skadlig programvara i { -brand-short-name } på <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
 safeb-palm-notdeceptive =
     .label = Detta är inte en vilseledande webbplats…

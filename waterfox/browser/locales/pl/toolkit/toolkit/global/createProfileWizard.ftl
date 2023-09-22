@@ -1,17 +1,17 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-create-profile-window =
+create-profile-window2 =
     .title = Kreator nowego profilu
-    .style = width: 45em; height: 32em;
+    .style = min-width: 45em; min-height: 32em;
 
 ## First wizard page
 
-create-profile-first-page-header =
+create-profile-first-page-header2 =
     { PLATFORM() ->
         [macos] Wstęp
-       *[other] { create-profile-window.title } — zapraszamy
+       *[other] { create-profile-window2.title } — zapraszamy
     }
 
 profile-creation-explanation-1 = { -brand-short-name } przechowuje informacje o ustawieniach i preferencjach użytkownika w prywatnym profilu.
@@ -28,10 +28,10 @@ profile-creation-explanation-4 =
 
 ## Second wizard page
 
-create-profile-last-page-header =
+create-profile-last-page-header2 =
     { PLATFORM() ->
         [macos] Zakończenie
-       *[other] { create-profile-window.title } — finalizowanie
+       *[other] { create-profile-window2.title } — finalizowanie
     }
 
 profile-creation-intro = Tworzony profil musi mieć nazwę różną od już istniejących profili. Użyj nazwy podanej poniżej lub wprowadź własną.

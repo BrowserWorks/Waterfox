@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,17 +13,45 @@ safeb-blocked-harmful-page-short-desc = { -brand-short-name } 已拦截此页面
 safeb-palm-advisory-desc = 安全信息由 <a data-l10n-name='advisory_provider'>{ $advisoryname }</a> 提供。
 safeb-palm-accept-label = 返回
 safeb-palm-see-details-label = 查阅详情
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-phishing-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> 被<a data-l10n-name='error_desc_link'>举报为诈骗网站</a>。您可以<a data-l10n-name='report_detection'>反映侦测有误</a>，或<a data-l10n-name='ignore_warning_link'>忽略此风险</a>并继续前往这个不安全的网站。
 safeb-blocked-phishing-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> 被<a data-l10n-name='error_desc_link'>举报为诈骗网站</a>。您可以<a data-l10n-name='report_detection'>反映侦测有误</a>。
+
+##
+
 safeb-blocked-phishing-page-learn-more = 到 <a data-l10n-name='learn_more_link'>www.antiphishing.org</a> 可以详细了解诈骗网站和钓鱼。到 <a data-l10n-name='firefox_support'>support.mozilla.org</a> 可以详细了解 { -brand-short-name } 防范钓鱼和恶意软件的机制。
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-malware-page-error-desc-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> 被<a data-l10n-name='error_desc_link'>举报包含恶意软件</a>。您可以<a data-l10n-name='ignore_warning_link'>忽略此风险</a>并继续前往这个不安全的网站。
 safeb-blocked-malware-page-error-desc-no-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> 被<a data-l10n-name='error_desc_link'>举报包含恶意软件</a>。
+
+##
+
 safeb-blocked-malware-page-learn-more-sumo = 访问 <a data-l10n-name='firefox_support'>support.mozilla.org</a> 详细了解 { -brand-short-name } 的钓鱼网站与恶意网站防护功能。
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-unwanted-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> 被<a data-l10n-name='error_desc_link'>举报含有有害软件</a>。您可以<a data-l10n-name='ignore_warning_link'>忽略此风险</a>并继续前往这个不安全的网站。
 safeb-blocked-unwanted-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> 被<a data-l10n-name='error_desc_link'>举报含有有害软件</a>。
+
+##
+
 safeb-blocked-unwanted-page-learn-more = 查阅 <a data-l10n-name='learn_more_link'>流氓软件政策</a> 可以详细了解有害和流氓的软件。到 <a data-l10n-name='firefox_support'>support.mozilla.org</a> 可以详细了解 { -brand-short-name } 防范钓鱼和恶意软件的机制。
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-harmful-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> 被<a data-l10n-name='error_desc_link'>举报含有风险软件</a>。您可以<a data-l10n-name='ignore_warning_link'>忽略此风险</a>并继续前往这个不安全的网站。
 safeb-blocked-harmful-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> 被<a data-l10n-name='error_desc_link'>举报含有潜在有害的软件</a>。
+
+##
+
 safeb-blocked-harmful-page-learn-more = 访问 <a data-l10n-name='firefox_support'>support.mozilla.org</a> 详细了解 { -brand-short-name } 的钓鱼网站与恶意网站防护功能。
 safeb-palm-notdeceptive =
     .label = 这不是诈骗网站…

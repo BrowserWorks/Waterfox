@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = Openen in nieuw privévenster
     .accesskey = v
+
+places-empty-bookmarks-folder =
+    .label = (Leeg)
 
 places-add-bookmark =
     .label = Bladwijzer toevoegen…
@@ -87,6 +90,15 @@ places-delete-folder =
            *[other] Mappen verwijderen
         }
     .accesskey = v
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] Pagina verwijderen
+           *[other] Pagina’s verwijderen
+        }
+    .accesskey = w
 
 # Managed bookmarks are created by an administrator and cannot be changed by the user.
 managed-bookmarks =
@@ -114,6 +126,20 @@ places-delete-bookmark =
         }
     .accesskey = v
 
+# Variables:
+#   $count (number) - The number of bookmarks being added.
+places-create-bookmark =
+    .label =
+        { $count ->
+            [1] Bladwijzer voor pagina maken…
+           *[other] Bladwijzers voor pagina’s maken…
+        }
+    .accesskey = B
+
+places-untag-bookmark =
+    .label = Tag verwijderen
+    .accesskey = v
+
 places-manage-bookmarks =
     .label = Bladwijzers beheren
     .accesskey = b
@@ -122,13 +148,12 @@ places-forget-about-this-site-confirmation-title = Deze website vergeten
 
 # Variables:
 # $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
-places-forget-about-this-site-confirmation-message = Met deze actie worden alle gegevens met betrekking tot { $hostOrBaseDomain } verwijderd, inclusief geschiedenis, wachtwoorden, cookies, buffer en inhoudsvoorkeuren. Weet u zeker dat u door wilt gaan?
+places-forget-about-this-site-confirmation-msg = Met deze actie worden gegevens met betrekking tot { $hostOrBaseDomain } verwijderd, inclusief geschiedenis, cookies, buffer en inhoudsvoorkeuren. Gerelateerde bladwijzers en wachtwoorden worden niet verwijderd. Weet u zeker dat u door wilt gaan?
 
 places-forget-about-this-site-forget = Vergeten
 
-places-library =
+places-library3 =
     .title = Bibliotheek
-    .style = width:700px; height:500px;
 
 places-organize-button =
     .label = Ordenen
@@ -229,6 +254,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = Laatst gewijzigd
 
+places-view-sortby-name =
+    .label = Sorteren op Naam
+    .accesskey = N
+places-view-sortby-url =
+    .label = Sorteren op Locatie
+    .accesskey = c
+places-view-sortby-date =
+    .label = Sorteren op Meest recente bezoek
+    .accesskey = M
+places-view-sortby-visit-count =
+    .label = Sorteren op Bezoekteller
+    .accesskey = B
+places-view-sortby-date-added =
+    .label = Sorteren op Toegevoegd
+    .accesskey = T
+places-view-sortby-last-modified =
+    .label = Sorteren op Laatst gewijzigd
+    .accesskey = w
+places-view-sortby-tags =
+    .label = Sorteren op Labels
+    .accesskey = L
+
 places-cmd-find-key =
     .key = f
 
@@ -239,3 +286,28 @@ places-forward-button =
     .tooltiptext = Vooruit gaan
 
 places-details-pane-select-an-item-description = Selecteer een item om de eigenschappen ervan te bekijken en te wijzigen
+
+places-details-pane-no-items =
+    .value = Geen items
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value =
+        { $count ->
+            [one] Eén item
+           *[other] { $count } items
+        }
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = Bladwijzers doorzoeken
+places-search-history =
+    .placeholder = Geschiedenis doorzoeken
+places-search-downloads =
+    .placeholder = Downloads doorzoeken
+
+##
+
+places-locked-prompt = Het bladwijzer- en geschiedenissysteem zal niet werken, omdat een van de bestanden van { -brand-short-name } in gebruik is door een andere toepassing. Sommige beveiligingssoftware kan dit probleem veroorzaken.

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -45,6 +45,12 @@ options-collapse-attrs-tooltip =
 options-inspector-draggable-properties-label = Κάντε κλικ και σύρετε για να επεξεργαστείτε τις τιμές μεγέθους
 options-inspector-draggable-properties-tooltip =
     .title = Κάντε κλικ και σύρετε για να επεξεργαστείτε τις τιμές μεγέθους στην προβολή κανόνων επιθεώρησης.
+
+# The label for the checkbox option to enable simplified highlighting on page elements
+# within the inspector for users who enabled prefers-reduced-motion = reduce
+options-inspector-simplified-highlighters-label = Χρήση απλούστερης επισήμανσης με το prefers-reduced-motion
+options-inspector-simplified-highlighters-tooltip =
+    .title = Ενεργοποιεί τις απλοποιημένες επισημάνσεις όταν είναι ενεργοποιημένο το prefers-reduced-motion. Σχεδιάζει γραμμές αντί για γεμάτα ορθογώνια γύρω από τα επισημασμένα στοιχεία για να αποφευχθούν τα εφέ που αναβοσβήνουν.
 
 ## "Default Color Unit" options for the Inspector
 
@@ -124,6 +130,11 @@ options-enable-remote-label = Ενεργοποίηση απομακρυσμέν�
 options-enable-remote-tooltip2 =
     .title = Η ενεργοποίηση αυτής της επιλογής θα επιτρέψει τον απομακρυσμένο έλεγχο σφαλμάτων σε αυτό το παράθυρο του προγράμματος περιήγησης
 
+# The label for checkbox that enables F12 as a shortcut to open DevTools
+options-enable-f12-label = Χρησιμοποιήστε το πλήκτρο F12 για να ανοίξετε ή να κλείσετε τα DevTools
+options-enable-f12-tooltip =
+    .title = Η ενεργοποίηση αυτής της επιλογής θα δεσμεύσει το πλήκτρο F12 με το άνοιγμα ή το κλείσιμο της εργαλειοθήκης DevTools
+
 # The label for checkbox that toggles custom formatters for objects
 options-enable-custom-formatters-label = Ενεργοποίηση προσαρμοσμένων μορφοποιητών
 options-enable-custom-formatters-tooltip =
@@ -141,11 +152,3 @@ options-source-maps-tooltip =
 
 # The message shown for settings that trigger page reload
 options-context-triggers-page-refresh = * Τρέχουσα συνεδρία μόνο, επαναφορτώνει τη σελίδα
-
-# The label for the checkbox that toggles the display of the platform data in the
-# Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference in about:config
-options-show-platform-data-label = Εμφάνιση δεδομένων πλατφόρμας Gecko
-options-show-platform-data-tooltip =
-    .title =
-        Αν ενεργοποιήσετε αυτή την επιλογή, οι αναφορές του προγράμματος προφίλ JavaScript θα περιλαμβάνουν
-        σύμβολα της πλατφόρμας Gecko

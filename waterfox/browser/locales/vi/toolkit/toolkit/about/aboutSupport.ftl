@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,6 +15,10 @@ support-addons-type = Kiểu
 support-addons-enabled = Đã bật
 support-addons-version = Phiên bản
 support-addons-id = ID
+legacy-user-stylesheets-title = Stylesheet của người dùng (cũ)
+legacy-user-stylesheets-enabled = Hoạt động
+legacy-user-stylesheets-stylesheet-types = Stylesheet
+legacy-user-stylesheets-no-stylesheets-found = Không phát hiện stylesheet nào
 security-software-title = Phần mềm bảo mật
 security-software-type = Kiểu
 security-software-name = Tên
@@ -70,10 +74,11 @@ app-basics-remote-processes-count = Tiến trình từ xa
 app-basics-enterprise-policies = Chính sách doanh nghiệp
 app-basics-location-service-key-google = Khóa dịch vụ định vị Google
 app-basics-safebrowsing-key-google = Khóa Google Safebrowsing
-app-basics-key-mozilla = Khóa dịch vụ định vị Waterfox
+app-basics-key-mozilla = Khóa dịch vụ định vị BrowserWorks
 app-basics-safe-mode = Chế độ an toàn
 app-basics-memory-size = Dung lượng bộ nhớ (RAM)
 app-basics-disk-available = Không gian đĩa có sẵn
+app-basics-pointing-devices = Thiết bị điều khiển con trỏ
 # Variables:
 #   $value (number) - Amount of data being stored
 #   $unit (string) - The unit of data being stored (e.g. MB)
@@ -107,11 +112,21 @@ graphics-gpu2-title = GPU #2
 graphics-decision-log-title = Nhật ký quyết định
 graphics-crash-guards-title = Vô hiệu hóa tính năng bảo vệ sự cố
 graphics-workarounds-title = Cách giải quyết
+graphics-device-pixel-ratios = Tỉ lệ Pixel của cửa sổ thiết bị
 # Windowing system in use on Linux (e.g. X11, Wayland).
 graphics-window-protocol = Giao thức cửa sổ
 # Desktop environment in use on Linux (e.g. GNOME, KDE, XFCE, etc).
 graphics-desktop-environment = Môi trường máy tính để bàn
 place-database-title = Cơ sở dữ liệu địa điểm
+place-database-stats = Thống kê
+place-database-stats-show = Hiển thị thống kê
+place-database-stats-hide = Ẩn thống kê
+place-database-stats-entity = Thực thể
+place-database-stats-count = Tổng số
+place-database-stats-size-kib = Kích thước (KiB)
+place-database-stats-size-perc = Kích thước (%)
+place-database-stats-efficiency-perc = Hiệu quả (%)
+place-database-stats-sequentiality-perc = Tuần tự (%)
 place-database-integrity = Tính toàn vẹn
 place-database-verify-integrity = Xác nhận tính toàn vẹn
 a11y-title = Trợ năng
@@ -161,6 +176,15 @@ media-capabilities-title = Khả năng truyền thông
 media-codec-support-info = Thông tin hỗ trợ Codec
 # List all the entries of the database.
 media-capabilities-enumerate = Liệt kê cơ sở dữ liệu
+
+## Codec support table
+
+media-codec-support-sw-decoding = Giải mã phần mềm
+media-codec-support-hw-decoding = Giải mã phần cứng
+media-codec-support-codec-name = Tên codec
+media-codec-support-supported = Được hỗ trợ
+media-codec-support-unsupported = Không hỗ trợ
+media-codec-support-error = Không có thông tin Codec được hỗ trợ. Hãy thử lại sau khi phát tập tin phương tiện.
 
 ##
 
@@ -255,6 +279,8 @@ webgl2-renderer = Trình kết xuất trình điều khiển WebGL 2
 webgl2-version = Phiên bản trình điều khiển WebGL 2
 webgl2-driver-extensions = Tiện ích mở rộng trình điều khiển WebGL 2
 webgl2-extensions = Tiện ích mở rộng WebGL 2
+webgpu-default-adapter = Adapter WebGPU mặc định
+webgpu-fallback-adapter = Adapter WebGPU dự phòng
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = Bị chặn trong danh sách do các sự cố đã biết: <a data-l10n-name="bug-link">mã lỗi { $bugNumber }</a>
@@ -284,6 +310,7 @@ can-sandbox-media = Media Plugin Sandboxing
 content-sandbox-level = Cấp độ quy trình nội dung hộp cát
 effective-content-sandbox-level = Cấp độ hiệu quả nội dung hộp cát
 content-win32k-lockdown-state = Trạng thái Win32k Lockdown cho tiến trình nội dung
+support-sandbox-gpu-level = Mức độ tiến trình GPU hộp cát
 sandbox-proc-type-content = nội dung
 sandbox-proc-type-file = nội dung tập tin
 sandbox-proc-type-media-plugin = phần bổ trợ phương tiện
@@ -318,12 +345,12 @@ fission-status-disabled-by-e10s-other = E10s bị vô hiệu hóa
 fission-status-enabled-by-rollout = Được kích hoạt bằng cách phát hành theo từng giai đoạn
 async-pan-zoom = Pan/Zoom không đồng bộ
 apz-none = không có
-wheel-enabled = con lăn đã bật
-touch-enabled = cảm ứng đã bật
-drag-enabled = thanh cuộn kéo đã bật
-keyboard-enabled = bàn phím đã bật
-autoscroll-enabled = tự động cuộn đã bật
-zooming-enabled = pinch-zoom mượt được kích hoạt
+wheel-enabled = con lăn được bật
+touch-enabled = cảm ứng được bật
+drag-enabled = thanh cuộn kéo được bật
+keyboard-enabled = bàn phím được bật
+autoscroll-enabled = tự động cuộn được bật
+zooming-enabled = pinch-zoom mượt được bật
 
 ## Variables
 ## $preferenceKey (string) - String ID of preference
@@ -355,3 +382,10 @@ support-remote-experiments-see-about-studies = Xem trang <a data-l10n-name="supp
 support-remote-features-title = Tính năng từ xa
 support-remote-features-name = Tên
 support-remote-features-status = Trạng thái
+
+## Pointing devices
+
+pointing-device-mouse = Chuột
+pointing-device-touchscreen = Màn hình cảm ứng
+pointing-device-pen-digitizer = Bút kỹ thuật số
+pointing-device-none = Không có thiết bị điều khiển con trỏ

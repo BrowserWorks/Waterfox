@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = Åbn i nyt privat vindue
     .accesskey = p
+
+places-empty-bookmarks-folder =
+    .label = (Tom)
 
 places-add-bookmark =
     .label = Tilføj bogmærke…
@@ -86,6 +89,15 @@ places-delete-folder =
            *[other] Slet mapper
         }
     .accesskey = S
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] Slet side
+           *[other] Slet sider
+        }
+    .accesskey = S
 
 # Managed bookmarks are created by an administrator and cannot be changed by the user.
 managed-bookmarks =
@@ -112,6 +124,20 @@ places-delete-bookmark =
         }
     .accesskey = S
 
+# Variables:
+#   $count (number) - The number of bookmarks being added.
+places-create-bookmark =
+    .label =
+        { $count ->
+            [1] Bogmærk side…
+           *[other] Bogmærk sider…
+        }
+    .accesskey = B
+
+places-untag-bookmark =
+    .label = Fjern mærkat
+    .accesskey = j
+
 places-manage-bookmarks =
     .label = Håndter bogmærker
     .accesskey = g
@@ -120,13 +146,12 @@ places-forget-about-this-site-confirmation-title = Glemmer dette websted
 
 # Variables:
 # $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
-places-forget-about-this-site-confirmation-message = Denne handling fjerner alle data relateret til { $hostOrBaseDomain } herunder historik, adgangskoder, cookies, cachet indhold og indholdsspecifikke indstillinger. Er du sikker på, at du vil fortsætte?
+places-forget-about-this-site-confirmation-msg = Denne handling fjerner data relateret til { $hostOrBaseDomain } inklusive historik, cookies, cache og indstillinger for indhold. Relaterede bogmærker og adgangskoder vil ikke blive fjernet. Er du sikker på, at du vil fortsætte?
 
 places-forget-about-this-site-forget = Glem
 
-places-library =
+places-library3 =
     .title = Arkiv
-    .style = width:700px; height:500px;
 
 places-organize-button =
     .label = Organiser
@@ -227,6 +252,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = Sidst ændret
 
+places-view-sortby-name =
+    .label = Sorter efter navn
+    .accesskey = n
+places-view-sortby-url =
+    .label = Sorter efter adresse
+    .accesskey = d
+places-view-sortby-date =
+    .label = Sorter efter seneste besøg
+    .accesskey = b
+places-view-sortby-visit-count =
+    .label = Sorter efter antal besøg
+    .accesskey = a
+places-view-sortby-date-added =
+    .label = Sorter efter tilføjet
+    .accesskey = t
+places-view-sortby-last-modified =
+    .label = Sorter efter senest ændret
+    .accesskey = æ
+places-view-sortby-tags =
+    .label = Sorter efter mærkater
+    .accesskey = m
+
 places-cmd-find-key =
     .key = f
 
@@ -237,3 +284,28 @@ places-forward-button =
     .tooltiptext = Gå frem
 
 places-details-pane-select-an-item-description = Vælg et element til visning og redigering af dets egenskaber
+
+places-details-pane-no-items =
+    .value = Ingen elementer
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value =
+        { $count ->
+            [one] Et element
+           *[other] { $count } elementer
+        }
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = Søg i bogmærker
+places-search-history =
+    .placeholder = Søg i historik
+places-search-downloads =
+    .placeholder = Søg i hentede filer
+
+##
+
+places-locked-prompt = Bogmærker og historik vil ikke virke, da en  { -brand-short-name }-fil er i brug af et andet program. Visse sikkerhedsprogrammer kan være skyld i dette.

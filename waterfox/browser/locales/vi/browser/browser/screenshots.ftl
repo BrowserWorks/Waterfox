@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,6 @@ screenshots-private-window-error-details = Xin lỗi vì sự bất tiện này.
 
 screenshots-generic-error-title = Whoa! { -screenshots-brand-name } đã bị hoãn.
 screenshots-generic-error-details = Chúng tôi không chắc những gì vừa xảy ra. Thử lại hoặc chụp một trang khác?
+
+screenshots-too-large-error-title = Ảnh chụp màn hình của bạn đã bị cắt vì nó quá lớn
+screenshots-too-large-error-details = Thử chọn vùng có cạnh dài nhất nhỏ hơn 32.700 pixel hoặc tổng diện tích 124.900.000 pixel.

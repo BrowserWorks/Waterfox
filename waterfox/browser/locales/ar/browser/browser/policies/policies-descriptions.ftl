@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -63,7 +63,7 @@ policy-DisablePrimaryPasswordCreation = إن كان ”صحيح“، فلا يم
 
 policy-DisablePasswordReveal = لا تسمح بكشف كلمات السر في جلسات الولوج المحفوظة.
 
-policy-DisablePocket = تعطيل ميزة حفظ الصفحات في Pocket.
+policy-DisablePocket2 = تعطيل ميزة حفظ الصفحات في { -pocket-brand-name }.
 
 policy-DisablePrivateBrowsing = تعطيل التصفح الخاص.
 
@@ -105,10 +105,6 @@ policy-Extensions = تثبيت أو إزالة أو قفل حالة الامتد
 policy-ExtensionSettings = إدارة كل ما يتعلّق بتثبيت الامتدادات.
 
 policy-ExtensionUpdate = تفعيل/تعطيل تحديث الامتدادات تلقائيًا.
-
-policy-WaterfoxHome = ضبط صفحة المنزل داخل Waterfox.
-
-policy-FlashPlugin = السماح باستخدام ملحقة فلاش أو منع ذلك.
 
 policy-Handlers = ضبط طرائق التعامل مع التطبيقات المبدئية.
 
@@ -177,9 +173,6 @@ policy-SearchBar = ضبط المكان المبدئي لشريط البحث. ي�
 policy-SearchEngines = ضبط إعدادات محرّك البحث. هذه السياسة متاحة في النسخة ممتدّة الدعم (ESR) لا غير.
 
 policy-SearchSuggestEnabled = تفعيل/تعطيل اقتراحات البحث.
-
-# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
-policy-SecurityDevices = تثبيت وحدات PKCS #11.
 
 policy-ShowHomeButton = عرض زر الصفحة الرئيسية في شريط الأدوات.
 

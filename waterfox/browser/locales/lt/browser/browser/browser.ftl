@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -14,11 +14,11 @@
 # The last two are for use when there *is* a content title.
 # Variables:
 #  $content-title (String): the title of the web content.
-browser-main-window =
+browser-main-window-window-titles =
     .data-title-default = { -brand-full-name }
-    .data-title-private = { -brand-full-name } (privatusis naršymas)
-    .data-content-title-default = { $content-title } - { -brand-full-name }
-    .data-content-title-private = { $content-title } - { -brand-full-name } (privatusis naršymas)
+    .data-title-private = „{ -brand-full-name }“ privatusis naršymas
+    .data-content-title-default = { $content-title } – { -brand-full-name }
+    .data-content-title-private = { $content-title } – „{ -brand-full-name }“ privatusis naršymas
 
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
@@ -34,17 +34,21 @@ browser-main-window =
 #
 # Variables:
 #  $content-title (String): the title of the web content.
-browser-main-window-mac =
+browser-main-window-mac-window-titles =
     .data-title-default = { -brand-full-name }
-    .data-title-private = { -brand-full-name } - (privatusis naršymas)
+    .data-title-private = { -brand-full-name } – privatusis naršymas
     .data-content-title-default = { $content-title }
-    .data-content-title-private = { $content-title } - (privatusis naršymas)
+    .data-content-title-private = { $content-title } – privatusis naršymas
 
 # This gets set as the initial title, and is overridden as soon as we start
 # updating the titlebar based on loaded tabs or private browsing state.
 # This should match the `data-title-default` attribute in both
 # `browser-main-window` and `browser-main-window-mac`.
 browser-main-window-title = { -brand-full-name }
+
+# The non-variable portion of this MUST match the translation of
+# "PRIVATE_BROWSING_SHORTCUT_TITLE" in custom.properties
+private-browsing-shortcut-text-2 = „{ -brand-shortcut-name }“ privatusis naršymas
 
 ##
 
@@ -75,16 +79,12 @@ urlbar-xr-notification-anchor =
     .tooltiptext = Atverti virtualios realybės leidimų polangį
 urlbar-storage-access-anchor =
     .tooltiptext = Atverti naršymo veiklos leidimų polangį
-urlbar-translate-notification-anchor =
-    .tooltiptext = Išversti šį tinklalapį
 urlbar-web-rtc-share-screen-notification-anchor =
     .tooltiptext = Tvarkyti langų ar viso ekrano bendrinimą su svetaine
 urlbar-indexed-db-notification-anchor =
     .tooltiptext = Atverti duomenų darbui neprisijungus pranešimo skydelį
 urlbar-password-notification-anchor =
     .tooltiptext = Atverti slaptažodžio įrašymo pranešimo skydelį
-urlbar-translated-notification-anchor =
-    .tooltiptext = Tvarkyti tinklalapio vertimą
 urlbar-plugins-notification-anchor =
     .tooltiptext = Valdyti papildinių naudojimą
 urlbar-web-rtc-share-devices-notification-anchor =
@@ -102,11 +102,18 @@ urlbar-addons-notification-anchor =
 urlbar-tip-help-icon =
     .title = Žinynas ir pagalba
 urlbar-search-tips-confirm = Gerai, supratau
+urlbar-search-tips-confirm-short = Supratau
 # Read out before Urlbar Tip text content so screenreader users know the
 # subsequent text is a tip offered by the browser. It should end in a colon or
 # localized equivalent.
 urlbar-tip-icon-description =
     .alt = Patarimas:
+
+urlbar-result-menu-button =
+    .title = Atverti meniu
+urlbar-result-menu-remove-from-history =
+    .label = Pašalinti iš žurnalo
+    .accesskey = P
 
 ## Prompts users to use the Urlbar when they open a new tab or visit the
 ## homepage of their default search engine.
@@ -115,6 +122,9 @@ urlbar-tip-icon-description =
 
 urlbar-search-tips-onboard = Rašykite mažiau, raskite daugiau: ieškokite per „{ $engineName }“ tiesiai iš savo adreso lauko.
 urlbar-search-tips-redirect-2 = Pradėkite savo paiešką adreso lauke, norėdami matyti žodžių siūlymus iš „{ $engineName }“ bei jūsų naršymo istorijos.
+
+# Make sure to match the name of the Search panel in settings.
+urlbar-search-tips-persist = Paieška dabar paprastesnė. Pabandykite konkretizuoti paiešką čia, adreso juostoje. Norėdami vietoj to matyti URL, eikite į paieškos nuostatas.
 
 # Prompts users to use the Urlbar when they are typing in the domain of a
 # search engine, e.g. google.com or amazon.com.
@@ -125,6 +135,7 @@ urlbar-tabtosearch-onboard = Pasirinkite šį leistuką, norėdami greičiau ras
 urlbar-search-mode-bookmarks = Adresynas
 urlbar-search-mode-tabs = Kortelės
 urlbar-search-mode-history = Žurnalas
+urlbar-search-mode-actions = Veiksmai
 
 ##
 
@@ -165,10 +176,12 @@ urlbar-star-add-bookmark =
 
 ## Page Action Context Menu
 
-page-action-manage-extension =
+page-action-manage-extension2 =
     .label = Tvarkyti priedą…
-page-action-remove-extension =
+    .accesskey = e
+page-action-remove-extension2 =
     .label = Pašalinti priedą
+    .accesskey = n
 
 ## Auto-hide Context Menu
 
@@ -210,7 +223,7 @@ search-one-offs-engine-with-alias =
 # Variables:
 #  $engineName (String): The name of the engine.
 search-one-offs-add-engine =
-    .label = Pirdėti „{ $engineName }“
+    .label = Pridėti „{ $engineName }“
     .tooltiptext = Pridėti ieškyklę „{ $engineName }“
     .aria-label = Pridėti ieškyklę „{ $engineName }“
 # When more than 5 engines are offered by a web page, they are grouped in a
@@ -231,6 +244,82 @@ search-one-offs-tabs =
     .tooltiptext = Kortelės ({ $restrict })
 search-one-offs-history =
     .tooltiptext = Žurnalas ({ $restrict })
+search-one-offs-actions =
+    .tooltiptext = Veiksmai ({ $restrict })
+
+## QuickActions are shown in the urlbar as the user types a matching string
+## The -cmd- strings are comma separated list of keywords that will match
+## the action.
+
+# Opens the about:addons page in the home / recommendations section
+quickactions-addons = Peržiūrėti priedus
+quickactions-cmd-addons2 = priedai
+
+# Opens the bookmarks library window
+quickactions-bookmarks2 = Tvarkyti adresyną
+quickactions-cmd-bookmarks = adresynas
+
+# Opens a SUMO article explaining how to clear history
+quickactions-clearhistory = Išvalyti žurnalą
+quickactions-cmd-clearhistory = išvalyti žurnalą
+
+# Opens about:downloads page
+quickactions-downloads2 = Žiūrėti atsiuntimus
+quickactions-cmd-downloads = atsiuntimai
+
+# Opens about:addons page in the extensions section
+quickactions-extensions = Tvarkyti priedus
+quickactions-cmd-extensions = priedai
+
+# Opens the devtools web inspector
+quickactions-inspector2 = Atverti programuotojų priemones
+quickactions-cmd-inspector = tyriklis, devtools
+
+# Opens about:logins
+quickactions-logins2 = Tvarkyti slaptažodžius
+quickactions-cmd-logins = prisijungimai, slaptažodžiai
+
+# Opens about:addons page in the plugins section
+quickactions-plugins = Tvarkyti papildinius
+quickactions-cmd-plugins = papildiniai
+
+# Opens the print dialog
+quickactions-print2 = Spausdinti puslapį
+quickactions-cmd-print = spausdinti
+
+quickactions-cmd-private = privatusis naršymas
+
+# Opens a SUMO article explaining how to refresh
+quickactions-refresh = Atšviežinti „{ -brand-short-name }“
+quickactions-cmd-refresh = atšviežinti
+
+# Restarts the browser
+quickactions-restart = Paleisti „{ -brand-short-name }“ iš naujo
+quickactions-cmd-restart = paleisti iš naujo
+
+# Opens the screenshot tool
+quickactions-screenshot3 = Padaryti ekrano nuotrauką
+quickactions-cmd-screenshot = ekrano nuotrauka
+
+# Opens about:preferences
+quickactions-settings2 = Keisti nuostatas
+quickactions-cmd-settings = nustatymai, nuostatos, parinktys
+
+# Opens about:addons page in the themes section
+quickactions-themes = Tvarkyti apvalkalus
+quickactions-cmd-themes = grafiniai apvalkalai
+
+# Opens a SUMO article explaining how to update the browser
+quickactions-update = Atnaujinti „{ -brand-short-name }“
+quickactions-cmd-update = naujinti
+
+# Opens the view-source UI with current pages source
+quickactions-viewsource2 = Pirminis tekstas
+quickactions-cmd-viewsource = pirminis tekstas
+
+# Tooltip text for the help button shown in the result.
+quickactions-learn-more =
+    .title = Sužinokite apie sparčiuosius veiksmus daugiau
 
 ## Bookmark Panel
 
@@ -277,7 +366,7 @@ identity-connection-internal = Tai yra saugus „{ -brand-short-name }“ tinkla
 identity-connection-file = Šis tinklalapis yra įrašytas jūsų kompiuteryje.
 identity-extension-page = Šis tinklalapis yra įkeltas iš priedo.
 identity-active-blocked = „{ -brand-short-name }“ užblokavo nesaugias šio tinklalapio dalis.
-identity-custom-root = Ryšį patvirtino liudijimo išdavėjas, kurio „Waterfox“ neatpažino.
+identity-custom-root = Ryšį patvirtino liudijimo išdavėjas, kurio „BrowserWorks“ neatpažino.
 identity-passive-loaded = Kai kurios šio tinklalapio dalys nėra saugios (pvz., paveikslai).
 identity-active-loaded = Šiame tinklalapyje esate išjungę apsaugą.
 identity-weak-encryption = Šis tinklalapis naudoja silpną šifravimą.
@@ -305,7 +394,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = Nesate saugiai prisijungę prie šios svetainės.
 identity-connection-verified = Esate saugiai prisijungę prie šios svetainės.
 identity-ev-owner-label = Kam išduotas liudijimas:
-identity-description-custom-root = „Waterfox“ neatpažįsta šio liudijimo išdavėjo. Jis galėjo būti pridėtas iš jūsų operacinės sistemos, arba administratoriaus. <label data-l10n-name="link">Sužinoti daugiau</label>
+identity-description-custom-root2 = „BrowserWorks“ neatpažįsta šio liudijimo išdavėjo. Jis galėjo būti pridėtas iš jūsų operacinės sistemos, arba administratoriaus.
 identity-remove-cert-exception =
     .label = Panaikinti išimtį
     .accesskey = n
@@ -313,14 +402,12 @@ identity-description-insecure = Jūsų ryšys su šia svetaine nėra privatus. J
 identity-description-insecure-login-forms = Šiame tinklalapyje jūsų įvesti prisijungimo duomenys nebus saugūs ir gali būti perimti.
 identity-description-weak-cipher-intro = Jūsų ryšys su šia svetaine naudoja silpną šifravimą ir nėra privatus.
 identity-description-weak-cipher-risk = Pašaliniai asmenys gali matyti jūsų duomenis ar keisti svetainės elgseną.
-identity-description-active-blocked = „{ -brand-short-name }“ užblokavo nesaugias šio tinklalapio dalis. <label data-l10n-name="link">Sužinoti daugiau</label>
+identity-description-active-blocked2 = „{ -brand-short-name }“ užblokavo nesaugias šio tinklalapio dalis.
 identity-description-passive-loaded = Jūsų ryšys nėra privatus, tad šiai svetainei pateikta informacija gali būti peržiūrėta kitų.
-identity-description-passive-loaded-insecure = Šioje svetainėje yra nesaugaus turinio (pvz., paveikslų). <label data-l10n-name="link">Sužinoti daugiau</label>
-identity-description-passive-loaded-mixed = Nors „{ -brand-short-name }“ užblokavo dalį turinio, šiame tinklalapyje vis dar yra nesaugaus turinio (pvz., paveikslų). <label data-l10n-name="link">Sužinoti daugiau</label>
+identity-description-passive-loaded-insecure2 = Šioje svetainėje yra nesaugaus turinio (pvz., paveikslų).
+identity-description-passive-loaded-mixed2 = Nors „{ -brand-short-name }“ užblokavo dalį turinio, šiame tinklalapyje vis dar yra nesaugaus turinio (pvz., paveikslų).
 identity-description-active-loaded = Šioje svetainėje yra nesaugaus turinio (pvz., scenarijų), be to, jūsų ryšys su ja nėra privatus.
 identity-description-active-loaded-insecure = Šiai svetainei pateikta informacija gali būti peržiūrėta kitų (pvz., slaptažodžiai, žinutės, banko kortelės, kita).
-identity-learn-more =
-    .value = Sužinoti daugiau
 identity-disable-mixed-content-blocking =
     .label = Laikinai išjungti apsaugą
     .accesskey = L
@@ -402,17 +489,10 @@ popup-select-microphone-icon =
     .tooltiptext = Mikrofonas
 popup-select-speaker-icon =
     .tooltiptext = Garsiakalbiai
+popup-select-window-or-screen =
+    .label = Langas ar ekranas:
+    .accesskey = L
 popup-all-windows-shared = Bus leidžiama matyti visus jūsų ekrane matomus langus.
-
-popup-screen-sharing-block =
-    .label = Neleisti
-    .accesskey = N
-
-popup-screen-sharing-always-block =
-    .label = Visada neleisti
-    .accesskey = V
-
-popup-mute-notifications-checkbox = Nutildyti svetainės pranešimus dalinantis
 
 ## WebRTC window or screen share tab switch warning
 
@@ -425,7 +505,7 @@ sharing-warning-disable-for-session =
 
 ## DevTools F12 popup
 
-enable-devtools-popup-description = Norėdami naudoti spartųjį klavišą „F12“, pirma atverkite saityno kūrėjų priemones iš meniu „Saityno kūrėjams“.
+enable-devtools-popup-description2 = Norėdami naudoti spartųjį klavišą „F12“, pirma atverkite saityno kūrėjų priemones iš meniu „Saityno kūrėjams“.
 
 ## URL Bar
 
@@ -466,6 +546,11 @@ urlbar-placeholder-search-mode-other-history =
 urlbar-placeholder-search-mode-other-tabs =
     .placeholder = Įveskite ieškomą tekstą
     .aria-label = Ieškote kortelėse
+
+# This placeholder is used when searching quick actions.
+urlbar-placeholder-search-mode-other-actions =
+    .placeholder = Įveskite ieškomą tekstą
+    .aria-label = Paieškos veiksmai
 
 # Variables
 #  $name (String): the name of the user's default search engine
@@ -545,6 +630,7 @@ urlbar-result-action-calculator-result = = { $result }
 urlbar-result-action-search-bookmarks = Ieškoti adresyne
 urlbar-result-action-search-history = Ieškoti žurnale
 urlbar-result-action-search-tabs = Ieškoti kortelėse
+urlbar-result-action-search-actions = Paieškos veiksmai
 
 ## Labels shown above groups of urlbar results
 
@@ -554,11 +640,29 @@ urlbar-group-firefox-suggest =
     .label = { -firefox-suggest-brand-name }
 
 # A label shown above the search suggestions group in the urlbar results. It
-# should use title case.
+# should use sentence case.
 # Variables
 #  $engine (String): the name of the search engine providing the suggestions
 urlbar-group-search-suggestions =
     .label = „{ $engine }“ siūlymai
+
+# A label shown above Quick Actions in the urlbar results.
+urlbar-group-quickactions =
+    .label = Spartieji veiksmai
+
+## Reader View toolbar buttons
+
+# This should match menu-view-enter-readerview in menubar.ftl
+reader-view-enter-button =
+    .aria-label = Pereiti į skaitymo rodinį
+# This should match menu-view-close-readerview in menubar.ftl
+reader-view-close-button =
+    .aria-label = Išjungti skaitymo rodinį
+
+## Picture-in-Picture urlbar button
+## Variables:
+##   $shortcut (String) - Keyboard shortcut to execute the command.
+
 
 ## Full Screen and Pointer Lock UI
 
@@ -581,18 +685,6 @@ pointerlock-warning-no-domain = Šis dokumentas valdo jūsų žymeklį. Spustel�
 
 ## Subframe crash notification
 
-crashed-subframe-message = <strong>Dalis šio tinklalapio užstrigo.</strong> Norėdami pranešti apie šią problemą „{ -brand-product-name }“ ir greičiau ją išspręsti, nusiųskite pranešimą.
-
-# The string for crashed-subframe-title.title should match crashed-subframe-message,
-# but without any markup.
-crashed-subframe-title =
-    .title = Dalis šio tinklalapio užstrigo. Norėdami pranešti apie šią problemą „{ -brand-product-name }“ ir greičiau ją išspręsti, nusiųskite pranešimą.
-crashed-subframe-learnmore-link =
-    .value = Sužinoti daugiau
-crashed-subframe-submit =
-    .label = Siųsti pranešimą
-    .accesskey = S
-
 ## Bookmarks panels, menus and toolbar
 
 bookmarks-manage-bookmarks =
@@ -608,6 +700,11 @@ bookmarks-other-bookmarks-menu =
     .label = Kiti adresai
 bookmarks-mobile-bookmarks-menu =
     .label = Mobilusis adresynas
+
+## Variables:
+##   $isVisible (boolean): if the specific element (e.g. bookmarks sidebar,
+##                         bookmarks toolbar, etc.) is visible or not.
+
 bookmarks-tools-sidebar-visibility =
     .label =
         { $isVisible ->
@@ -632,12 +729,15 @@ bookmarks-tools-menu-button-visibility =
             [true] Išimti adresyno meniu iš priemonių juostos
            *[other] Pridėti adresyno meniu į priemonių juostą
         }
+
+##
+
 bookmarks-search =
     .label = Ieškoti adresyne
 bookmarks-tools =
     .label = Adresyno priemonės
-bookmarks-bookmark-edit-panel =
-    .label = Taisyti adresyno įrašą
+bookmarks-subview-edit-bookmark =
+    .label = Redaguoti šį adresyno įrašą…
 
 # The aria-label is a spoken label that should not include the word "toolbar" or
 # such, because screen readers already know that this container is a toolbar.
@@ -654,8 +754,8 @@ bookmarks-toolbar-placeholder-button =
     .label = Adresyno juostos elementai
 
 # "Bookmark" is a verb, as in "Add current tab to bookmarks".
-bookmarks-current-tab =
-    .label = Įrašyti šią kortelę į adresyną
+bookmarks-subview-bookmark-tab =
+    .label = Įtraukti kortelę į adresyną…
 
 ## Library Panel items
 
@@ -679,12 +779,6 @@ repair-text-encoding-button =
 ## Customize Toolbar Buttons
 
 # Variables:
-#  $shortcut (String): keyboard shortcut to open the add-ons manager
-toolbar-addons-themes-button =
-    .label = Priedai ir grafiniai apvalkalai
-    .tooltiptext = Tvarkykite savo priedus ir grafinius apvalkalus ({ $shortcut })
-
-# Variables:
 #  $shortcut (String): keyboard shortcut to open settings (only on macOS)
 toolbar-settings-button =
     .label = Nuostatos
@@ -693,8 +787,6 @@ toolbar-settings-button =
             [macos] Atverti nuostatas ({ $shortcut })
            *[other] Atverti nuostatas
         }
-
-## More items
 
 toolbar-overflow-customize-button =
     .label = Tvarkyti priemonių juostą…
@@ -740,13 +832,6 @@ panel-save-update-username = Naudotojo vardas
 panel-save-update-password = Slaptažodis
 
 ## Add-on removal warning
-
-# Variables:
-#  $name (String): The name of the addon that will be removed.
-addon-removal-title = Pašalinti „{ $name }“?
-addon-removal-abuse-report-checkbox = Pranešti apie šį priedą į „{ -vendor-short-name }“
-
-## Remote / Synced tabs
 
 ##
 
@@ -826,9 +911,6 @@ navbar-library =
 navbar-search =
     .title = Paieška
 
-navbar-accessibility-indicator =
-    .tooltiptext = Prieinamumo funkcijos įjungtos
-
 # Name for the tabs toolbar as spoken by screen readers. The word
 # "toolbar" is appended automatically and should not be included in
 # in the string
@@ -848,9 +930,86 @@ tabs-toolbar-list-all-tabs =
 restore-session-startup-suggestion-message = <strong>Atverti ankstesnes korteles?</strong> Galite atkurti savo ankstesnį seansą iš „{ -brand-short-name }“ programos meniu <img data-l10n-name="icon"/>, iš žurnalo.
 restore-session-startup-suggestion-button = Parodyti instrukciją
 
-## Waterfox data reporting notification (Telemetry, Waterfox Health Report, etc)
+## BrowserWorks data reporting notification (Telemetry, Waterfox Health Report, etc)
 
 data-reporting-notification-message = „{ -brand-short-name }“ automatiškai siunčia tam tikrus duomenis į „{ -vendor-short-name }“ programos gerinimo tikslais.
 data-reporting-notification-button =
     .label = Pasirinkti, kas bus siunčiama
     .accesskey = s
+
+# Label for the indicator shown in the private browsing window titlebar.
+private-browsing-indicator-label = Privatusis naršymas
+
+## Unified extensions (toolbar) button
+
+unified-extensions-button =
+    .label = Priedai
+    .tooltiptext = Priedai
+
+## Unified extensions button when permission(s) are needed.
+## Note that the new line is intentionally part of the tooltip.
+
+unified-extensions-button-permissions-needed =
+    .label = Priedai
+    .tooltiptext =
+        Priedai
+        Reikia leidimų
+
+## Unified extensions button when some extensions are quarantined.
+## Note that the new line is intentionally part of the tooltip.
+
+## Autorefresh blocker
+
+refresh-blocked-refresh-label = „{ -brand-short-name }“ neleido šiam tinklalapiui automatiškai būti automatiškai atsiųstam iš naujo.
+refresh-blocked-redirect-label = „{ -brand-short-name }“ neleido šiam tinklalapiui automatiškai jus nukreipti į kitą tinklalapį.
+
+refresh-blocked-allow =
+    .label = Leisti
+    .accesskey = L
+
+## Waterfox Relay integration
+
+## Popup Notification
+
+
+## Add-on Pop-up Notifications
+
+popup-notification-addon-install-unsigned =
+    .value = (nepatikrintas)
+popup-notification-xpinstall-prompt-learn-more = Sužinokite daugiau apie saugų priedų diegimą
+
+## Pop-up warning
+
+# Variables:
+#   $popupCount (Number): the number of pop-ups blocked.
+popup-warning-message =
+    { $popupCount ->
+        [one] „{ -brand-short-name }“ neleido šiai svetainei atverti iškylančiojo lango.
+        [few] „{ -brand-short-name }“ neleido šiai svetainei atverti { $popupCount } iškylančiojo lango.
+       *[other] „{ -brand-short-name }“ neleido šiai svetainei atverti { $popupCount } iškylančiųjų langų.
+    }
+# The singular form is left out for English, since the number of blocked pop-ups is always greater than 1.
+# Variables:
+#   $popupCount (Number): the number of pop-ups blocked.
+popup-warning-exceeded-message =
+    { $popupCount ->
+        [one] „{ -brand-short-name }“ neleido šiai svetainei atverti daugiau nei { $popupCount } iškylančiojo lango.
+        [few] „{ -brand-short-name }“ neleido šiai svetainei atverti daugiau nei { $popupCount } iškylančiųjų langų.
+       *[other] „{ -brand-short-name }“ neleido šiai svetainei atverti daugiau nei { $popupCount } iškylančiųjų langų.
+    }
+popup-warning-button =
+    .label =
+        { PLATFORM() ->
+            [windows] Nuostatos
+           *[other] Nuostatos
+        }
+    .accesskey =
+        { PLATFORM() ->
+            [windows] N
+           *[other] N
+        }
+
+# Variables:
+#   $popupURI (String): the URI for the pop-up window
+popup-show-popup-menuitem =
+    .label = Rodyti „{ $popupURI }“

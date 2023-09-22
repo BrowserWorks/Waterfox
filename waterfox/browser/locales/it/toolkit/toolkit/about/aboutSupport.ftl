@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,6 +16,10 @@ support-addons-type = Tipo
 support-addons-enabled = Attivo
 support-addons-version = Versione
 support-addons-id = ID
+legacy-user-stylesheets-title = Fogli di stile utente (legacy)
+legacy-user-stylesheets-enabled = Attivo
+legacy-user-stylesheets-stylesheet-types = Fogli di stile
+legacy-user-stylesheets-no-stylesheets-found = Nessun foglio di stile trovato
 security-software-title = Software di sicurezza
 security-software-type = Tipo
 security-software-name = Nome
@@ -60,10 +64,11 @@ app-basics-remote-processes-count = Processi remoti
 app-basics-enterprise-policies = Criteri a livello aziendale
 app-basics-location-service-key-google = Chiave servizio Google Location
 app-basics-safebrowsing-key-google = Chiave servizio Google Safebrowsing
-app-basics-key-mozilla = Chiave per georilevazione di Waterfox
+app-basics-key-mozilla = Chiave per georilevazione di BrowserWorks
 app-basics-safe-mode = Modalità provvisoria
 app-basics-memory-size = Dimensione memoria (RAM)
 app-basics-disk-available = Spazio su disco disponibile
+app-basics-pointing-devices = Dispositivi di puntamento
 
 # Variables:
 #   $value (number) - Amount of data being stored
@@ -99,9 +104,19 @@ graphics-gpu2-title = GPU #2
 graphics-decision-log-title = Registro decisioni
 graphics-crash-guards-title = Funzioni disattivate da Crash Guard
 graphics-workarounds-title = Soluzioni alternative
+graphics-device-pixel-ratios = Proporzioni pixel dispositivo delle finestre
 graphics-window-protocol = Protocollo finestra
 graphics-desktop-environment = Ambiente desktop
 place-database-title = Database Places
+place-database-stats = Statistiche
+place-database-stats-show = Mostra statistiche
+place-database-stats-hide = Nascondi statistiche
+place-database-stats-entity = Entità
+place-database-stats-count = Numero
+place-database-stats-size-kib = Dimensione (KiB)
+place-database-stats-size-perc = Dimensione (%)
+place-database-stats-efficiency-perc = Efficienza (%)
+place-database-stats-sequentiality-perc = Sequenzialità (%)
 place-database-integrity = Integrità
 place-database-verify-integrity = Verifica integrità
 a11y-title = Accessibilità
@@ -151,6 +166,15 @@ media-device-latency = Latenza
 media-capabilities-title = Funzionalità media
 media-codec-support-info = Informazioni di supporto per i codec
 media-capabilities-enumerate = Enumerazione database
+
+## Codec support table
+
+media-codec-support-sw-decoding = Decodifica software
+media-codec-support-hw-decoding = Decodifica hardware
+media-codec-support-codec-name = Nome codec
+media-codec-support-supported = Supportata
+media-codec-support-unsupported = Non supportata
+media-codec-support-error = Informazioni di supporto sui codec non disponibili. Riprova dopo aver riprodotto un file multimediale.
 
 ##
 
@@ -274,6 +298,9 @@ webgl2-version = Versione driver WebGL 2
 webgl2-driver-extensions = Estensioni driver WebGL 2
 webgl2-extensions = Estensioni WebGL 2
 
+webgpu-default-adapter = Scheda WebGPU predefinita
+webgpu-fallback-adapter = Scheda WebGPU di fallback
+
 support-blocklisted-bug = Bloccato per problemi noti: <a data-l10n-name="bug-link">bug { $bugNumber }</a>
 
 # Variables
@@ -306,6 +333,7 @@ can-sandbox-media = Sandbox plugin multimediali
 content-sandbox-level = Livello sandbox content process
 effective-content-sandbox-level = Livello effettivo sandbox del processo per i contenuti
 content-win32k-lockdown-state = Stato Win32k Lockdown del processo per i contenuti
+support-sandbox-gpu-level = Livello sandbox processo GPU
 sandbox-proc-type-content = contenuti
 sandbox-proc-type-file = contenuto file
 sandbox-proc-type-media-plugin = plugin multimediale
@@ -384,3 +412,11 @@ support-remote-experiments-see-about-studies = Consultare <a data-l10n-name="sup
 support-remote-features-title = Funzioni remote
 support-remote-features-name = Nome
 support-remote-features-status = Stato
+
+## Pointing devices
+
+pointing-device-mouse = Mouse
+pointing-device-touchscreen = Schermo touch
+pointing-device-pen-digitizer = Penna digitale
+pointing-device-none = Nessuno dispositivo di puntamento
+

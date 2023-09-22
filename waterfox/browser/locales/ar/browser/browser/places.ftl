@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,6 +20,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = افتح في نافذة خاصة جديدة
     .accesskey = خ
+
+places-empty-bookmarks-folder =
+    .label = (فارغ)
 
 places-add-bookmark =
     .label = أضِف علامة…
@@ -76,6 +79,15 @@ places-edit-generic =
 places-edit-folder2 =
     .label = حرّر المجلد…
     .accesskey = ح
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] احذف الصفحة
+           *[other] احذف الصفحات
+        }
+    .accesskey = ذ
 
 # Managed bookmarks are created by an administrator and cannot be changed by the user.
 managed-bookmarks =
@@ -96,9 +108,8 @@ places-manage-bookmarks =
     .label = أدِر العلامات
     .accesskey = د
 
-places-library =
+places-library3 =
     .title = المكتبة
-    .style = width:700px; height:500px;
 
 places-organize-button =
     .label = نظّم
@@ -199,6 +210,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = آخر تعديل
 
+places-view-sortby-name =
+    .label = رتّب بالاسم
+    .accesskey = س
+places-view-sortby-url =
+    .label = رتّب بالمكان
+    .accesskey = ك
+places-view-sortby-date =
+    .label = رتّب بآخر زيارة
+    .accesskey = خ
+places-view-sortby-visit-count =
+    .label = رتّب بعدد الزيارات
+    .accesskey = ع
+places-view-sortby-date-added =
+    .label = رتّب بتاريخ الإضافة
+    .accesskey = ض
+places-view-sortby-last-modified =
+    .label = رتّب بآخر تعديل
+    .accesskey = ع
+places-view-sortby-tags =
+    .label = رتّب بالوسوم
+    .accesskey = س
+
 places-cmd-find-key =
     .key = f
 
@@ -209,3 +242,32 @@ places-forward-button =
     .tooltiptext = انتقل إلى الأمام
 
 places-details-pane-select-an-item-description = اختر عنصرًا لعرضه وتحرير خصائصه
+
+places-details-pane-no-items =
+    .value = لا عناصر
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value =
+        { $count ->
+            [zero] لا عناصر
+            [one] عنصر واحد
+            [two] عنصرين
+            [few] { $count } عناصر
+            [many] { $count } عنصرًا
+           *[other] { $count } عنصر
+        }
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = ابحث في العلامات
+places-search-history =
+    .placeholder = ابحث في التأريخ
+places-search-downloads =
+    .placeholder = ابحث في التنزيلات
+
+##
+
+places-locked-prompt = لن يعمل نظام التأريخ و العلامات بشكل صحيح لأنّ أحد ملفات { -brand-short-name } يستخدمه تطبيق آخر. قد يكون المتسبب بهذا أحد برامج الحماية.

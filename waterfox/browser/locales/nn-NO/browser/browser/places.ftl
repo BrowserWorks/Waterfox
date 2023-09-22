@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = Opne i nytt privat vindauge
     .accesskey = p
+
+places-empty-bookmarks-folder =
+    .label = (Tom)
 
 places-add-bookmark =
     .label = Legg til bokmerke
@@ -79,11 +82,22 @@ places-edit-generic =
 places-edit-folder2 =
     .label = Rediger mappe…
     .accesskey = R
+# Variables
+#   $count (number) - Number of folders to delete
 places-delete-folder =
     .label =
         { $count ->
             [1] Slett mappe
            *[other] Slett mapper
+        }
+    .accesskey = S
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] Slett sida
+           *[other] Slett sider
         }
     .accesskey = S
 
@@ -112,6 +126,20 @@ places-delete-bookmark =
         }
     .accesskey = S
 
+# Variables:
+#   $count (number) - The number of bookmarks being added.
+places-create-bookmark =
+    .label =
+        { $count ->
+            [1] Bokmerk side…
+           *[other] Bokmerk sider…
+        }
+    .accesskey = B
+
+places-untag-bookmark =
+    .label = Fjern etikett
+    .accesskey = F
+
 places-manage-bookmarks =
     .label = Handsam bokmerke
     .accesskey = H
@@ -120,13 +148,12 @@ places-forget-about-this-site-confirmation-title = Gløymer denne nettstaden
 
 # Variables:
 # $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
-places-forget-about-this-site-confirmation-message = Denne handlinga fjernar alle dataa relaterte til { $hostOrBaseDomain }, inkludert historikk, passord, infokapslar, hurtigbuffer og innhalds-innstillingar. Er du sikker på at du vil fortsetje?
+places-forget-about-this-site-confirmation-msg = Denne handlinga fjernar data relatert til { $hostOrBaseDomain }, inkludert historikk, infokapslar, hurtigbuffer og innhalds-innstillingar. Relaterte bokmerke og passord vil ikke bli fjerna. Er du sikker på at du vil halde fram?
 
 places-forget-about-this-site-forget = Gløym
 
-places-library =
+places-library3 =
     .title = Arkiv
-    .style = width:700px; height:500px;
 
 places-organize-button =
     .label = Organiser
@@ -227,6 +254,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = Sist endra
 
+places-view-sortby-name =
+    .label = Sorter etter namn
+    .accesskey = n
+places-view-sortby-url =
+    .label = Sorter etter plassering
+    .accesskey = p
+places-view-sortby-date =
+    .label = Sorter etter sist besøkt
+    .accesskey = B
+places-view-sortby-visit-count =
+    .label = Sorter etter besøkstal
+    .accesskey = a
+places-view-sortby-date-added =
+    .label = Sorter etter lagt til
+    .accesskey = l
+places-view-sortby-last-modified =
+    .label = Sorter etter sist oppdatert
+    .accesskey = o
+places-view-sortby-tags =
+    .label = Sorter etter etikettar
+    .accesskey = e
+
 places-cmd-find-key =
     .key = f
 
@@ -237,3 +286,28 @@ places-forward-button =
     .tooltiptext = Gå fram
 
 places-details-pane-select-an-item-description = Vel elementet du vil vise og redigere
+
+places-details-pane-no-items =
+    .value = Ingen element
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value =
+        { $count ->
+            [one] Eitt element
+           *[other] { $count } element
+        }
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = Søk i bokmerke
+places-search-history =
+    .placeholder = Søk i historikk
+places-search-downloads =
+    .placeholder = Søk i nedlastingar
+
+##
+
+places-locked-prompt = Bokmerke- og historikksystemet vil ikkje fungere fordi ein av { -brand-short-name } sine filer er i bruk av eit anna program. Nokre sikkerheitsprogram kan skape dette problemet.

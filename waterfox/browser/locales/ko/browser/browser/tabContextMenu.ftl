@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -54,9 +54,6 @@ unpin-selected-tabs =
 bookmark-selected-tabs =
     .label = 탭 북마크…
     .accesskey = k
-bookmark-tab =
-    .label = 탭 북마크
-    .accesskey = B
 tab-context-bookmark-tab =
     .label = 탭 북마크…
     .accesskey = B
@@ -103,6 +100,7 @@ tab-context-move-tabs =
            *[other] 탭 이동
         }
     .accesskey = v
+
 tab-context-send-tabs-to-device =
     .label = 탭 { $tabCount }개를 기기로 보내기
     .accesskey = n

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,14 +22,13 @@ pocket-panel-saved-page-removed = Η σελίδα αφαιρέθηκε
 pocket-panel-saved-page-saved = Αποθηκεύτηκε στο { -pocket-brand-name }
 pocket-panel-saved-page-saved-b = Αποθηκεύτηκε στο { -pocket-brand-name }!
 pocket-panel-saved-processing-remove = Αφαίρεση σελίδας…
-pocket-panel-saved-removed = Η σελίδα αφαιρέθηκε από τη λίστα μου
+pocket-panel-saved-removed-updated = Η σελίδα αφαιρέθηκε από τα αποθηκευμένα
 pocket-panel-saved-processing-tags = Προσθήκη ετικετών…
 pocket-panel-saved-remove-page = Αφαίρεση σελίδας
 pocket-panel-saved-save-tags = Αποθήκευση
 pocket-panel-saved-saving-tags = Αποθήκευση…
 pocket-panel-saved-suggested-tags = Προτεινόμενες ετικέτες
 pocket-panel-saved-tags-saved = Προστέθηκαν ετικέτες
-pocket-panel-signup-view-list = Προβολή λίστας
 
 # This is displayed above a field where the user can add tags
 pocket-panel-signup-add-tags = Προσθήκη ετικετών:
@@ -47,13 +46,12 @@ pocket-panel-signup-tagline-story-one = Κάντε κλικ στο κουμπί 
 pocket-panel-signup-tagline-story-two = Προβολή στο { -pocket-brand-name } σε οποιαδήποτε συσκευή, ανά πάσα στιγμή.
 
 pocket-panel-signup-cta-a-fix = Το κουμπί αποθήκευσής σας για το διαδίκτυο
-pocket-panel-signup-cta-b = Κάντε κλικ στο κουμπί του { -pocket-brand-name } για να αποθηκεύσετε άρθρα, βίντεο και συνδέσμους. Δείτε τη λίστα σας σε οποιαδήποτε συσκευή, ανά πάσα στιγμή.
+pocket-panel-signup-cta-b-updated = Κάντε κλικ στο κουμπί του { -pocket-brand-name } για να αποθηκεύσετε άρθρα, βίντεο και συνδέσμους. Δείτε τα αποθηκευμένα στοιχεία σας σε οποιαδήποτε συσκευή, ανά πάσα στιγμή.
 pocket-panel-signup-cta-b-short = Κάντε κλικ στο κουμπί του { -pocket-brand-name } για να αποθηκεύσετε άρθρα, βίντεο και συνδέσμους.
-pocket-panel-signup-cta-c = Δείτε τη λίστα σας σε οποιαδήποτε συσκευή, ανά πάσα στιγμή.
+pocket-panel-signup-cta-c-updated = Δείτε τα αποθηκευμένα σας σε οποιαδήποτε συσκευή, ανά πάσα στιγμή.
 
 ## about:pocket-home panel
 
-pocket-panel-home-my-list = Η λίστα μου
 pocket-panel-home-welcome-back = Καλώς ορίσατε ξανά
 pocket-panel-home-paragraph = Μπορείτε να χρησιμοποιήσετε το { -pocket-brand-name } για να εξερευνήσετε και να αποθηκεύσετε ιστοσελίδες, άρθρα, βίντεο, podcast ή για να επιστρέψετε σε αυτό που διαβάζατε.
 pocket-panel-home-explore-popular-topics = Εξερεύνηση δημοφιλών θεμάτων
@@ -67,7 +65,7 @@ pocket-panel-home-new-user-message = Δείτε τις πρόσφατες απο
 
 ## Pocket panel header component
 
-pocket-panel-header-my-list = Προβολή λίστας
+pocket-panel-header-my-saves = Προβολή αποθηκευμένων
 pocket-panel-header-sign-in = Σύνδεση
 
 ## Pocket panel buttons

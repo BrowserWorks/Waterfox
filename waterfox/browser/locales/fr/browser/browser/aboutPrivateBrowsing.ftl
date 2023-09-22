@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -59,3 +59,18 @@ about-private-browsing-pin-promo-link-text =
         [macos] Ajouter au Dock
        *[other] Épingler à la barre des tâches
     }
+about-private-browsing-pin-promo-title = Aucun cookie ni historique enregistré. Naviguez comme si personne ne vous regardait.
+
+## Strings used in a promotion message for cookie banner reduction
+
+# Simplified version of the headline if the original text doesn't work
+# in your language: `See fewer cookie requests`.
+about-private-browsing-cookie-banners-promo-header = Fini les bannières de cookies !
+about-private-browsing-cookie-banners-promo-button = Réduire les bannières de cookies
+about-private-browsing-cookie-banners-promo-message = Laisser { -brand-short-name } répondre automatiquement aux popups de cookies pour une navigation sans distraction. { -brand-short-name } rejettera toutes les demandes si possible.
+
+## Strings for Felt Privacy v1 experiments in 119
+
+about-private-browsing-felt-privacy-v1-info-header = Ne laissez aucune trace sur cet appareil
+about-private-browsing-felt-privacy-v1-info-body = { -brand-short-name } efface cookies, historique de navigation et données de sites lorsque vous fermez toutes les fenêtres de navigation privée.
+about-private-browsing-felt-privacy-v1-info-link = Qui peut voir mon activité ?

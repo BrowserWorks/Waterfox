@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,11 +6,16 @@ addons-page-title = Pengelola Pengaya
 search-header =
     .placeholder = Cari addons.mozilla.org
     .searchbuttonlabel = Cari
-search-header-shortcut =
-    .key = f
+
+## Variables
+##   $domain - Domain name where add-ons are available (e.g. addons.mozilla.org)
+
 list-empty-get-extensions-message = Dapatkan ekstensi dan tema di <a data-l10n-name="get-extensions">{ $domain }</a>
 list-empty-get-dictionaries-message = Dapatkan kamus di <a data-l10n-name="get-extensions">{ $domain }</a>
 list-empty-get-language-packs-message = Dapatkan paket bahasa di <a data-l10n-name="get-extensions">{ $domain }</a>
+
+##
+
 list-empty-installed =
     .value = Anda tidak memiliki pengaya terpasang jenis ini
 list-empty-available-updates =
@@ -142,14 +147,24 @@ addon-category-recent-updates-title =
 addon-category-sitepermission = Izin Situs
 addon-category-sitepermission-title =
     .title = Izin Situs
+# String displayed in about:addons in the Site Permissions section
+# Variables:
+#  $host (string): DNS host name for which the webextension enables permissions
+addon-sitepermission-host = Izin Situs untuk { $host }
 
 ## These are global warnings
 
 extensions-warning-safe-mode = Semua pengaya telah dinonaktifkan dalam mode aman.
 extensions-warning-check-compatibility = Pemeriksaan kompatibilitas pengaya telah dinonaktifkan. Anda mungkin menggunakan pengaya yang tidak kompatibel.
+extensions-warning-safe-mode2 =
+    .message = Semua pengaya telah dinonaktifkan dalam mode aman.
+extensions-warning-check-compatibility2 =
+    .message = Pemeriksaan kompatibilitas pengaya telah dinonaktifkan. Anda mungkin menggunakan pengaya yang tidak kompatibel.
 extensions-warning-check-compatibility-button = Aktifkan
     .title = Aktifkan pemeriksaan kompatibilitas pengaya
 extensions-warning-update-security = Pemeriksaan keamanan pemutakhiran pengaya telah dinonaktifkan. Pemutakhiran pengaya saat ini memiliki risiko keamanan.
+extensions-warning-update-security2 =
+    .message = Pemeriksaan keamanan pemutakhiran pengaya telah dinonaktifkan. Pemutakhiran pengaya saat ini memiliki risiko keamanan.
 extensions-warning-update-security-button = Aktifkan
     .title = Aktifkan pemeriksaan keamanan pemutakhiran pengaya
 
@@ -216,6 +231,11 @@ shortcuts-duplicate = Pintasan ganda
 # Variables:
 #   $shortcut (string) - Shortcut string for the add-on
 shortcuts-duplicate-warning-message = { $shortcut } digunakan sebagai pintasan di lebih dari satu tempat. Pintasan duplikat dapat menyebabkan perilaku yang tidak terduga.
+# String displayed when a keyboard shortcut is already assigned to more than one add-on
+# Variables:
+#   $shortcut (string) - Shortcut string for the add-on
+shortcuts-duplicate-warning-message2 =
+    .message = { $shortcut } digunakan sebagai pintasan di lebih dari satu tempat. Pintasan duplikat dapat menyebabkan perilaku yang tidak terduga.
 # String displayed when a keyboard shortcut is already used by another add-on
 # Variables:
 #   $addon (string) - Name of the add-on
@@ -239,6 +259,11 @@ discopane-intro =
 discopane-notice-recommendations =
     Beberapa rekomendasi ini dipersonalisasi. Rekomendasi tersebut didasarkan pada ekstensi lain
     yang Anda pasang, preferensi profil, dan statistik penggunaan.
+# Notice to make user aware that the recommendations are personalized.
+discopane-notice-recommendations2 =
+    .message =
+        Beberapa rekomendasi ini dipersonalisasi. Rekomendasi tersebut didasarkan pada ekstensi lain
+        yang Anda pasang, preferensi profil, dan statistik penggunaan.
 discopane-notice-learn-more = Pelajari lebih lanjut
 privacy-policy = Kebijakan Privasi
 # Refers to the author of an add-on, shown below the name of the add-on.
@@ -284,21 +309,7 @@ permissions-addon-button = Hak Akses
 extension-enabled-heading = Aktif
 extension-disabled-heading = Nonaktif
 theme-enabled-heading = Aktif
-theme-disabled-heading = Nonaktif
 theme-disabled-heading2 = Tema Tersimpan
-theme-monochromatic-heading = Warna
-theme-monochromatic-subheading = Warna baru yang semarak dari { -brand-product-name }. Tersedia untuk waktu terbatas.
-# Refers to the button label for the colorways card when a user does not have a colorway theme enabled.
-theme-colorways-button = Coba Colorways
-colorway-collection-independent-voices-subheading = Buatlah { -brand-short-name } menjadi lebih seperti Anda.
-# Variables:
-#   $expiryDate (string) - date on which the colorway collection expires.
-colorway-collection-expiry-date-span = Kedaluwarsa { DATETIME($expiryDate, month: "long", day: "numeric") }
-# Refers to the button label for the colorways card when a user has a colorway theme enabled.
-theme-colorways-button-colorway-enabled = Ubah Colorway
-# Variables:
-#   $expiryDate (string) - date on which the colorway collection expires. When formatting this, you may omit the year, only exposing the month and day, as colorway collections will always expire within a year.
-colorway-collection-expiry-label = Kedaluwarsa { DATETIME($expiryDate, month: "long", day: "numeric") }
 plugin-enabled-heading = Aktif
 plugin-disabled-heading = Nonaktif
 dictionary-enabled-heading = Aktif
@@ -316,6 +327,9 @@ addon-detail-homepage-label = Beranda
 addon-detail-rating-label = Peringkat
 # Message for add-ons with a staged pending update.
 install-postponed-message = Ekstensi ini akan diperbarui ketika { -brand-short-name } dimulai ulang.
+# Message for add-ons with a staged pending update.
+install-postponed-message2 =
+    .message = Ekstensi ini akan diperbarui ketika { -brand-short-name } dimulai ulang.
 install-postponed-button = Perbarui Sekarang
 # The average rating that the add-on has received.
 # Variables:
@@ -355,16 +369,20 @@ addon-detail-private-browsing-help = Jika diizinkan, ekstensi akan memiliki akse
 addon-detail-private-browsing-allow = Izinkan
 addon-detail-private-browsing-disallow = Jangan Izinkan
 
+## "sites with restrictions" (internally called "quarantined") are special domains
+## where add-ons are normally blocked for security reasons.
+
+
 ## This is the tooltip text for the recommended badges for an extension in about:addons. The
 ## badge is a small icon displayed next to an extension when it is recommended on AMO.
 
 addon-badge-recommended2 =
     .title = { -brand-product-name } hanya menyarankan ekstensi yang memenuhi standar keamanan dan kinerja kami.
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Waterfox" in the string below because the extensions are built
-# by Waterfox and we don't want forks to display "by Fork".
+# We hard code "BrowserWorks" in the string below because the extensions are built
+# by BrowserWorks and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = Ekstensi resmi yang dibuat oleh Waterfox, memenuhi standar keamanan dan kinerja
+    .title = Ekstensi resmi yang dibuat oleh BrowserWorks, memenuhi standar keamanan dan kinerja
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = Ekstensi ini telah ditinjau untuk memenuhi standar keamanan dan kinerja kami
@@ -406,18 +424,32 @@ addon-page-options-button =
 
 ## Detail notifications
 ## Variables:
-##   $name (String): name of the add-on.
+##   $name (string) - Name of the add-on.
 
 # Variables:
 #   $version (String): application version.
 details-notification-incompatible = { $name } tidak kompatibel dengan { -brand-short-name } { $version }.
+# Variables:
+#   $version (string) - Application version.
+details-notification-incompatible2 =
+    .message = { $name } tidak kompatibel dengan { -brand-short-name } { $version }.
 details-notification-incompatible-link = Informasi Lebih Lanjut
 details-notification-unsigned-and-disabled = { $name } tidak dapat diverifikasi untuk digunakan di { -brand-short-name } dan telah dinonaktifkan.
+details-notification-unsigned-and-disabled2 =
+    .message = { $name } tidak dapat diverifikasi untuk digunakan di { -brand-short-name } dan telah dinonaktifkan.
 details-notification-unsigned-and-disabled-link = Informasi Lebih Lanjut
 details-notification-unsigned = { $name } tidak dapat diverifikasi untuk digunakan di { -brand-short-name }. Lanjutkan dengan hati-hati.
+details-notification-unsigned2 =
+    .message = { $name } tidak dapat diverifikasi untuk digunakan di { -brand-short-name }. Lanjutkan dengan hati-hati.
 details-notification-unsigned-link = Informasi Lebih Lanjut
 details-notification-blocked = { $name } telah dimatikan karena masalah keamanan atau kestabilan.
+details-notification-blocked2 =
+    .message = { $name } telah dimatikan karena masalah keamanan atau kestabilan.
 details-notification-blocked-link = Informasi Lebih Lanjut
 details-notification-softblocked = { $name } telah dikenali mengakibatkan masalah keamanan atau kestabilan.
+details-notification-softblocked2 =
+    .message = { $name } telah dikenali mengakibatkan masalah keamanan atau kestabilan.
 details-notification-softblocked-link = Informasi Lebih Lanjut
 details-notification-gmp-pending = { $name } akan diinstal sebentar lagi.
+details-notification-gmp-pending2 =
+    .message = { $name } akan diinstal sebentar lagi.

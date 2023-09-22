@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,11 +38,9 @@ menu-quit =
             [windows] อ
            *[other] อ
         }
-
 # This menu-quit-mac string is only used on macOS.
 menu-quit-mac =
     .label = ออกจาก { -brand-shorter-name }
-
 menu-about =
     .label = เกี่ยวกับ { -brand-shorter-name }
     .accesskey = ก
@@ -182,6 +180,17 @@ menu-view-full-screen =
     .label = เต็มหน้าจอ
     .accesskey = จ
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = เข้าสู่มุมมองผู้อ่าน
+    .accesskey = ผ
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = ปิดมุมมองผู้อ่าน
+    .accesskey = ผ
+
 ##
 
 menu-view-show-all-tabs =
@@ -210,8 +219,9 @@ menu-history-undo-menu =
     .label = แท็บที่ปิดล่าสุด
 menu-history-undo-window-menu =
     .label = หน้าต่างที่ปิดล่าสุด
-menu-history-reopen-all-tabs = เปิดแท็บทั้งหมดใหม่
-menu-history-reopen-all-windows = เปิดหน้าต่างทั้งหมดใหม่
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = ค้นหาประวัติ
 
 ## Bookmarks Menu
 
@@ -220,10 +230,13 @@ menu-bookmarks-menu =
     .accesskey = ท
 menu-bookmarks-manage =
     .label = จัดการที่คั่นหน้า
-menu-bookmark-current-tab =
-    .label = เพิ่มที่คั่นหน้าแท็บปัจจุบัน
-menu-bookmark-edit =
-    .label = แก้ไขที่คั่นหน้านี้
+menu-bookmark-tab =
+    .label = เพิ่มที่คั่นหน้าสำหรับแท็บปัจจุบัน…
+menu-edit-bookmark =
+    .label = แก้ไขที่คั่นหน้านี้…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = ค้นหาที่คั่นหน้า
 menu-bookmarks-all-tabs =
     .label = เพิ่มที่คั่นหน้าสำหรับแท็บทั้งหมด…
 menu-bookmarks-toolbar =
@@ -242,7 +255,7 @@ menu-tools-downloads =
     .label = การดาวน์โหลด
     .accesskey = ด
 menu-tools-addons-and-themes =
-    .label = ส่วนเสริมและชุดตกแต่ง
+    .label = ส่วนเสริมและชุดรูปแบบ
     .accesskey = ส
 menu-tools-fxa-sign-in2 =
     .label = ลงชื่อเข้า
@@ -317,6 +330,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = ปิดโหมดแก้ไขปัญหา
     .accesskey = ด
+menu-help-switch-device =
+    .label = การสลับไปยังอุปกรณ์ใหม่
+    .accesskey = ม
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =

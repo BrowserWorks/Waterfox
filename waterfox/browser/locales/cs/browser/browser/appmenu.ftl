@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,11 +7,9 @@
 
 appmenuitem-banner-update-downloading =
     .label =
-        Stahování aktualizace { -brand-shorter-name.gender ->
-            [masculine] { -brand-shorter-name(case: "gen") }
-            [feminine] { -brand-shorter-name(case: "gen") }
-            [neuter] { -brand-shorter-name(case: "gen") }
-           *[other] { "" }
+        { -brand-shorter-name.case-status ->
+            [with-cases] Stahování aktualizace { -brand-shorter-name(case: "gen") }
+           *[no-cases] Stahování aktualizace
         }
 appmenuitem-banner-update-available =
     .label = Nová aktualizace — stáhnout
@@ -39,6 +37,8 @@ appmenuitem-print =
     .label = Vytisknout stránku…
 appmenuitem-find-in-page =
     .label = Najít na stránce…
+appmenuitem-translate =
+    .label = Přeložit stránku…
 appmenuitem-zoom =
     .value = Velikost stránky
 appmenuitem-more-tools =
@@ -92,11 +92,9 @@ appmenu-remote-tabs-welcome = Seznam panelů z ostatních zařízení
 appmenu-remote-tabs-unverified = Je potřeba ověřit váš účet.
 appmenuitem-fxa-toolbar-sync-now2 = Synchronizovat
 appmenuitem-fxa-sign-in =
-    { -brand-product-name.gender ->
-        [masculine] Přihlásit se k { -brand-product-name(case: "dat") }
-        [feminine] Přihlásit se k { -brand-product-name(case: "dat") }
-        [neuter] Přihlásit se k { -brand-product-name(case: "dat") }
-       *[other] Přihlásit se k aplikaci { -brand-product-name }
+    { -brand-product-name.case-status ->
+        [with-cases] Přihlásit se k { -brand-product-name(case: "dat") }
+       *[no-cases] Přihlásit se k aplikaci { -brand-product-name }
     }
 appmenuitem-fxa-manage-account = Správa účtu
 appmenu-fxa-header2 = { -fxaccount-brand-name }
@@ -134,8 +132,7 @@ profiler-popup-button-recording =
 profiler-popup-button-capturing =
     .label = Profiler
     .tooltiptext = Právě probíhá profilování
-profiler-popup-title =
-    .value = { -profiler-brand-name }
+profiler-popup-header-text = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
     .aria-label = Zobrazit podrobnosti
 profiler-popup-description-title =
@@ -171,54 +168,44 @@ profiler-popup-capture-shortcut =
 
 
 # Presets and their l10n IDs are defined in the file
-# devtools/client/performance-new/popup/background.jsm.js
+# devtools/client/performance-new/shared/background.jsm.js
 # Please take care that the same values are also defined in devtools' perftools.ftl.
 
 profiler-popup-presets-web-developer-description = Doporučené nastavení s minimální režií pro ladění většiny webových aplikací.
 profiler-popup-presets-web-developer-label =
     .label = Nástroje pro webové vývojáře
 profiler-popup-presets-firefox-description =
-    Doporučené nastavení pro profilování { -brand-shorter-name.gender ->
-        [masculine] { -brand-shorter-name(case: "gen") }
-        [feminine] { -brand-shorter-name(case: "gen") }
-        [neuter] { -brand-shorter-name(case: "gen") }
-       *[other] aplikace { -brand-shorter-name }
-    }.
+    { -brand-shorter-name.case-status ->
+        [with-cases] Doporučené nastavení pro profilování { -brand-shorter-name(case: "gen") }.
+       *[no-cases] Doporučené nastavení pro profilování aplikace { -brand-shorter-name }.
+    }
 profiler-popup-presets-firefox-label =
     .label = { -brand-shorter-name }
 profiler-popup-presets-graphics-description =
-    Doporučené nastavení pro ladění grafických chyb v { -brand-shorter-name.gender ->
-        [masculine] { -brand-shorter-name(case: "loc") }
-        [feminine] { -brand-shorter-name(case: "loc") }
-        [neuter] { -brand-shorter-name(case: "loc") }
-       *[other] aplikaci { -brand-shorter-name }
-    }.
+    { -brand-shorter-name.case-status ->
+        [with-cases] Doporučené nastavení pro ladění grafických chyb ve { -brand-shorter-name(case: "loc") }.
+       *[no-cases] Doporučené nastavení pro ladění grafických chyb v aplikaci { -brand-shorter-name }.
+    }
 profiler-popup-presets-graphics-label =
     .label = Grafika
 profiler-popup-presets-media-description2 =
-    Doporučené nastavení pro ladění chyb při přehrávání zvuku nebo videa v { -brand-shorter-name.gender ->
-        [masculine] { -brand-shorter-name(case: "loc") }
-        [feminine] { -brand-shorter-name(case: "loc") }
-        [neuter] { -brand-shorter-name(case: "loc") }
-       *[other] aplikaci { -brand-shorter-name }
-    }.
+    { -brand-shorter-name.case-status ->
+        [with-cases] Doporučené nastavení pro ladění chyb při přehrávání zvuku nebo videa ve { -brand-shorter-name(case: "loc") }.
+       *[no-cases] Doporučené nastavení pro ladění chyb při přehrávání zvuku nebo videa v aplikaci { -brand-shorter-name }.
+    }
 profiler-popup-presets-media-label =
     .label = Média
 profiler-popup-presets-networking-description =
-    { -brand-shorter-name.gender ->
-        [masculine] Doporučené nastavení pro ladění síťových problémů v { -brand-shorter-name(case: "loc") }.
-        [feminine] Doporučené nastavení pro ladění síťových problémů v { -brand-shorter-name(case: "loc") }.
-        [neuter] Doporučené nastavení pro ladění síťových problémů v { -brand-shorter-name(case: "loc") }.
-       *[other] Doporučené nastavení pro ladění síťových problémů v aplikaci { -brand-shorter-name }.
+    { -brand-shorter-name.case-status ->
+        [with-cases] Doporučené nastavení pro ladění síťových problémů ve { -brand-shorter-name(case: "loc") }.
+       *[no-cases] Doporučené nastavení pro ladění síťových problémů v aplikaci { -brand-shorter-name }.
     }
 profiler-popup-presets-networking-label =
     .label = Síť
 profiler-popup-presets-power-description =
-    { -brand-shorter-name.gender ->
-        [masculine] Doporučené nastavení pro ladění chyb ve spotřebě { -brand-shorter-name(case: "gen") }.
-        [feminine] Doporučené nastavení pro ladění chyb ve spotřebě { -brand-shorter-name(case: "gen") }.
-        [neuter] Doporučené nastavení pro ladění chyb ve spotřebě { -brand-shorter-name(case: "gen") }.
-       *[other] Doporučené nastavení pro ladění chyb ve spotřebě aplikace { -brand-shorter-name }.
+    { -brand-shorter-name.case-status ->
+        [with-cases] Doporučené nastavení pro ladění chyb ve spotřebě { -brand-shorter-name(case: "gen") }.
+       *[no-cases] Doporučené nastavení pro ladění chyb ve spotřebě aplikace { -brand-shorter-name }.
     }
 # "Power" is used in the sense of energy (electricity used by the computer).
 profiler-popup-presets-power-label =
@@ -230,8 +217,6 @@ profiler-popup-presets-custom-label =
 
 appmenu-manage-history =
     .label = Správa historie
-appmenu-reopen-all-tabs = Znovu otevřít všechny panely
-appmenu-reopen-all-windows = Znovu otevřít všechna okna
 appmenu-restore-session =
     .label = Obnovit předchozí relaci
 appmenu-clear-history =
@@ -241,19 +226,24 @@ appmenu-recently-closed-tabs =
     .label = Naposledy zavřené panely
 appmenu-recently-closed-windows =
     .label = Naposledy zavřená okna
+# This allows to search through the browser's history.
+appmenu-search-history =
+    .label = Hledat v historii
 
 ## Help panel
 
 appmenu-help-header =
     .title =
-        Nápověda { -brand-shorter-name.gender ->
-            [masculine] { -brand-shorter-name(case: "gen") }
-            [feminine] { -brand-shorter-name(case: "gen") }
-            [neuter] { -brand-shorter-name(case: "gen") }
-           *[other] aplikace { -brand-shorter-name }
+        { -brand-shorter-name.case-status ->
+            [with-cases] Nápověda { -brand-shorter-name(case: "gen") }
+           *[no-cases] Nápověda aplikace { -brand-shorter-name }
         }
 appmenu-about =
-    .label = O aplikaci { -brand-shorter-name }
+    .label =
+        { -brand-shorter-name.case-status ->
+            [with-cases] O { -brand-shorter-name(case: "loc") }
+           *[no-cases] O aplikaci { -brand-shorter-name }
+        }
     .accesskey = O
 appmenu-get-help =
     .label = Získat pomoc
@@ -266,6 +256,8 @@ appmenu-help-report-site-issue =
 appmenu-help-share-ideas =
     .label = Sdílet nápad nebo zpětnou vazbu…
     .accesskey = S
+appmenu-help-switch-device =
+    .label = Přechod na nové zařízení
 
 ## appmenu-help-enter-troubleshoot-mode and appmenu-help-exit-troubleshoot-mode
 ## are mutually exclusive, so it's possible to use the same accesskey for both.

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -25,13 +25,6 @@ about-networking-messages-received = الرسائل المُستلمة
 about-networking-bytes-sent = البايتات المرسلة
 about-networking-bytes-received = البايتات المستلمة
 about-networking-logging = التسجيل
-about-networking-log-tutorial = طالع <a data-l10n-name="logging">تسجيل HTTP</a> لتعليمات استخدام هذه الأداة.
-about-networking-current-log-file = ملف السجل الحالي:
-about-networking-current-log-modules = وحدات السجل الحالية:
-about-networking-set-log-file = حدد ملف السجل
-about-networking-set-log-modules = حدد وحدات السجل
-about-networking-start-logging = ابدأ تسجيل الوقائع
-about-networking-stop-logging = أوقف تسجيل الوقائع
 about-networking-dns-lookup = بحث DNS
 about-networking-dns-lookup-button = حُلّ
 about-networking-dns-domain = النطاق:

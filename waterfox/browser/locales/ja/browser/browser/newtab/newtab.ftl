@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -19,13 +19,12 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = 検索
     .aria-label = 検索
-
-# Variables
-#  $engine (String): the name of the user's default search engine
+# Variables:
+#   $engine (string) - The name of the user's default search engine
 newtab-search-box-handoff-text = { $engine } で検索、または URL を入力します
 newtab-search-box-handoff-text-no-engine = 検索語句、または URL を入力します
-# Variables
-#  $engine (String): the name of the user's default search engine
+# Variables:
+#   $engine (string) - The name of the user's default search engine
 newtab-search-box-handoff-input =
     .placeholder = { $engine } で検索、または URL を入力します
     .title = { $engine } で検索、または URL を入力します
@@ -34,7 +33,6 @@ newtab-search-box-handoff-input-no-engine =
     .placeholder = 検索語句、または URL を入力します
     .title = 検索語句、または URL を入力します
     .aria-label = 検索語句、または URL を入力します
-
 newtab-search-box-text = ウェブを検索
 newtab-search-box-input =
     .placeholder = ウェブを検索
@@ -87,7 +85,7 @@ newtab-dismiss-button-tooltip =
     .aria-label = 削除
 # This tooltip is for the context menu of Pocket cards or Topsites
 # Variables:
-#  $title (String): The label or hostname of the site. This is for screen readers when the context menu button is focused/active.
+#   $title (string) - The label or hostname of the site. This is for screen readers when the context menu button is focused/active.
 newtab-menu-content-tooltip =
     .title = メニューを開きます
     .aria-label = { $title } のコンテキストメニューを開く
@@ -157,17 +155,16 @@ newtab-label-saved = { -pocket-brand-name } に保存しました
 newtab-label-download = ダウンロード済み
 # This string is used in the story cards to indicate sponsored content
 # Variables:
-#  $sponsorOrSource (String): This is the name of a company or their domain
+#   $sponsorOrSource (string) - The name of a company or their domain
 newtab-label-sponsored = 提供: { $sponsorOrSource }
 # This string is used at the bottom of story cards to indicate sponsored content
 # Variables:
-#  $sponsor (String): This is the name of a sponsor
+#   $sponsor (string) - The name of a sponsor
 newtab-label-sponsored-by = 提供: { $sponsor }
-
 # This string is used under the image of story cards to indicate source and time to read
 # Variables:
-#  $source (String): This is the name of a company or their domain
-#  $timeToRead (Number): This is the estimated number of minutes to read this story
+#   $source (string) - The name of a company or their domain
+#   $timeToRead (number) - The estimated number of minutes to read this story
 newtab-label-source-read-time = { $source } · { $timeToRead } 分
 
 ## Section Menu: These strings are displayed in the section context menu and are
@@ -196,7 +193,7 @@ newtab-section-expand-section-label =
 newtab-section-header-topsites = トップサイト
 newtab-section-header-recent-activity = 最近のアクティビティ
 # Variables:
-#  $provider (String): Name of the corresponding content provider.
+#   $provider (string) - Name of the corresponding content provider.
 newtab-section-header-pocket = { $provider } のおすすめ
 
 ## Empty Section States: These show when there are no more items in a section. Ex. When there are no more Pocket story recommendations, in the space where there would have been stories, this is shown instead.
@@ -204,7 +201,7 @@ newtab-section-header-pocket = { $provider } のおすすめ
 newtab-empty-section-highlights = ブラウジング中にあなたが最近訪れたりブックマークしたりした、優れた記事、動画、その他ページの一部をここに表示します。
 # Ex. When there are no more Pocket story recommendations, in the space where there would have been stories, this is shown instead.
 # Variables:
-#  $provider (String): Name of the content provider for this section, e.g "Pocket".
+#   $provider (string) - Name of the content provider for this section, e.g "Pocket".
 newtab-empty-section-topstories = すべて既読です。また後で戻って { $provider } からのおすすめ記事をチェックしてください。もし待ちきれないなら、人気のトピックを選択すれば、他にもウェブ上の優れた記事を見つけられます。
 
 ## Empty Section (Content Discovery Experience). These show when there are no more stories or when some stories fail to load.
@@ -228,19 +225,13 @@ newtab-pocket-cta-text = お気に入りに記事を { -pocket-brand-name } に�
 newtab-pocket-pocket-firefox-family = { -pocket-brand-name } は { -brand-product-name } ファミリーの一員です
 
 # A save to Pocket button that shows over the card thumbnail on hover.
-newtab-pocket-save-to-pocket = { -pocket-brand-name } に保存します
-newtab-pocket-saved-to-pocket = { -pocket-brand-name } に保存しました
+newtab-pocket-save = 保存
+newtab-pocket-saved = 保存しました
 
-# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
-newtab-pocket-load-more-stories-button = その他の記事を読み込む
+## Pocket content onboarding experience dialog and modal for new users seeing the Pocket section for the first time, shown as the first item in the Pocket section.
 
-## Pocket Final Card Section.
-## This is for the final card in the Pocket grid.
-
-newtab-pocket-last-card-title = 最後まで読みました！
-newtab-pocket-last-card-desc = 後でもう一度確認してください。
-newtab-pocket-last-card-image =
-    .alt = 最後まで読みました
+newtab-pocket-onboarding-discover = ウェブのベストコンテンツを見つけましょう
+newtab-pocket-onboarding-cta = { -pocket-brand-name } は、さまざまな出版物の中から最も有益で、感動的な、信頼できるコンテンツをあなたの { -brand-product-name } ブラウザーにもたらします。
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -252,6 +243,8 @@ newtab-error-fallback-refresh-link = ページを再読み込みしてもう一�
 
 newtab-custom-shortcuts-title = ショートカット
 newtab-custom-shortcuts-subtitle = 保存または訪問したサイト
+# Variables
+#   $num (number) - Number of rows to display
 newtab-custom-row-selector = { $num } 行
 newtab-custom-sponsored-sites = 広告ショートカット
 newtab-custom-pocket-title = { -pocket-brand-name } のおすすめ
