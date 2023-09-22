@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,6 +12,22 @@ accessibility-text-label-header = 文字標籤與名稱
 accessibility-keyboard-header = 鍵盤
 
 ## Text entries that are used as text alternative for icons that depict accessibility isses.
+
+
+## These strings are used in the overlay displayed when running an audit in the accessibility panel
+
+accessibility-progress-initializing = 正在初始化…
+    .aria-valuetext = 正在初始化…
+
+# This string is displayed in the audit progress bar in the accessibility panel.
+# Variables:
+#   $nodeCount (Integer) - The number of nodes for which the audit was run so far.
+accessibility-progress-progressbar = 檢查 { $nodeCount } 個節點
+
+accessibility-progress-finishing = 即將完成…
+    .aria-valuetext = 即將完成…
+
+## Text entries that are used as text alternative for icons that depict accessibility issues.
 
 accessibility-warning =
     .alt = 警告

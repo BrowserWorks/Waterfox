@@ -7,7 +7,7 @@ _______________________________________________________________________________
    https://grammalecte.net/
 
    Licence :
-     MPL : Waterfox Public License
+     MPL : BrowserWorks Public License
      version 2.0  --  http://www.mozilla.org/MPL/2.0/
 
    Ce dictionnaire ne peut fonctionner qu’avec un logiciel utilisant le

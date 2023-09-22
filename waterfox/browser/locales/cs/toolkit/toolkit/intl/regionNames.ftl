@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,7 @@ region-name-bl = Svatý Bartoloměj
 region-name-bm = Bermudy
 region-name-bn = Brunej
 region-name-bo = Bolívie
-region-name-bq = Bonaire, Svatý Eustach a Saba
+region-name-bq-2018 = Karibské Nizozemsko
 region-name-br = Brazílie
 region-name-bs = Bahamy
 region-name-bt = Bhútán
@@ -57,11 +57,11 @@ region-name-co = Kolumbie
 region-name-cp = Clippertonův ostrov
 region-name-cr = Kostarika
 region-name-cu = Kuba
-region-name-cv = Kapverdy
+region-name-cv-2020 = Kapverdy
 region-name-cw = Curaçao
 region-name-cx = Vánoční ostrov
 region-name-cy = Kypr
-region-name-cz = Česká republika
+region-name-cz-2019 = Česko
 region-name-de = Německo
 region-name-dg = Diego García
 region-name-dj = Džibutsko
@@ -150,7 +150,7 @@ region-name-me = Černá Hora
 region-name-mf = Svatý Martin
 region-name-mg = Madagaskar
 region-name-mh = Marshallovy ostrovy
-region-name-mk = Makedonie
+region-name-mk-2019 = Severní Makedonie
 region-name-ml = Mali
 region-name-mm = Barma
 region-name-mn = Mongolsko
@@ -223,7 +223,7 @@ region-name-st = Svatý Tomáš a Princův ostrov
 region-name-sv = Salvador
 region-name-sx = Svatý Martin
 region-name-sy = Sýrie
-region-name-sz = Svazijsko
+region-name-sz-2019 = Svazijsko
 region-name-tc = Ostrovy Turks a Caicos
 region-name-td = Čad
 region-name-tf = Francouzská jižní a antarktická území

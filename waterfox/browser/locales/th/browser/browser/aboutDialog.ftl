@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,8 +16,15 @@ update-updateButton =
     .accesskey = ร
 
 update-checkingForUpdates = กำลังตรวจสอบการอัปเดต…
-update-downloading = <img data-l10n-name="icon"/>กำลังดาวน์โหลดการอัปเดต — <label data-l10n-name="download-status"/>
-update-downloading-message = กำลังดาวน์โหลดอัปเดต — <label data-l10n-name="download-status"/>
+
+## Variables:
+##   $transfer (string) - Transfer progress.
+
+settings-update-downloading = <img data-l10n-name="icon"/>กำลังดาวน์โหลดการอัปเดต — <label data-l10n-name="download-status">{ $transfer }</label>
+aboutdialog-update-downloading = กำลังดาวน์โหลดอัปเดต — <label data-l10n-name="download-status">{ $transfer }</label>
+
+##
+
 update-applying = กำลังติดตั้งการอัปเดต…
 
 update-failed = การอัปเดตล้มเหลว <label data-l10n-name="failed-link">ดาวน์โหลดรุ่นล่าสุด</label>
@@ -25,15 +32,26 @@ update-failed-main = การอัปเดตล้มเหลว <a data-l1
 
 update-adminDisabled = การอัปเดตถูกปิดใช้งานโดยผู้ดูแลระบบของคุณ
 update-noUpdatesFound = { -brand-short-name } เป็นรุ่นล่าสุดแล้ว
+aboutdialog-update-checking-failed = ไม่สามารถตรวจหาการอัปเดตได้
 update-otherInstanceHandlingUpdates = { -brand-short-name } กำลังถูกอัปเดตโดยอินสแตนซ์อื่น
 
-update-manual = มีการอัปเดตที่ <label data-l10n-name="manual-link"/>
+## Variables:
+##   $displayUrl (String): URL to page with download instructions. Example: www.mozilla.org/firefox/nightly/
+
+aboutdialog-update-manual-with-link = มีการอัปเดตที่ <label data-l10n-name="manual-link">{ $displayUrl }</label>
+settings-update-manual-with-link = มีการอัปเดตที่ <a data-l10n-name="manual-link">{ $displayUrl }</a>
 
 update-unsupported = คุณไม่สามารถดำเนินการอัปเดตเพิ่มเติมในระบบนี้ได้ <label data-l10n-name="unsupported-link">เรียนรู้เพิ่มเติม</label>
 
 update-restarting = กำลังเริ่มการทำงานใหม่…
 
-channel-description = คุณกำลังอยู่บนช่องทางการอัปเดต <label data-l10n-name="current-channel"></label>
+update-internal-error2 = ไม่สามารถตรวจสอบการอัพเดตได้เนื่องจากมีข้อผิดพลาดภายใน การอัพเดตมีอยู่ที่ <label data-l10n-name="manual-link">{ $displayUrl }</label>
+
+##
+
+# Variables:
+#   $channel (String): description of the update channel (e.g. "release", "beta", "nightly" etc.)
+aboutdialog-channel-description = คุณกำลังอยู่บนช่องทางการอัปเดต <label data-l10n-name="current-channel">{ $channel }</label>
 
 warningDesc-version = { -brand-short-name } เป็นรุ่นทดลองและอาจไม่เสถียร
 

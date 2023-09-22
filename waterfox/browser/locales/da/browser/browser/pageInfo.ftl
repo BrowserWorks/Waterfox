@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/. --
 
@@ -65,6 +65,9 @@ media-dimension =
     .value = Dimensioner:
 media-long-desc =
     .value = Udvidet beskrivelse:
+media-select-all =
+    .label = Marker alt
+    .accesskey = a
 media-save-as =
     .label = Gem som…
     .accesskey = e
@@ -172,8 +175,8 @@ security-no-visits = Nej
 general-meta-tags =
     .value =
         { $tags ->
-             [one] Meta (1 element)
-            *[other] Meta ({ $tags } elementer)
+            [one] Meta (1 element)
+           *[other] Meta ({ $tags } elementer)
         }
 
 # This string is used to display the number of times
@@ -182,9 +185,9 @@ general-meta-tags =
 #   $visits (number) - The number of previous visits
 security-visits-number =
     { $visits ->
-         [0] Nej
-         [one] Ja, én gang
-        *[other] Ja, { $visits } gange
+        [0] Nej
+        [one] Ja, én gang
+       *[other] Ja, { $visits } gange
     }
 
 # This string is used to display the size of a media file
@@ -192,10 +195,11 @@ security-visits-number =
 #   $kb (number) - The size of an image in Kilobytes
 #   $bytes (number) - The size of an image in Bytes
 properties-general-size =
-    .value = { $bytes ->
-         [one] { $kb } KB ({ $bytes } byte)
-        *[other] { $kb } KB ({ $bytes } bytes)
-    }
+    .value =
+        { $bytes ->
+            [one] { $kb } KB ({ $bytes } byte)
+           *[other] { $kb } KB ({ $bytes } bytes)
+        }
 
 # This string is used to display the type and number
 # of frames of a animated image
@@ -203,11 +207,12 @@ properties-general-size =
 #   $type (string) - The type of a animated image
 #   $frames (number) - The number of frames in an animated image
 media-animated-image-type =
-    .value = { $frames ->
-         [one] { $type } billede (animeret, { $frames } frame)
-        *[other] { $type } billede (animeret, { $frames } frames)
-    }
-    
+    .value =
+        { $frames ->
+            [one] { $type } billede (animeret, { $frames } frame)
+           *[other] { $type } billede (animeret, { $frames } frames)
+        }
+
 # This string is used to display the type of
 # an image
 # Variables:
@@ -238,6 +243,9 @@ media-dimensions =
 #   $size (number) - The size of the media file in kilobytes
 media-file-size = { $size } KB
 
+## Variables:
+##   $website (string) — The url of the website pageInfo is getting info for
+
 # This string is used to display the website name next to the
 # "Block Images" checkbox in the media tab
 # Variables:
@@ -249,7 +257,7 @@ media-block-image =
 # This string is used to display the URL of the website on top of the
 # pageInfo dialog box
 # Variables:
-#   $website (string) - The url of the website pageInfo is getting info for
+#   $website (string) — The url of the website pageInfo is getting info for
 page-info-page =
     .title = Sideoplysninger - { $website }
 page-info-frame =

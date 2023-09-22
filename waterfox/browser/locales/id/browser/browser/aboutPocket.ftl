@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,14 +22,13 @@ pocket-panel-saved-page-removed = Laman Dihapus
 pocket-panel-saved-page-saved = Disimpan di { -pocket-brand-name }
 pocket-panel-saved-page-saved-b = Disimpan di { -pocket-brand-name }!
 pocket-panel-saved-processing-remove = Menghapus Laman…
-pocket-panel-saved-removed = Halaman Dihapus dari Daftar Saya
+pocket-panel-saved-removed-updated = Laman Dihapus dari Simpanan
 pocket-panel-saved-processing-tags = Menambahkan tag…
 pocket-panel-saved-remove-page = Hapus Laman
 pocket-panel-saved-save-tags = Simpan
 pocket-panel-saved-saving-tags = Menyimpan…
 pocket-panel-saved-suggested-tags = Saran Tag
 pocket-panel-saved-tags-saved = Tag Ditambahkan
-pocket-panel-signup-view-list = Tampilkan Daftar
 
 # This is displayed above a field where the user can add tags
 pocket-panel-signup-add-tags = Tambahkan Tag:
@@ -47,13 +46,12 @@ pocket-panel-signup-tagline-story-one = Klik Tombol { -pocket-brand-name } untuk
 pocket-panel-signup-tagline-story-two = Tampilkan lewat { -pocket-brand-name } di berbagai perangkat, kapan saja.
 
 pocket-panel-signup-cta-a-fix = Tombol simpan Anda untuk internet.
-pocket-panel-signup-cta-b = Klik tombol { -pocket-brand-name } untuk menyimpan artikel, video, dan tautan. Lihat daftar Anda di semua perangkat, kapan saja.
+pocket-panel-signup-cta-b-updated = Klik tombol { -pocket-brand-name } untuk menyimpan artikel, video, dan tautan. Lihat simpanan Anda di perangkat apa pun, kapan pun.
 pocket-panel-signup-cta-b-short = Klik tombol { -pocket-brand-name } untuk menyimpan artikel, video, dan tautan.
-pocket-panel-signup-cta-c = Tampilkan daftar Anda di berbagai perangkat, kapan saja.
+pocket-panel-signup-cta-c-updated = Lihat simpanan Anda di perangkat apa pun, kapan pun.
 
 ## about:pocket-home panel
 
-pocket-panel-home-my-list = Daftar Saya
 pocket-panel-home-welcome-back = Selamat Datang Kembali
 pocket-panel-home-paragraph = Anda dapat menggunakan { -pocket-brand-name } untuk menjelajahi dan menyimpan laman web, artikel, video, podcast, atau kembali ke yang telah Anda baca.
 pocket-panel-home-explore-popular-topics = Jelajahi Topik Populer
@@ -67,7 +65,7 @@ pocket-panel-home-new-user-message = Lihat simpanan terbaru Anda di sini.
 
 ## Pocket panel header component
 
-pocket-panel-header-my-list = Tampilkan Daftar Saya
+pocket-panel-header-my-saves = Lihat Simpanan Saya
 pocket-panel-header-sign-in = Masuk
 
 ## Pocket panel buttons

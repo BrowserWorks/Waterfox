@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -78,7 +78,7 @@ language-name-hy = Armênio
 language-name-hz = Herero
 language-name-ia = Interlíngua
 language-name-id = Indonésio
-language-name-ie = Interlingue
+language-name-ie = Interlíngua
 language-name-ig = Ibo
 language-name-ii = Sichuan Yi
 language-name-ik = Inupiaque
@@ -158,10 +158,11 @@ language-name-ro = Romeno
 language-name-ru = Russo
 language-name-rw = Kinyarwanda
 language-name-sa = Sânscrito
+language-name-sat = Santali
 language-name-sc = Sardo
 language-name-sco = Ânglico escocês
 language-name-sd = Sindi
-language-name-se = Northern Sami
+language-name-se = Sami do Norte
 language-name-sg = Sango
 language-name-si = Cingalês
 language-name-sk = Eslovaco
@@ -198,7 +199,7 @@ language-name-ty = Taitiano
 language-name-ug = Uigur
 language-name-uk = Ucraniano
 language-name-ur = Urdu
-language-name-uz = Usbeque
+language-name-uz = Uzbeque
 language-name-ve = Venda
 language-name-vi = Vietnamita
 language-name-vo = Volapuque

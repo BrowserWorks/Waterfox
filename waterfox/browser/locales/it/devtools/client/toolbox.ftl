@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -31,6 +31,8 @@ toolbox-meatball-menu-noautohide-label = Disattiva “nascondi automaticamente�
 toolbox-meatball-menu-pseudo-locale-accented = Attiva locale “accented”
 toolbox-meatball-menu-pseudo-locale-bidi = Attiva locale “bidi”
 
+##
+
 ## These labels are shown in the top-toolbar in the Browser Toolbox and Browser Console
 
 toolbox-mode-browser-toolbox-label = Modalità Cassetta degli attrezzi browser
@@ -45,3 +47,8 @@ toolbox-mode-parent-process-label = Solo processo parent
 toolbox-mode-parent-process-sub-label = (veloce)
 toolbox-mode-parent-process-container =
   .title = Esamina solo le risorse dal processo parent.
+
+toolbox-always-on-top-enabled2 = Disattiva Sempre in primo piano
+  .title = Gli strumenti di sviluppo verranno riavviati
+toolbox-always-on-top-disabled2 = Attiva Sempre in primo piano
+  .title = Gli strumenti di sviluppo verranno riavviati

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -43,7 +43,9 @@ perftools-range-interval-milliseconds = { NUMBER($interval, maxFractionalUnits: 
 
 # The size of the memory buffer used to store things in the profiler.
 perftools-range-entries-label = Rozmiar bufora:
+
 perftools-custom-threads-label = Dodaj własne wątki według nazw:
+
 perftools-devtools-interval-label = Przedział:
 perftools-devtools-threads-label = Wątki:
 perftools-devtools-settings-label = Ustawienia
@@ -81,8 +83,6 @@ perftools-thread-renderer =
     .title = Wątek wykonujący wywołania OpenGL, kiedy WebRender jest włączony
 perftools-thread-render-backend =
     .title = Wątek RenderBackend silnika WebRender
-perftools-thread-paint-worker =
-    .title = Wątek, w którym odbywa się rysowanie, kiedy rysowanie poza wątkiem głównym jest włączone
 perftools-thread-timer =
     .title = Minutniki obsługi wątków (setTimeout, setInterval, nsITimer)
 perftools-thread-style-thread =
@@ -113,6 +113,7 @@ perftools-thread-jvm-pool =
 ##
 
 perftools-record-all-registered-threads = Pomiń powyższy wybór i nagraj wszystkie zarejestrowane wątki
+
 perftools-tools-threads-input-label =
     .title = Te nazwy wątków to lista oddzielona przecinkami, która jest używana do włączenia profilowania wątków w profilerze. Nazwa może tylko częściowo pasować do nazwy wątku, aby została uwzględniona. Spacje są rozróżniane.
 
@@ -120,6 +121,7 @@ perftools-tools-threads-input-label =
 ## devtools.performance.new-panel-onboarding preference is true.
 
 perftools-onboarding-message = <b>Nowość</b>: { -profiler-brand-name } jest teraz zintegrowany z narzędziami dla programistów. <a>Więcej informacji</a> o tym nowym potężnym narzędziu.
+
 perftools-onboarding-close-button =
     .aria-label = Zamknij ten komunikat
 
@@ -130,19 +132,29 @@ perftools-onboarding-close-button =
 # devtools/client/performance-new/popup/background.jsm.js
 # The same labels and descriptions are also defined in appmenu.ftl.
 
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/shared/background.jsm.js
+# The same labels and descriptions are also defined in appmenu.ftl.
+
 perftools-presets-web-developer-label = Dla twórców witryn
 perftools-presets-web-developer-description = Zalecane ustawienie do debugowania większości aplikacji internetowych o niskim wpływie na wydajność.
+
 perftools-presets-firefox-label = { -brand-shorter-name }
 perftools-presets-firefox-description = Zalecane ustawienie do profilowania programu { -brand-shorter-name }.
+
 perftools-presets-graphics-label = Grafika
 perftools-presets-graphics-description = Ustawienie do badania błędów graficznych w programie { -brand-shorter-name }.
+
 perftools-presets-media-label = Multimedia
 perftools-presets-media-description2 = Ustawienie do badania błędów dźwięku i obrazu w programie { -brand-shorter-name }.
+
 perftools-presets-networking-label = Sieć
 perftools-presets-networking-description = Ustawienie do badania błędów sieciowych w programie { -brand-shorter-name }.
+
 # "Power" is used in the sense of energy (electricity used by the computer).
 perftools-presets-power-label = Energia
 perftools-presets-power-description = Ustawienie do badania błędów użycia energii w programie { -brand-shorter-name } o niskim wpływie na wydajność.
+
 perftools-presets-custom-label = Inne
 
 ##

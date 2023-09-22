@@ -1,13 +1,13 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-connection-window =
+connection-window2 =
     .title = Impostazioni di connessione
     .style =
         { PLATFORM() ->
-            [macos] width: 47em
-           *[other] width: 52em
+            [macos] min-width: 47em
+           *[other] min-width: 52em
         }
 
 connection-close-key =
@@ -35,7 +35,6 @@ connection-proxy-http = Proxy HTTP
     .accesskey = H
 connection-proxy-http-port = Porta
     .accesskey = P
-
 connection-proxy-https-sharing =
     .label = Utilizza questo proxy anche per HTTPS
     .accesskey = c
@@ -61,6 +60,7 @@ connection-proxy-noproxy = Nessun proxy per
 
 connection-proxy-noproxy-desc = Esempio: .mozilla.org, .net.nz, 192.168.1.0/24
 
+# Do not translate "localhost", "127.0.0.1/8" and "::1". (You can translate "and".)
 connection-proxy-noproxy-localhost-desc-2 = Le connessioni verso localhost, 127.0.0.1/8 e ::1 non usano mai proxy.
 
 connection-proxy-autotype =
@@ -76,24 +76,25 @@ connection-proxy-autologin =
     .accesskey = c
     .tooltip = Questa opzione permette di autenticarsi direttamente con un proxy se risultano salvate delle credenziali. La richiesta verrà visualizzata in caso di errore.
 
+connection-proxy-autologin-checkbox =
+    .label = Non richiedere l’autenticazione se la password è salvata
+    .accesskey = c
+    .tooltiptext = Questa opzione permette di autenticarsi direttamente con un proxy se risultano salvate delle credenziali. La richiesta verrà visualizzata in caso di errore.
+
 connection-proxy-socks-remote-dns =
     .label = DNS proxy per SOCKS v5
     .accesskey = D
 
-connection-dns-over-https =
-    .label = Attiva DNS over HTTPS
-    .accesskey = H
-
-connection-dns-over-https-url-resolver = Utilizza provider
-    .accesskey = U
-
+# Variables:
+#   $name (String) - Display name or URL for the DNS over HTTPS provider
 connection-dns-over-https-url-item-default =
     .label = { $name } (predefinito)
-    .tooltiptext = Utilizza l’indirizzo predefinito per risolvere richieste DNS over HTTPS
+    .tooltiptext = Utilizza l’indirizzo predefinito per risolvere richieste DNS su HTTPS
 
 connection-dns-over-https-url-custom =
     .label = Personalizzato
     .accesskey = P
-    .tooltiptext = Inserisci l’indirizzo da utilizzare per risolvere richieste DNS over HTTPS
+    .tooltiptext = Inserisci l’indirizzo da utilizzare per risolvere richieste DNS su HTTPS
 
 connection-dns-over-https-custom-label = Personalizzato
+

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,6 +9,7 @@ sync-disconnect-dialog-body = { -brand-product-name } interromperà la sincroniz
 sync-disconnect-dialog-button = Disconnetti
 
 fxa-signout-dialog2-title = Disconnettersi dall’{ -fxaccount-brand-name }?
+fxa-signout-dialog-title2 = Disconnettersi dall’account?
 fxa-signout-dialog-body = I dati sincronizzati verranno mantenuti nell’account.
 fxa-signout-dialog2-button = Disconnetti
 fxa-signout-dialog2-checkbox = Elimina i dati da questo dispositivo (password, cronologia, segnalibri, ecc.)
@@ -21,6 +22,15 @@ fxa-menu-turn-on-sync-default = Attiva sincronizzazione
 
 fxa-menu-connect-another-device =
     .label = Connetti un altro dispositivo…
+
+# Variables:
+#   $tabCount (Number): The number of tabs sent to the device.
+fxa-menu-send-tab-to-device =
+    .label =
+        { $tabCount ->
+            [one] Invia scheda a dispositivo
+           *[other] Invia { $tabCount } schede a dispositivo
+        }
 
 # This is shown dynamically within "Send tab to device" in fxa menu.
 fxa-menu-send-tab-to-device-syncnotready =

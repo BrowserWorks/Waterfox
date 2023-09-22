@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,18 +8,16 @@
 # Variables:
 #   $addon-name (string) - Name of the add-on being reported
 abuse-report-dialog-title = 回報 { $addon-name }
-
 abuse-report-title-extension = 回報此擴充套件給 { -vendor-short-name }
 abuse-report-title-sitepermission = 回報此網站權限附加元件給 { -vendor-short-name }
 abuse-report-title-theme = 回報此佈景主題給 { -vendor-short-name }
 abuse-report-subtitle = 有什麼問題？
-
 # Variables:
 #   $author-name (string) - Name of the add-on author
 abuse-report-addon-authored-by = by <a data-l10n-name="author-name">{ $author-name }</a>
-
 abuse-report-learnmore = 不確定要選擇哪項嗎？<a data-l10n-name="learnmore-link">了解關於回報擴充套件與佈景主題的相關資訊</a>
-
+abuse-report-learnmore-intro = 不確定要選擇哪項嗎？
+abuse-report-learnmore-link = 了解關於回報擴充套件與佈景主題的相關資訊
 abuse-report-submit-description = 請描述問題（選填）
 abuse-report-textarea =
     .placeholder = 如果有更多細節，我們可以比較簡單就找到問題的根源。請描述您遇到了哪些問題，也非常感謝您協助我們，確保網路環境的健康。
@@ -46,6 +44,24 @@ abuse-report-messagebar-removed-sitepermission = 感謝您回報。已移除 <sp
 abuse-report-messagebar-removed-theme = 感謝您回報。已移除 <span data-l10n-name="addon-name">{ $addon-name }</span> 佈景主題。
 abuse-report-messagebar-error = 傳送<span data-l10n-name="addon-name">{ $addon-name }</span> 的報告時，發生錯誤。
 abuse-report-messagebar-error-recent-submit = 由於最近傳送過另一份報告，並未傳送 <span data-l10n-name="addon-name">{ $addon-name }</span> 的報告。
+abuse-report-messagebar-aborted2 =
+    .message = 已取消回報 { $addon-name }。
+abuse-report-messagebar-submitting2 =
+    .message = 正在傳送 { $addon-name } 的報告。
+abuse-report-messagebar-submitted2 =
+    .message = 感謝您回報。您想要移除 { $addon-name } 嗎？
+abuse-report-messagebar-submitted-noremove2 =
+    .message = 感謝您回報。
+abuse-report-messagebar-removed-extension2 =
+    .message = 感謝您回報。已移除 { $addon-name } 擴充套件。
+abuse-report-messagebar-removed-sitepermission2 =
+    .message = 感謝您回報。已移除 { $addon-name } 網站權限附加元件。
+abuse-report-messagebar-removed-theme2 =
+    .message = 感謝您回報。已移除 { $addon-name } 佈景主題。
+abuse-report-messagebar-error2 =
+    .message = 傳送{ $addon-name } 的報告時，發生錯誤。
+abuse-report-messagebar-error-recent-submit2 =
+    .message = 由於最近傳送過另一份報告，並未傳送 { $addon-name } 的報告。
 
 ## Message bars actions.
 
@@ -62,18 +78,14 @@ abuse-report-messagebar-action-cancel = 取消
 
 abuse-report-damage-reason-v2 = 它破壞了我的電腦或洩漏我的資料
 abuse-report-damage-example = 例如: 安裝有害軟體，或竊取電腦資料
-
 abuse-report-spam-reason-v2 = 它包含垃圾內容或插入多餘的廣告
 abuse-report-spam-example = 例如: 在網頁中插入廣告
-
 abuse-report-settings-reason-v2 = 它沒有先詢問我或預先通知，就更改了我的搜尋引擎、首頁、新分頁頁面
 abuse-report-settings-suggestions = 回報問題前，您可以嘗試調整瀏覽器設定:
 abuse-report-settings-suggestions-search = 更改您的預設搜尋設定
 abuse-report-settings-suggestions-homepage = 更改您的首頁與新分頁頁面
-
 abuse-report-deceptive-reason-v2 = 它偽裝成與其無關的東西
 abuse-report-deceptive-example = 例如: 在描述中誤導使用者，或使用誤導圖片
-
 abuse-report-broken-reason-extension-v2 = 它無法正常運作、造成網站無法運作、拖慢 { -brand-product-name }
 abuse-report-broken-reason-sitepermission-v2 = 它無法正常運作、造成網站無法運作、拖慢 { -brand-product-name }
 abuse-report-broken-reason-theme-v2 = 它無法運作或破壞瀏覽器顯示內容
@@ -81,11 +93,8 @@ abuse-report-broken-example = 例如: 某些功能運作很慢、很難或無法
 abuse-report-broken-suggestions-extension = 聽起來您遇到 Bug 了。除了在此回報之外，能夠解決功能問題的最佳方式是直接連絡擴充套件的開發者。<a data-l10n-name="support-link">請造訪擴充套件網站</a>來取得開發者的連絡資訊。
 abuse-report-broken-suggestions-sitepermission = 聽起來您遇到 Bug 了。除了在此回報之外，能夠解決功能問題的最佳方式是直接連絡網站的開發者。<a data-l10n-name="support-link">請造訪網站</a>來取得開發者的連絡資訊。
 abuse-report-broken-suggestions-theme = 聽起來您遇到 Bug 了。除了在此回報之外，能夠解決功能問題的最佳方式是直接連絡佈景主題的開發者。<a data-l10n-name="support-link">請造訪佈景主題網站</a>來取得開發者的連絡資訊。
-
 abuse-report-policy-reason-v2 = 它散播仇恨、暴力、非法內容
 abuse-report-policy-suggestions = 註: 若有著作權與商標問題，請依另一個流程處理。<a data-l10n-name="report-infringement-link">請依照本文當中的指示</a>來回報問題。
-
 abuse-report-unwanted-reason-v2 = 我從未安裝此套件，也不知道如何移除
 abuse-report-unwanted-example = 例如: 電腦上的某套應用程式未經我同意就安裝了這個套件
-
 abuse-report-other-reason = 其他原因

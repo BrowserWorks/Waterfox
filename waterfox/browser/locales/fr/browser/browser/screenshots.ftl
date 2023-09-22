@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,6 @@ screenshots-private-window-error-details = Désolé pour la gêne occasionnée. 
 
 screenshots-generic-error-title = { -screenshots-brand-name } semble avoir un problème.
 screenshots-generic-error-details = Un problème non identifié est survenu. Vous pouvez réessayer ou effectuer une capture d’écran d’une autre page.
+
+screenshots-too-large-error-title = Votre capture d’écran a été rognée car elle était trop grande
+screenshots-too-large-error-details = Essayez de sélectionner une zone dont le plus grand côté contient moins de 32 700 pixels ou dont la surface n’excède pas 124 900 000 pixels.

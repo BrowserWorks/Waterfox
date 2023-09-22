@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,13 +34,6 @@ about-networking-messages-received = Přijato zpráv
 about-networking-bytes-sent = Odesláno bajtů
 about-networking-bytes-received = Obdrženo bajtů
 about-networking-logging = Protokol
-about-networking-log-tutorial = Pro informace o používání tohoto nástroje prosím navštivte stránku <a data-l10n-name="logging">HTTP Logging</a>.
-about-networking-current-log-file = Současný soubor protokolu:
-about-networking-current-log-modules = Současné moduly protokolu:
-about-networking-set-log-file = Nastavit soubor protokolu
-about-networking-set-log-modules = Nastavit moduly protokolu
-about-networking-start-logging = Spustit ukládání protokolu
-about-networking-stop-logging = Ukončit ukládání protokolu
 about-networking-dns-lookup = Vyhledávání v DNS
 about-networking-dns-lookup-button = Přeložit
 about-networking-dns-domain = Doména:
@@ -63,6 +56,8 @@ about-networking-rcwn-cache-slow = Počet pomalých přístupů do mezipaměti
 about-networking-rcwn-cache-not-slow = Počet rychlých přístupů do mezipaměti
 about-networking-networkid = ID sítě
 about-networking-networkid-id = ID sítě
+# Note: do not translate about:logging, as it is a URL.
+about-networking-moved-about-logging = Tato stránka byla přesunuta do <a data-l10n-name="about-logging-url">about:logging</a>.
 
 ## Link is intended as "network link"
 

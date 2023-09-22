@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,12 +38,12 @@ screenshots-notification-image-copied-title = Bilde kopiert
 screenshots-notification-image-copied-details = Bildet ditt er kopiert til utklippstavla. Trykk på { screenshots-meta-key }-V for å lime det inn.
 
 screenshots-request-error-title = I ustand.
-screenshots-request-error-details = Beklagar! Vi klarte ikkje å lagre skjermbiildet ditt. Prøv igjen seinare.
+screenshots-request-error-details = Beklagar! Vi klarte ikkje å lagre skjermbiildet ditt. Prøv på nytt seinare.
 
 screenshots-connection-error-title = Vi kan ikkje kople til skjermbilda dine.
 screenshots-connection-error-details = Kontroller internett-tilkoplinga di. Om du kan kople til internett, kan det vere eit mellombels problem med tenesta { -screenshots-brand-name }.
 
-screenshots-login-error-details = Vi klarte ikkje å lagre skjermbildet ditt, fordi det er eit problem med tenesta { -screenshots-brand-name }. Prøv igjen seinare.
+screenshots-login-error-details = Vi klarte ikkje å lagre skjermbildet ditt, fordi det er eit problem med tenesta { -screenshots-brand-name }. Prøv på nytt seinare.
 
 screenshots-unshootable-page-error-title = Vi kan ikkje ta skjermbilde av denne sida.
 screenshots-unshootable-page-error-details = Dette er ikkje ei vanleg nettside, og du kan ikkje ta skjermbilde av henne.
@@ -54,4 +54,7 @@ screenshots-private-window-error-title = { -screenshots-brand-name } er slått a
 screenshots-private-window-error-details = Ein er lei for ulempa. Vi jobbar med denne funksjonen for framtidige versjonar.
 
 screenshots-generic-error-title = Oj! Det ser ut til at { -screenshots-brand-name } ikkje fungerer korrekt.
-screenshots-generic-error-details = Vi er ikkje sikre på kva som hende. Kan du prøve igjen eller ta eit bilde på ei anna side?
+screenshots-generic-error-details = Vi er ikkje sikre på kva som hende. Kan du prøve på nytt eller ta eit bilde på ei anna side?
+
+screenshots-too-large-error-title = Skjermbildet ditt vart skore til fordi det var for stort
+screenshots-too-large-error-details = Prøv å velje eit område som er mindre enn 32 700 pikslar på den lengste sida eller 124 900 000 pikslar totalt område.

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -31,7 +31,6 @@ flextype-item = フレックスアイテム
 # The layout type of an element shown in the infobar when hovering over a DOM element and
 # it is both a flex container and a flex item.
 flextype-dual = フレックスコンテナー / アイテム
-
 # The message displayed in the content page when the user clicks on the
 # "Pick an element from the page" in about:devtools-toolbox inspector panel, when
 # debugging a remote page.
@@ -39,14 +38,18 @@ flextype-dual = フレックスコンテナー / アイテム
 # $action (string) - Will either be remote-node-picker-notice-action-desktop or
 #                    remote-node-picker-notice-action-touch
 remote-node-picker-notice = 開発ツールのノード選択が有効です。{ $action }
-
 # Text displayed in `remote-node-picker-notice`, when the remote page is on desktop
 remote-node-picker-notice-action-desktop = 要素をクリックすると、インスペクターでその要素を選択できます
-
 # Text displayed in `remote-node-picker-notice`, when the remote page is on Android
 remote-node-picker-notice-action-touch = 要素をタップすると、インスペクターでその要素を選択できます
-
 # The text displayed in the button that is in the notice in the content page when the user
 # clicks on the "Pick an element from the page" in about:devtools-toolbox inspector panel,
 # when debugging a remote page.
 remote-node-picker-notice-hide-button = 閉じる
+# The text displayed in a toolbox notification message which is only displayed
+# if prefers-reduced-motion is enabled (via OS-level settings or by using the
+# ui.prefersReducedMotion=1 preference).
+simple-highlighters-message = prefers-reduced-motion が有効な場合、色フラッシュを避けるため、設定パネルで簡易強調を有効化できます。
+# Text displayed in a button inside the "simple-highlighters-message" toolbox
+# notification. "Settings" here refers to the DevTools settings panel.
+simple-highlighters-settings-button = 設定を開く

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,6 @@ screenshots-private-window-error-details = Desculpe pela inconveniência. Estamo
 
 screenshots-generic-error-title = Uau! Algo correu mal com o { -screenshots-brand-name }.
 screenshots-generic-error-details = Não temos a certeza do que acabou de acontecer. Importa-se de tentar novamente ou tirar uma captura de uma página diferente?
+
+screenshots-too-large-error-title = A sua captura de ecrã foi cortada porque era demasiado grande
+screenshots-too-large-error-details = Experimente selecionar uma região que tenha menos de 32700 pixels no lado maior ou 124900000 pixels de área total.

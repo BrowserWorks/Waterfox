@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -33,3 +33,23 @@ toolbox-meatball-menu-pseudo-locale-bidi = Activar idioma “bidi”
 
 ##
 
+
+## These labels are shown in the top-toolbar in the Browser Toolbox and Browser Console
+
+toolbox-mode-browser-toolbox-label = Modo de caja de herramientas del navegador
+toolbox-mode-browser-console-label = Modo de consola del navegador
+
+toolbox-mode-everything-label = Multiproceso
+toolbox-mode-everything-sub-label = (Más lento)
+toolbox-mode-everything-container =
+    .title = Depurar todo en todos los procesos
+
+toolbox-mode-parent-process-label = Solo proceso padre
+toolbox-mode-parent-process-sub-label = (Rápido)
+toolbox-mode-parent-process-container =
+    .title = Concentrarse únicamente en los recursos del proceso padre.
+
+toolbox-always-on-top-enabled2 = Desactivar siempre visible
+    .title = Esto reiniciará las herramientas para desarrolladores
+toolbox-always-on-top-disabled2 = Activar siempre visible
+    .title = Esto reiniciará las herramientas para desarrolladores

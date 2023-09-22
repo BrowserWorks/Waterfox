@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -86,38 +86,6 @@ main-context-menu-page-save =
 
 ## Simple menu items
 
-main-context-menu-bookmark-add =
-    .aria-label = Přidat stránku do záložek
-    .accesskey = P
-    .tooltiptext = Přidá tuto stránku do záložek
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-edit-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-add-mac =
-    .label = Přidat stránku do záložek
-    .accesskey = P
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-add-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-edit-mac =
-    .label = Upravit záložku
-    .accesskey = p
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the add bookmark command.
-main-context-menu-bookmark-add-with-shortcut =
-    .aria-label = Přidat stránku do záložek
-    .accesskey = P
-    .tooltiptext = Přidá tuto stránku do záložek ({ $shortcut })
-main-context-menu-bookmark-change =
-    .aria-label = Upravit záložku
-    .accesskey = P
-    .tooltiptext = Upraví tuto záložku
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the edit bookmark command.
-main-context-menu-bookmark-change-with-shortcut =
-    .aria-label = Upravit záložku
-    .accesskey = P
-    .tooltiptext = Upraví tuto záložku ({ $shortcut })
 main-context-menu-bookmark-page =
     .aria-label = Přidat stránku do záložek…
     .accesskey = P
@@ -165,9 +133,6 @@ main-context-menu-open-link-new-window =
 main-context-menu-open-link-new-private-window =
     .label = Otevřít odkaz v novém anonymním okně
     .accesskey = t
-main-context-menu-bookmark-link =
-    .label = Přidat do záložek
-    .accesskey = d
 main-context-menu-bookmark-link-2 =
     .label = Přidat do záložek…
     .accesskey = P
@@ -191,6 +156,11 @@ main-context-menu-copy-phone =
 main-context-menu-copy-link-simple =
     .label = Zkopírovat odkaz
     .accesskey = a
+# This command copies the link, removing additional
+# query parameters used to track users across sites.
+main-context-menu-strip-on-share-link =
+    .label = Zkopírovat odkaz bez sledovacích prvků
+    .accesskey = k
 
 ## Media (video/audio) controls
 ##
@@ -307,12 +277,6 @@ main-context-menu-video-email =
 main-context-menu-audio-email =
     .label = Poslat audio e-mailem…
     .accesskey = a
-main-context-menu-plugin-play =
-    .label = Spustit zásuvný modul
-    .accesskey = p
-main-context-menu-plugin-hide =
-    .label = Skrýt zásuvný modul
-    .accesskey = S
 main-context-menu-save-to-pocket =
     .label = Uložit stránku do { -pocket-brand-name(case: "gen") }
     .accesskey = k
@@ -333,8 +297,11 @@ main-context-menu-use-saved-password =
 
 ##
 
+main-context-menu-use-relay-mask =
+    .label = Použít e-mailovou masku { -relay-brand-short-name }
+    .accesskey = e
 main-context-menu-suggest-strong-password =
-    .label = Navrhnou bezpečně vygenerované heslo…
+    .label = Navrhnout bezpečně vygenerované heslo…
     .accesskey = g
 main-context-menu-manage-logins2 =
     .label = Správa přihlašovacích údajů
@@ -360,9 +327,6 @@ main-context-menu-frame-open-window =
 main-context-menu-frame-reload =
     .label = Znovu načíst rám
     .accesskey = m
-main-context-menu-frame-bookmark =
-    .label = Přidat rám do záložek
-    .accesskey = d
 main-context-menu-frame-add-bookmark =
     .label = Přidat rám do záložek…
     .accesskey = P
@@ -378,8 +342,8 @@ main-context-menu-frame-view-source =
 main-context-menu-frame-view-info =
     .label = Zobrazit informace o rámu
     .accesskey = i
-main-context-menu-print-selection =
-    .label = Vytisknout výběr
+main-context-menu-print-selection-2 =
+    .label = Vytisknout výběr…
     .accesskey = r
 main-context-menu-view-selection-source =
     .label = Zobrazit zdrojový kód výběru

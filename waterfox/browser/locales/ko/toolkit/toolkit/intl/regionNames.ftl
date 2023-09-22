@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,7 @@ region-name-bl = 산타 바스미
 region-name-bm = 버뮤다
 region-name-bn = 브루나이
 region-name-bo = 볼리비아
-region-name-bq = 보네르 섬, 신트외스타티위스 섬, 사바 섬
+region-name-bq-2018 = 네덜란드령 카리브
 region-name-br = 브라질
 region-name-bs = 바하마
 region-name-bt = 부탄
@@ -57,11 +57,11 @@ region-name-co = 콜롬비아
 region-name-cp = 클리퍼턴 섬
 region-name-cr = 코스타리카
 region-name-cu = 쿠바
-region-name-cv = 케이프 베르디
+region-name-cv-2020 = 카보베르데
 region-name-cw = 큐라소
 region-name-cx = 크리스마스 제도
 region-name-cy = 사이프러스
-region-name-cz = 체코 공화국
+region-name-cz-2019 = 체코
 region-name-de = 독일
 region-name-dg = 디에고 가르시아
 region-name-dj = 지부티
@@ -150,7 +150,7 @@ region-name-me = 몬테니그로
 region-name-mf = 산타 마틴
 region-name-mg = 마다카스카르
 region-name-mh = 마샬 군도
-region-name-mk = 마케도니아
+region-name-mk-2019 = 북 마케도니아
 region-name-ml = 말리
 region-name-mm = 미안마
 region-name-mn = 몽고
@@ -223,7 +223,7 @@ region-name-st = 상투메 프린시페
 region-name-sv = 엘살바도르
 region-name-sx = 신트마르턴
 region-name-sy = 시리아
-region-name-sz = 스와질랜드
+region-name-sz-2019 = 에스와티니
 region-name-tc = 터크스카이코스 제도
 region-name-td = 차드
 region-name-tf = 프랑스령 남부 식민지 제도

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,18 +22,6 @@ synced-tabs-sidebar-search =
 synced-tabs-context-open =
     .label = Abrir
     .accesskey = A
-synced-tabs-context-open-in-new-tab =
-    .label = Abrir num novo separador
-    .accesskey = s
-synced-tabs-context-open-in-new-window =
-    .label = Abrir ligação numa nova janela
-    .accesskey = j
-synced-tabs-context-open-in-new-private-window =
-    .label = Abrir ligação numa nova janela privada
-    .accesskey = p
-synced-tabs-context-bookmark-single-tab =
-    .label = Adicionar este separador aos marcadores…
-    .accesskey = C
 synced-tabs-context-open-in-tab =
     .label = Abrir num novo separador
     .accesskey = r
@@ -53,10 +41,10 @@ synced-tabs-context-open-in-private-window =
 # and/or devices in the list. This string is for a menuitem equivalent to one in
 # the tab context menu (activated by right-clicking a tab in the tabstrip). That
 # string is located in tabContextMenu.ftl. So, this string should be translated
-# consistently with the "Bookmark Tab" string there.
-synced-tabs-context-bookmark-tab =
-    .label = Adicionar separador aos marcadores
-    .accesskey = m
+# consistently with the "Bookmark Tab…" string there.
+synced-tabs-context-bookmark =
+    .label = Adicionar separador aos marcadores…
+    .accesskey = B
 synced-tabs-context-copy =
     .label = Copiar
     .accesskey = C

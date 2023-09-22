@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,6 @@ region-name-bl = سانت بارثيليمي
 region-name-bm = برمودا
 region-name-bn = بروناي
 region-name-bo = بوليفيا
-region-name-bq = بونير و سينت أوستاتيوس و سابا
 region-name-br = البرازيل
 region-name-bs = البهاما
 region-name-bt = بهوتان
@@ -57,11 +56,9 @@ region-name-co = كولومبيا
 region-name-cp = جزيرة كليبرتون
 region-name-cr = كوستا ريكا
 region-name-cu = كوبا
-region-name-cv = الرأس الأخضر
 region-name-cw = كوراساو
 region-name-cx = جزيرة الكريسماس
 region-name-cy = قبرص
-region-name-cz = جمهورية التشيك
 region-name-de = ألمانيا
 region-name-dg = دييغو غارسيا
 region-name-dj = جيبوتي
@@ -150,7 +147,6 @@ region-name-me = مونتنيغرو
 region-name-mf = سانت مارتن
 region-name-mg = مدغشقر
 region-name-mh = جزر المارشال
-region-name-mk = مقدونيا
 region-name-ml = مالي
 region-name-mm = بورما
 region-name-mn = منغوليا
@@ -223,7 +219,6 @@ region-name-st = صاو تومي و برنسيب
 region-name-sv = السلفادور
 region-name-sx = سانت مارتن
 region-name-sy = سوريا
-region-name-sz = سوازيلاند
 region-name-tc = جزر الترك والكايكوس
 region-name-td = تشاد
 region-name-tf = المناطق الجنوبية و الأنتركتيكية الفرنسية

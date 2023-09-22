@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,7 @@ region-name-bl = Сен-Бартелеми
 region-name-bm = Бермуды
 region-name-bn = Бруней
 region-name-bo = Боливия
-region-name-bq = Бонэйр, Синт-Эстатиус и Саба
+region-name-bq-2018 = Карибские Нидерланды
 region-name-br = Бразилия
 region-name-bs = Багамские острова
 region-name-bt = Бутан
@@ -57,11 +57,11 @@ region-name-co = Колумбия
 region-name-cp = Клиппертон, остров
 region-name-cr = Коста-Рика
 region-name-cu = Куба
-region-name-cv = Кабо-Верде
+region-name-cv-2020 = Кабо-Верде
 region-name-cw = Кюрасао
 region-name-cx = Рождества (Кристмас), остров
 region-name-cy = Кипр
-region-name-cz = Чехия
+region-name-cz-2019 = Чехия
 region-name-de = Германия
 region-name-dg = Диего-Гарсия
 region-name-dj = Джибути
@@ -150,7 +150,7 @@ region-name-me = Черногория
 region-name-mf = Святого Мартина, остров
 region-name-mg = Мадагаскар
 region-name-mh = Маршалловы острова
-region-name-mk = Северная Македония
+region-name-mk-2019 = Северная Македония
 region-name-ml = Мали
 region-name-mm = Мьянма
 region-name-mn = Монголия
@@ -223,7 +223,7 @@ region-name-st = Сан-Томе и Принсипи
 region-name-sv = Сальвадор
 region-name-sx = Синт-Мартен
 region-name-sy = Сирия
-region-name-sz = Свазиленд
+region-name-sz-2019 = Эсватини
 region-name-tc = Тёркс и Кайкос, острова
 region-name-td = Чад
 region-name-tf = Французские Южные и Антарктические территории

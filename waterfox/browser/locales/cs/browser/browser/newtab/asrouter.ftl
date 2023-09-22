@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -131,27 +131,13 @@ cfr-doorhanger-doh-secondary-button = Zakázat
 
 ## Fission Experiment Message
 
-cfr-doorhanger-fission-body-approved = Vaše soukromí je důležité. { -brand-short-name } nyní navzájem izoluje jednotlivé weby, což hackerům ztěžuje krádež hesel, čísel platebních karet nebo jiných citlivých informací.
-cfr-doorhanger-fission-header = Izolace webů
-cfr-doorhanger-fission-primary-button = OK, rozumím
-    .accesskey = O
-cfr-doorhanger-fission-secondary-button = Zjistit více
-    .accesskey = Z
-
 ## Full Video Support CFR message
 
 cfr-doorhanger-video-support-body =
-    V této verzi { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "gen") }
-        [feminine] { -brand-short-name(case: "gen") }
-        [neuter] { -brand-short-name(case: "gen") }
-       *[other] aplikace { -brand-short-name }
-    } se videa na tomto serveru nemusí přehrávat správně. Pro plnou podporu videí { -brand-short-name.gender ->
-        [masculine] svůj { -brand-short-name(case: "acc") }
-        [feminine] svou { -brand-short-name(case: "acc") }
-        [neuter] své { -brand-short-name(case: "acc") }
-       *[other] aplikaci { -brand-short-name }
-    } aktualizujte.
+    { -brand-short-name.case-status ->
+        [with-cases] V této verzi { -brand-short-name(case: "gen") } se videa na tomto serveru nemusí přehrávat správně. Pro plnou podporu videí svůj { -brand-short-name(case: "acc") } aktualizujte.
+       *[no-cases] V této verzi aplikace { -brand-short-name } se videa na tomto serveru nemusí přehrávat správně. Pro plnou podporu videí aplikaci { -brand-short-name } aktualizujte.
+    }
 cfr-doorhanger-video-support-header =
     Pro přehrání videa aktualizujte { -brand-short-name.gender ->
         [masculine] svůj { -brand-short-name(case: "acc") }
@@ -164,54 +150,29 @@ cfr-doorhanger-video-support-primary-button = Aktualizovat
 
 ## Spotlight modal shared strings
 
-spotlight-learn-more-collapsed = Zjistit více
-    .title = Zobrazit více informací o této funkci
-spotlight-learn-more-expanded = Zjistit více
-    .title = Zavřít
-
 ## VPN promotion dialog for public Wi-Fi users
 ##
 ## If a user is detected to be on a public Wi-Fi network, they are given a
 ## bit of info about how to improve their privacy and then offered a button
-## to the Waterfox VPN page and a link to dismiss the dialog.
+## to the BrowserWorks VPN page and a link to dismiss the dialog.
 
 # This header text can be explicitly wrapped.
 spotlight-public-wifi-vpn-header = Zdá se, že používáte veřejnou Wi-Fi síť
 spotlight-public-wifi-vpn-body = Pokud chcete skrýt svou polohu a aktivity během prohlížení internetu, zvažte využití služby virtuální privátní sítě. Poskytne vám ochranu během prohlížení internetu na veřejných místech, v kavárně nebo na letišti.
-spotlight-public-wifi-vpn-primary-button =
-    Ochraňte své soukromí { -mozilla-vpn-brand-name.gender ->
-        [masculine] s { -mozilla-vpn-brand-name(case: "ins") }
-        [feminine] s { -mozilla-vpn-brand-name(case: "ins") }
-        [neuter] s { -mozilla-vpn-brand-name(case: "ins") }
-       *[other] se službou { -mozilla-vpn-brand-name }
-    }
+spotlight-public-wifi-vpn-primary-button = Ochraňte své soukromí s { -mozilla-vpn-brand-name(case: "ins") }
     .accesskey = s
 spotlight-public-wifi-vpn-link = Teď ne
     .accesskey = n
 
 ## Total Cookie Protection Rollout
 
-# "Test pilot" is used as a verb. Possible alternatives: "Be the first to try",
-# "Join an early experiment". This header text can be explicitly wrapped.
-spotlight-total-cookie-protection-header =
-    Vyzkoušejte naši zatím nejsilnější
-    funkci na ochranu soukromí
-spotlight-total-cookie-protection-body = Úplná ochrana před cookies brání sledujícím subjektům používat cookies k vašemu sledování napříč webovými stránkami.
-# "Early access" for this feature rollout means it's a "feature preview" or
-# "soft launch" as not everybody will get it yet.
-spotlight-total-cookie-protection-expanded = { -brand-short-name } ochrání vaše cookies tak, že omezí jejich dostupnost pro konkrétní stránku, kterou prohlížíte, takže je sledovací prvky nemohou používat pro vaše sledování napříč stránkami. Vykoušením této funkce nám je pomůžete dále optimalizovat pro vás i všechny ostatní uživatele.
-spotlight-total-cookie-protection-primary-button = Zapnout úplnou ochranu před cookies
-spotlight-total-cookie-protection-secondary-button = Teď ne
-
 ## Emotive Continuous Onboarding
 
 spotlight-better-internet-header = Lepší internet začíná u vás
 spotlight-better-internet-body =
-    { -brand-short-name.gender ->
-        [masculine] Používáním { -brand-short-name(case: "gen") } vyjadřujete svou podporu otevřenému webu, který je přístupný a lepší pro všechny.
-        [feminine] Používáním { -brand-short-name(case: "gen") } vyjadřujete svou podporu otevřenému webu, který je přístupný a lepší pro všechny.
-        [neuter] Používáním { -brand-short-name(case: "gen") } vyjadřujete svou podporu otevřenému webu, který je přístupný a lepší pro všechny.
-       *[other] Používáním aplikace { -brand-short-name } vyjadřujete svou podporu otevřenému webu, který je přístupný a lepší pro všechny.
+    { -brand-short-name.case-status ->
+        [with-cases] Používáním { -brand-short-name(case: "gen") } vyjadřujete svou podporu otevřenému webu, který je přístupný a lepší pro všechny.
+       *[no-cases] Používáním aplikace { -brand-short-name } vyjadřujete svou podporu otevřenému webu, který je přístupný a lepší pro všechny.
     }
 spotlight-peace-mind-header = Všechno, co potřebujete
 spotlight-peace-mind-body = Každý měsíc zablokuje { -brand-short-name } pro každého uživatele v průměru přes 3000 sledovacích prvků. A to proto, aby vám nic nesnižovalo kvalitu internetu, tím méně sledovací prvky porušující vaše soukromí.
@@ -221,3 +182,144 @@ spotlight-pin-primary-button =
        *[other] Připnout na lištu
     }
 spotlight-pin-secondary-button = Teď ne
+
+## MR2022 Background Update Windows native toast notification strings.
+##
+## These strings will be displayed by the Windows operating system in
+## a native toast, like:
+##
+## <b>multi-line title</b>
+## multi-line text
+## <img>
+## [ primary button ] [ secondary button ]
+##
+## The button labels are fitted into narrow fixed-width buttons by
+## Windows and therefore must be as narrow as possible.
+
+mr2022-background-update-toast-title =
+    { -brand-short-name.gender ->
+        [masculine] Nový { -brand-short-name }. Více soukromí, méně sledovacích prvků. Bez kompromisů.
+        [feminine] Nová { -brand-short-name }. Více soukromí, méně sledovacích prvků. Bez kompromisů.
+        [neuter] Nové { -brand-short-name }. Více soukromí, méně sledovacích prvků. Bez kompromisů.
+       *[other] Nová aplikace { -brand-short-name }. Více soukromí, méně sledovacích prvků. Bez kompromisů.
+    }
+mr2022-background-update-toast-text =
+    { -brand-short-name.gender ->
+        [masculine] Vyzkoušejte nyní nejnovější { -brand-short-name(case: "acc") }, který byl vylepšen o naši dosud nejsilnější ochranu proti sledování.
+        [feminine] Vyzkoušejte nyní nejnovější { -brand-short-name(case: "acc") }, která byla vylepšena o naši dosud nejsilnější ochranu proti sledování.
+        [neuter] Vyzkoušejte nyní nejnovější { -brand-short-name(case: "acc") }, které bylo vylepšeno o naši dosud nejsilnější ochranu proti sledování.
+       *[other] Vyzkoušejte nyní nejnovější aplikaci { -brand-short-name }, která byla vylepšena o naši dosud nejsilnější ochranu proti sledování.
+    }
+
+# This button label will be fitted into a narrow fixed-width button by
+# Windows. Try to not exceed the width of the English text (compare it
+# using a variable font like Arial): the button can only fit 1-2
+# additional characters, exceeding characters will be truncated.
+mr2022-background-update-toast-primary-button-label =
+    { -brand-shorter-name.case-status ->
+        [with-cases] Spustit { -brand-shorter-name(case: "acc") }
+       *[no-cases] Spustit aplikaci { -brand-shorter-name }
+    }
+
+# This button label will be fitted into a narrow fixed-width button by
+# Windows. Try to not exceed the width of the English text (compare it using a
+# variable font like Arial): the button can only fit 1-2 additional characters,
+# exceeding characters will be truncated.
+mr2022-background-update-toast-secondary-button-label = Upozornit mě později
+
+## Waterfox View CFR
+
+firefoxview-cfr-primarybutton = Vyzkoušejte ho
+    .accesskey = t
+firefoxview-cfr-secondarybutton = Teď ne
+    .accesskey = n
+firefoxview-cfr-header-v2 = Rychle pokračujte tam, kde jste skončili
+firefoxview-cfr-body-v2 = Získejte zpět nedávno zavřené panely a plynule přecházejte mezi zařízeními pomocí { -firefoxview-brand-name(case: "gen") }.
+
+## Waterfox View Spotlight
+
+firefoxview-spotlight-promo-title = Přivítejte { -firefoxview-brand-name(case: "acc") }
+
+# “Poof” refers to the expression to convey when something or someone suddenly disappears, or in this case, reappears. For example, “Poof, it’s gone.”
+firefoxview-spotlight-promo-subtitle = Chcete zrovna ten panel otevřený v telefonu? Vezměte si ho. Potřebujete znovu tu stránku, co jste před chvílí navštívili? Hups, díky { -firefoxview-brand-name(case: "dat", capitalization: "lower") } ji máte zpátky.
+firefoxview-spotlight-promo-primarybutton = Jak to funguje
+firefoxview-spotlight-promo-secondarybutton = Přeskočit
+
+## Colorways expiry reminder CFR
+
+colorways-cfr-primarybutton = Zvolit baletu barev
+    .accesskey = Z
+
+# "shades" refers to the different color options available to users in colorways.
+colorways-cfr-body =
+    { -brand-short-name.case-status ->
+        [with-cases] Vybarvěte svůj { -brand-short-name(case: "acc") } exkluzivními odstíny inspirovanými hlasy, které změnily kulturu.
+       *[no-cases] Vybarvěte svůj prohlížeč { -brand-short-name } exkluzivními odstíny inspirovanými hlasy, které změnily kulturu.
+    }
+colorways-cfr-header-28days = Paleta barev Nezávislé hlasy je dostupná pouze do 16. ledna.
+colorways-cfr-header-14days = Paleta barev Nezávislé hlasy vyprší během dvou týdnů
+colorways-cfr-header-7days = Paleta barev Nezávislé hlasy vyprší tento týden
+colorways-cfr-header-today = Paleta barev Nezávislé hlasy vyprší dnes
+
+## Cookie Banner Handling CFR
+
+cfr-cbh-header =
+    { -brand-short-name.case-status ->
+        [with-cases] Povolit ve { -brand-short-name(case: "dat") } blokování cookie lišt?
+       *[no-cases] Povolit v aplikaci { -brand-short-name } blokování cookie lišt?
+    }
+cfr-cbh-body = { -brand-short-name } může automaticky blokovat řadu cookie lišt.
+cfr-cbh-confirm-button = Odmítat cookie lišty
+    .accesskey = c
+cfr-cbh-dismiss-button = Teď ne
+    .accesskey = n
+
+## These strings are used in the Fox doodle Pin/set default spotlights
+
+july-jam-headline = Všechno, co potřebujete
+july-jam-body = Každý měsíc { -brand-short-name } zablokuje v průměru více než 3 000 sledovacích prvků na uživatele, takže máte bezpečný a rychlý přístup ke kvalitnímu internetu.
+july-jam-set-default-primary =
+    { -brand-short-name.case-status ->
+        [with-cases] Otevírat mé odkazy pomocí { -brand-short-name(case: "gen") }
+       *[no-cases] Otevírat mé odkazy pomocí aplikace { -brand-short-name }
+    }
+fox-doodle-pin-headline = Vítejte zpět
+
+# “indie” is short for the term “independent”.
+# In this instance, free from outside influence or control.
+fox-doodle-pin-body = Zde je rychlé připomenutí, že si svůj oblíbený nezávislý prohlížeč můžete jediným klepnutím ponechat.
+fox-doodle-pin-primary =
+    { -brand-short-name.case-status ->
+        [with-cases] Otevírat mé odkazy pomocí { -brand-short-name(case: "gen") }
+       *[no-cases] Otevírat mé odkazy pomocí aplikace { -brand-short-name }
+    }
+fox-doodle-pin-secondary = Teď ne
+
+## These strings are used in the Set Waterfox as Default PDF Handler for Existing Users experiment
+
+set-default-pdf-handler-headline =
+    { -brand-short-name.case-status ->
+        [with-cases] <strong>Vaše PDF dokumenty se nyní otevírají ve { -brand-short-name(case: "loc") }.</strong> Upravujte nebo podepisujte formuláře přímo v prohlížeči. Pro změnu vyhledejte v nastavení položku „PDF“.
+       *[no-cases] <strong>Vaše PDF dokumenty se nyní otevírají v aplikaci { -brand-short-name }.</strong> Upravujte nebo podepisujte formuláře přímo v prohlížeči. Pro změnu vyhledejte v nastavení položku „PDF“.
+    }
+set-default-pdf-handler-primary = Rozumím
+
+## FxA sync CFR
+
+fxa-sync-cfr-header = Plánujete v blízké budoucnosti nové zařízení?
+fxa-sync-cfr-body =
+    { -brand-product-name.case-status ->
+        [with-cases] Ujistěte se, že máte své záložky, hesla a panely vždy při sobě, když otevřete novou instalaci { -brand-product-name(case: "gen") }.
+       *[no-cases] Ujistěte se, že máte své záložky, hesla a panely vždy při sobě, když otevřete novou instalaci prohlížeče { -brand-product-name }.
+    }
+fxa-sync-cfr-primary = Zjistit více
+    .accesskey = Z
+fxa-sync-cfr-secondary = Upozornit mě později
+    .accesskey = U
+
+## Device Migration FxA Spotlight
+
+device-migration-fxa-spotlight-header = Používáte starší zařízení?
+device-migration-fxa-spotlight-body = Zálohujte svá data, abyste neztratili důležité informace, jako jsou záložky a hesla – zejména pokud přejdete na nové zařízení.
+device-migration-fxa-spotlight-primary-button = Jak zálohovat moje data
+device-migration-fxa-spotlight-link = Upozornit mě později

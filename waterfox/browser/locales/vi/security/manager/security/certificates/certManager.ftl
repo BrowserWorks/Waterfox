@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,9 +26,9 @@ certmgr-people = Bạn có các tập tin chứng thực để nhận biết nh�
 certmgr-server = Các mục này xác định các ngoại lệ lỗi chứng chỉ máy chủ
 certmgr-ca = Bạn có những tập tin chứng thực để nhận biết các nhà thẩm định chứng thực này
 
-certmgr-edit-ca-cert =
+certmgr-edit-ca-cert2 =
     .title = Chỉnh thiết lập độ tin cậy chứng chỉ CA
-    .style = width: 48em;
+    .style = min-width: 48em;
 
 certmgr-edit-cert-edit-trust = Chỉnh thiết lập tin cậy:
 
@@ -38,9 +38,9 @@ certmgr-edit-cert-trust-ssl =
 certmgr-edit-cert-trust-email =
     .label = Chứng chỉ này có thể nhận diện người dùng email.
 
-certmgr-delete-cert =
+certmgr-delete-cert2 =
     .title = Xóa chứng nhận
-    .style = width: 48em; height: 24em;
+    .style = min-width: 48em; min-height: 24em;
 
 certmgr-cert-host =
     .label = Máy chủ
@@ -50,9 +50,6 @@ certmgr-cert-name =
 
 certmgr-cert-server =
     .label = Máy chủ
-
-certmgr-override-lifetime =
-    .label = Chu kì
 
 certmgr-token-name =
     .label = Thiết bị bảo mật
@@ -68,6 +65,9 @@ certmgr-email =
 
 certmgr-serial =
     .label = Số sê-ri
+
+certmgr-fingerprint-sha-256 =
+    .label = Vân tay SHA-256
 
 certmgr-view =
     .label = Xem…
@@ -185,8 +185,6 @@ delete-email-cert-impact = Nếu bạn xóa chứng chỉ email của một ngư
 #   $serialNumber : the serial number of the cert in AA:BB:CC hex format.
 cert-with-serial =
     .value = Chứng chỉ có số sê-ri: { $serialNumber }
-
-## Cert Viewer
 
 # Used to indicate that the user chose not to send a client authentication certificate to a server that requested one in a TLS handshake.
 send-no-client-certificate = Không gửi chứng chỉ máy khách

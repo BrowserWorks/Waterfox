@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,6 @@ screenshots-private-window-error-details = 불편하게 해드려서 죄송합�
 
 screenshots-generic-error-title = 이런! { -screenshots-brand-name }이 잘못됐습니다.
 screenshots-generic-error-details = 무슨 일이 있었는지 잘 모르겠습니다. 다시 시도하시거나 다른 페이지의 스크린샷을 찍어 보시겠습니까?
+
+screenshots-too-large-error-title = 스크린샷이 너무 커서 잘렸습니다.
+screenshots-too-large-error-details = 가장 긴 면이 32,700 픽셀보다 작거나 총 면적이 124,900,000 픽셀보다 작은 영역을 선택해 보세요.

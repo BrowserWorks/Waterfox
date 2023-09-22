@@ -1,14 +1,12 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
 
 about-logins-page-title = جلسات الولوج وكلمات السر
 
-login-filter =
-    .placeholder = ابحث في جلسات الولوج
-
-create-login-button = أنشئ جلسة ولوج جديدة
+create-new-login-button =
+    .title = أنشِئ جلسة ولوج جديدة
 
 fxaccounts-sign-in-text = استعمل كلمات السر لحساباتك في أجهزتك الأخرى
 fxaccounts-sign-in-sync-button = لِج كي تبدأ المزامنة
@@ -35,6 +33,8 @@ about-logins-menu-menuitem-help = مساعدة
 
 login-list =
     .aria-label = جلسات الولوج المطابقة لعبارة البحث
+# Variables
+#   $count (number) - Number of logins
 login-list-count =
     { $count ->
         [zero] لا جلسات ولوج
@@ -103,9 +103,17 @@ login-item-copied-password-button-text = نُسخ.
 login-item-save-changes-button = احفظ التغييرات
 login-item-save-new-button = احفظ
 login-item-cancel-button = ألغِ
-login-item-time-changed = آخر تعديل: { DATETIME($timeChanged, day: "numeric", month: "long", year: "numeric") }
-login-item-time-created = تاريخ الإنشاء: { DATETIME($timeCreated, day: "numeric", month: "long", year: "numeric") }
-login-item-time-used = آخر استخدام: { DATETIME($timeUsed, day: "numeric", month: "long", year: "numeric") }
+
+## The date is displayed in a timeline showing the password evolution.
+## A label is displayed under the date to describe the type of change.
+## (e.g. updated, created, etc.)
+
+# Variables
+#   $datetime (date) - Event date
+login-item-timeline-point-date = { DATETIME($datetime, day: "numeric", month: "short", year: "numeric") }
+login-item-timeline-action-created = أُنشِئ
+login-item-timeline-action-updated = حُدِّث
+login-item-timeline-action-used = استُعمِل
 
 ## OS Authentication dialog
 
@@ -155,6 +163,9 @@ confirmation-dialog-dismiss-button =
 about-logins-confirm-remove-dialog-title = أنُزيل هذا الولوج؟
 confirm-delete-dialog-message = هذا إجراء لا عودة فيه.
 about-logins-confirm-remove-dialog-confirm-button = أزِل
+
+## Variables
+##   $count (number) - Number of items
 
 about-logins-confirm-remove-all-dialog-confirm-button-label =
     { $count ->
@@ -218,6 +229,8 @@ about-logins-confirm-remove-all-sync-dialog-message =
        *[other] بهذا تحذف جلسات الولوج المحفوظة في { -brand-short-name } من كلّ الأجهزة المتزامنة مع { -fxaccount-brand-name } لديك. كما سيُزيل أيّ تحذيرات أخرى تظهر هنا عن تسريبات البيانات. لا يمكنك العودة عن هذا الإجراء.
     }
 
+##
+
 about-logins-confirm-export-dialog-title = صدّر جلسات الولوج وكلمات السر
 about-logins-confirm-export-dialog-message = ستُحفظ جلسات الولوج على هيئة نص مقروء (مثلا 12345 أو BadP@ssw0rd) وبهذا يستطيع أيّ شخص معاينتها لو فتح الملف المصدّر.
 about-logins-confirm-export-dialog-confirm-button = صدّر…
@@ -237,7 +250,6 @@ about-logins-breach-alert-date = حدث هذا التسرّب بتاريخ { DAT
 # Variables:
 #   $hostname (String) - The hostname of the website associated with the login, e.g. "example.com"
 about-logins-breach-alert-link = انتقل إلى { $hostname }
-about-logins-breach-alert-learn-more-link = اطّلع على المزيد
 
 ## Vulnerable Password notification
 

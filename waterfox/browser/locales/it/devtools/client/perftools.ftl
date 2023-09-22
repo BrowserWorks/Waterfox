@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -84,8 +84,6 @@ perftools-thread-renderer =
   .title = Quando WebRender è attivo, il thread che esegue le chiamate OpenGL
 perftools-thread-render-backend =
   .title = Il thread WebRender RenderBackend
-perftools-thread-paint-worker =
-  .title = Quando è attivo il painting fuori dal thread principale (“off-main-thread”), il painting viene eseguito in questo thread
 perftools-thread-timer =
   .title = Il thread che gestisce i timer (setTimeout, setInterval, nsITimer)
 perftools-thread-style-thread =
@@ -140,6 +138,10 @@ perftools-onboarding-close-button =
 
 # Presets and their l10n IDs are defined in the file
 # devtools/client/performance-new/popup/background.jsm.js
+# The same labels and descriptions are also defined in appmenu.ftl.
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/shared/background.jsm.js
 # The same labels and descriptions are also defined in appmenu.ftl.
 
 perftools-presets-web-developer-label = Sviluppo web

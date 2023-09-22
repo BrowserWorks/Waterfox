@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -44,7 +44,11 @@ about-processes-file-process = Soubory ({ $pid })
 about-processes-extension-process = Rozšíření ({ $pid })
 about-processes-privilegedabout-process = About stránka ({ $pid })
 about-processes-plugin-process = Zásuvné moduly ({ $pid })
-about-processes-privilegedmozilla-process = Stránky { -vendor-short-name(case: "gen") } ({ $pid })
+about-processes-privilegedmozilla-process =
+    { -vendor-short-name.case-status ->
+        [with-cases] Stránky { -vendor-short-name(case: "gen") } ({ $pid })
+       *[no-cases] Stránky organizace { -vendor-short-name(case: "gen") } ({ $pid })
+    }
 about-processes-gmp-plugin-process = Mediální moduly jádra Gecko ({ $pid })
 about-processes-gpu-process = GPU ({ $pid })
 about-processes-vr-process = VR ({ $pid })
@@ -53,7 +57,6 @@ about-processes-socket-process = Síť ({ $pid })
 about-processes-remote-sandbox-broker-process = Remote Sandbox Broker ({ $pid })
 about-processes-fork-server-process = Fork Server ({ $pid })
 about-processes-preallocated-process = Předalokováno ({ $pid })
-
 about-processes-utility-process = Nástroj ({ $pid })
 
 # Unknown process names
@@ -129,9 +132,16 @@ about-processes-frame-name-one = Podrám: { $url }
 #   $shortUrl (String) The shared prefix for the subframes in the group.
 about-processes-frame-name-many = Podrámy ({ $number }): { $shortUrl }
 
-# Utility process actor names
+## Utility process actor names
+
 about-processes-utility-actor-unknown = Neznámý actor
-about-processes-utility-actor-audio-decoder = Dekodér zvuku
+about-processes-utility-actor-audio-decoder-generic = Obecný zvukový dekodér
+about-processes-utility-actor-audio-decoder-applemedia = Zvukový dekodér Apple Media
+about-processes-utility-actor-audio-decoder-wmf = Zvukový dekodér Windows Media Framework
+about-processes-utility-actor-mf-media-engine = Windows Media Foundation Media Engine CDM
+# "Oracle" refers to an internal Waterfox process and should be kept in English
+about-processes-utility-actor-js-oracle = JavaScript Oracle
+about-processes-utility-actor-windows-utils = Windows Utils
 
 ## Displaying CPU (percentage and total)
 ## Variables:

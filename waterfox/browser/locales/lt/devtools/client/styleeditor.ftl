@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,7 +16,6 @@ styleeditor-save-button = Įrašyti
     .accesskey = r
 styleeditor-options-button =
     .tooltiptext = Stilių rengyklės nuostatos
-styleeditor-media-rules = @media taisyklės
 styleeditor-editor-textbox =
     .data-placeholder = Čia rašykite CSS taisykles.
 styleeditor-no-stylesheet = Šis tinklalapis nenaudoja stilių aprašų.
@@ -25,6 +24,22 @@ styleeditor-open-link-new-tab =
     .label = Atverti saitą naujoje kortelėje
 styleeditor-copy-url =
     .label = Kopijuoti URL
+styleeditor-find =
+    .label = Ieškoti
+    .accesskey = I
+styleeditor-find-again =
+    .label = Ieškoti toliau
+    .accesskey = o
 styleeditor-go-to-line =
     .label = Eiti į eilutę…
     .accesskey = E
+
+# This string is shown in the style sheets list
+# Variables:
+#   $ruleCount (Integer) - The number of rules in the stylesheet.
+styleeditor-stylesheet-rule-count =
+    { $ruleCount ->
+        [one] { $ruleCount } taisyklė.
+        [few] { $ruleCount } taisyklės.
+       *[other] { $ruleCount } taisyklių.
+    }

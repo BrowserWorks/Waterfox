@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,8 +16,15 @@ update-updateButton =
     .accesskey = Z
 
 update-checkingForUpdates = Nach Updates suchen…
-update-downloading = <img data-l10n-name="icon"/>Update wird heruntergeladen — <label data-l10n-name="download-status"/>
-update-downloading-message = Update wird heruntergeladen – <label data-l10n-name="download-status"/>
+
+## Variables:
+##   $transfer (string) - Transfer progress.
+
+settings-update-downloading = <img data-l10n-name="icon"/>Update wird heruntergeladen — <label data-l10n-name="download-status">{ $transfer }</label>
+aboutdialog-update-downloading = Update wird heruntergeladen – <label data-l10n-name="download-status">{ $transfer }</label>
+
+##
+
 update-applying = Update wird durchgeführt…
 
 update-failed = Update fehlgeschlagen. <label data-l10n-name="failed-link">Laden Sie die neueste Version herunter</label>
@@ -25,15 +32,26 @@ update-failed-main = Update fehlgeschlagen. <a data-l10n-name="failed-link-main"
 
 update-adminDisabled = Updates von Ihrem System-Administrator deaktiviert
 update-noUpdatesFound = { -brand-short-name } ist aktuell
+aboutdialog-update-checking-failed = Suche nach Updates fehlgeschlagen.
 update-otherInstanceHandlingUpdates = { -brand-short-name } wird durch eine andere Instanz aktualisiert.
 
-update-manual = Updates verfügbar unter <label data-l10n-name="manual-link"/>
+## Variables:
+##   $displayUrl (String): URL to page with download instructions. Example: www.mozilla.org/firefox/nightly/
+
+aboutdialog-update-manual-with-link = Updates verfügbar unter <label data-l10n-name="manual-link">{ $displayUrl }</label>
+settings-update-manual-with-link = Updates verfügbar unter <a data-l10n-name="manual-link">{ $displayUrl }</a>
 
 update-unsupported = Auf diesem System können keine weiteren Updates installiert werden. <label data-l10n-name="unsupported-link">Weitere Informationen</label>
 
 update-restarting = Wird neu gestartet…
 
-channel-description = Sie sind derzeit auf dem Update-Kanal <label data-l10n-name="current-channel"></label>.
+update-internal-error2 = Aufgrund eines internen Fehlers konnte nicht nach Updates gesucht werden. Updates verfügbar unter <label data-l10n-name="manual-link">{ $displayUrl }</label>
+
+##
+
+# Variables:
+#   $channel (String): description of the update channel (e.g. "release", "beta", "nightly" etc.)
+aboutdialog-channel-description = Sie sind derzeit auf dem Update-Kanal <label data-l10n-name="current-channel">{ $channel }</label>.
 
 warningDesc-version = { -brand-short-name } ist experimentell und könnte instabil sein.
 

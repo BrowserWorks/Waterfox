@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -164,11 +164,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = Öppnar om { $hours }t { $minutes }m…
-downloading-file-opens-in-minutes = Öppnar om { $minutes }m…
-downloading-file-opens-in-minutes-and-seconds = Öppnar om { $minutes }m { $seconds }s…
-downloading-file-opens-in-seconds = Öppnar om { $seconds }s…
-downloading-file-opens-in-some-time = Öppnar när det är klart…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = Öppnar om { $hours }t { $minutes }m…
+downloading-file-opens-in-minutes-2 =
+    .value = Öppnar om { $minutes }m…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = Öppnar om { $minutes }m { $seconds }s…
+downloading-file-opens-in-seconds-2 =
+    .value = Öppnar om { $seconds }s…
+downloading-file-opens-in-some-time-2 =
+    .value = Öppnar när det är klart…
 downloading-file-click-to-open =
     .value = Öppna när den är klar
 
@@ -233,3 +238,17 @@ downloads-more-downloading =
         [one] { $count } fil till laddas ned
        *[other] { $count } filer till laddas ned
     }
+
+## Download errors
+
+downloads-error-alert-title = Filhämtningsfel
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = Nedladdningen kan inte sparas eftersom den blockeras av { $extension }.
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = Nedladdningen kan inte sparas eftersom den blockeras av ett tillägg.
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    Filhämtningen kan inte sparas eftersom ett okänt fel har uppstått.
+    
+    Försök igen.

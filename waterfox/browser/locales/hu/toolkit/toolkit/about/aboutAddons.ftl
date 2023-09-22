@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,11 +6,16 @@ addons-page-title = Kiegészítőkezelő
 search-header =
     .placeholder = Keresés itt: addons.mozilla.org
     .searchbuttonlabel = Keresés
-search-header-shortcut =
-    .key = f
+
+## Variables
+##   $domain - Domain name where add-ons are available (e.g. addons.mozilla.org)
+
 list-empty-get-extensions-message = Kiegészítők és témák beszerzése itt: <a data-l10n-name="get-extensions">{ $domain }</a>
 list-empty-get-dictionaries-message = Szótárak beszerzése itt: <a data-l10n-name="get-extensions">{ $domain }</a>
 list-empty-get-language-packs-message = Nyelvi csomagok beszerzése itt: <a data-l10n-name="get-extensions">{ $domain }</a>
+
+##
+
 list-empty-installed =
     .value = Nincs ilyen típusú kiegészítője
 list-empty-available-updates =
@@ -24,9 +29,9 @@ list-empty-button =
 help-button = Kiegészítő támogatás
 sidebar-help-button-title =
     .title = Kiegészítő támogatás
-addons-settings-button = { -brand-short-name } Beállítások
+addons-settings-button = { -brand-short-name } beállítások
 sidebar-settings-button-title =
-    .title = { -brand-short-name } Beállítások
+    .title = { -brand-short-name } beállítások
 show-unsigned-extensions-button =
     .label = Néhány kiegészítő nem ellenőrizhető
 show-all-extensions-button =
@@ -142,16 +147,30 @@ addon-category-recent-updates-title =
 addon-category-sitepermission = Oldalengedélyek
 addon-category-sitepermission-title =
     .title = Oldalengedélyek
+# String displayed in about:addons in the Site Permissions section
+# Variables:
+#  $host (string) - DNS host name for which the webextension enables permissions
+addon-sitepermission-host = A(z) { $host } webhelyengedélyei
 
 ## These are global warnings
 
 extensions-warning-safe-mode = Minden kiegészítő tiltva van a csökkentett mód miatt.
 extensions-warning-check-compatibility = A kiegészítők kompatibilitásának vizsgálata tiltva van. Előfordulhat, hogy nem kompatibilis kiegészítői vannak.
+extensions-warning-safe-mode2 =
+    .message = Minden kiegészítő tiltva van a csökkentett mód miatt.
+extensions-warning-check-compatibility2 =
+    .message = A kiegészítők kompatibilitásának vizsgálata tiltva van. Előfordulhat, hogy nem kompatibilis kiegészítői vannak.
 extensions-warning-check-compatibility-button = Engedélyezés
     .title = Kiegészítők kompatibilitási ellenőrzésének engedélyezése
 extensions-warning-update-security = A kiegészítők biztonsági vizsgálata tiltva van. A frissítések biztonsági kockázatot hordoznak.
+extensions-warning-update-security2 =
+    .message = A kiegészítők biztonsági vizsgálata tiltva van. A frissítések biztonsági kockázatot hordoznak.
 extensions-warning-update-security-button = Engedélyezés
     .title = Kiegészítők frissítésekor a biztonsági ellenőrzés engedélyezése
+extensions-warning-imported-addons = Véglegesítse a { -brand-short-name }ba importált kiegészítők telepítését.
+extensions-warning-imported-addons2 =
+    .message = Véglegesítse a { -brand-short-name }ba importált kiegészítők telepítését.
+extensions-warning-imported-addons-button = Kiegészítők telepítése
 
 ## Strings connected to add-on updates
 
@@ -216,10 +235,17 @@ shortcuts-duplicate = Ismétlődő parancsikon
 # Variables:
 #   $shortcut (string) - Shortcut string for the add-on
 shortcuts-duplicate-warning-message = A { $shortcut } gyorsbillentyű több mint egy esetben van használva. Az ismétlődő gyorsbillentyűk váratlan viselkedést okozhatnak.
+# String displayed when a keyboard shortcut is already assigned to more than one add-on
+# Variables:
+#   $shortcut (string) - Shortcut string for the add-on
+shortcuts-duplicate-warning-message2 =
+    .message = A { $shortcut } gyorsbillentyű több mint egy esetben van használva. Az ismétlődő gyorsbillentyűk váratlan viselkedést okozhatnak.
 # String displayed when a keyboard shortcut is already used by another add-on
 # Variables:
 #   $addon (string) - Name of the add-on
 shortcuts-exists = Már használja: { $addon }
+# Variables:
+#   $numberToShow (number) - Number of other elements available to show
 shortcuts-card-expand-button =
     { $numberToShow ->
         [one] Még { $numberToShow } megjelenítése
@@ -245,6 +271,11 @@ discopane-intro =
 discopane-notice-recommendations =
     Ezen javaslatok egy része személyre szabott. Ennek alapja a telepített kiegészítői,
     a profilbeállításai és a használati statisztikái.
+# Notice to make user aware that the recommendations are personalized.
+discopane-notice-recommendations2 =
+    .message =
+        Ezen javaslatok egy része személyre szabott. Ennek alapja a telepített kiegészítői,
+        a profilbeállításai és a használati statisztikái.
 discopane-notice-learn-more = További tudnivalók
 privacy-policy = Adatvédelmi irányelvek
 # Refers to the author of an add-on, shown below the name of the add-on.
@@ -290,21 +321,7 @@ permissions-addon-button = Engedélyek
 extension-enabled-heading = Engedélyezve
 extension-disabled-heading = Tiltva
 theme-enabled-heading = Engedélyezve
-theme-disabled-heading = Tiltva
 theme-disabled-heading2 = Mentett témák
-theme-monochromatic-heading = Színvilágok
-theme-monochromatic-subheading = Élénk új színvilágok a { -brand-product-name }tól. Korlátozott ideig elérhető.
-# Refers to the button label for the colorways card when a user does not have a colorway theme enabled.
-theme-colorways-button = Próbálja ki a színvilágokat
-colorway-collection-independent-voices-subheading = Formálja a saját ízlésének megfelelőre a { -brand-short-name }ot.
-# Variables:
-#   $expiryDate (string) - date on which the colorway collection expires.
-colorway-collection-expiry-date-span = Lejárat: { DATETIME($expiryDate, month: "long", day: "numeric") }
-# Refers to the button label for the colorways card when a user has a colorway theme enabled.
-theme-colorways-button-colorway-enabled = Színvilág módosítása
-# Variables:
-#   $expiryDate (string) - date on which the colorway collection expires. When formatting this, you may omit the year, only exposing the month and day, as colorway collections will always expire within a year.
-colorway-collection-expiry-label = Lejárat: { DATETIME($expiryDate, month: "long", day: "numeric") }
 plugin-enabled-heading = Engedélyezve
 plugin-disabled-heading = Tiltva
 dictionary-enabled-heading = Engedélyezve
@@ -322,6 +339,9 @@ addon-detail-homepage-label = Honlap
 addon-detail-rating-label = Értékelés
 # Message for add-ons with a staged pending update.
 install-postponed-message = Ez a kiegészítő a { -brand-short-name } újraindításakor lesz frissítve.
+# Message for add-ons with a staged pending update.
+install-postponed-message2 =
+    .message = Ez a kiegészítő a { -brand-short-name } újraindításakor lesz frissítve.
 install-postponed-button = Frissítés most
 # The average rating that the add-on has received.
 # Variables:
@@ -353,6 +373,10 @@ addon-detail-updates-radio-on = Be
 addon-detail-updates-radio-off = Ki
 addon-detail-update-check-label = Frissítések keresése
 install-update-button = Frissítés
+# aria-label associated to the updates row to help screen readers to announce the group
+# of input controls being entered.
+addon-detail-group-label-updates =
+    .aria-label = { addon-detail-updates-label }
 # This is the tooltip text for the private browsing badge in about:addons. The
 # badge is the private browsing icon included next to the extension's name.
 addon-badge-private-browsing-allowed2 =
@@ -361,6 +385,24 @@ addon-badge-private-browsing-allowed2 =
 addon-detail-private-browsing-help = Ha engedélyezve van, a kiegészítő hozzá fog férni az online tevékenységekhez privát böngészés közben. <a data-l10n-name="learn-more">További tudnivalók</a>
 addon-detail-private-browsing-allow = Engedélyezés
 addon-detail-private-browsing-disallow = Tiltás
+# aria-label associated to the private browsing row to help screen readers to announce the group
+# of input controls being entered.
+addon-detail-group-label-private-browsing =
+    .aria-label = { detail-private-browsing-label }
+
+## "sites with restrictions" (internally called "quarantined") are special domains
+## where add-ons are normally blocked for security reasons.
+
+# Used as a description for the option to allow or block an add-on on quarantined domains.
+addon-detail-quarantined-domains-label = Futtatás korlátozásokkal rendelkező webhelyeken
+# Used as help text part of the quarantined domains UI controls row.
+addon-detail-quarantined-domains-help = Ha engedélyezett, akkor a kiegészítő hozzá fog férni a { -vendor-short-name } által korlátozott webhelyekhez. Csak akkor engedélyezze, ha megbízik ebben a kiegészítőben.
+# Used as label and tooltip text on the radio inputs associated to the quarantined domains UI controls.
+addon-detail-quarantined-domains-allow = Engedélyezés
+addon-detail-quarantined-domains-disallow = Tiltás
+# aria-label associated to the quarantined domains exempt row to help screen readers to announce the group.
+addon-detail-group-label-quarantined-domains =
+    .aria-label = { addon-detail-quarantined-domains-label }
 
 ## This is the tooltip text for the recommended badges for an extension in about:addons. The
 ## badge is a small icon displayed next to an extension when it is recommended on AMO.
@@ -368,10 +410,10 @@ addon-detail-private-browsing-disallow = Tiltás
 addon-badge-recommended2 =
     .title = A { -brand-product-name } csak olyan kiegészítőket ajánl, amelyek megfelelnek a biztonsági és a teljesítménybeli követelményeinknek.
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Waterfox" in the string below because the extensions are built
-# by Waterfox and we don't want forks to display "by Fork".
+# We hard code "BrowserWorks" in the string below because the extensions are built
+# by BrowserWorks and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = Hivatalos, a Waterfox által készített kiegészítő. Megfelel a biztonsági és teljesítményi előírásoknak.
+    .title = Hivatalos, a BrowserWorks által készített kiegészítő. Megfelel a biztonsági és teljesítményi előírásoknak.
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = Megvizsgáltuk ezt a kiegészítőt, és megfelelt a biztonsági és a teljesítménybeli követelményeinknek.
@@ -389,6 +431,8 @@ addon-permissions-optional = A további funkciókhoz szükséges engedélyek:
 addon-permissions-learnmore = További tudnivalók az engedélyekről
 recommended-extensions-heading = Ajánlott kiegészítők
 recommended-themes-heading = Ajánlott témák
+# Variables:
+#   $hostname (string) - Host where the permissions are granted
 addon-sitepermissions-required = A következő lehetőségeket biztosítja a(z) <span data-l10n-name="hostname">{ $hostname }</span> számára:
 # A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Waterfox Color" name itself should not be translated.
@@ -413,18 +457,32 @@ addon-page-options-button =
 
 ## Detail notifications
 ## Variables:
-##   $name (String): name of the add-on.
+##   $name (string) - Name of the add-on.
 
 # Variables:
-#   $version (String): application version.
+#   $version (string) - Application version.
 details-notification-incompatible = A(z) { $name } nem kompatibilis ezzel: { -brand-short-name } { $version }.
+# Variables:
+#   $version (string) - Application version.
+details-notification-incompatible2 =
+    .message = A(z) { $name } nem kompatibilis ezzel: { -brand-short-name } { $version }.
 details-notification-incompatible-link = További információk
 details-notification-unsigned-and-disabled = { $name } használhatósága nem ellenőrizhető a { -brand-short-name } programban, és le lett tiltva.
+details-notification-unsigned-and-disabled2 =
+    .message = { $name } használhatósága nem ellenőrizhető a { -brand-short-name } programban, és le lett tiltva.
 details-notification-unsigned-and-disabled-link = További információ
 details-notification-unsigned = { $name } használhatósága nem ellenőrizhető a { -brand-short-name } programban. Legyen óvatos.
+details-notification-unsigned2 =
+    .message = { $name } használhatósága nem ellenőrizhető a { -brand-short-name } programban. Legyen óvatos.
 details-notification-unsigned-link = További információ
 details-notification-blocked = A(z) { $name } le lett tiltva biztonsági vagy stabilitási problémák miatt.
+details-notification-blocked2 =
+    .message = A(z) { $name } le lett tiltva biztonsági vagy stabilitási problémák miatt.
 details-notification-blocked-link = További információ
 details-notification-softblocked = A(z) { $name } biztonsági vagy stabilitási problémát okoz.
+details-notification-softblocked2 =
+    .message = A(z) { $name } biztonsági vagy stabilitási problémát okoz.
 details-notification-softblocked-link = További információ
 details-notification-gmp-pending = { $name } hamarosan telepítésre kerül.
+details-notification-gmp-pending2 =
+    .message = { $name } hamarosan telepítésre kerül.

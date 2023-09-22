@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,9 @@ menu-application-services =
     .label = Služby
 menu-application-hide-this =
     .label =
-        Skrýt { -brand-shorter-name.gender ->
-            [masculine] { -brand-shorter-name(case: "acc") }
-            [feminine] { -brand-shorter-name(case: "acc") }
-            [neuter] { -brand-shorter-name(case: "acc") }
-           *[other] aplikaci { -brand-shorter-name }
+        { -brand-shorter-name.case-status ->
+            [with-cases] Skrýt { -brand-shorter-name(case: "acc") }
+           *[no-cases] Skrýt aplikaci { -brand-shorter-name }
         }
 menu-application-hide-other =
     .label = Skrýt ostatní
@@ -39,19 +37,15 @@ menu-quit =
 # This menu-quit-mac string is only used on macOS.
 menu-quit-mac =
     .label =
-        Ukončit { -brand-shorter-name.gender ->
-            [masculine] { -brand-shorter-name(case: "acc") }
-            [feminine] { -brand-shorter-name(case: "acc") }
-            [neuter] { -brand-shorter-name(case: "acc") }
-           *[other] aplikaci { -brand-shorter-name }
+        { -brand-shorter-name.case-status ->
+            [with-cases] Ukončit { -brand-shorter-name(case: "acc") }
+           *[no-cases] Ukončit aplikaci { -brand-shorter-name }
         }
 menu-about =
     .label =
-        O { -brand-shorter-name.gender ->
-            [masculine] { -brand-shorter-name(case: "loc") }
-            [feminine] { -brand-shorter-name(case: "loc") }
-            [neuter] { -brand-shorter-name(case: "loc") }
-           *[other] aplikaci { -brand-shorter-name }
+        { -brand-shorter-name.case-status ->
+            [with-cases] O { -brand-shorter-name(case: "loc") }
+           *[no-cases] O aplikaci { -brand-shorter-name }
         }
     .accesskey = O
 
@@ -192,6 +186,17 @@ menu-view-full-screen =
     .label = Celá obrazovka
     .accesskey = C
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Zapnout zobrazení čtečky
+    .accesskey = Z
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Zavřít zobrazení čtečky
+    .accesskey = Z
+
 ##
 
 menu-view-show-all-tabs =
@@ -220,8 +225,9 @@ menu-history-undo-menu =
     .label = Naposledy zavřené panely
 menu-history-undo-window-menu =
     .label = Naposledy zavřená okna
-menu-history-reopen-all-tabs = Znovu otevřít všechny panely
-menu-history-reopen-all-windows = Znovu otevřít všechna okna
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = Hledat v historii
 
 ## Bookmarks Menu
 
@@ -230,14 +236,13 @@ menu-bookmarks-menu =
     .accesskey = o
 menu-bookmarks-manage =
     .label = Správa záložek
-menu-bookmark-current-tab =
-    .label = Přidat současný panel do záložek
-menu-bookmark-edit =
-    .label = Upravit záložku
 menu-bookmark-tab =
     .label = Přidat současný panel do záložek…
 menu-edit-bookmark =
     .label = Upravit záložku…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = Hledat v záložkách
 menu-bookmarks-all-tabs =
     .label = Přidat všechny panely do záložek…
 menu-bookmarks-toolbar =
@@ -269,12 +274,10 @@ menu-tools-sync-now =
     .accesskey = S
 menu-tools-fxa-re-auth =
     .label =
-        Znovu připojit k účtu { -brand-product-name.gender ->
-            [masculine] { -brand-product-name(case: "gen") }
-            [feminine] { -brand-product-name(case: "gen") }
-            [neuter] { -brand-product-name(case: "gen") }
-           *[other] aplikace { -brand-product-name }
-        }…
+        { -brand-product-name.case-status ->
+            [with-cases] Znovu připojit k účtu { -brand-product-name(case: "gen") }…
+           *[no-cases] Znovu připojit k účtu aplikace { -brand-product-name }…
+        }
     .accesskey = n
 menu-tools-browser-tools =
     .label = Nástroje prohlížeče
@@ -337,6 +340,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = Ukončit režim řešení potíží
     .accesskey = m
+menu-help-switch-device =
+    .label = Přechod na nové zařízení
+    .accesskey = n
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =

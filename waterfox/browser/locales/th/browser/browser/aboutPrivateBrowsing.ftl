@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,12 +22,10 @@ about-private-browsing-not-private = ขณะนี้คุณไม่ได�
 about-private-browsing-info-description-private-window = หน้าต่างส่วนตัว: { -brand-short-name } จะล้างประวัติการค้นหาและการเรียกดูของคุณเมื่อคุณปิดหน้าต่างส่วนตัวทั้งหมด แต่จะไม่สามารถปกปิดตัวตนของคุณได้
 about-private-browsing-info-description-simplified = { -brand-short-name } จะล้างประวัติการค้นหาและการเรียกดูของคุณเมื่อคุณปิดหน้าต่างส่วนตัวทั้งหมด แต่จะไม่สามารถปกปิดตัวตนของคุณได้
 about-private-browsing-learn-more-link = เรียนรู้เพิ่มเติม
-
 about-private-browsing-hide-activity = ซ่อนกิจกรรมและตำแหน่งที่ตั้งของคุณในทุกที่ที่คุณเรียกดู
 about-private-browsing-get-privacy = รับการปกป้องความเป็นส่วนตัวในทุกที่ที่คุณเรียกดู
 about-private-browsing-hide-activity-1 = ซ่อนกิจกรรมการเรียกดูและตำแหน่งที่ตั้งด้วย { -mozilla-vpn-brand-name } สร้างการเชื่อมต่อที่ปลอดภัยในคลิกเดียวแม้ใช้ Wi-Fi สาธารณะ
 about-private-browsing-prominent-cta = เป็นส่วนตัวอยู่เสมอด้วย { -mozilla-vpn-brand-name }
-
 about-private-browsing-focus-promo-cta = ดาวน์โหลด { -focus-brand-name }
 about-private-browsing-focus-promo-header = { -focus-brand-name }: การท่องเว็บแบบส่วนตัวขณะเดินทาง
 about-private-browsing-focus-promo-text = แอพมือถือสำหรับการท่องเว็บแบบส่วนตัวของเราจะล้างประวัติและคุกกี้ของคุณทุกครั้ง
@@ -38,7 +36,6 @@ about-private-browsing-focus-promo-header-b = ท่องเว็บแบบ�
 about-private-browsing-focus-promo-text-b = ใช้ { -focus-brand-name } สำหรับการค้นหาส่วนตัวที่คุณไม่ต้องการให้เบราว์เซอร์มือถือหลักของคุณเห็น
 about-private-browsing-focus-promo-header-c = ความเป็นส่วนตัวระดับถัดไปบนมือถือ
 about-private-browsing-focus-promo-text-c = { -focus-brand-name } ล้างประวัติของคุณทุกครั้งในขณะที่ปิดกั้นโฆษณาและตัวติดตาม
-
 # This string is the title for the banner for search engine selection
 # in a private window.
 # Variables:
@@ -51,6 +48,29 @@ about-private-browsing-search-banner-description =
     }
 about-private-browsing-search-banner-close-button =
     .aria-label = ปิด
-
 about-private-browsing-promo-close-button =
     .title = ปิด
+
+## Strings used in a “pin promotion” message, which prompts users to pin a private window
+
+about-private-browsing-pin-promo-header = อิสระในการเรียกดูแบบส่วนตัวในคลิกเดียว
+about-private-browsing-pin-promo-link-text =
+    { PLATFORM() ->
+        [macos] เก็บไว้ใน Dock
+       *[other] ปักหมุดเข้ากับแถบงาน
+    }
+about-private-browsing-pin-promo-title = ไม่เก็บคุกกี้หรือประวัติที่บันทึกไว้จากเดสก์ท็อปของคุณ ให้คุณเรียกดูโดยไม่มีใครแอบมอง
+
+## Strings used in a promotion message for cookie banner reduction
+
+# Simplified version of the headline if the original text doesn't work
+# in your language: `See fewer cookie requests`.
+about-private-browsing-cookie-banners-promo-header = เอาแบนเนอร์คุกกี้ออกไปให้พ้น!
+about-private-browsing-cookie-banners-promo-button = ลดแบนเนอร์คุกกี้
+about-private-browsing-cookie-banners-promo-message = ให้ { -brand-short-name } ตอบป๊อปอัปคุกกี้ให้คุณโดยอัตโนมัติเพื่อให้คุณท่องเว็บได้โดยปราศจากสิ่งรบกวน { -brand-short-name } จะปฏิเสธคำขอทั้งหมดเมื่อเป็นไปได้
+
+## Strings for Felt Privacy v1 experiments in 119
+
+about-private-browsing-felt-privacy-v1-info-header = ไม่ทิ้งร่องรอยใดๆ บนอุปกรณ์นี้
+about-private-browsing-felt-privacy-v1-info-body = { -brand-short-name } จะลบคุกกี้ ประวัติ และข้อมูลไซต์ของคุณเมื่อคุณปิดหน้าต่างส่วนตัวของคุณทั้งหมด
+about-private-browsing-felt-privacy-v1-info-link = ใครบ้างที่สามารถเห็นกิจกรรมของฉันได้

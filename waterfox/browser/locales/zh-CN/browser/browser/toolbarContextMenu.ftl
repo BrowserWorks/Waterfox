@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,10 +6,10 @@ toolbar-context-menu-new-tab =
     .label = 新建标签页
     .accesskey = w
 toolbar-context-menu-reload-selected-tab =
-    .label = 重新载入所选标签页
+    .label = 重新加载所选标签页
     .accesskey = R
 toolbar-context-menu-reload-selected-tabs =
-    .label = 重新载入选中的标签页
+    .label = 重新加载选中的标签页
     .accesskey = R
 toolbar-context-menu-bookmark-selected-tab =
     .label = 为选中标签页添加书签…
@@ -20,6 +20,8 @@ toolbar-context-menu-bookmark-selected-tabs =
 toolbar-context-menu-select-all-tabs =
     .label = 选择所有标签页
     .accesskey = S
+# Variables
+#   $tabCount (number) - Number of tabs
 toolbar-context-menu-reopen-closed-tabs =
     .label =
         { $tabCount ->
@@ -27,18 +29,21 @@ toolbar-context-menu-reopen-closed-tabs =
            *[other] 恢复关闭的 { $tabCount } 个标签页
         }
     .accesskey = o
+
 toolbar-context-menu-manage-extension =
     .label = 管理扩展
     .accesskey = E
 toolbar-context-menu-remove-extension =
     .label = 移除扩展
     .accesskey = v
+
 # This label is used in the extensions toolbar buttons context menus,
-# a user can use this command to submit to Waterfox an abuse report
+# a user can use this command to submit to BrowserWorks an abuse report
 # related to that extension. "Report" is a verb.
 toolbar-context-menu-report-extension =
     .label = 举报扩展
     .accesskey = o
+
 # Can appear on the same context menu as toolbar-context-menu-menu-bar-cmd
 # ("Menu Bar") and personalbarCmd ("Bookmarks Toolbar"), so they should
 # have different access keys.
@@ -60,6 +65,12 @@ toolbar-context-menu-view-customize-toolbar =
 toolbar-context-menu-view-customize-toolbar-2 =
     .label = 定制工具栏…
     .accesskey = C
+# This is only ever shown when toolbar-context-menu-pin-to-overflow-menu
+# is hidden, so they can share access keys.
+toolbar-context-menu-pin-to-toolbar =
+    .label = 固定到工具栏
+    .accesskey = P
+
 toolbar-context-menu-bookmarks-toolbar-always-show-2 =
     .label = 始终显示
     .accesskey = A
@@ -69,9 +80,11 @@ toolbar-context-menu-bookmarks-toolbar-never-show-2 =
 toolbar-context-menu-bookmarks-toolbar-on-new-tab-2 =
     .label = 只在新标签页显示
     .accesskey = O
+
 toolbar-context-menu-bookmarks-show-other-bookmarks =
     .label = 显示 - 其他书签
     .accesskey = h
+
 toolbar-context-menu-menu-bar-cmd =
     .toolbarname = 菜单栏
     .accesskey = M

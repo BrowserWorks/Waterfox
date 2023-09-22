@@ -1,13 +1,13 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-connection-window =
+connection-window2 =
     .title = Параметры соединения
     .style =
         { PLATFORM() ->
-            [macos] width: 44em
-           *[other] width: 49em
+            [macos] min-width: 44em
+           *[other] min-width: 49em
         }
 
 connection-close-key =
@@ -35,7 +35,6 @@ connection-proxy-http = HTTP прокси
     .accesskey = с
 connection-proxy-http-port = Порт
     .accesskey = о
-
 connection-proxy-https-sharing =
     .label = Также использовать этот прокси для HTTPS
     .accesskey = я
@@ -77,16 +76,14 @@ connection-proxy-autologin =
     .accesskey = ш
     .tooltip = Эта настройка аутентифицирует вас на прокси, не выдавая запросов, если вы сохранили для них учётные данные. Если аутентификация не удастся, вам будет выдан запрос.
 
+connection-proxy-autologin-checkbox =
+    .label = Не запрашивать аутентификацию (если был сохранён пароль)
+    .accesskey = ш
+    .tooltiptext = Эта настройка аутентифицирует вас на прокси, не выдавая запросов, если вы сохранили для них учётные данные. Если аутентификация не удастся, вам будет выдан запрос.
+
 connection-proxy-socks-remote-dns =
     .label = Отправлять DNS-запросы через прокси при использовании SOCKS 5
     .accesskey = я
-
-connection-dns-over-https =
-    .label = Включить DNS через HTTPS
-    .accesskey = л
-
-connection-dns-over-https-url-resolver = Используемый провайдер
-    .accesskey = п
 
 # Variables:
 #   $name (String) - Display name or URL for the DNS over HTTPS provider

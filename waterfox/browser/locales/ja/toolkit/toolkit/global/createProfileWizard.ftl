@@ -1,17 +1,17 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-create-profile-window =
+create-profile-window2 =
     .title = プロファイル作成ウィザード
-    .style = width: 45em; height: 32em;
+    .style = min-width: 45em; min-height: 32em;
 
 ## First wizard page
 
-create-profile-first-page-header =
+create-profile-first-page-header2 =
     { PLATFORM() ->
         [macos] はじめに
-       *[other] { create-profile-window.title }の開始
+       *[other] { create-profile-window2.title }の開始
     }
 profile-creation-explanation-1 = { -brand-short-name } はユーザー設定などの情報を個人プロファイルとして保存します。
 profile-creation-explanation-2 = { -brand-short-name } を他のユーザーと共有しているときには各ユーザーが自分用のプロファイルを作成してください。これによりユーザー設定などを個別に保存できます。
@@ -24,13 +24,13 @@ profile-creation-explanation-4 =
 
 ## Second wizard page
 
-create-profile-last-page-header =
+create-profile-last-page-header2 =
     { PLATFORM() ->
         [macos] 完了
-       *[other] { create-profile-window.title }の完了
+       *[other] { create-profile-window2.title }の完了
     }
-profile-creation-intro = プロファイルを複数使用する場合は、それぞれに名前を付けて区別します。あらかじめ入力されている名前をそのまま使用するか、新しい名前を入力し直してください。
-profile-prompt = 新しいプロファイルの名前を入力してください:
+profile-creation-intro = 複数のプロファイルを作成する場合、それぞれに別のプロファイル名を付けてください。あらかじめ入力されている名前をそのまま使用するか、別の名前を入力してください。
+profile-prompt = 新しいプロファイル名を入力してください:
     .accesskey = E
 profile-default-name =
     .value = Default User

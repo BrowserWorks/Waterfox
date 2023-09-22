@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -181,6 +181,17 @@ menu-view-full-screen =
     .label = Volledig scherm
     .accesskey = d
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Lezerweergave openen
+    .accesskey = L
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Lezerweergave sluiten
+    .accesskey = L
+
 ##
 
 menu-view-show-all-tabs =
@@ -209,8 +220,9 @@ menu-history-undo-menu =
     .label = Onlangs gesloten tabbladen
 menu-history-undo-window-menu =
     .label = Onlangs gesloten vensters
-menu-history-reopen-all-tabs = Alle tabbladen opnieuw openen
-menu-history-reopen-all-windows = Alle vensters opnieuw openen
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = Geschiedenis doorzoeken
 
 ## Bookmarks Menu
 
@@ -219,14 +231,13 @@ menu-bookmarks-menu =
     .accesskey = a
 menu-bookmarks-manage =
     .label = Bladwijzers beheren
-menu-bookmark-current-tab =
-    .label = Bladwijzer voor huidige tabblad maken
-menu-bookmark-edit =
-    .label = Deze bladwijzer bewerken
 menu-bookmark-tab =
     .label = Bladwijzer voor huidige tabblad maken…
 menu-edit-bookmark =
     .label = Deze bladwijzer bewerken…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = Bladwijzers doorzoeken
 menu-bookmarks-all-tabs =
     .label = Bladwijzer voor alle tabbladen maken…
 menu-bookmarks-toolbar =
@@ -320,6 +331,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = Probleemoplossingsmodus uitschakelen
     .accesskey = m
+menu-help-switch-device =
+    .label = Wisselen naar een nieuw apparaat
+    .accesskey = u
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,8 +60,11 @@ import-from-firefox =
 import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
 
-no-migration-sources = Ни одной программы, содержащей закладки, журнал или пароли, не найдено.
+no-migration-sources = Ни одного приложения, содержащего закладки, журнал или пароли, не найдено.
 
 import-source-page-title = Импорт настроек и данных
 import-items-page-title = Объекты для импорта
@@ -64,8 +73,8 @@ import-items-description = Выберите объекты для импорти
 
 import-permissions-page-title = Предоставьте разрешения для { -brand-short-name }
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = macOS требует, чтобы вы явно разрешили { -brand-short-name } доступ к закладкам Safari. Щёлкните «Продолжить» и выберите файл «Bookmarks.plist» на открывшейся панели «Открыть файл».
+# Do not translate "Safari" (the name of the browser on Apple devices)
+import-safari-permissions-string = macOS требует, чтобы вы явно разрешили { -brand-short-name } доступ к данным Safari. Щёлкните «Продолжить», выберите папку «Safari» в появившемся диалоговом окне Finder и щёлкните «Открыть».
 
 import-migrating-page-title = Идёт импорт…
 
@@ -158,3 +167,8 @@ browser-data-session-checkbox =
     .label = Окна и вкладки
 browser-data-session-label =
     .value = Окна и вкладки
+
+browser-data-payment-methods-checkbox =
+    .label = Способы оплаты
+browser-data-payment-methods-label =
+    .value = Способы оплаты

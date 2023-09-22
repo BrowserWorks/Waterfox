@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,21 +12,39 @@ about-webrtc-document-title = WebRTC Internals
 # translated. This string is used as a title for a file save dialog box.
 about-webrtc-save-page-dialog-title = บันทึก about:webrtc เป็น
 
+## These labels are for a disclosure which contains the information for closed PeerConnection sections
+
+about-webrtc-closed-peerconnection-disclosure-show-msg = แสดง PeerConnections ที่ปิด
+about-webrtc-closed-peerconnection-disclosure-hide-msg = ซ่อน PeerConnections ที่ปิด
+
 ## AEC is an abbreviation for Acoustic Echo Cancellation.
 
 about-webrtc-aec-logging-msg-label = การบันทึก AEC
 about-webrtc-aec-logging-off-state-label = เริ่มการบันทึก AEC
 about-webrtc-aec-logging-on-state-label = หยุดการบันทึก AEC
 about-webrtc-aec-logging-on-state-msg = การบันทึก AEC ทำงานอยู่ (พูดกับผู้โทรไม่กี่นาทีแล้วหยุดการจับ)
-# The autorefresh checkbox causes the page to autorefresh its content when checked
-about-webrtc-auto-refresh-label = การรีเฟรชอัตโนมัติ
+about-webrtc-aec-logging-toggled-on-state-msg = การบันทึก AEC ทำงานอยู่ (พูดกับผู้โทรไม่กี่นาทีแล้วหยุดการจับ)
+about-webrtc-aec-logging-unavailable-sandbox = ตัวแปรสภาพแวดล้อม MOZ_DISABLE_CONTENT_SANDBOX=1 จำเป็นสำหรับการส่งออกปูม AEC ให้ตั้งค่าตัวแปรนี้ก็ต่อเมื่อคุณเข้าใจความเสี่ยงที่อาจเกิดขึ้นเท่านั้น
+# Variables:
+#  $path (String) - The path to which the aec log file is saved.
+about-webrtc-aec-logging-toggled-off-state-msg = ไฟล์บันทึกที่จับสามารถพบได้ใน: { $path }
 
 ##
 
+# The autorefresh checkbox causes a stats section to autorefresh its content when checked
+about-webrtc-auto-refresh-label = การรีเฟรชอัตโนมัติ
+# Determines the default state of the Auto Refresh check boxes
+about-webrtc-auto-refresh-default-label = เรียกใหม่อัตโนมัติตามค่าเริ่มต้น
+# A button which forces a refresh of displayed statistics
+about-webrtc-force-refresh-button = เรียกใหม่
 # "PeerConnection" is a proper noun associated with the WebRTC module. "ID" is
 # an abbreviation for Identifier. This string should not normally be translated
 # and is used as a data label.
 about-webrtc-peerconnection-id-label = PeerConnection ID:
+# The number of DataChannels that a PeerConnection has opened
+about-webrtc-data-channels-opened-label = ช่องข้อมูลที่เปิด:
+# The number of once open DataChannels that a PeerConnection has closed
+about-webrtc-data-channels-closed-label = ช่องข้อมูลที่ปิด:
 
 ## "SDP" is an abbreviation for Session Description Protocol, an IETF standard.
 ## See http://wikipedia.org/wiki/Session_Description_Protocol
@@ -80,6 +98,7 @@ about-webrtc-save-page-label = บันทึกหน้า
 about-webrtc-debug-mode-msg-label = โหมดดีบั๊ก
 about-webrtc-debug-mode-off-state-label = เริ่มโหมดดีบั๊ก
 about-webrtc-debug-mode-on-state-label = หยุดโหมดดีบั๊ก
+about-webrtc-enable-logging-label = เปิดใช้งานพรีเซ็ตปูม WebRTC
 about-webrtc-stats-heading = สถิติวาระ
 about-webrtc-stats-clear = ล้างประวัติ
 about-webrtc-log-heading = รายการบันทึกการเชื่อมต่อ
@@ -88,6 +107,12 @@ about-webrtc-log-show-msg = แสดงรายการบันทึก
     .title = คลิกเพื่อขยายส่วนนี้
 about-webrtc-log-hide-msg = ซ่อนรายการบันทึก
     .title = คลิกเพื่อยุบส่วนนี้
+about-webrtc-log-section-show-msg = แสดงรายการบันทึก
+    .title = คลิกเพื่อขยายส่วนนี้
+about-webrtc-log-section-hide-msg = ซ่อนรายการบันทึก
+    .title = คลิกเพื่อยุบส่วนนี้
+about-webrtc-copy-report-button = คัดลอกรายงาน
+about-webrtc-copy-report-history-button = คัดลอกประวัติรายงาน
 
 ## These are used to display a header for a PeerConnection.
 ## Variables:
@@ -98,6 +123,14 @@ about-webrtc-log-hide-msg = ซ่อนรายการบันทึก
 
 about-webrtc-connection-open = [ { $browser-id } | { $id } ] { $url } { $now }
 about-webrtc-connection-closed = [ { $browser-id } | { $id } ] { $url } (ปิดแล้ว) { $now }
+
+## These are used to indicate what direction media is flowing.
+## Variables:
+##  $codecs - a list of media codecs
+
+about-webrtc-short-send-receive-direction = ส่ง / รับ: { $codecs }
+about-webrtc-short-send-direction = ส่ง: { $codecs }
+about-webrtc-short-receive-direction = รับ: { $codecs }
 
 ##
 
@@ -110,10 +143,18 @@ about-webrtc-raw-cand-show-msg = แสดงแคนดิเดตดิบ
     .title = คลิกเพื่อขยายส่วนนี้
 about-webrtc-raw-cand-hide-msg = ซ่อนแคนดิเดตดิบ
     .title = คลิกเพื่อยุบส่วนนี้
+about-webrtc-raw-cand-section-show-msg = แสดงแคนดิเดตดิบ
+    .title = คลิกเพื่อขยายส่วนนี้
+about-webrtc-raw-cand-section-hide-msg = ซ่อนแคนดิเดตดิบ
+    .title = คลิกเพื่อยุบส่วนนี้
 about-webrtc-priority = ความสำคัญ
 about-webrtc-fold-show-msg = แสดงรายละเอียด
     .title = คลิกเพื่อขยายส่วนนี้
 about-webrtc-fold-hide-msg = ซ่อนรายละเอียด
+    .title = คลิกเพื่อยุบส่วนนี้
+about-webrtc-fold-default-show-msg = แสดงรายละเอียด
+    .title = คลิกเพื่อขยายส่วนนี้
+about-webrtc-fold-default-hide-msg = ซ่อนรายละเอียด
     .title = คลิกเพื่อยุบส่วนนี้
 about-webrtc-dropped-frames-label = เฟรมที่ถูกดรอป:
 about-webrtc-discarded-packets-label = แพ็คเก็ตที่ถูกละทิ้ง:
@@ -136,6 +177,12 @@ about-webrtc-last-frame-timestamp = การประทับเวลาก�
 about-webrtc-local-receive-ssrc = SSRC การรับข้อมูลภายใน
 # This is an SSRC on the remote side of the connection that is sending RTP
 about-webrtc-remote-send-ssrc = SSRC การส่งข้อมูลระยะไกล
+
+## These are displayed on the button that shows or hides the
+## PeerConnection configuration disclosure
+
+about-webrtc-pc-configuration-show-msg = แสดงการกำหนดค่า
+about-webrtc-pc-configuration-hide-msg = ซ่อนการกำหนดค่า
 
 ##
 
@@ -177,9 +224,11 @@ about-webrtc-save-page-msg = ได้บันทึกหน้าลงใน
 about-webrtc-debug-mode-off-state-msg = บันทึกร่องรอยสามารถพบได้ที่: { $path }
 about-webrtc-debug-mode-on-state-msg = โหมดดีบั๊กทำงานอยู่ บันทึกการติดตามอยู่ที่: { $path }
 about-webrtc-aec-logging-off-state-msg = ไฟล์บันทึกที่จับสามารถพบได้ใน: { $path }
-
-##
-
+# This path is used for saving the about:webrtc page so it can be attached to
+# bug reports.
+# Variables:
+#  $path (String) - The path to which the file is saved.
+about-webrtc-save-page-complete-msg = ได้บันทึกหน้าลงใน: { $path }
 # This is the total number of frames encoded or decoded over an RTP stream.
 # Variables:
 #  $frames (Number) - The number of frames encoded or decoded.
@@ -241,6 +290,22 @@ about-webrtc-sdp-set-at-timestamp-remote = ตั้งค่า SDP ระย�
 #  $timestamp (Number) - The Unix Epoch time at which the SDP was set.
 #  $relative-timestamp (Number) - The timestamp relative to the timestamp of the earliest received SDP.
 about-webrtc-sdp-set-timestamp = ประทับเวลา { NUMBER($timestamp, useGrouping: "false") } (+ { $relative-timestamp } ms)
+
+## These are displayed on the button that shows or hides the SDP information disclosure
+
+about-webrtc-show-msg-sdp = แสดง SDP
+about-webrtc-hide-msg-sdp = ซ่อน SDP
+
+##
+
+
+## These are displayed on the button that shows or hides the Media Context information disclosure.
+## The Media Context is the set of preferences and detected capabilities that informs
+## the negotiated CODEC settings.
+
+about-webrtc-media-context-show-msg = แสดงบริบทสื่อ
+about-webrtc-media-context-hide-msg = ซ่อนบริบทสื่อ
+about-webrtc-media-context-heading = บริบทสื่อ
 
 ##
 

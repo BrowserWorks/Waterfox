@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,10 @@
 site-data-settings-window =
     .title = Administrar cookies y datos del sitio
 
-site-data-settings-description = Los siguientes sitios web almacenan cookies y datos del sitio en tu equipo. { -brand-short-name } conserva los datos de los sitios web con almacenamiento persistente hasta que los elimines y cuando se necesite espacio adicional, elimina los datos de sitios sin almacenamiento persistente.
+site-data-settings-description = Los siguientes sitios web almacenan cookies y datos del sitio en su equipo. { -brand-short-name } conserva los datos de los sitios web con almacenamiento persistente hasta que los elimines y cuando se necesite espacio adicional, elimina los datos de sitios sin almacenamiento persistente.
 
 site-data-search-textbox =
-    .placeholder = Buscar sitios
+    .placeholder = Buscar sitios web
     .accesskey = S
 
 site-data-column-host =
@@ -59,7 +59,6 @@ site-data-removing-dialog =
 site-data-removing-header = Eliminando cookies y datos del sitio
 
 site-data-removing-desc = Eliminar cookies y datos de los sitios puede cerrar tus sesiones activas. ¿Estás seguro que deseas hacer los cambios?
-
 # Variables:
 #   $baseDomain (String) - The single domain for which data is being removed
 site-data-removing-single-desc = El eliminar cookies y los datos del sitio puede cerrarte las sesiones de los sitios web. ¿En verdad deseas eliminar las cookies y los datos del sitio de <strong>{ $baseDomain }</strong>?

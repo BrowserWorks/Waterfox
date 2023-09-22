@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,9 +8,8 @@ password-not-set =
 failed-pp-change = マスターパスワードを変更できませんでした。
 incorrect-pp = 現在のマスターパスワードが正しく入力されませんでした。入力し直してください。
 pp-change-ok = マスターパスワードの変更が完了しました。
-pp-empty-warning = 保存されたパスワードと秘密鍵は保護されません。
-pp-erased-ok = マスターパスワードを削除しました。 { pp-empty-warning }
-pp-not-wanted = 警告: マスターパスワードを使用しないように設定しました。 { pp-empty-warning }
+settings-pp-erased-ok = マスターパスワードを削除しました。保存されたパスワードと { -brand-short-name } により管理された証明書の秘密鍵は保護されません。
+settings-pp-not-wanted = 警告: マスターパスワードを使用しないように設定しました。 保存されたパスワードと { -brand-short-name } により管理された証明書の秘密鍵は保護されません。
 pp-change2empty-in-fips-mode =  現在 FIPS モードです。FIPS モードではマスターパスワードを空にすることができません。
 pw-change-success-title = パスワードを正常に変更しました
 pw-change-failed-title = パスワードを変更できませんでした

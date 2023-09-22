@@ -1,4 +1,4 @@
-/* This Source Code Form is subject to the terms of the Waterfox Public
+/* This Source Code Form is subject to the terms of the BrowserWorks Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -15,22 +15,5 @@ window {
   white-space: nowrap;
 }
 
-/* not to show scroll bar in the reporter form */
-#reportForm #description {
-  max-height: 6.8em;
-}
-
-/* Workaround for SeaMonkey's Preferences dialog */
-@-moz-document url(chrome://communicator/content/pref/preferences.xul) {
-  #prefsTree {
-  width: 17em !important;
-  }
-}
-
-
-/* Workaround for master password dialog with Meiryo */
-#changemp {
-  min-width: 39em;
-}
 
 

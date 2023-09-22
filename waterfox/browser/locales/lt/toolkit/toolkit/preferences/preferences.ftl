@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,6 @@ password-not-set =
 failed-pp-change = Nepavyko pakeisti pagrindinio slaptažodžio.
 incorrect-pp = Neteisingai surinkote dabartinį pagrindinį slaptažodį. Bandykite dar kartą.
 pp-change-ok = Pagrindinis slaptažodis sėkmingai pakeistas.
-
-pp-empty-warning = Jūsų įrašyti slaptažodžiai ir privatūs raktai nebus apsaugoti.
-pp-erased-ok = Pašalinote pagrindinį slaptažodį. { pp-empty-warning }
-pp-not-wanted = Dėmesio! Nusprendėte nesinaudoti pagrindiniu slaptažodžiu. { pp-empty-warning }
 
 pp-change2empty-in-fips-mode = Šiuo metu pasirinkta FIPS veiksena. Jai reikia pagrindinio slaptažodžio.
 pw-change-success-title = Slaptažodis pakeistas sėkmingai

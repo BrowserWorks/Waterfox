@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = Megnyitás új privát ablakban
     .accesskey = p
+
+places-empty-bookmarks-folder =
+    .label = (Üres)
 
 places-add-bookmark =
     .label = Könyvjelzők hozzáadása…
@@ -87,6 +90,15 @@ places-delete-folder =
            *[other] Mappák törlése
         }
     .accesskey = t
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] Lap törlése
+           *[other] Lapok törlése
+        }
+    .accesskey = t
 
 # Managed bookmarks are created by an administrator and cannot be changed by the user.
 managed-bookmarks =
@@ -114,6 +126,20 @@ places-delete-bookmark =
         }
     .accesskey = t
 
+# Variables:
+#   $count (number) - The number of bookmarks being added.
+places-create-bookmark =
+    .label =
+        { $count ->
+            [1] Lap könyvjelzőzése…
+           *[other] Lapok könyvjelzőzése…
+        }
+    .accesskey = k
+
+places-untag-bookmark =
+    .label = Címke eltávolítása
+    .accesskey = t
+
 places-manage-bookmarks =
     .label = Könyvjelzők kezelése
     .accesskey = K
@@ -122,13 +148,12 @@ places-forget-about-this-site-confirmation-title = Webhely elfelejtése
 
 # Variables:
 # $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
-places-forget-about-this-site-confirmation-message = Ez a művelet eltávolítja a(z) { $hostOrBaseDomain } domainhez kapcsolódó összes adatot, beleértve az előzményeket, a jelszavakat, a sütiket, a gyorsítótárat és a tartalmi beállításokat. Biztos, hogy folytatja?
+places-forget-about-this-site-confirmation-msg = Ez a művelet eltávolítja a(z) { $hostOrBaseDomain } domainhez kapcsolódó összes adatot, beleértve az előzményeket, a sütiket, a gyorsítótárat és a tartalmi beállításokat. A kapcsolódó könyvjelzők és jelszavak nem lesznek eltávolítva. Biztos, hogy folytatja?
 
 places-forget-about-this-site-forget = Elfelejtés
 
-places-library =
+places-library3 =
     .title = Könyvtár
-    .style = width:700px; height:500px;
 
 places-organize-button =
     .label = Rendszerezés
@@ -229,6 +254,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = Utoljára módosítva
 
+places-view-sortby-name =
+    .label = Rendezés név szerint
+    .accesskey = n
+places-view-sortby-url =
+    .label = Rendezés hely szerint
+    .accesskey = h
+places-view-sortby-date =
+    .label = Rendezés a legutóbbi látogatás szerint
+    .accesskey = u
+places-view-sortby-visit-count =
+    .label = Rendezés a látogatás száma szerint
+    .accesskey = s
+places-view-sortby-date-added =
+    .label = Rendezés a hozzáadás ideje szerint
+    .accesskey = e
+places-view-sortby-last-modified =
+    .label = Rendezés az utolsó módosítás szerint
+    .accesskey = m
+places-view-sortby-tags =
+    .label = Rendezés címkék szerint
+    .accesskey = c
+
 places-cmd-find-key =
     .key = f
 
@@ -239,3 +286,28 @@ places-forward-button =
     .tooltiptext = Ugrás előre
 
 places-details-pane-select-an-item-description = Jelöljön ki egy elemet megtekintésre, és szerkessze tulajdonságait
+
+places-details-pane-no-items =
+    .value = 0 elem
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value =
+        { $count ->
+            [one] Egy elem
+           *[other] { $count } elem
+        }
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = Keresés a könyvjelzők között
+places-search-history =
+    .placeholder = Keresés az előzmények között
+places-search-downloads =
+    .placeholder = Keresés a letöltések között
+
+##
+
+places-locked-prompt = A könyvjelzők és az előzmények rendszere nem fog működni, mert a { -brand-short-name } egyik fájlját egy másik alkalmazás használja. Egyes biztonsági szoftverek okozhatnak ilyen problémát.

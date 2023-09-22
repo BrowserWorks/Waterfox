@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = Otwórz w nowym oknie prywatnym
     .accesskey = p
+
+places-empty-bookmarks-folder =
+    .label = (pusty)
 
 places-add-bookmark =
     .label = Dodaj zakładkę…
@@ -86,6 +89,15 @@ places-delete-folder =
            *[other] Usuń foldery
         }
     .accesskey = U
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] Usuń tę stronę
+           *[other] Usuń te strony
+        }
+    .accesskey = s
 
 # Managed bookmarks are created by an administrator and cannot be changed by the user.
 managed-bookmarks =
@@ -112,6 +124,20 @@ places-delete-bookmark =
         }
     .accesskey = U
 
+# Variables:
+#   $count (number) - The number of bookmarks being added.
+places-create-bookmark =
+    .label =
+        { $count ->
+            [1] Dodaj zakładkę do tej strony…
+           *[other] Dodaj zakładki do tych stron…
+        }
+    .accesskey = D
+
+places-untag-bookmark =
+    .label = Usuń etykietę
+    .accesskey = s
+
 places-manage-bookmarks =
     .label = Zarządzaj zakładkami
     .accesskey = Z
@@ -120,13 +146,12 @@ places-forget-about-this-site-confirmation-title = Usuwanie całej witryny
 
 # Variables:
 # $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
-places-forget-about-this-site-confirmation-message = Spowoduje to usunięcie wszystkich danych powiązanych z witryną { $hostOrBaseDomain }, w tym historię, hasła, zakładki, ciasteczka, pamięć podręczną i preferencje dotyczące treści. Czy na pewno kontynuować?
+places-forget-about-this-site-confirmation-msg = Spowoduje to usunięcie danych powiązanych z witryną { $hostOrBaseDomain }, w tym historię, ciasteczka, pamięć podręczną i preferencje dotyczące treści. Powiązane zakładki i hasła nie zostaną usunięte. Czy na pewno kontynuować?
 
 places-forget-about-this-site-forget = Usuń całą witrynę
 
-places-library =
+places-library3 =
     .title = Biblioteka
-    .style = width:1000px; height:500px;
 
 places-organize-button =
     .label = Zarządzaj
@@ -227,6 +252,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = Ostatnia modyfikacja
 
+places-view-sortby-name =
+    .label = Sortuj według nazw
+    .accesskey = n
+places-view-sortby-url =
+    .label = Sortuj według adresu
+    .accesskey = a
+places-view-sortby-date =
+    .label = Sortuj według daty ostatniej wizyty
+    .accesskey = d
+places-view-sortby-visit-count =
+    .label = Sortuj według liczby wizyt
+    .accesskey = c
+places-view-sortby-date-added =
+    .label = Sortuj według daty dodania
+    .accesskey = n
+places-view-sortby-last-modified =
+    .label = Sortuj według daty ostatniej modyfikacji
+    .accesskey = m
+places-view-sortby-tags =
+    .label = Sortuj według etykiet
+    .accesskey = e
+
 places-cmd-find-key =
     .key = f
 
@@ -237,3 +284,29 @@ places-forward-button =
     .tooltiptext = Przejdź do przodu
 
 places-details-pane-select-an-item-description = Zaznacz element, by wyświetlić i edytować jego właściwości
+
+places-details-pane-no-items =
+    .value = Brak elementów
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value =
+        { $count ->
+            [one] Jeden element
+            [few] { $count } elementy
+           *[many] { $count } elementów
+        }
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = Szukaj w zakładkach
+places-search-history =
+    .placeholder = Szukaj w historii
+places-search-downloads =
+    .placeholder = Szukaj w pobranych plikach
+
+##
+
+places-locked-prompt = System zakładek i historii nie będzie działał, ponieważ jeden z plików programu { -brand-short-name } jest używany przez inną aplikację. Niektóre programy związane z bezpieczeństwem mogą powodować ten problem.

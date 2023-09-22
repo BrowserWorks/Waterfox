@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,9 +26,9 @@ certmgr-people = A következő embereket lehet azonosítani a meglevő tanúsít
 certmgr-server = Ezek a bejegyzések kiszolgálói tanúsítványhiba kivételeket azonosítanak
 certmgr-ca = A következő hitelesítésszolgáltatókat lehet azonosítani a meglevő tanúsítványokkal
 
-certmgr-edit-ca-cert =
+certmgr-edit-ca-cert2 =
     .title = Hitelesítésszolgáltató tanúsítványa megbízhatóságának beállítása
-    .style = width: 48em;
+    .style = min-width: 48em;
 
 certmgr-edit-cert-edit-trust = Megbízhatósági beállítások megadása:
 
@@ -38,9 +38,9 @@ certmgr-edit-cert-trust-ssl =
 certmgr-edit-cert-trust-email =
     .label = Ez a tanúsítvány használható elektronikus levelek feladóinak azonosítására.
 
-certmgr-delete-cert =
+certmgr-delete-cert2 =
     .title = Tanúsítvány törlése
-    .style = width: 48em; height: 24em;
+    .style = min-width: 48em; min-height: 24em;
 
 certmgr-cert-host =
     .label = Gép
@@ -50,9 +50,6 @@ certmgr-cert-name =
 
 certmgr-cert-server =
     .label = Kiszolgáló
-
-certmgr-override-lifetime =
-    .label = Élettartam
 
 certmgr-token-name =
     .label = Adatvédelmi eszköz
@@ -68,6 +65,9 @@ certmgr-email =
 
 certmgr-serial =
     .label = Sorozatszám
+
+certmgr-fingerprint-sha-256 =
+    .label = SHA-256-ujjlenyomat
 
 certmgr-view =
     .label = Megtekintés…

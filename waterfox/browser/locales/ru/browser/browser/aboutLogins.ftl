@@ -1,14 +1,16 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
 
 about-logins-page-title = Логины и пароли
-login-filter =
+about-logins-login-filter =
     .placeholder = Поиск логинов
-create-login-button = Создать новый логин
+    .key = F
+create-new-login-button =
+    .title = Создать новый логин
 fxaccounts-sign-in-text = Получайте доступ к своим паролям на других устройствах
-fxaccounts-sign-in-sync-button = Войти в Синхронизацию
+fxaccounts-sign-in-sync-button = Войдите для синхронизации
 fxaccounts-avatar-button =
     .title = Управление аккаунтом
 
@@ -32,13 +34,25 @@ about-logins-menu-menuitem-help = Помощь
 
 login-list =
     .aria-label = Логины, соответствующие поисковому запросу
+# Variables
+#   $count (number) - Number of logins
 login-list-count =
     { $count ->
         [one] { $count } логин
         [few] { $count } логина
        *[many] { $count } логинов
     }
-login-list-sort-label-text = Сортировать:
+# Variables
+#   $count (number) - Number of filtered logins
+#   $total (number) - Total number of logins
+login-list-filtered-count =
+    { $total ->
+        [one] { $count } из { $total } логинов
+        [few] { $count } из { $total } логинов
+        [many] { $count } из { $total } логинов
+       *[other] { $count } из { $total } логинов
+    }
+login-list-sort-label-text = Упорядочивать:
 login-list-name-option = По имени (А-Я)
 login-list-name-reverse-option = По имени (Я-А)
 login-list-username-option = По имени пользователя (А-Я)
@@ -54,10 +68,10 @@ login-list-item-title-new-login = Новый логин
 login-list-item-subtitle-new-login = Введите свои учётные данные
 login-list-item-subtitle-missing-username = (нет имени пользователя)
 about-logins-list-item-breach-icon =
-    .title = Атакованный сайт
+    .title = Взломанный сайт
 about-logins-list-item-vulnerable-password-icon =
     .title = Уязвимый пароль
-about-logins-list-section-breach = Атакованные сайты
+about-logins-list-section-breach = Взломанные веб-сайты
 about-logins-list-section-vulnerable = Уязвимые пароли
 about-logins-list-section-nothing = Нет предупреждения
 about-logins-list-section-today = Сегодня
@@ -70,6 +84,7 @@ about-logins-login-intro-heading-logged-out2 = Ищете сохранённые
 about-logins-login-intro-heading-logged-in = Синхронизированных логинов не найдено.
 login-intro-description = Если вы сохранили ваши логины в { -brand-product-name } на другом устройстве, то вот как получить к ним доступ здесь:
 login-intro-instructions-fxa = Создайте или войдите в ваш { -fxaccount-brand-name } на устройстве, где сохранены ваши логины
+login-intro-instructions-fxa2 = Создайте или войдите в ваш аккаунт на устройстве, где сохранены ваши логины.
 login-intro-instructions-fxa-settings = Выберите «Настройки» > «Синхронизация» > «Включить синхронизацию…». Установите флажок «Логины и пароли».
 login-intro-instructions-fxa-passwords-help = Посетите <a data-l10n-name="passwords-help-link">раздел поддержки по паролям</a>, чтобы узнать больше.
 about-logins-intro-browser-only-import = Если ваши логины сохранены в другом браузере, вы можете <a data-l10n-name="import-link">импортировать их в { -brand-product-name }</a>
@@ -87,19 +102,27 @@ login-item-origin =
 login-item-username-label = Имя пользователя
 about-logins-login-item-username =
     .placeholder = (нет имени пользователя)
-login-item-copy-username-button-text = Копировать
+login-item-copy-username-button-text = Скопировать
 login-item-copied-username-button-text = Скопировано!
 login-item-password-label = Пароль
 login-item-password-reveal-checkbox =
     .aria-label = Показать пароль
-login-item-copy-password-button-text = Копировать
+login-item-copy-password-button-text = Скопировать
 login-item-copied-password-button-text = Скопировано!
 login-item-save-changes-button = Сохранить изменения
 login-item-save-new-button = Сохранить
 login-item-cancel-button = Отмена
-login-item-time-changed = Последнее изменение: { DATETIME($timeChanged, day: "numeric", month: "long", year: "numeric") }
-login-item-time-created = Создан: { DATETIME($timeCreated, day: "numeric", month: "long", year: "numeric") }
-login-item-time-used = Последнее использование: { DATETIME($timeUsed, day: "numeric", month: "long", year: "numeric") }
+
+## The date is displayed in a timeline showing the password evolution.
+## A label is displayed under the date to describe the type of change.
+## (e.g. updated, created, etc.)
+
+# Variables
+#   $datetime (date) - Event date
+login-item-timeline-point-date = { DATETIME($datetime, day: "numeric", month: "short", year: "numeric") }
+login-item-timeline-action-created = Создан
+login-item-timeline-action-updated = Обновлён
+login-item-timeline-action-used = Использован
 
 ## OS Authentication dialog
 
@@ -145,6 +168,10 @@ confirmation-dialog-dismiss-button =
 about-logins-confirm-remove-dialog-title = Удалить этот логин?
 confirm-delete-dialog-message = Это действие нельзя отменить.
 about-logins-confirm-remove-dialog-confirm-button = Удалить
+
+## Variables
+##   $count (number) - Number of items
+
 about-logins-confirm-remove-all-dialog-confirm-button-label =
     { $count ->
         [1] Удалить
@@ -185,6 +212,16 @@ about-logins-confirm-remove-all-sync-dialog-message =
         [few] Это приведет к удалению всех логинов, сохранённых вами в { -brand-short-name } на всех устройствах, синхронизируемых с вашим { -fxaccount-brand-name(case: "instrumental") }. Также будут удалены появляющиеся здесь предупреждения об утечках. Вы не сможете отменить это действие.
        *[many] Это приведет к удалению всех логинов, сохранённых вами в { -brand-short-name } на всех устройствах, синхронизируемых с вашим { -fxaccount-brand-name(case: "instrumental") }. Также будут удалены появляющиеся здесь предупреждения об утечках. Вы не сможете отменить это действие.
     }
+about-logins-confirm-remove-all-sync-dialog-message2 =
+    { $count ->
+        [1] Это приведет к удалению логина, сохранённого вами в { -brand-short-name } на всех устройствах, синхронизируемых с вашим аккаунтом. Также будут удалены предупреждения об утечках, появляющиеся здесь. Вы не сможете отменить это действие.
+        [one] Это приведет к удалению всех логинов, сохранённых вами в { -brand-short-name } на всех устройствах, синхронизируемых с вашим аккаунтом. Также будут удалены предупреждения об утечках, появляющиеся здесь. Вы не сможете отменить это действие.
+        [few] Это приведет к удалению всех логинов, сохранённых вами в { -brand-short-name } на всех устройствах, синхронизируемых с вашим аккаунтом. Также будут удалены предупреждения об утечках, появляющиеся здесь. Вы не сможете отменить это действие.
+       *[many] Это приведет к удалению всех логинов, сохранённых вами в { -brand-short-name } на всех устройствах, синхронизируемых с вашим аккаунтом. Также будут удалены предупреждения об утечках, появляющиеся здесь. Вы не сможете отменить это действие.
+    }
+
+##
+
 about-logins-confirm-export-dialog-title = Экспорт логинов и паролей
 about-logins-confirm-export-dialog-message = Ваши пароли будут сохранены в виде читаемого текста (например, BadP@ssw0rd), поэтому любой, кто может открыть файл с ними, сможет их просмотреть.
 about-logins-confirm-export-dialog-confirm-button = Экспортировать…
@@ -202,7 +239,6 @@ about-logins-breach-alert-date = Эта утечка случилась { DATETI
 # Variables:
 #   $hostname (String) - The hostname of the website associated with the login, e.g. "example.com"
 about-logins-breach-alert-link = Перейти на { $hostname }
-about-logins-breach-alert-learn-more-link = Подробнее
 
 ## Vulnerable Password notification
 
@@ -291,7 +327,7 @@ about-logins-import-dialog-items-error =
 about-logins-import-dialog-done = Готово
 about-logins-import-dialog-error-title = Ошибка импорта
 about-logins-import-dialog-error-conflicting-values-title = Несколько конфликтующих учётных данных для одного логина
-about-logins-import-dialog-error-conflicting-values-description = Например: несколько имён пользователей, паролей, URL для одного логина.
+about-logins-import-dialog-error-conflicting-values-description = Например: несколько имён пользователей, паролей, сетевых адресов для одного логина.
 about-logins-import-dialog-error-file-format-title = Неверный формат файла
 about-logins-import-dialog-error-file-format-description = Неверные или отсутствующие заголовки столбцов. Проверьте, что в файле действительно содержатся колонки для имени пользователя, пароля и URL.
 about-logins-import-dialog-error-file-permission-title = Не удалось прочитать файл
@@ -351,4 +387,4 @@ about-logins-import-report-error =
 
 ## Logins import report page
 
-about-logins-import-report-page-title = Сводный отчет об импорте
+about-logins-import-report-page-title = Сводный отчёт об импорте

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,14 +22,13 @@ pocket-panel-saved-page-removed = Seite entfernt
 pocket-panel-saved-page-saved = Bei { -pocket-brand-name } gespeichert
 pocket-panel-saved-page-saved-b = Bei { -pocket-brand-name } gespeichert!
 pocket-panel-saved-processing-remove = Seite wird entfernt…
-pocket-panel-saved-removed = Seite aus Meine Liste entfernt
+pocket-panel-saved-removed-updated = Seite aus Einträgen entfernt
 pocket-panel-saved-processing-tags = Tags werden hinzugefügt…
 pocket-panel-saved-remove-page = Seite entfernen
 pocket-panel-saved-save-tags = Speichern
 pocket-panel-saved-saving-tags = Speichern…
 pocket-panel-saved-suggested-tags = Vorgeschlagene Tags
 pocket-panel-saved-tags-saved = Tags hinzugefügt
-pocket-panel-signup-view-list = Liste anzeigen
 
 # This is displayed above a field where the user can add tags
 pocket-panel-signup-add-tags = Tags hinzufügen:
@@ -47,13 +46,12 @@ pocket-panel-signup-tagline-story-one = Klicken Sie auf die { -pocket-brand-name
 pocket-panel-signup-tagline-story-two = Lesen Sie diese mit { -pocket-brand-name }, jederzeit und auf jedem Gerät.
 
 pocket-panel-signup-cta-a-fix = Ihre Speichern-Taste für das Internet
-pocket-panel-signup-cta-b = Klicken Sie auf die { -pocket-brand-name }-Schaltfläche, um Artikel, Videos und Links zu speichern. Schauen Sie sich Ihre Liste an, jederzeit und auf jedem Gerät.
+pocket-panel-signup-cta-b-updated = Klicken Sie auf die { -pocket-brand-name }-Schaltfläche, um Artikel, Videos und Links zu speichern. Schauen Sie sich Ihre Einträge an, jederzeit und auf jedem Gerät.
 pocket-panel-signup-cta-b-short = Klicken Sie auf die { -pocket-brand-name }-Schaltfläche, um Artikel, Videos und Links zu speichern.
-pocket-panel-signup-cta-c = Schauen Sie sich Ihre Liste an, jederzeit und auf jedem Gerät.
+pocket-panel-signup-cta-c-updated = Schauen Sie sich Ihre Einträge an, jederzeit und auf jedem Gerät.
 
 ## about:pocket-home panel
 
-pocket-panel-home-my-list = Meine Liste
 pocket-panel-home-welcome-back = Willkommen zurück
 pocket-panel-home-paragraph = Mit { -pocket-brand-name } können Sie Webseiten, Artikel, Videos und Podcasts entdecken und speichern, oder zu dem zurückkehren, was Sie gelesen haben.
 pocket-panel-home-explore-popular-topics = Beliebte Themen entdecken
@@ -67,7 +65,7 @@ pocket-panel-home-new-user-message = Ihre zuletzt hinzugefügten Einträge finde
 
 ## Pocket panel header component
 
-pocket-panel-header-my-list = Meine Liste anzeigen
+pocket-panel-header-my-saves = Meine Einträge anzeigen
 pocket-panel-header-sign-in = Anmelden
 
 ## Pocket panel buttons

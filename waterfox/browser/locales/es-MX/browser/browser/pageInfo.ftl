@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/. --
 
@@ -65,6 +65,9 @@ media-dimension =
     .value = Tamaño:
 media-long-desc =
     .value = Descripción larga:
+media-select-all =
+    .label = Seleccionar todo
+    .accesskey = e
 media-save-as =
     .label = Guardar como…
     .accesskey = G
@@ -95,7 +98,7 @@ security-view-identity-domain =
 security-view-identity-verifier =
     .value = Verificado por:
 security-view-identity-validity =
-    .value = Caduca el:
+    .value = Expira el:
 security-view-privacy =
     .value = Privacidad e historial
 
@@ -240,18 +243,17 @@ media-dimensions =
 #   $size (number) - The size of the media file in kilobytes
 media-file-size = { $size } KB
 
+## Variables:
+##   $website (string) — The url of the website pageInfo is getting info for
+
 # This string is used to display the website name next to the
 # "Block Images" checkbox in the media tab
-# Variables:
-#   $website (string) - The website name
 media-block-image =
     .label = Bloquear imágenes de { $website }
     .accesskey = B
 
 # This string is used to display the URL of the website on top of the
 # pageInfo dialog box
-# Variables:
-#   $website (string) - The url of the website pageInfo is getting info for
 page-info-page =
     .title = Información sobre esta página - { $website }
 page-info-frame =

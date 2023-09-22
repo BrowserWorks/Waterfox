@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,8 +16,15 @@ update-updateButton =
     .accesskey = R
 
 update-checkingForUpdates = Đang kiểm tra cập nhật…
-update-downloading = <img data-l10n-name="icon"/>Đang tải cập nhật — <label data-l10n-name="download-status"/>
-update-downloading-message = Đang tải xuống bản cập nhật — <label data-l10n-name="download-status"/>
+
+## Variables:
+##   $transfer (string) - Transfer progress.
+
+settings-update-downloading = <img data-l10n-name="icon"/>Đang tải cập nhật — <label data-l10n-name="download-status">{ $transfer }</label>
+aboutdialog-update-downloading = Đang tải xuống bản cập nhật — <label data-l10n-name="download-status">{ $transfer }</label>
+
+##
+
 update-applying = Đang cài đặt cập nhật…
 
 update-failed = Cập nhật thất bại. <label data-l10n-name="failed-link">Tải phiên bản mới nhất</label>
@@ -25,15 +32,26 @@ update-failed-main = Cập nhật thất bại. <a data-l10n-name="failed-link-m
 
 update-adminDisabled = Cập nhật bị vô hiệu hóa bởi quản trị hệ thống
 update-noUpdatesFound = { -brand-short-name } đã được cập nhật
+aboutdialog-update-checking-failed = Không thể kiểm tra bản cập nhật.
 update-otherInstanceHandlingUpdates = { -brand-short-name } đang được cập nhật bởi tiến trình khác
 
-update-manual = Cập nhật có tại <label data-l10n-name="manual-link"/>
+## Variables:
+##   $displayUrl (String): URL to page with download instructions. Example: www.mozilla.org/firefox/nightly/
+
+aboutdialog-update-manual-with-link = Cập nhật có tại <label data-l10n-name="manual-link">{ $displayUrl }</label>
+settings-update-manual-with-link = Cập nhật có tại <a data-l10n-name="manual-link">{ $displayUrl }</a>
 
 update-unsupported = Bạn không thể cập nhật thêm trên hệ thống này nữa. <label data-l10n-name="unsupported-link">Tìm hiểu thêm</label>
 
 update-restarting = Đang khởi động lại…
 
-channel-description = Bạn hiện đang ở trên kênh cập nhật <label data-l10n-name="current-channel"></label>.
+update-internal-error2 = Không thể kiểm tra các bản cập nhật do lỗi nội bộ. Các bản cập nhật có sẵn tại <label data-l10n-name="manual-link">{ $displayUrl }</label>
+
+##
+
+# Variables:
+#   $channel (String): description of the update channel (e.g. "release", "beta", "nightly" etc.)
+aboutdialog-channel-description = Bạn hiện đang ở trên kênh cập nhật <label data-l10n-name="current-channel">{ $channel }</label>.
 
 warningDesc-version = { -brand-short-name } được thiết kế để thử nghiệm và có thể không ổn định.
 

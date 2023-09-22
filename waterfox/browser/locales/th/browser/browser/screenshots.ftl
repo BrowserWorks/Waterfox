@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,6 @@ screenshots-private-window-error-details = ขออภัยในความ�
 
 screenshots-generic-error-title = โอ๊ย! { -screenshots-brand-name } รวน
 screenshots-generic-error-details = เราไม่แน่ใจว่าเกิดอะไรขึ้น ต้องการลองอีกครั้งหรือจับภาพหน้าจอของหน้าอื่น?
+
+screenshots-too-large-error-title = ภาพหน้าจอของคุณถูกครอบตัดเนื่องจากมีขนาดใหญ่เกินไป
+screenshots-too-large-error-details = ลองเลือกขอบเขตที่มีขนาดเล็กกว่า 32,700 พิกเซลที่ด้านยาวที่สุด หรือพื้นที่ทั้งหมด 124,900,000 พิกเซล

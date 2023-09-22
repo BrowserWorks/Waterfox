@@ -1,9 +1,8 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 protections-panel-sendreportview-error = Er is een fout opgetreden bij het verzenden van het rapport. Probeer het later nog eens.
-
 # A link shown when ETP is disabled for a site. Opens the breakage report subview when clicked.
 protections-panel-sitefixedsendreport-label = Website gerepareerd? Rapport verzenden
 
@@ -22,13 +21,24 @@ protections-popup-footer-protection-label-standard = Standaard
 # The text a screen reader speaks when focused on the info button.
 protections-panel-etp-more-info =
     .aria-label = Meer informatie over Verbeterde bescherming tegen volgen
-
 protections-panel-etp-on-header = Verbeterde bescherming tegen volgen is AAN voor deze website
 protections-panel-etp-off-header = Verbeterde bescherming tegen volgen is UIT voor deze website
 
+## Text for the toggles shown when ETP is enabled/disabled for a given site.
+## .description is transferred into a separate paragraph by the moz-toggle
+## custom element code.
+##   $host (String): the hostname of the site that is being displayed.
+
+protections-panel-etp-on-toggle =
+    .label = Verbeterde bescherming tegen volgen
+    .description = Aan voor deze website
+    .aria-label = Beschermingen voor { $host } uitschakelen
+protections-panel-etp-off-toggle =
+    .label = Verbeterde bescherming tegen volgen
+    .description = Uit voor deze website
+    .aria-label = Beschermingen voor { $host } inschakelen
 # The link to be clicked to open the sub-panel view
 protections-panel-site-not-working = Werkt de website niet?
-
 # The heading/title of the sub-panel view
 protections-panel-site-not-working-view =
     .title = Werkt de website niet?
@@ -43,9 +53,7 @@ protections-panel-not-blocking-why-etp-off-tooltip = Alle trackers op deze websi
 ##
 
 protections-panel-no-trackers-found = Op deze pagina zijn geen bij { -brand-short-name } bekende trackers aangetroffen.
-
 protections-panel-content-blocking-tracking-protection = Volginhoud
-
 protections-panel-content-blocking-socialblock = Sociale-mediatrackers
 protections-panel-content-blocking-cryptominers-label = Cryptominers
 protections-panel-content-blocking-fingerprinters-label = Fingerprinters
@@ -70,14 +78,13 @@ protections-panel-protectionsdashboard-label = Beveiligingsdashboard
 
 # The header of the list
 protections-panel-site-not-working-view-header = Schakel beschermingen uit als u problemen hebt met:
-
 # The list items, shown in a <ul>
 protections-panel-site-not-working-view-issue-list-login-fields = Aanmeldvelden
 protections-panel-site-not-working-view-issue-list-forms = Formulieren
 protections-panel-site-not-working-view-issue-list-payments = Betalingen
 protections-panel-site-not-working-view-issue-list-comments = Opmerkingen
 protections-panel-site-not-working-view-issue-list-videos = Video’s
-
+protections-panel-site-not-working-view-issue-list-fonts = Lettertypen
 protections-panel-site-not-working-view-send-report = Rapport verzenden
 
 ##
@@ -87,19 +94,17 @@ protections-panel-cryptominers = Cryptominers gebruiken de rekenkracht van uw sy
 protections-panel-fingerprinters = Fingerprinters verzamelen instellingen van uw browser en computer om een profiel van u te maken. Met behulp van deze digitale vingerafdruk kunnen ze u op verschillende websites volgen.
 protections-panel-tracking-content = Websites kunnen externe advertenties, video’s en andere inhoud laden met volgcode. Het blokkeren van volginhoud kan websites helpen sneller te laden, maar sommige knoppen, formulieren en aanmeldvelden werken mogelijk niet.
 protections-panel-social-media-trackers = Sociale netwerken plaatsen trackers op andere websites om te volgen wat u online doet, ziet en bekijkt. Hierdoor kunnen sociale-mediabedrijven meer over u leren dan wat u deelt op uw sociale-mediaprofielen.
-
 protections-panel-description-shim-allowed = Sommige hieronder gelabelde trackers zijn op deze pagina deels gedeblokkeerd, omdat u er interactie mee hebt gehad.
 protections-panel-description-shim-allowed-learn-more = Meer info
 protections-panel-shim-allowed-indicator =
     .tooltiptext = Tracker deels gedeblokkeerd
-
 protections-panel-content-blocking-manage-settings =
     .label = Beschermingsinstellingen beheren
     .accesskey = B
-
 protections-panel-content-blocking-breakage-report-view =
     .title = Niet-werkende website melden
-protections-panel-content-blocking-breakage-report-view-description = Het blokkeren van bepaalde trackers kan problemen met bepaalde websites veroorzaken. Door deze problemen te melden, helpt u { -brand-short-name } voor iedereen te verbeteren. Als u dit rapport verzendt, wordt zowel een URL als informatie over uw browserinstellingen naar Waterfox verzonden. <label data-l10n-name="learn-more">Meer info</label>
+protections-panel-content-blocking-breakage-report-view-description = Het blokkeren van bepaalde trackers kan problemen met bepaalde websites veroorzaken. Door deze problemen te melden, helpt u { -brand-short-name } voor iedereen te verbeteren. Als u dit rapport verzendt, wordt zowel een URL als informatie over uw browserinstellingen naar BrowserWorks verzonden. <label data-l10n-name="learn-more">Meer info</label>
+protections-panel-content-blocking-breakage-report-view-description2 = Het blokkeren van bepaalde trackers kan problemen met bepaalde websites veroorzaken. Door deze problemen te melden, helpt u { -brand-short-name } voor iedereen te verbeteren. Als u dit rapport verzendt, wordt zowel een URL als informatie over uw browserinstellingen naar { -vendor-short-name } verzonden.
 protections-panel-content-blocking-breakage-report-view-collection-url = URL
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = URL
@@ -110,3 +115,21 @@ protections-panel-content-blocking-breakage-report-view-cancel =
     .label = Annuleren
 protections-panel-content-blocking-breakage-report-view-send-report =
     .label = Rapport verzenden
+
+# Cookie Banner Handling
+
+protections-panel-cookie-banner-handling-header = Reductie van cookiebanners
+protections-panel-cookie-banner-handling-enabled = Aan voor deze website
+protections-panel-cookie-banner-handling-disabled = Uit voor deze website
+protections-panel-cookie-banner-handling-undetected = Website wordt momenteel niet ondersteund
+protections-panel-cookie-banner-view-title =
+    .title = Reductie van cookiebanners
+# Variables
+#  $host (String): the hostname of the site that is being displayed.
+protections-panel-cookie-banner-view-turn-off-for-site = Reductie van cookiebanners uitschakelen voor { $host }?
+protections-panel-cookie-banner-view-turn-on-for-site = Reductie van cookiebanners inschakelen voor deze website?
+protections-panel-cookie-banner-view-cookie-clear-warning = { -brand-short-name } wist de cookies voor deze website en vernieuwt de pagina. Als alle cookies worden gewist, wordt u mogelijk afgemeld of worden winkelwagentjes geleegd.
+protections-panel-cookie-banner-view-turn-on-description = { -brand-short-name } probeert alle cookieverzoeken op ondersteunde websites automatisch te weigeren.
+protections-panel-cookie-banner-view-cancel = Annuleren
+protections-panel-cookie-banner-view-turn-off = Uitschakelen
+protections-panel-cookie-banner-view-turn-on = Inschakelen

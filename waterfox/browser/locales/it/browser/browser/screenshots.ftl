@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,6 @@ screenshots-private-window-error-details = Ci dispiace per l’inconveniente. St
 
 screenshots-generic-error-title = Wow! { -screenshots-brand-name } è andato in tilt
 screenshots-generic-error-details = Non sappiamo che cosa sia successo. Riprova, magari con una pagina diversa.
+
+screenshots-too-large-error-title = Lo screenshot è stato ritagliato in quanto troppo grande
+screenshots-too-large-error-details = Selezionare un’area inferiore a 32.700 pixel nel lato più lungo, o con una superficie complessiva inferiore a 124.900.000 pixel.

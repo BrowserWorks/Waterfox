@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -164,11 +164,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = Wird in { $hours }h { $minutes }m geöffnet…
-downloading-file-opens-in-minutes = Wird in { $minutes }m geöffnet…
-downloading-file-opens-in-minutes-and-seconds = Wird in { $minutes }m { $seconds }s geöffnet…
-downloading-file-opens-in-seconds = Wird in { $seconds }s geöffnet…
-downloading-file-opens-in-some-time = Wird nach Abschluss geöffnet…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = Wird in { $hours }h { $minutes }m geöffnet…
+downloading-file-opens-in-minutes-2 =
+    .value = Wird in { $minutes }m geöffnet…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = Wird in { $minutes }m { $seconds }s geöffnet…
+downloading-file-opens-in-seconds-2 =
+    .value = Wird in { $seconds }s geöffnet…
+downloading-file-opens-in-some-time-2 =
+    .value = Wird nach Abschluss geöffnet…
 downloading-file-click-to-open =
     .value = Nach Abschluss öffnen
 
@@ -233,3 +238,17 @@ downloads-more-downloading =
         [one] { $count } weitere Datei wird heruntergeladen
        *[other] { $count } weitere Dateien werden heruntergeladen
     }
+
+## Download errors
+
+downloads-error-alert-title = Download-Fehler
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = Der Download kann nicht gespeichert werden, da er von { $extension } blockiert wird.
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = Der Download kann nicht gespeichert werden, weil er von einer Erweiterung blockiert wird.
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    Der Download kann nicht gespeichert werden, weil ein unbekannter Fehler aufgetreten ist.
+    
+    Bitte versuchen Sie es nochmals.

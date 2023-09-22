@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -182,6 +182,17 @@ menu-view-full-screen =
     .label = Полный экран
     .accesskey = э
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Перейти в режим чтения
+    .accesskey = ч
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Закрыть режим чтения
+    .accesskey = ч
+
 ##
 
 menu-view-show-all-tabs =
@@ -210,8 +221,9 @@ menu-history-undo-menu =
     .label = Недавно закрытые вкладки
 menu-history-undo-window-menu =
     .label = Недавно закрытые окна
-menu-history-reopen-all-tabs = Снова открыть все вкладки
-menu-history-reopen-all-windows = Снова открыть все окна
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = Поиск в журнале
 
 ## Bookmarks Menu
 
@@ -220,14 +232,13 @@ menu-bookmarks-menu =
     .accesskey = З
 menu-bookmarks-manage =
     .label = Управление закладками
-menu-bookmark-current-tab =
-    .label = Добавить текущую вкладку в закладки
-menu-bookmark-edit =
-    .label = Редактировать эту закладку
 menu-bookmark-tab =
     .label = Добавить текущую вкладку в закладки…
 menu-edit-bookmark =
     .label = Изменить эту закладку…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = Искать в закладках
 menu-bookmarks-all-tabs =
     .label = Добавить все вкладки…
 menu-bookmarks-toolbar =
@@ -270,8 +281,8 @@ menu-tools-page-source =
     .label = Исходный код страницы
     .accesskey = х
 menu-tools-page-info =
-    .label = Информация о странице
-    .accesskey = ф
+    .label = Сведения о странице
+    .accesskey = в
 menu-settings =
     .label = Настройки
     .accesskey =
@@ -321,6 +332,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = Отключить безопасный режим
     .accesskey = Б
+menu-help-switch-device =
+    .label = Переход на новое устройство
+    .accesskey = х
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =
