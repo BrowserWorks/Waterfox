@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,6 +17,10 @@ fxa-menu-turn-on-sync =
 fxa-menu-turn-on-sync-default = 同期をオンにする
 fxa-menu-connect-another-device =
     .label = 別の端末を接続...
+# Variables:
+#   $tabCount (Number): The number of tabs sent to the device.
+fxa-menu-send-tab-to-device =
+    .label = { $tabCount } 個のタブを端末へ送信
 # This is shown dynamically within "Send tab to device" in fxa menu.
 fxa-menu-send-tab-to-device-syncnotready =
     .label = 端末を同期しています...

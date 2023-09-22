@@ -1,17 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-colors-window =
+colors-dialog2 =
     .title = 颜色
-    .style =
-        { PLATFORM() ->
-            [macos] width: 41em
-           *[other] width: 38em
-        }
-colors-dialog =
-    .title = 颜色
-    .style = width: 41em;
+    .style = min-width: 41em;
 colors-close-key =
     .key = w
 colors-page-override = 使用您在上面选择的颜色覆盖页面指定的颜色
@@ -21,7 +14,7 @@ colors-page-override-option-always =
 colors-page-override-option-auto =
     .label = 仅在使用高对比度主题时
 colors-page-override-option-never =
-    .label = 总不
+    .label = 永不
 colors-text-and-background = 文本和背景
 colors-text-header = 文本
     .accesskey = T

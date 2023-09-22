@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -157,7 +157,6 @@ menu-view-page-style-no-style =
 menu-view-page-basic-style =
     .label = Stile pagina di base
     .accesskey = S
-
 menu-view-repair-text-encoding =
     .label = Correggi codifica testo
     .accesskey = C
@@ -174,6 +173,17 @@ menu-view-exit-full-screen =
 menu-view-full-screen =
     .label = Schermo intero
     .accesskey = S
+
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Attiva Modalità lettura
+    .accesskey = A
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Chiudi Modalità lettura
+    .accesskey = C
 
 ##
 
@@ -203,9 +213,9 @@ menu-history-undo-menu =
     .label = Schede chiuse di recente
 menu-history-undo-window-menu =
     .label = Finestre chiuse di recente
-
-menu-history-reopen-all-tabs = Riapri tutte le schede
-menu-history-reopen-all-windows = Riapri tutte le finestre
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = Cerca nella cronologia
 
 ## Bookmarks Menu
 
@@ -214,14 +224,13 @@ menu-bookmarks-menu =
     .accesskey = e
 menu-bookmarks-manage =
     .label = Gestisci segnalibri
-menu-bookmark-current-tab =
-    .label = Aggiungi scheda corrente ai segnalibri
 menu-bookmark-tab =
     .label = Aggiungi scheda corrente ai segnalibri…
-menu-bookmark-edit =
-    .label = Modifica segnalibro
 menu-edit-bookmark =
     .label = Modifica segnalibro…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = Cerca nei segnalibri
 menu-bookmarks-all-tabs =
     .label = Tutte le schede nei segnalibri…
 menu-bookmarks-toolbar =
@@ -290,15 +299,6 @@ menu-window-bring-all-to-front =
 # NOTE: For Engineers, any additions or changes to Help menu strings should
 # also be reflected in the related strings in appmenu.ftl. Those strings, by
 # convention, will have the same ID as these, but prefixed with "app".
-# Example: appmenu-help-product
-#
-# These strings are duplicated to allow for different casing depending on
-# where the strings appear.
-
-
-# NOTE: For Engineers, any additions or changes to Help menu strings should
-# also be reflected in the related strings in appmenu.ftl. Those strings, by
-# convention, will have the same ID as these, but prefixed with "app".
 # Example: appmenu-get-help
 #
 # These strings are duplicated to allow for different casing depending on
@@ -324,6 +324,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = Disattiva Modalità risoluzione problemi
     .accesskey = m
+menu-help-switch-device =
+    .label = Passaggio a un nuovo dispositivo
+    .accesskey = P
 # Label of the Help menu item. Either this or
 # safeb.palm.notdeceptive.label from
 # phishing-afterload-warning-message.dtd is shown.
@@ -333,3 +336,5 @@ menu-help-report-deceptive-site =
 menu-help-not-deceptive =
     .label = Non è un sito ingannevole…
     .accesskey = e
+
+

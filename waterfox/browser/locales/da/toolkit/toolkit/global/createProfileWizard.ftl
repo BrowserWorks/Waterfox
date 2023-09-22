@@ -1,17 +1,17 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-create-profile-window =
+create-profile-window2 =
     .title = Guiden Opret profil
-    .style = width: 47em; height: 35em;
+    .style = min-width: 47em; min-height: 35em;
 
 ## First wizard page
 
-create-profile-first-page-header =
+create-profile-first-page-header2 =
     { PLATFORM() ->
         [macos] Introduktion
-       *[other] Velkommen til { create-profile-window.title }
+       *[other] Velkommen til { create-profile-window2.title }
     }
 
 profile-creation-explanation-1 = { -brand-short-name } opbevarer information om dine indstillinger i din brugerprofil.
@@ -28,10 +28,10 @@ profile-creation-explanation-4 =
 
 ## Second wizard page
 
-create-profile-last-page-header =
+create-profile-last-page-header2 =
     { PLATFORM() ->
         [macos] Konklusion
-       *[other] Færdiggør { create-profile-window.title }
+       *[other] Færdiggør { create-profile-window2.title }
     }
 
 profile-creation-intro = Hvis du opretter flere profiler kan du adskille dem på profilnavnet. Du kan anvende det foreslåede navn, eller angive et selv.

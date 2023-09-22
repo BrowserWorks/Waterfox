@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,11 +38,9 @@ menu-quit =
             [windows] S
            *[other] S
         }
-
 # This menu-quit-mac string is only used on macOS.
 menu-quit-mac =
     .label = Salir de { -brand-shorter-name }
-
 menu-about =
     .label = Acerca de { -brand-shorter-name }
     .accesskey = A
@@ -183,6 +181,17 @@ menu-view-full-screen =
     .label = Pantalla completa
     .accesskey = P
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Abrir vista de lectura
+    .accesskey = v
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Cerrar vista de lectura
+    .accesskey = R
+
 ##
 
 menu-view-show-all-tabs =
@@ -211,8 +220,9 @@ menu-history-undo-menu =
     .label = Pestañas cerradas recientemente
 menu-history-undo-window-menu =
     .label = Ventanas cerradas recientemente
-menu-history-reopen-all-tabs = Reabrir todas las pestañas
-menu-history-reopen-all-windows = Reabrir todas las ventanas
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = Buscar en el historial
 
 ## Bookmarks Menu
 
@@ -221,10 +231,13 @@ menu-bookmarks-menu =
     .accesskey = M
 menu-bookmarks-manage =
     .label = Administrar marcadores
-menu-bookmark-current-tab =
-    .label = Añadir pestaña actual a marcadores
-menu-bookmark-edit =
-    .label = Editar este marcador
+menu-bookmark-tab =
+    .label = Añadir pestaña actual a marcadores…
+menu-edit-bookmark =
+    .label = Editar este marcador…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = Buscar marcadores
 menu-bookmarks-all-tabs =
     .label = Añadir pestañas a marcadores…
 menu-bookmarks-toolbar =
@@ -318,6 +331,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = Desactivar modo de resolución de problemas
     .accesskey = M
+menu-help-switch-device =
+    .label = Cambiar a un nuevo dispositivo
+    .accesskey = n
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =

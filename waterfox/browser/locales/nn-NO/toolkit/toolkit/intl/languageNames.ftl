@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -158,6 +158,7 @@ language-name-ro = Rumensk
 language-name-ru = Russisk
 language-name-rw = Kinyarwanda
 language-name-sa = Sanskrit
+language-name-sat = Santali
 language-name-sc = Sardisk
 language-name-sco = Skotsk
 language-name-sd = Sindhi

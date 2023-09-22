@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,7 @@ options-context-inspector = 查看器
 # The label for the checkbox option to show user agent styles
 options-show-user-agent-styles-label = 显示浏览器样式
 options-show-user-agent-styles-tooltip =
-    .title = 启用此选项将显示由浏览器载入的默认样式。
+    .title = 启用此选项将显示由浏览器加载的默认样式。
 
 # The label for the checkbox option to enable collapse attributes
 options-collapse-attrs-label = 截短 DOM 属性
@@ -45,6 +45,12 @@ options-collapse-attrs-tooltip =
 options-inspector-draggable-properties-label = 点击并拖动编辑大小值
 options-inspector-draggable-properties-tooltip =
     .title = 在查看器规则视图中单击并拖动编辑大小值。
+
+# The label for the checkbox option to enable simplified highlighting on page elements
+# within the inspector for users who enabled prefers-reduced-motion = reduce
+options-inspector-simplified-highlighters-label = 通过 prefers-reduced-motion 使用更简明的高亮显示。
+options-inspector-simplified-highlighters-tooltip =
+    .title = 设置 prefers-reduced-motion 首选项启用简化的高亮显示。在突出显示的元素周围绘制线条而不是填充矩形，以避免闪烁效果。
 
 ## "Default Color Unit" options for the Inspector
 
@@ -124,6 +130,11 @@ options-enable-remote-label = 启用远程调试
 options-enable-remote-tooltip2 =
     .title = 启用此选项将允许远程调试此浏览器实例
 
+# The label for checkbox that enables F12 as a shortcut to open DevTools
+options-enable-f12-label = 使用 F12 键打开或关闭开发者工具
+options-enable-f12-tooltip =
+    .title = 开启此选项后， 将绑定 F12 键用于打开或关闭开发者工具箱
+
 # The label for checkbox that toggles custom formatters for objects
 options-enable-custom-formatters-label = 启用自定义格式化程序
 options-enable-custom-formatters-tooltip =
@@ -140,10 +151,4 @@ options-source-maps-tooltip =
     .title = 如果您启用此选项，工具中的源代码将被映射。
 
 # The message shown for settings that trigger page reload
-options-context-triggers-page-refresh = * 仅限当前会话，将重新载入当前页面
-
-# The label for the checkbox that toggles the display of the platform data in the
-# Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference in about:config
-options-show-platform-data-label = 显示 Gecko 平台数据
-options-show-platform-data-tooltip =
-    .title = 如果开启此选项，JavaScript 分析报告将会包含 Gecko 平台符号表
+options-context-triggers-page-refresh = * 仅限当前会话，将重新加载当前页面

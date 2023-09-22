@@ -1,13 +1,13 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 title-label = Über Plugins
-
 installed-plugins-label = Installierte Plugins
 no-plugins-are-installed-label = Keine installierten Plugins gefunden
-
 deprecation-description = Fehlt etwas? Einige Plugins werden nicht mehr unterstützt. <a data-l10n-name="deprecation-link">Weitere Informationen</a>
+deprecation-description2 =
+    .message = Fehlt etwas? Einige Plugins werden nicht mehr unterstützt.
 
 ## The information of plugins
 ##
@@ -29,7 +29,6 @@ state-dd-enabled = <span data-l10n-name="state">Status:</span> Aktiviert
 state-dd-enabled-block-list-state = <span data-l10n-name="state">Status:</span> Aktiviert ({ $blockListState })
 state-dd-Disabled = <span data-l10n-name="state">Status:</span> Deaktiviert
 state-dd-Disabled-block-list-state = <span data-l10n-name="state">Status:</span> Deaktiviert ({ $blockListState })
-
 mime-type-label = MIME-Typ
 description-label = Beschreibung
 suffixes-label = Endungen
@@ -38,9 +37,7 @@ suffixes-label = Endungen
 
 plugins-gmp-license-info = Lizenzinformation
 plugins-gmp-privacy-info = Datenschutz-Hinweis
-
 plugins-openh264-name = OpenH264-Videocodec zur Verfügung gestellt von Cisco Systems, Inc.
-plugins-openh264-description = Dieses Plugin wird automatisch von Waterfox installiert, um die WebRTC-Spezifikation zu befolgen und WebRTC-Anrufe mit Geräten zu ermöglichen, die das H.264-Codec benötigen. Besuchen Sie http://www.openh264.org/ um den Quelltext des Plugins zu sehen und mehr über die Implementierung zu erfahren.
-
+plugins-openh264-description = Dieses Plugin wird automatisch von BrowserWorks installiert, um die WebRTC-Spezifikation zu befolgen und WebRTC-Anrufe mit Geräten zu ermöglichen, die das H.264-Codec benötigen. Besuchen Sie http://www.openh264.org/ um den Quelltext des Plugins zu sehen und mehr über die Implementierung zu erfahren.
 plugins-widevine-name = Widevine Content Decryption Module zur Verfügung gestellt von Google Inc.
 plugins-widevine-description = Dieses Plugin ermöglicht die Wiedergabe von verschlüsselten Mediendateien, welche nach der Spezifikation für Encrypted Media Extensions erstellt wurden. Verschlüsselte Mediendateien werden meist von Websites verwendet, um das Kopieren von Medieninhalten zu verhindern. Weitere Informationen zu Encrypted Media Extensions stehen unter https://www.w3.org/TR/encrypted-media/ zur Verfügung.

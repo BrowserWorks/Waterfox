@@ -1,17 +1,17 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-create-profile-window =
+create-profile-window2 =
     .title = Βοηθός δημιουργίας προφίλ
-    .style = width: 52em; height: 35em;
+    .style = min-width: 52em; min-height: 35em;
 
 ## First wizard page
 
-create-profile-first-page-header =
+create-profile-first-page-header2 =
     { PLATFORM() ->
         [macos] Εισαγωγή
-       *[other] { create-profile-window.title } - Καλώς ήλθατε
+       *[other] { create-profile-window2.title } - Καλώς ήλθατε
     }
 
 profile-creation-explanation-1 = Το { -brand-short-name } αποθηκεύει πληροφορίες σχετικά με τις ρυθμίσεις και τις προτιμήσεις σας στο προσωπικό σας προφίλ.
@@ -28,10 +28,10 @@ profile-creation-explanation-4 =
 
 ## Second wizard page
 
-create-profile-last-page-header =
+create-profile-last-page-header2 =
     { PLATFORM() ->
         [macos] Επίλογος
-       *[other] { create-profile-window.title } - Ολοκλήρωση
+       *[other] { create-profile-window2.title } - Ολοκλήρωση
     }
 
 profile-creation-intro = Αν δημιουργήσετε πολλά προφίλ, μπορείτε να τα ξεχωρίζετε από το όνομά τους. Μπορείτε να επιλέξτε το προεπιλεγμένο όνομα ή να δημιουργήσετε το δικό σας.

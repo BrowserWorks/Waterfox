@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -54,9 +54,9 @@ unpin-selected-tabs =
 bookmark-selected-tabs =
     .label = Añadir pestañas a marcadores…
     .accesskey = k
-bookmark-tab =
-    .label = Añadir pestaña a marcadores
-    .accesskey = A
+tab-context-bookmark-tab =
+    .label = Añadir pestaña a marcadores…
+    .accesskey = m
 tab-context-open-in-new-container-tab =
     .label = Abrir en nueva pestaña contenedora
     .accesskey = e

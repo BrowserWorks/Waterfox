@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,6 +13,7 @@
 onboarding-welcome-header = 歡迎使用 { -brand-short-name }
 onboarding-start-browsing-button-label = 開始瀏覽
 onboarding-not-now-button-label = 現在不要
+mr1-onboarding-get-started-primary-button-label = 開始使用
 
 ## Custom Return To AMO onboarding strings
 
@@ -25,105 +26,32 @@ return-to-amo-addon-title = 現在來安裝 <img data-l10n-name="icon"/><b>{ $ad
 return-to-amo-add-extension-label = 安裝擴充套件
 return-to-amo-add-theme-label = 安裝佈景主題
 
+##  Variables: $addon-name (String) - Name of the add-on to be installed
+
+mr1-return-to-amo-subtitle = 跟 { -brand-short-name } 說聲嗨！
+mr1-return-to-amo-addon-title = 您有了一套觸手可及，又快又有隱私斯的瀏覽器。現在您還可以新增 <b>{ $addon-name }</b>，讓 { -brand-short-name } 能做更多事。
+mr1-return-to-amo-add-extension-label = 新增 { $addon-name }
+
 ## Multistage onboarding strings (about:welcome pages)
 
-# Aria-label to make the "steps" of multistage onboarding visible to screen readers.
-# Variables:
-#   $current (Int) - Number of the current page
-#   $total (Int) - Total number of pages
-onboarding-welcome-steps-indicator =
-    .aria-label = 開始使用: 第 { $current } 畫面，全部共 { $total } 畫面
 
 # Aria-label to make the "steps" of multistage onboarding visible to screen readers.
 # Variables:
 #   $current (Int) - Number of the current page
 #   $total (Int) - Total number of pages
 
-onboarding-welcome-steps-indicator2 =
-    .aria-valuetext = 進度：第 { $current } 步，共 { $total } 步
-# "Hero Text" displayed on left side of welcome screen.
-# The "Fire" in "Fire starts here" plays on the "Fire" in "Waterfox".
-# It also signals the passion users bring to Waterfox, how they use
-# Waterfox to pursue those passions, as well as the boldness in their
-# choice to use Waterfox over a larger competitor browser.
-# An alternative title for localization is: "It starts here".
-# This text can be formatted to span multiple lines as needed.
-mr1-welcome-screen-hero-text = 一切從這裡開始
-# Caption for background image in about:welcome. "Soraya Osorio" is the name
-# of the person and shouldn't be translated.
-# In case your language needs to adapt the nouns to a gender, Soraya is a female name (she/her).
-# You can see the picture in about:welcome in Nightly 90.
-mr1-onboarding-welcome-image-caption = Soraya Osorio — 家具設計師、Waterfox 粉絲
+onboarding-welcome-steps-indicator-label =
+    .aria-label = 進度：第 { $current } 步，共 { $total } 步
 # This button will open system settings to turn on prefers-reduced-motion
 mr1-onboarding-reduce-motion-button-label = 關閉動畫
-
-## Title and primary button strings differ between platforms as they
-## match the OS' application context menu item action where Windows uses "pin"
-## and "taskbar" while macOS "keep" and "Dock" (proper noun).
-
-# Title used on welcome page when Waterfox is not pinned
-mr1-onboarding-pin-header =
-    { PLATFORM() ->
-        [macos] 將 { -brand-short-name } 保留在您的 Dock，方便快速使用
-       *[other] 將 { -brand-short-name } 釘選到您的工作列，方便快速使用
-    }
-# Primary button string used on welcome page when Waterfox is not pinned.
-mr1-onboarding-pin-primary-button-label =
-    { PLATFORM() ->
-        [macos] 保留在 Dock
-       *[other] 釘選到工作列
-    }
-
-## Multistage MR1 onboarding strings (about:welcome pages)
-
-# This string will be used on welcome page primary button label
-# when Waterfox is both pinned and default
-mr1-onboarding-get-started-primary-button-label = 開始使用
-mr1-onboarding-welcome-header = 歡迎使用 { -brand-short-name }
-mr1-onboarding-set-default-pin-primary-button-label = 將 { -brand-short-name } 設為我的主要瀏覽器
-    .title = 將 { -brand-short-name } 設為預設瀏覽器，並釘選到工作列
-# This string will be used on welcome page primary button label
-# when Waterfox is not default but already pinned
-mr1-onboarding-set-default-only-primary-button-label = 將 { -brand-short-name } 設為我的預設瀏覽器
-mr1-onboarding-set-default-secondary-button-label = 暫時不要
+# String for the Waterfox Accounts button
 mr1-onboarding-sign-in-button-label = 登入
-
-## Title, subtitle and primary button string used on set default onboarding screen
-## when Waterfox is not default browser
-
-mr1-onboarding-default-header = 將 { -brand-short-name } 設為您的預設瀏覽器
-mr1-onboarding-default-subtitle = 開啟速度、安全性、隱私權的自動保護。
-mr1-onboarding-default-primary-button-label = 設為預設瀏覽器
-
-## Multistage MR1 onboarding strings (about:welcome pages)
-
-mr1-onboarding-import-header = 資料隨身攜帶
-mr1-onboarding-import-subtitle =
-    匯入您的密碼、書籤<br/>
-    與更多資料。
 # The primary import button label will depend on whether we can detect which browser was used to download Waterfox.
 # Variables:
 #   $previous (Str) - Previous browser name, such as Edge, Chrome
 mr1-onboarding-import-primary-button-label-attribution = 從 { $previous } 匯入
-# This string will be used in cases where we can't detect the previous browser name.
-mr1-onboarding-import-primary-button-label-no-attribution = 從先前使用的瀏覽器匯入
-mr1-onboarding-import-secondary-button-label = 現在不要
-mr2-onboarding-colorway-header = 美麗生活
-mr2-onboarding-colorway-subtitle = 活力滿點的新配色，限時提供。
-mr2-onboarding-colorway-primary-button-label = 儲存配色
-mr2-onboarding-colorway-secondary-button-label = 現在不要
-mr2-onboarding-colorway-label-soft = 軟色調
-mr2-onboarding-colorway-label-balanced = 均衡色調
-# "Bold" is used in the sense of bravery or courage, not in the sense of
-# emphasized text.
-mr2-onboarding-colorway-label-bold = 濃烈色調
-# Automatic theme uses operating system color settings
-mr2-onboarding-theme-label-auto = 自動
-# This string will be used for Default theme
-mr2-onboarding-theme-label-default = 預設
 mr1-onboarding-theme-header = 有您的風格
 mr1-onboarding-theme-subtitle = 使用佈景主題，讓 { -brand-short-name } 有您的風格
-mr1-onboarding-theme-primary-button-label = 儲存佈景主題
 mr1-onboarding-theme-secondary-button-label = 現在不要
 # System theme uses operating system color settings
 mr1-onboarding-theme-label-system = 系統佈景主題
@@ -166,26 +94,6 @@ mr1-onboarding-theme-tooltip-alpenglow =
 # Input description for Alpenglow theme
 mr1-onboarding-theme-description-alpenglow =
     .aria-description = 使用色彩繽紛的按鈕、選單、視窗佈景主題。
-# Tooltip displayed on hover of non-default colorway theme
-# variations e.g. soft, balanced, bold
-mr2-onboarding-theme-tooltip =
-    .title = 使用這套配色。
-# Selector description for non-default colorway theme
-# variations e.g. soft, balanced, bold
-mr2-onboarding-theme-description =
-    .aria-description = 使用這套配色。
-# Tooltip displayed on hover of colorway
-# Variables:
-#   $colorwayName (String) - Name of colorway
-mr2-onboarding-colorway-tooltip =
-    .title = 探索 { $colorwayName } 的配色。
-# Selector description for colorway
-# Variables:
-#   $colorwayName (String) - Name of colorway
-mr2-onboarding-colorway-label = 探索 { $colorwayName } 的配色。
-# Tooltip displayed on hover of default themes
-mr2-onboarding-default-theme-tooltip =
-    .title = 探索預設佈景主題。
 # Selector description for default themes
 mr2-onboarding-default-theme-label = 探索預設佈景主題。
 
@@ -194,14 +102,6 @@ mr2-onboarding-default-theme-label = 探索預設佈景主題。
 mr2-onboarding-thank-you-header = 感謝您選用
 mr2-onboarding-thank-you-text = { -brand-short-name } 是一套由非營利組織所打造的獨立瀏覽器。由我們一起讓網路環境更安全、更健康、也更有隱私。
 mr2-onboarding-start-browsing-button-label = 開始上網
-
-## Multistage live language reloading onboarding strings (about:welcome pages)
-##
-## The following language names are generated by the browser's Intl.DisplayNames API.
-##
-## Variables:
-##   $negotiatedLanguage (String) - The name of the langpack's language, e.g. "Español (ES)"
-
 
 ## Multistage live language reloading onboarding strings (about:welcome pages)
 ##
@@ -248,6 +148,15 @@ fx100-upgrade-thank-you-body = 這一版是 { -brand-short-name } 的第 100 版
 # Message shown with either a pin-to-taskbar or set-default button.
 fx100-upgrade-thanks-keep-body = 這一版是我們的第 100 版！非常感謝您參與我們的社群，只要點一下即可進入 { -brand-short-name } 的下一個 100 版旅程。
 mr2022-onboarding-secondary-skip-button-label = 跳過這步
+
+## MR2022 New User Easy Setup screen strings
+
+# Primary button string used on new user onboarding first screen showing multiple actions such as Set Default, Import from previous browser.
+mr2022-onboarding-easy-setup-primary-button-label = 儲存並繼續
+# Set Default action checkbox label used on new user onboarding first screen
+mr2022-onboarding-easy-setup-set-default-checkbox-label = 將 { -brand-short-name } 設為預設瀏覽器
+# Import action checkbox label used on new user onboarding first screen
+mr2022-onboarding-easy-setup-import-checkbox-label = 從先前使用的瀏覽器匯入
 
 ## MR2022 New User Pin Waterfox screen strings
 
@@ -296,7 +205,7 @@ mr2022-onboarding-set-default-subtitle = 使用由非營利組織在背後開發
 
 # When translating "zip", please feel free to pick a verb that signifies movement and/or exploration
 # and makes sense in the context of navigating the web.
-mr2022-onboarding-get-started-primary-subtitle = 最新版本是圍繞您打造的。讓您更簡單就可在網路中探索，我們希望您也會喜歡我們推出的滿滿功能。
+mr2022-onboarding-get-started-primary-subtitle = 最新版本是圍繞您打造的。讓您更簡單就可在網路中探索，希望您也會喜歡我們推出的滿滿功能。
 mr2022-onboarding-get-started-primary-button-label = 幾秒鐘就能設定完成
 
 ## MR2022 Import Settings screen strings
@@ -312,35 +221,35 @@ mr2022-onboarding-import-primary-button-label-no-attribution = 從先前使用�
 
 mr2022-onboarding-colorway-title = 選擇能激發您靈感的色彩
 mr2022-onboarding-colorway-subtitle = 獨立的聲音將改變文化。
-mr2022-onboarding-colorway-primary-button-label = 使用此配色
-mr2022-onboarding-existing-colorway-checkbox-label = 將 { -firefox-home-brand-name } 設定為您色彩繽紛的首頁
+mr2022-onboarding-colorway-primary-button-label-continue = 設定並繼續
+mr2022-onboarding-existing-colorway-checkbox-label = 將 { -firefox-home-brand-name }設定為色彩繽紛的首頁
 mr2022-onboarding-colorway-label-default = 預設
-mr2022-onboarding-colorway-tooltip-default =
-    .title = 預設
+mr2022-onboarding-colorway-tooltip-default2 =
+    .title = { -brand-short-name } 目前的配色
 mr2022-onboarding-colorway-description-default = <b>使用我目前的 { -brand-short-name } 色彩。</b>
 mr2022-onboarding-colorway-label-playmaker = 控球後衛
-mr2022-onboarding-colorway-tooltip-playmaker =
-    .title = 控球後衛
+mr2022-onboarding-colorway-tooltip-playmaker2 =
+    .title = 控球後衛（紅色）
 mr2022-onboarding-colorway-description-playmaker = <b>您是控球後衛。</b>您創造了勝利的機會，並且幫助您周圍的所有人，一同贏得競賽。
 mr2022-onboarding-colorway-label-expressionist = 表現主義者
-mr2022-onboarding-colorway-tooltip-expressionist =
-    .title = 表現主義者
+mr2022-onboarding-colorway-tooltip-expressionist2 =
+    .title = 表現主義者（黃色）
 mr2022-onboarding-colorway-description-expressionist = <b>您是表現主義者。</b>您用不同的方式看待世界，您的作品激發出他人的情感。
 mr2022-onboarding-colorway-label-visionary = 遠見家
-mr2022-onboarding-colorway-tooltip-visionary =
-    .title = 遠見家
+mr2022-onboarding-colorway-tooltip-visionary2 =
+    .title = 遠見家（綠色）
 mr2022-onboarding-colorway-description-visionary = <b>您是遠見家。</b>您不滿意於現狀，讓所有人能夠一同想像出更好的未來。
 mr2022-onboarding-colorway-label-activist = 社會運動家
-mr2022-onboarding-colorway-tooltip-activist =
-    .title = 社會運動家
+mr2022-onboarding-colorway-tooltip-activist2 =
+    .title = 社會運動家（藍色）
 mr2022-onboarding-colorway-description-activist = <b>您是社會運動家。</b>您讓世界變得更好，並讓他人也如此相信。
 mr2022-onboarding-colorway-label-dreamer = 夢想家
-mr2022-onboarding-colorway-tooltip-dreamer =
-    .title = 夢想家
+mr2022-onboarding-colorway-tooltip-dreamer2 =
+    .title = 夢想家（紫色）
 mr2022-onboarding-colorway-description-dreamer = <b>您是夢想家。</b>您相信命運之神眷顧大膽的人，並且鼓勵大家勇敢表現。
 mr2022-onboarding-colorway-label-innovator = 創造者
-mr2022-onboarding-colorway-tooltip-innovator =
-    .title = 創造者
+mr2022-onboarding-colorway-tooltip-innovator2 =
+    .title = 創造者（橘色）
 mr2022-onboarding-colorway-description-innovator = <b>您是創造者。</b>您看到各處的機會，並且對周遭的所有人產生正面影響。
 
 ## MR2022 Multistage Mobile Download screen strings
@@ -371,7 +280,42 @@ mr2022-onboarding-privacy-segmentation-button-secondary-label = 顯示詳細資�
 
 ## MR2022 Multistage Gratitude screen strings
 
-mr2022-onboarding-gratitude-title = 您正在幫助我們打造更好的網路環境。
-mr2022-onboarding-gratitude-subtitle = 感謝您使用由 Waterfox Limited 所支持開發的 { -brand-short-name }。透過您的支援，我們努力讓網路環境變得更好、更開放、更可被所有人使用。
+mr2022-onboarding-gratitude-title = 您正在幫助我們打造更好的網路環境
+mr2022-onboarding-gratitude-subtitle = 感謝您使用由 BrowserWorks 所支持開發的 { -brand-short-name }。透過您的支援，我們努力讓網路環境變得更好、更開放、更可被所有人使用。
 mr2022-onboarding-gratitude-primary-button-label = 看看有什麼新鮮事
 mr2022-onboarding-gratitude-secondary-button-label = 開始瀏覽
+
+## Onboarding spotlight for infrequent users
+
+onboarding-infrequent-import-title = 別客氣，當自己家
+onboarding-infrequent-import-subtitle = 不論您只是要暫時試用，還是已經決定好要使用，都可以匯入其他瀏覽器的書籤、密碼與其他資料。
+onboarding-infrequent-import-primary-button = 匯入 { -brand-short-name }
+
+## MR2022 Illustration alt tags
+## Descriptive tags for illustrations used by screen readers and other assistive tech
+
+mr2022-onboarding-pin-image-alt =
+    .aria-label = 有人的周圍圍繞著星星與花朵，並且正在使用筆記型電腦
+mr2022-onboarding-default-image-alt =
+    .aria-label = 有人擁抱著 { -brand-product-name } 圖示
+mr2022-onboarding-import-image-alt =
+    .aria-label = 有人踩著滑板，還有一盒軟體圖示
+mr2022-onboarding-mobile-download-image-alt =
+    .aria-label = 有隻青蛙跳過水蓮，正中間有一組能夠下載 { -brand-product-name } 行動版的 QR Code
+mr2022-onboarding-pin-private-image-alt =
+    .aria-label = 一支讓 { -brand-product-name } 隱私瀏覽圖示從帽子中冒出來的魔術棒
+mr2022-onboarding-privacy-segmentation-image-alt =
+    .aria-label = 淺色與深色皮膚的人舉手擊掌
+mr2022-onboarding-gratitude-image-alt =
+    .aria-label = 從窗戶看到日落，窗台上有隻狐狸與一顆盆栽
+mr2022-onboarding-colorways-image-alt =
+    .aria-label = 用噴漆的方式手繪出色彩繽紛的拼貼圖，當中有綠色的眼睛、橘色的鞋子、紅色的籃球、紫色的耳機、藍色的心、黃色的皇冠
+
+## Device migration onboarding
+
+onboarding-device-migration-image-alt =
+    .aria-label = 有一隻狐狸在筆記型電腦螢幕上揮手，筆記型電腦連接著滑鼠。
+onboarding-device-migration-title = 歡迎回來！
+onboarding-device-migration-subtitle = 登入您的 { -fxaccount-brand-name(capitalization: "sentence") }後即可將書籤、密碼、瀏覽紀錄等資料帶到新裝置上。
+onboarding-device-migration-subtitle2 = 登入帳號後，即可將書籤、密碼、上網紀錄帶到新裝置。
+onboarding-device-migration-primary-button-label = 登入

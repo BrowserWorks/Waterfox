@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -86,38 +86,6 @@ main-context-menu-page-save =
 
 ## Simple menu items
 
-main-context-menu-bookmark-add =
-    .aria-label = Bladwijzer voor deze pagina maken
-    .accesskey = m
-    .tooltiptext = Bladwijzer voor deze pagina maken
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-edit-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-add-mac =
-    .label = Bladwijzer van pagina maken
-    .accesskey = m
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-add-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-edit-mac =
-    .label = Bladwijzer bewerken
-    .accesskey = w
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the add bookmark command.
-main-context-menu-bookmark-add-with-shortcut =
-    .aria-label = Bladwijzer voor deze pagina maken
-    .accesskey = m
-    .tooltiptext = Bladwijzer voor deze pagina maken ({ $shortcut })
-main-context-menu-bookmark-change =
-    .aria-label = Deze bladwijzer bewerken
-    .accesskey = m
-    .tooltiptext = Deze bladwijzer bewerken
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the edit bookmark command.
-main-context-menu-bookmark-change-with-shortcut =
-    .aria-label = Deze bladwijzer bewerken
-    .accesskey = m
-    .tooltiptext = Deze bladwijzer bewerken ({ $shortcut })
 main-context-menu-bookmark-page =
     .aria-label = Bladwijzer voor pagina maken…
     .accesskey = w
@@ -165,9 +133,6 @@ main-context-menu-open-link-new-window =
 main-context-menu-open-link-new-private-window =
     .label = Koppeling openen in nieuw privévenster
     .accesskey = r
-main-context-menu-bookmark-link =
-    .label = Bladwijzer maken
-    .accesskey = B
 main-context-menu-bookmark-link-2 =
     .label = Bladwijzer maken…
     .accesskey = B
@@ -191,6 +156,11 @@ main-context-menu-copy-phone =
 main-context-menu-copy-link-simple =
     .label = Koppeling kopiëren
     .accesskey = K
+# This command copies the link, removing additional
+# query parameters used to track users across sites.
+main-context-menu-strip-on-share-link =
+    .label = Koppeling zonder websitetracking kopiëren
+    .accesskey = i
 
 ## Media (video/audio) controls
 ##
@@ -307,12 +277,6 @@ main-context-menu-video-email =
 main-context-menu-audio-email =
     .label = Audio e-mailen…
     .accesskey = a
-main-context-menu-plugin-play =
-    .label = Deze plug-in activeren
-    .accesskey = c
-main-context-menu-plugin-hide =
-    .label = Deze plug-in verbergen
-    .accesskey = v
 main-context-menu-save-to-pocket =
     .label = Pagina opslaan naar { -pocket-brand-name }
     .accesskey = k
@@ -333,6 +297,9 @@ main-context-menu-use-saved-password =
 
 ##
 
+main-context-menu-use-relay-mask =
+    .label = { -relay-brand-short-name }-e-mailmasker gebruiken
+    .accesskey = m
 main-context-menu-suggest-strong-password =
     .label = Sterk wachtwoord voorstellen…
     .accesskey = S
@@ -360,9 +327,6 @@ main-context-menu-frame-open-window =
 main-context-menu-frame-reload =
     .label = Deelvenster vernieuwen
     .accesskey = n
-main-context-menu-frame-bookmark =
-    .label = Bladwijzer voor dit deelvenster maken
-    .accesskey = m
 main-context-menu-frame-add-bookmark =
     .label = Bladwijzer voor frame maken…
     .accesskey = w
@@ -378,9 +342,6 @@ main-context-menu-frame-view-source =
 main-context-menu-frame-view-info =
     .label = Deelvensterinfo bekijken
     .accesskey = i
-main-context-menu-print-selection =
-    .label = Selectie afdrukken
-    .accesskey = d
 main-context-menu-print-selection-2 =
     .label = Selectie afdrukken…
     .accesskey = a

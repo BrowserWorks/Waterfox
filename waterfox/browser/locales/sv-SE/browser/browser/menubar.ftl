@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -180,6 +180,17 @@ menu-view-full-screen =
     .label = Helskärm
     .accesskey = H
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Öppna läsarvy
+    .accesskey = R
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Stäng läsarvy
+    .accesskey = R
+
 ##
 
 menu-view-show-all-tabs =
@@ -208,8 +219,9 @@ menu-history-undo-menu =
     .label = Nyligen stängda flikar
 menu-history-undo-window-menu =
     .label = Nyligen stängda fönster
-menu-history-reopen-all-tabs = Återöppna alla flikar
-menu-history-reopen-all-windows = Återöppna alla fönster
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = Sök i historik
 
 ## Bookmarks Menu
 
@@ -218,14 +230,13 @@ menu-bookmarks-menu =
     .accesskey = B
 menu-bookmarks-manage =
     .label = Hantera bokmärken
-menu-bookmark-current-tab =
-    .label = Bokmärk aktuell flik
-menu-bookmark-edit =
-    .label = Redigera bokmärket
 menu-bookmark-tab =
     .label = Bokmärk aktuell flik…
 menu-edit-bookmark =
     .label = Redigera detta bokmärke…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = Sök efter bokmärken
 menu-bookmarks-all-tabs =
     .label = Bokmärke för alla flikar…
 menu-bookmarks-toolbar =
@@ -319,6 +330,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = Stäng av felsökningsläge
     .accesskey = g
+menu-help-switch-device =
+    .label = Byter till en ny enhet
+    .accesskey = B
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =

@@ -1,14 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-colors-window =
+colors-dialog2 =
     .title = สี
-    .style =
-        { PLATFORM() ->
-            [macos] width: 41em
-           *[other] width: 38em
-        }
+    .style = min-width: 41em;
 
 colors-close-key =
     .key = w
@@ -19,7 +15,7 @@ colors-page-override = เขียนทับสีที่ระบุโด
 colors-page-override-option-always =
     .label = เสมอ
 colors-page-override-option-auto =
-    .label = เฉพาะกับชุดตกแต่งความเปรียบต่างสูง
+    .label = เฉพาะกับธีมความเปรียบต่างสูง
 colors-page-override-option-never =
     .label = ไม่เลย
 

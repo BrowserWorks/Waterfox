@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,9 +26,9 @@ customize-mode-uidensity-menu-normal =
     .accesskey = N
     .tooltiptext = 普通
 customize-mode-uidensity-menu-compact-unsupported =
-    .label = 紧凑（不支持）
+    .label = 紧凑（未来版本可能不支持）
     .accesskey = C
-    .tooltiptext = 紧凑（不支持）
+    .tooltiptext = 紧凑（未来版本可能不支持）
 customize-mode-undo-cmd =
     .label = 撤销
 customize-mode-lwthemes-link = 管理主题

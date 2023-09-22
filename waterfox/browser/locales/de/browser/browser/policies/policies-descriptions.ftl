@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,11 +26,14 @@ policy-Bookmarks = Lesezeichen erstellen in der Lesezeichen-Symbolleiste, im Les
 policy-CaptivePortal = Erkennung von Anmelde- oder Bestätigungspflicht für Internetzugriff aktivieren oder deaktivieren
 policy-CertificatesDescription = Zertifikate hinzufügen oder eingebaute Zertifikate verwenden
 policy-Cookies = Cookies setzen durch Websites erlauben oder verbieten
+# Containers in this context is referring to container tabs in Waterfox.
+policy-Containers = Richtlinien für Umgebungen festlegen
+policy-DisableAccounts = Kontobasierte Dienste, einschließlich Synchronisation, deaktivieren
 policy-DisabledCiphers = Chiffren deaktivieren
 policy-DefaultDownloadDirectory = Standardordner für Downloads festlegen
 policy-DisableAppUpdate = Browser-Updates deaktivieren
 policy-DisableBuiltinPDFViewer = Eingebauten PDF-Betrachter von { -brand-short-name } (PDF.js) deaktivieren
-policy-DisableDefaultBrowserAgent = Aktionen des Programms zur Erkennung des Standardbrowser deaktivieren. Findet nur auf Windows Anwendung, da andere Betriebssysteme nicht über dieses Programm verfügen.
+policy-DisableDefaultBrowserAgent = Aktionen des Programms zur Erkennung des Standardbrowsers deaktivieren. Findet nur unter Windows Anwendung, da andere Betriebssysteme nicht über dieses Programm verfügen.
 policy-DisableDeveloperTools = Zugriff auf Entwicklerwerkzeuge deaktivieren
 policy-DisableFeedbackCommands = Feedback senden über "Hilfe"-Menü deaktivieren ("Feedback senden…" und "Betrügerische Website melden…")
 policy-DisableWaterfoxAccounts = { -fxaccount-brand-name }-basierte Dienste (z.B. Sync) deaktivieren
@@ -41,7 +44,7 @@ policy-DisableForgetButton = Zugriff auf "Vergessen"-Schaltfläche verhindern
 policy-DisableFormHistory = Formular- und Suchchronik nicht speichern
 policy-DisablePrimaryPasswordCreation = Hauptpasswort kann nicht erstellt werden, falls true
 policy-DisablePasswordReveal = Option zur Klartextanzeige von Passwörtern in gespeicherten Zugangsdaten deaktivieren
-policy-DisablePocket = Pocket als Speicherliste für Webseiten deaktivieren
+policy-DisablePocket2 = { -pocket-brand-name } als Speicherliste für Webseiten deaktivieren
 policy-DisablePrivateBrowsing = Privates Surfen deaktivieren
 policy-DisableProfileImport = Datenimport aus anderen Browsern (Menüeintrag) deaktivieren
 policy-DisableProfileRefresh = "{ -brand-short-name } bereinigen"-Schaltfläche in Hilfeseite "Informationen zur Fehlerbehebung" (about:support) deaktivieren
@@ -50,6 +53,7 @@ policy-DisableSecurityBypass = Umgehen einiger Sicherheitswarnungen durch Benutz
 policy-DisableSetAsDesktopBackground = "Als Hintergrundbild einrichten"-Menüeintrag deaktivieren
 policy-DisableSystemAddonUpdate = Installieren und Aktualisieren von System-Add-ons durch den Browser deaktivieren
 policy-DisableTelemetry = Datenerhebung zur Verbesserung von Waterfox (Telemetrie) deaktivieren
+policy-DisableThirdPartyModuleBlocking = Verhindern, dass der Benutzer Module von Drittanbietern blockiert, die in den { -brand-short-name }-Prozess eingefügt werden
 policy-DisplayBookmarksToolbar = Lesezeichen-Symbolleiste standardmäßig anzeigen
 policy-DisplayMenuBar = Menüleiste standardmäßig anzeigen
 policy-DNSOverHTTPS = DNS über HTTPS einrichten
@@ -66,9 +70,8 @@ policy-ExemptDomainFileTypePairsFromFileTypeDownloadWarnings = Warnungen basiere
 policy-Extensions = Installieren, Deinstallieren oder Fixieren von Erweiterungen. Die Install-Option akzeptiert Adressen und Pfade als Werte. Die Uninstall- und Locked-Optionen erfordern Erweiterungs-IDs.
 policy-ExtensionSettings = Alle Einstellungen für die Erweiterungsinstallation verwalten
 policy-ExtensionUpdate = Automatische Add-on-Updates aktivieren oder deaktivieren
-policy-WaterfoxHome = Waterfox-Startseite konfigurieren
 policy-WaterfoxHome2 = { -firefox-home-brand-name } konfigurieren
-policy-FlashPlugin = Flash-Plugin-Verwendung erlauben oder verbieten
+policy-WaterfoxSuggest = { -firefox-suggest-brand-name } konfigurieren
 policy-GoToIntranetSiteForSingleWordEntryInAddressBar = Direkte Navigation zu Intranet-Websites erzwingen, anstatt beim Eintippen von Einzelworteinträgen in die Adressleiste eine Suche zu starten
 policy-Handlers = Standardanwendungen für das Öffnen von Dateien, Protokollen und MIME-Typen festlegen
 policy-HardwareAcceleration = Hardwarebeschleunigung deaktiviert, falls false
@@ -110,8 +113,8 @@ policy-SanitizeOnShutdown2 = Navigationsdaten beim Beenden löschen
 policy-SearchBar = Standardposition der Suchleiste setzen. Der Benutzer darf sie weiterhin anpassen.
 policy-SearchEngines = Suchmaschineneinstellungen anpassen. Diese Richtlinie ist nur für Versionen des Extended Support Release (ESR) verfügbar.
 policy-SearchSuggestEnabled = Suchvorschläge aktivieren oder deaktivieren
-# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
-policy-SecurityDevices = PKCS#11-Module installieren
+# For more information, see https://wikipedia.org/wiki/PKCS_11
+policy-SecurityDevices2 = PKCS#11-Module hinzufügen oder löschen
 policy-ShowHomeButton = Schaltfläche "Startseite" in der Symbolleiste anzeigen
 policy-SSLVersionMax = Höchste zu verwendende SSL-Version festlegen
 policy-SSLVersionMin = Niedrigste zu verwendende SSL-Version festlegen

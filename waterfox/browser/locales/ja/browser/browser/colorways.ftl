@@ -1,30 +1,23 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-## Colorway collections
-
-colorway-collection-independent-voices = インディペンデント・ボイス
-colorway-collection-independent-voices-description = カラーはカルチャーを変えることができます。最新のカラーテーマは世界をより良い場所にする声を賞賛します。
-# Used as a subheading for the colorway collection card in about:addons
-colorway-collection-independent-voices-short-description = カラーでカルチャーが変わる。
-
 ## Colorway names and descriptions
 
-playmaker-colorway-name = プレーメーカー
-playmaker-colorway-description = 仲間とともに勝機を掴め！
+playmaker-colorway-name = Playmaker
+playmaker-colorway-description = 勝利への道を切り開け。あなたのプレーは周囲を巻き込みゲームを盛り上げる。
 
-expressionist-colorway-name = エクスプレショニスト
-expressionist-colorway-description = これこそ孤高にして至高の創造。
+expressionist-colorway-name = Expressionist
+expressionist-colorway-description = 内なる感情を世界に刻め。あなたの表現に映る歪みが人の心をかき乱す。
 
-visionary-colorway-name = ビジョナリー
-visionary-colorway-description = こままではダメだ！誰かが変えなきゃいかンのだ！
+visionary-colorway-name = Visionary
+visionary-colorway-description = 現状に疑問を投げかけろ。より良い未来に人を動かすのはあなたのビジョンだ。
 
-activist-colorway-name = アクティビスト
-activist-colorway-description = さあ、新天地へ向かおう！
+activist-colorway-name = Activist
+activist-colorway-description = 今いる世界をより良い場所に変えていけ。あなたの活動が人を導き同志へ変える。
 
-dreamer-colorway-name = ドリーマー
-dreamer-colorway-description = 運も実力のうち。
+dreamer-colorway-name = Dreamer
+dreamer-colorway-description = 大胆に幸運を引き寄せろ。夢を掲げるあなたの姿は人の勇気を呼び覚ます。
 
-innovator-colorway-name = イノベーター
-innovator-colorway-description = チャンスはいくらでもある。これからだ！
+innovator-colorway-name = Innovator
+innovator-colorway-description = あらゆる場所で機会を掴め。あなたがもたらす革新は周囲の人生を震わせる。

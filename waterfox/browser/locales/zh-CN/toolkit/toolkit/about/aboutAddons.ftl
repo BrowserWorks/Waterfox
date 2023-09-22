@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,11 +6,16 @@ addons-page-title = 附加组件管理器
 search-header =
     .placeholder = 在 addons.mozilla.org 搜索
     .searchbuttonlabel = 搜索
-search-header-shortcut =
-    .key = f
+
+## Variables
+##   $domain - Domain name where add-ons are available (e.g. addons.mozilla.org)
+
 list-empty-get-extensions-message = 到 <a data-l10n-name="get-extensions">{ $domain }</a> 安装扩展和主题。
 list-empty-get-dictionaries-message = 到 <a data-l10n-name="get-extensions">{ $domain }</a> 安装字典
 list-empty-get-language-packs-message = 到 <a data-l10n-name="get-extensions">{ $domain }</a> 安装语言包
+
+##
+
 list-empty-installed =
     .value = 您没有安装任何此类型的附加组件
 list-empty-available-updates =
@@ -36,7 +41,7 @@ detail-version =
 detail-last-updated =
     .label = 上次更新
 addon-detail-description-expand = 显示更多
-addon-detail-description-collapse = 显示更少
+addon-detail-description-collapse = 折叠
 detail-contributions-description = 此附加组件的开发者希望通过您的小额捐款，帮助支持其持续开发。
 detail-contributions-button = 捐助
     .title = 捐助此附加组件的开发
@@ -139,16 +144,30 @@ addon-category-recent-updates-title =
 addon-category-sitepermission = 网站权限
 addon-category-sitepermission-title =
     .title = 网站权限
+# String displayed in about:addons in the Site Permissions section
+# Variables:
+#  $host (string) - DNS host name for which the webextension enables permissions
+addon-sitepermission-host = { $host } 的网站权限
 
 ## These are global warnings
 
 extensions-warning-safe-mode = 所有附加组件都已被安全模式暂时禁用。
 extensions-warning-check-compatibility = 附加组件兼容性检查已禁用。您可能有不兼容的附加组件。
+extensions-warning-safe-mode2 =
+    .message = 所有附加组件都已被安全模式暂时禁用。
+extensions-warning-check-compatibility2 =
+    .message = 附加组件兼容性检查已禁用。您可能有不兼容的附加组件。
 extensions-warning-check-compatibility-button = 启用
     .title = 启用附加组件兼容性检查
 extensions-warning-update-security = 附加组件更新安全检查已被禁用。您可能会受到更新带来的安全威胁。
+extensions-warning-update-security2 =
+    .message = 附加组件更新安全检查已被禁用。您可能会受到更新带来的安全威胁。
 extensions-warning-update-security-button = 启用
     .title = 启用附加组件安全更新检查
+extensions-warning-imported-addons = 请完成安装导入至 { -brand-short-name } 的扩展。
+extensions-warning-imported-addons2 =
+    .message = 请完成安装导入至 { -brand-short-name } 的扩展。
+extensions-warning-imported-addons-button = 安装扩展
 
 ## Strings connected to add-on updates
 
@@ -213,15 +232,22 @@ shortcuts-duplicate = 快捷键重复
 # Variables:
 #   $shortcut (string) - Shortcut string for the add-on
 shortcuts-duplicate-warning-message = 有超过一个附加组件使用 { $shortcut } 作为快捷键，重复的快捷键可能会导致无法预料的行为。
+# String displayed when a keyboard shortcut is already assigned to more than one add-on
+# Variables:
+#   $shortcut (string) - Shortcut string for the add-on
+shortcuts-duplicate-warning-message2 =
+    .message = 有超过一个附加组件使用 { $shortcut } 作为快捷键，重复的快捷键可能会导致无法预料的行为。
 # String displayed when a keyboard shortcut is already used by another add-on
 # Variables:
 #   $addon (string) - Name of the add-on
 shortcuts-exists = 已被 { $addon } 占用
+# Variables:
+#   $numberToShow (number) - Number of other elements available to show
 shortcuts-card-expand-button =
     { $numberToShow ->
        *[other] 显示另外 { $numberToShow } 个
     }
-shortcuts-card-collapse-button = 显示更少
+shortcuts-card-collapse-button = 折叠
 header-back-button =
     .title = 返回
 
@@ -232,6 +258,9 @@ header-back-button =
 discopane-intro = 扩展和主题就像手机上的应用，可帮助您保管密码、下载视频、查找优惠信息、拦截恼人广告、改变浏览器外观等等。这些小型程序大多由第三方开发。以下是一些 { -brand-product-name } <a data-l10n-name="learn-more-trigger">推荐</a>的附加组件，它们在安全性、性能和功能等方面表现优秀。
 # Notice to make user aware that the recommendations are personalized.
 discopane-notice-recommendations = 以下的部分推荐是基于您的已安装附加组件、选项设置和使用统计得出的个性化结果。
+# Notice to make user aware that the recommendations are personalized.
+discopane-notice-recommendations2 =
+    .message = 以下的部分推荐是基于您的已安装附加组件、选项设置和使用统计得出的个性化结果。
 discopane-notice-learn-more = 详细了解
 privacy-policy = 隐私政策
 # Refers to the author of an add-on, shown below the name of the add-on.
@@ -277,21 +306,7 @@ permissions-addon-button = 权限
 extension-enabled-heading = 已启用
 extension-disabled-heading = 已禁用
 theme-enabled-heading = 已启用
-theme-disabled-heading = 已禁用
 theme-disabled-heading2 = 保存的主题
-theme-monochromatic-heading = 配色
-theme-monochromatic-subheading = 元气满满的 { -brand-product-name } 新配色，限时提供。
-# Refers to the button label for the colorways card when a user does not have a colorway theme enabled.
-theme-colorways-button = 配色随心换
-colorway-collection-independent-voices-subheading = 活力十足的 { -brand-short-name }。
-# Variables:
-#   $expiryDate (string) - date on which the colorway collection expires.
-colorway-collection-expiry-date-span = { DATETIME($expiryDate, month: "long", day: "numeric") }到期
-# Refers to the button label for the colorways card when a user has a colorway theme enabled.
-theme-colorways-button-colorway-enabled = 更改配色
-# Variables:
-#   $expiryDate (string) - date on which the colorway collection expires. When formatting this, you may omit the year, only exposing the month and day, as colorway collections will always expire within a year.
-colorway-collection-expiry-label = { DATETIME($expiryDate, month: "long", day: "numeric") }到期
 plugin-enabled-heading = 已启用
 plugin-disabled-heading = 已禁用
 dictionary-enabled-heading = 已启用
@@ -309,6 +324,9 @@ addon-detail-homepage-label = 主页
 addon-detail-rating-label = 评分
 # Message for add-ons with a staged pending update.
 install-postponed-message = 该扩展将在 { -brand-short-name } 重启后完成更新。
+# Message for add-ons with a staged pending update.
+install-postponed-message2 =
+    .message = 该扩展将在 { -brand-short-name } 重启后完成更新。
 install-postponed-button = 立即更新
 # The average rating that the add-on has received.
 # Variables:
@@ -339,6 +357,10 @@ addon-detail-updates-radio-on = 开
 addon-detail-updates-radio-off = 关
 addon-detail-update-check-label = 检查更新
 install-update-button = 更新
+# aria-label associated to the updates row to help screen readers to announce the group
+# of input controls being entered.
+addon-detail-group-label-updates =
+    .aria-label = { addon-detail-updates-label }
 # This is the tooltip text for the private browsing badge in about:addons. The
 # badge is the private browsing icon included next to the extension's name.
 addon-badge-private-browsing-allowed2 =
@@ -347,6 +369,24 @@ addon-badge-private-browsing-allowed2 =
 addon-detail-private-browsing-help = 若允许，扩展可在隐私浏览中获知您的在线活动。 <a data-l10n-name="learn-more">详细了解</a>
 addon-detail-private-browsing-allow = 允许
 addon-detail-private-browsing-disallow = 不允许
+# aria-label associated to the private browsing row to help screen readers to announce the group
+# of input controls being entered.
+addon-detail-group-label-private-browsing =
+    .aria-label = { detail-private-browsing-label }
+
+## "sites with restrictions" (internally called "quarantined") are special domains
+## where add-ons are normally blocked for security reasons.
+
+# Used as a description for the option to allow or block an add-on on quarantined domains.
+addon-detail-quarantined-domains-label = 在受限制的网站上运行
+# Used as help text part of the quarantined domains UI controls row.
+addon-detail-quarantined-domains-help = 允许后，此扩展将能够访问受 { -vendor-short-name } 限制的网站。请仅在您信任此网站时才允许。
+# Used as label and tooltip text on the radio inputs associated to the quarantined domains UI controls.
+addon-detail-quarantined-domains-allow = 允许
+addon-detail-quarantined-domains-disallow = 不允许
+# aria-label associated to the quarantined domains exempt row to help screen readers to announce the group.
+addon-detail-group-label-quarantined-domains =
+    .aria-label = { addon-detail-quarantined-domains-label }
 
 ## This is the tooltip text for the recommended badges for an extension in about:addons. The
 ## badge is a small icon displayed next to an extension when it is recommended on AMO.
@@ -354,10 +394,10 @@ addon-detail-private-browsing-disallow = 不允许
 addon-badge-recommended2 =
     .title = { -brand-product-name } 只推荐符合我们的安全和性能标准的扩展。
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Waterfox" in the string below because the extensions are built
-# by Waterfox and we don't want forks to display "by Fork".
+# We hard code "BrowserWorks" in the string below because the extensions are built
+# by BrowserWorks and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = 由 Waterfox 构建的官方扩展，符合安全和性能标准
+    .title = 由 BrowserWorks 构建的官方扩展，符合安全和性能标准
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = 此扩展已通过审核，符合我们的安全和性能标准
@@ -367,14 +407,16 @@ addon-badge-verified2 =
 
 available-updates-heading = 可用更新
 recent-updates-heading = 最近更新
-release-notes-loading = 正在载入…
-release-notes-error = 抱歉，载入发行说明时出错。
+release-notes-loading = 正在加载…
+release-notes-error = 抱歉，加载发行说明时出错。
 addon-permissions-empty = 此扩展未要求任何权限
 addon-permissions-required = 核心功能所需的权限：
 addon-permissions-optional = 附加功能的可选权限：
 addon-permissions-learnmore = 详细了解“权限”
 recommended-extensions-heading = 推荐扩展
 recommended-themes-heading = 推荐主题
+# Variables:
+#   $hostname (string) - Host where the permissions are granted
 addon-sitepermissions-required = 授予 <span data-l10n-name="hostname">{ $hostname }</span> 以下功能：
 # A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Waterfox Color" name itself should not be translated.
@@ -399,18 +441,32 @@ addon-page-options-button =
 
 ## Detail notifications
 ## Variables:
-##   $name (String): name of the add-on.
+##   $name (string) - Name of the add-on.
 
 # Variables:
-#   $version (String): application version.
+#   $version (string) - Application version.
 details-notification-incompatible = { $name } 不兼容 { -brand-short-name } { $version }。
+# Variables:
+#   $version (string) - Application version.
+details-notification-incompatible2 =
+    .message = { $name } 不兼容 { -brand-short-name } { $version }。
 details-notification-incompatible-link = 更多信息
 details-notification-unsigned-and-disabled = { $name } 未通过针对是否适用于 { -brand-short-name } 的验证，现已被禁用。
+details-notification-unsigned-and-disabled2 =
+    .message = { $name } 未通过针对是否适用于 { -brand-short-name } 的验证，现已被禁用。
 details-notification-unsigned-and-disabled-link = 了解详情
 details-notification-unsigned = { $name } 未通过针对是否适用于 { -brand-short-name } 的验证。请谨慎。
+details-notification-unsigned2 =
+    .message = { $name } 未通过针对是否适用于 { -brand-short-name } 的验证。请谨慎。
 details-notification-unsigned-link = 了解详情
 details-notification-blocked = { $name } 由于安全或稳定性问题已被禁用。
+details-notification-blocked2 =
+    .message = { $name } 由于安全或稳定性问题已被禁用。
 details-notification-blocked-link = 了解详情
 details-notification-softblocked = { $name } 已知会导致安全性或稳定性问题。
+details-notification-softblocked2 =
+    .message = { $name } 已知会导致安全性或稳定性问题。
 details-notification-softblocked-link = 了解详情
 details-notification-gmp-pending = { $name } 即将安装。
+details-notification-gmp-pending2 =
+    .message = { $name } 即将安装。

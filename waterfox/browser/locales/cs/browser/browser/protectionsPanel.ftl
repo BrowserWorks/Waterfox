@@ -1,9 +1,8 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 protections-panel-sendreportview-error = Při odesílání hlášení nastala chyba. Zkuste to prosím později.
-
 # A link shown when ETP is disabled for a site. Opens the breakage report subview when clicked.
 protections-panel-sitefixedsendreport-label = Stránka začala fungovat? Pošlete hlášení
 
@@ -22,13 +21,24 @@ protections-popup-footer-protection-label-standard = Standardní
 # The text a screen reader speaks when focused on the info button.
 protections-panel-etp-more-info =
     .aria-label = Více informací o rozšířené ochraně proti sledování
-
 protections-panel-etp-on-header = Rozšířená ochrana proti sledování je zapnuta
 protections-panel-etp-off-header = Rozšířená ochrana proti sledování je vypnuta
 
+## Text for the toggles shown when ETP is enabled/disabled for a given site.
+## .description is transferred into a separate paragraph by the moz-toggle
+## custom element code.
+##   $host (String): the hostname of the site that is being displayed.
+
+protections-panel-etp-on-toggle =
+    .label = Rozšířená ochrana proti sledování
+    .description = Zapnuto pro tento web
+    .aria-label = Vypnout ochranu na serveru { $host }
+protections-panel-etp-off-toggle =
+    .label = Rozšířená ochrana proti sledování
+    .description = Vypnuto pro tento web
+    .aria-label = Zapnout ochranu na serveru { $host }
 # The link to be clicked to open the sub-panel view
 protections-panel-site-not-working = Stránka nefunguje?
-
 # The heading/title of the sub-panel view
 protections-panel-site-not-working-view =
     .title = Stránka nefunguje?
@@ -49,9 +59,7 @@ protections-panel-no-trackers-found =
         [neuter] { -brand-short-name } na této stránce nenalezlo
        *[other] Aplikace { -brand-short-name } na této stránce nenalezla
     } žádné známé sledovací prvky.
-
 protections-panel-content-blocking-tracking-protection = Sledující obsah
-
 protections-panel-content-blocking-socialblock = Sledující prvky sociálních sítí
 protections-panel-content-blocking-cryptominers-label = Těžba kryptoměn
 protections-panel-content-blocking-fingerprinters-label = Otisk prohlížeče
@@ -69,7 +77,6 @@ protections-panel-not-found-label = Nenalezeno
 ##
 
 protections-panel-settings-label = Nastavení ochrany
-# This should match the "appmenuitem-protection-dashboard-title" string in browser/appmenu.ftl.
 protections-panel-protectionsdashboard-label = Přehled ochrany soukromí
 
 ## In the Site Not Working? view, we suggest turning off protections if
@@ -77,14 +84,13 @@ protections-panel-protectionsdashboard-label = Přehled ochrany soukromí
 
 # The header of the list
 protections-panel-site-not-working-view-header = Vypněte ochranu proti sledování pokud pozorujete problémy s:
-
 # The list items, shown in a <ul>
 protections-panel-site-not-working-view-issue-list-login-fields = přihlášením
 protections-panel-site-not-working-view-issue-list-forms = fungováním formulářů
 protections-panel-site-not-working-view-issue-list-payments = platbami
 protections-panel-site-not-working-view-issue-list-comments = psaním komentářů
 protections-panel-site-not-working-view-issue-list-videos = přehráváním videí
-
+protections-panel-site-not-working-view-issue-list-fonts = Písma
 protections-panel-site-not-working-view-send-report = Poslat hlášení
 
 ##
@@ -94,25 +100,33 @@ protections-panel-cryptominers = Těžba kryptoměn využívá výpočetní výk
 protections-panel-fingerprinters = Sběrem informací o vašem prohlížeči a počítači lze vytvořit unikátní otisk a ten pak použít k vašemu sledování napříč různými a nijak nesouvisejícími servery a webovými stránkami.
 protections-panel-tracking-content = Webové stránky mohou načítat externí reklamy, videa a další obsah, který obsahuje sledovací kód. Po zablokování sledujícího obsahu se stránky načítají rychleji, ale některá tlačítka nebo formuláře nemusí správně fungovat.
 protections-panel-social-media-trackers = Sociální sítě umisťují na ostatní stránky sledovací prvky, pomocí kterých mohou sledovat, co na internetu děláte, vidíte a co si pouštíte. To umožňuje společnostem, které tato sociální média vlastní, dozvědět se o vás víc než jen to, co sdílíte na svých profilech.
-
 protections-panel-description-shim-allowed = Některé níže označené sledovací prvky byly na této stránce částečně povoleny, protože jste s nimi interagovali.
 protections-panel-description-shim-allowed-learn-more = Zjistit více
 protections-panel-shim-allowed-indicator =
     .tooltiptext = Sledovací prvky částečně povoleny
-
 protections-panel-content-blocking-manage-settings =
     .label = Nastavení ochrany
     .accesskey = N
-
 protections-panel-content-blocking-breakage-report-view =
     .title = Nahlásit nefunkční stránku
 protections-panel-content-blocking-breakage-report-view-description =
-    Blokování sledovacích prvků může na některých stránkách způsobovat problémy. Jejich nahlášením významně pomůžete { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "acc") }
-        [feminine] { -brand-short-name(case: "acc") }
-        [neuter] { -brand-short-name(case: "acc") }
-       *[other] aplikaci { -brand-short-name }
-    } dále vylepšovat. S vaším hlášením se Mozille odešle URL stránky a informace o vašem nastavení blokování obsahu. <label data-l10n-name="learn-more">Zjistit více</label>
+    { -brand-short-name.case-status ->
+        [with-cases] Blokování sledovacích prvků může na některých stránkách způsobovat problémy. Jejich nahlášením významně pomůžete { -brand-short-name(case: "acc") } dále vylepšovat. S vaším hlášením se Mozille odešle URL stránky a informace o vašem nastavení blokování obsahu. <label data-l10n-name="learn-more">Zjistit více</label>
+       *[no-cases] Blokování sledovacích prvků může na některých stránkách způsobovat problémy. Jejich nahlášením významně pomůžete aplikaci { -brand-short-name } dále vylepšovat. S vaším hlášením se Mozille odešle URL stránky a informace o vašem nastavení blokování obsahu. <label data-l10n-name="learn-more">Zjistit více</label>
+    }
+protections-panel-content-blocking-breakage-report-view-description2 =
+    { -brand-short-name.case-status ->
+        [with-cases]
+            { -vendor-short-name.case-status ->
+                [with-cases] Blokování sledovacích prvků může na některých stránkách způsobovat problémy. Jejich nahlášením významně pomůžete { -brand-short-name(case: "acc") } dále vylepšovat. S vaším hlášením se { -vendor-short-name(case: "dat") } odešle URL stránky a informace o vašem nastavení blokování obsahu.
+               *[no-cases] Blokování sledovacích prvků může na některých stránkách způsobovat problémy. Jejich nahlášením významně pomůžete { -brand-short-name(case: "acc") } dále vylepšovat. S vaším hlášením se organizaci { -vendor-short-name } odešle URL stránky a informace o vašem nastavení blokování obsahu.
+            }
+       *[no-cases]
+            { -vendor-short-name.case-status ->
+                [with-cases] Blokování sledovacích prvků může na některých stránkách způsobovat problémy. Jejich nahlášením významně pomůžete aplikaci { -brand-short-name } dále vylepšovat. S vaším hlášením se { -vendor-short-name(case: "dat") } odešle URL stránky a informace o vašem nastavení blokování obsahu.
+               *[no-cases] Blokování sledovacích prvků může na některých stránkách způsobovat problémy. Jejich nahlášením významně pomůžete aplikaci { -brand-short-name } dále vylepšovat. S vaším hlášením se organizaci { -vendor-short-name } odešle URL stránky a informace o vašem nastavení blokování obsahu.
+            }
+    }
 protections-panel-content-blocking-breakage-report-view-collection-url = URL
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = URL
@@ -123,3 +137,21 @@ protections-panel-content-blocking-breakage-report-view-cancel =
     .label = Zrušit
 protections-panel-content-blocking-breakage-report-view-send-report =
     .label = Odeslat hlášení
+
+# Cookie Banner Handling
+
+protections-panel-cookie-banner-handling-header = Omezení cookie lišt
+protections-panel-cookie-banner-handling-enabled = Zapnuto pro tento web
+protections-panel-cookie-banner-handling-disabled = Vypnuto pro tento web
+protections-panel-cookie-banner-handling-undetected = Server není aktuálně podporován
+protections-panel-cookie-banner-view-title =
+    .title = Omezení cookie lišt
+# Variables
+#  $host (String): the hostname of the site that is being displayed.
+protections-panel-cookie-banner-view-turn-off-for-site = Chcete vypnout omezení cookie lišt pro { $host }?
+protections-panel-cookie-banner-view-turn-on-for-site = Chcete zapnout omezení cookie lišt pro tento web?
+protections-panel-cookie-banner-view-cookie-clear-warning = { -brand-short-name } smaže cookies tohoto webu a stránku znovu načte. Vymazání všech cookies může způsobit vaše odhlášení nebo třeba vyprázdnění nákupního koše.
+protections-panel-cookie-banner-view-turn-on-description = { -brand-short-name } se pokusí automaticky odmítnout všechny žádosti o povolení cookies na podporovaných serverech.
+protections-panel-cookie-banner-view-cancel = Zrušit
+protections-panel-cookie-banner-view-turn-off = Vypnout
+protections-panel-cookie-banner-view-turn-on = Zapnout

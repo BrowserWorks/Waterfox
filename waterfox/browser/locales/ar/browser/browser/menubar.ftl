@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -187,6 +187,17 @@ menu-view-full-screen =
     .label = ملء الشاشة
     .accesskey = ش
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = ادخل منظور القارئ
+    .accesskey = ظ
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = أغلق منظور القارئ
+    .accesskey = غ
+
 ##
 
 menu-view-show-all-tabs =
@@ -215,8 +226,6 @@ menu-history-undo-menu =
     .label = الألسنة المُغلقة مؤخرًا
 menu-history-undo-window-menu =
     .label = النوافذ المغلقة مؤخرًا
-menu-history-reopen-all-tabs = أعِد فتح كل الألسنة
-menu-history-reopen-all-windows = أعِد فتح كل النوافذ
 
 ## Bookmarks Menu
 
@@ -225,10 +234,6 @@ menu-bookmarks-menu =
     .accesskey = ع
 menu-bookmarks-manage =
     .label = أدِر العلامات
-menu-bookmark-current-tab =
-    .label = علّم اللسان الحالي
-menu-bookmark-edit =
-    .label = حرّر هذه العلامة
 menu-bookmarks-all-tabs =
     .label = علّم كل الألسنة…
 menu-bookmarks-toolbar =

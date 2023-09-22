@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-webpage-languages-window =
+webpage-languages-window2 =
     .title = Weblap nyelvi beállításai
-    .style = width: 40em
+    .style = min-width: 40em
 
 languages-close-key =
     .key = w
@@ -49,9 +49,9 @@ languages-code-format =
 languages-active-code-format =
     .value = { languages-code-format.label }
 
-browser-languages-window =
+browser-languages-window2 =
     .title = { -brand-short-name } nyelvi beállítások
-    .style = width: 40em
+    .style = min-width: 40em
 
 browser-languages-description = A { -brand-short-name } az első nyelvet jeleníti meg alapértelmezettként, az alternatív nyelveket pedig szükség esetén a megjelenésük sorrendjében jeleníti meg.
 

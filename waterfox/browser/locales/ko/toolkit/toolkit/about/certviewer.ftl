@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -91,7 +91,7 @@ certificate-viewer-download = 다운로드
 certificate-viewer-boolean =
     { $boolean ->
         [true] 예
-       *[false] 아니오
+       *[false] 아니요
     }
 
 ## Variables:
