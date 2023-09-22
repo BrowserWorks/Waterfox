@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -36,7 +36,9 @@ perftools-range-interval-milliseconds = { NUMBER($interval, maxFractionalUnits: 
 
 # The size of the memory buffer used to store things in the profiler.
 perftools-range-entries-label = Tamanho do buffer:
+
 perftools-custom-threads-label = Adicionar threads personalizados por nome:
+
 perftools-devtools-interval-label = Intervalo:
 perftools-devtools-threads-label = Threads:
 perftools-devtools-settings-label = Configurações
@@ -74,8 +76,6 @@ perftools-thread-renderer =
     .title = Quando o WebRender está ativado, o thread que executa chamadas OpenGL
 perftools-thread-render-backend =
     .title = O thread RenderBackend do WebRender
-perftools-thread-paint-worker =
-    .title = Quando a pintura fora do thread principal está ativada, o thread em que a pintura acontece
 perftools-thread-timer =
     .title = Os timers de manipulação de threads (setTimeout, setInterval, nsITimer)
 perftools-thread-style-thread =
@@ -106,6 +106,7 @@ perftools-thread-jvm-pool =
 ##
 
 perftools-record-all-registered-threads = Ignorar as seleções acima e gravar todos os threads registrados
+
 perftools-tools-threads-input-label =
     .title = Esses nomes de thread ficam numa lista separada por vírgulas, usada para ativar a gravação de profiles dos threads no profiler. O nome precisa ser apenas uma correspondência parcial do nome do thread a ser incluído. É sensível a espaços em branco.
 
@@ -113,6 +114,7 @@ perftools-tools-threads-input-label =
 ## devtools.performance.new-panel-onboarding preference is true.
 
 perftools-onboarding-message = <b>Novo</b>: Agora o { -profiler-brand-name } é integrado nas ferramentas de desenvolvimento. <a>Saiba mais</a> sobre esta nova ferramenta poderosa.
+
 perftools-onboarding-close-button =
     .aria-label = Fechar a mensagem de integração
 
@@ -123,19 +125,29 @@ perftools-onboarding-close-button =
 # devtools/client/performance-new/popup/background.jsm.js
 # The same labels and descriptions are also defined in appmenu.ftl.
 
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/shared/background.jsm.js
+# The same labels and descriptions are also defined in appmenu.ftl.
+
 perftools-presets-web-developer-label = Desenvolvimento web
 perftools-presets-web-developer-description = Ajuste prévio recomendado para depuração da maioria dos aplicativos web, com pouca sobrecarga.
+
 perftools-presets-firefox-label = { -brand-shorter-name }
-perftools-presets-firefox-description = Predefinição recomendada para gravação de profile no { -brand-shorter-name }.
+perftools-presets-firefox-description = Ajuste prévio recomendado para gravação de profile do { -brand-shorter-name }.
+
 perftools-presets-graphics-label = Gráficos
-perftools-presets-graphics-description = Predefinição para investigar bugs gráficos no { -brand-shorter-name }.
+perftools-presets-graphics-description = Ajuste prévio para investigar bugs gráficos no { -brand-shorter-name }.
+
 perftools-presets-media-label = Mídia
-perftools-presets-media-description2 = Predefinição para investigar bugs de áudio e vídeo no { -brand-shorter-name }.
+perftools-presets-media-description2 = Ajuste prévio para investigar bugs de áudio e vídeo no { -brand-shorter-name }.
+
 perftools-presets-networking-label = Rede
-perftools-presets-networking-description = Predefinição para investigar bugs de rede no { -brand-shorter-name }.
+perftools-presets-networking-description = Ajuste prévio para investigar bugs de rede no { -brand-shorter-name }.
+
 # "Power" is used in the sense of energy (electricity used by the computer).
 perftools-presets-power-label = Energia
-perftools-presets-power-description = Predefinição para investigar bugs de uso de energia no { -brand-shorter-name }, com baixa sobrecarga.
+perftools-presets-power-description = Ajuste prévio para investigar bugs de uso de energia no { -brand-shorter-name }, com baixa sobrecarga.
+
 perftools-presets-custom-label = Personalizado
 
 ##

@@ -1,17 +1,17 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-create-profile-window =
+create-profile-window2 =
     .title = مُرشِد إنشاء ملفّ شخصي
-    .style = width: 45em; height: 32em;
+    .style = min-width: 45em; min-height: 32em;
 
 ## First wizard page
 
-create-profile-first-page-header =
+create-profile-first-page-header2 =
     { PLATFORM() ->
         [macos] مقدّمة
-       *[other] مرحبًا في { create-profile-window.title }
+       *[other] مرحبًا في { create-profile-window2.title }
     }
 
 profile-creation-explanation-1 = يخزن { -brand-short-name } معلومات عن إعداداتك و تفضيلاتك في ملفّك الشّخصي.
@@ -28,10 +28,10 @@ profile-creation-explanation-4 =
 
 ## Second wizard page
 
-create-profile-last-page-header =
+create-profile-last-page-header2 =
     { PLATFORM() ->
         [macos] خاتمة
-       *[other] إكمال { create-profile-window.title }
+       *[other] إكمال { create-profile-window2.title }
     }
 
 profile-creation-intro = إذا أنشأت عدّة ملفّات شخصيّة، يمكنك التّمييز بينها من خلال اسم الملفّ الشّخصي. يمكنك استخدام الاسم المزود هنا أو اسم من عندك.

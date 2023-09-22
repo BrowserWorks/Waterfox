@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,9 +9,8 @@ failed-pp-change = Impossibile cambiare la password principale.
 incorrect-pp = Non è stata inserita correttamente la password principale attuale. Ritentare.
 pp-change-ok = La password principale è stata cambiata correttamente.
 
-pp-empty-warning = Le password dei siti web, i dati dei moduli e le chiavi private memorizzati sul computer non verranno protetti.
-pp-erased-ok = La password principale è stata eliminata. { pp-empty-warning }
-pp-not-wanted = Attenzione. Si è deciso di non utilizzare la password principale. { pp-empty-warning }
+settings-pp-erased-ok = La password principale è stata eliminata. Le password salvate e le chiavi private dei certificati gestiti da { -brand-short-name } non saranno protette.
+settings-pp-not-wanted = Attenzione: hai deciso di non utilizzare una password principale. Le password salvate e le chiavi private dei certificati gestiti da { -brand-short-name } non saranno protette.
 
 pp-change2empty-in-fips-mode = Si è in modalità FIPS. FIPS richiede che la password principale sia impostata.
 pw-change-success-title = La password è stata cambiata correttamente.

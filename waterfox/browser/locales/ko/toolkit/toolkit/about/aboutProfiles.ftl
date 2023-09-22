@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -40,7 +40,7 @@ profiles-cannot-set-as-default-title = 기본값으로 설정할 수 없음
 profiles-cannot-set-as-default-message = { -brand-short-name }의 기본 프로필은 변경할 수 없습니다.
 
 profiles-yes = 예
-profiles-no = 아니오
+profiles-no = 아니요
 
 profiles-rename-profile-title = 프로필 이름 변경
 # Variables:

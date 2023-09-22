@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,6 +38,8 @@ serviceworker-worker-start3 = 시작
 
 # Text displayed for the updated time of the service worker. The <time> element will
 # display the last update time of the service worker script.
+# Variables:
+#   $date (date) - Update date
 serviceworker-worker-updated = <time>{ DATETIME($date, month: "long", year: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric") }</time>에 업데이트됨
 
 ## Service Worker status strings: all serviceworker-worker-status-* strings are also
@@ -98,7 +100,7 @@ manifest-loaded-error = 매니페스트를 로드하는 동안 오류가 발생�
 
 # Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Waterfox DevTools 오류
+manifest-loaded-devtools-error = Waterfox 개발자 도구 오류
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = 검사할 매니페스트가 없습니다.
@@ -109,6 +111,8 @@ manifest-json-link-data-url = 매니페스트는 데이터 URL에 포함됩니�
 
 # Text displayed at manifest icons to label their purpose, as declared
 # in the manifest.
+# Variables:
+#   $purpose (string) - Manifest purpose
 manifest-icon-purpose = 용도: <code> { $purpose } </code>
 
 # Text displayed as the alt attribute for <img> tags showing the icons in the
@@ -117,8 +121,11 @@ manifest-icon-img =
     .alt = 아이콘
 
 # Text displayed as the title attribute for <img> tags showing the icons in the
-# manifest. `$sizes` is a user-dependent string that has been parsed as a
-# space-separated list of `<width>x<height>` sizes or the keyword `any`.
+# manifest.
+# Variables:
+#   $sizes (string) - User-dependent string that has been parsed as a
+#                     space-separated list of `<width>x<height>` sizes or
+#                     the keyword `any`.
 manifest-icon-img-title = 아이콘 크기: { $sizes }
 
 # Text displayed as the title attribute for <img> tags showing the icons in the
@@ -144,4 +151,3 @@ icon-warning =
 icon-error =
     .alt = 오류 아이콘
     .title = 오류
-

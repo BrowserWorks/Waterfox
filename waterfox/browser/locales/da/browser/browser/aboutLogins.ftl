@@ -1,14 +1,16 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
 
 about-logins-page-title = Logins & adgangskoder
 
-login-filter =
+about-logins-login-filter =
     .placeholder = Søg efter logins
+    .key = F
 
-create-login-button = Opret nyt login
+create-new-login-button =
+    .title = Opret nyt login
 
 fxaccounts-sign-in-text = Få dine adgangkoder på alle dine enheder
 fxaccounts-sign-in-sync-button = Log ind for at synkronisere
@@ -35,10 +37,20 @@ about-logins-menu-menuitem-help = Hjælp
 
 login-list =
     .aria-label = Logins der matcher din søgning
+# Variables
+#   $count (number) - Number of logins
 login-list-count =
     { $count ->
         [one] { $count } login
        *[other] { $count } logins
+    }
+# Variables
+#   $count (number) - Number of filtered logins
+#   $total (number) - Total number of logins
+login-list-filtered-count =
+    { $total ->
+        [one] { $count } af { $total } login
+       *[other] { $count } af { $total } logins
     }
 login-list-sort-label-text = Sorter efter:
 login-list-name-option = Navn (A-Z)
@@ -47,7 +59,7 @@ login-list-username-option = Brugernavn (A-Å)
 login-list-username-reverse-option = Brugernavn (Å-A)
 about-logins-login-list-alerts-option = Advarsler
 login-list-last-changed-option = Senest ændret
-login-list-last-used-option = Senest brugt
+login-list-last-used-option = Senest anvendt
 login-list-intro-title = Ingen logins fundet
 login-list-intro-description = Når du gemmer et login i { -brand-product-name } vil det blive vist hér.
 about-logins-login-list-empty-search-title = Ingen logins fundet
@@ -99,9 +111,17 @@ login-item-copied-password-button-text = Kopieret!
 login-item-save-changes-button = Gem ændringer
 login-item-save-new-button = Gem
 login-item-cancel-button = Annuller
-login-item-time-changed = Senest ændret: { DATETIME($timeChanged, day: "numeric", month: "long", year: "numeric") }
-login-item-time-created = Oprettet: { DATETIME($timeCreated, day: "numeric", month: "long", year: "numeric") }
-login-item-time-used = Senest brugt: { DATETIME($timeUsed, day: "numeric", month: "long", year: "numeric") }
+
+## The date is displayed in a timeline showing the password evolution.
+## A label is displayed under the date to describe the type of change.
+## (e.g. updated, created, etc.)
+
+# Variables
+#   $datetime (date) - Event date
+login-item-timeline-point-date = { DATETIME($datetime, day: "numeric", month: "short", year: "numeric") }
+login-item-timeline-action-created = Oprettet
+login-item-timeline-action-updated = Opdateret
+login-item-timeline-action-used = Anvendt
 
 ## OS Authentication dialog
 
@@ -152,6 +172,9 @@ about-logins-confirm-remove-dialog-title = Fjern dette login?
 confirm-delete-dialog-message = Denne handling kan ikke fortrydes.
 about-logins-confirm-remove-dialog-confirm-button = Fjern
 
+## Variables
+##   $count (number) - Number of items
+
 about-logins-confirm-remove-all-dialog-confirm-button-label =
     { $count ->
         [1] Fjern
@@ -189,6 +212,8 @@ about-logins-confirm-remove-all-sync-dialog-message =
        *[other] Denne handling fjerner de logins, du har gemt til { -brand-short-name } på alle enheder, der er synkroniseret med din { -fxaccount-brand-name }. Advarsler om datalæk, der optræder her, vil også blive fjernet. Du kan ikke fortryde denne handling.
     }
 
+##
+
 about-logins-confirm-export-dialog-title = Eksporter logins og adgangskoder
 about-logins-confirm-export-dialog-message = Dine adgangskoder bliver gemt som læsbar tekst (fx dåRligAdg@ngsk0de), så alle der kan åbne den eksportede fil kan se dine adgangskoder.
 about-logins-confirm-export-dialog-confirm-button = Eksporter…
@@ -208,7 +233,6 @@ about-logins-breach-alert-date = Datalækket fandt sted { DATETIME($date, day: "
 # Variables:
 #   $hostname (String) - The hostname of the website associated with the login, e.g. "example.com"
 about-logins-breach-alert-link = Gå til { $hostname }
-about-logins-breach-alert-learn-more-link = Læs mere
 
 ## Vulnerable Password notification
 

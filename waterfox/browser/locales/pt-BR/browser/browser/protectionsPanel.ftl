@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,20 @@ protections-panel-etp-more-info =
     .aria-label = Mais informações sobre a proteção aprimorada contra rastreamento
 protections-panel-etp-on-header = A proteção aprimorada contra rastreamento está ATIVADA neste site
 protections-panel-etp-off-header = A proteção aprimorada contra rastreamento está DESATIVADA neste site
+
+## Text for the toggles shown when ETP is enabled/disabled for a given site.
+## .description is transferred into a separate paragraph by the moz-toggle
+## custom element code.
+##   $host (String): the hostname of the site that is being displayed.
+
+protections-panel-etp-on-toggle =
+    .label = Proteção aprimorada contra rastreamento
+    .description = Ativada neste site
+    .aria-label = Desativar proteção em { $host }
+protections-panel-etp-off-toggle =
+    .label = Proteção aprimorada contra rastreamento
+    .description = Desativada neste site
+    .aria-label = Ativar proteção em { $host }
 # The link to be clicked to open the sub-panel view
 protections-panel-site-not-working = O site não está funcionando?
 # The heading/title of the sub-panel view
@@ -70,6 +84,7 @@ protections-panel-site-not-working-view-issue-list-forms = Formulários
 protections-panel-site-not-working-view-issue-list-payments = Pagamento
 protections-panel-site-not-working-view-issue-list-comments = Comentários
 protections-panel-site-not-working-view-issue-list-videos = Vídeos
+protections-panel-site-not-working-view-issue-list-fonts = Fontes
 protections-panel-site-not-working-view-send-report = Enviar um relato
 
 ##
@@ -88,7 +103,8 @@ protections-panel-content-blocking-manage-settings =
     .accesskey = G
 protections-panel-content-blocking-breakage-report-view =
     .title = Relatar um site com problemas
-protections-panel-content-blocking-breakage-report-view-description = Bloquear certos rastreadores pode causar problemas em alguns sites. Relatar esses problemas ajuda a melhorar o { -brand-short-name } para todos. Ao enviar este relato, a Waterfox recebe o endereço da página e informações sobre configurações do seu navegador. <label data-l10n-name="learn-more">Saiba mais</label>
+protections-panel-content-blocking-breakage-report-view-description = Bloquear certos rastreadores pode causar problemas em alguns sites. Relatar esses problemas ajuda a melhorar o { -brand-short-name } para todos. Ao enviar este relato, a BrowserWorks recebe o endereço da página e informações sobre configurações do seu navegador. <label data-l10n-name="learn-more">Saiba mais</label>
+protections-panel-content-blocking-breakage-report-view-description2 = Bloquear certos rastreadores pode causar problemas em alguns sites. Relatar esses problemas ajuda a melhorar o { -brand-short-name } para todos. Ao enviar este relato, a { -vendor-short-name } recebe o endereço da página e informações sobre configurações do seu navegador.
 protections-panel-content-blocking-breakage-report-view-collection-url = URL
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = URL
@@ -99,3 +115,21 @@ protections-panel-content-blocking-breakage-report-view-cancel =
     .label = Cancelar
 protections-panel-content-blocking-breakage-report-view-send-report =
     .label = Enviar relato
+
+# Cookie Banner Handling
+
+protections-panel-cookie-banner-handling-header = Redução de avisos de cookies
+protections-panel-cookie-banner-handling-enabled = Ativado neste site
+protections-panel-cookie-banner-handling-disabled = Desativado neste site
+protections-panel-cookie-banner-handling-undetected = Site atualmente não suportado
+protections-panel-cookie-banner-view-title =
+    .title = Redução de avisos de cookies
+# Variables
+#  $host (String): the hostname of the site that is being displayed.
+protections-panel-cookie-banner-view-turn-off-for-site = Desativar redução de avisos de cookies em { $host }?
+protections-panel-cookie-banner-view-turn-on-for-site = Ativar redução de avisos de cookies neste site?
+protections-panel-cookie-banner-view-cookie-clear-warning = O { -brand-short-name } irá limpar os cookies deste site e atualizar a página. Limpar todos os cookies pode encerrar a sessão de acesso no site ou esvaziar carrinhos de compras.
+protections-panel-cookie-banner-view-turn-on-description = O { -brand-short-name } tenta rejeitar automaticamente todas as solicitações de cookies em sites suportados.
+protections-panel-cookie-banner-view-cancel = Cancelar
+protections-panel-cookie-banner-view-turn-off = Desativar
+protections-panel-cookie-banner-view-turn-on = Ativar

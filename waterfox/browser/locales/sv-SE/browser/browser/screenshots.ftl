@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,6 @@ screenshots-private-window-error-details = Ledsen för besväret. Vi arbetar med
 
 screenshots-generic-error-title = Oj! { -screenshots-brand-name } verkar inte fungera korrekt.
 screenshots-generic-error-details = Vi är inte säkra på vad som just hände. Kan du försöka igen eller ta en bild på en annan sida?
+
+screenshots-too-large-error-title = Din skärmdump har beskurits eftersom den var för stor
+screenshots-too-large-error-details = Prova att välja ett område som är mindre än 32 700 pixlar på sin längsta sida eller 124 900 000 pixlar total yta.

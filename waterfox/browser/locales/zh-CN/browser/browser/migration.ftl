@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,13 +13,13 @@ import-from =
 
 import-from-bookmarks = 从下列来源导入书签：
 import-from-ie =
-    .label = 微软 IE 浏览器
+    .label = Microsoft Internet Explorer（IE 浏览器）
     .accesskey = M
 import-from-edge =
     .label = Microsoft Edge
     .accesskey = E
 import-from-edge-legacy =
-    .label = Microsoft Edge 旧版
+    .label = 旧版 Microsoft Edge
     .accesskey = L
 import-from-edge-beta =
     .label = Microsoft Edge Beta
@@ -28,8 +28,14 @@ import-from-nothing =
     .label = 不导入任何数据
     .accesskey = D
 import-from-safari =
-    .label = Safari
+    .label = Safari 浏览器
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,6 +60,9 @@ import-from-firefox =
 import-from-360se =
     .label = 360 安全浏览器
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
 
 no-migration-sources = 找不到存有书签、历史记录或密码数据的浏览器。
 
@@ -64,8 +73,8 @@ import-items-description = 请选择要导入的项目：
 
 import-permissions-page-title = 请授权 { -brand-short-name }
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = macOS 要求您明确允许 { -brand-short-name } 访问 Safari 书签才能继续。请点击“继续”，并从显示的打开文件面板中选择“Bookmarks.plist”文件。
+# Do not translate "Safari" (the name of the browser on Apple devices)
+import-safari-permissions-string = macOS 要求您明确允许 { -brand-short-name } 访问 Safari 浏览器的数据。请点击“继续”，在“访达”对话框中选择“Safari”文件夹，然后点击“打开”。
 
 import-migrating-page-title = 正在导入…
 
@@ -81,11 +90,11 @@ import-done-description = 成功导入下列各项：
 
 import-close-source-browser = 请先关闭选定的浏览器，再继续操作。
 
-source-name-ie = 微软 IE 浏览器
+source-name-ie = Internet Explorer（IE 浏览器）
 source-name-edge = Microsoft Edge
 source-name-chrome = Google Chrome
 
-imported-safari-reading-list = 阅读列表（来自 Safari）
+imported-safari-reading-list = 阅读列表（来自 Safari 浏览器）
 imported-edge-reading-list = 阅读列表（来自 Edge）
 
 ## Browser data types
@@ -116,8 +125,8 @@ browser-data-history-checkbox =
 browser-data-history-label =
     .value =
         { $browser ->
-            [firefox] 浏览历史
-           *[other] 浏览历史和书签
+            [firefox] 浏览历史和书签
+           *[other] 浏览历史
         }
 
 browser-data-formdata-checkbox =
@@ -158,3 +167,8 @@ browser-data-session-checkbox =
     .label = 窗口和标签页
 browser-data-session-label =
     .value = 窗口和标签页
+
+browser-data-payment-methods-checkbox =
+    .label = 付款方式
+browser-data-payment-methods-label =
+    .value = 付款方式

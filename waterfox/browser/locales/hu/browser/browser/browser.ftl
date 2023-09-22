@@ -1,50 +1,19 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ## The main browser window's title
 
-# These are the default window titles everywhere except macOS. The first two
-# attributes are used when the web content opened has no title:
+# These are the default window titles everywhere except macOS.
+# .data-title-default and .data-title-private are used when the web content
+# opened has no title:
 #
 # default - "Waterfox"
 # private - "Waterfox (Private Browsing)"
 #
-# The last two are for use when there *is* a content title.
-# Variables:
-#  $content-title (String): the title of the web content.
-browser-main-window =
-    .data-title-default = { -brand-full-name }
-    .data-title-private = { -brand-full-name } (Privát böngészés)
-    .data-content-title-default = { $content-title } - { -brand-full-name }
-    .data-content-title-private = { $content-title } - { -brand-full-name } (Privát böngészés)
-# These are the default window titles on macOS. The first two are for use when
-# there is no content title:
-#
-# "default" - "Waterfox"
-# "private" - "Waterfox — (Private Browsing)"
-#
-# The last two are for use when there *is* a content title.
-# Do not use the brand name in the last two attributes, as we do on non-macOS.
-#
-# Also note the other subtle difference here: we use a `-` to separate the
-# brand name from `(Private Browsing)`, which does not happen on other OSes.
-#
-# Variables:
-#  $content-title (String): the title of the web content.
-browser-main-window-mac =
-    .data-title-default = { -brand-full-name }
-    .data-title-private = { -brand-full-name } - (Privát böngészés)
-    .data-content-title-default = { $content-title }
-    .data-content-title-private = { $content-title } - (Privát böngészés)
-# These are the default window titles everywhere except macOS. The first two
-# attributes are used when the web content opened has no title:
-#
-# default - "Waterfox"
-# private - "Waterfox (Private Browsing)"
-#
-# The last two are for use when there *is* a content title.
+# .data-content-title-default and .data-content-title-private are for use when
+# there *is* a content title.
 # Variables:
 #  $content-title (String): the title of the web content.
 browser-main-window-window-titles =
@@ -52,14 +21,17 @@ browser-main-window-window-titles =
     .data-title-private = { -brand-full-name } privát böngészés
     .data-content-title-default = { $content-title } – { -brand-full-name }
     .data-content-title-private = { $content-title } – { -brand-full-name } privát böngészés
-# These are the default window titles on macOS. The first two are for use when
-# there is no content title:
+# These are the default window titles on macOS.
+# .data-title-default and .data-title-private are used when the web content
+# opened has no title:
+#
 #
 # "default" - "Waterfox"
 # "private" - "Waterfox — (Private Browsing)"
 #
-# The last two are for use when there *is* a content title.
-# Do not use the brand name in the last two attributes, as we do on non-macOS.
+# .data-content-title-default and .data-content-title-private are for use when
+# there *is* a content title.
+# Do not use the brand name in these, as we do on non-macOS.
 #
 # Also note the other subtle difference here: we use a `-` to separate the
 # brand name from `(Private Browsing)`, which does not happen on other OSes.
@@ -76,7 +48,9 @@ browser-main-window-mac-window-titles =
 # This should match the `data-title-default` attribute in both
 # `browser-main-window` and `browser-main-window-mac`.
 browser-main-window-title = { -brand-full-name }
-private-browsing-shortcut-text = { -brand-short-name } privát böngészés
+# The non-variable portion of this MUST match the translation of
+# "PRIVATE_BROWSING_SHORTCUT_TITLE" in custom.properties
+private-browsing-shortcut-text-2 = { -brand-shortcut-name } privát böngészés
 
 ##
 
@@ -107,16 +81,12 @@ urlbar-xr-notification-anchor =
     .tooltiptext = A virtuális valóság engedélyek panel megnyitása
 urlbar-storage-access-anchor =
     .tooltiptext = Böngészési tevékenység engedélyezési panel megnyitása
-urlbar-translate-notification-anchor =
-    .tooltiptext = Oldal lefordítása
 urlbar-web-rtc-share-screen-notification-anchor =
     .tooltiptext = Az ablakok vagy képernyő az oldallal megosztásának kezelése
 urlbar-indexed-db-notification-anchor =
     .tooltiptext = Kapcsolat nélküli tárolás üzenetpanel megnyitása
 urlbar-password-notification-anchor =
     .tooltiptext = Jelszó mentési üzenetpanel megnyitása
-urlbar-translated-notification-anchor =
-    .tooltiptext = Oldalfordítás kezelése
 urlbar-plugins-notification-anchor =
     .tooltiptext = Bővítményhasználat kezelése
 urlbar-web-rtc-share-devices-notification-anchor =
@@ -134,11 +104,25 @@ urlbar-addons-notification-anchor =
 urlbar-tip-help-icon =
     .title = Segítség kérése
 urlbar-search-tips-confirm = Rendben, értettem
+urlbar-search-tips-confirm-short = Megértettem!
 # Read out before Urlbar Tip text content so screenreader users know the
 # subsequent text is a tip offered by the browser. It should end in a colon or
 # localized equivalent.
 urlbar-tip-icon-description =
     .alt = Tipp:
+urlbar-result-menu-button =
+    .title = Menü megnyitása
+urlbar-result-menu-button-feedback = Visszajelzés
+    .title = Menü megnyitása
+urlbar-result-menu-learn-more =
+    .label = További tudnivalók
+    .accesskey = T
+urlbar-result-menu-remove-from-history =
+    .label = Törlés az előzményekből
+    .accesskey = T
+urlbar-result-menu-tip-get-help =
+    .label = Segítség kérése
+    .accesskey = S
 
 ## Prompts users to use the Urlbar when they open a new tab or visit the
 ## homepage of their default search engine.
@@ -147,6 +131,8 @@ urlbar-tip-icon-description =
 
 urlbar-search-tips-onboard = Gépeljen kevesebbet, találjon többet: { $engineName } keresés közvetlenül a címsorból.
 urlbar-search-tips-redirect-2 = Kezdjen keresni a címsorban, és lássa a { $engineName } javaslatait, valamint a böngészési előzményeit.
+# Make sure to match the name of the Search panel in settings.
+urlbar-search-tips-persist = Egyszerűbb lett a keresés. Próbálja meg pontosítani a keresést itt, a címsávban. Ha inkább a webcímet szeretné megjeleníteni, nyissa meg a Keresést a beállításokban.
 # Prompts users to use the Urlbar when they are typing in the domain of a
 # search engine, e.g. google.com or amazon.com.
 urlbar-tabtosearch-onboard = Válassza ezt a rövidítést, hogy gyorsabban megtalálja, amire szüksége van.
@@ -195,10 +181,6 @@ urlbar-star-add-bookmark =
 
 ## Page Action Context Menu
 
-page-action-manage-extension =
-    .label = Kiegészítő kezelése…
-page-action-remove-extension =
-    .label = Kiegészítő eltávolítása
 page-action-manage-extension2 =
     .label = Kiegészítő kezelése…
     .accesskey = K
@@ -267,42 +249,38 @@ search-one-offs-actions =
     .tooltiptext = Műveletek ({ $restrict })
 
 ## QuickActions are shown in the urlbar as the user types a matching string
-
-
-## QuickActions are shown in the urlbar as the user types a matching string
 ## The -cmd- strings are comma separated list of keywords that will match
 ## the action.
 
 # Opens the about:addons page in the home / recommendations section
 quickactions-addons = Kiegészítők megjelenítése
-quickactions-cmd-addons = kiegészítők, bővítmények, témák
 quickactions-cmd-addons2 = kiegészítők
 # Opens the bookmarks library window
-quickactions-bookmarks = Könyvjelzők megtekintése
+quickactions-bookmarks2 = Könyvjelzők kezelése
 quickactions-cmd-bookmarks = könyvjelzők
 # Opens a SUMO article explaining how to clear history
 quickactions-clearhistory = Előzmények törlése
 quickactions-cmd-clearhistory = előzmények törlése
 # Opens about:downloads page
-quickactions-downloads = Letöltések megnyitása
+quickactions-downloads2 = Letöltések megtekintése
 quickactions-cmd-downloads = letöltések
 # Opens about:addons page in the extensions section
 quickactions-extensions = Kiegészítők kezelése
 quickactions-cmd-extensions = kiegészítők
 # Opens the devtools web inspector
-quickactions-inspector = Vizsgáló megnyitása
+quickactions-inspector2 = Fejlesztői eszközök megnyitása
 quickactions-cmd-inspector = vizsgáló, fejlesztői eszközök
 # Opens about:logins
-quickactions-logins = Bejelentkezések megtekintése
+quickactions-logins2 = Jelszavak kezelése
 quickactions-cmd-logins = bejelentkezések, jelszavak
 # Opens about:addons page in the plugins section
 quickactions-plugins = Bővítmények kezelése
 quickactions-cmd-plugins = bővítmények
 # Opens the print dialog
-quickactions-print = Nyomtatás
+quickactions-print2 = Oldal nyomtatása
 quickactions-cmd-print = nyomtatás
 # Opens a new private browsing window
-quickactions-private = Privát böngészési ablak megnyitása
+quickactions-private2 = Privát ablak megnyitása
 quickactions-cmd-private = privát böngészés
 # Opens a SUMO article explaining how to refresh
 quickactions-refresh = A { -brand-short-name } felfrissítése
@@ -311,10 +289,10 @@ quickactions-cmd-refresh = frissítés
 quickactions-restart = A { -brand-short-name } újraindítása
 quickactions-cmd-restart = újraindítás
 # Opens the screenshot tool
-quickactions-screenshot2 = Képernyőkép készítése
+quickactions-screenshot3 = Képernyőkép készítése
 quickactions-cmd-screenshot = képernyőkép
 # Opens about:preferences
-quickactions-settings = Beállítások megnyitása
+quickactions-settings2 = Beállítások kezelése
 quickactions-cmd-settings = beállítások, lehetőségek, kapcsolók
 # Opens about:addons page in the themes section
 quickactions-themes = Témák kezelése
@@ -323,8 +301,11 @@ quickactions-cmd-themes = témák
 quickactions-update = A { -brand-short-name } frissítése
 quickactions-cmd-update = frissítés
 # Opens the view-source UI with current pages source
-quickactions-viewsource = Forrás megtekintése
+quickactions-viewsource2 = Oldal forrásának megtekintése
 quickactions-cmd-viewsource = forrás megtekintése, forrás, forráskód
+# Tooltip text for the help button shown in the result.
+quickactions-learn-more =
+    .title = További információ a gyors műveletekről
 
 ## Bookmark Panel
 
@@ -369,13 +350,14 @@ identity-connection-internal = Ez egy biztonságos { -brand-short-name } oldal.
 identity-connection-file = Ez az oldal a számítógépén van tárolva.
 identity-extension-page = Ez az oldal kiegészítőből lett betöltve.
 identity-active-blocked = A { -brand-short-name } blokkolta az oldal néhány nem biztonságos elemét.
-identity-custom-root = A kapcsolatot egy olyan tanúsítványkibocsátó igazolta, amelyet a Waterfox nem ismeri fel.
+identity-custom-root = A kapcsolatot egy olyan tanúsítványkibocsátó igazolta, amelyet a BrowserWorks nem ismeri fel.
 identity-passive-loaded = A weboldal egyes részei nem biztonságosak (például a képek).
 identity-active-loaded = Kikapcsolta a védelmet ezen az oldalon.
 identity-weak-encryption = Ez az oldal gyenge titkosítást használ.
 identity-insecure-login-forms = Az oldalon megadott bejelentkezési adatok nincsenek biztonságban.
 identity-https-only-connection-upgraded = (frissítve HTTPS-re)
 identity-https-only-label = Csak HTTPS mód
+identity-https-only-label2 = A webhely kapcsolatának automatikus frissítése biztonságossá
 identity-https-only-dropdown-on =
     .label = Be
 identity-https-only-dropdown-off =
@@ -384,6 +366,8 @@ identity-https-only-dropdown-off-temporarily =
     .label = Ideiglenesen ki
 identity-https-only-info-turn-on2 = Kapcsolja be a Csak HTTPS módot ezen az oldalon, ha azt akarja, hogy a { -brand-short-name } frissítse a kapcsolatot, ha lehetséges.
 identity-https-only-info-turn-off2 = Ha az oldal nem megfelelően működik, lehet ki kell kapcsolnia a Csak HTTPS módot az oldalon, hogy nem biztonságos HTTP-vel töltse újra.
+identity-https-only-info-turn-on3 = Kapcsolja be a HTTPS frissítéseket ezen az oldalon, ha azt akarja, hogy a { -brand-short-name } frissítse a kapcsolatot, ha lehetséges.
+identity-https-only-info-turn-off3 = Ha az oldal nem megfelelően működik, lehet ki kell kapcsolnia a HTTPS frissítéseket az oldalon, hogy nem biztonságos HTTP-vel töltse újra.
 identity-https-only-info-no-upgrade = Nem lehet frissíteni a kapcsolatot HTTP-ről.
 identity-permissions-storage-access-header = Webhelyek közötti sütik
 identity-permissions-storage-access-hint = Ezek a felek használhatják a webhelyek közötti sütiket és a webhely adatait, amíg Ön ezen a webhelyen tartózkodik.
@@ -394,7 +378,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = Nem biztonságosan kapcsolódik ehhez az oldalhoz.
 identity-connection-verified = Biztonságosan kapcsolódik ehhez az oldalhoz.
 identity-ev-owner-label = Tanúsítvány kiállítva ennek:
-identity-description-custom-root = A Waterfox nem ismeri fel ezt a tanúsítványkibocsátót. Lehet, hogy az operációs rendszer vagy egy rendszergazda adta hozzá. <label data-l10n-name="link">További tudnivalók</label>
+identity-description-custom-root2 = A BrowserWorks nem ismeri fel ezt a tanúsítványkibocsátót. Lehet, hogy az operációs rendszer vagy egy rendszergazda adta hozzá.
 identity-remove-cert-exception =
     .label = Kivétel eltávolítása
     .accesskey = e
@@ -402,14 +386,12 @@ identity-description-insecure = A kapcsolat ehhez az oldalhoz nem biztonságos. 
 identity-description-insecure-login-forms = Az oldalon megadott bejelentkezési adatok nincsenek biztonságban és lehallgathatók lehetnek.
 identity-description-weak-cipher-intro = A kapcsolat ehhez a weboldalhoz túl gyenge titkosítást használ, és nem biztonságos.
 identity-description-weak-cipher-risk = Mások megjeleníthetik információit, vagy módosíthatják a weboldal viselkedését.
-identity-description-active-blocked = A { -brand-short-name } blokkolta az oldal néhány nem biztonságos elemét. <label data-l10n-name="link">További tudnivalók</label>
+identity-description-active-blocked2 = A { -brand-short-name } blokkolta az oldal néhány nem biztonságos elemét.
 identity-description-passive-loaded = A kapcsolat nem biztonságos, és az oldalnak elküldött információkat mások is láthatják.
-identity-description-passive-loaded-insecure = Ez a weboldal nem biztonságos tartalmakat is tartalmaz (például képek). <label data-l10n-name="link">További tudnivalók</label>
-identity-description-passive-loaded-mixed = Bár a { -brand-short-name } blokkolt bizonyos tartalmakat, még mindig szerepel olyan tartalom az oldalon, amely nem biztonságos (például képek). <label data-l10n-name="link">További tudnivalók</label>
+identity-description-passive-loaded-insecure2 = A weboldal nem biztonságos elemeket (például képeket) tartalmaz.
+identity-description-passive-loaded-mixed2 = Noha a { -brand-short-name } blokkolt bizonyos tartalmakat, még mindig van nem biztonságos tartalom (például képek) az oldalon.
 identity-description-active-loaded = A weboldal nem biztonságos elemeket (például parancsfájlokat) tartalmaz, és a kapcsolat nem biztonságos.
 identity-description-active-loaded-insecure = Az oldalnak elküldött információkat mások is láthatják (például a jelszavakat, üzeneteket, bankkártya-adatokat stb.).
-identity-learn-more =
-    .value = További tudnivalók
 identity-disable-mixed-content-blocking =
     .label = Védelem kikapcsolása most
     .accesskey = k
@@ -485,14 +467,10 @@ popup-select-microphone-icon =
     .tooltiptext = Mikrofon
 popup-select-speaker-icon =
     .tooltiptext = Hangeszközök
+popup-select-window-or-screen =
+    .label = Ablak vagy képernyő:
+    .accesskey = A
 popup-all-windows-shared = A képernyő minden látható ablaka meg lesz osztva.
-popup-screen-sharing-block =
-    .label = Tiltás
-    .accesskey = T
-popup-screen-sharing-always-block =
-    .label = Tiltás mindig
-    .accesskey = i
-popup-mute-notifications-checkbox = Webhely értesítéseinek elnémítása megosztás közben
 
 ## WebRTC window or screen share tab switch warning
 
@@ -505,7 +483,7 @@ sharing-warning-disable-for-session =
 
 ## DevTools F12 popup
 
-enable-devtools-popup-description = Az F12 gyorsbillentyű használatához először nyissa meg fejlesztői eszközöket a Webfejlesztő menüben.
+enable-devtools-popup-description2 = Az F12 gyorsbillentyű használatához először nyissa meg fejlesztői eszközöket a Böngészőeszközök menüből.
 
 ## URL Bar
 
@@ -585,6 +563,8 @@ urlbar-result-action-search-w-engine = { $engine } keresés
 urlbar-result-action-sponsored = Szponzorált
 urlbar-result-action-switch-tab = Váltás erre a lapra
 urlbar-result-action-visit = Keresse fel:
+# Allows the user to visit a URL that was previously copied to the clipboard.
+urlbar-result-action-visit-from-your-clipboard = Felkeresés a vágólapról
 # Directs a user to press the Tab key to perform a search with the specified
 # engine.
 # Variables
@@ -638,6 +618,29 @@ urlbar-group-search-suggestions =
 urlbar-group-quickactions =
     .label = Gyors műveletek
 
+## Reader View toolbar buttons
+
+# This should match menu-view-enter-readerview in menubar.ftl
+reader-view-enter-button =
+    .aria-label = Belépés olvasó nézetbe
+# This should match menu-view-close-readerview in menubar.ftl
+reader-view-close-button =
+    .aria-label = Olvasó nézet bezárása
+
+## Picture-in-Picture urlbar button
+## Variables:
+##   $shortcut (String) - Keyboard shortcut to execute the command.
+
+picture-in-picture-urlbar-button-open =
+    .tooltiptext = Kép a képben megnyitása ({ $shortcut })
+picture-in-picture-urlbar-button-close =
+    .tooltiptext = Kép a képben bezárása ({ $shortcut })
+picture-in-picture-panel-header = Kép a képben
+picture-in-picture-panel-headline = A weboldal nem ajánlja a Kép a képben módot
+picture-in-picture-panel-body = Előfordulhat, hogy a videók nem a fejlesztő által kívánt módon jelennek meg, ha a Kép a képben funkció engedélyezett.
+picture-in-picture-enable-toggle =
+    .label = Engedélyezés mindenképp
+
 ## Full Screen and Pointer Lock UI
 
 # Please ensure that the domain stays in the `<span data-l10n-name="domain">` markup.
@@ -654,19 +657,6 @@ fullscreen-exit-mac-button = Kilépés a teljes képernyőből (esc)
 pointerlock-warning-domain = A következő irányítja az egérmutatót: <span data-l10n-name="domain">{ $domain }</span> . Nyomja meg az Esc gombot az irányítás visszavételéhez.
 pointerlock-warning-no-domain = Ez a dokumentum vezérli az egérmutatóját. Nyomja meg az Esc gombot az irányítás visszavételéhez.
 
-## Subframe crash notification
-
-crashed-subframe-message = <strong>Az oldal egy része összeomlott.</strong> Küldjön egy jelentést a { -brand-product-name } fejlesztőinek, hogy gyorsabban elháríthassák a problémát.
-# The string for crashed-subframe-title.title should match crashed-subframe-message,
-# but without any markup.
-crashed-subframe-title =
-    .title = Az oldal egy része összeomlott. Küldjön egy jelentést a { -brand-product-name } fejlesztőinek, hogy gyorsabban elháríthassák a problémát.
-crashed-subframe-learnmore-link =
-    .value = További tudnivalók
-crashed-subframe-submit =
-    .label = Jelentés beküldése
-    .accesskey = b
-
 ## Bookmarks panels, menus and toolbar
 
 bookmarks-manage-bookmarks =
@@ -682,6 +672,11 @@ bookmarks-other-bookmarks-menu =
     .label = Más könyvjelzők
 bookmarks-mobile-bookmarks-menu =
     .label = Mobil könyvjelzők
+
+## Variables:
+##   $isVisible (boolean): if the specific element (e.g. bookmarks sidebar,
+##                         bookmarks toolbar, etc.) is visible or not.
+
 bookmarks-tools-sidebar-visibility =
     .label =
         { $isVisible ->
@@ -706,12 +701,13 @@ bookmarks-tools-menu-button-visibility =
             [true] Könyvjelzők menü eltávolítása az eszköztárról
            *[other] Könyvjelzők menü hozzáadása az eszköztárhoz
         }
+
+##
+
 bookmarks-search =
     .label = Könyvjelzők keresése
 bookmarks-tools =
     .label = Könyvjelzőzési eszközök
-bookmarks-bookmark-edit-panel =
-    .label = Könyvjelző szerkesztése
 bookmarks-subview-edit-bookmark =
     .label = Könyvjelző szerkesztése…
 # The aria-label is a spoken label that should not include the word "toolbar" or
@@ -727,9 +723,6 @@ bookmarks-toolbar-placeholder =
     .title = Könyvjelző eszköztár elemei
 bookmarks-toolbar-placeholder-button =
     .label = Könyvjelző eszköztár elemei
-# "Bookmark" is a verb, as in "Add current tab to bookmarks".
-bookmarks-current-tab =
-    .label = Jelenlegi lap könyvjelzőzése
 # "Bookmark" is a verb, as in "Add current tab to bookmarks".
 bookmarks-subview-bookmark-tab =
     .label = Jelenlegi lap könyvjelzőzése…
@@ -756,11 +749,6 @@ repair-text-encoding-button =
 ## Customize Toolbar Buttons
 
 # Variables:
-#  $shortcut (String): keyboard shortcut to open the add-ons manager
-toolbar-addons-themes-button =
-    .label = Kiegészítők és témák
-    .tooltiptext = Kiegészítők és témák kezelése ({ $shortcut })
-# Variables:
 #  $shortcut (String): keyboard shortcut to open settings (only on macOS)
 toolbar-settings-button =
     .label = Beállítások
@@ -775,6 +763,9 @@ toolbar-overflow-customize-button =
 toolbar-button-email-link =
     .label = Hivatkozás küldése
     .tooltiptext = Az oldalra mutató hivatkozás küldése e-mailben
+toolbar-button-logins =
+    .label = Jelszavak
+    .tooltiptext = A mentett jelszavak megtekintése és kezelése
 # Variables:
 #  $shortcut (String): keyboard shortcut to save a copy of the page
 toolbar-button-save-page =
@@ -806,13 +797,6 @@ eme-notifications-drm-content-playing-dismiss-accesskey = E
 
 panel-save-update-username = Felhasználónév
 panel-save-update-password = Jelszó
-
-## Add-on removal warning
-
-# Variables:
-#  $name (String): The name of the addon that will be removed.
-addon-removal-title = Eltávoltja a következőt: { $name }?
-addon-removal-abuse-report-checkbox = A kiegészítő jelentése a { -vendor-short-name } felé
 
 ##
 
@@ -881,8 +865,6 @@ navbar-library =
     .tooltiptext = Előzmények, mentett könyvjelzők megtekintése
 navbar-search =
     .title = Keresés
-navbar-accessibility-indicator =
-    .tooltiptext = Akadálymentesítési funkciók engedélyezve
 # Name for the tabs toolbar as spoken by screen readers. The word
 # "toolbar" is appended automatically and should not be included in
 # in the string
@@ -900,7 +882,7 @@ tabs-toolbar-list-all-tabs =
 restore-session-startup-suggestion-message = <strong>Megnyitná az előző lapokat?</strong> Visszaállíthatja az előző munkamenetét a { -brand-short-name } alkalmazásmenüben <img data-l10n-name="icon"/>, az Előzmények alatt.
 restore-session-startup-suggestion-button = Mutassa meg hogyan
 
-## Waterfox data reporting notification (Telemetry, Waterfox Health Report, etc)
+## BrowserWorks data reporting notification (Telemetry, Waterfox Health Report, etc)
 
 data-reporting-notification-message = A { -brand-short-name } automatikusan adatokat küld a { -vendor-short-name } számára, hogy javíthassuk a felhasználói élményt.
 data-reporting-notification-button =
@@ -914,3 +896,72 @@ private-browsing-indicator-label = Privát böngészés
 unified-extensions-button =
     .label = Kiegészítők
     .tooltiptext = Kiegészítők
+
+## Unified extensions button when permission(s) are needed.
+## Note that the new line is intentionally part of the tooltip.
+
+unified-extensions-button-permissions-needed =
+    .label = Kiegészítők
+    .tooltiptext =
+        Kiegészítők
+        Jogosultságok szükségesek
+
+## Unified extensions button when some extensions are quarantined.
+## Note that the new line is intentionally part of the tooltip.
+
+unified-extensions-button-quarantined =
+    .label = Kiegészítők
+    .tooltiptext =
+        Kiegészítők
+        Egyes kiegészítők nem engedélyezettek
+
+## Autorefresh blocker
+
+refresh-blocked-refresh-label = A { -brand-short-name } megakadályozta, hogy az oldal automatikusan újratöltődjön.
+refresh-blocked-redirect-label = A { -brand-short-name } megakadályozta, hogy az oldal automatikusan átirányítson egy másik oldalra.
+refresh-blocked-allow =
+    .label = Engedélyezés
+    .accesskey = E
+
+## Waterfox Relay integration
+
+firefox-relay-offer-why-to-use-relay = Biztonságos, könnyen használható maszkjaink az e-mail-címének elrejtésével védik személyazonosságát, és megakadályozzák a levélszemetet.
+# Variables:
+#  $useremail (String): user email that will receive messages
+firefox-relay-offer-what-relay-provides = Az e-mail-maszkjaira küldött levelek a(z) <strong>{ $useremail }</strong> címre lesznek továbbítva (hacsak nem dönt úgy, hogy letiltja őket).
+firefox-relay-offer-legal-notice = Az „E-mail-maszk használata” gombra kattintással elfogadja a <label data-l10n-name="tos-url">Szolgáltatási feltételeket</label> és az <label data-l10n-name="privacy-url">Adatvédelmi nyilatkozatot</label>.
+
+## Add-on Pop-up Notifications
+
+popup-notification-addon-install-unsigned =
+    .value = (Ellenőrizetlen)
+popup-notification-xpinstall-prompt-learn-more = Tudjon meg többet a bővítmények biztonságos telepítéséről
+
+## Pop-up warning
+
+# Variables:
+#   $popupCount (Number): the number of pop-ups blocked.
+popup-warning-message =
+    { $popupCount ->
+        [one] A { -brand-short-name } megakadályozta, hogy ez a webhely felugró ablakot nyisson meg.
+       *[other] A { -brand-short-name } megakadályozta, hogy ez a webhely { $popupCount } felugró ablakot nyisson meg.
+    }
+# The singular form is left out for English, since the number of blocked pop-ups is always greater than 1.
+# Variables:
+#   $popupCount (Number): the number of pop-ups blocked.
+popup-warning-exceeded-message = A { -brand-short-name } megakadályozta, hogy ez a webhely több mint { $popupCount } felugró ablakot nyisson meg.
+popup-warning-button =
+    .label =
+        { PLATFORM() ->
+            [windows] Beállítások
+           *[other] Beállítások
+        }
+    .accesskey =
+        { PLATFORM() ->
+            [windows] B
+           *[other] B
+        }
+# Variables:
+#   $popupURI (String): the URI for the pop-up window
+popup-show-popup-menuitem =
+    .label = „{ $popupURI }” megjelenítése

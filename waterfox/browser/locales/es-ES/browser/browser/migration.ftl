@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,6 +60,9 @@ import-from-firefox =
 import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
 
 no-migration-sources = No se pudieron encontrar programas que contuvieran marcadores, historial o datos de contraseñas.
 
@@ -64,8 +73,8 @@ import-items-description = Seleccione qué elementos importar:
 
 import-permissions-page-title = Por favor, dé permisos a { -brand-short-name }
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = macOS requiere que permita explícitamente a { -brand-short-name } acceder a los marcadores de Safari. Haga clic en “Continuar” y seleccione el archivo “Bookmarks.plist” en el panel de abrir archivo que se mostrará.
+# Do not translate "Safari" (the name of the browser on Apple devices)
+import-safari-permissions-string = macOS requiere que permita explícitamente a { -brand-short-name } acceder a los datos de Safari. Haga clic en “Continuar”, seleccione la carpeta “Safari“ en el diálogo de Finder que aparece y haga clic en “Abrir”.
 
 import-migrating-page-title = Importando…
 
@@ -158,3 +167,8 @@ browser-data-session-checkbox =
     .label = Ventanas y pestañas
 browser-data-session-label =
     .value = Ventanas y pestañas
+
+browser-data-payment-methods-checkbox =
+    .label = Métodos de pago
+browser-data-payment-methods-label =
+    .value = Métodos de pago

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,7 @@ region-name-bl = セント バーソロミュー
 region-name-bm = バミューダ諸島
 region-name-bn = ブルネイ
 region-name-bo = ボリビア
-region-name-bq = ボネール、シント ユースタティウス、サバ
+region-name-bq-2018 = オランダカリブ領域
 region-name-br = ブラジル
 region-name-bs = バハマ国
 region-name-bt = ブータン
@@ -57,11 +57,11 @@ region-name-co = コロンビア
 region-name-cp = クリッパートン島
 region-name-cr = コスタ リカ
 region-name-cu = キューバ
-region-name-cv = カーボベルデ
+region-name-cv-2020 = カーボベルデ
 region-name-cw = キュラソー
 region-name-cx = クリスマス島
 region-name-cy = キプロス
-region-name-cz = チェコ共和国
+region-name-cz-2019 = チェコ共和国 (チェキア)
 region-name-de = ドイツ
 region-name-dg = ディエゴガルシア
 region-name-dj = ジブチ
@@ -150,7 +150,7 @@ region-name-me = モンテネグロ
 region-name-mf = サンマルタン
 region-name-mg = マダガスカル
 region-name-mh = マーシャル諸島
-region-name-mk = マケドニア
+region-name-mk-2019 = 北マケドニア
 region-name-ml = マリ
 region-name-mm = ミャンマー (ビルマ)
 region-name-mn = モンゴル
@@ -223,7 +223,7 @@ region-name-st = サントメ プリンシペ
 region-name-sv = エルサルバドル
 region-name-sx = シント マールテン
 region-name-sy = シリア
-region-name-sz = スワジランド
+region-name-sz-2019 = エスワティニ
 region-name-tc = タークス諸島 カイコス諸島
 region-name-td = チャド
 region-name-tf = フランス領南方 南極地域
