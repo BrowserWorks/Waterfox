@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,6 @@ screenshots-private-window-error-details = Omlouváme se za nepříjemnosti. Na 
 
 screenshots-generic-error-title = Jejda! Služba { -screenshots-brand-name } přestala pracovat.
 screenshots-generic-error-details = Nejsme si jistí, co se právě stalo. Chcete to zkusit znovu, nebo zkusíte pořídit snímek na jiné stránce?
+
+screenshots-too-large-error-title = Váš snímek stránky byl oříznut, protože byl příliš veliký
+screenshots-too-large-error-details = Zkuste vybrat oblast s delší stranou menší než 32700 pixelů, nebo s celkovou plochou menší než 124900000 pixelů.

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,7 +18,7 @@ about-private-browsing-handoff-no-engine =
 #  $engine (String): the name of the user's default search engine
 about-private-browsing-handoff-text = { $engine } 검색 또는 주소 입력
 about-private-browsing-handoff-text-no-engine = 검색어 또는 주소 입력
-about-private-browsing-not-private = 현재 사생활 보호 창에 있지 않습니다.
+about-private-browsing-not-private = 사용자가 현재 사생활 보호 창에 있지 않습니다.
 about-private-browsing-info-description-private-window = 사생활 보호 창: { -brand-short-name }는 모든 사생활 보호 창을 닫을 때 검색 및 방문 기록을 지웁니다. 이것이 사용자를 익명으로 만들지는 않습니다.
 about-private-browsing-info-description-simplified = { -brand-short-name }는 모든 사생활 보호 창을 닫을 때 검색 및 방문 기록을 지우지만 사용자를 익명으로 만들지는 않습니다.
 about-private-browsing-learn-more-link = 더 알아보기
@@ -60,3 +60,17 @@ about-private-browsing-pin-promo-link-text =
        *[other] 작업 표시줄에 고정
     }
 about-private-browsing-pin-promo-title = 쿠키나 기록이 저장되지 않습니다. 아무도 보고 있지 않은 것처럼 탐색하세요.
+
+## Strings used in a promotion message for cookie banner reduction
+
+# Simplified version of the headline if the original text doesn't work
+# in your language: `See fewer cookie requests`.
+about-private-browsing-cookie-banners-promo-header = 쿠키 배너가 사라졌습니다!
+about-private-browsing-cookie-banners-promo-button = 쿠키 배너 줄이기
+about-private-browsing-cookie-banners-promo-message = { -brand-short-name }가 쿠키 팝업에 자동으로 응답하도록 하여 방해받지 않고 탐색할 수 있습니다. { -brand-short-name }는 가능한 경우 모든 요청을 거부합니다.
+
+## Strings for Felt Privacy v1 experiments in 119
+
+about-private-browsing-felt-privacy-v1-info-header = 이 기기에 흔적을 남기지 마세요
+about-private-browsing-felt-privacy-v1-info-body = { -brand-short-name }는 모든 사생활 보호 창을 닫을 때 쿠키, 기록 및 사이트 데이터를 삭제합니다.
+about-private-browsing-felt-privacy-v1-info-link = 누가 내 활동을 볼 수 있나요?

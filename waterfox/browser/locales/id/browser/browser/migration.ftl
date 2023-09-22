@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,6 +60,9 @@ import-from-firefox =
 import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = O
 
 no-migration-sources = Tidak ada program yang berisi markah, riwayat atau sandi yang bisa ditemukan.
 
@@ -63,9 +72,6 @@ import-items-page-title = Pilih yang akan diimpor
 import-items-description = Pilih yang akan diimpor:
 
 import-permissions-page-title = Mohon beri izin kepada { -brand-short-name }
-
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = macOS memerlukan izin Anda secara eksplisit agar { -brand-short-name } dapat mengakses markah Safari. Klik "Lanjutkan" dan pilih berkas “Bookmarks.plist” pada panel Buka Berkas yang muncul.
 
 import-migrating-page-title = Mengimpor…
 
@@ -158,3 +164,4 @@ browser-data-session-checkbox =
     .label = Jendela dan Tab
 browser-data-session-label =
     .value = Jendela dan Tab
+

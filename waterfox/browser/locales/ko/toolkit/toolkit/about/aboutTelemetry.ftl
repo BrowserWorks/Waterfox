@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -19,7 +19,7 @@ about-telemetry-current-store = 현재 저장소:
 about-telemetry-more-information = 자세한 정보를 찾고 계십니까?
 about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Waterfox 데이터 문서</a>에 데이터 도구를 사용하는 방법에 대한 안내서가 포함되어 있습니다.
 about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Waterfox 원격 분석 클라이언트 문서</a>에 개요, API 문서 및 데이터 참조에 대한 정의가 포함되어 있습니다.
-about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">원격 분석 대시보드</a>를 사용하면 원격 분석을 통해 Waterfox가 받는 데이터를 시각화 할 수 있습니다.
+about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">원격 분석 대시보드</a>를 사용하면 원격 분석을 통해 BrowserWorks가 받는 데이터를 시각화 할 수 있습니다.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">프로브 사전</a>은 원격 분석에 의해 수집된 조사 내용에 대한 상세 정보와 설명을 제공합니다.
 about-telemetry-show-in-Waterfox-json-viewer = JSON 뷰어에서 열기
 about-telemetry-home-section = 홈
@@ -66,7 +66,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } 샘플, 평균 = { $prettyAverage }, 합계 = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "BrowserWorks"
 about-telemetry-page-subtitle = 이 페이지는 원격 분석에 의해서 수집된 성능, 하드웨어, 사용 현황 및 사용자 정의에 대한 정보를 표시합니다. 이 정보는 { -brand-full-name }의 개선을 위해 { $telemetryServerOwner }에 제출됩니다.
 about-telemetry-settings-explanation = 원격 분석이 { about-telemetry-data-type }를 수집 중이며 업로드는 <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>입니다.
 # Variables:
@@ -130,12 +130,6 @@ about-telemetry-category-header = 카테고리
 about-telemetry-method-header = 메서드
 about-telemetry-object-header = 객체
 about-telemetry-extra-header = 추가
-about-telemetry-origin-section = Origin Telemetry
-about-telemetry-origin-origin = origin
-about-telemetry-origin-count = 개수
-# Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Waterfox Origin Telemetry</a>는 전송되기 전에 데이터를 인코딩하여 { $telemetryServerOwner }가 항목의 수를 셀 수는 있지만, 주어진 { -brand-product-name }가 해당 카운트에 기여했는지 여부는 알 수 없습니다. (<a data-l10n-name="prio-blog-link">더 알아보기</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = { $process } 프로세스

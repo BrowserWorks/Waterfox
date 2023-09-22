@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -117,7 +117,7 @@ language-name-ltg = Letgallo
 language-name-lu = Luba-Katanga
 language-name-lv = Lettone
 language-name-mai = Maithili
-language-name-meh = Mixteco del sud-est Tlaxiaco
+language-name-meh = Mixteco del Tlaxiaco sud-occidentale
 language-name-mg = Malgascio
 language-name-mh = Marshallese
 language-name-mi = Maori
@@ -158,6 +158,7 @@ language-name-ro = Rumeno
 language-name-ru = Russo
 language-name-rw = Kinyarwanda
 language-name-sa = Sanscrito
+language-name-sat = Santali
 language-name-sc = Sardo
 language-name-sco = Scots
 language-name-sd = Sindhi

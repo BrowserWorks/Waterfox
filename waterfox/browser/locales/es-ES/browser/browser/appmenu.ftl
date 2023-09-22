@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,6 +38,8 @@ appmenuitem-print =
     .label = Imprimir…
 appmenuitem-find-in-page =
     .label = Buscar en la página…
+appmenuitem-translate =
+    .label = Traducir página…
 appmenuitem-zoom =
     .value = Tamaño
 appmenuitem-more-tools =
@@ -144,8 +146,7 @@ profiler-popup-button-capturing =
     .label = Analizador
     .tooltiptext = El analizador está capturando un perfil
 
-profiler-popup-title =
-    .value = { -profiler-brand-name }
+profiler-popup-header-text = { -profiler-brand-name }
 
 profiler-popup-reveal-description-button =
     .aria-label = Revelar más información
@@ -196,6 +197,11 @@ profiler-popup-capture-shortcut =
 # devtools/client/performance-new/popup/background.jsm.js
 # Please take care that the same values are also defined in devtools' perftools.ftl.
 
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/shared/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
 profiler-popup-presets-web-developer-description = Configuración recomendada para la depuración de la mayoría de aplicaciones web, con poca sobrecarga.
 profiler-popup-presets-web-developer-label =
     .label = Desarrollador web
@@ -216,6 +222,11 @@ profiler-popup-presets-networking-description = Preestablecido para investigar p
 profiler-popup-presets-networking-label =
     .label = Red
 
+profiler-popup-presets-power-description = Preestablecido para investigar errores relacionados con el consumo de energía en { -brand-shorter-name }, con poca sobrecarga.
+# "Power" is used in the sense of energy (electricity used by the computer).
+profiler-popup-presets-power-label =
+    .label = Energía
+
 profiler-popup-presets-custom-label =
     .label = Personalizado
 
@@ -223,8 +234,6 @@ profiler-popup-presets-custom-label =
 
 appmenu-manage-history =
     .label = Administrar historial
-appmenu-reopen-all-tabs = Reabrir todas las pestañas
-appmenu-reopen-all-windows = Reabrir todas las ventanas
 appmenu-restore-session =
     .label = Restaurar sesión anterior
 appmenu-clear-history =
@@ -234,6 +243,9 @@ appmenu-recently-closed-tabs =
     .label = Pestañas cerradas recientemente
 appmenu-recently-closed-windows =
     .label = Ventanas cerradas recientemente
+# This allows to search through the browser's history.
+appmenu-search-history =
+    .label = Buscar en el historial
 
 ## Help panel
 
@@ -253,6 +265,8 @@ appmenu-help-report-site-issue =
 appmenu-help-share-ideas =
     .label = Compartir ideas y opiniones…
     .accesskey = s
+appmenu-help-switch-device =
+    .label = Cambiar a un nuevo dispositivo
 
 ## appmenu-help-enter-troubleshoot-mode and appmenu-help-exit-troubleshoot-mode
 ## are mutually exclusive, so it's possible to use the same accesskey for both.

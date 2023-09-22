@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -164,11 +164,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = 將於 { $hours } 時 { $minutes } 分後開啟…
-downloading-file-opens-in-minutes = 將於 { $minutes } 分後開啟…
-downloading-file-opens-in-minutes-and-seconds = 將於 { $minutes } 分 { $seconds } 秒後開啟…
-downloading-file-opens-in-seconds = 將於 { $seconds } 秒後開啟…
-downloading-file-opens-in-some-time = 將於下載完成時開啟…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = 將於 { $hours } 時 { $minutes } 分後開啟…
+downloading-file-opens-in-minutes-2 =
+    .value = 將於 { $minutes } 分後開啟…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = 將於 { $minutes } 分 { $seconds } 秒後開啟…
+downloading-file-opens-in-seconds-2 =
+    .value = 將於 { $seconds } 秒後開啟…
+downloading-file-opens-in-some-time-2 =
+    .value = 將於下載完成時開啟…
 downloading-file-click-to-open =
     .value = 於下載完成時開啟
 
@@ -232,3 +237,17 @@ downloads-more-downloading =
     { $count ->
        *[other] 還在下載 { $count } 個檔案
     }
+
+## Download errors
+
+downloads-error-alert-title = 下載錯誤
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = 由於被 { $extension } 封鎖，無法儲存此下載項目。
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = 由於被擴充套件封鎖，無法儲存此下載項目。
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    下載工作無法進行，因為發生未知錯誤。
+    
+    請再試一次。

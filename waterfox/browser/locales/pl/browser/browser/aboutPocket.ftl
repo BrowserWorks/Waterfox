@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,14 +22,13 @@ pocket-panel-saved-page-removed = Usunięto stronę
 pocket-panel-saved-page-saved = Wysłano do { -pocket-brand-name }
 pocket-panel-saved-page-saved-b = Wysłano do { -pocket-brand-name }!
 pocket-panel-saved-processing-remove = Usuwanie strony…
-pocket-panel-saved-removed = Usunięto stronę z mojej listy
+pocket-panel-saved-removed-updated = Usunięto stronę z ostatnio zapisanych
 pocket-panel-saved-processing-tags = Dodawanie etykiet…
 pocket-panel-saved-remove-page = Usuń stronę
 pocket-panel-saved-save-tags = Wyślij
 pocket-panel-saved-saving-tags = Wysyłanie…
 pocket-panel-saved-suggested-tags = Sugerowane etykiety
 pocket-panel-saved-tags-saved = Dodano etykiety
-pocket-panel-signup-view-list = Otwórz listę
 
 # This is displayed above a field where the user can add tags
 pocket-panel-signup-add-tags = Dodaj etykiety:
@@ -47,13 +46,12 @@ pocket-panel-signup-tagline-story-one = Kliknij przycisk { -pocket-brand-name },
 pocket-panel-signup-tagline-story-two = Czytaj z { -pocket-brand-name } o dowolnej porze na dowolnym urządzeniu.
 
 pocket-panel-signup-cta-a-fix = Twój przycisk „Zapisz” do Internetu
-pocket-panel-signup-cta-b = Kliknij przycisk { -pocket-brand-name }, aby zapisać artykuły, filmy i odnośniki. Wyświetlaj swoją listę o dowolnej porze na dowolnym urządzeniu.
+pocket-panel-signup-cta-b-updated = Kliknij przycisk { -pocket-brand-name }, aby zapisać artykuły, filmy i odnośniki. Wyświetlaj je o dowolnej porze na dowolnym urządzeniu.
 pocket-panel-signup-cta-b-short = Kliknij przycisk { -pocket-brand-name }, aby zapisać artykuły, filmy i odnośniki.
-pocket-panel-signup-cta-c = Wyświetlaj swoją listę o dowolnej porze na dowolnym urządzeniu.
+pocket-panel-signup-cta-c-updated = Wyświetlaj je o dowolnej porze na dowolnym urządzeniu.
 
 ## about:pocket-home panel
 
-pocket-panel-home-my-list = Moja lista
 pocket-panel-home-welcome-back = Witaj ponownie
 pocket-panel-home-paragraph = Za pomocą { -pocket-brand-name } możesz odkrywać i zachowywać strony, artykuły, filmy i podcasty lub wracać do tego, co lubisz czytać.
 pocket-panel-home-explore-popular-topics = Przeglądaj popularne tematy
@@ -67,7 +65,7 @@ pocket-panel-home-new-user-message = Tutaj będą wyświetlane ostatnio zapisane
 
 ## Pocket panel header component
 
-pocket-panel-header-my-list = Otwórz moją listę
+pocket-panel-header-my-saves = Otwórz ostatnio zapisane
 pocket-panel-header-sign-in = Zaloguj się
 
 ## Pocket panel buttons

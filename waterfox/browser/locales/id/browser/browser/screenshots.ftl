@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,6 @@ screenshots-private-window-error-details = Maaf atas ketidaknyamanannya. Kami se
 
 screenshots-generic-error-title = Wah! { -screenshots-brand-name } mendadak kacau.
 screenshots-generic-error-details = Kami tidak yakin akan apa yang terjadi. Ingin mencoba lagi atau merekam gambar dari laman yang berbeda?
+
+screenshots-too-large-error-title = Tangkapan layar Anda dipotong karena terlalu besar
+screenshots-too-large-error-details = Coba pilih bidang yang lebih kecil dari 32.700 piksel pada sisi terpanjangnya atau total luas 124.900.000 piksel.

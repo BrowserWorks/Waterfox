@@ -1,13 +1,19 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 do-not-track-description = 傳送「Do Not Track」訊號，告訴網站您不想被追蹤
+do-not-track-description2 =
+    .label = 告訴網站「不要追蹤我」
+    .accesskey = d
 do-not-track-learn-more = 了解更多
 do-not-track-option-default-content-blocking-known =
     .label = 僅在 { -brand-short-name } 設定為封鎖已知追蹤器時
 do-not-track-option-always =
     .label = 總是
+global-privacy-control-description =
+    .label = 告訴網站不要銷售或分享我的資料
+    .accesskey = s
 settings-page-title = 設定
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
@@ -71,7 +77,7 @@ restart-later = 稍後再重新啟動
 ## <img data-l10n-name="icon"/> is going to be replaced by the extension icon.
 ##
 ## Variables:
-##   $name (String): name of the extension
+##   $name (string) - Name of the extension
 
 # This string is shown to notify the user that the password manager setting
 # is being controlled by an extension
@@ -120,6 +126,11 @@ startup-restore-warn-on-quit =
     .label = 關閉瀏覽器時警告您
 disable-extension =
     .label = 停用擴充套件
+preferences-data-migration-header = 匯入瀏覽器資料
+preferences-data-migration-description = 將書籤、密碼、瀏覽紀錄與網頁自動填寫資料匯入到 { -brand-short-name }。
+preferences-data-migration-button =
+    .label = 匯入資料
+    .accesskey = m
 tabs-group-header = 分頁
 ctrl-tab-recently-used-order =
     .label = 按下 Ctrl+Tab 時，依照最近使用分頁的順序切換分頁標籤
@@ -132,7 +143,7 @@ confirm-on-close-multiple-tabs =
     .accesskey = m
 # This string is used for the confirm before quitting preference.
 # Variables:
-#   $quitKey (String) - the quit keyboard shortcut, and formatted
+#   $quitKey (string) - the quit keyboard shortcut, and formatted
 #                       in the same manner as it would appear,
 #                       for example, in the File menu.
 confirm-on-quit-with-key =
@@ -155,12 +166,19 @@ browser-containers-settings =
     .label = 設定…
     .accesskey = i
 containers-disable-alert-title = 要關閉所有容器分頁嗎？
+
+## Variables:
+##   $tabCount (number) - Number of tabs
+
 containers-disable-alert-desc = 若您現在停用容器分頁，將關閉 { $tabCount } 個分頁。您真的要停用容器分頁嗎？
 containers-disable-alert-ok-button = 關閉 { $tabCount } 個容器分頁
+
+##
+
 containers-disable-alert-cancel-button = 保持開啟
 containers-remove-alert-title = 要移除這個容器嗎？
 # Variables:
-#   $count (Number) - Number of tabs that will be closed.
+#   $count (number) - Number of tabs that will be closed.
 containers-remove-alert-msg = 若您現在移除此容器，將關閉 { $count } 個容器分頁。您確定要移除此容器嗎？
 containers-remove-ok-button = 移除此容器
 containers-remove-cancel-button = 不要移除此容器
@@ -170,22 +188,17 @@ containers-remove-cancel-button = 不要移除此容器
 language-and-appearance-header = 語言與外觀
 preferences-web-appearance-header = 網站外觀
 preferences-web-appearance-description = 某些網站可依照您的偏好來調整顯示配色，可在此決定要針對這些網站使用哪種配色模式。
-preferences-web-appearance-choice-browser = { -brand-short-name } 佈景主題
-preferences-web-appearance-choice-system = 系統佈景主題
+preferences-web-appearance-choice-auto = 自動
 preferences-web-appearance-choice-light = 亮色
 preferences-web-appearance-choice-dark = 暗色
-preferences-web-appearance-choice-tooltip-browser =
-    .title = 在網站背景與內容使用與 { -brand-short-name } 佈景主題設定相符的配色。
-preferences-web-appearance-choice-tooltip-system =
-    .title = 在網站背景與內容使用與您的系統設定相符的配色。
+preferences-web-appearance-choice-tooltip-auto =
+    .title = 依照系統設定與 { -brand-short-name } 佈景主題設定，自動更改網頁與背景與內容。
 preferences-web-appearance-choice-tooltip-light =
     .title = 在網站背景與內容使用亮色外觀。
 preferences-web-appearance-choice-tooltip-dark =
     .title = 在網站背景與內容使用暗色外觀。
-preferences-web-appearance-choice-input-browser =
-    .aria-description = { preferences-web-appearance-choice-tooltip-browser.title }
-preferences-web-appearance-choice-input-system =
-    .aria-description = { preferences-web-appearance-choice-tooltip-system.title }
+preferences-web-appearance-choice-input-auto =
+    .aria-description = { preferences-web-appearance-choice-tooltip-auto.title }
 preferences-web-appearance-choice-input-light =
     .aria-description = { preferences-web-appearance-choice-tooltip-light.title }
 preferences-web-appearance-choice-input-dark =
@@ -213,6 +226,8 @@ advanced-fonts =
 preferences-zoom-header = 縮放
 preferences-default-zoom = 預設縮放比例
     .accesskey = z
+# Variables:
+#   $percentage (number) - Zoom percentage value
 preferences-default-zoom-value =
     .label = { $percentage }%
 preferences-zoom-text-only =
@@ -305,15 +320,15 @@ applications-manage-app =
 applications-always-ask =
     .label = 總是詢問
 # Variables:
-#   $type-description (String) - Description of the type (e.g "Portable Document Format")
-#   $type (String) - the MIME type (e.g application/binary)
+#   $type-description (string) - Description of the type (e.g "Portable Document Format")
+#   $type (string) - The MIME type (e.g application/binary)
 applications-type-description-with-type = { $type-description }（{ $type }）
 # Variables:
-#   $extension (String) - file extension (e.g .TXT)
-#   $type (String) - the MIME type (e.g application/binary)
+#   $extension (string) - File extension (e.g .TXT)
+#   $type (string) - The MIME type (e.g application/binary)
 applications-file-ending-with-type = { applications-file-ending }（{ $type }）
 # Variables:
-#   $plugin-name (String) - Name of a plugin (e.g Adobe Flash)
+#   $plugin-name (string) - Name of a plugin (e.g Adobe Flash)
 applications-use-plugin-in =
     .label = 使用 { $plugin-name } (在 { -brand-short-name } 開啟)
 applications-open-inapp =
@@ -356,6 +371,8 @@ play-drm-content =
 play-drm-content-learn-more = 了解更多
 update-application-title = { -brand-short-name } 更新
 update-application-description = 保持更新 { -brand-short-name }，獲得最佳效能、穩定度以及安全性。
+# Variables:
+# $version (string) - Waterfox version
 update-application-version = { $version } 版 <a data-l10n-name="learn-more">有什麼新鮮事</a>
 update-history =
     .label = 顯示更新紀錄…
@@ -382,7 +399,7 @@ update-application-suppress-prompts =
     .accesskey = n
 update-setting-write-failure-title2 = 儲存更新設定時發生錯誤
 # Variables:
-#   $path (String) - Path to the configuration file
+#   $path (string) - Path to the configuration file
 # The newlines between the main text and the line containing the path is
 # intentional so the path is easier to identify.
 update-setting-write-failure-message2 =
@@ -412,7 +429,7 @@ performance-limit-content-process-option = 內容處理程序數量限制
 performance-limit-content-process-enabled-desc = 調高內容處理程序的數量，可改善開啟多個分頁時的效能，但也會使用更多記憶體。
 performance-limit-content-process-blocked-desc = 僅能在多程序的 { -brand-short-name } 當中修改內容處理程序數量。<a data-l10n-name="learn-more">了解如何確認多程序模式是否已開啟</a>
 # Variables:
-#   $num - default value of the `dom.ipc.processCount` pref.
+#   $num (number) - Default value of the `dom.ipc.processCount` pref.
 performance-default-content-process-count =
     .label = { $num }（預設）
 
@@ -434,6 +451,9 @@ browsing-use-onscreen-keyboard =
 browsing-use-cursor-navigation =
     .label = 總是使用鍵盤方向鍵瀏覽網頁（鍵盤瀏覽）
     .accesskey = c
+browsing-use-full-keyboard-navigation =
+    .label = 使用 Tab 鍵在表單控制元件與鏈結間移動焦點
+    .accesskey = t
 browsing-search-on-start-typing =
     .label = 打字時直接搜尋頁面文字（隨打即找）
     .accesskey = x
@@ -474,10 +494,6 @@ home-newtabs-mode-label = 新分頁
 home-restore-defaults =
     .label = 回復為預設值
     .accesskey = R
-# "Waterfox" should be treated as a brand and kept in English,
-# while "Home" and "(Default)" can be localized.
-home-mode-choice-default =
-    .label = Waterfox 首頁（預設值）
 home-mode-choice-default-fx =
     .label = { -firefox-home-brand-name }（預設）
 home-mode-choice-custom =
@@ -503,8 +519,6 @@ choose-bookmark =
 
 ## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Waterfox 首頁內容
-home-prefs-content-description = 選擇要在您的 Waterfox 首頁顯示哪些內容。
 home-prefs-content-header2 = { -firefox-home-brand-name } 內容
 home-prefs-content-description2 = 選擇要在您的 { -firefox-home-brand-name } 畫面顯示哪些內容。
 home-prefs-search-header =
@@ -516,7 +530,7 @@ home-prefs-shortcuts-by-option-sponsored =
     .label = 贊助捷徑
 
 ## Variables:
-##  $provider (String): Name of the corresponding content provider, e.g "Pocket".
+##  $provider (string) - Name of the corresponding content provider, e.g "Pocket".
 
 home-prefs-recommended-by-header =
     .label = { $provider } 推薦
@@ -547,6 +561,8 @@ home-prefs-recent-activity-description = 近期造訪過的網站與內容精選
 home-prefs-snippets-header =
     .label = 隻字片語
 home-prefs-snippets-description-new = 來自 { -vendor-short-name } 及 { -brand-product-name } 的使用秘訣與新聞
+# Variables:
+#   $num (number) - Number of rows displayed
 home-prefs-sections-rows-option =
     .label = { $num } 行
 
@@ -571,6 +587,11 @@ search-suggestions-option =
 search-show-suggestions-url-bar-option =
     .label = 在網址列結果中顯示搜尋建議
     .accesskey = l
+# With this option enabled, on the search results page
+# the URL will be replaced by the search terms in the address bar
+# when using the current default search engine.
+search-show-search-term-option =
+    .label = 在預設搜尋引擎的搜尋結果頁面中，顯示搜尋關鍵字而不顯示網址
 # This string describes what the user will observe when the system
 # prioritizes search suggestions over browsing history in the results
 # that extend down from the address bar. In the original English string,
@@ -602,7 +623,7 @@ search-find-more-link = 尋找更多搜尋引擎
 # ('Duplicate' is an adjective)
 search-keyword-warning-title = 關鍵字重複
 # Variables:
-#   $name (String) - Name of a search engine.
+#   $name (string) - Name of a search engine.
 search-keyword-warning-engine = 您選用的關鍵字目前正被「{ $name }」所使用，請另選一個。
 search-keyword-warning-bookmark = 您選用的關鍵字目前正被書籤項目所使用，請另選一個。
 
@@ -622,7 +643,7 @@ containers-settings-button =
 containers-remove-button =
     .label = 移除
 
-## Waterfox Account - Signed out. Note that "Sync" and "Waterfox Account" are now
+## Waterfox account - Signed out. Note that "Sync" and "Waterfox account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = 把 Web 隨身帶著走
@@ -640,7 +661,7 @@ sync-signedout-account-signin3 =
 # to your language, but should not be changed or translated.
 sync-mobile-promo = 下載 Waterfox for<img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a>或<img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a>以與您的行動裝置同步。
 
-## Waterfox Account - Signed in
+## Waterfox account - Signed in
 
 sync-profile-picture =
     .tooltiptext = 更改個人資料照片
@@ -649,8 +670,15 @@ sync-sign-out =
     .accesskey = g
 sync-manage-account = 管理帳號
     .accesskey = o
+
+## Variables
+## $email (string) - Email used for Waterfox account
+
 sync-signedin-unverified = { $email } 未驗證。
 sync-signedin-login-failure = 請登入以重新連線 { $email }
+
+##
+
 sync-resend-verification =
     .label = 重寄驗證信
     .accesskey = d
@@ -673,10 +701,15 @@ prefs-sync-now =
     .labelnotsyncing = 立刻同步
     .accesskeynotsyncing = N
     .labelsyncing = 同步中…
+prefs-sync-now-button =
+    .label = 立刻同步
+    .accesskey = N
+prefs-syncing-button =
+    .label = 同步中…
 
 ## The list of things currently syncing.
 
-sync-currently-syncing-heading = 您目前正在同步下列項目:
+sync-syncing-across-devices-heading = 您連線的裝置會同步下列項目:
 sync-currently-syncing-bookmarks = 書籤
 sync-currently-syncing-history = 瀏覽紀錄
 sync-currently-syncing-tabs = 開啟分頁
@@ -691,13 +724,14 @@ sync-change-options =
 
 ## The "Choose what to sync" dialog.
 
-sync-choose-what-to-sync-dialog =
+sync-choose-what-to-sync-dialog3 =
     .title = 選擇要同步哪些資料
-    .style = width: 36em; min-height: 35em;
+    .style = min-width: 36em;
     .buttonlabelaccept = 儲存變更
     .buttonaccesskeyaccept = S
     .buttonlabelextra2 = 中斷連線…
     .buttonaccesskeyextra2 = D
+sync-choose-dialog-subtitle = 對同步項目的變更，將套用到所有連線的裝置上。
 sync-engine-bookmarks =
     .label = 書籤
     .accesskey = m
@@ -743,6 +777,16 @@ sync-device-name-save =
     .accesskey = v
 sync-connect-another-device = 連結其他裝置
 
+## These strings are shown in a desktop notification after the
+## user requests we resend a verification email.
+
+sync-verification-sent-title = 已寄出驗證信
+# Variables:
+#   $email (String): Email address of user's Waterfox account.
+sync-verification-sent-body = 已將驗證鏈結發送到 { $email }。
+sync-verification-not-sent-title = 無法傳送驗證信
+sync-verification-not-sent-body = 我們暫時無法寄出驗證信，請稍後再試。
+
 ## Privacy Section
 
 privacy-header = 瀏覽器隱私權
@@ -766,6 +810,9 @@ forms-breach-alerts =
     .label = 針對發生過資料外洩的網站顯示密碼警告
     .accesskey = b
 forms-breach-alerts-learn-more-link = 了解更多
+preferences-relay-integration-checkbox =
+    .label = 為您建議 { -relay-brand-name } 郵件轉寄信箱，幫助您保護實際信箱
+relay-integration-learn-more-link = 了解更多
 # Checkbox which controls filling saved logins into fields automatically when they appear, in some cases without user interaction.
 forms-fill-logins-and-passwords =
     .label = 自動填寫登入資訊與密碼
@@ -854,8 +901,8 @@ history-clear-button =
 sitedata-header = Cookie 與網站資料
 sitedata-total-size-calculating = 正在計算網站資料與快取大小…
 # Variables:
-#   $value (Number) - Value of the unit (for example: 4.6, 500)
-#   $unit (String) - Name of the unit (for example: "bytes", "KB")
+#   $value (number) - Value of the unit (for example: 4.6, 500)
+#   $unit (string) - Name of the unit (for example: "bytes", "KB")
 sitedata-total-size = 您儲存的 Cookie、網站資料與快取目前使用了 { $value } { $unit } 磁碟空間
 sitedata-learn-more = 了解更多
 sitedata-delete-on-close =
@@ -880,8 +927,8 @@ sitedata-option-block-cross-site-cookies =
     .label = 跨網站追蹤 Cookie，並隔離其餘跨網站 Cookie
 sitedata-option-block-unvisited =
     .label = 來自未造訪過網站的 Cookie
-sitedata-option-block-all-third-party =
-    .label = 所有第三方 Cookie（可能造成某些網站不正常）
+sitedata-option-block-all-cross-site-cookies =
+    .label = 所有跨網站 Cookie（可能會造成網站運作不正常）
 sitedata-option-block-all =
     .label = 所有 Cookie（會造成網站不正常）
 sitedata-clear =
@@ -894,6 +941,14 @@ sitedata-cookies-exceptions =
     .label = 管理例外網站…
     .accesskey = X
 
+## Privacy Section - Cookie Banner Handling
+
+cookie-banner-handling-header = 減少 Cookie 橫幅
+cookie-banner-handling-description = { -brand-short-name } 會自動在支援的網站，嘗試為您拒絕網站設定 Cookie 的請求。
+cookie-banner-learn-more = 了解更多
+forms-handle-cookie-banners =
+    .label = 減少 Cookie 橫幅
+
 ## Privacy Section - Address Bar
 
 addressbar-header = 網址列
@@ -904,6 +959,9 @@ addressbar-locbar-history-option =
 addressbar-locbar-bookmarks-option =
     .label = 書籤
     .accesskey = k
+addressbar-locbar-clipboard-option =
+    .label = 剪貼簿
+    .accesskey = C
 addressbar-locbar-openpage-option =
     .label = 開啟分頁
     .accesskey = O
@@ -929,6 +987,10 @@ content-blocking-enhanced-tracking-protection = 加強型追蹤保護
 content-blocking-section-top-level-description = 追蹤器會在網路上跟蹤您，收集您的興趣與喜好。{ -brand-short-name } 會封鎖許多追蹤器與其他有害指令碼。
 content-blocking-learn-more = 了解更多
 content-blocking-fpi-incompatibility-warning = 您已開啟第一方隔離（FPI）功能，會蓋掉 { -brand-short-name } 的某些 Cookie 設定。
+# There is no need to translate "Resist Fingerprinting (RFP)". This is a
+# feature that can only be enabled via about:config, and it's not exposed to
+# standard users (e.g. via Settings).
+content-blocking-rfp-incompatibility-warning = 您開啟了 Resist Fingerprinting (RFP) 功能，將蓋過 { -brand-short-name } 的部分數位指紋追蹤保護設定。此功能可能造成某些網站運作不正常。
 
 ## These strings are used to define the different levels of
 ## Enhanced Tracking Protection.
@@ -951,7 +1013,6 @@ content-blocking-etp-strict-desc = 保護更強大，但可能會導致某些網
 content-blocking-etp-custom-desc = 選擇要封鎖哪些追蹤器與指令碼。
 content-blocking-etp-blocking-desc = { -brand-short-name } 封鎖下列項目:
 content-blocking-private-windows = 隱私視窗中的追蹤內容
-content-blocking-cross-site-cookies-in-all-windows = 所有視窗中的跨網站 Cookie（包含追蹤用 Cookie）
 content-blocking-cross-site-cookies-in-all-windows2 = 所有視窗中的跨網站 Cookie
 content-blocking-cross-site-tracking-cookies = 跨網站追蹤 Cookie
 content-blocking-all-cross-site-cookies-private-windows = 隱私視窗中的跨網站 Cookie
@@ -960,14 +1021,16 @@ content-blocking-social-media-trackers = 社交媒體追蹤器
 content-blocking-all-cookies = 所有 Cookie
 content-blocking-unvisited-cookies = 來自未造訪過網站的 Cookie
 content-blocking-all-windows-tracking-content = 所有視窗中的追蹤內容
-content-blocking-all-third-party-cookies = 所有第三方 Cookie
+content-blocking-all-cross-site-cookies = 所有跨網站 Cookie
 content-blocking-cryptominers = 加密貨幣採礦程式
 content-blocking-fingerprinters = 數位指紋追蹤程式
-# "Test pilot" is used as a verb. Possible alternatives:
-# "Be the first to try", "Join an early experiment".
-content-blocking-etp-standard-tcp-rollout-checkbox =
-    .label = 試用我們有史以來最強大的隱私保護功能
-    .accesskey = T
+# The known fingerprinters are those that are known for collecting browser fingerprints from user devices. And
+# the suspected fingerprinters are those that we are uncertain about browser fingerprinting activities. But they could
+# possibly acquire browser fingerprints because of the behavior on accessing APIs that expose browser fingerprints.
+content-blocking-known-and-suspected-fingerprinters = 已知與疑似的數位指紋追蹤程式
+
+# The tcp-rollout strings are no longer used for the rollout but for tcp-by-default in the standard section
+
 # "Contains" here means "isolates", "limits".
 content-blocking-etp-standard-tcp-rollout-description = 全方位 Cookie 保護功能會將 Cookie 限制於您所在的網站當中，這樣追蹤器就無法透過 Cookie 在不同網站間追蹤您。
 content-blocking-etp-standard-tcp-rollout-learn-more = 了解更多
@@ -1003,6 +1066,18 @@ content-blocking-cryptominers-label =
 content-blocking-fingerprinters-label =
     .label = 數位指紋追蹤程式
     .accesskey = F
+# Browser fingerprinting is a method of tracking users by the configuration and settings information (their "digital fingerprint")
+# that is visible to websites they browse, rather than traditional tracking methods such as IP addresses and unique cookies.
+#
+# The known fingerprinters are those that are known for collecting browser fingerprints from user devices.
+content-blocking-known-fingerprinters-label =
+    .label = 已知的數位指紋追蹤程式
+    .accesskey = K
+# The suspected fingerprinters are those that we are uncertain about browser fingerprinting activities. But they could
+# possibly acquire browser fingerprints because of the behavior on accessing APIs that expose browser fingerprints.
+content-blocking-suspected-fingerprinters-label =
+    .label = 疑似是數位指紋追蹤程式
+    .accesskey = S
 
 ## Privacy Section - Tracking
 
@@ -1029,6 +1104,11 @@ permissions-microphone = 麥克風
 permissions-microphone-settings =
     .label = 設定…
     .accesskey = m
+# Short form for "the act of choosing sound output devices and redirecting audio to the chosen devices".
+permissions-speaker = 選擇喇叭
+permissions-speaker-settings =
+    .label = 設定…
+    .accesskey = t
 permissions-notification = 通知
 permissions-notification-settings =
     .label = 設定…
@@ -1060,6 +1140,8 @@ permissions-addon-exceptions =
 ## Privacy Section - Data Collection
 
 collection-header = { -brand-short-name } 資料收集與使用
+collection-header2 = { -brand-short-name } 資料收集與使用
+    .searchkeywords = telemetry
 collection-description = 我們致力於提供您選擇，也只會收集我們在提供與改善 { -brand-short-name } 時所必需的資料。我們也一定會經過您的同意才收集您的個人資訊。
 collection-privacy-notice = 隱私權公告
 collection-health-report-telemetry-disabled = 將不再允許 { -vendor-short-name } 捕捉技術與互動資料，之前收集的資料將於 30 天內刪除。
@@ -1133,6 +1215,63 @@ httpsonly-radio-enabled-pbm =
     .label = 僅在隱私瀏覽視窗開啟純 HTTPS 模式
 httpsonly-radio-disabled =
     .label = 不開啟純 HTTPS 模式
+
+## DoH Section
+
+preferences-doh-header = DNS over HTTPS
+preferences-doh-description = DNS over HTTPS 會將您的網域名稱查詢請求加密後傳送，使其他人更難得知您要開啟的網站，讓 DNS 查詢變得安全。
+# Variables:
+#   $status (string) - The status of the DoH connection
+preferences-doh-status = 狀態：{ $status }
+# Variables:
+#   $name (string) - The name of the DNS over HTTPS resolver. If a custom resolver is used, the name will be the domain of the URL.
+preferences-doh-resolver = 提供者：{ $name }
+# This is displayed instead of $name in preferences-doh-resolver
+# when the DoH URL is not a valid URL
+preferences-doh-bad-url = 網址無效
+preferences-doh-steering-status = 使用本機提供者
+preferences-doh-status-active = 啟用
+preferences-doh-status-disabled = 關閉
+# Variables:
+#   $reason (string) - A string representation of the reason DoH is not active. For example NS_ERROR_UNKNOWN_HOST or TRR_RCODE_FAIL.
+preferences-doh-status-not-active = 未啟用（{ $reason }）
+preferences-doh-group-message = 使用下列方式開啟安全 DNS 功能：
+preferences-doh-expand-section =
+    .tooltiptext = 更多資訊
+preferences-doh-setting-default =
+    .label = 預設保護
+    .accesskey = D
+preferences-doh-default-desc = { -brand-short-name } 會為您覺得什麼時候要使用安全的 DNS 來保護您的隱私。
+preferences-doh-default-detailed-desc-1 = 在可用安全 DNS 的地區就使用
+preferences-doh-default-detailed-desc-2 = 若無法使用安全的 DNS 提供者，就使用您的預設 DNS 解析器。
+preferences-doh-default-detailed-desc-3 = 盡可能使用本機提供者
+preferences-doh-default-detailed-desc-4 = 當 VPN、家長監護設定或企業政策生效時就關閉
+preferences-doh-default-detailed-desc-5 = 當網路裝置告訴 { -brand-short-name } 不該使用安全 DNS 時就關閉
+preferences-doh-setting-enabled =
+    .label = 加強保護
+    .accesskey = I
+preferences-doh-enabled-desc = 由您自行決定要使用哪個提供者的安全 DNS。
+preferences-doh-enabled-detailed-desc-1 = 使用您選擇的提供者
+preferences-doh-enabled-detailed-desc-2 = 只在無法使用安全的 DNS 提供者時，使用您的預設 DNS 解析器。
+preferences-doh-setting-strict =
+    .label = 最大保護
+    .accesskey = M
+preferences-doh-strict-desc = { -brand-short-name } 總是會使用安全 DNS。若我們需要使用系統 DNS 時，您會看到安全性警告。
+preferences-doh-strict-detailed-desc-1 = 只使用您選擇的提供者
+preferences-doh-strict-detailed-desc-2 = 安全 DNS 無法使用時總是警告我
+preferences-doh-strict-detailed-desc-3 = 若無法使用安全 DNS，就不開啟網站或無法正常運作
+preferences-doh-setting-off =
+    .label = 關閉
+    .accesskey = O
+preferences-doh-off-desc = 使用您系統預設的 DNS 解析器
+preferences-doh-checkbox-warn =
+    .label = 若有第三方系統主動封鎖安全 DNS 時警告我
+    .accesskey = W
+preferences-doh-select-resolver = 選擇提供者：
+preferences-doh-exceptions-description = { -brand-short-name } 將不對下列網站使用安全 DNS
+preferences-doh-manage-exceptions =
+    .label = 管理例外網站…
+    .accesskey = x
 
 ## The following strings are used in the Download section of settings
 

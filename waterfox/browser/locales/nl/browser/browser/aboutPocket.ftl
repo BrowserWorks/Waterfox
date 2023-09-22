@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,14 +22,13 @@ pocket-panel-saved-page-removed = Pagina verwijderd
 pocket-panel-saved-page-saved = Opgeslagen naar { -pocket-brand-name }
 pocket-panel-saved-page-saved-b = Opgeslagen naar { -pocket-brand-name }!
 pocket-panel-saved-processing-remove = Pagina verwijderen…
-pocket-panel-saved-removed = Pagina uit Mijn lijst verwijderd
+pocket-panel-saved-removed-updated = Pagina verwijderd uit Opgeslagen items
 pocket-panel-saved-processing-tags = Labels toevoegen…
 pocket-panel-saved-remove-page = Pagina verwijderen
 pocket-panel-saved-save-tags = Opslaan
 pocket-panel-saved-saving-tags = Opslaan…
 pocket-panel-saved-suggested-tags = Voorgestelde labels
 pocket-panel-saved-tags-saved = Labels toegevoegd
-pocket-panel-signup-view-list = Lijst weergeven
 
 # This is displayed above a field where the user can add tags
 pocket-panel-signup-add-tags = Labels toevoegen:
@@ -47,13 +46,12 @@ pocket-panel-signup-tagline-story-one = Klik op de { -pocket-brand-name }-knop o
 pocket-panel-signup-tagline-story-two = Bekijk ze in { -pocket-brand-name } op diverse apparaten, wanneer dan ook.
 
 pocket-panel-signup-cta-a-fix = Uw bewaarknop voor het internet
-pocket-panel-signup-cta-b = Klik op de knop { -pocket-brand-name } om artikelen, video’s en koppelingen op te slaan. Bekijk uw lijst op elk apparaat, wanneer dan ook.
+pocket-panel-signup-cta-b-updated = Klik op de knop { -pocket-brand-name } om artikelen, video’s en koppelingen op te slaan. Bekijk uw opgeslagen items op elk gewenst moment op elk gewenst apparaat.
 pocket-panel-signup-cta-b-short = Klik op de knop { -pocket-brand-name } om artikelen, video’s en koppelingen op te slaan.
-pocket-panel-signup-cta-c = Bekijk uw lijst op elk apparaat, wanneer dan ook.
+pocket-panel-signup-cta-c-updated = Bekijk uw opgeslagen items op elk gewenst moment op elk gewenst apparaat.
 
 ## about:pocket-home panel
 
-pocket-panel-home-my-list = Mijn lijst
 pocket-panel-home-welcome-back = Welkom terug
 pocket-panel-home-paragraph = U kunt { -pocket-brand-name } gebruiken om webpagina’s, artikelen, video’s en podcasts te verkennen en op te slaan, of om terug te gaan naar wat u aan het lezen was.
 pocket-panel-home-explore-popular-topics = Populaire onderwerpen verkennen
@@ -67,7 +65,7 @@ pocket-panel-home-new-user-message = Bekijk hier uw recent opgeslagen items.
 
 ## Pocket panel header component
 
-pocket-panel-header-my-list = Mijn lijst bekijken
+pocket-panel-header-my-saves = Mijn Opgeslagen items bekijken
 pocket-panel-header-sign-in = Aanmelden
 
 ## Pocket panel buttons

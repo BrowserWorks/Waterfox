@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -28,6 +28,10 @@ perftools-heading-local-build = Bản dựng cục bộ
 perftools-description-intro =
     Bản ghi sẽ khởi chạy <a>profiler.firefox.com</a> trong một thẻ mới. Tất cả dữ liệu được lưu trữ
     cục bộ, nhưng bạn có thể chọn tải lên để chia sẻ.
+perftools-description-local-build =
+    Nếu bạn đang lược tả một bản dựng do chính bạn biên dịch, trên
+    máy tính này, vui lòng thêm objdir của bản dựng của bạn vào
+    danh sách bên dưới để có thể sử dụng nó để tra cứu thông tin symbol.
 
 ## The controls for the interval at which the profiler samples the code.
 
@@ -91,7 +95,7 @@ perftools-onboarding-close-button =
 
 
 # Presets and their l10n IDs are defined in the file
-# devtools/client/performance-new/popup/background.jsm.js
+# devtools/client/performance-new/shared/background.jsm.js
 # The same labels and descriptions are also defined in appmenu.ftl.
 
 perftools-presets-web-developer-label = Nhà phát triển Web

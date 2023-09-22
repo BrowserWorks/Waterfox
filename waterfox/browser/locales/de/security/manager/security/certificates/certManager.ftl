@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,9 +26,9 @@ certmgr-people = Sie haben Zertifikate gespeichert, die diese Personen identifiz
 certmgr-server = Diese Einträge identifizieren Ausnahmeregeln für Fehler von Serverzertifikaten
 certmgr-ca = Sie haben Zertifikate gespeichert, die diese Zertifizierungsstellen identifizieren:
 
-certmgr-edit-ca-cert =
+certmgr-edit-ca-cert2 =
     .title = CA-Zertifikat-Vertrauenseinstellungen bearbeiten
-    .style = width: 48em;
+    .style = min-width: 48em;
 
 certmgr-edit-cert-edit-trust = Vertrauenseinstellungen bearbeiten
 
@@ -38,9 +38,9 @@ certmgr-edit-cert-trust-ssl =
 certmgr-edit-cert-trust-email =
     .label = Dieses Zertifikat kann Mail-Benutzer identifizieren.
 
-certmgr-delete-cert =
+certmgr-delete-cert2 =
     .title = Zertifikat löschen
-    .style = width: 48em; height: 24em;
+    .style = min-width: 48em; min-height: 24em;
 
 certmgr-cert-host =
     .label = Host
@@ -50,9 +50,6 @@ certmgr-cert-name =
 
 certmgr-cert-server =
     .label = Server
-
-certmgr-override-lifetime =
-    .label = Lebenszeit
 
 certmgr-token-name =
     .label = Kryptographie-Modul
@@ -68,6 +65,9 @@ certmgr-email =
 
 certmgr-serial =
     .label = Seriennummer
+
+certmgr-fingerprint-sha-256 =
+    .label = SHA-256-Fingerabdruck
 
 certmgr-view =
     .label = Ansehen…
@@ -185,8 +185,6 @@ delete-email-cert-impact = Wenn Sie das E-Mail-Zertifikat einer Person löschen,
 #   $serialNumber : the serial number of the cert in AA:BB:CC hex format.
 cert-with-serial =
     .value = Zertifikat mit Seriennummer: { $serialNumber }
-
-## Cert Viewer
 
 # Used to indicate that the user chose not to send a client authentication certificate to a server that requested one in a TLS handshake.
 send-no-client-certificate = Kein Client-Zertifikat senden

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,6 +18,10 @@ support-addons-type = Τύπος
 support-addons-enabled = Ενεργό
 support-addons-version = Έκδοση
 support-addons-id = ID
+legacy-user-stylesheets-title = Φύλλα στυλ χρήστη παλαιού τύπου
+legacy-user-stylesheets-enabled = Ενεργό
+legacy-user-stylesheets-stylesheet-types = Φύλλο στυλ
+legacy-user-stylesheets-no-stylesheets-found = Δεν βρέθηκαν φύλλα στυλ
 security-software-title = Λογισμικό ασφαλείας
 security-software-type = Τύπος
 security-software-name = Όνομα
@@ -73,10 +77,11 @@ app-basics-remote-processes-count = Απομακρυσμένες διεργασ�
 app-basics-enterprise-policies = Πολιτικές επιχειρήσεων
 app-basics-location-service-key-google = Κλειδί υπηρεσίας τοποθεσίας Google
 app-basics-safebrowsing-key-google = Κλειδί ασφαλούς περιήγησης Google
-app-basics-key-mozilla = Κλειδί υπηρεσίας τοποθεσίας Waterfox
+app-basics-key-mozilla = Κλειδί υπηρεσίας τοποθεσίας BrowserWorks
 app-basics-safe-mode = Ασφαλής λειτουργία
 app-basics-memory-size = Μέγεθος μνήμης (RAM)
 app-basics-disk-available = Διαθέσιμος χώρος δίσκου
+app-basics-pointing-devices = Συσκευές κατάδειξης
 # Variables:
 #   $value (number) - Amount of data being stored
 #   $unit (string) - The unit of data being stored (e.g. MB)
@@ -110,11 +115,21 @@ graphics-gpu2-title = GPU #2
 graphics-decision-log-title = Αρχείο καταγραφής αποφάσεων
 graphics-crash-guards-title = Ανενεργές λειτουργίες φύλαξης καταρρεύσεων
 graphics-workarounds-title = Λύσεις
+graphics-device-pixel-ratios = Αναλογίες εικονοστοιχείων συσκευής παραθύρου
 # Windowing system in use on Linux (e.g. X11, Wayland).
 graphics-window-protocol = Πρωτόκολλο παραθύρου
 # Desktop environment in use on Linux (e.g. GNOME, KDE, XFCE, etc).
 graphics-desktop-environment = Περιβάλλον επιφάνειας εργασίας
 place-database-title = Βάση δεδομένων τοποθεσιών
+place-database-stats = Στατιστικά
+place-database-stats-show = Εμφάνιση στατιστικών
+place-database-stats-hide = Απόκρυψη στατιστικών
+place-database-stats-entity = Οντότητα
+place-database-stats-count = Αριθμός
+place-database-stats-size-kib = Μέγεθος (KiB)
+place-database-stats-size-perc = Μέγεθος (%)
+place-database-stats-efficiency-perc = Αποδοτικότητα (%)
+place-database-stats-sequentiality-perc = Διαδοχικότητα (%)
 place-database-integrity = Ακεραιότητα
 place-database-verify-integrity = Επαλήθευση ακεραιότητας
 a11y-title = Προσβασιμότητα
@@ -165,9 +180,18 @@ media-codec-support-info = Πληροφορίες υποστήριξης codec
 # List all the entries of the database.
 media-capabilities-enumerate = Απαρίθμηση βάσης δεδομένων
 
+## Codec support table
+
+media-codec-support-sw-decoding = Αποκωδικοποίηση λογισμικού
+media-codec-support-hw-decoding = Αποκωδικοποίηση υλικού
+media-codec-support-codec-name = Όνομα κωδικοποιητή
+media-codec-support-supported = Υποστηρίζεται
+media-codec-support-unsupported = Δεν υποστηρίζεται
+media-codec-support-error = Οι πληροφορίες υποστήριξης κωδικοποίησης δεν είναι διαθέσιμες. Δοκιμάστε ξανά μετά την αναπαραγωγή ενός αρχείου πολυμέσων.
+
 ##
 
-intl-title = Διεθνοποίηση & μετάφραση
+intl-title = Διεθνοποίηση και μετάφραση
 intl-app-title = Ρυθμίσεις εφαρμογής
 intl-locales-requested = Ζητούμενες γλώσσες
 intl-locales-available = Διαθέσιμες γλώσσες
@@ -278,6 +302,8 @@ webgl2-renderer = Πρόγραμμα οδήγησης απεικόνισης Web
 webgl2-version = Έκδοση προγράμματος οδήγησης WebGL 2
 webgl2-driver-extensions = Επεκτάσεις προγράμματος οδήγησης WebGL 2
 webgl2-extensions = Επεκτάσεις WebGL 2
+webgpu-default-adapter = Προεπιλεγμένος προσαρμογέας WebGPU
+webgpu-fallback-adapter = Εφεδρικός προσαρμογέας WebGPU
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = Αποκλείστηκε λόγω γνωστών ζητημάτων: <a data-l10n-name="bug-link">σφάλμα { $bugNumber }</a>
@@ -307,6 +333,7 @@ can-sandbox-media = Sandboxing αρθρώματος πολυμέσων
 content-sandbox-level = Επίπεδο sandbox διεργασίας περιεχομένου
 effective-content-sandbox-level = Αποτελεσματικό επίπεδο επεξεργασίας περιεχομένου sandbox
 content-win32k-lockdown-state = Κατάσταση κλειδώματος Win32k για διεργασία περιεχομένου
+support-sandbox-gpu-level = Επίπεδο sandbox διεργασίας GPU
 sandbox-proc-type-content = περιεχόμενο
 sandbox-proc-type-file = περιεχόμενο αρχείου
 sandbox-proc-type-media-plugin = άρθρωμα πολυμέσων
@@ -378,3 +405,10 @@ support-remote-experiments-see-about-studies = Δείτε το <a data-l10n-name
 support-remote-features-title = Απομακρυσμένες δυνατότητες
 support-remote-features-name = Όνομα
 support-remote-features-status = Κατάσταση
+
+## Pointing devices
+
+pointing-device-mouse = Ποντίκι
+pointing-device-touchscreen = Οθόνη αφής
+pointing-device-pen-digitizer = Ψηφιοποιητής γραφίδας
+pointing-device-none = Δεν υπάρχουν συσκευές κατάδειξης

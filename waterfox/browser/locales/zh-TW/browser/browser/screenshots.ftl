@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,6 @@ screenshots-private-window-error-details = 很抱歉帶來不便，我們將在�
 
 screenshots-generic-error-title = 唉呀，{ -screenshots-brand-name } 有點秀逗了。
 screenshots-generic-error-details = 我們不確定剛剛發生了什麼事，您可以再試一次，或拍攝其他頁面的擷圖嗎？
+
+screenshots-too-large-error-title = 擷圖太大，已裁切
+screenshots-too-large-error-details = 請選擇長邊小於 32,700 畫素，或總面積小於 124,900,000 畫素的區域。

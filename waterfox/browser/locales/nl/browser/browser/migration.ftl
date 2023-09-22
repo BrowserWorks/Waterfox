@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,6 +60,9 @@ import-from-firefox =
 import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
 
 no-migration-sources = Er zijn geen programma’s gevonden die bladwijzers, geschiedenis of wachtwoorden bevatten.
 
@@ -64,8 +73,8 @@ import-items-description = Selecteer de te importeren items:
 
 import-permissions-page-title = Geef { -brand-short-name } toestemmingen
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = In macOS dient u { -brand-short-name } expliciet toegang te geven tot de bladwijzers van Safari. Klik op ‘Doorgaan’ en selecteer in het getoonde paneel Bestand openen het bestand ‘Bookmarks.plist’.
+# Do not translate "Safari" (the name of the browser on Apple devices)
+import-safari-permissions-string = In macOS dient u { -brand-short-name } expliciet toegang te geven tot de gegevens van Safari. Klik op ‘Doorgaan’, selecteer de map ‘Safari’ in het getoonde Finder-dialoogvenster en klik vervolgens op ‘Openen’.
 
 import-migrating-page-title = Importeren…
 
@@ -158,3 +167,8 @@ browser-data-session-checkbox =
     .label = Vensters en tabbladen
 browser-data-session-label =
     .value = Vensters en tabbladen
+
+browser-data-payment-methods-checkbox =
+    .label = Betalingsmethoden
+browser-data-payment-methods-label =
+    .value = Betalingsmethoden

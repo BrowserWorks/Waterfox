@@ -1,13 +1,19 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 do-not-track-description = Enviar a los sitios web una señal “No rastrear” indicando que no quiere ser rastreado
+do-not-track-description2 =
+    .label = Enviar a los sitios web una solicitud de “No rastrear”
+    .accesskey = d
 do-not-track-learn-more = Más información
 do-not-track-option-default-content-blocking-known =
     .label = Solo cuando { -brand-short-name } está configurado para bloquear los rastreadores conocidos
 do-not-track-option-always =
     .label = Siempre
+global-privacy-control-description =
+    .label = Decir a los sitios web que no vendan ni compartan mis datos
+    .accesskey = s
 settings-page-title = Ajustes
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
@@ -71,7 +77,7 @@ restart-later = Reiniciar más tarde
 ## <img data-l10n-name="icon"/> is going to be replaced by the extension icon.
 ##
 ## Variables:
-##   $name (String): name of the extension
+##   $name (string) - Name of the extension
 
 # This string is shown to notify the user that the password manager setting
 # is being controlled by an extension
@@ -109,7 +115,7 @@ always-check-default =
     .label = Comprobar siempre si { -brand-short-name } es su navegador predeterminado
     .accesskey = o
 is-default = { -brand-short-name } es su navegador predeterminado
-is-not-default = { -brand-short-name } no es su navegador predet.
+is-not-default = { -brand-short-name } no es su navegador predeterminado
 set-as-my-default-browser =
     .label = Convertir en predeterminado…
     .accesskey = C
@@ -120,6 +126,11 @@ startup-restore-warn-on-quit =
     .label = Advertirle al salir del navegador
 disable-extension =
     .label = Desactivar extensión
+preferences-data-migration-header = Importar datos del navegador
+preferences-data-migration-description = Importar marcadores, contraseñas, historial y datos de autocompletado en { -brand-short-name }.
+preferences-data-migration-button =
+    .label = Importar datos
+    .accesskey = m
 tabs-group-header = Pestañas
 ctrl-tab-recently-used-order =
     .label = Ctrl+Tab pasa por las pestañas en orden de uso reciente
@@ -132,7 +143,7 @@ confirm-on-close-multiple-tabs =
     .accesskey = m
 # This string is used for the confirm before quitting preference.
 # Variables:
-#   $quitKey (String) - the quit keyboard shortcut, and formatted
+#   $quitKey (string) - the quit keyboard shortcut, and formatted
 #                       in the same manner as it would appear,
 #                       for example, in the File menu.
 confirm-on-quit-with-key =
@@ -155,6 +166,10 @@ browser-containers-settings =
     .label = Configuración…
     .accesskey = C
 containers-disable-alert-title = ¿Cerrar todas las pestañas contenedoras?
+
+## Variables:
+##   $tabCount (number) - Number of tabs
+
 containers-disable-alert-desc =
     { $tabCount ->
         [one] Si desactiva las pestañas contenedores ahora, se cerrará { $tabCount } pestaña contenedora. ¿Está seguro de que quiere desactivar las pestañas contenedoras?
@@ -165,10 +180,13 @@ containers-disable-alert-ok-button =
         [one] Cerrar { $tabCount } pestaña contenedora
        *[other] Cerrar { $tabCount } pestañas contenedoras
     }
+
+##
+
 containers-disable-alert-cancel-button = Mantener activadas
 containers-remove-alert-title = ¿Eliminar este contenedor?
 # Variables:
-#   $count (Number) - Number of tabs that will be closed.
+#   $count (number) - Number of tabs that will be closed.
 containers-remove-alert-msg =
     { $count ->
         [one] Si elimina este contenedor ahora, se cerrará { $count } pestaña contenedora. ¿Está seguro de que quiere eliminar este contenedor?
@@ -182,22 +200,17 @@ containers-remove-cancel-button = No eliminar este contenedor
 language-and-appearance-header = Idioma y apariencia
 preferences-web-appearance-header = Apariencia del sitio web
 preferences-web-appearance-description = Algunos sitios web adaptan su combinación de colores según las preferencias. Elija qué combinación de colores le gustaría usar para esos sitios.
-preferences-web-appearance-choice-browser = Tema de { -brand-short-name }
-preferences-web-appearance-choice-system = Tema del sistema
+preferences-web-appearance-choice-auto = Automático
 preferences-web-appearance-choice-light = Claro
 preferences-web-appearance-choice-dark = Oscuro
-preferences-web-appearance-choice-tooltip-browser =
-    .title = Seguir la configuración de su tema de { -brand-short-name } para los fondos y el contenido del sitio web.
-preferences-web-appearance-choice-tooltip-system =
-    .title = Seguir la configuración de su sistema para los fondos y el contenido del sitio web.
+preferences-web-appearance-choice-tooltip-auto =
+    .title = Cambia automáticamente el fondo y el contenido del sitio web de acuerdo a la configuración de su sistema y al tema de { -brand-short-name }.
 preferences-web-appearance-choice-tooltip-light =
     .title = Usar una apariencia clara para los fondos y el contenido del sitio web.
 preferences-web-appearance-choice-tooltip-dark =
     .title = Usar una apariencia oscura para los fondos y el contenido del sitio web.
-preferences-web-appearance-choice-input-browser =
-    .aria-description = { preferences-web-appearance-choice-tooltip-browser.title }
-preferences-web-appearance-choice-input-system =
-    .aria-description = { preferences-web-appearance-choice-tooltip-system.title }
+preferences-web-appearance-choice-input-auto =
+    .aria-description = { preferences-web-appearance-choice-tooltip-auto.title }
 preferences-web-appearance-choice-input-light =
     .aria-description = { preferences-web-appearance-choice-tooltip-light.title }
 preferences-web-appearance-choice-input-dark =
@@ -225,6 +238,8 @@ advanced-fonts =
 preferences-zoom-header = Ampliación
 preferences-default-zoom = Ampliación predeterminada
     .accesskey = A
+# Variables:
+#   $percentage (number) - Zoom percentage value
 preferences-default-zoom-value =
     .label = { $percentage }%
 preferences-zoom-text-only =
@@ -317,15 +332,15 @@ applications-manage-app =
 applications-always-ask =
     .label = Preguntar siempre
 # Variables:
-#   $type-description (String) - Description of the type (e.g "Portable Document Format")
-#   $type (String) - the MIME type (e.g application/binary)
+#   $type-description (string) - Description of the type (e.g "Portable Document Format")
+#   $type (string) - The MIME type (e.g application/binary)
 applications-type-description-with-type = { $type-description } ({ $type })
 # Variables:
-#   $extension (String) - file extension (e.g .TXT)
-#   $type (String) - the MIME type (e.g application/binary)
+#   $extension (string) - File extension (e.g .TXT)
+#   $type (string) - The MIME type (e.g application/binary)
 applications-file-ending-with-type = { applications-file-ending } ({ $type })
 # Variables:
-#   $plugin-name (String) - Name of a plugin (e.g Adobe Flash)
+#   $plugin-name (string) - Name of a plugin (e.g Adobe Flash)
 applications-use-plugin-in =
     .label = Usar { $plugin-name } (en { -brand-short-name })
 applications-open-inapp =
@@ -368,6 +383,8 @@ play-drm-content =
 play-drm-content-learn-more = Saber más
 update-application-title = Actualizaciones de { -brand-short-name }
 update-application-description = Mantenga { -brand-short-name } actualizado para un rendimiento, estabilidad y seguridad óptimos.
+# Variables:
+# $version (string) - Waterfox version
 update-application-version = Versión { $version } <a data-l10n-name="learn-more">Novedades</a>
 update-history =
     .label = Mostrar historial de actualizaciones…
@@ -394,7 +411,7 @@ update-application-suppress-prompts =
     .accesskey = n
 update-setting-write-failure-title2 = Error al guardar los ajustes de actualización
 # Variables:
-#   $path (String) - Path to the configuration file
+#   $path (string) - Path to the configuration file
 # The newlines between the main text and the line containing the path is
 # intentional so the path is easier to identify.
 update-setting-write-failure-message2 =
@@ -424,7 +441,7 @@ performance-limit-content-process-option = Límite de procesos de contenido
 performance-limit-content-process-enabled-desc = Más procesos de contenido pueden mejorar el rendimiento al usar múltiples pestañas, pero también usarán más memoria.
 performance-limit-content-process-blocked-desc = Modificar el número de procesos de contenido solo es posible con { -brand-short-name } multiproceso. <a data-l10n-name="learn-more">Sepa cómo comprobar si el multiproceso está activado</a>
 # Variables:
-#   $num - default value of the `dom.ipc.processCount` pref.
+#   $num (number) - Default value of the `dom.ipc.processCount` pref.
 performance-default-content-process-count =
     .label = { $num } (predeterminado)
 
@@ -446,6 +463,9 @@ browsing-use-onscreen-keyboard =
 browsing-use-cursor-navigation =
     .label = Usar siempre las teclas del cursor para navegar dentro de las páginas
     .accesskey = c
+browsing-use-full-keyboard-navigation =
+    .label = Use la tecla de tabulación para mover el foco entre los controles de formulario y los enlaces
+    .accesskey = t
 browsing-search-on-start-typing =
     .label = Buscar texto cuando comience a escribir
     .accesskey = x
@@ -486,10 +506,8 @@ home-newtabs-mode-label = Nuevas pestañas
 home-restore-defaults =
     .label = Restaurar ajustes predeterminados
     .accesskey = R
-# "Waterfox" should be treated as a brand and kept in English,
-# while "Home" and "(Default)" can be localized.
-home-mode-choice-default =
-    .label = Inicio de Waterfox (predeterminado)
+home-mode-choice-default-fx =
+    .label = { -firefox-home-brand-name } (Predeterminado)
 home-mode-choice-custom =
     .label = URLs personalizadas...
 home-mode-choice-blank =
@@ -513,8 +531,8 @@ choose-bookmark =
 
 ## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Contenido de la página de inicio de Waterfox
-home-prefs-content-description = Seleccione el contenido que desea en la pantalla de inicio de Waterfox.
+home-prefs-content-header2 = Contenido de { -firefox-home-brand-name }
+home-prefs-content-description2 = Seleccione el contenido que desea en la pantalla de inicio de { -firefox-home-brand-name }.
 home-prefs-search-header =
     .label = Búsqueda web
 home-prefs-shortcuts-header =
@@ -524,7 +542,7 @@ home-prefs-shortcuts-by-option-sponsored =
     .label = Accesos directos patrocinados
 
 ## Variables:
-##  $provider (String): Name of the corresponding content provider, e.g "Pocket".
+##  $provider (string) - Name of the corresponding content provider, e.g "Pocket".
 
 home-prefs-recommended-by-header =
     .label = Recomendado por { $provider }
@@ -535,6 +553,8 @@ home-prefs-recommended-by-description-new = Contenido excepcional seleccionado p
 home-prefs-recommended-by-learn-more = Cómo funciona
 home-prefs-recommended-by-option-sponsored-stories =
     .label = Historias patrocinadas
+home-prefs-recommended-by-option-recent-saves =
+    .label = Mostrar guardados recientemente
 home-prefs-highlights-option-visited-pages =
     .label = Páginas visitadas
 home-prefs-highlights-options-bookmarks =
@@ -553,6 +573,8 @@ home-prefs-recent-activity-description = Una selección de sitios y contenidos r
 home-prefs-snippets-header =
     .label = Mensajes interactivos
 home-prefs-snippets-description-new = Consejos y noticias de { -vendor-short-name } y { -brand-product-name }
+# Variables:
+#   $num (number) - Number of rows displayed
 home-prefs-sections-rows-option =
     .label =
         { $num ->
@@ -581,6 +603,11 @@ search-suggestions-option =
 search-show-suggestions-url-bar-option =
     .label = Mostrar sugerencias de búsqueda en los resultados de la barra de direcciones
     .accesskey = M
+# With this option enabled, on the search results page
+# the URL will be replaced by the search terms in the address bar
+# when using the current default search engine.
+search-show-search-term-option =
+    .label = Mostrar los términos de búsqueda en lugar de la URL en la página de resultados del buscador predeterminado
 # This string describes what the user will observe when the system
 # prioritizes search suggestions over browsing history in the results
 # that extend down from the address bar. In the original English string,
@@ -612,7 +639,7 @@ search-find-more-link = Encontrar más buscadores
 # ('Duplicate' is an adjective)
 search-keyword-warning-title = Palabra clave duplicada
 # Variables:
-#   $name (String) - Name of a search engine.
+#   $name (string) - Name of a search engine.
 search-keyword-warning-engine = Ha seleccionado una palabra clave que está siendo usada por "{ $name }". Por favor, seleccione otra.
 search-keyword-warning-bookmark = Ha seleccionado una palabra clave que está siendo usada por otro marcador. Por favor, seleccione otra.
 
@@ -632,7 +659,7 @@ containers-settings-button =
 containers-remove-button =
     .label = Eliminar
 
-## Waterfox Account - Signed out. Note that "Sync" and "Waterfox Account" are now
+## Waterfox account - Signed out. Note that "Sync" and "Waterfox account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Llévese la web con usted
@@ -650,7 +677,7 @@ sync-signedout-account-signin3 =
 # to your language, but should not be changed or translated.
 sync-mobile-promo = Descargar Waterfox para <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> o <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> para sincronizar con su dispositivo móvil.
 
-## Waterfox Account - Signed in
+## Waterfox account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Cambiar imagen del perfil
@@ -659,8 +686,15 @@ sync-sign-out =
     .accesskey = C
 sync-manage-account = Administrar cuenta
     .accesskey = A
+
+## Variables
+## $email (string) - Email used for Waterfox account
+
 sync-signedin-unverified = { $email } no está verificado.
 sync-signedin-login-failure = Inicie sesión para reconectar { $email }
+
+##
+
 sync-resend-verification =
     .label = Reenviar verificación
     .accesskey = v
@@ -683,10 +717,15 @@ prefs-sync-now =
     .labelnotsyncing = Sincronizar ahora
     .accesskeynotsyncing = N
     .labelsyncing = Sincronizando…
+prefs-sync-now-button =
+    .label = Sincronizar ahora
+    .accesskey = N
+prefs-syncing-button =
+    .label = Sincronizando…
 
 ## The list of things currently syncing.
 
-sync-currently-syncing-heading = En este momento está sincronizando estos elementos:
+sync-syncing-across-devices-heading = Se están sincronizando estos ítems en todos sus dispositivos conectados:
 sync-currently-syncing-bookmarks = Marcadores
 sync-currently-syncing-history = Historial
 sync-currently-syncing-tabs = Pestañas abiertas
@@ -701,13 +740,14 @@ sync-change-options =
 
 ## The "Choose what to sync" dialog.
 
-sync-choose-what-to-sync-dialog =
+sync-choose-what-to-sync-dialog3 =
     .title = Elija lo que quiere sincronizar
-    .style = width: 36em; min-height: 35em;
+    .style = min-width: 36em;
     .buttonlabelaccept = Guardar cambios
     .buttonaccesskeyaccept = S
     .buttonlabelextra2 = Cerrar sesión…
     .buttonaccesskeyextra2 = D
+sync-choose-dialog-subtitle = Los cambios en la lista de ítems a sincronizar se reflejarán en todos sus dispositivos conectados.
 sync-engine-bookmarks =
     .label = Marcadores
     .accesskey = m
@@ -753,6 +793,16 @@ sync-device-name-save =
     .accesskey = u
 sync-connect-another-device = Conectar otro dispositivo
 
+## These strings are shown in a desktop notification after the
+## user requests we resend a verification email.
+
+sync-verification-sent-title = Verificación enviada
+# Variables:
+#   $email (String): Email address of user's Waterfox account.
+sync-verification-sent-body = Se ha enviado un enlace de verificación a { $email }.
+sync-verification-not-sent-title = No se puede enviar la verificación
+sync-verification-not-sent-body = No podemos enviar un correo de verificación en este momento, vuelva a intentarlo más tarde.
+
 ## Privacy Section
 
 privacy-header = Privacidad del navegador
@@ -776,6 +826,9 @@ forms-breach-alerts =
     .label = Mostrar alertas sobre contraseñas para sitios web comprometidos
     .accesskey = b
 forms-breach-alerts-learn-more-link = Saber más
+preferences-relay-integration-checkbox =
+    .label = Sugerir alias de correo electrónico { -relay-brand-name } para proteger su dirección de correo electrónico
+relay-integration-learn-more-link = Saber más
 # Checkbox which controls filling saved logins into fields automatically when they appear, in some cases without user interaction.
 forms-fill-logins-and-passwords =
     .label = Autocompletar inicios de sesión y contraseñas
@@ -864,8 +917,8 @@ history-clear-button =
 sitedata-header = Cookies y datos del sitio
 sitedata-total-size-calculating = Calculando el tamaño de los datos del sitio y del caché…
 # Variables:
-#   $value (Number) - Value of the unit (for example: 4.6, 500)
-#   $unit (String) - Name of the unit (for example: "bytes", "KB")
+#   $value (number) - Value of the unit (for example: 4.6, 500)
+#   $unit (string) - Name of the unit (for example: "bytes", "KB")
 sitedata-total-size = Sus cookies, datos del sitio y caché almacenados ocupan actualmente un { $value } { $unit } del espacio en disco.
 sitedata-learn-more = Saber más
 sitedata-delete-on-close =
@@ -890,8 +943,8 @@ sitedata-option-block-cross-site-cookies =
     .label = Cookies de rastreo de sitios cruzados, y aislamiento de otras cookies de sitios cruzados
 sitedata-option-block-unvisited =
     .label = Cookies de sitios web no visitados
-sitedata-option-block-all-third-party =
-    .label = Todas las cookies de terceros (puede causar errores en algunos sitios web)
+sitedata-option-block-all-cross-site-cookies =
+    .label = Todas las cookies entre sitios (puede causar errores en los sitios web)
 sitedata-option-block-all =
     .label = Todas las cookies (causará errores en sitios web)
 sitedata-clear =
@@ -904,6 +957,14 @@ sitedata-cookies-exceptions =
     .label = Gestionar excepciones…
     .accesskey = x
 
+## Privacy Section - Cookie Banner Handling
+
+cookie-banner-handling-header = Reducción de avisos de cookies
+cookie-banner-handling-description = { -brand-short-name } rechaza automáticamente las solicitudes de cookies en sitios compatibles.
+cookie-banner-learn-more = Saber más
+forms-handle-cookie-banners =
+    .label = Reducir los avisos de cookies
+
 ## Privacy Section - Address Bar
 
 addressbar-header = Barra de direcciones
@@ -914,6 +975,9 @@ addressbar-locbar-history-option =
 addressbar-locbar-bookmarks-option =
     .label = Marcadores
     .accesskey = M
+addressbar-locbar-clipboard-option =
+    .label = Portapapeles
+    .accesskey = P
 addressbar-locbar-openpage-option =
     .label = Abrir pestañas
     .accesskey = A
@@ -927,7 +991,11 @@ addressbar-locbar-topsites-option =
 addressbar-locbar-engines-option =
     .label = Buscadores
     .accesskey = a
+addressbar-locbar-quickactions-option =
+    .label = Acciones rápidas
+    .accesskey = A
 addressbar-suggestions-settings = Cambiar preferencias de sugerencias de buscadores
+addressbar-quickactions-learn-more = Saber más
 
 ## Privacy Section - Content Blocking
 
@@ -957,7 +1025,6 @@ content-blocking-etp-strict-desc = Mayor protección, pero puede provocar que fa
 content-blocking-etp-custom-desc = Elija qué rastreadores y scripts quiere bloquear.
 content-blocking-etp-blocking-desc = { -brand-short-name } bloquea lo siguiente:
 content-blocking-private-windows = Rastreo de contenido en ventanas privadas
-content-blocking-cross-site-cookies-in-all-windows = Cookies de sitios cruzados en todas las ventanas (incluye cookies de rastreo)
 content-blocking-cross-site-cookies-in-all-windows2 = Cookies de sitios cruzados en todas las ventanas
 content-blocking-cross-site-tracking-cookies = Cookies de rastreo entre sitios
 content-blocking-all-cross-site-cookies-private-windows = Cookies de sitios cruzados en ventanas privadas
@@ -966,14 +1033,16 @@ content-blocking-social-media-trackers = Rastreadores sociales
 content-blocking-all-cookies = Todas las cookies
 content-blocking-unvisited-cookies = Cookies de sitios no visitados
 content-blocking-all-windows-tracking-content = Contenido de rastreo en todas las ventanas
-content-blocking-all-third-party-cookies = Todas las cookies de terceros
+content-blocking-all-cross-site-cookies = Todas las cookies entre sitios
 content-blocking-cryptominers = Criptomineros
 content-blocking-fingerprinters = Fingerprinters
-# "Test pilot" is used as a verb. Possible alternatives:
-# "Be the first to try", "Join an early experiment".
-content-blocking-etp-standard-tcp-rollout-checkbox =
-    .label = Pruebe nuestra experiencia de privacidad más poderosa de la historia
-    .accesskey = t
+# The known fingerprinters are those that are known for collecting browser fingerprints from user devices. And
+# the suspected fingerprinters are those that we are uncertain about browser fingerprinting activities. But they could
+# possibly acquire browser fingerprints because of the behavior on accessing APIs that expose browser fingerprints.
+content-blocking-known-and-suspected-fingerprinters = Detectores de huellas digitales, conocidos y sospechosos
+
+# The tcp-rollout strings are no longer used for the rollout but for tcp-by-default in the standard section
+
 # "Contains" here means "isolates", "limits".
 content-blocking-etp-standard-tcp-rollout-description = La protección total contra las cookies contiene cookies para el sitio en el que está, así que los rastreadores no pueden usarlas para seguirle entre sitios.
 content-blocking-etp-standard-tcp-rollout-learn-more = Saber más
@@ -1009,6 +1078,18 @@ content-blocking-cryptominers-label =
 content-blocking-fingerprinters-label =
     .label = Fingerprinters
     .accesskey = F
+# Browser fingerprinting is a method of tracking users by the configuration and settings information (their "digital fingerprint")
+# that is visible to websites they browse, rather than traditional tracking methods such as IP addresses and unique cookies.
+#
+# The known fingerprinters are those that are known for collecting browser fingerprints from user devices.
+content-blocking-known-fingerprinters-label =
+    .label = Detectores de huellas digitales conocidos
+    .accesskey = c
+# The suspected fingerprinters are those that we are uncertain about browser fingerprinting activities. But they could
+# possibly acquire browser fingerprints because of the behavior on accessing APIs that expose browser fingerprints.
+content-blocking-suspected-fingerprinters-label =
+    .label = Presuntos detectores de huellas digitales
+    .accesskey = s
 
 ## Privacy Section - Tracking
 
@@ -1035,6 +1116,11 @@ permissions-microphone = Micrófono
 permissions-microphone-settings =
     .label = Configuración…
     .accesskey = u
+# Short form for "the act of choosing sound output devices and redirecting audio to the chosen devices".
+permissions-speaker = Selección de altavoces
+permissions-speaker-settings =
+    .label = Ajustes…
+    .accesskey = t
 permissions-notification = Notificaciones
 permissions-notification-settings =
     .label = Configuración…
@@ -1066,6 +1152,8 @@ permissions-addon-exceptions =
 ## Privacy Section - Data Collection
 
 collection-header = Recopilación y uso de datos de { -brand-short-name }
+collection-header2 = Recopilación y uso de datos de { -brand-short-name }
+    .searchkeywords = telemetría
 collection-description = Nos esforzamos en proporcionarle opciones y recopilamos solo lo que necesitamos para proporcionarle y mejorar { -brand-short-name } para todos. Siempre pedimos permiso antes de recibir información personal.
 collection-privacy-notice = Aviso sobre privacidad
 collection-health-report-telemetry-disabled = Ya no permite que { -vendor-short-name } capture datos técnicos y de interacción. Todos los datos anteriores se eliminarán en 30 días.
@@ -1085,6 +1173,12 @@ addon-recommendations-link = Saber más
 collection-health-report-disabled = La recopilación de datos está deshabilitada en esta configuración de compilación
 collection-backlogged-crash-reports-with-link = Permitir que { -brand-short-name } envíe informes de fallos acumulados en su nombre <a data-l10n-name="crash-reports-link">Saber más</a>
     .accesskey = c
+privacy-segmentation-section-header = Nuevas características que mejoran su navegación
+privacy-segmentation-section-description = Cuando ofrecemos funciones que usan sus datos para brindarle una experiencia más personal:
+privacy-segmentation-radio-off =
+    .label = Use las recomendaciones de { -brand-product-name }
+privacy-segmentation-radio-on =
+    .label = Mostrar información detallada
 
 ## Privacy Section - Security
 ##
@@ -1133,6 +1227,63 @@ httpsonly-radio-enabled-pbm =
     .label = Activar el modo solo-HTTPS solamente en ventanas privadas
 httpsonly-radio-disabled =
     .label = No activar el modo solo-HTTPS
+
+## DoH Section
+
+preferences-doh-header = DNS sobre HTTPS
+preferences-doh-description = El sistema de nombres de dominio (DNS) sobre HTTPS envía los pedidos de un nombre de dominio a través de una conexión cifrada, lo que crea un DNS seguro y hace más difícil que otros vean que sitio web está tratando de acceder.
+# Variables:
+#   $status (string) - The status of the DoH connection
+preferences-doh-status = Estado: { $status }
+# Variables:
+#   $name (string) - The name of the DNS over HTTPS resolver. If a custom resolver is used, the name will be the domain of the URL.
+preferences-doh-resolver = Proveedor: { $name }
+# This is displayed instead of $name in preferences-doh-resolver
+# when the DoH URL is not a valid URL
+preferences-doh-bad-url = URL no válida
+preferences-doh-steering-status = Usando un proveedor local
+preferences-doh-status-active = Activo
+preferences-doh-status-disabled = Desactivado
+# Variables:
+#   $reason (string) - A string representation of the reason DoH is not active. For example NS_ERROR_UNKNOWN_HOST or TRR_RCODE_FAIL.
+preferences-doh-status-not-active = Inactivo ({ $reason })
+preferences-doh-group-message = Activar DNS seguro usando:
+preferences-doh-expand-section =
+    .tooltiptext = Más información
+preferences-doh-setting-default =
+    .label = Protección predeterminada
+    .accesskey = d
+preferences-doh-default-desc = { -brand-short-name } decide cuándo usar DNS seguro para proteger su privacidad.
+preferences-doh-default-detailed-desc-1 = Usar DNS seguro en regiones donde esté disponible
+preferences-doh-default-detailed-desc-2 = Use la resolución de DNS predeterminada si hay un problema con el proveedor de DNS seguro
+preferences-doh-default-detailed-desc-3 = Usar un proveedor local si es posible
+preferences-doh-default-detailed-desc-4 = Desactivar cuando una VPN, control parental o políticas de empresa estén activas
+preferences-doh-default-detailed-desc-5 = Desactivar cuando una red le diga a { -brand-short-name } que no debería usar DNS seguro
+preferences-doh-setting-enabled =
+    .label = Protección aumentada
+    .accesskey = i
+preferences-doh-enabled-desc = Usted controla cuándo usar DNS seguro y elige su proveedor.
+preferences-doh-enabled-detailed-desc-1 = Usar el proveedor seleccionado
+preferences-doh-enabled-detailed-desc-2 = Solo usar la resolución de DNS predeterminada si hay un problema con el DNS seguro
+preferences-doh-setting-strict =
+    .label = Protección máxima
+    .accesskey = m
+preferences-doh-strict-desc = { -brand-short-name } siempre usará DNS seguro. Se verá una advertencia de riesgo de seguridad antes de que usemos el DNS del sistema.
+preferences-doh-strict-detailed-desc-1 = Solo usar el proveedor seleccionado
+preferences-doh-strict-detailed-desc-2 = Avisar siempre si el DNS seguro no está disponible
+preferences-doh-strict-detailed-desc-3 = Si el DNS seguro no está disponible los sitios no se cargarán ni funcionarán correctamente.
+preferences-doh-setting-off =
+    .label = Desactivado
+    .accesskey = o
+preferences-doh-off-desc = Usar la resolución de DNS predeterminada
+preferences-doh-checkbox-warn =
+    .label = Advertir si un tercero impide activamente el DNS seguro
+    .accesskey = v
+preferences-doh-select-resolver = Seleccionar proveedor:
+preferences-doh-exceptions-description = { -brand-short-name } no usará DNS seguro en estos sitios
+preferences-doh-manage-exceptions =
+    .label = Administrar excepciones…
+    .accesskey = x
 
 ## The following strings are used in the Download section of settings
 
