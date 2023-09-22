@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,13 +34,6 @@ about-networking-messages-received = 受信メッセージ
 about-networking-bytes-sent = 送信バイト数
 about-networking-bytes-received = 受信バイト数
 about-networking-logging = HTTP ログ
-about-networking-log-tutorial = このツールの使い方は <a data-l10n-name="logging">HTTP Logging</a> を参照してください。
-about-networking-current-log-file = 現在のログファイル:
-about-networking-current-log-modules = 現在のログモジュール:
-about-networking-set-log-file = ログファイルを設定
-about-networking-set-log-modules = ログモジュールを設定
-about-networking-start-logging = 記録開始
-about-networking-stop-logging = 記録終了
 about-networking-dns-lookup = DNS 照会
 about-networking-dns-lookup-button = 解決
 about-networking-dns-domain = ドメイン:
@@ -63,6 +56,8 @@ about-networking-rcwn-cache-slow = キャッシュ遅滞カウント
 about-networking-rcwn-cache-not-slow = キャッシュ非遅滞カウント
 about-networking-networkid = ネットワーク ID
 about-networking-networkid-id = ネットワーク ID
+# Note: do not translate about:logging, as it is a URL.
+about-networking-moved-about-logging = このページは <a data-l10n-name="about-logging-url">about:logging</a> へ移動しました。
 
 ## Link is intended as "network link"
 

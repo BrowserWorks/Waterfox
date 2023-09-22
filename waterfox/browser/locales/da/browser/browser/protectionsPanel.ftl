@@ -1,9 +1,8 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 protections-panel-sendreportview-error = Der opstod en fejl med at sende rapporten. Prøv igen senere.
-
 # A link shown when ETP is disabled for a site. Opens the breakage report subview when clicked.
 protections-panel-sitefixedsendreport-label = Virker webstedet nu? Fortæl os det
 
@@ -22,13 +21,24 @@ protections-popup-footer-protection-label-standard = Standard
 # The text a screen reader speaks when focused on the info button.
 protections-panel-etp-more-info =
     .aria-label = Mere information om udvidet beskyttelse mod sporing
-
 protections-panel-etp-on-header = Udvidet beskyttelse mod sporing er SLÅET TIL for dette websted
 protections-panel-etp-off-header = Udvidet beskyttelse mod sporing er SLÅET FRA for dette websted
 
+## Text for the toggles shown when ETP is enabled/disabled for a given site.
+## .description is transferred into a separate paragraph by the moz-toggle
+## custom element code.
+##   $host (String): the hostname of the site that is being displayed.
+
+protections-panel-etp-on-toggle =
+    .label = Udvidet beskyttelse mod sporing
+    .description = Til for dette websted
+    .aria-label = Deaktiver beskyttelse for { $host }
+protections-panel-etp-off-toggle =
+    .label = Udvidet beskyttelse mod sporing
+    .description = Fra for dette websted
+    .aria-label = Aktiver beskyttelse for { $host }
 # The link to be clicked to open the sub-panel view
 protections-panel-site-not-working = Virker webstedet ikke?
-
 # The heading/title of the sub-panel view
 protections-panel-site-not-working-view =
     .title = Virker webstedet ikke?
@@ -43,9 +53,7 @@ protections-panel-not-blocking-why-etp-off-tooltip = Alle sporings-mekanismer p�
 ##
 
 protections-panel-no-trackers-found = { -brand-short-name } fandt ikke kendte sporings-mekanismer på denne side.
-
 protections-panel-content-blocking-tracking-protection = Sporings-indhold
-
 protections-panel-content-blocking-socialblock = Sporing via sociale medier
 protections-panel-content-blocking-cryptominers-label = Cryptominers
 protections-panel-content-blocking-fingerprinters-label = Fingerprinters
@@ -63,7 +71,6 @@ protections-panel-not-found-label = Ingen fundet
 ##
 
 protections-panel-settings-label = Indstillinger for beskyttelse
-# This should match the "appmenuitem-protection-dashboard-title" string in browser/appmenu.ftl.
 protections-panel-protectionsdashboard-label = Oversigt over beskyttelse
 
 ## In the Site Not Working? view, we suggest turning off protections if
@@ -71,14 +78,13 @@ protections-panel-protectionsdashboard-label = Oversigt over beskyttelse
 
 # The header of the list
 protections-panel-site-not-working-view-header = Slå beskyttelse fra, hvis du har problemer med:
-
 # The list items, shown in a <ul>
 protections-panel-site-not-working-view-issue-list-login-fields = Login-felter
 protections-panel-site-not-working-view-issue-list-forms = Formularer
 protections-panel-site-not-working-view-issue-list-payments = Betalinger
 protections-panel-site-not-working-view-issue-list-comments = Kommentarer
 protections-panel-site-not-working-view-issue-list-videos = Videoer
-
+protections-panel-site-not-working-view-issue-list-fonts = Skrifttyper
 protections-panel-site-not-working-view-send-report = Send en rapport
 
 ##
@@ -88,19 +94,17 @@ protections-panel-cryptominers = Cryptominers bruger din computers ressourcer ti
 protections-panel-fingerprinters = Fingerprinters indsamler indstillinger fra din browser og din computer for at skabe en profil af dig. Ved at bruge dette digitale fingeraftryk kan de spore dig på tværs af forskellige websteder.
 protections-panel-tracking-content = Websteder kan indlæse eksterne reklamer, videoer og andet indhold, der indeholder sporings-kode. Ved at blokere sporings-indhold kan sider ofte indlæses hurtigere, men nogle knapper, formularer og login-felter virker måske ikke.
 protections-panel-social-media-trackers = Sociale netværk placerer sporings-mekanismer på andre websteder for at følge med i, hvad du gør og ser på nettet. Det giver virksomhederne bag de sociale medier mulighed for at lære mere om dig, end det du ellers selv deler på de sociale medier.
-
 protections-panel-description-shim-allowed = Blokeringen af nogle af sporings-mekanismerne angivet nedenfor er blevet delvist ophævet, fordi du har interageret med dem.
 protections-panel-description-shim-allowed-learn-more = Lær mere
 protections-panel-shim-allowed-indicator =
     .tooltiptext = Blokering af sporings-mekaniske delvist ophævet
-
 protections-panel-content-blocking-manage-settings =
     .label = Håndter indstillinger for beskyttelse
     .accesskey = H
-
 protections-panel-content-blocking-breakage-report-view =
     .title = Rapportér problemer med et websted
-protections-panel-content-blocking-breakage-report-view-description = Blokering af indhold kan skabe problemer for nogle websteder. Ved at rapportere problemer hjælper du med at gøre { -brand-short-name } bedre for alle. Dette sender en URL samt information om dine browser-indstillinger til Waterfox. <label data-l10n-name="learn-more">Læs mere</label>
+protections-panel-content-blocking-breakage-report-view-description = Blokering af indhold kan skabe problemer for nogle websteder. Ved at rapportere problemer hjælper du med at gøre { -brand-short-name } bedre for alle. Dette sender en URL samt information om dine browser-indstillinger til BrowserWorks. <label data-l10n-name="learn-more">Læs mere</label>
+protections-panel-content-blocking-breakage-report-view-description2 = Blokering af indhold kan skabe problemer for nogle websteder. Ved at rapportere problemer hjælper du med at gøre { -brand-short-name } bedre for alle. Dette sender en URL samt information om dine browser-indstillinger til { -vendor-short-name }.
 protections-panel-content-blocking-breakage-report-view-collection-url = URL
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = URL
@@ -111,3 +115,21 @@ protections-panel-content-blocking-breakage-report-view-cancel =
     .label = Afbryd
 protections-panel-content-blocking-breakage-report-view-send-report =
     .label = Send rapport
+
+# Cookie Banner Handling
+
+protections-panel-cookie-banner-handling-header = Reduktion af cookie-bannere
+protections-panel-cookie-banner-handling-enabled = Slået til for dette websted
+protections-panel-cookie-banner-handling-disabled = Slået fra for dette websted
+protections-panel-cookie-banner-handling-undetected = Webstedet understøttes ikke i øjeblikket
+protections-panel-cookie-banner-view-title =
+    .title = Reduktion af cookie-bannere
+# Variables
+#  $host (String): the hostname of the site that is being displayed.
+protections-panel-cookie-banner-view-turn-off-for-site = Slå reduktion af cookie-bannere fra for { $host }?
+protections-panel-cookie-banner-view-turn-on-for-site = Slå reduktion af cookie-bannere til for dette websted?
+protections-panel-cookie-banner-view-cookie-clear-warning = { -brand-short-name } vil rydde dette websteds cookies og indlæse siden igen. Rydning af alle cookies kan logge dig ud eller tømme indkøbskurve.
+protections-panel-cookie-banner-view-turn-on-description = { -brand-short-name } forsøger automatisk at afvise alle cookie-anmodninger på understøttede websteder.
+protections-panel-cookie-banner-view-cancel = Annuller
+protections-panel-cookie-banner-view-turn-off = Slå fra
+protections-panel-cookie-banner-view-turn-on = Slå til

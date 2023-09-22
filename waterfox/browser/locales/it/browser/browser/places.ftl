@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,8 +9,8 @@ places-open-in-tab =
     .label = Apri in nuova scheda
     .accesskey = h
 places-open-in-container-tab =
-  .label = Apri in nuova scheda contenitore
-  .accesskey = o
+    .label = Apri in nuova scheda contenitore
+    .accesskey = o
 places-open-all-bookmarks =
     .label = Apri tutti i segnalibri
     .accesskey = u
@@ -23,6 +23,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = Apri in nuova finestra anonima
     .accesskey = m
+
+places-empty-bookmarks-folder =
+    .label = (vuoto)
 
 places-add-bookmark =
     .label = Aggiungi segnalibro…
@@ -87,6 +90,16 @@ places-delete-folder =
         }
     .accesskey = n
 
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] Elimina pagina
+           *[other] Elimina pagine
+        }
+    .accesskey = E
+
 # Managed bookmarks are created by an administrator and cannot be changed by the user.
 managed-bookmarks =
     .label = Segnalibri gestiti
@@ -99,8 +112,8 @@ other-bookmarks-folder =
     .label = Altri segnalibri
 
 places-show-in-folder =
-  .label = Mostra nella cartella
-  .accesskey = M
+    .label = Mostra nella cartella
+    .accesskey = M
 
 places-delete-bookmark =
     .label =
@@ -110,21 +123,32 @@ places-delete-bookmark =
         }
     .accesskey = E
 
+# Variables:
+#   $count (number) - The number of bookmarks being added.
+places-create-bookmark =
+    .label =
+        { $count ->
+            [1] Aggiungi pagina ai segnalibri…
+           *[other] Aggiungi pagine ai segnalibri…
+        }
+    .accesskey = A
+
+places-untag-bookmark =
+    .label = Elimina etichetta
+    .accesskey = m
+
 places-manage-bookmarks =
     .label = Gestisci segnalibri
     .accesskey = G
 
 places-forget-about-this-site-confirmation-title = Dimentica questo sito
 
-# Variables:
-# $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
-places-forget-about-this-site-confirmation-message = Questa operazione eliminerà tutti i dati relativi a { $hostOrBaseDomain }, inclusi cronologia, password, cookie, cache e preferenze relative ai contenuti. Dimenticare questo sito?
+places-forget-about-this-site-confirmation-msg = Questa operazione eliminerà tutti i dati relativi a { $hostOrBaseDomain }, inclusi cronologia, cookie, cache e preferenze relative ai contenuti. I segnalibri e le password associati non verranno rimossi. Proseguire?
 
 places-forget-about-this-site-forget = Dimentica
 
-places-library =
+places-library3 =
     .title = Libreria
-    .style = width:700px; height:500px;
 
 places-organize-button =
     .label = Organizza
@@ -225,6 +249,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = Ultima modifica
 
+places-view-sortby-name =
+    .label = Nome
+    .accesskey = N
+places-view-sortby-url =
+    .label = Indirizzo
+    .accesskey = I
+places-view-sortby-date =
+    .label = Visita più recente
+    .accesskey = r
+places-view-sortby-visit-count =
+    .label = Numero visite
+    .accesskey = v
+places-view-sortby-date-added =
+    .label = Data inserimento
+    .accesskey = a
+places-view-sortby-last-modified =
+    .label = Ultima modifica
+    .accesskey = U
+places-view-sortby-tags =
+    .label = Etichette
+    .accesskey = e
+
 places-cmd-find-key =
     .key = f
 
@@ -235,3 +281,29 @@ places-forward-button =
     .tooltiptext = Vai avanti
 
 places-details-pane-select-an-item-description = Selezionare un elemento per visualizzarne e modificarne le proprietà
+
+places-details-pane-no-items =
+    .value = Nessun elemento
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value =
+        { $count ->
+            [one] Un elemento
+           *[other] { $count } elementi
+        }
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = Cerca nei segnalibri
+places-search-history =
+    .placeholder = Cerca nella cronologia
+places-search-downloads =
+    .placeholder = Cerca nei download
+
+##
+
+places-locked-prompt = I segnalibri e la cronologia non potranno funzionare correttamente in quanto un file di { -brand-short-name } risulta utilizzato da un’altra applicazione. Il problema potrebbe essere causato da un software di sicurezza.
+

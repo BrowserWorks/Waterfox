@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -131,7 +131,7 @@ menu-view-customize-toolbar2 =
     .label = 도구 모음 사용자 지정…
     .accesskey = C
 menu-view-sidebar =
-    .label = 탐색창
+    .label = 사이드바
     .accesskey = e
 menu-view-bookmarks =
     .label = 북마크
@@ -180,6 +180,17 @@ menu-view-full-screen =
     .label = 전체 화면
     .accesskey = F
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = 리더뷰 보기
+    .accesskey = R
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = 리더뷰 닫기
+    .accesskey = R
+
 ##
 
 menu-view-show-all-tabs =
@@ -208,8 +219,9 @@ menu-history-undo-menu =
     .label = 최근에 닫은 탭
 menu-history-undo-window-menu =
     .label = 최근에 닫은 창
-menu-history-reopen-all-tabs = 모든 탭 다시 열기
-menu-history-reopen-all-windows = 모든 창 다시 열기
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = 기록 검색
 
 ## Bookmarks Menu
 
@@ -218,14 +230,13 @@ menu-bookmarks-menu =
     .accesskey = B
 menu-bookmarks-manage =
     .label = 북마크 관리
-menu-bookmark-current-tab =
-    .label = 현재 탭 북마크
-menu-bookmark-edit =
-    .label = 이 북마크 편집
 menu-bookmark-tab =
     .label = 현재 탭 북마크…
 menu-edit-bookmark =
     .label = 이 북마크 편집…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = 북마크 검색
 menu-bookmarks-all-tabs =
     .label = 모든 탭 북마크…
 menu-bookmarks-toolbar =
@@ -319,6 +330,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = 문제 해결 모드 끄기
     .accesskey = M
+menu-help-switch-device =
+    .label = 새 기기로 전환
+    .accesskey = N
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =

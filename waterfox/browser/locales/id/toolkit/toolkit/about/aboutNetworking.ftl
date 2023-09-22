@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,13 +34,6 @@ about-networking-messages-received = Pesan Diterima
 about-networking-bytes-sent = Byte Dikirim
 about-networking-bytes-received = Byte Diterima
 about-networking-logging = Pencatatan
-about-networking-log-tutorial = Lihat <a data-l10n-name="logging">Pencatatan HTTP</a> untuk instruksi menggunakan alat ini.
-about-networking-current-log-file = Berkas Log Terkini:
-about-networking-current-log-modules = Modul Log Terkini:
-about-networking-set-log-file = Atur Berkas Log
-about-networking-set-log-modules = Atur Modul Log
-about-networking-start-logging = Mulai Pencatatan
-about-networking-stop-logging = Hentikan Pencatatan
 about-networking-dns-lookup = Pencarian DNS
 about-networking-dns-lookup-button = Selesaikan
 about-networking-dns-domain = Domain:
@@ -63,6 +56,8 @@ about-networking-rcwn-cache-slow = Tembolok hitung lambat
 about-networking-rcwn-cache-not-slow = Tembolok hitung tidak lambat
 about-networking-networkid = ID jaringan
 about-networking-networkid-id = ID jaringan
+# Note: do not translate about:logging, as it is a URL.
+about-networking-moved-about-logging = Laman ini telah dipindahkan ke <a data-l10n-name="about-logging-url">about:logging</a>.
 
 ## Link is intended as "network link"
 

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -24,6 +24,12 @@ bookmark-overlay-folders-expander =
     .tooltiptextdown = { bookmark-overlay-folders-expander.tooltiptext }
     .tooltiptextup = Ẩn
 
+bookmark-overlay-folders-expander2 =
+    .tooltiptext = Hiển thị tất cả các thư mục chứa dấu trang
+
+bookmark-overlay-folders-expander-hide =
+    .tooltiptext = Ẩn
+
 bookmark-overlay-new-folder-button =
     .label = Thư mục mới
     .accesskey = i
@@ -39,6 +45,12 @@ bookmark-overlay-tags-expander =
     .tooltiptext = Hiển thị tất cả các nhãn
     .tooltiptextdown = { bookmark-overlay-tags-expander.tooltiptext }
     .tooltiptextup = Ẩn
+
+bookmark-overlay-tags-expander2 =
+    .tooltiptext = Hiển thị tất cả các nhãn
+
+bookmark-overlay-tags-expander-hide =
+    .tooltiptext = Ẩn
 
 bookmark-overlay-keyword-2 =
     .value = Từ khóa

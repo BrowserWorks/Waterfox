@@ -1,6 +1,7 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 
 ## The Enterprise Policies feature is aimed at system administrators
 ## who want to deploy these settings across several Waterfox installations
@@ -41,6 +42,11 @@ policy-CertificatesDescription = Aggiungi certificati o utilizza i certificati p
 
 policy-Cookies = Consenti o nega ai siti web di impostare cookie.
 
+# Containers in this context is referring to container tabs in Waterfox.
+policy-Containers = Imposta criteri relativi alle schede contenitore.
+
+policy-DisableAccounts = Disattiva servizi che richiedono un account, sincronizzazione inclusa.
+
 policy-DisabledCiphers = Disattiva cifrature.
 
 policy-DefaultDownloadDirectory = Imposta la cartella predefinita per i download.
@@ -70,7 +76,7 @@ policy-DisablePrimaryPasswordCreation = Se impostato a “true” non è possibi
 
 policy-DisablePasswordReveal = Non permettere di mostrare le password nelle credenziali salvate.
 
-policy-DisablePocket = Disattiva la possibilità di salvare pagine web in Pocket.
+policy-DisablePocket2 = Disattiva la possibilità di salvare pagine web in { -pocket-brand-name }.
 
 policy-DisablePrivateBrowsing = Disattiva la modalità Navigazione anonima.
 
@@ -88,32 +94,38 @@ policy-DisableSystemAddonUpdate = Impedisci al browser di installare e aggiornar
 
 policy-DisableTelemetry = Disattiva telemetria.
 
+policy-DisableThirdPartyModuleBlocking = Impedisci all’utente di bloccare moduli di terze parti che vengono inseriti nel processo di { -brand-short-name }.
+
 policy-DisplayBookmarksToolbar = Visualizza la barra dei segnalibri per impostazione predefinita.
 
 policy-DisplayMenuBar = Visualizza la barra dei menu per impostazione predefinita.
 
-policy-DNSOverHTTPS = Configura DNS over HTTPS.
+policy-DNSOverHTTPS = Configura DNS su HTTPS.
 
 policy-DontCheckDefaultBrowser = Disattiva il controllo del browser predefinito all’avvio.
 
 policy-DownloadDirectory = Imposta la cartella per i download e impedisci ulteriori modifiche.
 
+# “lock” means that the user won’t be able to change this setting
 policy-EnableTrackingProtection = Attiva o disattiva il blocco contenuti ed eventualmente impedisci modifiche all’opzione.
 
+# “lock” means that the user won’t be able to change this setting
 policy-EncryptedMediaExtensions = Attiva o disattiva Encrypted Media Extensions ed eventualmente impedisci modifiche all’opzione.
 
 policy-ExemptDomainFileTypePairsFromFileTypeDownloadWarnings = Disattiva avvisi associati all’estensione dei file per determinati tipi di file e domini.
 
+# A “locked” extension can’t be disabled or removed by the user. This policy
+# takes 3 keys (“Install”, ”Uninstall”, ”Locked”), you can either keep them in
+# English or translate them as verbs.
 policy-Extensions = Installa, disinstalla o blocca estensioni. L’opzione per installare richiede URL o percorsi come parametri. L’opzione per disinstallare o bloccare richiede gli ID delle estensioni.
 
 policy-ExtensionSettings = Gestisci tutti gli aspetti connessi all’installazione di estensioni.
 
 policy-ExtensionUpdate = Attiva o disattiva l’aggiornamento automatico delle estensioni.
 
-policy-WaterfoxHome = Configura Waterfox Home.
 policy-WaterfoxHome2 = Configura { -firefox-home-brand-name }.
 
-policy-FlashPlugin = Consenti o nega l’utilizzo del plugin Flash.
+policy-WaterfoxSuggest = Configura { -firefox-suggest-brand-name }.
 
 policy-GoToIntranetSiteForSingleWordEntryInAddressBar = Forza la navigazione verso pagine della Intranet invece di avviare una ricerca quando si digita una singola parola nella barra degli indirizzi.
 
@@ -121,6 +133,7 @@ policy-Handlers = Configura i gestori predefiniti dell’applicazione.
 
 policy-HardwareAcceleration = Se “false”, disattiva l’accelerazione hardware.
 
+# “lock” means that the user won’t be able to change this setting
 policy-Homepage = Imposta la pagina iniziale ed eventualmente impedisci modifiche all’opzione.
 
 policy-InstallAddonsPermission = Consenti a determinati siti web di installare componenti aggiuntivi.
@@ -161,6 +174,7 @@ policy-PasswordManagerEnabled = Attiva il salvataggio delle password nel gestore
 
 policy-PasswordManagerExceptions = Impedisci a { -brand-short-name } di salvare le password per determinati siti.
 
+# PDF.js and PDF should not be translated
 policy-PDFjs = Disattiva o configura PDF.js, il lettore integrato di PDF di { -brand-short-name }.
 
 policy-Permissions2 = Configura i permessi per fotocamera, microfono, posizione, notifiche e riproduzione automatica.
@@ -185,7 +199,8 @@ policy-SearchEngines = Configura le impostazioni relative ai motori di ricerca. 
 
 policy-SearchSuggestEnabled = Attiva o disattiva suggerimenti di ricerca.
 
-policy-SecurityDevices = Installa moduli PKCS #11.
+# For more information, see https://developer.mozilla.org/en-US/docs/BrowserWorks/Projects/NSS/PKCS11/Module_Installation
+policy-SecurityDevices2 = Aggiungi o elimina moduli PKCS #11.
 
 policy-ShowHomeButton = Visualizza il pulsante Pagina iniziale nella barra degli strumenti.
 
@@ -201,6 +216,11 @@ policy-UserMessaging = Non visualizzare determinati messaggi all’utente.
 
 policy-UseSystemPrintDialog = Stampa utilizzando la finestra di dialogo di sistema.
 
+# “format” refers to the format used for the value of this policy.
 policy-WebsiteFilter = Impedisci l’accesso a determinati siti web. Consulta la documentazione per ulteriori dettagli sul formato da utilizzare.
 
 policy-Windows10SSO = Permetti l’utilizzo di Windows single sign-on per account Microsoft, account aziendale o dell’istituto di istruzione.
+
+
+
+

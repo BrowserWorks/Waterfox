@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -44,15 +44,24 @@ flextype-dual = 플렉스 컨테이너/항목
 # Variables
 # $action (string) - Will either be remote-node-picker-notice-action-desktop or
 #                    remote-node-picker-notice-action-touch
-remote-node-picker-notice = DevTools 노드 선택기가 활성화되었습니다. { $action }
+remote-node-picker-notice = 개발자 도구 노드 선택기가 활성화되었습니다. { $action }
 
 # Text displayed in `remote-node-picker-notice`, when the remote page is on desktop
 remote-node-picker-notice-action-desktop = 검사기에서 요소를 선택하려면 클릭하세요
 
 # Text displayed in `remote-node-picker-notice`, when the remote page is on Android
-remote-node-picker-notice-action-touch = 검사기에서 요소를 선택하려면 탭하세요
+remote-node-picker-notice-action-touch = 검사기에서 요소를 선택하려면 누르세요
 
 # The text displayed in the button that is in the notice in the content page when the user
 # clicks on the "Pick an element from the page" in about:devtools-toolbox inspector panel,
 # when debugging a remote page.
 remote-node-picker-notice-hide-button = 숨기기
+
+# The text displayed in a toolbox notification message which is only displayed
+# if prefers-reduced-motion is enabled (via OS-level settings or by using the
+# ui.prefersReducedMotion=1 preference).
+simple-highlighters-message = prefers-reduced-motion이 활성화되면 깜박임을 피하기 위해 설정 패널에서 단순한 하이라이터를 활성화할 수 있습니다.
+
+# Text displayed in a button inside the "simple-highlighters-message" toolbox
+# notification. "Settings" here refers to the DevTools settings panel.
+simple-highlighters-settings-button = 설정 열기

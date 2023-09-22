@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,12 +13,14 @@ styleeditor-filter-input =
 styleeditor-visibility-toggle =
     .tooltiptext = Cambia visibilità del foglio di stile
     .accesskey = S
+styleeditor-visibility-toggle-system =
+    .tooltiptext = Non è possibile disattivare i fogli di stile di sistema
 styleeditor-save-button = Salva
     .tooltiptext = Salva questo foglio di stile in un file
     .accesskey = S
 styleeditor-options-button =
     .tooltiptext = Opzioni Editor stili
-styleeditor-media-rules = Regole @media
+styleeditor-at-rules = At-rules
 styleeditor-editor-textbox =
     .data-placeholder = Inserire qui il CSS.
 styleeditor-no-stylesheet = Questa pagina non ha un foglio di stile.
@@ -37,3 +39,13 @@ styleeditor-go-to-line =
     .label = Passa alla riga…
     .accesskey = P
 styleeditor-stylesheet-all-filtered = Non è stato trovato alcun foglio di stile corrispondente.
+
+# This string is shown in the style sheets list
+# Variables:
+#   $ruleCount (Integer) - The number of rules in the stylesheet.
+styleeditor-stylesheet-rule-count =
+    { $ruleCount ->
+        [one] { $ruleCount } regola.
+       *[other] { $ruleCount } regole.
+    }
+

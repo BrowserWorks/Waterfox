@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,6 +60,9 @@ import-from-firefox =
 import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
 
 no-migration-sources = Aucun logiciel contenant des marque-pages, un historique ou des mots de passe enregistrés n’a été trouvé.
 
@@ -64,8 +73,8 @@ import-items-description = Sélectionnez les éléments à importer :
 
 import-permissions-page-title = Veuillez accorder les autorisations à { -brand-short-name }
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = macOS vous demande d’autoriser explicitement { -brand-short-name } à accéder aux marque-pages de Safari. Cliquez sur « Continuer » et sélectionnez le fichier « Bookmarks.plist » dans le panneau d’ouverture de fichier qui apparaît.
+# Do not translate "Safari" (the name of the browser on Apple devices)
+import-safari-permissions-string = macOS vous demande d’autoriser explicitement { -brand-short-name } à accéder aux données de Safari. Cliquez sur « Continuer » et sélectionnez le dossier « Safari » dans la boîte de dialogue du Finder qui apparait, puis cliquez sur « Ouvrir ».
 
 import-migrating-page-title = Importation…
 
@@ -162,3 +171,8 @@ browser-data-session-checkbox =
     .label = Fenêtres et onglets
 browser-data-session-label =
     .value = Fenêtres et onglets
+
+browser-data-payment-methods-checkbox =
+    .label = Moyens de paiement
+browser-data-payment-methods-label =
+    .value = Moyens de paiement

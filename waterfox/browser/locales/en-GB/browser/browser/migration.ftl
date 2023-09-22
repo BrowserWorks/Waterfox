@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,6 +60,9 @@ import-from-firefox =
 import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
 
 no-migration-sources = No programs that contain bookmarks, history or password data could be found.
 
@@ -64,8 +73,8 @@ import-items-description = Select which items to import:
 
 import-permissions-page-title = Please give { -brand-short-name } permissions
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = macOS requires you to explicitly allow { -brand-short-name } to access Safari’s bookmarks. Click “Continue” and select the “Bookmarks.plist” file in the File Open panel that appears.
+# Do not translate "Safari" (the name of the browser on Apple devices)
+import-safari-permissions-string = macOS requires you to explicitly allow { -brand-short-name } to access Safari’s data. Click “Continue”, select the “Safari“ folder in the Finder dialogue that appears and then click “Open”.
 
 import-migrating-page-title = Importing…
 
@@ -158,3 +167,8 @@ browser-data-session-checkbox =
     .label = Windows and Tabs
 browser-data-session-label =
     .value = Windows and Tabs
+
+browser-data-payment-methods-checkbox =
+    .label = Payment methods
+browser-data-payment-methods-label =
+    .value = Payment methods

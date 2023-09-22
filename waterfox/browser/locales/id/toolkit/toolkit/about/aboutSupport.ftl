@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,6 +15,7 @@ support-addons-type = Tipe
 support-addons-enabled = Diaktifkan
 support-addons-version = Versi
 support-addons-id = ID
+legacy-user-stylesheets-enabled = Aktif
 security-software-title = Perangkat Lunak Keamanan
 security-software-type = Jenis
 security-software-name = Nama
@@ -38,8 +39,8 @@ app-basics-update-channel = Kanal Pemutakhiran
 # as in "Folder for updates". "Update" is a noun, not a verb.
 app-basics-update-dir =
     { PLATFORM() ->
-        [linux] Pemutakhiran Direktori
-       *[other] Pemutakhiran Folder
+        [linux] Direktori Pemutakhiran
+       *[other] Folder Pemutakhiran
     }
 app-basics-update-history = Riwayat Pemutakhiran
 app-basics-show-update-history = Tampilkan Riwayat Pemutakhiran
@@ -70,7 +71,7 @@ app-basics-remote-processes-count = Proses Jarak Jauh
 app-basics-enterprise-policies = Kebijakan Perusahaan
 app-basics-location-service-key-google = Google Location Service Key
 app-basics-safebrowsing-key-google = Google Safebrowsing Key
-app-basics-key-mozilla = Kunci Layanan Lokasi Waterfox
+app-basics-key-mozilla = Kunci Layanan Lokasi BrowserWorks
 app-basics-safe-mode = Mode Aman
 app-basics-memory-size = Ukuran Memori (RAM)
 app-basics-disk-available = Kapasitas Disk Tersedia
@@ -107,11 +108,21 @@ graphics-gpu2-title = GPU #2
 graphics-decision-log-title = Log Keputusan
 graphics-crash-guards-title = Fitur Penjaga Kerusakan yang Dinonaktifkan
 graphics-workarounds-title = Solusi sementara
+graphics-device-pixel-ratios = Rasio Piksel Perangkat Jendela
 # Windowing system in use on Linux (e.g. X11, Wayland).
 graphics-window-protocol = Protokol Jendela
 # Desktop environment in use on Linux (e.g. GNOME, KDE, XFCE, etc).
 graphics-desktop-environment = Lingkungan Desktop
 place-database-title = Basis Data Places
+place-database-stats = Statistik
+place-database-stats-show = Tampilkan Statistik
+place-database-stats-hide = Sembunyikan Statistik
+place-database-stats-entity = Entitas
+place-database-stats-count = Jumlah
+place-database-stats-size-kib = Ukuran (KB)
+place-database-stats-size-perc = Ukuran (%)
+place-database-stats-efficiency-perc = Efisiensi (%)
+place-database-stats-sequentiality-perc = Urutan (%)
 place-database-integrity = Integritas
 place-database-verify-integrity = Verifikasikan Integritas
 a11y-title = Aksesibilitas
@@ -161,6 +172,12 @@ media-capabilities-title = Kemampuan Media
 media-codec-support-info = Informasi Dukungan Codec
 # List all the entries of the database.
 media-capabilities-enumerate = Daftar basis data
+
+## Codec support table
+
+media-codec-support-hw-decoding = Dekode Perangkat Keras
+media-codec-support-supported = Didukung
+media-codec-support-unsupported = Tidak didukung
 
 ##
 
@@ -284,6 +301,7 @@ can-sandbox-media = Media Plugin Sandboxing
 content-sandbox-level = Tingkat Proses Konten Sandbox
 effective-content-sandbox-level = Tingkat Sandbox Proses Konten Efektif
 content-win32k-lockdown-state = Status Penguncian Win32k untuk Proses Konten
+support-sandbox-gpu-level = Tingkat Sandbox Proses GPU
 sandbox-proc-type-content = konten
 sandbox-proc-type-file = konten berkas
 sandbox-proc-type-media-plugin = plugin media

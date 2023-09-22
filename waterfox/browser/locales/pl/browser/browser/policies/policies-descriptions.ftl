@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,6 +26,9 @@ policy-Bookmarks = Tworzenie zakładek na pasku zakładek, w menu zakładek lub
 policy-CaptivePortal = Włączenie lub wyłączenie obsługi portalu przechwytującego.
 policy-CertificatesDescription = Dodawanie certyfikatów lub używanie wbudowanych.
 policy-Cookies = Zezwalanie lub zabranianie witrynom ustawiania ciasteczek.
+# Containers in this context is referring to container tabs in Waterfox.
+policy-Containers = Ustawianie zasad związanych z kontekstami.
+policy-DisableAccounts = Wyłączenie usług korzystających z konta, w tym synchronizacji.
 policy-DisabledCiphers = Wyłączenie szyfrów.
 policy-DefaultDownloadDirectory = Ustawienie domyślnego katalogu pobierania.
 policy-DisableAppUpdate = Uniemożliwienie aktualizowania przeglądarki.
@@ -41,7 +44,7 @@ policy-DisableForgetButton = Wyłączenie dostępu do przycisku „Wyczyść”.
 policy-DisableFormHistory = Wyłączenie zachowywania historii wyszukiwania i formularzy.
 policy-DisablePrimaryPasswordCreation = Wartość „prawda” powoduje, że nie można utworzyć hasła głównego.
 policy-DisablePasswordReveal = Wyłączenie możliwości wyświetlania haseł w zachowanych danych logowania.
-policy-DisablePocket = Wyłączenie funkcji zachowywania stron w Pocket.
+policy-DisablePocket2 = Wyłączenie funkcji zachowywania stron w { -pocket-brand-name }.
 policy-DisablePrivateBrowsing = Wyłączenie trybu prywatnego.
 policy-DisableProfileImport = Wyłączenie polecenia menu do importowania danych z innej przeglądarki.
 policy-DisableProfileRefresh = Wyłączenie przycisku „Odśwież program { -brand-short-name }” na stronie about:support.
@@ -50,6 +53,7 @@ policy-DisableSecurityBypass = Uniemożliwienie użytkownikowi obejścia pewnych
 policy-DisableSetAsDesktopBackground = Wyłączenie polecenia menu „Ustaw jako tło pulpitu” dla obrazów.
 policy-DisableSystemAddonUpdate = Uniemożliwienie przeglądarce instalowania i aktualizowania dodatków systemowych.
 policy-DisableTelemetry = Wyłączenie telemetrii.
+policy-DisableThirdPartyModuleBlocking = Uniemożliwienie użytkownikowi blokowania modułów zewnętrznych, które są umieszczane w procesie programu { -brand-short-name }.
 policy-DisplayBookmarksToolbar = Domyślne wyświetlanie paska zakładek.
 policy-DisplayMenuBar = Domyślne wyświetlanie paska menu.
 policy-DNSOverHTTPS = Konfiguracja DNS poprzez HTTPS.
@@ -66,9 +70,8 @@ policy-ExemptDomainFileTypePairsFromFileTypeDownloadWarnings = Wyłączenie ostr
 policy-Extensions = Instalacja, odinstalowywanie lub blokowanie rozszerzeń. Opcja instalacji przyjmuje adresy URL lub ścieżki jako parametry. Opcje odinstalowywania i blokady przyjmują identyfikatory rozszerzeń.
 policy-ExtensionSettings = Zarządzanie wszystkimi aspektami instalacji rozszerzeń.
 policy-ExtensionUpdate = Włączenie lub wyłączenie automatycznego aktualizowania rozszerzeń.
-policy-WaterfoxHome = Konfiguracja strony startowej Firefoksa.
 policy-WaterfoxHome2 = Konfiguracja { -firefox-home-brand-name(case: "gen", capitalization: "lower") }.
-policy-FlashPlugin = Zezwalanie lub zabranianie korzystania z wtyczki Flash.
+policy-WaterfoxSuggest = Konfiguracja { -firefox-suggest-brand-name(case: "gen", capitalization: "lower") }.
 policy-GoToIntranetSiteForSingleWordEntryInAddressBar = Wymuszenie bezpośredniej nawigacji na witrynie intranetowej zamiast wyszukiwania podczas wpisywania pojedynczych słów na pasku adresu.
 policy-Handlers = Konfiguracja domyślnych aplikacji obsługujących typy plików.
 policy-HardwareAcceleration = Wartość „fałsz” wyłącza przyspieszanie sprzętowe.
@@ -91,7 +94,7 @@ policy-PrimaryPassword = Wymaganie lub uniemożliwienie używania hasła główn
 policy-NetworkPrediction = Włączenie lub wyłączenie przewidywania sieci (wstępnego pobierania DNS).
 policy-NewTabPage = Włączenie lub wyłączenie strony nowej karty.
 policy-NoDefaultBookmarks = Wyłączenie tworzenia domyślnych zakładek dołączonych do przeglądarki { -brand-short-name } oraz dynamicznych zakładek („Często odwiedzane” i „Ostatnio używane etykiety”). Uwaga: ta zasada jest uwzględniana tylko przed pierwszym uruchomieniem profilu.
-policy-OfferToSaveLogins = Wymuszenie ustawienia zezwalającego przeglądarce { -brand-short-name } pytanie o zapamiętanie zachowanych danych logowania i haseł. Przyjmowane są wartości „prawda” i „fałsz”.
+policy-OfferToSaveLogins = Wymuszenie ustawienia zezwalającego programowi { -brand-short-name } pytanie o zapamiętanie zachowanych danych logowania i haseł. Przyjmowane są wartości „prawda” i „fałsz”.
 policy-OfferToSaveLoginsDefault = Ustawienie domyślnej wartości ustawienia zezwalającego programowi { -brand-short-name } pytanie o zapamiętanie zachowanych danych logowania i haseł. Przyjmowane są wartości „prawda” i „fałsz”.
 policy-OverrideFirstRunPage = Zastąpienie strony pierwszego uruchomienia. Ustawienie tej zasady na pustą wyłączy stronę pierwszego uruchomienia.
 policy-OverridePostUpdatePage = Zastąpienie strony „Co nowego” wyświetlanej po aktualizacji. Ustawienie tej zasady na pustą wyłączy stronę wyświetlaną po aktualizacji.
@@ -110,8 +113,8 @@ policy-SanitizeOnShutdown2 = Usuwanie danych nawigacji podczas wyłączania.
 policy-SearchBar = Ustawienie domyślnego położenia paska wyszukiwania. Użytkownik nadal może go konfigurować.
 policy-SearchEngines = Konfiguracja ustawień wyszukiwarki. Ta zasada jest dostępna tylko w wersji ESR (Extended Support Release).
 policy-SearchSuggestEnabled = Włączenie lub wyłączenie podpowiedzi wyszukiwania.
-# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
-policy-SecurityDevices = Instalacja modułów PKCS #11.
+# For more information, see https://wikipedia.org/wiki/PKCS_11
+policy-SecurityDevices2 = Dodawanie i usuwanie modułów PKCS #11.
 policy-ShowHomeButton = Wyświetlanie przycisku strony domowej na pasku narzędzi.
 policy-SSLVersionMax = Ustawienie maksymalnej wersji SSL.
 policy-SSLVersionMin = Ustawienie minimalnej wersji SSL.

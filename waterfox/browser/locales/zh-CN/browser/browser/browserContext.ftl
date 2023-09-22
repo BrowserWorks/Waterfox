@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -46,11 +46,11 @@ toolbar-button-forward-2 =
 ## Reload
 
 main-context-menu-reload =
-    .aria-label = 重新载入
+    .aria-label = 重新加载
     .accesskey = R
 # This menuitem is only visible on macOS
 main-context-menu-reload-mac =
-    .label = 重新载入
+    .label = 重新加载
     .accesskey = R
 toolbar-button-reload =
     .label = { main-context-menu-reload.aria-label }
@@ -86,38 +86,6 @@ main-context-menu-page-save =
 
 ## Simple menu items
 
-main-context-menu-bookmark-add =
-    .aria-label = 将此页面加入书签
-    .accesskey = m
-    .tooltiptext = 将此页面加入书签
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-edit-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-add-mac =
-    .label = 添加书签
-    .accesskey = m
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-add-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-edit-mac =
-    .label = 编辑书签
-    .accesskey = m
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the add bookmark command.
-main-context-menu-bookmark-add-with-shortcut =
-    .aria-label = 将此页面加入书签
-    .accesskey = m
-    .tooltiptext = 将此页面加入书签 ({ $shortcut })
-main-context-menu-bookmark-change =
-    .aria-label = 编辑此书签
-    .accesskey = m
-    .tooltiptext = 编辑此书签
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the edit bookmark command.
-main-context-menu-bookmark-change-with-shortcut =
-    .aria-label = 编辑此书签
-    .accesskey = m
-    .tooltiptext = 编辑此书签 ({ $shortcut })
 main-context-menu-bookmark-page =
     .aria-label = 将页面加入书签…
     .accesskey = m
@@ -165,9 +133,6 @@ main-context-menu-open-link-new-window =
 main-context-menu-open-link-new-private-window =
     .label = 新建隐私窗口打开链接
     .accesskey = P
-main-context-menu-bookmark-link =
-    .label = 为此链接添加书签
-    .accesskey = B
 main-context-menu-bookmark-link-2 =
     .label = 将链接加入书签…
     .accesskey = B
@@ -191,6 +156,11 @@ main-context-menu-copy-phone =
 main-context-menu-copy-link-simple =
     .label = 复制链接
     .accesskey = L
+# This command copies the link, removing additional
+# query parameters used to track users across sites.
+main-context-menu-strip-on-share-link =
+    .label = 复制无跟踪参数链接
+    .accesskey = y
 
 ## Media (video/audio) controls
 ##
@@ -254,7 +224,7 @@ main-context-menu-media-watch-pip =
     .label = 画中画观看
     .accesskey = u
 main-context-menu-image-reload =
-    .label = 重新载入图像
+    .label = 重新加载图像
     .accesskey = R
 main-context-menu-image-view-new-tab =
     .label = 新建标签页打开图像
@@ -307,12 +277,6 @@ main-context-menu-video-email =
 main-context-menu-audio-email =
     .label = 用邮件发送音频…
     .accesskey = a
-main-context-menu-plugin-play =
-    .label = 激活此插件
-    .accesskey = c
-main-context-menu-plugin-hide =
-    .label = 隐藏此插件
-    .accesskey = H
 main-context-menu-save-to-pocket =
     .label = 保存页面到 { -pocket-brand-name }
     .accesskey = k
@@ -325,14 +289,17 @@ main-context-menu-send-to-device =
 ## are mutually exclusive.
 
 main-context-menu-use-saved-login =
-    .label = 使用存放的登录信息
+    .label = 使用保存的登录信息
     .accesskey = o
 main-context-menu-use-saved-password =
-    .label = 使用存放的密码
+    .label = 使用保存的密码
     .accesskey = o
 
 ##
 
+main-context-menu-use-relay-mask =
+    .label = 使用 { -relay-brand-short-name } 马甲邮箱
+    .accesskey = E
 main-context-menu-suggest-strong-password =
     .label = 建议高强度密码…
     .accesskey = S
@@ -358,11 +325,8 @@ main-context-menu-frame-open-window =
     .label = 新建窗口打开框架
     .accesskey = W
 main-context-menu-frame-reload =
-    .label = 重新载入框架
+    .label = 重新加载框架
     .accesskey = R
-main-context-menu-frame-bookmark =
-    .label = 为此框架添加书签
-    .accesskey = m
 main-context-menu-frame-add-bookmark =
     .label = 将框架加入书签…
     .accesskey = m
@@ -378,9 +342,6 @@ main-context-menu-frame-view-source =
 main-context-menu-frame-view-info =
     .label = 查看框架信息
     .accesskey = I
-main-context-menu-print-selection =
-    .label = 打印选中内容
-    .accesskey = r
 main-context-menu-print-selection-2 =
     .label = 打印选中内容…
     .accesskey = r

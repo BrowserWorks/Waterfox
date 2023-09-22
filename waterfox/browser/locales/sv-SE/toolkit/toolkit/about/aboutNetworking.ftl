@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,13 +34,6 @@ about-networking-messages-received = Mottagna meddelanden
 about-networking-bytes-sent = Skickade byte
 about-networking-bytes-received = Mottagna byte
 about-networking-logging = Loggning
-about-networking-log-tutorial = Se <a data-l10n-name="logging">HTTP-loggning</a> för instruktioner om hur du använder detta verktyg.
-about-networking-current-log-file = Aktuell loggfil:
-about-networking-current-log-modules = Aktuella loggmoduler:
-about-networking-set-log-file = Ange loggfil
-about-networking-set-log-modules = Ange loggmoduler
-about-networking-start-logging = Starta loggning
-about-networking-stop-logging = Stoppa loggning
 about-networking-dns-lookup = DNS-uppslagning
 about-networking-dns-lookup-button = Lös fel
 about-networking-dns-domain = Domän:
@@ -63,6 +56,8 @@ about-networking-rcwn-cache-slow = Antal långsam cache
 about-networking-rcwn-cache-not-slow = Antal inte långsam cache
 about-networking-networkid = Nätverks-ID
 about-networking-networkid-id = Nätverks-ID
+# Note: do not translate about:logging, as it is a URL.
+about-networking-moved-about-logging = Den här sidan har flyttats till <a data-l10n-name="about-logging-url">about:logging</a>.
 
 ## Link is intended as "network link"
 

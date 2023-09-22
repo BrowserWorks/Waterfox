@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,6 +18,10 @@ support-addons-type = Typ
 support-addons-enabled = Aktiviert
 support-addons-version = Version
 support-addons-id = ID
+legacy-user-stylesheets-title = Ältere Benutzer-Stylesheets
+legacy-user-stylesheets-enabled = Aktiv
+legacy-user-stylesheets-stylesheet-types = Stylesheets
+legacy-user-stylesheets-no-stylesheets-found = Keine Stylesheets gefunden
 security-software-title = Sicherheitssoftware
 security-software-type = Typ
 security-software-name = Name
@@ -73,10 +77,11 @@ app-basics-remote-processes-count = Externe Prozesse
 app-basics-enterprise-policies = Unternehmensrichtlinien
 app-basics-location-service-key-google = Google-Location-Service-Schlüssel
 app-basics-safebrowsing-key-google = Google-Safebrowsing-Schlüssel
-app-basics-key-mozilla = Waterfox-Location-Service-Schlüssel
+app-basics-key-mozilla = BrowserWorks-Location-Service-Schlüssel
 app-basics-safe-mode = Abgesicherter Modus
 app-basics-memory-size = Speichergröße (RAM)
 app-basics-disk-available = Speicherplatz verfügbar
+app-basics-pointing-devices = Zeigegeräte
 # Variables:
 #   $value (number) - Amount of data being stored
 #   $unit (string) - The unit of data being stored (e.g. MB)
@@ -110,11 +115,21 @@ graphics-gpu2-title = GPU 2
 graphics-decision-log-title = Entscheidungsprotokoll
 graphics-crash-guards-title = Absturzverhinderer hat Funktionen deaktiviert
 graphics-workarounds-title = Lösungen
+graphics-device-pixel-ratios = Gerät-Pixel-Verhältnisse (Device Pixel Ratios) des Fensters
 # Windowing system in use on Linux (e.g. X11, Wayland).
 graphics-window-protocol = Window-Protokoll
 # Desktop environment in use on Linux (e.g. GNOME, KDE, XFCE, etc).
 graphics-desktop-environment = Desktop-Umgebung
 place-database-title = Chronik- und Lesezeichendatenbank
+place-database-stats = Statistiken
+place-database-stats-show = Statistiken anzeigen
+place-database-stats-hide = Statistiken ausblenden
+place-database-stats-entity = Entität
+place-database-stats-count = Anzahl
+place-database-stats-size-kib = Größe (KiB)
+place-database-stats-size-perc = Größe (%)
+place-database-stats-efficiency-perc = Effizienz (%)
+place-database-stats-sequentiality-perc = Sequenzialität (%)
 place-database-integrity = Integrität
 place-database-verify-integrity = Integrität überprüfen
 a11y-title = Barrierefreiheit
@@ -164,6 +179,15 @@ media-capabilities-title = Leistungsmerkmale für Medien (Media Capabilities)
 media-codec-support-info = Support-Informationen zum Codec
 # List all the entries of the database.
 media-capabilities-enumerate = Datenbankeinträge auflisten
+
+## Codec support table
+
+media-codec-support-sw-decoding = Software-Dekodierung
+media-codec-support-hw-decoding = Hardware-Dekodierung
+media-codec-support-codec-name = Codec-Name
+media-codec-support-supported = Unterstützt
+media-codec-support-unsupported = Nicht unterstützt
+media-codec-support-error = Support-Informationen zum Codec nicht verfügbar. Versuchen Sie es nach der Wiedergabe einer Mediendatei erneut.
 
 ##
 
@@ -278,6 +302,8 @@ webgl2-renderer = WebGL-2-Treiber: Renderer
 webgl2-version = WebGL-2-Treiber: Version
 webgl2-driver-extensions = WebGL-2-Treiber: Erweiterungen
 webgl2-extensions = WebGL-2-Erweiterungen
+webgpu-default-adapter = WebGPU-Standardadapter
+webgpu-fallback-adapter = WebGPU-Rückfalladapter
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = Aufgrund bekannter Probleme blockiert: <a data-l10n-name="bug-link">Bug { $bugNumber }</a>
@@ -307,6 +333,7 @@ can-sandbox-media = Medienplugins in isolierter Umgebung
 content-sandbox-level = Ebene der isolierten Umgebung des Inhaltsprozesses
 effective-content-sandbox-level = Effektive Ebene der isolierten Umgebung
 content-win32k-lockdown-state = Status der Win32k-Sperre für den Inhaltsprozess
+support-sandbox-gpu-level = Ebene der isolierten Umgebung des GPU-Prozesses
 sandbox-proc-type-content = Inhalt
 sandbox-proc-type-file = Dateiinhalt
 sandbox-proc-type-media-plugin = Medienplugin
@@ -378,3 +405,10 @@ support-remote-experiments-see-about-studies = Weitere Informationen erhalten Si
 support-remote-features-title = Externe Funktionen
 support-remote-features-name = Name
 support-remote-features-status = Status
+
+## Pointing devices
+
+pointing-device-mouse = Maus
+pointing-device-touchscreen = Touch-Gerät
+pointing-device-pen-digitizer = Digitizer-Stift
+pointing-device-none = Keine Zeigegeräte

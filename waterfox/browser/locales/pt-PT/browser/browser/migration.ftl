@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,6 +60,9 @@ import-from-firefox =
 import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
 
 no-migration-sources = Não foram encontrados programas que contenham marcadores, histórico ou palavras-passe.
 
@@ -64,8 +73,8 @@ import-items-description = Selecione os itens a importar:
 
 import-permissions-page-title = Por favor, dê permissões ao { -brand-short-name }
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = O macOS exige que você permita explicitamente o acesso do { -brand-short-name } aos marcadores do Safari. Clique em “Continuar” e selecione o ficheiro “Bookmarks.plist” no painel Abrir ficheiro que é apresentado.
+# Do not translate "Safari" (the name of the browser on Apple devices)
+import-safari-permissions-string = O macOS requer que você autorize, de forma explicita, o acesso do { -brand-short-name } aos dados do Safari. Clique em “Continuar”, selecione a pasta “Safari“ na janela do Finder que é apresentada e clique em “Abrir”.
 
 import-migrating-page-title = A importar…
 
@@ -158,3 +167,8 @@ browser-data-session-checkbox =
     .label = Janelas e separadores
 browser-data-session-label =
     .value = Janelas e separadores
+
+browser-data-payment-methods-checkbox =
+    .label = Métodos de pagamento
+browser-data-payment-methods-label =
+    .value = Métodos de pagamento

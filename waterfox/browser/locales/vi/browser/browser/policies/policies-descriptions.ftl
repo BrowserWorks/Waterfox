@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,6 +26,9 @@ policy-Bookmarks = Tạo dấu trang trong thanh công cụ dấu trang, menu d�
 policy-CaptivePortal = Kích hoạt hoặc vô hiệu hóa hỗ trợ kiểm soát truy cập.
 policy-CertificatesDescription = Thêm chứng chỉ hoặc sử dụng chứng chỉ có sẵn.
 policy-Cookies = Cho phép hoặc từ chối các trang web lưu cookie.
+# Containers in this context is referring to container tabs in Waterfox.
+policy-Containers = Đặt các chính sách liên quan đến ngăn chứa.
+policy-DisableAccounts = Vô hiệu hóa các dịch vụ dựa trên tài khoản, bao gồm cả đồng bộ hóa.
 policy-DisabledCiphers = Vô hiệu hóa thuật toán mã hóa.
 policy-DefaultDownloadDirectory = Đặt thư mục tải xuống mặc định.
 policy-DisableAppUpdate = Chặn việc cập nhật trình duyệt.
@@ -41,7 +44,7 @@ policy-DisableForgetButton = Chặn truy cập vào nút Quên.
 policy-DisableFormHistory = Không lưu lịch sử tìm kiếm và biểu mẫu.
 policy-DisablePrimaryPasswordCreation = Nếu đúng, không thể tạo mật khẩu chính.
 policy-DisablePasswordReveal = Không cho phép mật khẩu được tiết lộ trong thông tin đăng nhập đã lưu.
-policy-DisablePocket = Tắt tính năng lưu trang web vào Pocket.
+policy-DisablePocket2 = Tắt tính năng lưu trang web vào { -pocket-brand-name }.
 policy-DisablePrivateBrowsing = Vô hiệu hóa duyệt web riêng tư.
 policy-DisableProfileImport = Vô hiệu hóa lệnh nhập dữ liệu từ trình duyệt khác trên bảng chọn.
 policy-DisableProfileRefresh = Vô hiệu hóa nút khôi phục { -brand-short-name } trong trang about:support.
@@ -50,9 +53,10 @@ policy-DisableSecurityBypass = Ngăn người dùng bỏ qua một số cảnh b
 policy-DisableSetAsDesktopBackground = Vô hiệu hóa lệnh đặt làm hình nền desktop trong menu.
 policy-DisableSystemAddonUpdate = Ngăn trình duyệt cài đặt và cập nhật tiện ích hệ thống.
 policy-DisableTelemetry = Tắt Telemetry.
+policy-DisableThirdPartyModuleBlocking = Ngăn người dùng chặn các module của bên thứ ba đưa vào tiến trình { -brand-short-name }.
 policy-DisplayBookmarksToolbar = Hiển thị thanh công cụ dấu trang theo mặc định.
 policy-DisplayMenuBar = Hiển thị thanh bảng chọn theo mặc định.
-policy-DNSOverHTTPS = Cấu hình DNS over HTTPS.
+policy-DNSOverHTTPS = Cấu hình DNS qua HTTPS.
 policy-DontCheckDefaultBrowser = Tắt kiểm tra trình duyệt mặc định khi khởi động.
 policy-DownloadDirectory = Đặt và khóa thư mục tải xuống.
 # “lock” means that the user won’t be able to change this setting
@@ -66,9 +70,8 @@ policy-ExemptDomainFileTypePairsFromFileTypeDownloadWarnings = Tắt cảnh báo
 policy-Extensions = Cài đặt, gỡ cài đặt hoặc khóa tiện ích mở rộng. Tùy chọn Cài đặt lấy URL hoặc đường dẫn làm tham số. Các tùy chọn Gỡ cài đặt và Khóa lấy ID tiện ích mở rộng.
 policy-ExtensionSettings = Quản lý các cài đặt cài đặt khác nhau cho tiện ích mở rộng.
 policy-ExtensionUpdate = Bật hoặc tắt cập nhật tiện ích mở rộng tự động.
-policy-WaterfoxHome = Cấu hình trang chủ Waterfox.
 policy-WaterfoxHome2 = Định cấu hình { -firefox-home-brand-name }.
-policy-FlashPlugin = Cho phép hoặc từ chối việc sử dụng phần bổ trợ Flash.
+policy-WaterfoxSuggest = Định cấu hình { -firefox-suggest-brand-name }.
 policy-GoToIntranetSiteForSingleWordEntryInAddressBar = Buộc điều hướng trực tiếp trang web nội bộ thay vì tìm kiếm khi nhập các mục từ đơn lẻ vào thanh địa chỉ.
 policy-Handlers = Cấu hình trình xử lý ứng dụng mặc định.
 policy-HardwareAcceleration = Nếu không đúng, hãy tắt chế độ tăng tốc phần cứng.
@@ -110,8 +113,8 @@ policy-SanitizeOnShutdown2 = Xóa dữ liệu điều hướng khi tắt máy.
 policy-SearchBar = Đặt thanh tìm kiếm ở vị trí mặc định. Người dùng vẫn được phép tùy chỉnh nó.
 policy-SearchEngines = Cấu hình cài đặt công cụ tìm kiếm. Chính sách này chỉ có sẵn trên phiên bản phát hành hỗ trợ mở rộng (ESR).
 policy-SearchSuggestEnabled = Kích hoạt hoặc vô hiệu hóa các đề xuất tìm kiếm.
-# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
-policy-SecurityDevices = Cài đặt các mô-đun PKCS # 11.
+# For more information, see https://wikipedia.org/wiki/PKCS_11
+policy-SecurityDevices2 = Thêm hoặc xóa module PKCS #11.
 policy-ShowHomeButton = Hiển thị nút trang chủ trên thanh công cụ.
 policy-SSLVersionMax = Chỉnh phiên bản SSL tối đa.
 policy-SSLVersionMin = Chỉnh phiên bản SSL tối thiểu.
