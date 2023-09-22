@@ -1,56 +1,86 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pictureinpicture-player-title = Bild-i-bild
-pictureinpicture-pause =
-    .aria-label = Pausa
-pictureinpicture-play =
-    .aria-label = Spela upp
-pictureinpicture-mute =
-    .aria-label = Ljud av
-pictureinpicture-unmute =
-    .aria-label = Ljud på
-pictureinpicture-unpip =
-    .aria-label = Skicka tillbaka till flik
-pictureinpicture-close =
-    .aria-label = Stäng
 
 ## Variables:
 ##   $shortcut (String) - Keyboard shortcut to execute the command.
 
-pictureinpicture-pause-cmd =
+## Note that this uses .tooltip rather than the standard '.title'
+## or '.tooltiptext' -  but it has the same effect. Code in the
+## picture-in-picture window will read and copy this to an in-document
+## DOM node that then shows the tooltip.
+##
+## Variables:
+##   $shortcut (String) - Keyboard shortcut to execute the command.
+
+pictureinpicture-pause-btn =
     .aria-label = Pausa
-    .title = Pausa (mellanslag)
-pictureinpicture-play-cmd =
+    .tooltip = Pausa (mellanslag)
+pictureinpicture-play-btn =
     .aria-label = Spela
-    .title = Spela (mellanslag)
-pictureinpicture-mute-cmd =
+    .tooltip = Spela (mellanslag)
+
+pictureinpicture-mute-btn =
     .aria-label = Ljud av
-    .title = Ljud av ({ $shortcut })
-pictureinpicture-unmute-cmd =
+    .tooltip = Ljud av ({ $shortcut })
+pictureinpicture-unmute-btn =
     .aria-label = Ljud på
-    .title = Ljud på ({ $shortcut })
-pictureinpicture-unpip-cmd =
+    .tooltip = Ljud på ({ $shortcut })
+
+pictureinpicture-unpip-btn =
     .aria-label = Skicka tillbaka till flik
-    .title = Tillbaka till flik
-pictureinpicture-close-cmd =
+    .tooltip = Tillbaka till flik
+
+pictureinpicture-close-btn =
     .aria-label = Stäng
-    .title = Stäng ({ $shortcut })
-pictureinpicture-subtitles-cmd =
+    .tooltip = Stäng ({ $shortcut })
+
+pictureinpicture-subtitles-btn =
     .aria-label = Undertexter
-    .title = Undertexter
+    .tooltip = Undertexter
+
+pictureinpicture-fullscreen-btn2 =
+    .aria-label = Helskärm
+    .tooltip = Helskärm (dubbelklicka eller { $shortcut })
+
+pictureinpicture-exit-fullscreen-btn2 =
+    .aria-label = Avsluta helskärm
+    .tooltip = Avsluta helskärm (dubbelklicka eller { $shortcut })
 
 ##
 
-pictureinpicture-fullscreen-cmd =
-    .aria-label = Helskärm
-    .title = Helskärm (dubbelklick)
-pictureinpicture-exit-fullscreen-cmd =
-    .aria-label = Avsluta helskärm
-    .title = Avsluta helskärm (dubbelklick)
+# Keyboard shortcut to toggle fullscreen mode when Picture-in-Picture is open.
+pictureinpicture-toggle-fullscreen-shortcut =
+    .key = F
+
+## Note that this uses .tooltip rather than the standard '.title'
+## or '.tooltiptext' -  but it has the same effect. Code in the
+## picture-in-picture window will read and copy this to an in-document
+## DOM node that then shows the tooltip.
+
+pictureinpicture-seekbackward-btn =
+    .aria-label = Bakåt
+    .tooltip = Bakåt (←)
+
+pictureinpicture-seekforward-btn =
+    .aria-label = Framåt
+    .tooltip = Framåt (→)
+
+##
+
+# This string is never displayed on the window. Is intended to be announced by
+# a screen reader whenever a user opens the subtitles settings panel
+# after selecting the subtitles button.
+pictureinpicture-subtitles-panel-accessible = Undertextinställningar
+
 pictureinpicture-subtitles-label = Undertexter
+
 pictureinpicture-font-size-label = Textstorlek
+
 pictureinpicture-font-size-small = Liten
+
 pictureinpicture-font-size-medium = Mellan
+
 pictureinpicture-font-size-large = Stor

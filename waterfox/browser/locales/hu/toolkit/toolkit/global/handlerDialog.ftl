@@ -1,6 +1,7 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 
 ## Permission Dialog
 ## Variables:
@@ -8,11 +9,28 @@
 ##  $scheme - the type of link that's being opened.
 ##  $appName - Name of the application that will be opened.
 
+
+## Permission Dialog
+## Variables:
+##  $host - the hostname that is initiating the request
+##  $scheme - the type of link that's being opened.
+##  $appName - Name of the application that will be opened.
+##  $extension - Name of extension that initiated the request
+
+## Permission Dialog
+## Variables:
+##  $host (string) - The hostname that is initiating the request
+##  $scheme (string) - The type of link that's being opened.
+##  $appName (string) - Name of the application that will be opened.
+##  $extension (string) - Name of extension that initiated the request
+
 permission-dialog-description = Engedélyezi az oldal számára, hogy megnyissa a(z) { $scheme } hivatkozást?
 
 permission-dialog-description-file = Engedélyezi a fájl számára, hogy megnyissa a(z) { $scheme } hivatkozást?
 
 permission-dialog-description-host = Engedélyezi a(z) { $host } számára, hogy megnyissa a(z) { $scheme } hivatkozást?
+
+permission-dialog-description-extension = Engedélyezi a(z) { $extension } kiegészítő számára, hogy megnyissa a(z) { $scheme } hivatkozást?
 
 permission-dialog-description-app = Engedélyezi az oldal számára, hogy megnyissa a(z) { $scheme } hivatkozást a(z) { $appName } alkalmazással?
 
@@ -20,13 +38,24 @@ permission-dialog-description-host-app = Engedélyezi a(z) { $host } számára, 
 
 permission-dialog-description-file-app = Engedélyezi a fájl számára, hogy megnyissa a(z) { $scheme } hivatkozást a(z) { $appName } alkalmazással?
 
+permission-dialog-description-extension-app = Engedélyezi a(z) { $extension } kiegészítő számára, hogy megnyissa a(z) { $scheme } hivatkozást a(z) { $appName } alkalmazással?
+
 ## Please keep the emphasis around the hostname and scheme (ie the
 ## `<strong>` HTML tags). Please also keep the hostname as close to the start
 ## of the sentence as your language's grammar allows.
 
+## Please keep the emphasis around the hostname and scheme (ie the
+## `<strong>` HTML tags). Please also keep the hostname as close to the start
+## of the sentence as your language's grammar allows.
+## Variables:
+##  $host (string) - The hostname that is initiating the request
+##  $scheme (string) - The type of link that's being opened.
+
 permission-dialog-remember = Mindig engedélyezze, hogy a(z) <strong>{ $host }</strong> <strong>{ $scheme }</strong> hivatkozásokat nyisson meg
 
-permission-dialog-remember-file = Mindig engedélyezzen ennek a fájlnak, hogy megnyissa a(z) <strong>{ $scheme }</strong> hivatkozásokat
+permission-dialog-remember-file = Mindig engedélyezze ennek a fájlnak, hogy megnyissa a(z) <strong>{ $scheme }</strong> hivatkozásokat
+
+permission-dialog-remember-extension = Mindig engedélyezze ennek a kiegészítőnek, hogy megnyissa a(z) <strong>{ $scheme }</strong> hivatkozásokat
 
 ##
 
@@ -45,6 +74,10 @@ permission-dialog-set-change-app-link = Másik alkalmazás választása.
 ## Chooser dialog
 ## Variables:
 ##  $scheme - the type of link that's being opened.
+
+## Chooser dialog
+## Variables:
+##  $scheme (string) - The type of link that's being opened.
 
 chooser-window =
     .title = Alkalmazás választása

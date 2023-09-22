@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,12 +20,13 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = Tìm kiếm
     .aria-label = Tìm kiếm
-# Variables
-#  $engine (String): the name of the user's default search engine
+
+# Variables:
+#   $engine (string) - The name of the user's default search engine
 newtab-search-box-handoff-text = Tìm kiếm với { $engine } hoặc nhập địa chỉ
 newtab-search-box-handoff-text-no-engine = Tìm kiếm hoặc nhập địa chỉ
-# Variables
-#  $engine (String): the name of the user's default search engine
+# Variables:
+#   $engine (string) - The name of the user's default search engine
 newtab-search-box-handoff-input =
     .placeholder = Tìm kiếm với { $engine } hoặc nhập địa chỉ
     .title = Tìm kiếm với { $engine } hoặc nhập địa chỉ
@@ -34,6 +35,7 @@ newtab-search-box-handoff-input-no-engine =
     .placeholder = Tìm kiếm hoặc nhập địa chỉ
     .title = Tìm kiếm hoặc nhập địa chỉ
     .aria-label = Tìm kiếm hoặc nhập địa chỉ
+
 newtab-search-box-text = Tìm kiếm trên mạng
 newtab-search-box-input =
     .placeholder = Tìm kiếm trên mạng
@@ -48,10 +50,12 @@ newtab-topsites-edit-shortcut-header = Chỉnh sửa lối tắt
 newtab-topsites-title-label = Tiêu đề
 newtab-topsites-title-input =
     .placeholder = Nhập tiêu đề
+
 newtab-topsites-url-label = URL
 newtab-topsites-url-input =
     .placeholder = Nhập hoặc dán URL
 newtab-topsites-url-validation = Yêu cầu URL hợp lệ
+
 newtab-topsites-image-url-label = Hình ảnh Tuỳ chỉnh URL
 newtab-topsites-use-image-link = Sử dụng hình ảnh tùy chỉnh…
 newtab-topsites-image-validation = Không tải được hình ảnh. Hãy thử một URL khác.
@@ -80,13 +84,15 @@ newtab-topsite-sponsored = Được tài trợ
 newtab-menu-section-tooltip =
     .title = Mở bảng chọn
     .aria-label = Mở bảng chọn
+
 # Tooltip for dismiss button
 newtab-dismiss-button-tooltip =
     .title = Gỡ bỏ
     .aria-label = Gỡ bỏ
+
 # This tooltip is for the context menu of Pocket cards or Topsites
 # Variables:
-#  $title (String): The label or hostname of the site. This is for screen readers when the context menu button is focused/active.
+#   $title (string) - The label or hostname of the site. This is for screen readers when the context menu button is focused/active.
 newtab-menu-content-tooltip =
     .title = Mở bảng chọn
     .aria-label = Mở bảng chọn ngữ cảnh cho { $title }
@@ -156,18 +162,21 @@ newtab-label-removed-bookmark = Đã xóa dấu trang
 newtab-label-recommended = Xu hướng
 newtab-label-saved = Đã lưu vào { -pocket-brand-name }
 newtab-label-download = Đã tải xuống
+
 # This string is used in the story cards to indicate sponsored content
 # Variables:
-#  $sponsorOrSource (String): This is the name of a company or their domain
+#   $sponsorOrSource (string) - The name of a company or their domain
 newtab-label-sponsored = { $sponsorOrSource } · Được tài trợ
+
 # This string is used at the bottom of story cards to indicate sponsored content
 # Variables:
-#  $sponsor (String): This is the name of a sponsor
+#   $sponsor (string) - The name of a sponsor
 newtab-label-sponsored-by = Được tài trợ bởi { $sponsor }
+
 # This string is used under the image of story cards to indicate source and time to read
 # Variables:
-#  $source (String): This is the name of a company or their domain
-#  $timeToRead (Number): This is the estimated number of minutes to read this story
+#   $source (string) - The name of a company or their domain
+#   $timeToRead (number) - The estimated number of minutes to read this story
 newtab-label-source-read-time = { $source } · { $timeToRead } phút
 
 ## Section Menu: These strings are displayed in the section context menu and are
@@ -196,15 +205,16 @@ newtab-section-expand-section-label =
 newtab-section-header-topsites = Trang web hàng đầu
 newtab-section-header-recent-activity = Hoạt động gần đây
 # Variables:
-#  $provider (String): Name of the corresponding content provider.
+#   $provider (string) - Name of the corresponding content provider.
 newtab-section-header-pocket = Được đề xuất bởi { $provider }
 
 ## Empty Section States: These show when there are no more items in a section. Ex. When there are no more Pocket story recommendations, in the space where there would have been stories, this is shown instead.
 
 newtab-empty-section-highlights = Bắt đầu duyệt web và chúng tôi sẽ hiển thị một số bài báo, video, và các trang khác mà bạn đã xem hoặc đã đánh dấu tại đây.
+
 # Ex. When there are no more Pocket story recommendations, in the space where there would have been stories, this is shown instead.
 # Variables:
-#  $provider (String): Name of the content provider for this section, e.g "Pocket".
+#   $provider (string) - Name of the content provider for this section, e.g "Pocket".
 newtab-empty-section-topstories = Bạn đã bắt kịp. Kiểm tra lại sau để biết thêm các câu chuyện hàng đầu từ { $provider }. Không muốn đợi? Chọn một chủ đề phổ biến để tìm thêm những câu chuyện tuyệt vời từ khắp nơi trên web.
 
 ## Empty Section (Content Discovery Experience). These show when there are no more stories or when some stories fail to load.
@@ -226,19 +236,18 @@ newtab-pocket-learn-more = Tìm hiểu thêm
 newtab-pocket-cta-button = Nhận { -pocket-brand-name }
 newtab-pocket-cta-text = Lưu những câu chuyện bạn yêu thích trong { -pocket-brand-name } và vui vẻ khi đọc chúng.
 newtab-pocket-pocket-firefox-family = { -pocket-brand-name } là một phần của gia đình { -brand-product-name }
-# A save to Pocket button that shows over the card thumbnail on hover.
-newtab-pocket-save-to-pocket = Lưu vào { -pocket-brand-name }
-newtab-pocket-saved-to-pocket = Đã lưu vào { -pocket-brand-name }
-# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
-newtab-pocket-load-more-stories-button = Tải thêm các câu chuyện
 
 ## Pocket Final Card Section.
 ## This is for the final card in the Pocket grid.
 
-newtab-pocket-last-card-title = Bạn đã bắt kịp tất cả!
-newtab-pocket-last-card-desc = Kiểm tra lại sau để biết thêm.
-newtab-pocket-last-card-image =
-    .alt = Bạn đã bắt kịp tất cả
+# A save to Pocket button that shows over the card thumbnail on hover.
+newtab-pocket-save = Lưu
+newtab-pocket-saved = Đã lưu
+
+## Pocket content onboarding experience dialog and modal for new users seeing the Pocket section for the first time, shown as the first item in the Pocket section.
+
+newtab-pocket-onboarding-discover = Khám phá những điều tốt nhất của web
+newtab-pocket-onboarding-cta = { -pocket-brand-name } khám phá nhiều loại ấn phẩm khác nhau để mang nội dung giàu thông tin, truyền cảm hứng và đáng tin cậy nhất đến ngay trình duyệt { -brand-product-name } của bạn.
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -250,6 +259,8 @@ newtab-error-fallback-refresh-link = Thử làm mới lại trang.
 
 newtab-custom-shortcuts-title = Lối tắt
 newtab-custom-shortcuts-subtitle = Các trang web bạn lưu hoặc truy cập
+# Variables
+#   $num (number) - Number of rows to display
 newtab-custom-row-selector =
     { $num ->
        *[other] { $num } hàng

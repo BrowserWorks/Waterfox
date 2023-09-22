@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,6 +60,9 @@ import-from-firefox =
 import-from-360se =
     .label = 360 sikker nettlesar
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
 
 no-migration-sources = Klarte ikkje å finne program som inneheld bokmerke, historikk eller passordinformasjon.
 
@@ -64,8 +73,8 @@ import-items-description = Vel kva for element som skal importerast:
 
 import-permissions-page-title = Gi { -brand-short-name } løyve
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = macOS krev at du eksplisitt gir { -brand-short-name } tilgang til Safaris bokmerke. Klikk på «Fortset» og vel «Bookmarks.plist»-fila i Opne fil-panelet som vert vist.
+# Do not translate "Safari" (the name of the browser on Apple devices)
+import-safari-permissions-string = macOS krev at du eksplisitt gir { -brand-short-name } tilgang til Safaris data. Klikk «Hald fram», vel «Safari»-mappa i Finder-vindauget som vert vist, og klikk deretter «Opne».
 
 import-migrating-page-title = Importerer…
 
@@ -158,3 +167,8 @@ browser-data-session-checkbox =
     .label = Vindauge og faner
 browser-data-session-label =
     .value = Vindauge og faner
+
+browser-data-payment-methods-checkbox =
+    .label = Betalingsmåtar
+browser-data-payment-methods-label =
+    .value = Betalingsmåtar

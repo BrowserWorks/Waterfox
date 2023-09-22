@@ -1,20 +1,20 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-sanitize-prefs =
+sanitize-prefs2 =
     .title = 履歴の消去設定
-    .style = width: 34em
+    .style = min-width: 34em
 sanitize-prefs-style =
-    .style = width: 16.5em
-dialog-title =
+    .style = width: 17em
+sanitize-dialog-title =
     .title = 最近の履歴を消去
-    .style = width: 34em
+    .style = min-width: 34em
 # When "Time range to clear" is set to "Everything", this message is used for the
 # title instead of dialog-title.
-dialog-title-everything =
+sanitize-dialog-title-everything =
     .title = すべての履歴を消去
-    .style = width: 34em
+    .style = min-width: 34em
 clear-data-settings-label = { -brand-short-name } の終了時には次のデータを自動消去する
 
 ## clear-time-duration-prefix is followed by a dropdown list, with
@@ -61,11 +61,9 @@ item-form-search-history =
     .label = 検索やフォームの入力履歴
     .accesskey = F
 data-section-label = データ
-
 item-site-settings =
     .label = サイトの設定
     .accesskey = S
-
 item-offline-apps =
     .label = ウェブサイトのオフライン作業用データ
     .accesskey = O

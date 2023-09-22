@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -164,11 +164,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = A abrir em { $hours }h { $minutes }m…
-downloading-file-opens-in-minutes = A abrir em { $minutes }m…
-downloading-file-opens-in-minutes-and-seconds = A abrir em { $minutes }m { $seconds }s…
-downloading-file-opens-in-seconds = A abrir em { $seconds }s…
-downloading-file-opens-in-some-time = Será aberto quando terminar…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = A abrir em { $hours }h { $minutes }m…
+downloading-file-opens-in-minutes-2 =
+    .value = A abrir em { $minutes }m…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = A abrir em { $minutes }m { $seconds }s…
+downloading-file-opens-in-seconds-2 =
+    .value = A abrir em { $seconds }s…
+downloading-file-opens-in-some-time-2 =
+    .value = Será aberto quando terminar…
 downloading-file-click-to-open =
     .value = Abrir quando terminar
 
@@ -233,3 +238,17 @@ downloads-more-downloading =
         [one] Está a ser transferido mais { $count } ficheiro
        *[other] Estão a ser transferidos mais { $count } ficheiros
     }
+
+## Download errors
+
+downloads-error-alert-title = Erro de transferência
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = A transferência não pôde ser guardada porque está a ser bloqueada por { $extension }.
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = A transferência não pôde ser guardada porque está a ser bloqueada por uma extensão.
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    Não foi possível guardar a transferência devido a um erro desconhecido.
+    
+    Por favor, volte a tentar.

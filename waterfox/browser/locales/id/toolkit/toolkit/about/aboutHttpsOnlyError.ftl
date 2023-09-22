@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -21,6 +21,11 @@ about-httpsonly-link-learn-more = Pelajari Lebih Lanjut…
 ## Variables:
 ##   $websiteUrl (String) - Url of the website that can be securely loded with these alternatives. Example: example.com
 
+
+## Suggestion Box that only shows up if a secure connection to www can be established
+## Variables:
+##   $websiteUrl (String) - Url of the website that can be securely loaded with these alternatives. Example: example.com
+
 about-httpsonly-suggestion-box-header = Alternatif yang Mungkin
-about-httpsonly-suggestion-box-www-text = Tersedia versi aman dari <em>www.{ $websiteUrl }</em>. Anda dapat mengunjungi laman ini alih-alih <em>{ $websiteUrl }<em>.
+about-httpsonly-suggestion-box-www-text = Tersedia versi aman dari <em>www.{ $websiteUrl }</em>. Anda dapat mengunjungi laman ini alih-alih <em>{ $websiteUrl }</em>.
 about-httpsonly-suggestion-box-www-button = Buka www. { $websiteUrl }

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,14 +22,13 @@ pocket-panel-saved-page-removed = 页面已移除
 pocket-panel-saved-page-saved = 已保存到 { -pocket-brand-name }
 pocket-panel-saved-page-saved-b = 已保存至 { -pocket-brand-name }！
 pocket-panel-saved-processing-remove = 正在移除页面…
-pocket-panel-saved-removed = 已从“我的列表”移除页面
+pocket-panel-saved-removed-updated = 页面已移除
 pocket-panel-saved-processing-tags = 正在添加标签…
 pocket-panel-saved-remove-page = 移除页面
 pocket-panel-saved-save-tags = 保存
 pocket-panel-saved-saving-tags = 正在保存…
 pocket-panel-saved-suggested-tags = 推荐标签
 pocket-panel-saved-tags-saved = 标签已添加
-pocket-panel-signup-view-list = 查看列表
 
 # This is displayed above a field where the user can add tags
 pocket-panel-signup-add-tags = 添加标签：
@@ -47,13 +46,12 @@ pocket-panel-signup-tagline-story-one = 点击 { -pocket-brand-name } 按钮保�
 pocket-panel-signup-tagline-story-two = 在任何时间、任何设备上的 { -pocket-brand-name } 中查看。
 
 pocket-panel-signup-cta-a-fix = 您的互联网内容保存按钮。
-pocket-panel-signup-cta-b = 点击 { -pocket-brand-name } 按钮，即可保存文章、视频和链接。您可以随时随地在任何设备上查看阅读列表。
+pocket-panel-signup-cta-b-updated = 点击 { -pocket-brand-name } 按钮，即可保存文章、视频和链接。您可以随时随地在任何设备上查看保存的内容。
 pocket-panel-signup-cta-b-short = 点击 { -pocket-brand-name } 按钮，即可保存文章、视频和链接。
-pocket-panel-signup-cta-c = 随时随地在任何设备上查看阅读列表。
+pocket-panel-signup-cta-c-updated = 随时随地在任何设备上查看保存的内容。
 
 ## about:pocket-home panel
 
-pocket-panel-home-my-list = 我的列表
 pocket-panel-home-welcome-back = 欢迎回来
 pocket-panel-home-paragraph = 您可以使用 { -pocket-brand-name } 浏览和保存网页、文章、视频、播客，或回到上次未阅读完的内容。
 pocket-panel-home-explore-popular-topics = 浏览热门话题
@@ -61,13 +59,13 @@ pocket-panel-home-discover-more = 发现更多
 pocket-panel-home-explore-more = 发现
 
 pocket-panel-home-most-recent-saves = 以下是您最近保存的内容：
-pocket-panel-home-most-recent-saves-loading = 正在加载近期保存内容…
+pocket-panel-home-most-recent-saves-loading = 正在加载最近保存内容…
 pocket-panel-home-new-user-cta = 点击 { -pocket-brand-name } 按钮，即可保存文章、视频和链接。
 pocket-panel-home-new-user-message = 在此查看您最近保存的内容。
 
 ## Pocket panel header component
 
-pocket-panel-header-my-list = 查看我的列表
+pocket-panel-header-my-saves = 查看我保存的内容
 pocket-panel-header-sign-in = 登录
 
 ## Pocket panel buttons

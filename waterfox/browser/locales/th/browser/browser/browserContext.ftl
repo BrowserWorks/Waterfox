@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -86,38 +86,6 @@ main-context-menu-page-save =
 
 ## Simple menu items
 
-main-context-menu-bookmark-add =
-    .aria-label = เพิ่มที่คั่นหน้าสำหรับหน้านี้
-    .accesskey = พ
-    .tooltiptext = เพิ่มที่คั่นหน้าสำหรับหน้านี้
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-edit-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-add-mac =
-    .label = เพิ่มที่คั่นหน้าสำหรับหน้า
-    .accesskey = ท
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-add-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-edit-mac =
-    .label = แก้ไขที่คั่นหน้า
-    .accesskey = ท
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the add bookmark command.
-main-context-menu-bookmark-add-with-shortcut =
-    .aria-label = เพิ่มที่คั่นหน้าสำหรับหน้านี้
-    .accesskey = พ
-    .tooltiptext = เพิ่มที่คั่นหน้าสำหรับหน้านี้ ({ $shortcut })
-main-context-menu-bookmark-change =
-    .aria-label = แก้ไขที่คั่นหน้านี้
-    .accesskey = พ
-    .tooltiptext = แก้ไขที่คั่นหน้านี้
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the edit bookmark command.
-main-context-menu-bookmark-change-with-shortcut =
-    .aria-label = แก้ไขที่คั่นหน้านี้
-    .accesskey = พ
-    .tooltiptext = แก้ไขที่คั่นหน้านี้ ({ $shortcut })
 main-context-menu-bookmark-page =
     .aria-label = เพิ่มที่คั่นหน้าสำหรับหน้า…
     .accesskey = พ
@@ -134,6 +102,22 @@ main-context-menu-bookmark-page-mac =
 main-context-menu-edit-bookmark-mac =
     .label = แก้ไขที่คั่นหน้า…
     .accesskey = ก
+# Variables
+#   $shortcut (String) - A keyboard shortcut for the add bookmark command.
+main-context-menu-bookmark-page-with-shortcut =
+    .aria-label = เพิ่มที่คั่นหน้าสำหรับหน้า…
+    .accesskey = ท
+    .tooltiptext = เพิ่มที่คั่นหน้าสำหรับหน้า ({ $shortcut })
+main-context-menu-edit-bookmark =
+    .aria-label = แก้ไขที่คั่นหน้า…
+    .accesskey = ท
+    .tooltiptext = แก้ไขที่คั่นหน้า
+# Variables
+#   $shortcut (String) - A keyboard shortcut for the edit bookmark command.
+main-context-menu-edit-bookmark-with-shortcut =
+    .aria-label = แก้ไขที่คั่นหน้า…
+    .accesskey = ท
+    .tooltiptext = แก้ไขที่คั่นหน้า ({ $shortcut })
 main-context-menu-open-link =
     .label = เปิดลิงก์
     .accesskey = ป
@@ -149,9 +133,9 @@ main-context-menu-open-link-new-window =
 main-context-menu-open-link-new-private-window =
     .label = เปิดลิงก์ในหน้าต่างส่วนตัวใหม่
     .accesskey = ส
-main-context-menu-bookmark-link =
-    .label = เพิ่มที่คั่นหน้าสำหรับลิงก์
-    .accesskey = B
+main-context-menu-bookmark-link-2 =
+    .label = เพิ่มที่คั่นหน้าสำหรับลิงก์…
+    .accesskey = พ
 main-context-menu-save-link =
     .label = บันทึกลิงก์เป็น…
     .accesskey = น
@@ -172,6 +156,11 @@ main-context-menu-copy-phone =
 main-context-menu-copy-link-simple =
     .label = คัดลอกลิงก์
     .accesskey = L
+# This command copies the link, removing additional
+# query parameters used to track users across sites.
+main-context-menu-strip-on-share-link =
+    .label = คัดลอกลิงก์โดยไม่ติดตามไซต์
+    .accesskey = ค
 
 ## Media (video/audio) controls
 ##
@@ -264,6 +253,9 @@ main-context-menu-image-email =
 main-context-menu-image-set-image-as-background =
     .label = ตั้งค่ารูปภาพเป็นพื้นหลังเดสก์ท็อป…
     .accesskey = S
+main-context-menu-image-copy-text =
+    .label = คัดลอกข้อความจากภาพ
+    .accesskey = ข
 main-context-menu-image-info =
     .label = ดูข้อมูลภาพ
     .accesskey = ข
@@ -285,12 +277,6 @@ main-context-menu-video-email =
 main-context-menu-audio-email =
     .label = ส่งอีเมลเสียง…
     .accesskey = ม
-main-context-menu-plugin-play =
-    .label = เปิดใช้งานปลั๊กอินนี้
-    .accesskey = ป
-main-context-menu-plugin-hide =
-    .label = ซ่อนปลั๊กอินนี้
-    .accesskey = อ
 main-context-menu-save-to-pocket =
     .label = บันทึกหน้าไปยัง { -pocket-brand-name }
     .accesskey = บ
@@ -311,6 +297,9 @@ main-context-menu-use-saved-password =
 
 ##
 
+main-context-menu-use-relay-mask =
+    .label = ใช้ตัวปกปิดอีเมลของ { -relay-brand-short-name }
+    .accesskey = อ
 main-context-menu-suggest-strong-password =
     .label = แนะนำรหัสผ่านที่คาดเดายาก…
     .accesskey = ย
@@ -338,9 +327,9 @@ main-context-menu-frame-open-window =
 main-context-menu-frame-reload =
     .label = โหลดกรอบใหม่
     .accesskey = ล
-main-context-menu-frame-bookmark =
-    .label = เพิ่มที่คั่นหน้าสำหรับกรอบนี้
-    .accesskey = ม
+main-context-menu-frame-add-bookmark =
+    .label = เพิ่มที่คั่นหน้าสำหรับเฟรม…
+    .accesskey = ท
 main-context-menu-frame-save-as =
     .label = บันทึกกรอบเป็น…
     .accesskey = ก
@@ -353,9 +342,9 @@ main-context-menu-frame-view-source =
 main-context-menu-frame-view-info =
     .label = ดูข้อมูลกรอบ
     .accesskey = ข
-main-context-menu-print-selection =
-    .label = พิมพ์ที่เลือก
-    .accesskey = r
+main-context-menu-print-selection-2 =
+    .label = พิมพ์ส่วนที่เลือก…
+    .accesskey = ม
 main-context-menu-view-selection-source =
     .label = ดูต้นฉบับส่วนที่เลือก
     .accesskey = ต

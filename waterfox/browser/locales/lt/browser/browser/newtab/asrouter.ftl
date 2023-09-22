@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,25 +12,33 @@ cfr-doorhanger-feature-heading = Rekomenduojama funkcija
 
 cfr-doorhanger-extension-sumo-link =
     .tooltiptext = Kodėl tai matau
+
 cfr-doorhanger-extension-cancel-button = Ne dabar
     .accesskey = N
+
 cfr-doorhanger-extension-ok-button = Pridėti dabar
     .accesskey = P
+
 cfr-doorhanger-extension-manage-settings-button = Tvarkyti rekomendacijų nuostatas
     .accesskey = T
+
 cfr-doorhanger-extension-never-show-recommendation = Nerodyti man šios rekomendacijos
     .accesskey = N
+
 cfr-doorhanger-extension-learn-more-link = Sužinoti daugiau
+
 # This string is used on a new line below the add-on name
 # Variables:
 #   $name (String) - Add-on author name
 cfr-doorhanger-extension-author = sukūrė { $name }
+
 # This is a notification displayed in the address bar.
 # When clicked it opens a panel with a message for the user.
 cfr-doorhanger-extension-notification = Rekomendacija
 cfr-doorhanger-extension-notification2 = Rekomendacija
     .tooltiptext = Priedo rekomendacija
     .a11y-announcement = Siūloma priedo rekomendacija
+
 # This is a notification displayed in the address bar.
 # When clicked it opens a panel with a message for the user.
 cfr-doorhanger-feature-notification = Rekomendacija
@@ -79,9 +87,11 @@ cfr-protections-panel-link-text = Sužinoti daugiau
 # This string is used by screen readers to offer a text based alternative for
 # the notification icon
 cfr-badge-reader-label-newfeature = Naujovė:
+
 cfr-whatsnew-button =
     .label = Kas naujo
     .tooltiptext = Kas naujo
+
 cfr-whatsnew-release-notes-link-text = Skaityti laidos apžvalgą
 
 ## Enhanced Tracking Protection Milestones
@@ -111,13 +121,6 @@ cfr-doorhanger-doh-secondary-button = Išjungti
 
 ## Fission Experiment Message
 
-cfr-doorhanger-fission-body-approved = Jūsų privatumas yra svarbus. „{ -brand-short-name }“ jau izoliuoja, arba laiko atskirai, svetaines vieną nuo kitos, kas apsunkina piktavalių bandymus pavogti slaptažodžius, banko kortelių duomenis, ir kitus jautrius duomenis.
-cfr-doorhanger-fission-header = Svetainių izoliavimas
-cfr-doorhanger-fission-primary-button = Gerai, supratau
-    .accesskey = G
-cfr-doorhanger-fission-secondary-button = Sužinoti daugiau
-    .accesskey = S
-
 ## Full Video Support CFR message
 
 cfr-doorhanger-video-support-body = Šios svetainės vaizdo įrašai gali būti rodomi netinkamai su šia „{ -brand-short-name }“ versija. Norėdami gauti geriausią palaikymą, atnaujinkite „{ -brand-short-name }“.
@@ -127,16 +130,11 @@ cfr-doorhanger-video-support-primary-button = Atnaujinti dabar
 
 ## Spotlight modal shared strings
 
-spotlight-learn-more-collapsed = Sužinoti daugiau
-    .title = Išskleiskite, norėdami sužinoti daugiau apie šią funkciją
-spotlight-learn-more-expanded = Sužinoti daugiau
-    .title = Užverti
-
 ## VPN promotion dialog for public Wi-Fi users
 ##
 ## If a user is detected to be on a public Wi-Fi network, they are given a
 ## bit of info about how to improve their privacy and then offered a button
-## to the Waterfox VPN page and a link to dismiss the dialog.
+## to the BrowserWorks VPN page and a link to dismiss the dialog.
 
 # This header text can be explicitly wrapped.
 spotlight-public-wifi-vpn-header = Panašu, kad naudojatės viešu „Wi-Fi“
@@ -147,18 +145,6 @@ spotlight-public-wifi-vpn-link = Ne dabar
     .accesskey = N
 
 ## Total Cookie Protection Rollout
-
-# "Test pilot" is used as a verb. Possible alternatives: "Be the first to try",
-# "Join an early experiment". This header text can be explicitly wrapped.
-spotlight-total-cookie-protection-header =
-    Išbandykite mūsų galingiausią
-    privatumo apsaugą
-spotlight-total-cookie-protection-body = Visapusiška slapukų apsauga neleidžia stebėjimo elementams sekti jūsų naršymą naudojant slapukus.
-# "Early access" for this feature rollout means it's a "feature preview" or
-# "soft launch" as not everybody will get it yet.
-spotlight-total-cookie-protection-expanded = „{ -brand-short-name }“ pastato užtvarą aplink slapukus, ribodama jų pasiekimą jūsų lankomoje svetainėje, todėl stebėjimo elementai negali jų naudoti jūsų sekimui. Išbandydami iš anksto, padėsite optimizuoti šį funkcionalumą, kad galėtume kurti visiems geresnį internetą.
-spotlight-total-cookie-protection-primary-button = Įjungti visapusišką slapukų apsaugą
-spotlight-total-cookie-protection-secondary-button = Ne dabar
 
 ## Emotive Continuous Onboarding
 
@@ -172,3 +158,33 @@ spotlight-pin-primary-button =
        *[other] Įsegti į užduočių juostą
     }
 spotlight-pin-secondary-button = Ne dabar
+
+## MR2022 Background Update Windows native toast notification strings.
+##
+## These strings will be displayed by the Windows operating system in
+## a native toast, like:
+##
+## <b>multi-line title</b>
+## multi-line text
+## <img>
+## [ primary button ] [ secondary button ]
+##
+## The button labels are fitted into narrow fixed-width buttons by
+## Windows and therefore must be as narrow as possible.
+
+## Waterfox View CFR
+
+## Waterfox View Spotlight
+
+## Colorways expiry reminder CFR
+
+## Cookie Banner Handling CFR
+
+## These strings are used in the Fox doodle Pin/set default spotlights
+
+## These strings are used in the Set Waterfox as Default PDF Handler for Existing Users experiment
+
+## FxA sync CFR
+
+## Device Migration FxA Spotlight
+

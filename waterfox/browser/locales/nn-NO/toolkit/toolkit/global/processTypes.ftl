@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,7 +15,7 @@ process-type-privilegedabout = Priviligerte About-sider
 
 # process used to run privileged mozilla pages,
 # such as accounts.firefox.com
-process-type-privilegedmozilla = Privilegert Waterfox-innhald
+process-type-privilegedmozilla = Privilegert BrowserWorks-innhald
 
 process-type-extension = Utviding
 

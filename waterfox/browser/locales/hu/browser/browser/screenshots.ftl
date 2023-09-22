@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,6 @@ screenshots-private-window-error-details = Sajnáljuk a kényelmetlenséget. Dol
 
 screenshots-generic-error-title = Húha! A { -screenshots-brand-name } megkergült.
 screenshots-generic-error-details = Nem vagyunk benne biztosak, hogy mi történt. Próbálja újra, vagy készítsen képet egy másik oldalról.
+
+screenshots-too-large-error-title = A képernyőkép le lett vágva, mert túl nagy volt
+screenshots-too-large-error-details = Próbáljon egy 32 700 képpontosnál kisebb szélességű, vagy egy 124 900 000 képpontosnál kisebb összképpontszámú területet kiválasztani .

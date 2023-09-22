@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-blocklist-window =
+blocklist-window2 =
     .title = 封鎖清單
-    .style = width: 55em
+    .style = min-width: 55em
 
 blocklist-description = 請選擇 { -brand-short-name } 要用來封鎖線上追蹤器的清單。清單內容是由 <a data-l10n-name="disconnect-link" title="Disconnect">Disconnect</a> 提供。
 blocklist-close-key =

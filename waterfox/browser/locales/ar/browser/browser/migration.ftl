@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -60,9 +60,6 @@ import-items-page-title = العناصر المراد استيرادها
 import-items-description = اختر أي العناصر تريد استيرادها:
 
 import-permissions-page-title = من فضلك امنح { -brand-short-name } الصلاحيات اللازمة
-
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = يطلب نظام ماك‌أو‌إس أن تسمح بجهارةٍ لمتصفح { -brand-short-name } بالوصول إلى علامات متصفح سفاري. انقر ”واصِل“ واختر ”Bookmarks.plist“ في لوحة فتح الملف التي ستظهر.
 
 import-migrating-page-title = يستورد…
 
@@ -155,3 +152,4 @@ browser-data-session-checkbox =
     .label = النوافذ و الألسنة
 browser-data-session-label =
     .value = النوافذ و الألسنة
+

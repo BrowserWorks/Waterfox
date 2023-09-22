@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,9 +9,8 @@ failed-pp-change = Não foi possível alterar a palavra-passe principal.
 incorrect-pp = A palavra-passe que digitou não corresponde à palavra-passe principal atual. Por favor, tente novamente.
 pp-change-ok = Palavra-passe principal alterada com sucesso.
 
-pp-empty-warning = As suas palavras-passe armazenadas e chaves privadas não serão protegidas.
-pp-erased-ok = Eliminou a sua palavra-passe principal. { pp-empty-warning }
-pp-not-wanted = Aviso! Optou não utilizar uma palavra-passe principal. { pp-empty-warning }
+settings-pp-erased-ok = Eliminou a sua palavra-passe principal. As palavras-passe armazenadas e chaves privadas de certificados geridas pelo { -brand-short-name } não serão protegidas.
+settings-pp-not-wanted = Aviso! Decidiu não utilizar uma palavra-passe principal. As palavras-passe armazenadas e chaves privadas de certificados geridas pelo { -brand-short-name } não serão protegidas.
 
 pp-change2empty-in-fips-mode = Atualmente, está no modo FIPS. Este modo requer uma palavra-passe principal não vazia.
 pw-change-success-title = Palavra-passe alterada com sucesso
@@ -26,7 +25,6 @@ set-password-new-password = Introduza a nova palavra-passe:
 set-password-reenter-password = Volte a introduzir a palavra-passe:
 set-password-meter = Indicador de qualidade da palavra-passe
 set-password-meter-loading = A carregar
-
 primary-password-admin = O seu administrador requer que tenha uma palavra-passe principal definida para poder guardar credenciais e palavras-passe.
 primary-password-description = Uma palavra-passe principal é utilizada para proteger informações sensíveis, tais como credenciais e palavras-passe, neste dispositivo. Se criar uma palavra-passe principal, será solicitado que a especifique uma vez por cada sessão, quando o { -brand-short-name } obtém informação protegida pela palavra-passe principal.
 primary-password-warning = Por favor certifique-se que memoriza a palavra-passe principal definida. Se se esquecer da sua palavra-passe principal, não irá conseguir aceder a qualquer informação protegida pela mesma neste dispositivo.

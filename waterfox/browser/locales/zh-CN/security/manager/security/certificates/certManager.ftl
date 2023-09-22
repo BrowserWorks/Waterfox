@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,9 +26,9 @@ certmgr-people = 您有用来识别这些人的证书文件
 certmgr-server = 下列是服务器证书例外项目
 certmgr-ca = 您有用来识别这些证书颁发机构的证书文件
 
-certmgr-edit-ca-cert =
+certmgr-edit-ca-cert2 =
     .title = 编辑证书颁发机构信任关系设置
-    .style = width: 48em;
+    .style = min-width: 48em;
 
 certmgr-edit-cert-edit-trust = 编辑信任设置：
 
@@ -38,9 +38,9 @@ certmgr-edit-cert-trust-ssl =
 certmgr-edit-cert-trust-email =
     .label = 此证书可以标识电子邮件用户。
 
-certmgr-delete-cert =
+certmgr-delete-cert2 =
     .title = 删除证书
-    .style = width: 48em; height: 24em;
+    .style = min-width: 48em; min-height: 24em;
 
 certmgr-cert-host =
     .label = 主机
@@ -50,9 +50,6 @@ certmgr-cert-name =
 
 certmgr-cert-server =
     .label = 服务器
-
-certmgr-override-lifetime =
-    .label = 生命周期
 
 certmgr-token-name =
     .label = 安全设备
@@ -68,6 +65,9 @@ certmgr-email =
 
 certmgr-serial =
     .label = 序列号
+
+certmgr-fingerprint-sha-256 =
+    .label = SHA-256 指纹
 
 certmgr-view =
     .label = 查看…
@@ -185,8 +185,6 @@ delete-email-cert-impact = 如果您删除了某人的电子邮件证书，您�
 #   $serialNumber : the serial number of the cert in AA:BB:CC hex format.
 cert-with-serial =
     .value = 证书序列号：{ $serialNumber }
-
-## Cert Viewer
 
 # Used to indicate that the user chose not to send a client authentication certificate to a server that requested one in a TLS handshake.
 send-no-client-certificate = 不发送客户端证书

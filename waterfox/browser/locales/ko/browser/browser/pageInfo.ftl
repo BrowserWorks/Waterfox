@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/. --
 
@@ -65,6 +65,9 @@ media-dimension =
     .value = 픽셀 크기:
 media-long-desc =
     .value = 설명:
+media-select-all =
+    .label = 모두 선택
+    .accesskey = e
 media-save-as =
     .label = 다른 이름으로 저장…
     .accesskey = A
@@ -127,7 +130,7 @@ security-site-data-cookies = 예, 쿠키와 { $value } { $unit }의 사이트 �
 security-site-data-only = 예, { $value } { $unit } 사이트 데이터
 
 security-site-data-cookies-only = 예, 쿠키
-security-site-data-no = 아니오
+security-site-data-no = 아니요
 
 ##
 
@@ -148,7 +151,7 @@ media-input = 입력
 media-video = 동영상
 media-audio = 음성
 saved-passwords-yes = 예
-saved-passwords-no = 아니오
+saved-passwords-no = 아니요
 
 no-page-title =
     .value = 페이지 제목 없음:
@@ -163,7 +166,7 @@ media-unknown-not-cached =
     .value = 알 수 없음 (캐시 안 됨)
 permissions-use-default =
     .label = 기본 설정 사용
-security-no-visits = 아니오
+security-no-visits = 아니요
 
 # This string is used to display the number of meta tags
 # in the General Tab
@@ -181,7 +184,7 @@ general-meta-tags =
 #   $visits (number) - The number of previous visits
 security-visits-number =
     { $visits ->
-        [0] 아니오
+        [0] 아니요
        *[other] 예, { $visits }회
     }
 
@@ -235,6 +238,9 @@ media-dimensions =
 # Variables:
 #   $size (number) - The size of the media file in kilobytes
 media-file-size = { $size } KB
+
+## Variables:
+##   $website (string) — The url of the website pageInfo is getting info for
 
 # This string is used to display the website name next to the
 # "Block Images" checkbox in the media tab

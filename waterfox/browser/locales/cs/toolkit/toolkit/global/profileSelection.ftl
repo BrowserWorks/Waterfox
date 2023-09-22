@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,11 +7,9 @@ profile-selection-window =
 
 profile-selection-button-accept =
     .label =
-        Spustit { -brand-short-name.gender ->
-            [masculine] { -brand-short-name(case: "acc") }
-            [feminine] { -brand-short-name(case: "acc") }
-            [neuter] { -brand-short-name(case: "acc") }
-           *[other] aplikaci { -brand-short-name }
+        { -brand-short-name.case-status ->
+            [with-cases] Spustit { -brand-short-name(case: "acc") }
+           *[no-cases] Spustit aplikaci { -brand-short-name }
         }
 
 profile-selection-button-cancel =
@@ -30,17 +28,18 @@ profile-selection-delete-button =
     .accesskey = m
 
 profile-selection-conflict-message =
-    Další kopie { -brand-product-name.gender ->
-        [masculine] { -brand-product-name(case: "gen") }
-        [feminine] { -brand-product-name(case: "gen") }
-        [neuter] { -brand-product-name(case: "gen") }
-       *[other] aplikace { -brand-product-name }
-    } změnila tento profil. Před provedením dalších změn { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "acc") }
-        [feminine] { -brand-short-name(case: "acc") }
-        [neuter] { -brand-short-name(case: "acc") }
-       *[other] aplikaci { -brand-short-name }
-    } restartujte.
+    { -brand-product-name.case-status ->
+        [with-cases]
+            { -brand-short-name.case-status ->
+                [with-cases] Další kopie { -brand-product-name(case: "gen") } změnila tento profil. Před provedením dalších změn { -brand-short-name(case: "acc") } restartujte.
+               *[no-cases] Další kopie { -brand-product-name(case: "gen") } změnila tento profil. Před provedením dalších změn aplikaci { -brand-short-name } restartujte.
+            }
+       *[no-cases]
+            { -brand-short-name.case-status ->
+                [with-cases] Další kopie aplikace { -brand-product-name } změnila tento profil. Před provedením dalších změn { -brand-short-name(case: "acc") } restartujte.
+               *[no-cases] Další kopie aplikace { -brand-product-name } změnila tento profil. Před provedením dalších změn aplikaci { -brand-short-name } restartujte.
+            }
+    }
 
 ## Messages used in the profile manager
 

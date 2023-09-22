@@ -1,15 +1,13 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # The question portion of the following message should have the <strong> and </strong> tags surrounding it.
 default-browser-notification-message =
-    <strong>Nastavte si { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "acc") }
-        [feminine] { -brand-short-name(case: "acc") }
-        [neuter] { -brand-short-name(case: "acc") }
-       *[other] aplikaci { -brand-short-name }
-    } jako výchozí prohlížeč</strong> a získáte rychlý, bezpečný a soukromý prohlížeč pro jakoukoliv webovou stránku.
+    { -brand-short-name.case-status ->
+        [with-cases] <strong>Nastavte si { -brand-short-name(case: "acc") } jako výchozí prohlížeč</strong> a získáte rychlý, bezpečný a soukromý prohlížeč pro jakoukoliv webovou stránku.
+       *[no-cases] <strong>Nastavte si aplikaci { -brand-short-name } jako výchozí prohlížeč</strong> a získáte rychlý, bezpečný a soukromý prohlížeč pro jakoukoliv webovou stránku.
+    }
 default-browser-notification-button =
     .label = Nastavit jako výchozí
     .accesskey = v
@@ -19,12 +17,10 @@ default-browser-notification-button =
 ## secondary button are shared between the variants.
 
 default-browser-prompt-title-pin =
-    Chcete { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "acc") }
-        [feminine] { -brand-short-name(case: "acc") }
-        [neuter] { -brand-short-name(case: "acc") }
-       *[other] aplikaci { -brand-short-name }
-    } nastavit jako svůj hlavní prohlížeč?
+    { -brand-short-name.case-status ->
+        [with-cases] Chcete { -brand-short-name(case: "acc") } nastavit jako svůj hlavní prohlížeč?
+       *[no-cases] Chcete aplikaci { -brand-short-name } nastavit jako svůj hlavní prohlížeč?
+    }
 default-browser-prompt-message-pin =
     { -brand-short-name.gender ->
         [masculine] Mějte { -brand-short-name(case: "acc") } nastavený jako výchozí prohlížeč a připnutý na své liště.
@@ -41,12 +37,10 @@ default-browser-prompt-message-pin-mac =
     }
 default-browser-prompt-button-primary-pin = Nastavit jako hlavní prohlížeč
 default-browser-prompt-title-alt =
-    Chcete { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "acc") }
-        [feminine] { -brand-short-name(case: "acc") }
-        [neuter] { -brand-short-name(case: "acc") }
-       *[other] aplikaci { -brand-short-name }
-    } nastavit jako svůj výchozí prohlížeč?
+    { -brand-short-name.case-status ->
+        [with-cases] Chcete { -brand-short-name(case: "acc") } nastavit jako svůj výchozí prohlížeč?
+       *[no-cases] Chcete aplikaci { -brand-short-name } nastavit jako svůj výchozí prohlížeč?
+    }
 default-browser-prompt-message-alt = Získejte rychlost, bezpečnost a soukromí pro své prohlížení.
 default-browser-prompt-button-primary-alt = Nastavit jako výchozí prohlížeč
 default-browser-prompt-checkbox-not-again-label = Příště už nezobrazovat

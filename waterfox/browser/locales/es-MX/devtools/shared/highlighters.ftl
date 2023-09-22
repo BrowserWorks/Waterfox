@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,15 +16,15 @@ grid-row-column-positions = Fila { $row } / Columna { $column }
 
 # The layout type of an element shown in the infobar when hovering over a DOM element and
 # it is a grid container.
-gridtype-container = Contenedor de cuadrícula
+gridtype-container = Contenedor de retícula
 
 # The layout type of an element shown in the infobar when hovering over a DOM element and
 # it is a grid item.
-gridtype-item = Elemento de la cuadrícula
+gridtype-item = Elemento de la retícula
 
 # The layout type of an element shown in the infobar when hovering over a DOM element and
 # it is both a grid container and a grid item.
-gridtype-dual = Contenedor o elemento de cuadrícula
+gridtype-dual = Contenedor o elemento de retícula
 
 # The layout type of an element shown in the infobar when hovering over a DOM element and
 # it is a flex container.
@@ -56,3 +56,12 @@ remote-node-picker-notice-action-touch = Toca un elemento para seleccionarlo en 
 # clicks on the "Pick an element from the page" in about:devtools-toolbox inspector panel,
 # when debugging a remote page.
 remote-node-picker-notice-hide-button = Ocultar
+
+# The text displayed in a toolbox notification message which is only displayed
+# if prefers-reduced-motion is enabled (via OS-level settings or by using the
+# ui.prefersReducedMotion=1 preference).
+simple-highlighters-message = Cuando se activa prefers-reduced-motion, es posible activar un resaltador simplificado en el panel de configuración para evitar que parpadeen los colores.
+
+# Text displayed in a button inside the "simple-highlighters-message" toolbox
+# notification. "Settings" here refers to the DevTools settings panel.
+simple-highlighters-settings-button = Abrir ajustes

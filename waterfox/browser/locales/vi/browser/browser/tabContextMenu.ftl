@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -54,9 +54,6 @@ unpin-selected-tabs =
 bookmark-selected-tabs =
     .label = Đánh dấu các thẻ…
     .accesskey = k
-bookmark-tab =
-    .label = Đánh dấu thẻ
-    .accesskey = B
 tab-context-bookmark-tab =
     .label = Đánh dấu thẻ…
     .accesskey = B
@@ -103,6 +100,7 @@ tab-context-move-tabs =
            *[other] Di chuyển các thẻ
         }
     .accesskey = v
+
 tab-context-send-tabs-to-device =
     .label = Gửi { $tabCount } thẻ đến thiết bị
     .accesskey = n

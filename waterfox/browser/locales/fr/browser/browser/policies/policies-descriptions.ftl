@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,6 +26,9 @@ policy-Bookmarks = Créer des marque-pages dans la Barre personnelle, le menu de
 policy-CaptivePortal = Permettre ou interdire la prise en charge des portails captifs.
 policy-CertificatesDescription = Ajouter des certificats ou utiliser des certificats prédéfinis.
 policy-Cookies = Permettre ou interdire aux sites de définir des cookies.
+# Containers in this context is referring to container tabs in Waterfox.
+policy-Containers = Définir des politiques relatives aux conteneurs.
+policy-DisableAccounts = Désactiver les services qui demandent un compte, y compris la synchronisation.
 policy-DisabledCiphers = Désactiver les chiffrements.
 policy-DefaultDownloadDirectory = Définir le répertoire de téléchargement par défaut.
 policy-DisableAppUpdate = Empêcher le navigateur de se mettre à jour.
@@ -41,7 +44,7 @@ policy-DisableForgetButton = Empêcher l’accès au bouton d’effacement des d
 policy-DisableFormHistory = Désactiver la conservation de l’historique des recherches et des formulaires.
 policy-DisablePrimaryPasswordCreation = Si la valeur est sur true, la création d’un mot de passe principal est impossible.
 policy-DisablePasswordReveal = Ne pas permettre de révéler les mots de passe dans les identifiants enregistrés.
-policy-DisablePocket = Désactiver la fonctionnalité d’enregistrement de pages web dans Pocket.
+policy-DisablePocket2 = Désactiver la fonctionnalité d’enregistrement de pages web dans { -pocket-brand-name }.
 policy-DisablePrivateBrowsing = Désactiver la navigation privée.
 policy-DisableProfileImport = Désactiver la commande de menu permettant d’importer des données à partir d’un autre navigateur.
 policy-DisableProfileRefresh = Désactiver le bouton Réparer { -brand-short-name } dans la page about:support.
@@ -50,6 +53,7 @@ policy-DisableSecurityBypass = Empêcher l’utilisateur de contourner certains 
 policy-DisableSetAsDesktopBackground = Désactiver la commande contextuelle Choisir l’image comme fond d’écran pour les images.
 policy-DisableSystemAddonUpdate = Empêcher le navigateur d’installer et de mettre à jour des modules complémentaires.
 policy-DisableTelemetry = Désactiver la télémétrie.
+policy-DisableThirdPartyModuleBlocking = Empêcher l’utilisateur de bloquer les modules tiers qui sont injectés dans le processus { -brand-short-name }.
 policy-DisplayBookmarksToolbar = Afficher la barre personnelle par défaut.
 policy-DisplayMenuBar = Afficher la barre de menus par défaut.
 policy-DNSOverHTTPS = Configurer le DNS via HTTPS.
@@ -66,9 +70,8 @@ policy-ExemptDomainFileTypePairsFromFileTypeDownloadWarnings = Désactiver les a
 policy-Extensions = Installer, désinstaller ou verrouiller les extensions. L’option d’installation accepte des URL ou des chemins comme paramètres. Les options Désinstaller et Verrouiller utilisent les identifiants des extensions.
 policy-ExtensionSettings = Gérer tous les aspects de l’installation d’extensions.
 policy-ExtensionUpdate = Activer ou désactiver la mise à jour automatique des extensions.
-policy-WaterfoxHome = Configurer l’accueil de Waterfox.
 policy-WaterfoxHome2 = Configurer la { -firefox-home-brand-name }.
-policy-FlashPlugin = Autoriser ou non l’utilisation du plugin Flash.
+policy-WaterfoxSuggest = Configurer { -firefox-suggest-brand-name }.
 policy-GoToIntranetSiteForSingleWordEntryInAddressBar = Forcer directement la navigation dans le site intranet plutôt que vers la recherche quand des entrées ne comprenant qu’un seul mot sont saisies dans la barre d’adresse.
 policy-Handlers = Configurer les gestionnaires d’applications par défaut.
 policy-HardwareAcceleration = Positionner à false pour désactiver l’accélération matérielle.
@@ -110,8 +113,8 @@ policy-SanitizeOnShutdown2 = Permettre d’effacer des données de navigation à
 policy-SearchBar = Définir l’emplacement par défaut de la barre de recherche. L’utilisateur garde la possibilité de la personnaliser.
 policy-SearchEngines = Configurer les paramètres du moteur de recherche. Cette propriété n’est disponible que sur la version Extended Support Release (ESR).
 policy-SearchSuggestEnabled = Activer ou désactiver les suggestions de recherche.
-# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
-policy-SecurityDevices = Installer des modules PKCS #11.
+# For more information, see https://wikipedia.org/wiki/PKCS_11
+policy-SecurityDevices2 = Ajouter ou supprimer des modules PKCS #11.
 policy-ShowHomeButton = Afficher le bouton d’accueil dans la barre d’outils.
 policy-SSLVersionMax = Définir la version maximale de SSL à utiliser.
 policy-SSLVersionMin = Définir la version minimale de SSL à utiliser.

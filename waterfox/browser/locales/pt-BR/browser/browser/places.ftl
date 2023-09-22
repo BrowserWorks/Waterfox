@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = Abrir em nova janela privativa
     .accesskey = p
+
+places-empty-bookmarks-folder =
+    .label = (vazio)
 
 places-add-bookmark =
     .label = Adicionar favorito…
@@ -86,6 +89,15 @@ places-delete-folder =
            *[other] Excluir pastas
         }
     .accesskey = x
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] Excluir página
+           *[other] Excluir páginas
+        }
+    .accesskey = A
 
 # Managed bookmarks are created by an administrator and cannot be changed by the user.
 managed-bookmarks =
@@ -112,6 +124,20 @@ places-delete-bookmark =
         }
     .accesskey = x
 
+# Variables:
+#   $count (number) - The number of bookmarks being added.
+places-create-bookmark =
+    .label =
+        { $count ->
+            [1] Adicionar página aos favoritos…
+           *[other] Adicionar páginas aos favoritos…
+        }
+    .accesskey = f
+
+places-untag-bookmark =
+    .label = Remover etiqueta
+    .accesskey = R
+
 places-manage-bookmarks =
     .label = Gerenciar favoritos
     .accesskey = G
@@ -120,13 +146,12 @@ places-forget-about-this-site-confirmation-title = Esquecer este site
 
 # Variables:
 # $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
-places-forget-about-this-site-confirmation-message = Esta ação remove todos os dados relacionados a { $hostOrBaseDomain }, incluindo histórico, senhas, cookies, cache e preferências de conteúdo. Tem certeza que quer continuar?
+places-forget-about-this-site-confirmation-msg = Esta ação remove dados relacionados a { $hostOrBaseDomain }, incluindo histórico, cookies, cache e preferências de conteúdo. Favoritos e senhas relacionados não são removidos. Tem certeza que quer continuar?
 
 places-forget-about-this-site-forget = Esquecer
 
-places-library =
+places-library3 =
     .title = Biblioteca
-    .style = width:700px; height:500px;
 
 places-organize-button =
     .label = Organizar
@@ -227,6 +252,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = Última modificação
 
+places-view-sortby-name =
+    .label = Ordenar por nome
+    .accesskey = n
+places-view-sortby-url =
+    .label = Ordenar por localização
+    .accesskey = l
+places-view-sortby-date =
+    .label = Ordenar por visitados mais recentemente
+    .accesskey = c
+places-view-sortby-visit-count =
+    .label = Ordenar por número de visitas
+    .accesskey = v
+places-view-sortby-date-added =
+    .label = Ordenar por data
+    .accesskey = a
+places-view-sortby-last-modified =
+    .label = Ordenar por data de modificação
+    .accesskey = m
+places-view-sortby-tags =
+    .label = Ordenar por etiquetas
+    .accesskey = t
+
 places-cmd-find-key =
     .key = F
 
@@ -237,3 +284,28 @@ places-forward-button =
     .tooltiptext = Avançar
 
 places-details-pane-select-an-item-description = Selecione um item para ver e editar suas propriedades
+
+places-details-pane-no-items =
+    .value = Nenhum item
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value =
+        { $count ->
+            [one] Um item
+           *[other] { $count } itens
+        }
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = Procurar favoritos
+places-search-history =
+    .placeholder = Procurar no histórico
+places-search-downloads =
+    .placeholder = Procurar nos downloads
+
+##
+
+places-locked-prompt = O sistema de favoritos e histórico não funcionará agora porque um dos arquivos do { -brand-short-name } está sendo usado por outra aplicação. Alguns softwares de segurança podem causar este problema.

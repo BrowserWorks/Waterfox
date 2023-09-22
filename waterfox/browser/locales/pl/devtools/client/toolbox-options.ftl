@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -45,6 +45,12 @@ options-collapse-attrs-tooltip =
 options-inspector-draggable-properties-label = Kliknięcie i przeciągnięcie, aby zmienić rozmiar
 options-inspector-draggable-properties-tooltip =
     .title = Umożliwia zmianę rozmiaru przez kliknięcie i przeciągnięcie w widoku reguł inspektora.
+
+# The label for the checkbox option to enable simplified highlighting on page elements
+# within the inspector for users who enabled prefers-reduced-motion = reduce
+options-inspector-simplified-highlighters-label = Prostsze wyróżnianie przy włączonej opcji preferowania zmniejszonego ruchu
+options-inspector-simplified-highlighters-tooltip =
+    .title = Włącza uproszczone wyróżnianie, kiedy włączona jest opcja preferowania zmniejszonego ruchu. Wyświetla linie zamiast wypełnionych prostokątów wokół wyróżnionych elementów, aby uniknąć migania.
 
 ## "Default Color Unit" options for the Inspector
 
@@ -124,6 +130,11 @@ options-enable-remote-label = Debugowanie zdalne
 options-enable-remote-tooltip2 =
     .title = Włączenie tej opcji umożliwi zdalne debugowanie tej instancji przeglądarki
 
+# The label for checkbox that enables F12 as a shortcut to open DevTools
+options-enable-f12-label = Otwieranie i zamykanie narzędzi dla programistów klawiszem F12
+options-enable-f12-tooltip =
+    .title = Włączenie tej opcji umożliwi otwieranie i zamykanie narzędzi dla programistów klawiszem F12
+
 # The label for checkbox that toggles custom formatters for objects
 options-enable-custom-formatters-label = Niestandardowe formatery
 options-enable-custom-formatters-tooltip =
@@ -141,9 +152,3 @@ options-source-maps-tooltip =
 
 # The message shown for settings that trigger page reload
 options-context-triggers-page-refresh = * Tylko bieżąca sesja, przeładowuje stronę
-
-# The label for the checkbox that toggles the display of the platform data in the
-# Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference in about:config
-options-show-platform-data-label = Informacje platformy Gecko
-options-show-platform-data-tooltip =
-    .title = Po włączeniu tej opcji Profiler JavaScript będzie raportował symbole platformy Gecko

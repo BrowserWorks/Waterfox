@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,6 +15,10 @@ support-addons-type = Type
 support-addons-enabled = Slått på
 support-addons-version = Versjon
 support-addons-id = ID
+legacy-user-stylesheets-title = Eldre brukar-stilsett
+legacy-user-stylesheets-enabled = Aktiv
+legacy-user-stylesheets-stylesheet-types = Stilsett
+legacy-user-stylesheets-no-stylesheets-found = Fann ingen stilsett
 security-software-title = Sikkerheitsprogram
 security-software-type = Type
 security-software-name = Namn
@@ -70,10 +74,11 @@ app-basics-remote-processes-count = Fjernprosessar
 app-basics-enterprise-policies = Bedriftspolitikk
 app-basics-location-service-key-google = Google Location Service-nøkkel
 app-basics-safebrowsing-key-google = Google Safebrowsing-nøkkel
-app-basics-key-mozilla = Waterfox Location Service-nykel
+app-basics-key-mozilla = BrowserWorks Location Service-nykel
 app-basics-safe-mode = Trygg modus
 app-basics-memory-size = Minnestorleik (RAM)
 app-basics-disk-available = Tilgjengeleg diskplass
+app-basics-pointing-devices = Peike-einingar
 # Variables:
 #   $value (number) - Amount of data being stored
 #   $unit (string) - The unit of data being stored (e.g. MB)
@@ -107,11 +112,21 @@ graphics-gpu2-title = GPU #2
 graphics-decision-log-title = Avgjerdslogg
 graphics-crash-guards-title = Krasjvern slo av funksjonar
 graphics-workarounds-title = Løysingar
+graphics-device-pixel-ratios = Pikselforhold for vindauget
 # Windowing system in use on Linux (e.g. X11, Wayland).
 graphics-window-protocol = Protokoll for vindaugshandsamar
 # Desktop environment in use on Linux (e.g. GNOME, KDE, XFCE, etc).
 graphics-desktop-environment = Skrivebordsmiljø
 place-database-title = Plasser database
+place-database-stats = Statistikk
+place-database-stats-show = Vis statistikk
+place-database-stats-hide = Gøym statistikk
+place-database-stats-entity = Entitet
+place-database-stats-count = Antal
+place-database-stats-size-kib = Storleik (KiB)
+place-database-stats-size-perc = Storleik (%)
+place-database-stats-efficiency-perc = Effektivitet (%)
+place-database-stats-sequentiality-perc = Sekvensitet (%)
 place-database-integrity = Integritet
 place-database-verify-integrity = Stadfest integritet
 a11y-title = Tilgjenge
@@ -161,6 +176,15 @@ media-capabilities-title = Mediefunksjonar
 media-codec-support-info = Kodekstøtteinformasjon
 # List all the entries of the database.
 media-capabilities-enumerate = Telje opp databasen
+
+## Codec support table
+
+media-codec-support-sw-decoding = Programvaredekoding
+media-codec-support-hw-decoding = Maskinvaredekoding
+media-codec-support-codec-name = Kodeknamn
+media-codec-support-supported = Støtta
+media-codec-support-unsupported = Ikkje støtta
+media-codec-support-error = Kodek-støtteinformasjon utilgjengeleg. Prøv på nytt etter å ha spelt av ei mediefil.
 
 ##
 
@@ -275,6 +299,8 @@ webgl2-renderer = WebGL2-renderar
 webgl2-version = WebGL 2 drivarversjon
 webgl2-driver-extensions = WebGL 2 drivarutviding
 webgl2-extensions = WebGL 2 utviding
+webgpu-default-adapter = WebGPU standardadapter
+webgpu-fallback-adapter = WebGPU reservadapter
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = Blokkert på grunn av kjende problem: <a data-l10n-name="bug-link">feilrapport { $bugNumber }</a>
@@ -304,6 +330,7 @@ can-sandbox-media = Sandkasse for media-programtillegg
 content-sandbox-level = Nivå for sandkasse for innhaldsprosessar
 effective-content-sandbox-level = Effektiv sandbox-nivå for innhaldsprosess
 content-win32k-lockdown-state = Win32k-låsestatus for innhaldsprosessar
+support-sandbox-gpu-level = Nivå for sandkasse for GPU-prosessar
 sandbox-proc-type-content = innhald
 sandbox-proc-type-file = filinnhald
 sandbox-proc-type-media-plugin = programtillegg for media
@@ -375,3 +402,10 @@ support-remote-experiments-see-about-studies = Sjå <a data-l10n-name="support-a
 support-remote-features-title = Eksterne funksjonar
 support-remote-features-name = Namn
 support-remote-features-status = Status
+
+## Pointing devices
+
+pointing-device-mouse = Mus
+pointing-device-touchscreen = Berøringsskjerm
+pointing-device-pen-digitizer = Digitalpenn
+pointing-device-none = Inga peikeeining

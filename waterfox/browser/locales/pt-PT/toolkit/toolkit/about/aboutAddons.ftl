@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,11 +6,16 @@ addons-page-title = Gestor de extras
 search-header =
     .placeholder = Pesquisar addons.mozilla.org
     .searchbuttonlabel = Pesquisar
-search-header-shortcut =
-    .key = f
+
+## Variables
+##   $domain - Domain name where add-ons are available (e.g. addons.mozilla.org)
+
 list-empty-get-extensions-message = Obter extensões e temas em <a data-l10n-name="get-extensions">{ $domain }</a>
 list-empty-get-dictionaries-message = Obter dicionários em <a data-l10n-name="get-extensions">{ $domain }</a>
 list-empty-get-language-packs-message = Obter pacotes de idioma em <a data-l10n-name="get-extensions">{ $domain }</a>
+
+##
+
 list-empty-installed =
     .value = Não tem instalado qualquer extra deste tipo
 list-empty-available-updates =
@@ -142,16 +147,30 @@ addon-category-recent-updates-title =
 addon-category-sitepermission = Permissões do site
 addon-category-sitepermission-title =
     .title = Permissões do site
+# String displayed in about:addons in the Site Permissions section
+# Variables:
+#  $host (string) - DNS host name for which the webextension enables permissions
+addon-sitepermission-host = Permissões de site para { $host }
 
 ## These are global warnings
 
 extensions-warning-safe-mode = Todos os extras foram desativados pelo modo de segurança.
 extensions-warning-check-compatibility = A verificação de compatibilidade de extras está desativada. Poderá ter extras incompatíveis.
+extensions-warning-safe-mode2 =
+    .message = Todos os extras foram desativados pelo modo de segurança.
+extensions-warning-check-compatibility2 =
+    .message = A verificação de compatibilidade de extras está desativada. Poderá ter extras incompatíveis.
 extensions-warning-check-compatibility-button = Ativar
     .title = Ativar verificação de compatibilidade de extras
 extensions-warning-update-security = A verificação de compatibilidade de extras está desativada. Poderá estar comprometido com atualizações.
+extensions-warning-update-security2 =
+    .message = A verificação de compatibilidade de extras está desativada. Poderá estar comprometido com atualizações.
 extensions-warning-update-security-button = Ativar
     .title = Ativar verificação de segurança de atualização do extra
+extensions-warning-imported-addons = Por favor, finalize a instalação das extensões que foram importadas para o { -brand-short-name }.
+extensions-warning-imported-addons2 =
+    .message = Por favor, finalize a instalação das extensões que foram importadas para o { -brand-short-name }.
+extensions-warning-imported-addons-button = Instalar Extensões
 
 ## Strings connected to add-on updates
 
@@ -216,10 +235,17 @@ shortcuts-duplicate = Atalho duplicado
 # Variables:
 #   $shortcut (string) - Shortcut string for the add-on
 shortcuts-duplicate-warning-message = { $shortcut } está a ser utilizado como um atalho em mais do que um caso. Atalhos duplicados podem causar comportamentos inesperados.
+# String displayed when a keyboard shortcut is already assigned to more than one add-on
+# Variables:
+#   $shortcut (string) - Shortcut string for the add-on
+shortcuts-duplicate-warning-message2 =
+    .message = { $shortcut } está a ser utilizado como um atalho em mais do que um caso. Atalhos duplicados podem causar comportamentos inesperados.
 # String displayed when a keyboard shortcut is already used by another add-on
 # Variables:
 #   $addon (string) - Name of the add-on
 shortcuts-exists = Já está em uso por { $addon }
+# Variables:
+#   $numberToShow (number) - Number of other elements available to show
 shortcuts-card-expand-button =
     { $numberToShow ->
         [one] Mostrar mais { $numberToShow }
@@ -243,6 +269,11 @@ discopane-intro =
 discopane-notice-recommendations =
     Algumas destas recomendações são personalizadas. Estas são baseadas noutras
     extensões que instalou, preferências de perfil e estatísticas de utilização.
+# Notice to make user aware that the recommendations are personalized.
+discopane-notice-recommendations2 =
+    .message =
+        Algumas destas recomendações são personalizadas. Estas são baseadas noutras
+        extensões que instalou, preferências de perfil e estatísticas de utilização.
 discopane-notice-learn-more = Saber mais
 privacy-policy = Política de privacidade
 # Refers to the author of an add-on, shown below the name of the add-on.
@@ -288,21 +319,7 @@ permissions-addon-button = Permissões
 extension-enabled-heading = Ativada
 extension-disabled-heading = Desativada
 theme-enabled-heading = Ativado
-theme-disabled-heading = Desativado
 theme-disabled-heading2 = Temas Guardados
-theme-monochromatic-heading = Esquemas de cor
-theme-monochromatic-subheading = Novos esquemas de cor vibrantes do { -brand-product-name }. Disponível por tempo limitado.
-# Refers to the button label for the colorways card when a user does not have a colorway theme enabled.
-theme-colorways-button = Experimente as Colorways
-colorway-collection-independent-voices-subheading = Faça com que { -brand-short-name } sinta um pouco mais de si.
-# Variables:
-#   $expiryDate (string) - date on which the colorway collection expires.
-colorway-collection-expiry-date-span = Expira em { DATETIME($expiryDate, month: "long", day: "numeric") }
-# Refers to the button label for the colorways card when a user has a colorway theme enabled.
-theme-colorways-button-colorway-enabled = Alterar esquema de cor
-# Variables:
-#   $expiryDate (string) - date on which the colorway collection expires. When formatting this, you may omit the year, only exposing the month and day, as colorway collections will always expire within a year.
-colorway-collection-expiry-label = Expira em { DATETIME($expiryDate, month: "long", day: "numeric") }
 plugin-enabled-heading = Ativado
 plugin-disabled-heading = Desativado
 dictionary-enabled-heading = Ativado
@@ -320,6 +337,9 @@ addon-detail-homepage-label = Página inicial
 addon-detail-rating-label = Avaliação
 # Message for add-ons with a staged pending update.
 install-postponed-message = Esta extensão será atualizada quando o { -brand-short-name } for reiniciado.
+# Message for add-ons with a staged pending update.
+install-postponed-message2 =
+    .message = Esta extensão será atualizada quando o { -brand-short-name } for reiniciado.
 install-postponed-button = Atualizar agora
 # The average rating that the add-on has received.
 # Variables:
@@ -351,6 +371,10 @@ addon-detail-updates-radio-on = Ligado
 addon-detail-updates-radio-off = Desligado
 addon-detail-update-check-label = Procurar atualizações
 install-update-button = Atualizar
+# aria-label associated to the updates row to help screen readers to announce the group
+# of input controls being entered.
+addon-detail-group-label-updates =
+    .aria-label = { addon-detail-updates-label }
 # This is the tooltip text for the private browsing badge in about:addons. The
 # badge is the private browsing icon included next to the extension's name.
 addon-badge-private-browsing-allowed2 =
@@ -359,6 +383,24 @@ addon-badge-private-browsing-allowed2 =
 addon-detail-private-browsing-help = Quando permitido, a extensão irá ter acesso às suas atividades online durante a navegação privada. <a data-l10n-name="learn-more">Saber mais</a>
 addon-detail-private-browsing-allow = Permitir
 addon-detail-private-browsing-disallow = Não permitir
+# aria-label associated to the private browsing row to help screen readers to announce the group
+# of input controls being entered.
+addon-detail-group-label-private-browsing =
+    .aria-label = { detail-private-browsing-label }
+
+## "sites with restrictions" (internally called "quarantined") are special domains
+## where add-ons are normally blocked for security reasons.
+
+# Used as a description for the option to allow or block an add-on on quarantined domains.
+addon-detail-quarantined-domains-label = Executar em sites com restrições
+# Used as help text part of the quarantined domains UI controls row.
+addon-detail-quarantined-domains-help = Quando permitido, a extensão terá acesso aos sites restritos por { -vendor-short-name }. Permita apenas se confiar nesta extensão.
+# Used as label and tooltip text on the radio inputs associated to the quarantined domains UI controls.
+addon-detail-quarantined-domains-allow = Permitir
+addon-detail-quarantined-domains-disallow = Não permitir
+# aria-label associated to the quarantined domains exempt row to help screen readers to announce the group.
+addon-detail-group-label-quarantined-domains =
+    .aria-label = { addon-detail-quarantined-domains-label }
 
 ## This is the tooltip text for the recommended badges for an extension in about:addons. The
 ## badge is a small icon displayed next to an extension when it is recommended on AMO.
@@ -366,10 +408,10 @@ addon-detail-private-browsing-disallow = Não permitir
 addon-badge-recommended2 =
     .title = O { -brand-product-name } recomenda apenas as extensões que cumpram aos nossos padrões para segurança e desempenho.
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Waterfox" in the string below because the extensions are built
-# by Waterfox and we don't want forks to display "by Fork".
+# We hard code "BrowserWorks" in the string below because the extensions are built
+# by BrowserWorks and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = Extensão oficial desenvolvida pela Waterfox. Cumpre as recomendações de segurança e de desempenho.
+    .title = Extensão oficial desenvolvida pela BrowserWorks. Cumpre as recomendações de segurança e de desempenho.
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = Esta extensão foi revista para cumprir com os nossos padrões de segurança e desempenho
@@ -387,6 +429,8 @@ addon-permissions-optional = Permissões opcionais para a funcionalidade adicion
 addon-permissions-learnmore = Saber mais sobre permissões
 recommended-extensions-heading = Extensões recomendadas
 recommended-themes-heading = Temas recomendados
+# Variables:
+#   $hostname (string) - Host where the permissions are granted
 addon-sitepermissions-required = Concede as seguintes capacidades a <span data-l10n-name="hostname">{ $hostname }</span>:
 # A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Waterfox Color" name itself should not be translated.
@@ -411,18 +455,32 @@ addon-page-options-button =
 
 ## Detail notifications
 ## Variables:
-##   $name (String): name of the add-on.
+##   $name (string) - Name of the add-on.
 
 # Variables:
-#   $version (String): application version.
+#   $version (string) - Application version.
 details-notification-incompatible = { $name } é incompatível com o { -brand-short-name } { $version }.
+# Variables:
+#   $version (string) - Application version.
+details-notification-incompatible2 =
+    .message = { $name } é incompatível com o { -brand-short-name } { $version }.
 details-notification-incompatible-link = Mais Informações
 details-notification-unsigned-and-disabled = { $name } não pôde ser verificado para utilização no { -brand-short-name } e foi desativado.
+details-notification-unsigned-and-disabled2 =
+    .message = { $name } não pôde ser verificado para utilização no { -brand-short-name } e foi desativado.
 details-notification-unsigned-and-disabled-link = Mais informação
 details-notification-unsigned = { $name } não pôde ser verificado para utilização no { -brand-short-name }. Proceda com cuidado.
+details-notification-unsigned2 =
+    .message = { $name } não pôde ser verificado para utilização no { -brand-short-name }. Proceda com cuidado.
 details-notification-unsigned-link = Mais informação
 details-notification-blocked = { $name } foi desativado devido a problemas de estabilidade ou de segurança.
+details-notification-blocked2 =
+    .message = { $name } foi desativado devido a problemas de estabilidade ou de segurança.
 details-notification-blocked-link = Mais informação
 details-notification-softblocked = { $name } é conhecido por causar problemas de estabilidade ou de segurança.
+details-notification-softblocked2 =
+    .message = { $name } é conhecido por causar problemas de estabilidade ou de segurança.
 details-notification-softblocked-link = Mais informação
 details-notification-gmp-pending = { $name } será instalado dentro de momentos.
+details-notification-gmp-pending2 =
+    .message = { $name } será instalado dentro de momentos.

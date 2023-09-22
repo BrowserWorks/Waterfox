@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -24,6 +24,12 @@ bookmark-overlay-folders-expander =
     .tooltiptextdown = { bookmark-overlay-folders-expander.tooltiptext }
     .tooltiptextup = Nerodyti
 
+bookmark-overlay-folders-expander2 =
+    .tooltiptext = Rodyti visus adresyno aplankus
+
+bookmark-overlay-folders-expander-hide =
+    .tooltiptext = Nerodyti
+
 bookmark-overlay-new-folder-button =
     .label = Naujas aplankas
     .accesskey = N
@@ -39,6 +45,12 @@ bookmark-overlay-tags-expander =
     .tooltiptext = Rodyti visas gaires
     .tooltiptextdown = { bookmark-overlay-tags-expander.tooltiptext }
     .tooltiptextup = Nerodyti
+
+bookmark-overlay-tags-expander2 =
+    .tooltiptext = Rodyti visas gaires
+
+bookmark-overlay-tags-expander-hide =
+    .tooltiptext = Nerodyti
 
 bookmark-overlay-keyword-2 =
     .value = Reikšminis žodis

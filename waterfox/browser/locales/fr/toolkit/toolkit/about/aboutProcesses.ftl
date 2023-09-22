@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -52,7 +52,6 @@ about-processes-socket-process = Réseau ({ $pid })
 about-processes-remote-sandbox-broker-process = Broker du bac à sable distant ({ $pid })
 about-processes-fork-server-process = Copie du serveur ({ $pid })
 about-processes-preallocated-process = Préalloué ({ $pid })
-
 about-processes-utility-process = Utilitaire ({ $pid })
 
 # Unknown process names
@@ -126,9 +125,16 @@ about-processes-frame-name-one = Iframe imbriqué : { $url }
 #   $shortUrl (String) The shared prefix for the subframes in the group.
 about-processes-frame-name-many = Iframes imbriqués ({ $number }) : { $shortUrl }
 
-# Utility process actor names
+## Utility process actor names
+
 about-processes-utility-actor-unknown = Utilitaire inconnu
-about-processes-utility-actor-audio-decoder = Décodeur audio
+about-processes-utility-actor-audio-decoder-generic = Décodeur audio générique
+about-processes-utility-actor-audio-decoder-applemedia = Décodeur audio multimédia Apple
+about-processes-utility-actor-audio-decoder-wmf = Décodeur audio Windows Media Framework
+about-processes-utility-actor-mf-media-engine = CDM du moteur multimédia Windows Media Foundation
+# "Oracle" refers to an internal Waterfox process and should be kept in English
+about-processes-utility-actor-js-oracle = Oracle JavaScript
+about-processes-utility-actor-windows-utils = Utilitaires Windows
 
 ## Displaying CPU (percentage and total)
 ## Variables:

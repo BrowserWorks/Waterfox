@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-## Waterfox and Waterfox Brand
+## Waterfox and BrowserWorks Brand
 ##
-## Waterfox and Waterfox must be treated as a brand.
+## Waterfox and BrowserWorks must be treated as a brand.
 ##
 ## They cannot be:
 ## - Transliterated.
@@ -18,9 +18,10 @@
 
 -brand-shorter-name = Waterfox
 -brand-short-name = Waterfox
+-brand-shortcut-name = Waterfox
 -brand-full-name = Waterfox
 # This brand name can be used in messages where the product name needs to
 # remain unchanged across different versions (Nightly, Beta, etc.).
 -brand-product-name = Waterfox
--vendor-short-name = Waterfox
-trademarkInfo = Waterfox および Waterfox ロゴは 米国 Waterfox Limited の米国およびその他の国における商標です。
+-vendor-short-name = BrowserWorks
+trademarkInfo = Waterfox および Waterfox ロゴは 米国 BrowserWorks の米国およびその他の国における商標です。

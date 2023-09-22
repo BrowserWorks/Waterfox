@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 fonts-window =
     .title = 글꼴
+
 fonts-window-close =
     .key = w
 
@@ -11,6 +12,7 @@ fonts-window-close =
 
 fonts-langgroup-header = 언어별 글꼴
     .accesskey = F
+
 fonts-langgroup-arabic =
     .label = 아랍어
 fonts-langgroup-armenian =
@@ -75,27 +77,37 @@ fonts-langgroup-other =
 
 fonts-proportional-header = 가변폭
     .accesskey = P
+
 fonts-default-serif =
     .label = 세리프
 fonts-default-sans-serif =
     .label = 산세리프
+
 fonts-proportional-size = 크기
     .accesskey = z
+
 fonts-serif = 세리프
     .accesskey = S
+
 fonts-sans-serif = 산세리프
     .accesskey = n
+
 fonts-monospace = 고정폭
     .accesskey = M
+
 fonts-monospace-size = 크기
     .accesskey = e
+
 fonts-minsize = 최소 글꼴 크기
     .accesskey = o
+
 fonts-minsize-none =
     .label = 없음
+
 fonts-allow-own =
     .label = 위에서 선택한 글꼴 대신, 페이지에서 지정된 글꼴을 사용하도록 허용
     .accesskey = A
+
 # Variables:
 #   $name {string, "Arial"} - Name of the default font
 fonts-label-default =

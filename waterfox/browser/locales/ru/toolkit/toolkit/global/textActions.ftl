@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,10 +18,15 @@ text-action-cut =
 text-action-cut-shortcut =
     .key = X
 text-action-copy =
-    .label = Копировать
+    .label = Скопировать
     .accesskey = п
 text-action-copy-shortcut =
     .key = C
+# This command copies the link, removing additional
+# query parameters used to track users across sites.
+text-action-strip-on-share =
+    .label = Скопировать без отслеживания сайтом
+    .accesskey = е
 text-action-paste =
     .label = Вставить
     .accesskey = с

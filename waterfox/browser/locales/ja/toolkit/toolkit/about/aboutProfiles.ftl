@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -56,8 +56,8 @@ profiles-delete-profile-title = プロファイルの削除
 # Variables:
 #   $dir (String) - Path to be displayed
 profiles-delete-profile-confirm =
-    プロファイルの削除は、使用可能なプロファイルのリストから項目を削除します。これを元に戻すことはできません。
-    さらに、プロファイルのデータファイル (設定や証明書、他のユーザー関連のデータを含む) を削除することもできます。このオプションは “{ $dir }” フォルダーを完全に削除します。これを元に戻すことはできません。
+    プロファイルの削除は、使用可能なプロファイルのリストから項目を削除します。この操作は元に戻せません。
+    さらに、プロファイルのデータファイル (設定や証明書、他のユーザー関連のデータを含む) を削除することもできます。このオプションは “{ $dir }” フォルダーを完全に削除します。この操作は元に戻せません。
     本当にプロファイルのデータファイルを削除しますか？
 profiles-delete-files = ファイルを削除
 profiles-dont-delete-files = 項目のみ削除

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -33,10 +33,12 @@ appmenuitem-print =
     .label = In…
 appmenuitem-find-in-page =
     .label = Tìm trong trang…
+appmenuitem-translate =
+    .label = Dịch trang…
 appmenuitem-zoom =
     .value = Thu phóng
 appmenuitem-more-tools =
-    .label = Thêm công cụ
+    .label = Công cụ khác
 appmenuitem-help =
     .label = Trợ giúp
 appmenuitem-exit2 =
@@ -126,8 +128,7 @@ profiler-popup-button-recording =
 profiler-popup-button-capturing =
     .label = Profiler
     .tooltiptext = Profiler đang ghi một hồ sơ
-profiler-popup-title =
-    .value = { -profiler-brand-name }
+profiler-popup-header-text = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
     .aria-label = Hiển thị thêm thông tin
 profiler-popup-description-title =
@@ -163,7 +164,7 @@ profiler-popup-capture-shortcut =
 
 
 # Presets and their l10n IDs are defined in the file
-# devtools/client/performance-new/popup/background.jsm.js
+# devtools/client/performance-new/shared/background.jsm.js
 # Please take care that the same values are also defined in devtools' perftools.ftl.
 
 profiler-popup-presets-web-developer-description = Cài đặt trước được đề xuất cho hầu hết gỡ lỗi ứng dụng web, với chi phí thấp.
@@ -192,8 +193,6 @@ profiler-popup-presets-custom-label =
 
 appmenu-manage-history =
     .label = Quản lý lịch sử
-appmenu-reopen-all-tabs = Mở lại tất cả các thẻ
-appmenu-reopen-all-windows = Mở lại tất cả các cửa sổ
 appmenu-restore-session =
     .label = Khôi phục phiên làm việc trước
 appmenu-clear-history =
@@ -203,6 +202,9 @@ appmenu-recently-closed-tabs =
     .label = Thẻ mới đóng gần đây
 appmenu-recently-closed-windows =
     .label = Các cửa sổ mới đóng
+# This allows to search through the browser's history.
+appmenu-search-history =
+    .label = Lịch sử tìm kiếm
 
 ## Help panel
 
@@ -222,6 +224,8 @@ appmenu-help-report-site-issue =
 appmenu-help-share-ideas =
     .label = Chia sẻ ý tưởng và phản hồi…
     .accesskey = S
+appmenu-help-switch-device =
+    .label = Chuyển sang thiết bị mới
 
 ## appmenu-help-enter-troubleshoot-mode and appmenu-help-exit-troubleshoot-mode
 ## are mutually exclusive, so it's possible to use the same accesskey for both.

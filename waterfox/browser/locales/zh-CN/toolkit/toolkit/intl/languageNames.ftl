@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -66,7 +66,7 @@ language-name-gu = 古吉拉特语
 language-name-gv = 马恩岛语
 language-name-ha = 豪萨语
 language-name-haw = 夏威夷语
-language-name-he = 希伯莱语
+language-name-he = 希伯来语
 language-name-hi = 印地语
 language-name-hil = 希利盖农语
 language-name-ho = 希里莫图语
@@ -110,7 +110,7 @@ language-name-lb = 卢森堡语
 language-name-lg = 干达语
 language-name-li = 林堡语
 language-name-lij = 利古里亚语
-language-name-ln = 林格拉语
+language-name-ln = 林加拉语
 language-name-lo = 老挝语
 language-name-lt = 立陶宛语
 language-name-ltg = 拉特加莱语
@@ -135,7 +135,7 @@ language-name-nd = 北恩德贝勒语
 language-name-ne = 尼泊尔语
 language-name-ng = 恩敦加语
 language-name-nl = 荷兰语
-language-name-nn = 新挪威语
+language-name-nn = 挪威尼诺斯克语
 language-name-no = 挪威语
 language-name-nr = 南恩德贝勒语
 language-name-nso = 北梭托语
@@ -158,6 +158,7 @@ language-name-ro = 罗马尼亚语
 language-name-ru = 俄语
 language-name-rw = 卢旺达语
 language-name-sa = 梵语
+language-name-sat = 桑塔利语
 language-name-sc = 萨丁尼亚语
 language-name-sco = 低地苏格兰语
 language-name-sd = 信德语

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -65,7 +65,7 @@ app-basics-remote-processes-count = العمليات البعيدة
 app-basics-enterprise-policies = سياسات المؤسسات
 app-basics-location-service-key-google = مفتاح خدمة التموضع من جوجل
 app-basics-safebrowsing-key-google = مفتاح التصفّح الآمن من جوجل
-app-basics-key-mozilla = مفتاح خدمة التموضع من Waterfox
+app-basics-key-mozilla = مفتاح خدمة التموضع من BrowserWorks
 app-basics-safe-mode = الوضع الآمن
 
 show-dir-label =
@@ -143,6 +143,8 @@ media-device-format = التنسيق
 media-device-channels = القنوات
 media-device-rate = المعدل
 media-device-latency = الكمون
+
+## Codec support table
 
 ##
 

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,6 +26,9 @@ policy-Bookmarks = Skapa bokmärken i bokmärkesfältet, bokmärkesmenyn eller e
 policy-CaptivePortal = Aktivera eller inaktivera captive portal support.
 policy-CertificatesDescription = Lägg till certifikat eller använd inbyggda certifikat.
 policy-Cookies = Tillåt eller neka webbplatser att lagra kakor
+# Containers in this context is referring to container tabs in Waterfox.
+policy-Containers = Ange policyer relaterade till behållare.
+policy-DisableAccounts = Inaktivera kontobaserade tjänster, inklusive synkronisering.
 policy-DisabledCiphers = Inaktivera chiffer.
 policy-DefaultDownloadDirectory = Ange standard för nedladdningskatalog.
 policy-DisableAppUpdate = Förhindra att webbläsaren uppdateras.
@@ -41,7 +44,7 @@ policy-DisableForgetButton = Förhindra tillgång till knappen Glöm.
 policy-DisableFormHistory = Spara inte sök- och formulärhistorik.
 policy-DisablePrimaryPasswordCreation = Om det är sant kan ett huvudlösenord inte skapas.
 policy-DisablePasswordReveal = Låt inte lösenord avslöjas i sparade inloggningar.
-policy-DisablePocket = Inaktivera funktionen att spara webbsidor till Pocket.
+policy-DisablePocket2 = Inaktivera funktionen att spara webbsidor till { -pocket-brand-name }.
 policy-DisablePrivateBrowsing = Inaktivera privat surfning.
 policy-DisableProfileImport = Inaktivera menyalternativet att importera data från en annan webbläsare.
 policy-DisableProfileRefresh = Inaktivera knappen Återställ { -brand-short-name } på sidan about:support.
@@ -50,6 +53,7 @@ policy-DisableSecurityBypass = Förhindra användaren från att gå vidare vid v
 policy-DisableSetAsDesktopBackground = Inaktivera menyalternativet Använd som skrivbordsbakgrund för bilder.
 policy-DisableSystemAddonUpdate = Förhindra webbläsaren att installera och uppdatera systemtillägg.
 policy-DisableTelemetry = Stäng av telemetri.
+policy-DisableThirdPartyModuleBlocking = Förhindra användaren från att blockera tredjepartsmoduler som injiceras i { -brand-short-name }-processen.
 policy-DisplayBookmarksToolbar = Visa bokmärkesfältet som standard.
 policy-DisplayMenuBar = Visa menyraden som standard.
 policy-DNSOverHTTPS = Konfigurera DNS över HTTPS.
@@ -66,9 +70,8 @@ policy-ExemptDomainFileTypePairsFromFileTypeDownloadWarnings = Inaktivera varnin
 policy-Extensions = Installera, avinstallera eller låsa tillägg. Installeringsalternativet tar webbadresser eller sökvägar som parametrar. Alternativen för borttagning och låsning använder tilläggs-ID.
 policy-ExtensionSettings = Hantera alla aspekter av tilläggsinstallation.
 policy-ExtensionUpdate = Aktivera eller inaktivera automatiska utökningsuppdateringar.
-policy-WaterfoxHome = Konfigurera Waterfox startsida.
 policy-WaterfoxHome2 = Konfigurera { -firefox-home-brand-name }.
-policy-FlashPlugin = Tillåt eller neka att insticksmodulen Flash används.
+policy-WaterfoxSuggest = Konfigurera { -firefox-suggest-brand-name }.
 policy-GoToIntranetSiteForSingleWordEntryInAddressBar = Tvinga direkt navigering på intranätet istället för att söka när du skriver in enstaka ord i adressfältet.
 policy-Handlers = Konfigurera standardprogramhanterare.
 policy-HardwareAcceleration = Om inaktiv, stäng av hårdvaruacceleration.
@@ -110,8 +113,8 @@ policy-SanitizeOnShutdown2 = Rensa navigeringsdata vid avstängning.
 policy-SearchBar = Ange standardplacering av sökfältet. Användaren kan fortfarande flytta det.
 policy-SearchEngines = Ange sökmotorinställningar. Denna policy finns bara på Extended Support Release (ESR)-versionen.
 policy-SearchSuggestEnabled = Aktivera eller inaktivera sökförslag.
-# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
-policy-SecurityDevices = Installera PKCS #11-moduler.
+# For more information, see https://wikipedia.org/wiki/PKCS_11
+policy-SecurityDevices2 = Lägg till eller ta bort PKCS #11-moduler.
 policy-ShowHomeButton = Visa hemknappen i verktygsfältet.
 policy-SSLVersionMax = Ange den maximala SSL-versionen.
 policy-SSLVersionMin = Ange den lägsta SSL-versionen.

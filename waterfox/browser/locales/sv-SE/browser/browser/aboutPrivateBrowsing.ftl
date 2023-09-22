@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -60,3 +60,17 @@ about-private-browsing-pin-promo-link-text =
        *[other] Fäst i aktivitetsfältet
     }
 about-private-browsing-pin-promo-title = Inga sparade kakor eller historik, direkt från ditt skrivbord. Surfa som om ingen tittar.
+
+## Strings used in a promotion message for cookie banner reduction
+
+# Simplified version of the headline if the original text doesn't work
+# in your language: `See fewer cookie requests`.
+about-private-browsing-cookie-banners-promo-header = Ta bort kak-banners!
+about-private-browsing-cookie-banners-promo-button = Reducera kak-banners
+about-private-browsing-cookie-banners-promo-message = Låt { -brand-short-name } automatiskt svara på popup-fönster för kakor så att du kan återgå till att surfa utan distraktion. { -brand-short-name } kommer att avvisa alla förfrågningar om möjligt.
+
+## Strings for Felt Privacy v1 experiments in 119
+
+about-private-browsing-felt-privacy-v1-info-header = Lämna inga spår på den här enheten
+about-private-browsing-felt-privacy-v1-info-body = { -brand-short-name } raderar dina kakor, historik och webbplatsdata när du stänger alla dina privata fönster.
+about-private-browsing-felt-privacy-v1-info-link = Vem kan kanske se min aktivitet?

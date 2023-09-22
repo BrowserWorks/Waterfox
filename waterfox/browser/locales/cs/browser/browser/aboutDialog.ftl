@@ -1,14 +1,12 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 aboutDialog-title =
     .title =
-        O { -brand-full-name.gender ->
-            [masculine] { -brand-full-name(case: "loc") }
-            [feminine] { -brand-full-name(case: "loc") }
-            [neuter] { -brand-full-name(case: "loc") }
-           *[other] aplikaci { -brand-full-name }
+        { -brand-full-name.case-status ->
+            [with-cases] O { -brand-full-name(case: "loc") }
+           *[no-cases] O aplikaci { -brand-full-name }
         }
 
 releaseNotes-link = Co je nového
@@ -19,17 +17,22 @@ update-checkForUpdatesButton =
 
 update-updateButton =
     .label =
-        Restartovat a aktualizovat { -brand-shorter-name.gender ->
-            [masculine] { -brand-shorter-name(case: "acc") }
-            [feminine] { -brand-shorter-name(case: "acc") }
-            [neuter] { -brand-shorter-name(case: "acc") }
-           *[other] aplikaci { -brand-shorter-name }
+        { -brand-shorter-name.case-status ->
+            [with-cases] Restartovat a aktualizovat { -brand-shorter-name(case: "acc") }
+           *[no-cases] Restartovat a aktualizovat aplikaci { -brand-shorter-name }
         }
     .accesskey = R
 
 update-checkingForUpdates = Kontrola aktualizací…
-update-downloading = <img data-l10n-name="icon"/>Stahování aktualizace — <label data-l10n-name="download-status"/>
-update-downloading-message = Stahování aktualizace — <label data-l10n-name="download-status"/>
+
+## Variables:
+##   $transfer (string) - Transfer progress.
+
+settings-update-downloading = <img data-l10n-name="icon"/>Stahování aktualizace — <label data-l10n-name="download-status">{ $transfer }</label>
+aboutdialog-update-downloading = Stahování aktualizace — <label data-l10n-name="download-status">{ $transfer }</label>
+
+##
+
 update-applying = Probíhá aktualizace…
 
 update-failed = Aktualizace selhala. <label data-l10n-name="failed-link">Stáhnout nejnovější verzi</label>
@@ -37,6 +40,7 @@ update-failed-main = Aktualizace selhala. <a data-l10n-name="failed-link-main">S
 
 update-adminDisabled = Aktualizace jsou zakázány správcem
 update-noUpdatesFound = { -brand-short-name } je aktuální
+aboutdialog-update-checking-failed = Kontrola aktualizací se nezdařila
 update-otherInstanceHandlingUpdates =
     { -brand-short-name.gender ->
         [masculine] { -brand-short-name } je aktualizován jinou instancí
@@ -45,22 +49,30 @@ update-otherInstanceHandlingUpdates =
        *[other] Aplikace { -brand-short-name } je aktualizována jinou instancí
     }
 
-update-manual = Aktualizace jsou dostupné na <label data-l10n-name="manual-link"/>
+## Variables:
+##   $displayUrl (String): URL to page with download instructions. Example: www.mozilla.org/firefox/nightly/
+
+aboutdialog-update-manual-with-link = Aktualizace jsou dostupné na <label data-l10n-name="manual-link">{ $displayUrl }</label>
+settings-update-manual-with-link = Aktualizace jsou dostupné na <a data-l10n-name="manual-link">{ $displayUrl }</a>
 
 update-unsupported = Na tomto systému nelze provádět další aktualizace. <label data-l10n-name="unsupported-link">Zjistit více</label>
 
 update-restarting = Restartování…
 
-channel-description = Používáte aktualizační kanál <label data-l10n-name="current-channel"></label>.
+update-internal-error2 = Aktualizace se nepodařilo zkontrolovat kvůli vnitřní chybě. Aktualizace nejdete na adrese <label data-l10n-name="manual-link">{ $displayUrl }</label>
+
+##
+
+# Variables:
+#   $channel (String): description of the update channel (e.g. "release", "beta", "nightly" etc.)
+aboutdialog-channel-description = Používáte aktualizační kanál <label data-l10n-name="current-channel">{ $channel }</label>.
 
 warningDesc-version = { -brand-short-name } je experimentální verze a může být nestabilní.
 
 aboutdialog-help-user =
-    Nápověda { -brand-product-name.gender ->
-        [masculine] { -brand-product-name(case: "gen") }
-        [feminine] { -brand-product-name(case: "gen") }
-        [neuter] { -brand-product-name(case: "gen") }
-       *[other] aplikace { -brand-product-name }
+    { -brand-product-name.case-status ->
+        [with-cases] Nápověda { -brand-product-name(case: "gen") }
+       *[no-cases] Nápověda aplikace { -brand-product-name }
     }
 aboutdialog-submit-feedback = Odeslat zpětnou vazbu
 

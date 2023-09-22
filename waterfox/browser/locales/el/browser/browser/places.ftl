@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = Άνοιγμα σε νέο ιδιωτικό παράθυρο
     .accesskey = γ
+
+places-empty-bookmarks-folder =
+    .label = (Κενό)
 
 places-add-bookmark =
     .label = Προσθήκη σελιδοδείκτη…
@@ -86,6 +89,15 @@ places-delete-folder =
            *[other] Διαγραφή φακέλων
         }
     .accesskey = Δ
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] Διαγραφή σελίδας
+           *[other] Διαγραφή σελίδων
+        }
+    .accesskey = Δ
 
 # Managed bookmarks are created by an administrator and cannot be changed by the user.
 managed-bookmarks =
@@ -112,6 +124,20 @@ places-delete-bookmark =
         }
     .accesskey = Δ
 
+# Variables:
+#   $count (number) - The number of bookmarks being added.
+places-create-bookmark =
+    .label =
+        { $count ->
+            [1] Προσθήκη σελιδοδείκτη…
+           *[other] Προσθήκη σελιδοδεικτών…
+        }
+    .accesskey = Π
+
+places-untag-bookmark =
+    .label = Αφαίρεση ετικέτας
+    .accesskey = Α
+
 places-manage-bookmarks =
     .label = Διαχείριση σελιδοδεικτών
     .accesskey = Δ
@@ -120,13 +146,12 @@ places-forget-about-this-site-confirmation-title = Εξάλειψη αυτού �
 
 # Variables:
 # $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
-places-forget-about-this-site-confirmation-message = Αυτή η ενέργεια θα αφαιρέσει όλα τα δεδομένα που σχετίζονται με το { $hostOrBaseDomain }, όπως το ιστορικό, τους κωδικούς πρόσβασης, τα cookies, την κρυφή μνήμη και τις προτιμήσεις περιεχομένου. Θέλετε σίγουρα να συνεχίσετε;
+places-forget-about-this-site-confirmation-msg = Αυτή η ενέργεια θα αφαιρέσει τα δεδομένα που σχετίζονται με το { $hostOrBaseDomain }, όπως το ιστορικό, τα cookies, την κρυφή μνήμη και τις προτιμήσεις περιεχομένου. Δεν θα διαγραφούν οι σχετικοί σελιδοδείκτες και κωδικοί πρόσβασης. Θέλετε σίγουρα να συνεχίσετε;
 
 places-forget-about-this-site-forget = Εξάλειψη
 
-places-library =
+places-library3 =
     .title = Βιβλιοθήκη
-    .style = width:700px; height:500px;
 
 places-organize-button =
     .label = Οργάνωση
@@ -227,6 +252,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = Τελευταία τροποποίηση
 
+places-view-sortby-name =
+    .label = Ταξινόμηση κατά όνομα
+    .accesskey = ν
+places-view-sortby-url =
+    .label = Ταξινόμηση κατά διεύθυνση
+    .accesskey = θ
+places-view-sortby-date =
+    .label = Ταξινόμηση κατά ημερομηνία επίσκεψης
+    .accesskey = ψ
+places-view-sortby-visit-count =
+    .label = Ταξινόμηση κατά αριθμό επισκέψεων
+    .accesskey = θ
+places-view-sortby-date-added =
+    .label = Ταξινόμηση κατά σειρά προσθήκης
+    .accesskey = η
+places-view-sortby-last-modified =
+    .label = Ταξινόμηση κατά τελευταία τροποποίηση
+    .accesskey = λ
+places-view-sortby-tags =
+    .label = Ταξινόμηση κατά ετικέτες
+    .accesskey = τ
+
 places-cmd-find-key =
     .key = f
 
@@ -237,3 +284,28 @@ places-forward-button =
     .tooltiptext = Μετάβαση μπροστά
 
 places-details-pane-select-an-item-description = Επιλέξτε ένα στοιχείο για να δείτε και να επεξεργαστείτε τις ιδιότητές του
+
+places-details-pane-no-items =
+    .value = Κανένα στοιχείο
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value =
+        { $count ->
+            [one] Ένα στοιχείο
+           *[other] { $count } στοιχεία
+        }
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = Αναζήτηση σελιδοδεικτών
+places-search-history =
+    .placeholder = Αναζήτηση ιστορικού
+places-search-downloads =
+    .placeholder = Αναζήτηση λήψεων
+
+##
+
+places-locked-prompt = Το σύστημα σελιδοδεικτών και ιστορικού δεν θα λειτουργεί επειδή ένα από τα αρχεία του { -brand-short-name } χρησιμοποιείται από μια άλλη εφαρμογή. Αυτό το πρόβλημα μπορεί να οφείλεται σε κάποιο λογισμικό ασφάλειας.

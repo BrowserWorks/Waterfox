@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,6 @@ screenshots-private-window-error-details = Sorry voor het ongemak. Voor toekomst
 
 screenshots-generic-error-title = Ho! Er is iets mis met { -screenshots-brand-name }.
 screenshots-generic-error-details = We weten niet precies wat er zonet is gebeurd. Wilt u het nogmaals proberen, of een schermafbeelding van een andere pagina maken?
+
+screenshots-too-large-error-title = Uw schermafdruk is bijgesneden omdat deze te groot was
+screenshots-too-large-error-details = Probeer een gebied te selecteren dat kleiner is dan 32.700 pixels aan de langste zijde of een totale oppervlakte van 124.900.000 pixels.

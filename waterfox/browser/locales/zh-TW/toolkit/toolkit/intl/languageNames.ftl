@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -158,6 +158,7 @@ language-name-ro = 羅馬尼亞語
 language-name-ru = 俄語
 language-name-rw = 盧安達語
 language-name-sa = 梵語 (古印度語)
+language-name-sat = 桑塔利語
 language-name-sc = 薩丁尼語 (義大利)
 language-name-sco = 低地蘇格蘭語
 language-name-sd = 辛德語 (印度)

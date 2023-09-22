@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,6 +15,10 @@ support-addons-type = Típus
 support-addons-enabled = Engedélyezve
 support-addons-version = Verzió
 support-addons-id = Azonosító
+legacy-user-stylesheets-title = Hagyományos felhasználói stíluslapok
+legacy-user-stylesheets-enabled = Aktív
+legacy-user-stylesheets-stylesheet-types = Stíluslapok
+legacy-user-stylesheets-no-stylesheets-found = Nem találhatók stíluslapok
 security-software-title = Biztonsági szoftver
 security-software-type = Típus
 security-software-name = Név
@@ -70,10 +74,11 @@ app-basics-remote-processes-count = Távoli folyamatok
 app-basics-enterprise-policies = Vállalati házirendek
 app-basics-location-service-key-google = Google helymeghatározási szolgáltatás kulcs
 app-basics-safebrowsing-key-google = Google Safebrowsing kulcs
-app-basics-key-mozilla = Waterfox helymeghatározási szolgáltatás kulcs
+app-basics-key-mozilla = BrowserWorks helymeghatározási szolgáltatás kulcs
 app-basics-safe-mode = Csökkentett mód
 app-basics-memory-size = Memória mérete (RAM)
 app-basics-disk-available = Szabad lemezterület
+app-basics-pointing-devices = Mutatóeszközök
 # Variables:
 #   $value (number) - Amount of data being stored
 #   $unit (string) - The unit of data being stored (e.g. MB)
@@ -107,11 +112,21 @@ graphics-gpu2-title = 2. GPU
 graphics-decision-log-title = Döntésnapló
 graphics-crash-guards-title = Összeomlásvédelem által letiltott funkciók
 graphics-workarounds-title = Kerülő eljárások
+graphics-device-pixel-ratios = Ablakeszköz képpontarányai
 # Windowing system in use on Linux (e.g. X11, Wayland).
 graphics-window-protocol = Ablakprotokoll
 # Desktop environment in use on Linux (e.g. GNOME, KDE, XFCE, etc).
 graphics-desktop-environment = Asztali környezet
 place-database-title = Helyek adatbázisa
+place-database-stats = Statisztika
+place-database-stats-show = Statisztika megjelenítése
+place-database-stats-hide = Statisztika elrejtése
+place-database-stats-entity = Entitás
+place-database-stats-count = Darabszám
+place-database-stats-size-kib = Méret (KiB)
+place-database-stats-size-perc = Méret (%)
+place-database-stats-efficiency-perc = Hatékonyság (%)
+place-database-stats-sequentiality-perc = Sorozatosság (%)
 place-database-integrity = Sértetlenség
 place-database-verify-integrity = Sértetlenség ellenőrzése
 a11y-title = Kisegítő lehetőségek
@@ -122,7 +137,7 @@ a11y-instantiator = Kisegítő lehetőségek kezdeményezője
 library-version-title = Könyvtárak verziói
 copy-text-to-clipboard-label = Szöveg másolása a vágólapra
 copy-raw-data-to-clipboard-label = Nyers adatok másolása a vágólapra
-sandbox-title = Sandbox
+sandbox-title = Homokozó
 sandbox-sys-call-log-title = Elutasított rendszerhívások
 sandbox-sys-call-index = #
 sandbox-sys-call-age = másodperce
@@ -161,6 +176,15 @@ media-capabilities-title = Médiafunkciók
 media-codec-support-info = Kodektámogatási információk
 # List all the entries of the database.
 media-capabilities-enumerate = Adatbázis felsorolása
+
+## Codec support table
+
+media-codec-support-sw-decoding = Szoftveres dekódolás
+media-codec-support-hw-decoding = Hardveres dekódolás
+media-codec-support-codec-name = Kodeknév
+media-codec-support-supported = Támogatott
+media-codec-support-unsupported = Nem támogatott
+media-codec-support-error = A kodek támogatási információi nem érhetőek el. Próbálja újra egy médiafájl lejátszása után.
 
 ##
 
@@ -275,6 +299,8 @@ webgl2-renderer = WebGL 2 illesztőprogram megjelenítő
 webgl2-version = WebGL 2 illesztőprogram verzió
 webgl2-driver-extensions = WebGL 2 illesztőprogram kiterjesztései
 webgl2-extensions = WebGL 2 kiterjesztések
+webgpu-default-adapter = WebGPU alapértelmezett adaptere
+webgpu-fallback-adapter = WebGPU tartalék adaptere
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = Ismert problémák miatt blokkolva: <a data-l10n-name="bug-link">{ $bugNumber }. hiba</a>
@@ -299,11 +325,12 @@ has-seccomp-bpf = Seccomp-BPF (rendszerhívás-szűrés)
 has-seccomp-tsync = Seccomp szálszinkronizáció
 has-user-namespaces = Felhasználói névterek
 has-privileged-user-namespaces = Felhasználói névterek privilegizált folyamatokhoz
-can-sandbox-content = Tartalomfolyamat sandboxing
-can-sandbox-media = Médiabővítmény sandboxing
-content-sandbox-level = Tartalomfolyamat sandboxing szintje
-effective-content-sandbox-level = Tartalomfolyamat tényleges sandboxing szintje
+can-sandbox-content = Tartalomfolyamat homokozója
+can-sandbox-media = Médiabővítmény homokozója
+content-sandbox-level = Tartalomfolyamat homokozóhasználati szintje
+effective-content-sandbox-level = Tartalomfolyamat tényleges homokozóhasználati szintje
 content-win32k-lockdown-state = Win32k zárolási állapot a tartalmi folyamathoz
+support-sandbox-gpu-level = GPU-folyamat homokozóhasználati szintje
 sandbox-proc-type-content = tartalom
 sandbox-proc-type-file = fájltartalom
 sandbox-proc-type-media-plugin = médiabővítmény
@@ -375,3 +402,10 @@ support-remote-experiments-see-about-studies = További információkért tekint
 support-remote-features-title = Távoli funkciók
 support-remote-features-name = Név
 support-remote-features-status = Állapot
+
+## Pointing devices
+
+pointing-device-mouse = Egér
+pointing-device-touchscreen = Érintőképernyő
+pointing-device-pen-digitizer = Digitalizáló toll
+pointing-device-none = Nincsenek mutatóeszközök

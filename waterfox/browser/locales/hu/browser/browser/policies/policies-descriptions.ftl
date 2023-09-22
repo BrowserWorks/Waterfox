@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,6 +26,9 @@ policy-Bookmarks = Könyvjelzők létrehozása a Könyvjelzők eszköztáron, a 
 policy-CaptivePortal = Beléptető oldal támogatás engedélyezése vagy letiltása.
 policy-CertificatesDescription = Tanúsítványok hozzáadása vagy beépített tanúsítványok használata.
 policy-Cookies = A weboldalak süti elhelyezésének engedélyezése vagy letiltása.
+# Containers in this context is referring to container tabs in Waterfox.
+policy-Containers = A konténerekhez kapcsolódó házirendek beállítása.
+policy-DisableAccounts = Fiókalapú szolgáltatások, köztük a szinkronizálás letiltása.
 policy-DisabledCiphers = Titkosítási módok letiltása.
 policy-DefaultDownloadDirectory = Az alapértelmezett letöltési könyvtár beállítása.
 policy-DisableAppUpdate = A böngésző frissítésének megakadályozása.
@@ -41,7 +44,7 @@ policy-DisableForgetButton = Az Elfelejtés gombhoz hozzáférés megakadályoz�
 policy-DisableFormHistory = Ne jegyezze meg a keresőmezők és űrlapmezők előzményeit.
 policy-DisablePrimaryPasswordCreation = Ha igaz, akkor nem hozható létre elsődleges jelszó.
 policy-DisablePasswordReveal = Ne engedje, hogy a mentet bejelentkezésekben szereplő jelszavak megjelenítésre kerüljenek.
-policy-DisablePocket = A weboldalak Pocketbe mentését biztosító funkció letiltása.
+policy-DisablePocket2 = A weboldalak { -pocket-brand-name }be mentését biztosító funkció letiltása.
 policy-DisablePrivateBrowsing = Privát böngészés letiltása.
 policy-DisableProfileImport = A más böngészőből történő adatimportálás parancsok letiltása.
 policy-DisableProfileRefresh = A { -brand-short-name } felfrissítése gomb letiltása az about:support oldalon.
@@ -50,6 +53,7 @@ policy-DisableSecurityBypass = Annak a megakadályozása, hogy a felhasználó �
 policy-DisableSetAsDesktopBackground = A Beállítás háttérképként menüparancs letiltása a képeknél.
 policy-DisableSystemAddonUpdate = Annak a megakadályozása, hogy a böngésző rendszer-kiegészítőket telepítsen és frissítsen.
 policy-DisableTelemetry = Telemetria kikapcsolása.
+policy-DisableThirdPartyModuleBlocking = A felhasználó megakadályozása abban, hogy blokkolja a harmadik féltől származó modulok betöltését a { -brand-short-name } folyamatba.
 policy-DisplayBookmarksToolbar = A Könyvjelző eszköztár megjelenítése alapértelmezetten.
 policy-DisplayMenuBar = A Menüsáv megjelenítése alapértelmezetten.
 policy-DNSOverHTTPS = HTTPS-en keresztüli DNS beállítása.
@@ -66,9 +70,8 @@ policy-ExemptDomainFileTypePairsFromFileTypeDownloadWarnings = A fájlok kiterje
 policy-Extensions = Kiegészítők telepítése, eltávolítása vagy zárolása. A Telepítés lehetőség URL-t vagy útvonalat vár paraméterként. Az Eltávolítás és Zárolás kiegészítőazonosítót vár.
 policy-ExtensionSettings = Kezelje a kiegészítők telepítésének összes vonatkozását.
 policy-ExtensionUpdate = Az automatikus kiegészítőfrissítések engedélyezése vagy letiltása.
-policy-WaterfoxHome = A Waterfox kezdőlap beállítása.
 policy-WaterfoxHome2 = A { -firefox-home-brand-name } beállítása.
-policy-FlashPlugin = A Flash bővítmény használatának engedélyezése vagy tiltása.
+policy-WaterfoxSuggest = A { -firefox-suggest-brand-name } beállítása.
 policy-GoToIntranetSiteForSingleWordEntryInAddressBar = A közvetlen intranetes navigáció kényszerítése a keresés helyett, amikor egyetlen szót ír be a címsorba.
 policy-Handlers = Alapértelmezett alkalmazáskezelők beállítása
 policy-HardwareAcceleration = Ha hamis, akkor kikapcsolja a hardveres gyorsítást.
@@ -110,8 +113,8 @@ policy-SanitizeOnShutdown2 = Navigációs adatok törlése leállításkor.
 policy-SearchBar = A keresősáv alapértelmezett helyének megadása. A felhasználó továbbra is testreszabhatja.
 policy-SearchEngines = Keresőszolgáltatások beállításainak konfigurálása. Ez a házirend csak a kibővített támogatású kiadásban (ESR) érhető el.
 policy-SearchSuggestEnabled = A keresési javaslatok engedélyezése vagy letiltása.
-# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
-policy-SecurityDevices = PKCS #11 modulok telepítése.
+# For more information, see https://wikipedia.org/wiki/PKCS_11
+policy-SecurityDevices2 = PKCS #11 modulok hozzáadása vagy törlése.
 policy-ShowHomeButton = A kezdőoldal gomb megjelenítése az eszköztáron.
 policy-SSLVersionMax = A legmagasabb SSL verzió beállítása.
 policy-SSLVersionMin = A legkisebb SSL verzió beállítása.

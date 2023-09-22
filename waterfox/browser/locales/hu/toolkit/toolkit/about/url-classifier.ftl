@@ -1,11 +1,15 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 url-classifier-title = URL-osztályozó információk
 url-classifier-search-title = Keresés
 url-classifier-search-result-title = Találatok
+# Variables:
+#   $uri (string) - URI of blocked page
 url-classifier-search-result-uri = URI: { $uri }
+# Variables:
+#   $list (string) - List of tables where the page is blocked
 url-classifier-search-result-list = Táblázatok listája: { $list }
 url-classifier-search-input = URL
 url-classifier-search-error-invalid-url = Érvénytelen URL
@@ -30,7 +34,7 @@ url-classifier-cache-show-entries = Bejegyzések megjelenítése
 url-classifier-cache-entries = Gyorsítótár-bejegyzések
 url-classifier-cache-prefix = Előtag
 url-classifier-cache-ncache-expiry = Negatív gyorsítótár lejárata
-url-classifier-cache-fullhash = Teljes hash
+url-classifier-cache-fullhash = Teljes ujjlenyomat
 url-classifier-cache-pcache-expiry = Pozitív gyorsítótár lejárata
 url-classifier-debug-title = Hibakeresés
 url-classifier-debug-module-btn = Naplómodulok beállítása
@@ -50,5 +54,9 @@ url-classifier-disabled = Letiltva
 url-classifier-updating = frissítés
 url-classifier-cannot-update = nem frissíthető
 url-classifier-success = sikeres
+
+## Variables
+##   $error (string) - Error message
+
 url-classifier-update-error = frissítési hiba ({ $error })
 url-classifier-download-error = letöltési hiba ({ $error })

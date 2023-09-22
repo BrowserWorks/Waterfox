@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -41,11 +41,11 @@ appmenu-update-other-instance-message = มีการอัปเดต { -bra
 appmenu-addon-private-browsing-installed2 =
     .buttonlabel = ตกลง
     .buttonaccesskey = O
-appmenu-addon-post-install-message3 = จัดการส่วนเสริมและชุดตกแต่งของคุณได้ผ่านเมนูแอปพลิเคชัน
+appmenu-addon-post-install-message3 = จัดการส่วนเสริมและชุดรูปแบบของคุณผ่านเมนูแอปพลิเคชัน
 appmenu-addon-post-install-incognito-checkbox =
     .label = อนุญาตให้ส่วนขยายนี้ทำงานในหน้าต่างส่วนตัว
     .accesskey = อ
-    
+
 appmenu-new-tab-controlled-changes =
     .label = แท็บใหม่ของคุณมีการเปลี่ยนแปลง
     .buttonlabel = เก็บการเปลี่ยนแปลง

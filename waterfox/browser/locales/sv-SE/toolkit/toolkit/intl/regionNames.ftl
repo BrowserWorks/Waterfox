@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,7 @@ region-name-bl = Saint-Barthélemy
 region-name-bm = Bermuda
 region-name-bn = Brunei
 region-name-bo = Bolivia
-region-name-bq = Bonaire, Sint Eustatius och Saba
+region-name-bq-2018 = Karibiska Nederländerna
 region-name-br = Brasilien
 region-name-bs = Bahamas
 region-name-bt = Bhutan
@@ -57,11 +57,11 @@ region-name-co = Colombia
 region-name-cp = Clippertonön
 region-name-cr = Costa Rica
 region-name-cu = Kuba
-region-name-cv = Kap Verde
+region-name-cv-2020 = Kap Verde
 region-name-cw = Curaçao
 region-name-cx = Julön
 region-name-cy = Cypern
-region-name-cz = Tjeckien
+region-name-cz-2019 = Tjeckien
 region-name-de = Tyskland
 region-name-dg = Diego Garcia
 region-name-dj = Djibouti
@@ -150,7 +150,7 @@ region-name-me = Montenegro
 region-name-mf = Saint-Martin
 region-name-mg = Madagaskar
 region-name-mh = Marshallöarna
-region-name-mk = Makedonien
+region-name-mk-2019 = Nordmakedonien
 region-name-ml = Mali
 region-name-mm = Burma
 region-name-mn = Mongoliet
@@ -223,7 +223,7 @@ region-name-st = São Tomé och Príncipe
 region-name-sv = El Salvador
 region-name-sx = Sint Maarten
 region-name-sy = Syrien
-region-name-sz = Swaziland
+region-name-sz-2019 = Swaziland
 region-name-tc = Turks- och Caicosöarna
 region-name-td = Tchad
 region-name-tf = Franska sydterritorierna

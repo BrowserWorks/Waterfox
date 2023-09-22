@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,6 @@
 #   $count (String) - Number of blocked pop-ups
 site-permissions-open-blocked-popups =
     { $count ->
-        [one] Abrir { $count } popup bloqueado…
-       *[other] Abrir { $count } popups bloqueados…
+        [one] Abrir { $count } janela ou aba bloqueada…
+       *[other] Abrir { $count } janelas ou abas bloqueadas…
     }

@@ -1,13 +1,19 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-do-not-track-description = Отправлять веб-сайтам сигнал «Не отслеживать», означающий, что вы не хотите, чтобы вас отслеживали
+do-not-track-description = Отправлять сайтам сигнал «Не отслеживать», означающий, что вы не хотите, чтобы вас отслеживали
+do-not-track-description2 =
+    .label = Отправлять веб-сайтам запрос «Не отслеживать»
+    .accesskey = в
 do-not-track-learn-more = Подробнее
 do-not-track-option-default-content-blocking-known =
     .label = Только когда { -brand-short-name } настроен на блокировку известных трекеров
 do-not-track-option-always =
     .label = Всегда
+global-privacy-control-description =
+    .label = Сообщать веб-сайтам, чтобы они не продавали и не разглашали мои данные
+    .accesskey = ы
 settings-page-title = Настройки
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
@@ -71,7 +77,7 @@ restart-later = Перезапустить позже
 ## <img data-l10n-name="icon"/> is going to be replaced by the extension icon.
 ##
 ## Variables:
-##   $name (String): name of the extension
+##   $name (string) - Name of the extension
 
 # This string is shown to notify the user that the password manager setting
 # is being controlled by an extension
@@ -120,6 +126,11 @@ startup-restore-warn-on-quit =
     .label = Предупреждать при выходе из браузера
 disable-extension =
     .label = Отключить расширение
+preferences-data-migration-header = Импорт данных браузера
+preferences-data-migration-description = Импорт закладок, паролей, истории и данных автозаполнения в { -brand-short-name }.
+preferences-data-migration-button =
+    .label = Импорт данных
+    .accesskey = м
 tabs-group-header = Вкладки
 ctrl-tab-recently-used-order =
     .label = Ctrl+Tab переключает между вкладками в порядке недавнего использования
@@ -132,7 +143,7 @@ confirm-on-close-multiple-tabs =
     .accesskey = е
 # This string is used for the confirm before quitting preference.
 # Variables:
-#   $quitKey (String) - the quit keyboard shortcut, and formatted
+#   $quitKey (string) - the quit keyboard shortcut, and formatted
 #                       in the same manner as it would appear,
 #                       for example, in the File menu.
 confirm-on-quit-with-key =
@@ -155,6 +166,10 @@ browser-containers-settings =
     .label = Параметры…
     .accesskey = м
 containers-disable-alert-title = Закрыть все вкладки в контейнере?
+
+## Variables:
+##   $tabCount (number) - Number of tabs
+
 containers-disable-alert-desc =
     { $tabCount ->
         [one] Если вы отключите сейчас вкладки в контейнере, { $tabCount } вкладка в контейнере будет закрыта. Вы уверены, что хотите отключить вкладки в контейнере?
@@ -167,10 +182,13 @@ containers-disable-alert-ok-button =
         [few] Закрыть { $tabCount } вкладки в контейнере
        *[many] Закрыть { $tabCount } вкладок в контейнере
     }
+
+##
+
 containers-disable-alert-cancel-button = Оставить включёнными
 containers-remove-alert-title = Удалить этот контейнер?
 # Variables:
-#   $count (Number) - Number of tabs that will be closed.
+#   $count (number) - Number of tabs that will be closed.
 containers-remove-alert-msg =
     { $count ->
         [one] Если вы удалите сейчас этот контейнер, { $count } вкладка в контейнере будет закрыта. Вы уверены, что хотите удалить этот контейнер?
@@ -184,35 +202,30 @@ containers-remove-cancel-button = Не удалять этот контейне�
 
 language-and-appearance-header = Язык и внешний вид
 preferences-web-appearance-header = Внешний вид сайтов
-preferences-web-appearance-description = Некоторые веб-сайты адаптируют свою цветовую схему в зависимости от ваших предпочтений. Выберите цветовую схему, которую вы хотите использовать для этих сайтов.
-preferences-web-appearance-choice-browser = Тема { -brand-short-name }
-preferences-web-appearance-choice-system = Системная тема
+preferences-web-appearance-description = Некоторые сайты изменяют свою цветовую схему в зависимости от ваших предпочтений. Выберите цветовую схему, которую вы хотите использовать для этих сайтов.
+preferences-web-appearance-choice-auto = Автоматически
 preferences-web-appearance-choice-light = Светлая
 preferences-web-appearance-choice-dark = Тёмная
-preferences-web-appearance-choice-tooltip-browser =
-    .title = Применять настройки темы { -brand-short-name } к фону и содержимому веб-сайтов.
-preferences-web-appearance-choice-tooltip-system =
-    .title = Применять системные настройки к фону и содержимому веб-сайтов.
+preferences-web-appearance-choice-tooltip-auto =
+    .title = Автоматически менять фон и содержимое сайтов в зависимости от ваших системных настроек и темы { -brand-short-name }.
 preferences-web-appearance-choice-tooltip-light =
-    .title = Использовать светлый вид для фона и содержимого веб-сайтов.
+    .title = Использовать светлый вид для фона и содержимого сайтов.
 preferences-web-appearance-choice-tooltip-dark =
-    .title = Использовать тёмный вид для фона и содержимого веб-сайтов.
-preferences-web-appearance-choice-input-browser =
-    .aria-description = { preferences-web-appearance-choice-tooltip-browser.title }
-preferences-web-appearance-choice-input-system =
-    .aria-description = { preferences-web-appearance-choice-tooltip-system.title }
+    .title = Использовать тёмный вид для фона и содержимого сайтов.
+preferences-web-appearance-choice-input-auto =
+    .aria-description = { preferences-web-appearance-choice-tooltip-auto.title }
 preferences-web-appearance-choice-input-light =
     .aria-description = { preferences-web-appearance-choice-tooltip-light.title }
 preferences-web-appearance-choice-input-dark =
     .aria-description = { preferences-web-appearance-choice-tooltip-dark.title }
 # This can appear when using windows HCM or "Override colors: always" without
 # system colors.
-preferences-web-appearance-override-warning = Выбранные вами цвета изменяют внешний вид веб-сайтов. <a data-l10n-name="colors-link">Управлять цветами</a>
+preferences-web-appearance-override-warning = Выбранные вами цвета изменяют внешний вид сайтов. <a data-l10n-name="colors-link">Управлять цветами</a>
 # This message contains one link. It can be moved within the sentence as needed
 # to adapt to your language, but should not be changed.
 preferences-web-appearance-footer = Управляйте темами { -brand-short-name } в разделе <a data-l10n-name="themes-link">«Расширения и темы»</a>
 preferences-colors-header = Цвета
-preferences-colors-description = Переопределяйте цвета { -brand-short-name } по умолчанию для текста, фона веб-сайтов и ссылок.
+preferences-colors-description = Переопределяйте цвета { -brand-short-name } по умолчанию для текста, фона сайтов и ссылок.
 preferences-colors-manage-button =
     .label = Управление цветами…
     .accesskey = м
@@ -228,24 +241,26 @@ advanced-fonts =
 preferences-zoom-header = Масштаб
 preferences-default-zoom = Масштаб по умолчанию
     .accesskey = ш
+# Variables:
+#   $percentage (number) - Zoom percentage value
 preferences-default-zoom-value =
     .label = { $percentage }%
 preferences-zoom-text-only =
     .label = Только текст
     .accesskey = о
 language-header = Язык
-choose-language-description = Выберите язык, предпочитаемый вами для отображения веб-страниц
+choose-language-description = Выберите язык, предпочитаемый вами для отображения страниц
 choose-button =
     .label = Выбрать…
     .accesskey = ы
 choose-browser-language-description = Выберите язык отображения меню, сообщений и уведомлений от { -brand-short-name }.
 manage-browser-languages-button =
-    .label = Выбрать альтернативные…
+    .label = Выбрать другие…
     .accesskey = ы
 confirm-browser-language-change-description = Перезапустите { -brand-short-name } для применения этих изменений
 confirm-browser-language-change-button = Применить и перезапустить
 translate-web-pages =
-    .label = Перевод веб-страниц
+    .label = Перевод страниц
     .accesskey = и
 fx-translate-web-pages = { -translations-brand-name }
 # The <img> element is replaced by the logo of the provider
@@ -320,15 +335,15 @@ applications-manage-app =
 applications-always-ask =
     .label = Всегда спрашивать
 # Variables:
-#   $type-description (String) - Description of the type (e.g "Portable Document Format")
-#   $type (String) - the MIME type (e.g application/binary)
+#   $type-description (string) - Description of the type (e.g "Portable Document Format")
+#   $type (string) - The MIME type (e.g application/binary)
 applications-type-description-with-type = { $type-description } ({ $type })
 # Variables:
-#   $extension (String) - file extension (e.g .TXT)
-#   $type (String) - the MIME type (e.g application/binary)
+#   $extension (string) - File extension (e.g .TXT)
+#   $type (string) - The MIME type (e.g application/binary)
 applications-file-ending-with-type = { applications-file-ending } ({ $type })
 # Variables:
-#   $plugin-name (String) - Name of a plugin (e.g Adobe Flash)
+#   $plugin-name (string) - Name of a plugin (e.g Adobe Flash)
 applications-use-plugin-in =
     .label = Использовать { $plugin-name } (в { -brand-short-name })
 applications-open-inapp =
@@ -364,31 +379,33 @@ applications-save-for-new-types =
 applications-ask-before-handling =
     .label = Спрашивать, открывать или сохранять файлы
     .accesskey = ш
-drm-content-header = Содержимое использующее технические средства защиты авторских прав (DRM)
+drm-content-header = Содержимое, использующее средства защиты авторских прав (DRM)
 play-drm-content =
     .label = Воспроизводить защищённое DRM содержимое
     .accesskey = п
 play-drm-content-learn-more = Подробнее
 update-application-title = Обновления { -brand-short-name }
 update-application-description = Используйте последнюю версию { -brand-short-name } для наилучшей производительности, стабильности и безопасности.
+# Variables:
+# $version (string) - Waterfox version
 update-application-version = Версия { $version } <a data-l10n-name="learn-more">Что нового</a>
 update-history =
     .label = Показать журнал обновлений…
     .accesskey = ж
 update-application-allow-description = Разрешить { -brand-short-name }
 update-application-auto =
-    .label = Автоматически устанавливать обновления (рекомендуется)
+    .label = Автоматически устанавливать обновления (желательно)
     .accesskey = ч
 update-application-check-choose =
     .label = Проверять наличие обновлений, но позволять вам решать, устанавливать ли их
     .accesskey = в
 update-application-manual =
-    .label = Никогда не проверять наличие обновлений (не рекомендуется)
+    .label = Никогда не проверять наличие обновлений (не желательно)
     .accesskey = и
 update-application-background-enabled =
     .label = Когда { -brand-short-name } не запущен
     .accesskey = а
-update-application-warning-cross-user-setting = Этот параметр применится ко всем учётным записям Windows и профилям { -brand-short-name }, использующим эту установку { -brand-short-name }.
+update-application-warning-cross-user-setting = Эта настройка применится ко всем учётным записям Windows и профилям { -brand-short-name }, использующим эту установку { -brand-short-name }.
 update-application-use-service =
     .label = Использовать фоновую службу для установки обновлений
     .accesskey = ф
@@ -397,7 +414,7 @@ update-application-suppress-prompts =
     .accesskey = е
 update-setting-write-failure-title2 = Ошибка при сохранении настроек обновления
 # Variables:
-#   $path (String) - Path to the configuration file
+#   $path (string) - Path to the configuration file
 # The newlines between the main text and the line containing the path is
 # intentional so the path is easier to identify.
 update-setting-write-failure-message2 =
@@ -425,15 +442,15 @@ performance-allow-hw-accel =
 performance-limit-content-process-option = Максимальное число процессов контента
     .accesskey = в
 performance-limit-content-process-enabled-desc = Дополнительные процессы контента могут улучшить производительность при работе со множеством вкладок, но также повысят потребление памяти.
-performance-limit-content-process-blocked-desc = Изменение числа процессов контента возможно только в мультипроцессном { -brand-short-name }. <a data-l10n-name="learn-more">Узнайте, как проверить, включена ли мультипроцессность</a>
+performance-limit-content-process-blocked-desc = Изменение числа процессов контента возможно только во многопроцессном { -brand-short-name }. <a data-l10n-name="learn-more">Узнайте, как проверить, включена ли многопроцессность</a>
 # Variables:
-#   $num - default value of the `dom.ipc.processCount` pref.
+#   $num (number) - Default value of the `dom.ipc.processCount` pref.
 performance-default-content-process-count =
     .label = { $num } (по умолчанию)
 
 ## General Section - Browsing
 
-browsing-title = Просмотр сайтов
+browsing-title = Просмотр сети
 browsing-use-autoscroll =
     .label = Использовать автоматическую прокрутку
     .accesskey = а
@@ -449,6 +466,9 @@ browsing-use-onscreen-keyboard =
 browsing-use-cursor-navigation =
     .label = Всегда использовать клавиши курсора для навигации по страницам
     .accesskey = к
+browsing-use-full-keyboard-navigation =
+    .label = Использовать клавишу табуляции для перемещения фокуса между элементами управления формой и ссылками.
+    .accesskey = е
 browsing-search-on-start-typing =
     .label = Искать текст на странице по мере его набора
     .accesskey = И
@@ -457,7 +477,7 @@ browsing-picture-in-picture-toggle-enabled =
     .accesskey = а
 browsing-picture-in-picture-learn-more = Подробнее
 browsing-media-control =
-    .label = Управлять медиа с помощью клавиатуры, гарнитуры или виртуального интерфейса
+    .label = Управлять воспроизведением звука или видео с помощью клавиатуры, гарнитуры или виртуального интерфейса
     .accesskey = У
 browsing-media-control-learn-more = Подробнее
 browsing-cfr-recommendations =
@@ -470,7 +490,7 @@ browsing-cfr-recommendations-learn-more = Подробнее
 
 ## General Section - Proxy
 
-network-settings-title = Параметры сети
+network-settings-title = Настройки сети
 network-proxy-connection-description = Настроить, как { -brand-short-name } соединяется с Интернетом.
 network-proxy-connection-learn-more = Подробнее
 network-proxy-connection-settings =
@@ -489,18 +509,14 @@ home-newtabs-mode-label = Новые вкладки
 home-restore-defaults =
     .label = Восстановить по умолчанию
     .accesskey = о
-# "Waterfox" should be treated as a brand and kept in English,
-# while "Home" and "(Default)" can be localized.
-home-mode-choice-default =
-    .label = Домашняя страница Waterfox (по умолчанию)
 home-mode-choice-default-fx =
     .label = { -firefox-home-brand-name(case: "nominative") } (По умолчанию)
 home-mode-choice-custom =
-    .label = Мой URL...
+    .label = Мой сетевой адрес...
 home-mode-choice-blank =
     .label = Пустая страница
 home-homepage-custom-url =
-    .placeholder = Вставьте URL...
+    .placeholder = Вставьте сетевой адрес...
 # This string has a special case for '1' and [other] (default). If necessary for
 # your language, you can add {$tabCount} to your translations and use the
 # standard CLDR forms, or only use the form for [other] if both strings should
@@ -518,8 +534,6 @@ choose-bookmark =
 
 ## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Домашняя страница Waterfox
-home-prefs-content-description = Выберите, какое содержимое вы хотите видеть на домашней странице Waterfox.
 home-prefs-content-header2 = Содержимое { -firefox-home-brand-name(case: "genitive") }
 home-prefs-content-description2 = Выберите, какое содержимое вы хотите видеть на экране { -firefox-home-brand-name(case: "genitive") }.
 home-prefs-search-header =
@@ -531,7 +545,7 @@ home-prefs-shortcuts-by-option-sponsored =
     .label = Спонсируемые ярлыки
 
 ## Variables:
-##  $provider (String): Name of the corresponding content provider, e.g "Pocket".
+##  $provider (string) - Name of the corresponding content provider, e.g "Pocket".
 
 home-prefs-recommended-by-header =
     .label = Рекомендовано { $provider }
@@ -562,6 +576,8 @@ home-prefs-recent-activity-description = Подборка недавних са�
 home-prefs-snippets-header =
     .label = Заметки
 home-prefs-snippets-description-new = Советы и новости от { -vendor-short-name } и { -brand-product-name }
+# Variables:
+#   $num (number) - Number of rows displayed
 home-prefs-sections-rows-option =
     .label =
         { $num ->
@@ -572,13 +588,13 @@ home-prefs-sections-rows-option =
 
 ## Search Section
 
-search-bar-header = Панель поиска
+search-bar-header = Строка поиска
 search-bar-hidden =
     .label = Использовать адресную строку для поиска и навигации
 search-bar-shown =
-    .label = Добавить панель поиска на панель инструментов
+    .label = Добавить строку поиска на панель инструментов
 search-engine-default-header = Поисковая система по умолчанию
-search-engine-default-desc-2 = Это ваша поисковая система по умолчанию в адресной строке и панели поиска. Вы можете сменить её в любое время.
+search-engine-default-desc-2 = Это ваша поисковая система по умолчанию в адресной строке и строке поиска. Вы можете сменить её в любое время.
 search-engine-default-private-desc-2 = Выберите другую поисковую систему по умолчанию для использования только в приватных окнах
 search-separate-default-engine =
     .label = Использовать эту поисковую систему в приватных окнах
@@ -589,21 +605,26 @@ search-suggestions-option =
     .label = Отображать поисковые предложения
     .accesskey = о
 search-show-suggestions-url-bar-option =
-    .label = Отображать поисковые предложения при использовании панели адреса
+    .label = Отображать поисковые предложения при использовании адресной строки
     .accesskey = ж
+# With this option enabled, on the search results page
+# the URL will be replaced by the search terms in the address bar
+# when using the current default search engine.
+search-show-search-term-option =
+    .label = Показывать поисковые запросы вместо сетевых адресов на странице выдачи поисковой системы по умолчанию
 # This string describes what the user will observe when the system
 # prioritizes search suggestions over browsing history in the results
 # that extend down from the address bar. In the original English string,
 # "ahead" refers to location (appearing most proximate to), not time
 # (appearing before).
 search-show-suggestions-above-history-option =
-    .label = Отображать поисковые предложения перед историей веб-сёрфинга при использовании панели адреса
+    .label = Отображать поисковые предложения перед историей просмотра сети при использовании адресной строки
 search-show-suggestions-private-windows =
     .label = Отображать поисковые предложения в приватных окнах
 suggestions-addressbar-settings-generic2 = Изменить другие настройки предложений в адресной строке
-search-suggestions-cant-show = При использовании панели адреса поисковые предложения отображаться не будут, так как вы настроили { -brand-short-name } никогда не запоминать историю.
+search-suggestions-cant-show = При использовании адресной строки поисковые предложения отображаться не будут, так как вы настроили { -brand-short-name } никогда не запоминать историю.
 search-one-click-header2 = Значки поисковых систем
-search-one-click-desc = Выберите альтернативные поисковые системы, которые появятся под панелью адреса и панелью поиска, когда вы начнёте вводить ключевое слово.
+search-one-click-desc = Выберите иные поисковые системы, которые появятся под адресной строкой и строкой поиска, когда вы начнёте вводить ключевое слово.
 search-choose-engine-column =
     .label = Поисковая система
 search-choose-keyword-column =
@@ -622,7 +643,7 @@ search-find-more-link = Найти другие поисковые систем�
 # ('Duplicate' is an adjective)
 search-keyword-warning-title = Ключевое слово уже используется
 # Variables:
-#   $name (String) - Name of a search engine.
+#   $name (string) - Name of a search engine.
 search-keyword-warning-engine = Выбранное ключевое слово уже используется «{ $name }». Пожалуйста, выберите другое.
 search-keyword-warning-bookmark = Выбранное ключевое слово уже используется одной из закладок. Пожалуйста, выберите другое.
 
@@ -642,7 +663,7 @@ containers-settings-button =
 containers-remove-button =
     .label = Удалить
 
-## Waterfox Account - Signed out. Note that "Sync" and "Waterfox Account" are now
+## Waterfox account - Signed out. Note that "Sync" and "Waterfox account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Возьмите свой Интернет с собой
@@ -660,7 +681,7 @@ sync-signedout-account-signin3 =
 # to your language, but should not be changed or translated.
 sync-mobile-promo = Загрузите Waterfox для <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> или <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS,</a> чтобы синхронизироваться со своим мобильным устройством.
 
-## Waterfox Account - Signed in
+## Waterfox account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Изменить фотографию в профиле
@@ -669,8 +690,15 @@ sync-sign-out =
     .accesskey = ы
 sync-manage-account = Управление аккаунтом
     .accesskey = в
+
+## Variables
+## $email (string) - Email used for Waterfox account
+
 sync-signedin-unverified = { $email } не подтверждён.
 sync-signedin-login-failure = Войдите для повтора соединения с { $email }
+
+##
+
 sync-resend-verification =
     .label = Повторить отправку подтверждения
     .accesskey = и
@@ -693,10 +721,15 @@ prefs-sync-now =
     .labelnotsyncing = Синхронизировать
     .accesskeynotsyncing = х
     .labelsyncing = Синхронизирую…
+prefs-sync-now-button =
+    .label = Синхронизировать
+    .accesskey = т
+prefs-syncing-button =
+    .label = Синхронизирую…
 
 ## The list of things currently syncing.
 
-sync-currently-syncing-heading = Сейчас вы синхронизируете:
+sync-syncing-across-devices-heading = Вы синхронизируете эти элементы на всех подключённых устройствах:
 sync-currently-syncing-bookmarks = Закладки
 sync-currently-syncing-history = Историю
 sync-currently-syncing-tabs = Открытые вкладки
@@ -711,13 +744,14 @@ sync-change-options =
 
 ## The "Choose what to sync" dialog.
 
-sync-choose-what-to-sync-dialog =
+sync-choose-what-to-sync-dialog3 =
     .title = Выберите, что синхронизировать
-    .style = width: 36em; min-height: 35em;
+    .style = min-width: 36em;
     .buttonlabelaccept = Сохранить изменения
     .buttonaccesskeyaccept = х
     .buttonlabelextra2 = Отсоединить…
     .buttonaccesskeyextra2 = е
+sync-choose-dialog-subtitle = Изменения в списке элементов для синхронизации будут отражены на всех подключённых устройствах.
 sync-engine-bookmarks =
     .label = Закладки
     .accesskey = к
@@ -763,6 +797,16 @@ sync-device-name-save =
     .accesskey = х
 sync-connect-another-device = Подключить другое устройство
 
+## These strings are shown in a desktop notification after the
+## user requests we resend a verification email.
+
+sync-verification-sent-title = Подтверждение отправлено
+# Variables:
+#   $email (String): Email address of user's Waterfox account.
+sync-verification-sent-body = Ссылка для подтверждения была отправлена на { $email }.
+sync-verification-not-sent-title = Не удалось отправить подтверждение
+sync-verification-not-sent-body = Мы не можем отправить сейчас письмо для подтверждения, пожалуйста, повторите попытку позже.
+
 ## Privacy Section
 
 privacy-header = Приватность браузера
@@ -786,6 +830,9 @@ forms-breach-alerts =
     .label = Показывать уведомления о паролях для взломанных сайтов
     .accesskey = ы
 forms-breach-alerts-learn-more-link = Подробнее
+preferences-relay-integration-checkbox =
+    .label = Предлагать псевдонимы электронной почты { -relay-brand-name } для защиты вашего адреса электронной почты
+relay-integration-learn-more-link = Подробнее
 # Checkbox which controls filling saved logins into fields automatically when they appear, in some cases without user interaction.
 forms-fill-logins-and-passwords =
     .label = Автозаполнять логины и пароли
@@ -849,7 +896,7 @@ history-remember-option-never =
 history-remember-option-custom =
     .label = будет использовать ваши настройки хранения истории
 history-remember-description = { -brand-short-name } будет помнить историю посещений, загрузок, поиска и сохранять данные форм.
-history-dontremember-description = { -brand-short-name } будет использовать те же настройки, что и в приватном режиме, и не будет помнить историю вашей работы с веб-сайтами.
+history-dontremember-description = { -brand-short-name } будет использовать те же настройки, что и в приватном режиме, и не будет помнить историю вашей работы с сайтами.
 history-private-browsing-permanent =
     .label = Всегда работать в приватном режиме
     .accesskey = и
@@ -872,11 +919,11 @@ history-clear-button =
 ## Privacy Section - Site Data
 
 sitedata-header = Куки и данные сайтов
-sitedata-total-size-calculating = Вычисление объема данных сайтов и кэша…
+sitedata-total-size-calculating = Вычисление объема данных сайтов и кеша…
 # Variables:
-#   $value (Number) - Value of the unit (for example: 4.6, 500)
-#   $unit (String) - Name of the unit (for example: "bytes", "KB")
-sitedata-total-size = Ваши сохранённые куки, данные сайтов и кэш сейчас занимают на диске { $value } { $unit }.
+#   $value (number) - Value of the unit (for example: 4.6, 500)
+#   $unit (string) - Name of the unit (for example: "bytes", "KB")
+sitedata-total-size = Ваши сохранённые куки, данные сайтов и кеш сейчас занимают на диске { $value } { $unit }.
 sitedata-learn-more = Подробнее
 sitedata-delete-on-close =
     .label = Удалять куки и данные сайтов при закрытии { -brand-short-name }
@@ -900,8 +947,8 @@ sitedata-option-block-cross-site-cookies =
     .label = Межсайтовые отслеживающие куки, а также изолировать другие межсайтовые куки
 sitedata-option-block-unvisited =
     .label = Куки с непосещённых сайтов
-sitedata-option-block-all-third-party =
-    .label = Все сторонние куки (может нарушить работу веб-сайтов)
+sitedata-option-block-all-cross-site-cookies =
+    .label = Все межсайтовые куки (может нарушить работу сайтов)
 sitedata-option-block-all =
     .label = Все куки (нарушит работу веб-сайтов)
 sitedata-clear =
@@ -914,6 +961,14 @@ sitedata-cookies-exceptions =
     .label = Управление исключениями…
     .accesskey = ю
 
+## Privacy Section - Cookie Banner Handling
+
+cookie-banner-handling-header = Уменьшение числа уведомлений о куках
+cookie-banner-handling-description = { -brand-short-name } будет автоматически пытаться отклонять запросы на сохранение кук в уведомлениях о куках на поддерживаемых сайтах.
+cookie-banner-learn-more = Подробнее
+forms-handle-cookie-banners =
+    .label = Уменьшить число уведомлений о куках
+
 ## Privacy Section - Address Bar
 
 addressbar-header = Адресная строка
@@ -924,6 +979,9 @@ addressbar-locbar-history-option =
 addressbar-locbar-bookmarks-option =
     .label = из закладок
     .accesskey = д
+addressbar-locbar-clipboard-option =
+    .label = из буфера обмена
+    .accesskey = м
 addressbar-locbar-openpage-option =
     .label = из открытых вкладок
     .accesskey = к
@@ -946,9 +1004,13 @@ addressbar-quickactions-learn-more = Подробнее
 ## Privacy Section - Content Blocking
 
 content-blocking-enhanced-tracking-protection = Улучшенная защита от отслеживания
-content-blocking-section-top-level-description = Трекеры отслеживают вас в Интернете, чтобы собирать информацию о ваших привычках и интересах. { -brand-short-name } блокирует многие из этих трекеров и других вредоносных скриптов.
+content-blocking-section-top-level-description = Трекеры отслеживают вас в Интернете, чтобы собирать сведения о ваших привычках и интересах. { -brand-short-name } блокирует многие из этих трекеров и других вредоносных скриптов.
 content-blocking-learn-more = Подробнее
 content-blocking-fpi-incompatibility-warning = Вы используете First Party Isolation (FPI), которая переопределяет некоторые настройки кук { -brand-short-name }.
+# There is no need to translate "Resist Fingerprinting (RFP)". This is a
+# feature that can only be enabled via about:config, and it's not exposed to
+# standard users (e.g. via Settings).
+content-blocking-rfp-incompatibility-warning = Вы используете функцию защиты от сборщиков цифровых отпечатков (RFP), которая заменяет некоторые настройки защиты от сборщиков цифровых отпечатков { -brand-short-name }. Это может привести к неработоспособности некоторых сайтов.
 
 ## These strings are used to define the different levels of
 ## Enhanced Tracking Protection.
@@ -966,34 +1028,35 @@ enhanced-tracking-protection-setting-custom =
 
 ##
 
-content-blocking-etp-standard-desc = Баланс защиты и производительности. Страницы будут загружаться нормально.
+content-blocking-etp-standard-desc = Золотая середина: защита и производительность. Страницы будут загружаться нормально.
 content-blocking-etp-strict-desc = Усиленная защита может вызывать проблемы с некоторыми сайтами и их содержимым.
 content-blocking-etp-custom-desc = Выберите, какие трекеры и скрипты необходимо блокировать.
 content-blocking-etp-blocking-desc = { -brand-short-name } блокирует следующее:
 content-blocking-private-windows = Отслеживающее содержимое в приватных окнах
-content-blocking-cross-site-cookies-in-all-windows = Межсайтовые куки во всех окнах (включая отслеживающие куки)
 content-blocking-cross-site-cookies-in-all-windows2 = Межсайтовые куки во всех окнах
 content-blocking-cross-site-tracking-cookies = Межсайтовые отслеживающие куки
 content-blocking-all-cross-site-cookies-private-windows = Межсайтовые куки в приватных окнах
 content-blocking-cross-site-tracking-cookies-plus-isolate = Межсайтовые отслеживающие куки, а также изолировать оставшиеся куки
-content-blocking-social-media-trackers = Трекеры социальных сетей
+content-blocking-social-media-trackers = Трекеры соцсетей
 content-blocking-all-cookies = Все куки
 content-blocking-unvisited-cookies = Куки с непосещённых сайтов
 content-blocking-all-windows-tracking-content = Отслеживающее содержимое во всех окнах
-content-blocking-all-third-party-cookies = Все сторонние куки
+content-blocking-all-cross-site-cookies = Все межсайтовые куки
 content-blocking-cryptominers = Криптомайнеры
 content-blocking-fingerprinters = Сборщики цифровых отпечатков
-# "Test pilot" is used as a verb. Possible alternatives:
-# "Be the first to try", "Join an early experiment".
-content-blocking-etp-standard-tcp-rollout-checkbox =
-    .label = Испытайте нашу самую мощную за всё время функцию защиты приватности
-    .accesskey = ы
+# The known fingerprinters are those that are known for collecting browser fingerprints from user devices. And
+# the suspected fingerprinters are those that we are uncertain about browser fingerprinting activities. But they could
+# possibly acquire browser fingerprints because of the behavior on accessing APIs that expose browser fingerprints.
+content-blocking-known-and-suspected-fingerprinters = Известные и предполагаемые сборщики цифровых отпечатков
+
+# The tcp-rollout strings are no longer used for the rollout but for tcp-by-default in the standard section
+
 # "Contains" here means "isolates", "limits".
 content-blocking-etp-standard-tcp-rollout-description = Полная защита от кук ограничивает работу кук сайтом, на котором вы находитесь, чтобы трекеры не могли использовать их для слежки за вами от сайта к сайту.
 content-blocking-etp-standard-tcp-rollout-learn-more = Подробнее
 content-blocking-etp-standard-tcp-title = Включает Полную защиту от кук, нашу самую мощную функцию защиты приватности.
 content-blocking-warning-title = Осторожно!
-content-blocking-and-isolating-etp-warning-description-2 = Эта настройка может вызвать ошибки отображения содержимого или нарушение корректной работы некоторых веб-сайтов. Если кажется, что сайт не работает, вам, возможно, понадобится отключить защиту от отслеживания на этом сайте, чтобы загрузить всё его содержимое.
+content-blocking-and-isolating-etp-warning-description-2 = Эта настройка может вызвать ошибки отображения содержимого или нарушение правильной работы некоторых сайтов. Если кажется, что сайт не работает, вам, возможно, понадобится отключить защиту от отслеживания на этом сайте, чтобы загрузить всё его содержимое.
 content-blocking-warning-learn-how = Подробнее
 content-blocking-reload-description = Вам понадобится обновить свои вкладки, чтобы применить эти изменения.
 content-blocking-reload-tabs-button =
@@ -1013,7 +1076,7 @@ content-blocking-cookies-label =
     .label = Куки
     .accesskey = и
 content-blocking-expand-section =
-    .tooltiptext = Дополнительная информация
+    .tooltiptext = Дополнительные сведения
 # Cryptomining refers to using scripts on websites that can use a computer’s resources to mine cryptocurrency without a user’s knowledge.
 content-blocking-cryptominers-label =
     .label = Криптомайнеры
@@ -1022,6 +1085,18 @@ content-blocking-cryptominers-label =
 # that is visible to websites they browse, rather than traditional tracking methods such as IP addresses and unique cookies.
 content-blocking-fingerprinters-label =
     .label = Сборщики цифровых отпечатков
+    .accesskey = о
+# Browser fingerprinting is a method of tracking users by the configuration and settings information (their "digital fingerprint")
+# that is visible to websites they browse, rather than traditional tracking methods such as IP addresses and unique cookies.
+#
+# The known fingerprinters are those that are known for collecting browser fingerprints from user devices.
+content-blocking-known-fingerprinters-label =
+    .label = Известные цифровые отпечатки
+    .accesskey = в
+# The suspected fingerprinters are those that we are uncertain about browser fingerprinting activities. But they could
+# possibly acquire browser fingerprints because of the behavior on accessing APIs that expose browser fingerprints.
+content-blocking-suspected-fingerprinters-label =
+    .label = Подозреваемые цифровые отпечатки
     .accesskey = о
 
 ## Privacy Section - Tracking
@@ -1049,6 +1124,11 @@ permissions-microphone = Микрофон
 permissions-microphone-settings =
     .label = Параметры…
     .accesskey = ы
+# Short form for "the act of choosing sound output devices and redirecting audio to the chosen devices".
+permissions-speaker = Выбор динамика
+permissions-speaker-settings =
+    .label = Параметры…
+    .accesskey = м
 permissions-notification = Уведомления
 permissions-notification-settings =
     .label = Параметры…
@@ -1071,7 +1151,7 @@ permissions-block-popups-exceptions-button =
     .accesskey = ю
     .searchkeywords = popup
 permissions-addon-install-warning =
-    .label = Предупреждать при попытке веб-сайтов установить дополнения
+    .label = Предупреждать при попытке сайтов установить дополнения
     .accesskey = е
 permissions-addon-exceptions =
     .label = Исключения…
@@ -1080,7 +1160,9 @@ permissions-addon-exceptions =
 ## Privacy Section - Data Collection
 
 collection-header = Сбор и использование данных { -brand-short-name }
-collection-description = Мы стремимся предоставить вам выбор и собирать только то, что нам нужно, для выпуска и улучшения { -brand-short-name } для всех и каждого. Мы всегда спрашиваем разрешения перед получением личной информации.
+collection-header2 = Сбор и использование данных { -brand-short-name }
+    .searchkeywords = телеметрия
+collection-description = Мы стремимся предоставить вам выбор и собирать только то, что нам нужно, для выпуска и улучшения { -brand-short-name } для всех и каждого. Мы всегда спрашиваем разрешения перед получением личных сведений.
 collection-privacy-notice = Уведомление о конфиденциальности
 collection-health-report-telemetry-disabled = Вы больше не разрешаете { -vendor-short-name } собирать технические данные и данные взаимодействия. Все собранные ранее данные будут удалены в течение 30 дней.
 collection-health-report-telemetry-disabled-link = Подробнее
@@ -1097,13 +1179,14 @@ addon-recommendations-link = Подробнее
 # This message is displayed above disabled data sharing options in developer builds
 # or builds with no Telemetry support available.
 collection-health-report-disabled = Для этой конфигурации сборки отправка данных отключена
-collection-backlogged-crash-reports-with-link = Разрешить { -brand-short-name } отправлять от вашего имени накопившиеся сообщения о падениях <a data-l10n-name="crash-reports-link">Подробнее</a>
+collection-backlogged-crash-reports-with-link = Разрешить { -brand-short-name } отправлять от вашего имени накопившиеся сообщения о его падениях <a data-l10n-name="crash-reports-link">Подробнее</a>
     .accesskey = ш
-privacy-segmentation-section-header = Новые функции, улучшающие ваш веб-сёрфинг
+privacy-segmentation-section-header = Новые возможности, улучшающие ваш просмотр сети
+privacy-segmentation-section-description = Когда мы предлагаем возможности, которые используют ваши данные, чтобы улучшить персонализацию браузера:
 privacy-segmentation-radio-off =
-    .label = Использовать рекомендации { -brand-product-name }
+    .label = Использовать советы { -brand-product-name }
 privacy-segmentation-radio-on =
-    .label = Показать подробную информацию
+    .label = Показать подробные сведения
 
 ## Privacy Section - Security
 ##
@@ -1111,7 +1194,7 @@ privacy-segmentation-radio-on =
 ## https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
 
 security-header = Защита
-security-browsing-protection = Поддельное содержимое и защита от вредоносных программ
+security-browsing-protection = Поддельное содержимое и защита от вредоносных приложений
 security-enable-safe-browsing =
     .label = Блокировать опасное и обманывающее содержимое
     .accesskey = л
@@ -1120,7 +1203,7 @@ security-block-downloads =
     .label = Блокировать опасные загрузки
     .accesskey = к
 security-block-uncommon-software =
-    .label = Предупреждать о нежелательных и редко загружаемых программах
+    .label = Предупреждать о нежелательных и редко загружаемых приложениях
     .accesskey = ж
 
 ## Privacy Section - Certificates
@@ -1138,13 +1221,13 @@ certs-devices =
 space-alert-over-5gb-settings-button =
     .label = Открыть Настройки
     .accesskey = к
-space-alert-over-5gb-message2 = <strong>У { -brand-short-name } заканчивается место на диске.</strong> Содержимое веб-сайтов может отображаться некорректно. Вы можете удалить сохранённые данные через Настройки > Приватность и Защита > Куки и данные сайтов.
-space-alert-under-5gb-message2 = <strong>У { -brand-short-name } заканчивается место на диске.</strong> Содержимое веб-сайтов может отображаться некорректно. Щёлкните «Подробнее», чтобы оптимизировать использование вашего диска для улучшения веб-сёрфинга.
+space-alert-over-5gb-message2 = <strong>У { -brand-short-name } заканчивается место на диске.</strong> Содержимое сайтов может отображаться неправильно. Вы можете удалить сохранённые данные через Настройки > Приватность и Защита > Куки и данные сайтов.
+space-alert-under-5gb-message2 = <strong>У { -brand-short-name } заканчивается место на диске.</strong> Содержимое сайтов может отображаться неправильно. Щёлкните «Подробнее», чтобы уменьшить использование вашего диска для улучшения работы в Интернете.
 
 ## Privacy Section - HTTPS-Only
 
 httpsonly-header = Режим «Только HTTPS»
-httpsonly-description = HTTPS обеспечивает безопасное и зашифрованное соединение между { -brand-short-name } и веб-сайтами, которые вы посещаете. Большинство веб-сайтов поддерживают HTTPS, и если включён режим «Только HTTPS», то { -brand-short-name } переключит все соединения на HTTPS.
+httpsonly-description = HTTPS обеспечивает безопасное и зашифрованное соединение между { -brand-short-name } и сайтами, которые вы посещаете. Большинство сайтов поддерживают HTTPS, и если включён режим «Только HTTPS», то { -brand-short-name } переключит все соединения на HTTPS.
 httpsonly-learn-more = Подробнее
 httpsonly-radio-enabled =
     .label = Включить режим «Только HTTPS» во всех окнах
@@ -1152,6 +1235,63 @@ httpsonly-radio-enabled-pbm =
     .label = Включить режим «Только HTTPS» только в приватных окнах
 httpsonly-radio-disabled =
     .label = Не включать режим «Только HTTPS»
+
+## DoH Section
+
+preferences-doh-header = DNS через HTTPS
+preferences-doh-description = Система доменных имён (DNS) через HTTPS отправляет ваш запрос доменного имени через зашифрованное соединение, создавая безопасный DNS и затрудняя другим возможность увидеть, к какому сайту вы собираетесь получить доступ.
+# Variables:
+#   $status (string) - The status of the DoH connection
+preferences-doh-status = Состояние: { $status }
+# Variables:
+#   $name (string) - The name of the DNS over HTTPS resolver. If a custom resolver is used, the name will be the domain of the URL.
+preferences-doh-resolver = Поставщик: { $name }
+# This is displayed instead of $name in preferences-doh-resolver
+# when the DoH URL is not a valid URL
+preferences-doh-bad-url = Некорректный URL
+preferences-doh-steering-status = Использование местного поставщика
+preferences-doh-status-active = Активно
+preferences-doh-status-disabled = Отключено
+# Variables:
+#   $reason (string) - A string representation of the reason DoH is not active. For example NS_ERROR_UNKNOWN_HOST or TRR_RCODE_FAIL.
+preferences-doh-status-not-active = Неактивно ({ $reason })
+preferences-doh-group-message = Включить безопасный DNS, используя:
+preferences-doh-expand-section =
+    .tooltiptext = Подробная информация
+preferences-doh-setting-default =
+    .label = Защиту по умолчанию
+    .accesskey = м
+preferences-doh-default-desc = { -brand-short-name } решает, когда использовать безопасный DNS для защиты вашей конфиденциальности.
+preferences-doh-default-detailed-desc-1 = Использовать безопасный DNS в регионах, где он доступен
+preferences-doh-default-detailed-desc-2 = Использовать разрешение DNS по умолчанию, если имеется проблема с поставщиком безопасного DNS.
+preferences-doh-default-detailed-desc-3 = Использовать местного поставщика, если это возможно
+preferences-doh-default-detailed-desc-4 = Отключить, когда активны VPN, родительский контроль или корпоративные политики.
+preferences-doh-default-detailed-desc-5 = Отключить, когда сеть сообщает { -brand-short-name }, что она не должна использовать безопасный DNS.
+preferences-doh-setting-enabled =
+    .label = Повышенную защиту
+    .accesskey = ы
+preferences-doh-enabled-desc = Вы сами решаете, когда использовать безопасный DNS, и выбираете своего поставщика.
+preferences-doh-enabled-detailed-desc-1 = Использовать выбранного вами поставщика
+preferences-doh-enabled-detailed-desc-2 = Использовать разрешение DNS по умолчанию только в том случае, если есть проблема с безопасным DNS
+preferences-doh-setting-strict =
+    .label = Максимальную защиту
+    .accesskey = к
+preferences-doh-strict-desc = { -brand-short-name } всегда будет использовать безопасный DNS. Вы увидите предупреждение об угрозе безопасности, прежде чем мы будем использовать DNS вашей системы.
+preferences-doh-strict-detailed-desc-1 = Использовать только выбранного вами поставщика
+preferences-doh-strict-detailed-desc-2 = Всегда предупреждать, если безопасный DNS недоступен
+preferences-doh-strict-detailed-desc-3 = Если безопасный DNS недоступен, сайты не будут загружаться или работать должным образом.
+preferences-doh-setting-off =
+    .label = Отключить
+    .accesskey = ю
+preferences-doh-off-desc = Использовать разрешение DNS по умолчанию
+preferences-doh-checkbox-warn =
+    .label = Предупреждать, если третья сторона активно препятствует безопасному DNS
+    .accesskey = ж
+preferences-doh-select-resolver = Выбрать поставщика:
+preferences-doh-exceptions-description = { -brand-short-name } не будет использовать безопасный DNS на этих сайтах
+preferences-doh-manage-exceptions =
+    .label = Управление исключениями…
+    .accesskey = ю
 
 ## The following strings are used in the Download section of settings
 

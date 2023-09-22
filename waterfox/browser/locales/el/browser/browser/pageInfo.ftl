@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/. --
 
@@ -65,6 +65,9 @@ media-dimension =
     .value = Διαστάσεις:
 media-long-desc =
     .value = Μακρά περιγραφή:
+media-select-all =
+    .label = Επιλογή όλων
+    .accesskey = π
 media-save-as =
     .label = Αποθήκευση ως…
     .accesskey = ω
@@ -97,7 +100,7 @@ security-view-identity-verifier =
 security-view-identity-validity =
     .value = Λήγει στις:
 security-view-privacy =
-    .value = Απόρρητο & ιστορικό
+    .value = Απόρρητο και ιστορικό
 
 security-view-privacy-history-value = Έχω επισκεφθεί τον ιστότοπο στο παρελθόν;
 security-view-privacy-sitedata-value = Αποθηκεύει ο ιστότοπος πληροφορίες στον υπολογιστή μου;
@@ -239,6 +242,9 @@ media-dimensions =
 # Variables:
 #   $size (number) - The size of the media file in kilobytes
 media-file-size = { $size } KB
+
+## Variables:
+##   $website (string) — The url of the website pageInfo is getting info for
 
 # This string is used to display the website name next to the
 # "Block Images" checkbox in the media tab

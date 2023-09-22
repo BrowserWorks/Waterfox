@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,14 +22,13 @@ pocket-panel-saved-page-removed = Siden er fjernet
 pocket-panel-saved-page-saved = Gemt til { -pocket-brand-name }
 pocket-panel-saved-page-saved-b = Gemt til { -pocket-brand-name }
 pocket-panel-saved-processing-remove = Fjerner side…
-pocket-panel-saved-removed = Side fjernet fra Min liste
+pocket-panel-saved-removed-updated = Side fjernet fra Gemte
 pocket-panel-saved-processing-tags = Tilføjer tags…
 pocket-panel-saved-remove-page = Fjern side
 pocket-panel-saved-save-tags = Gem
 pocket-panel-saved-saving-tags = Gemmer…
 pocket-panel-saved-suggested-tags = Foreslåede tags
 pocket-panel-saved-tags-saved = Tags tilføjet
-pocket-panel-signup-view-list = Vis liste
 
 # This is displayed above a field where the user can add tags
 pocket-panel-signup-add-tags = Tilføj tags:
@@ -47,13 +46,12 @@ pocket-panel-signup-tagline-story-one = Klik på knappen { -pocket-brand-name } 
 pocket-panel-signup-tagline-story-two = Se i { -pocket-brand-name } hvor og hvornår, du har lyst.
 
 pocket-panel-signup-cta-a-fix = Din gem-knap til internettet
-pocket-panel-signup-cta-b = Klik på { -pocket-brand-name }-knappen for at gemme artikler, videoer og links. Se din liste på alle dine enheder når som helst.
+pocket-panel-signup-cta-b-updated = Klik på { -pocket-brand-name }-knappen for at gemme artikler, videoer og links. Se de ting, du har gemt, når som helst og på alle dine enheder.
 pocket-panel-signup-cta-b-short = Klik på { -pocket-brand-name }-knappen for at gemme artikler, videoer og links.
-pocket-panel-signup-cta-c = Se din liste på alle dine enheder når som helst.
+pocket-panel-signup-cta-c-updated = Se de ting, du har gemt, når som helst og på alle dine enheder.
 
 ## about:pocket-home panel
 
-pocket-panel-home-my-list = Min liste
 pocket-panel-home-welcome-back = Velkommen tilbage
 pocket-panel-home-paragraph = Du kan bruge { -pocket-brand-name } til at udforske og gemme websider, artikler, videoer, podcasts eller finde tilbage til noget, du læste tidligere.
 pocket-panel-home-explore-popular-topics = Udforsk populære emner
@@ -67,7 +65,7 @@ pocket-panel-home-new-user-message = Se de seneste ting, du har gemt.
 
 ## Pocket panel header component
 
-pocket-panel-header-my-list = Vis min liste
+pocket-panel-header-my-saves = Vis mine Gemte
 pocket-panel-header-sign-in = Log ind
 
 ## Pocket panel buttons

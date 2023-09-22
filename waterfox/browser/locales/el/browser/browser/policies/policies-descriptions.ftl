@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,6 +26,9 @@ policy-Bookmarks = Δημιουργία σελιδοδεικτών στη γρα
 policy-CaptivePortal = Ενεργοποίηση ή απενεργοποίηση υποστήριξης πυλών υποδοχής.
 policy-CertificatesDescription = Προσθήκη πιστοποιητικών ή χρήση ενσωματωμένων πιστοποιητικών.
 policy-Cookies = Αποδοχή ή άρνηση αιτημάτων αποθήκευσης cookies.
+# Containers in this context is referring to container tabs in Waterfox.
+policy-Containers = Ορισμός πολιτικών που σχετίζονται με τις θεματικές ενότητες.
+policy-DisableAccounts = Απενεργοποίηση υπηρεσιών που βασίζονται σε λογαριασμό, συμπεριλαμβανομένου του συγχρονισμού.
 policy-DisabledCiphers = Απενεργοποίηση κρυπτογράφησης.
 policy-DefaultDownloadDirectory = Ορισμός προεπιλεγμένου καταλόγου λήψης.
 policy-DisableAppUpdate = Αποτροπή ενημέρωσης προγράμματος περιήγησης.
@@ -38,10 +41,10 @@ policy-DisableWaterfoxAccounts = Απενεργοποίηση υπηρεσιών
 policy-DisableWaterfoxScreenshots = Απενεργοποίηση λειτουργίας Waterfox Screenshots.
 policy-DisableWaterfoxStudies = Αποτροπή εκτέλεσης μελετών του { -brand-short-name }.
 policy-DisableForgetButton = Αποτροπή πρόσβασης στο κουμπί "Διαγραφή".
-policy-DisableFormHistory = Να μην γίνεται διατήρηση ιστορικού αναζήτησης και φορμών.
+policy-DisableFormHistory = Να μη γίνεται διατήρηση ιστορικού αναζήτησης και φορμών.
 policy-DisablePrimaryPasswordCreation = Αν είναι αληθές, δεν είναι δυνατή η δημιουργία κύριου κωδικού πρόσβασης.
 policy-DisablePasswordReveal = Να μην επιτρέπεται η αποκάλυψη κωδικών πρόσβασης σε αποθηκευμένες συνδέσεις.
-policy-DisablePocket = Απενεργοποίηση λειτουργίας για αποθήκευση ιστοσελίδων στο Pocket.
+policy-DisablePocket2 = Απενεργοποίηση λειτουργίας για αποθήκευση ιστοσελίδων στο { -pocket-brand-name }.
 policy-DisablePrivateBrowsing = Απενεργοποίηση ιδιωτικής περιήγησης.
 policy-DisableProfileImport = Απενεργοποίηση της εντολής μενού για εισαγωγή δεδομένων από άλλο πρόγραμμα περιήγησης.
 policy-DisableProfileRefresh = Απενεργοποίηση του κουμπιού ανανέωσης { -brand-short-name } στη σελίδα about:support.
@@ -50,6 +53,7 @@ policy-DisableSecurityBypass = Αποτροπή παράκαμψης ορισμ�
 policy-DisableSetAsDesktopBackground = Απενεργοποίηση της εντολής μενού «Ορισμός ως φόντο επιφάνειας εργασίας» για εικόνες.
 policy-DisableSystemAddonUpdate = Αποτροπή εγκατάστασης και ενημέρωσης προσθέτων συστήματος από το πρόγραμμα περιήγησης.
 policy-DisableTelemetry = Απενεργοποίηση τηλεμετρίας.
+policy-DisableThirdPartyModuleBlocking = Αποτροπή του χρήστη από το να αποκλείει μονάδες τρίτων που εισάγονται στη διεργασία του { -brand-short-name }.
 policy-DisplayBookmarksToolbar = Προβολή της γραμμής σελιδοδεικτών από προεπιλογή.
 policy-DisplayMenuBar = Προβολή γραμμής μενού από προεπιλογή.
 policy-DNSOverHTTPS = Ρύθμιση παραμέτρων DNS over HTTPS.
@@ -66,9 +70,8 @@ policy-ExemptDomainFileTypePairsFromFileTypeDownloadWarnings = Απενεργο�
 policy-Extensions = Εγκατάσταση, αφαίρεση ή κλείδωμα επεκτάσεων. Η επιλογή εγκατάστασης παίρνει ως παραμέτρους τα URL ή τις διαδρομές. Οι επιλογές αφαίρεσης και κλειδώματος παίρνουν τα ID επεκτάσεων.
 policy-ExtensionSettings = Διαχείριση όλων των πτυχών της εγκατάστασης επεκτάσεων.
 policy-ExtensionUpdate = Ενεργοποίηση ή απενεργοποίηση αυτόματων ενημερώσεων επεκτάσεων.
-policy-WaterfoxHome = Ρύθμιση παραμέτρων της Αρχικής Waterfox.
 policy-WaterfoxHome2 = Διαμόρφωση του { -firefox-home-brand-name }.
-policy-FlashPlugin = Αποδοχή ή απόρριψη χρήσης του αρθρώματος Flash.
+policy-WaterfoxSuggest = Ρύθμιση της λειτουργίας «{ -firefox-suggest-brand-name }».
 policy-GoToIntranetSiteForSingleWordEntryInAddressBar = Αναγκαστική πλοήγηση στον ιστότοπο ενδοδικτύου, αντί για αναζήτηση κατά την πληκτρολόγηση μίας λέξης στη γραμμή διευθύνσεων.
 policy-Handlers = Ρύθμιση παραμέτρων χειριστών προεπιλεγμένης εφαρμογής.
 policy-HardwareAcceleration = Αν είναι ψευδές, απενεργοποίηση επιτάχυνσης υλικού.
@@ -110,8 +113,8 @@ policy-SanitizeOnShutdown2 = Εκκαθάριση δεδομένων πλοήγ�
 policy-SearchBar = Ορισμός της προεπιλεγμένης τοποθεσίας της γραμμής αναζήτησης. Ο χρήστης θα μπορεί να την προσαρμόσει.
 policy-SearchEngines = Διαμόρφωση ρυθμίσεων μηχανής αναζήτησης. Αυτή η πολιτική είναι διαθέσιμη μόνο στην έκδοση εκτεταμένης υποστήριξης (ESR).
 policy-SearchSuggestEnabled = Ενεργοποίηση ή απενεργοποίηση προτάσεων αναζήτησης.
-# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
-policy-SecurityDevices = Εγκατάσταση μονάδων PKCS #11.
+# For more information, see https://wikipedia.org/wiki/PKCS_11
+policy-SecurityDevices2 = Προσθήκη ή διαγραφή μονάδων PKCS #11.
 policy-ShowHomeButton = Εμφάνιση του κουμπιού αρχικής σελίδας στη γραμμή εργαλείων.
 policy-SSLVersionMax = Ορισμός μέγιστης έκδοσης SSL.
 policy-SSLVersionMin = Ορισμός ελάχιστης έκδοσης SSL.

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,6 +26,9 @@ policy-Bookmarks = Criar favoritos na barra de favoritos, no menu de favoritos o
 policy-CaptivePortal = Ativar ou desativar suporte a portal cativo.
 policy-CertificatesDescription = Adicionar certificados ou usar certificados integrados.
 policy-Cookies = Permitir ou impedir que sites criem cookies.
+# Containers in this context is referring to container tabs in Waterfox.
+policy-Containers = Definir diretivas relacionadas a contêineres.
+policy-DisableAccounts = Desativar serviços baseados em conta, inclusive sincronização.
 policy-DisabledCiphers = Desativar criptografia.
 policy-DefaultDownloadDirectory = Definir o diretório de download padrão.
 policy-DisableAppUpdate = Impedir a atualização do navegador.
@@ -33,7 +36,7 @@ policy-DisableBuiltinPDFViewer = Desativar PDF.js, o visor de PDF integrado no {
 policy-DisableDefaultBrowserAgent = Impedir que o agente padrão do navegador execute qualquer ação. Aplicável apenas a Windows; outras plataformas não têm o agente.
 policy-DisableDeveloperTools = Bloquear acesso às ferramentas de desenvolvimento.
 policy-DisableFeedbackCommands = Desativar comandos de envio de comentários no menu Ajuda (Enviar opinião e Denunciar site enganoso).
-policy-DisableWaterfoxAccounts = Desativar serviços baseados em { -fxaccount-brand-name }, incluindo o Sync.
+policy-DisableWaterfoxAccounts = Desativar serviços baseados em { -fxaccount-brand-name }, incluindo a sincronização.
 # Waterfox Screenshots is the name of the feature, and should not be translated.
 policy-DisableWaterfoxScreenshots = Desativar o recurso de captura de tela do Waterfox.
 policy-DisableWaterfoxStudies = Impedir que o { -brand-short-name } execute estudos.
@@ -41,7 +44,7 @@ policy-DisableForgetButton = Impedir acesso ao botão "Esquecer".
 policy-DisableFormHistory = Não memorizar o histórico de pesquisas e formulários.
 policy-DisablePrimaryPasswordCreation = Se for true, não pode ser criada uma senha principal.
 policy-DisablePasswordReveal = Não permitir que senhas sejam reveladas em contas salvas.
-policy-DisablePocket = Desativar o recurso de salvar páginas no Pocket.
+policy-DisablePocket2 = Desativar o recurso de salvar páginas no { -pocket-brand-name }.
 policy-DisablePrivateBrowsing = Desativar a navegação privativa.
 policy-DisableProfileImport = Desativar o comando do menu para importar dados de outro navegador.
 policy-DisableProfileRefresh = Desativar o botão "Restaurar o { -brand-short-name }" na página about:support.
@@ -50,6 +53,7 @@ policy-DisableSecurityBypass = Impedir que o usuário ignore determinados alerta
 policy-DisableSetAsDesktopBackground = Desativar o comando de menu Definir como papel de parede da área de trabalho para imagens.
 policy-DisableSystemAddonUpdate = Impedir que o navegador instale e atualize extensões do sistema.
 policy-DisableTelemetry = Desligar telemetria.
+policy-DisableThirdPartyModuleBlocking = Evitar que o usuário bloqueie módulos de terceiros injetados no processo { -brand-short-name }.
 policy-DisplayBookmarksToolbar = Exibir a barra de favoritos por padrão.
 policy-DisplayMenuBar = Exibir a barra de menu por padrão.
 policy-DNSOverHTTPS = Configurar DNS sobre HTTPS.
@@ -66,9 +70,8 @@ policy-ExemptDomainFileTypePairsFromFileTypeDownloadWarnings = Desativar avisos 
 policy-Extensions = Instalar, desinstalar e bloquear extensões. A opção “Instalar” recebe URLs ou caminhos como parâmetros. As opções “Desinstalar” e "Bloqueado" usam IDs de extensões.
 policy-ExtensionSettings = Gerenciar todos os aspectos da instalação de extensões.
 policy-ExtensionUpdate = Ativar ou desativar atualizações automáticas de extensões.
-policy-WaterfoxHome = Configurar a página inicial do Waterfox.
 policy-WaterfoxHome2 = Configurar a { -firefox-home-brand-name }.
-policy-FlashPlugin = Permitir ou negar o uso do plugin Flash.
+policy-WaterfoxSuggest = Configurar o { -firefox-suggest-brand-name }.
 policy-GoToIntranetSiteForSingleWordEntryInAddressBar = Forçar navegação direta em site da intranet em vez de pesquisar ao digitar uma única palavra na barra de endereços.
 policy-Handlers = Configurar manipuladores de aplicativos padrão.
 policy-HardwareAcceleration = Caso definido como "false", desativar a aceleração de hardware.
@@ -101,7 +104,7 @@ policy-PasswordManagerExceptions = Impedir que o { -brand-short-name } salve sen
 policy-PDFjs = Desativar ou configurar o PDF.js, o visor de PDF integrado no { -brand-short-name }.
 policy-Permissions2 = Configurar permissões de câmera, microfone, localização, notificações e reprodução automática.
 policy-PictureInPicture = Ativar ou desativar picture-in-picture.
-policy-PopupBlocking = Permitir por padrão que determinados sites abram de janelas.
+policy-PopupBlocking = Permitir por padrão que determinados sites abram janelas ou abas.
 policy-Preferences = Definir e bloquear o valor de um subconjunto de preferências.
 policy-PromptForDownloadLocation = Perguntar onde salvar arquivos ao baixar.
 policy-Proxy = Definir as configurações de proxy.
@@ -110,8 +113,8 @@ policy-SanitizeOnShutdown2 = Limpar dados de navegação ao fechar.
 policy-SearchBar = Definir a localização padrão da barra de pesquisa. O usuário ainda pode personalizar tal localização.
 policy-SearchEngines = Definir configurações de mecanismos de pesquisa. Esta diretiva só está disponível na versão Extended Support Release (ESR).
 policy-SearchSuggestEnabled = Ativar ou desativar sugestões de pesquisa.
-# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
-policy-SecurityDevices = Instalar módulos PKCS #11.
+# For more information, see https://wikipedia.org/wiki/PKCS_11
+policy-SecurityDevices2 = Adicionar ou excluir módulos PKCS #11.
 policy-ShowHomeButton = Mostrar o botão de página inicial na barra de ferramentas.
 policy-SSLVersionMax = Definir a versão SSL máxima.
 policy-SSLVersionMin = Definir a versão SSL mínima.

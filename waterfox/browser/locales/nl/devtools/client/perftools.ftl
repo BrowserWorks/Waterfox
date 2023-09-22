@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -43,7 +43,9 @@ perftools-range-interval-milliseconds = { NUMBER($interval, maxFractionalUnits: 
 
 # The size of the memory buffer used to store things in the profiler.
 perftools-range-entries-label = Buffergrootte:
+
 perftools-custom-threads-label = Aangepaste threads op naam toevoegen:
+
 perftools-devtools-interval-label = Interval:
 perftools-devtools-threads-label = Threads:
 perftools-devtools-settings-label = Instellingen
@@ -81,8 +83,6 @@ perftools-thread-renderer =
     .title = Als WebRender is ingeschakeld, de thread die OpenGL-aanroepen uitvoert
 perftools-thread-render-backend =
     .title = De WebRender RenderBackend-thread
-perftools-thread-paint-worker =
-    .title = Als off-main-threadpainting is ingeschakeld, de thread waarop painting wordt uitgevoerd
 perftools-thread-timer =
     .title = De timers voor het afhandelen van threads (setTimeout, setInterval, nsITimer)
 perftools-thread-style-thread =
@@ -113,6 +113,7 @@ perftools-thread-jvm-pool =
 ##
 
 perftools-record-all-registered-threads = Bovenstaande selectie omzeilen en alle geregistreerde threads opnemen
+
 perftools-tools-threads-input-label =
     .title = Deze threadnamen zijn een kommagescheiden lijst, die wordt gebruikt om het profileren van de threads in de profiler mogelijk te maken. De naam hoeft maar deels overeen te komen met de threadnaam om opgenomen te worden. Gevoelig voor witruimte.
 
@@ -120,6 +121,7 @@ perftools-tools-threads-input-label =
 ## devtools.performance.new-panel-onboarding preference is true.
 
 perftools-onboarding-message = <b>Nieuw</b>: { -profiler-brand-name } is nu geïntegreerd in de Ontwikkelaarshulpmiddelen. <a>Meer info</a> over dit krachtige nieuwe hulpmiddel.
+
 perftools-onboarding-close-button =
     .aria-label = Het welkomstbericht sluiten
 
@@ -130,19 +132,29 @@ perftools-onboarding-close-button =
 # devtools/client/performance-new/popup/background.jsm.js
 # The same labels and descriptions are also defined in appmenu.ftl.
 
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/shared/background.jsm.js
+# The same labels and descriptions are also defined in appmenu.ftl.
+
 perftools-presets-web-developer-label = Webontwikkelaar
 perftools-presets-web-developer-description = Aanbevolen voorinstelling voor de meeste foutopsporing in web-apps, met lage overhead.
+
 perftools-presets-firefox-label = { -brand-shorter-name }
 perftools-presets-firefox-description = Aanbevolen voorinstelling voor profileren van { -brand-shorter-name }.
+
 perftools-presets-graphics-label = Grafisch
 perftools-presets-graphics-description = Voorinstelling voor het onderzoeken van grafische bugs in { -brand-shorter-name }.
+
 perftools-presets-media-label = Media
 perftools-presets-media-description2 = Voorinstelling voor het onderzoeken van audio- en videobugs in { -brand-shorter-name }.
+
 perftools-presets-networking-label = Netwerk
 perftools-presets-networking-description = Voorinstelling voor het onderzoeken van netwerkbugs in { -brand-shorter-name }.
+
 # "Power" is used in the sense of energy (electricity used by the computer).
 perftools-presets-power-label = Vermogen
 perftools-presets-power-description = Voorinstelling voor het onderzoeken van stroomverbruikbugs in { -brand-shorter-name }, met lage overhead.
+
 perftools-presets-custom-label = Aangepast
 
 ##

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,6 +13,9 @@ about-webrtc-document-title = „WebRTC“ vidus
 # translated. This string is used as a title for a file save dialog box.
 about-webrtc-save-page-dialog-title = Įrašyti „about:webrtc“ kaip
 
+## These labels are for a disclosure which contains the information for closed PeerConnection sections
+
+
 ## AEC is an abbreviation for Acoustic Echo Cancellation.
 
 about-webrtc-aec-logging-msg-label = AEC įrašymas
@@ -20,10 +23,16 @@ about-webrtc-aec-logging-off-state-label = Pradėti AEC įrašinėjimą
 about-webrtc-aec-logging-on-state-label = Baigti AEC įrašinėjimą
 about-webrtc-aec-logging-on-state-msg = AEC įrašinėjimas aktyvus (pakalbėkite su pašnekovu keletą minučių, o tada sustabdykite įrašymą)
 
+about-webrtc-aec-logging-toggled-on-state-msg = AEC įrašinėjimas aktyvus (pakalbėkite su pašnekovu keletą minučių, o tada sustabdykite įrašymą)
+# Variables:
+#  $path (String) - The path to which the aec log file is saved.
+about-webrtc-aec-logging-toggled-off-state-msg = Įrašyti žurnalo failai yra čia: { $path }
+
+##
+
 # The autorefresh checkbox causes the page to autorefresh its content when checked
 about-webrtc-auto-refresh-label = Automatinis turinio atnaujinimas
 
-##
 
 # "PeerConnection" is a proper noun associated with the WebRTC module. "ID" is
 # an abbreviation for Identifier. This string should not normally be translated
@@ -62,8 +71,6 @@ about-webrtc-ice-pair-bytes-sent = Išsiųsta baitų:
 about-webrtc-ice-pair-bytes-received = Gauta baitų:
 about-webrtc-ice-component-id = Komponento ID
 
-## "Avg." is an abbreviation for Average. These are used as data labels.
-
 ## These adjectives are used to label a line of statistics collected for a peer
 ## connection. The data represents either the local or remote end of the
 ## connection.
@@ -95,6 +102,11 @@ about-webrtc-log-show-msg = rodyti žurnalą
 about-webrtc-log-hide-msg = slėpti žurnalą
     .title = spustelėkite, norėdami suskleisti šią sekciją
 
+about-webrtc-log-section-show-msg = Rodyti žurnalą
+    .title = Spustelėkite, norėdami išskleisti šią sekciją
+about-webrtc-log-section-hide-msg = Slėpti žurnalą
+    .title = Spustelėkite, norėdami suskleisti šią sekciją
+
 ## These are used to display a header for a PeerConnection.
 ## Variables:
 ##  $browser-id (Number) - A numeric id identifying the browser tab for the PeerConnection.
@@ -104,6 +116,11 @@ about-webrtc-log-hide-msg = slėpti žurnalą
 
 about-webrtc-connection-open = [ { $browser-id } | { $id } ] { $url } { $now }
 about-webrtc-connection-closed = [ { $browser-id } | { $id } ] { $url } (užverta) { $now }
+
+## These are used to indicate what direction media is flowing.
+## Variables:
+##  $codecs - a list of media codecs
+
 
 ##
 
@@ -116,11 +133,19 @@ about-webrtc-raw-cand-show-msg = rodyti neapdorotus kandidatus
     .title = spustelėkite, norėdami išskleisti šią sekciją
 about-webrtc-raw-cand-hide-msg = slėpti neapdorotus kandidatus
     .title = spustelėkite, norėdami suskleisti šią sekciją
+about-webrtc-raw-cand-section-show-msg = Rodyti neapdorotus kandidatus
+    .title = Spustelėkite, norėdami išskleisti šią sekciją
+about-webrtc-raw-cand-section-hide-msg = Slėpti neapdorotus kandidatus
+    .title = Spustelėkite, norėdami suskleisti šią sekciją
 about-webrtc-priority = Prioritetas
 about-webrtc-fold-show-msg = išsamiau
     .title = spustelėkite, norėdami išskleisti šią sekciją
 about-webrtc-fold-hide-msg = mažiau
     .title = spustelėkite, norėdami suskleisti šią sekciją
+about-webrtc-fold-default-show-msg = Išsamiau
+    .title = Spustelėkite, norėdami išskleisti šią sekciją
+about-webrtc-fold-default-hide-msg = Mažiau
+    .title = Spustelėkite, norėdami suskleisti šią sekciją
 about-webrtc-dropped-frames-label = Dingę kadrai:
 about-webrtc-discarded-packets-label = Išmesti paketiniai duomenys:
 about-webrtc-decoder-label = Iškoduotuvas
@@ -142,6 +167,10 @@ about-webrtc-last-frame-timestamp = Paskutinio kadro gavimo laiko žyma
 about-webrtc-local-receive-ssrc = Vietinis gaunamas SSRC
 # This is an SSRC on the remote side of the connection that is sending RTP
 about-webrtc-remote-send-ssrc = Nuotolinis siunčiamas SSRC
+
+## These are displayed on the button that shows or hides the
+## PeerConnection configuration disclosure
+
 
 ##
 
@@ -193,6 +222,10 @@ about-webrtc-save-page-msg = tinklalapis įrašytas į: { $path }
 about-webrtc-debug-mode-off-state-msg = vykdymo sekimo žurnalas yra čia: { $path }
 about-webrtc-debug-mode-on-state-msg = derinimo veiksena aktyvi, vykdymo sekimo žurnalas čia: { $path }
 about-webrtc-aec-logging-off-state-msg = įrašyti žurnalo failai yra čia: { $path }
+
+about-webrtc-save-page-complete-msg = Tinklalapis įrašytas į: { $path }
+about-webrtc-debug-mode-toggled-off-state-msg = Vykdymo sekimo žurnalas yra čia: { $path }
+about-webrtc-debug-mode-toggled-on-state-msg = Derinimo veiksena aktyvi, vykdymo sekimo žurnalas čia: { $path }
 
 ##
 
@@ -255,6 +288,14 @@ about-webrtc-sdp-set-at-timestamp-remote = Nustatyti „Nutolęs SDP“ ties lai
 #  $timestamp (Number) - The Unix Epoch time at which the SDP was set.
 #  $relative-timestamp (Number) - The timestamp relative to the timestamp of the earliest received SDP.
 about-webrtc-sdp-set-timestamp = Laiko žymė: { NUMBER($timestamp, useGrouping: "false") } (+ { $relative-timestamp } ms)
+
+## These are displayed on the button that shows or hides the SDP information disclosure
+
+
+## These are displayed on the button that shows or hides the Media Context information disclosure.
+## The Media Context is the set of preferences and detected capabilities that informs
+## the negotiated CODEC settings.
+
 
 ##
 

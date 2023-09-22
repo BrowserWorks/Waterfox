@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,15 +15,18 @@ about-unloads-intro =
     { -brand-short-name }가 탭의 우선 순위를 지정하는 방법과 어떤 탭이 
     언로드되는지 보여줍니다. 아래의 <em>언로드</em> 버튼을 클릭하여 
     탭 언로드를 수동으로 실행할 수 있습니다.
+
 # The link points to a Waterfox documentation page, only available in English,
 # with title "Tab Unloading"
 about-unloads-learn-more =
     이 기능과 이 페이지에 대해 더 알아보려면 
     <a data-l10n-name="doc-link">탭 언로드</a>를 참고하세요.
+
 about-unloads-last-updated = 마지막 업데이트: { DATETIME($date, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric", hour12: "false") }
 about-unloads-button-unload = 언로드
     .title = 가장 높은 우선 순위를 가진 탭 언로드
 about-unloads-no-unloadable-tab = 언로드할 수 있는 탭이 없습니다.
+
 about-unloads-column-priority = 우선 순위
 about-unloads-column-host = 호스트
 about-unloads-column-last-accessed = 마지막 액세스
@@ -35,6 +38,7 @@ about-unloads-column-memory = 메모리
     .title = 탭의 예상 메모리 사용량
 about-unloads-column-processes = 프로세스 ID
     .title = 탭의 콘텐츠를 호스팅하는 프로세스의 ID
+
 about-unloads-last-accessed = { DATETIME($date, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric", hour12: "false") }
 about-unloads-memory-in-mb = { NUMBER($mem, maxFractionalUnits: 2) } MB
 about-unloads-memory-in-mb-tooltip =

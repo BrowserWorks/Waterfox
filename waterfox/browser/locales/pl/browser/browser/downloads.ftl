@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -164,11 +164,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = Otwieranie za { $hours } godz. { $minutes } min…
-downloading-file-opens-in-minutes = Otwieranie za { $minutes } min…
-downloading-file-opens-in-minutes-and-seconds = Otwieranie za { $minutes } min { $seconds } s…
-downloading-file-opens-in-seconds = Otwieranie za { $seconds } s…
-downloading-file-opens-in-some-time = Otwieranie po ukończeniu…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = Otwieranie za { $hours } godz. { $minutes } min…
+downloading-file-opens-in-minutes-2 =
+    .value = Otwieranie za { $minutes } min…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = Otwieranie za { $minutes } min { $seconds } s…
+downloading-file-opens-in-seconds-2 =
+    .value = Otwieranie za { $seconds } s…
+downloading-file-opens-in-some-time-2 =
+    .value = Otwieranie po ukończeniu…
 downloading-file-click-to-open =
     .value = Otwórz po ukończeniu
 
@@ -235,3 +240,17 @@ downloads-more-downloading =
         [few] Pobierane są jeszcze { $count } pliki
        *[many] Pobieranych jest jeszcze { $count } plików
     }
+
+## Download errors
+
+downloads-error-alert-title = Błąd pobierania pliku
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = Nie można zapisać pobieranego pliku, ponieważ jest zablokowany przez rozszerzenie { $extension }.
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = Nie można zapisać pobieranego pliku, ponieważ jest zablokowany przez rozszerzenie.
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    Nie można zapisać pobieranego pliku z powodu nieznanego błędu.
+    
+    Należy spróbować ponownie.

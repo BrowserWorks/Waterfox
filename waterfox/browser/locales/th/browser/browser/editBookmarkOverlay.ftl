@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -24,6 +24,12 @@ bookmark-overlay-folders-expander =
     .tooltiptextdown = { bookmark-overlay-folders-expander.tooltiptext }
     .tooltiptextup = ซ่อน
 
+bookmark-overlay-folders-expander2 =
+    .tooltiptext = แสดงโฟลเดอร์ที่คั่นหน้าทั้งหมด
+
+bookmark-overlay-folders-expander-hide =
+    .tooltiptext = ซ่อน
+
 bookmark-overlay-new-folder-button =
     .label = โฟลเดอร์ใหม่
     .accesskey = ฟ
@@ -39,6 +45,12 @@ bookmark-overlay-tags-expander =
     .tooltiptext = แสดงป้ายกำกับทั้งหมด
     .tooltiptextdown = { bookmark-overlay-tags-expander.tooltiptext }
     .tooltiptextup = ซ่อน
+
+bookmark-overlay-tags-expander2 =
+    .tooltiptext = แสดงป้ายกำกับทั้งหมด
+
+bookmark-overlay-tags-expander-hide =
+    .tooltiptext = ซ่อน
 
 bookmark-overlay-keyword-2 =
     .value = คำสำคัญ

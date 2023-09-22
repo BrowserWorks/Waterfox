@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -21,8 +21,8 @@ extension-firefox-alpenglow-description = カラフルな外観のボタン、�
 ## Variables
 ##   $colorway-name (String) The name of a colorway (e.g. Graffiti, Elemental).
 
-extension-colorways-soft-name={ $colorway-name } — ソフト
+extension-colorways-soft-name={ $colorway-name } — 穏やか
 extension-colorways-balanced-name={ $colorway-name } — バランス
 # "Bold" is used in the sense of bravery or courage, not in the sense of
 # emphasized text.
-extension-colorways-bold-name={ $colorway-name } — ボールド
+extension-colorways-bold-name={ $colorway-name } — 大胆

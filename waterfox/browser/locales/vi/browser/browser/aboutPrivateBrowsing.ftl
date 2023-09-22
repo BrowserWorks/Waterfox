@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -60,3 +60,17 @@ about-private-browsing-pin-promo-link-text =
        *[other] Ghim vào thanh tác vụ
     }
 about-private-browsing-pin-promo-title = Không có cookie hoặc lịch sử đã lưu, ngay từ màn hình của bạn. Duyệt như không có ai đang xem.
+
+## Strings used in a promotion message for cookie banner reduction
+
+# Simplified version of the headline if the original text doesn't work
+# in your language: `See fewer cookie requests`.
+about-private-browsing-cookie-banners-promo-header = Biểu ngữ cookie sẽ biến mất!
+about-private-browsing-cookie-banners-promo-button = Giảm biểu ngữ cookie
+about-private-browsing-cookie-banners-promo-message = Hãy để { -brand-short-name } tự động trả lời các cửa sổ bật lên cookie cho bạn để bạn có thể quay lại trình duyệt mà không bị phân tâm. { -brand-short-name } sẽ từ chối tất cả các yêu cầu nếu có thể.
+
+## Strings for Felt Privacy v1 experiments in 119
+
+about-private-browsing-felt-privacy-v1-info-header = Không để lại dấu vết trên thiết bị này
+about-private-browsing-felt-privacy-v1-info-body = { -brand-short-name } xóa cookie, lịch sử và dữ liệu trang web của bạn khi bạn đóng tất cả các cửa sổ riêng tư của mình.
+about-private-browsing-felt-privacy-v1-info-link = Ai có thể xem hoạt động của tôi?

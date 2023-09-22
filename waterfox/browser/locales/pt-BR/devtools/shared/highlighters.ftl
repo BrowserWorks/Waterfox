@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -44,7 +44,7 @@ flextype-dual = Flex Container/Item
 # Variables
 # $action (string) - Will either be remote-node-picker-notice-action-desktop or
 #                    remote-node-picker-notice-action-touch
-remote-node-picker-notice = Seletor de nós do DevTools ativado. { $action }
+remote-node-picker-notice = Seletor de nodes do DevTools ativado. { $action }
 
 # Text displayed in `remote-node-picker-notice`, when the remote page is on desktop
 remote-node-picker-notice-action-desktop = Clique em um elemento para selecionar no Inspetor
@@ -56,3 +56,12 @@ remote-node-picker-notice-action-touch = Toque em um elemento para selecionar no
 # clicks on the "Pick an element from the page" in about:devtools-toolbox inspector panel,
 # when debugging a remote page.
 remote-node-picker-notice-hide-button = Ocultar
+
+# The text displayed in a toolbox notification message which is only displayed
+# if prefers-reduced-motion is enabled (via OS-level settings or by using the
+# ui.prefersReducedMotion=1 preference).
+simple-highlighters-message = Quando prefers-reduced-motion está ativado, um destaque mais simples pode ser ativado no painel de configurações, para evitar cores piscantes.
+
+# Text displayed in a button inside the "simple-highlighters-message" toolbox
+# notification. "Settings" here refers to the DevTools settings panel.
+simple-highlighters-settings-button = Abrir configurações

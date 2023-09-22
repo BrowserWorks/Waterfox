@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,9 +7,9 @@ print-setup =
 custom-prompt-title = Προσαρμογή…
 custom-prompt-prompt = Εισάγετε το προσαρμοσμένο κείμενο επικεφαλίδας/υποσέλιδου
 basic-tab =
-    .label = Μορφή & επιλογές
+    .label = Μορφή και επιλογές
 advanced-tab =
-    .label = Περιθώρια & επικεφαλίδα/υποσέλιδο
+    .label = Περιθώρια και επικεφαλίδα/υποσέλιδο
 format-group-label =
     .value = Μορφή
 orientation-label =
@@ -31,7 +31,7 @@ shrink-to-fit =
 options-group-label =
     .value = Επιλογές
 print-bg =
-    .label = Εκτύπωση παρασκηνίου (χρώματα & εικόνες)
+    .label = Εκτύπωση παρασκηνίου (χρώματα και εικόνες)
     .accesskey = Π
 margin-group-label-inches =
     .value = Περιθώρια (ίντσες)
@@ -58,7 +58,7 @@ margin-right =
 margin-right-invisible =
     .value = Δεξιά:
 header-footer-label =
-    .value = Επικεφαλίδες & υποσέλιδα
+    .value = Επικεφαλίδες και υποσέλιδα
 hf-left-label =
     .value = Αριστερά:
 hf-center-label =

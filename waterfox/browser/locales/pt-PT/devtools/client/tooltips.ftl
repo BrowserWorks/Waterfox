@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -33,6 +33,7 @@ inactive-css-not-table = <strong>{ $property }</strong> não tem efeito neste el
 inactive-scroll-padding-when-not-scroll-container = <strong>{ $property }</strong> não tem efeito neste elemento porque o mesmo não desliza.
 inactive-css-border-image = <strong>{ $property }</strong> não afeta este elemento, pois a propriedade não pode ser aplicada a elementos de tabela interna em que <strong>border-collapse</strong> esteja definido como <strong>collapse</strong> no elemento da tabela pai.
 inactive-css-ruby-element = <strong>{ $property }</strong> não tem efeito sobre este elemento, pois é um elemento rubi. O seu tamanho é determinado pelo tamanho da fonte do texto rubi.
+inactive-css-highlight-pseudo-elements-not-supported = <strong>{ $property }</strong> não é compatível com pseudo-elementos de destaque.
 
 ## In the Rule View when a CSS property cannot be successfully applied we display
 ## an icon. When this icon is hovered this message is displayed to explain how

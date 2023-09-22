@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -36,8 +36,8 @@ restore-page-close-button =
 
 ## The following strings are used in about:welcomeback
 
-welcome-back-tab-title = 成功！
-welcome-back-page-title = 成功！
+welcome-back-tab-title = 翻新成功！
+welcome-back-page-title = 翻新成功！
 welcome-back-page-info = { -brand-short-name } 蓄势待发。
 
 welcome-back-restore-button =
@@ -47,5 +47,4 @@ welcome-back-restore-button =
 welcome-back-restore-all-label = 恢复全部窗口与标签页
 welcome-back-restore-some-label = 仅恢复您选择的
 
-welcome-back-page-info-link = 您的附加组件和个性化调整已被移除，浏览器设置也已恢复到默认值。如果这样还无法解决您的问题，<a data-l10n-name="link-more">您可进一步了解还能做什么。</a>
-
+welcome-back-page-info-link = 您的附加组件和个性化调整已被移除，浏览器设置也已恢复到默认值。如果这样还无法解决您的问题，您可<a data-l10n-name="link-more">进一步了解还能做什么</a>。

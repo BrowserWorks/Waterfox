@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,17 +13,45 @@ safeb-blocked-harmful-page-short-desc = { -brand-short-name } blocked this page 
 safeb-palm-advisory-desc = Advisory provided by <a data-l10n-name='advisory_provider'>{ $advisoryname }</a>.
 safeb-palm-accept-label = Go backwards
 safeb-palm-see-details-label = See details
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-phishing-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> has been <a data-l10n-name='error_desc_link'>reported as a deceptive site</a>. You can <a data-l10n-name='report_detection'>report a detection problem</a> or <a data-l10n-name='ignore_warning_link'>ignore the risk</a> and go to this unsafe site.
 safeb-blocked-phishing-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> has been <a data-l10n-name='error_desc_link'>reported as a deceptive site</a>. You can <a data-l10n-name='report_detection'>report a detection problem</a>.
+
+##
+
 safeb-blocked-phishing-page-learn-more = Learn more about deceptive sites and phishing at <a data-l10n-name='learn_more_link'>www.antiphishing.org</a>. Learn more about { -brand-short-name }’s Phishing and Malware Protection at <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-malware-page-error-desc-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> has been <a data-l10n-name='error_desc_link'>reported as containing malicious software</a>. You can <a data-l10n-name='ignore_warning_link'>ignore the risk</a> and go to this unsafe site.
 safeb-blocked-malware-page-error-desc-no-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> has been <a data-l10n-name='error_desc_link'>reported as containing malicious software</a>.
+
+##
+
 safeb-blocked-malware-page-learn-more-sumo = Learn more about { -brand-short-name }’s Phishing and Malware Protection at <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-unwanted-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> has been <a data-l10n-name='error_desc_link'>reported as containing harmful software</a>. You can <a data-l10n-name='ignore_warning_link'>ignore the risk</a> and go to this unsafe site.
 safeb-blocked-unwanted-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> has been <a data-l10n-name='error_desc_link'>reported as containing harmful software</a>.
+
+##
+
 safeb-blocked-unwanted-page-learn-more = Learn more about harmful and unwanted software at <a data-l10n-name='learn_more_link'>Unwanted Software Policy</a>. Learn more about { -brand-short-name }’s Phishing and Malware Protection at <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-harmful-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> has been <a data-l10n-name='error_desc_link'>reported as containing a potentially harmful application</a>. You can <a data-l10n-name='ignore_warning_link'>ignore the risk</a> and go to this unsafe site.
 safeb-blocked-harmful-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> has been <a data-l10n-name='error_desc_link'>reported as containing a potentially harmful application</a>.
+
+##
+
 safeb-blocked-harmful-page-learn-more = Learn more about { -brand-short-name }’s Phishing and Malware Protection at <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
 safeb-palm-notdeceptive =
     .label = This isn’t a deceptive site…

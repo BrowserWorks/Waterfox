@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,6 +38,8 @@ serviceworker-worker-start3 = 開始
 
 # Text displayed for the updated time of the service worker. The <time> element will
 # display the last update time of the service worker script.
+# Variables:
+#   $date (date) - Update date
 serviceworker-worker-updated = 更新於 <time>{ DATETIME($date, month: "long", year: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric") }</time>
 
 ## Service Worker status strings: all serviceworker-worker-status-* strings are also
@@ -66,7 +68,7 @@ serviceworker-empty-suggestions2 = 若目前頁面中應該要有 service worker
 serviceworker-empty-suggestions-aboutdebugging2 = 檢視來自其他網域的 service worker
 
 # Header for the Manifest page when we have an actual manifest
-manifest-view-header = 應用程式 Manifest
+manifest-view-header = 應用程式安裝資訊
 
 # Header for the Manifest page when there's no manifest to inspect
 manifest-empty-intro2 = 未偵測到網頁應用程式的安裝資訊檔
@@ -109,6 +111,8 @@ manifest-json-link-data-url = Manifest 嵌入於 Data URL 中。
 
 # Text displayed at manifest icons to label their purpose, as declared
 # in the manifest.
+# Variables:
+#   $purpose (string) - Manifest purpose
 manifest-icon-purpose = 目的: <code>{ $purpose }</code>
 
 # Text displayed as the alt attribute for <img> tags showing the icons in the
@@ -117,8 +121,11 @@ manifest-icon-img =
     .alt = 圖示
 
 # Text displayed as the title attribute for <img> tags showing the icons in the
-# manifest. `$sizes` is a user-dependent string that has been parsed as a
-# space-separated list of `<width>x<height>` sizes or the keyword `any`.
+# manifest.
+# Variables:
+#   $sizes (string) - User-dependent string that has been parsed as a
+#                     space-separated list of `<width>x<height>` sizes or
+#                     the keyword `any`.
 manifest-icon-img-title = 下列大小的圖示: { $sizes }
 
 # Text displayed as the title attribute for <img> tags showing the icons in the
@@ -144,4 +151,3 @@ icon-warning =
 icon-error =
     .alt = 錯誤圖示
     .title = 錯誤
-

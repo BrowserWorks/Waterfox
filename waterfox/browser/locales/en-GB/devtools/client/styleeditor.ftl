@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,12 +13,14 @@ styleeditor-filter-input =
 styleeditor-visibility-toggle =
     .tooltiptext = Toggle style sheet visibility
     .accesskey = S
+styleeditor-visibility-toggle-system =
+    .tooltiptext = System style sheets can’t be disabled
 styleeditor-save-button = Save
     .tooltiptext = Save this style sheet to a file
     .accesskey = S
 styleeditor-options-button =
     .tooltiptext = Style Editor options
-styleeditor-media-rules = Media Queries
+styleeditor-at-rules = At-rules
 styleeditor-editor-textbox =
     .data-placeholder = Type CSS here.
 styleeditor-no-stylesheet = This page has no style sheet.
@@ -27,8 +29,23 @@ styleeditor-open-link-new-tab =
     .label = Open Link in New Tab
 styleeditor-copy-url =
     .label = Copy URL
+styleeditor-find =
+    .label = Find
+    .accesskey = F
+styleeditor-find-again =
+    .label = Find Again
+    .accesskey = g
 styleeditor-go-to-line =
     .label = Jump to Line…
     .accesskey = J
 # Label displayed when searching a term that is not found in any stylesheet path
 styleeditor-stylesheet-all-filtered = No matching style sheet has been found.
+
+# This string is shown in the style sheets list
+# Variables:
+#   $ruleCount (Integer) - The number of rules in the stylesheet.
+styleeditor-stylesheet-rule-count =
+    { $ruleCount ->
+        [one] { $ruleCount } rule.
+       *[other] { $ruleCount } rules.
+    }

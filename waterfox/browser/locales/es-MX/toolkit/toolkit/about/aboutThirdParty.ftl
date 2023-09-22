@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -32,10 +32,12 @@ third-party-tag-shellex = Extensión de la consola
     .title = Este tipo de módulo es cargado cuando abres el diálogo del sistema.
 third-party-tag-background = Segundo plano
     .title = Este tipo de módulo no bloqueó la aplicación porque fue cargado en segundo plano.
-third-party-unsigned-icon =
+third-party-icon-unsigned =
     .title = Este módulo no está firmado
-third-party-warning-icon =
+    .alt = Este módulo no está firmado
+third-party-icon-warning =
     .title = { -brand-short-name } falló en el código de este módulo
+    .alt = { -brand-short-name } falló en el código de este módulo
 
 third-party-status-loaded = Cargado
 third-party-status-blocked = Bloqueado
@@ -46,7 +48,28 @@ third-party-button-reload = Recargar con info del sistema
     .title = Recargar con información del sistema
 third-party-button-open =
     .title = Abrir ubicación del archivo…
+third-party-button-to-block =
+    .title = Bloquear este módulo
+    .aria-label = Bloquear este módulo
+third-party-button-to-unblock =
+    .title = Actualmente bloqueado. Haz clic para desbloquearlo.
+    .aria-label = Actualmente bloqueado. Haz clic para desbloquearlo.
+third-party-button-to-unblock-disabled =
+    .title =
+        Actualmente marcado como bloqueado, aunque la lista de bloqueo está deshabilitada para esta ejecución
+        de { -brand-short-name }. Haz clic para desbloquearlo.
+    .aria-label =
+        Actualmente marcado como bloqueado, aunque la lista de bloqueo está deshabilitada para esta ejecución
+        de { -brand-short-name }. Haz clic para desbloquearlo.
 third-party-button-expand =
     .title = Mostrar información detallada
 third-party-button-collapse =
     .title = Contraer información detallada
+third-party-blocking-requires-restart = Para bloquear un módulo de terceros, { -brand-short-name } debe reiniciarse.
+third-party-should-restart-title = Reiniciar { -brand-short-name }
+third-party-restart-now = Reiniciar ahora
+third-party-restart-later = Reiniciar después
+
+third-party-blocked-by-builtin =
+    .title = Bloqueado por { -brand-short-name }
+    .alt = Bloqueado por { -brand-short-name }

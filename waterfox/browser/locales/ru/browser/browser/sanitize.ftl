@@ -1,23 +1,23 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-sanitize-prefs =
+sanitize-prefs2 =
     .title = Настройки удаления истории
-    .style = width: 34em
+    .style = min-width: 34em
 
 sanitize-prefs-style =
     .style = width: 17em
 
-dialog-title =
+sanitize-dialog-title =
     .title = Удаление недавней истории
-    .style = width: 34em
+    .style = min-width: 34em
 
 # When "Time range to clear" is set to "Everything", this message is used for the
 # title instead of dialog-title.
-dialog-title-everything =
+sanitize-dialog-title-everything =
     .title = Удаление всей истории
-    .style = width: 34em
+    .style = min-width: 34em
 
 clear-data-settings-label = При закрытии { -brand-short-name } должен автоматически удалять
 
@@ -65,12 +65,12 @@ item-cookies =
     .accesskey = у
 
 item-active-logins =
-    .label = Активные сеансы
+    .label = Текущие сеансы
     .accesskey = с
 
 item-cache =
-    .label = Кэш
-    .accesskey = э
+    .label = Кеш
+    .accesskey = е
 
 item-form-search-history =
     .label = Журнал форм и поиска
@@ -83,7 +83,7 @@ item-site-settings =
     .accesskey = о
 
 item-offline-apps =
-    .label = Данные автономных веб-сайтов
+    .label = Данные автономных сайтов
     .accesskey = н
 
 sanitize-everything-undo-warning = Это действие нельзя отменить.

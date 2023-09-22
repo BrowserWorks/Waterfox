@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,21 +9,23 @@
 #   $addon-name (string) - Name of the add-on being reported
 abuse-report-dialog-title = { $addon-name } を報告
 abuse-report-title-extension = この拡張機能を { -vendor-short-name } に報告
-abuse-report-title-sitepermission = このサイト許可設定アドオンを { -vendor-short-name } に報告
+abuse-report-title-sitepermission = このサイト権限アドオンを { -vendor-short-name } に報告
 abuse-report-title-theme = このテーマを { -vendor-short-name } に報告
 abuse-report-subtitle = どのような問題ですか？
 # Variables:
 #   $author-name (string) - Name of the add-on author
 abuse-report-addon-authored-by = 作者: <a data-l10n-name="author-name">{ $author-name }</a>
 abuse-report-learnmore =
-  どれを選択すべきか分からない時は、
-  <a data-l10n-name="learnmore-link">拡張機能やテーマの報告について学んでください。</a>
+    どれを選択すべきか分からない時は、
+    <a data-l10n-name="learnmore-link">拡張機能やテーマの報告について学んでください。</a>
+abuse-report-learnmore-intro = どれを選択すべきか分からない時は、
+abuse-report-learnmore-link = 拡張機能やテーマの報告について学んでください。
 abuse-report-submit-description = 問題の詳細を記入してください (任意)
 abuse-report-textarea =
-  .placeholder = 詳細を報告していただければ、問題を解決しやすくなります。あなたの体験した問題について記入してください。健全なウェブを保つためのご協力に感謝します。
+    .placeholder = 詳細を報告していただければ、問題を解決しやすくなります。あなたの体験した問題について記入してください。健全なウェブを保つためのご協力に感謝します。
 abuse-report-submit-note =
-  注意: 個人情報 (氏名、メールアドレス、電話番号、所在地など) を記入してはいけません。
-  { -vendor-short-name } は、これらの報告を永久に保管します。
+    注意: 個人情報 (氏名、メールアドレス、電話番号、所在地など) を記入しないでください。
+    { -vendor-short-name } は、これらの報告を永久に保管します。
 
 ## Panel buttons.
 
@@ -42,10 +44,28 @@ abuse-report-messagebar-submitting = <span data-l10n-name="addon-name">{ $addon-
 abuse-report-messagebar-submitted = ご報告ありがとうございます。<span data-l10n-name="addon-name">{ $addon-name }</span> を削除しますか？
 abuse-report-messagebar-submitted-noremove = ご報告ありがとうございました。
 abuse-report-messagebar-removed-extension = ご報告ありがとうございました。拡張機能 <span data-l10n-name="addon-name">{ $addon-name }</span> を削除しました。
-abuse-report-messagebar-removed-sitepermission = ご報告ありがとうございました。サイト許可設定アドオン <span data-l10n-name="addon-name">{ $addon-name }</span> を削除しました。
+abuse-report-messagebar-removed-sitepermission = ご報告ありがとうございました。サイト権限アドオン <span data-l10n-name="addon-name">{ $addon-name }</span> を削除しました。
 abuse-report-messagebar-removed-theme = ご報告ありがとうございました。テーマ <span data-l10n-name="addon-name">{ $addon-name }</span> を削除しました。
 abuse-report-messagebar-error = <span data-l10n-name="addon-name">{ $addon-name }</span> についての報告の送信中にエラーが発生しました。
 abuse-report-messagebar-error-recent-submit = 別の報告が最近送信されているため、<span data-l10n-name="addon-name">{ $addon-name }</span> についての報告は送信されませんでした。
+abuse-report-messagebar-aborted2 =
+    .message = { $addon-name } についての報告をキャンセルしました。
+abuse-report-messagebar-submitting2 =
+    .message = { $addon-name } についての報告を送信しています。
+abuse-report-messagebar-submitted2 =
+    .message = ご報告ありがとうございます。{ $addon-name } を削除しますか？
+abuse-report-messagebar-submitted-noremove2 =
+    .message = ご報告ありがとうございました。
+abuse-report-messagebar-removed-extension2 =
+    .message = ご報告ありがとうございました。拡張機能 { $addon-name } を削除しました。
+abuse-report-messagebar-removed-sitepermission2 =
+    .message = ご報告ありがとうございました。サイト権限アドオン { $addon-name } を削除しました。
+abuse-report-messagebar-removed-theme2 =
+    .message = ご報告ありがとうございました。テーマ { $addon-name } を削除しました。
+abuse-report-messagebar-error2 =
+    .message = { $addon-name } についての報告の送信中にエラーが発生しました。
+abuse-report-messagebar-error-recent-submit2 =
+    .message = 別の報告が最近送信されているため、{ $addon-name } についての報告は送信されませんでした。
 
 ## Message bars actions.
 
@@ -75,18 +95,18 @@ abuse-report-broken-reason-sitepermission-v2 = 動作しない、ウェブサイ
 abuse-report-broken-reason-theme-v2 = 動作しない、またはブラウザーの表示を崩す
 abuse-report-broken-example = 例: 機能の動作が遅い、使うのが困難、まったく動作しない、ウェブサイトの一部が読み込まれない、または表示が異常
 abuse-report-broken-suggestions-extension =
-  拡張機能のバグを見つけたのかもしれません。ここに報告するのもよいですが、動作の問題を解決する最善の方法は、拡張機能の開発者に問い合わせることです。
-  開発者の情報を得るには、<a data-l10n-name="support-link">その拡張機能のウェブサイトを訪れてください</a>。
+    拡張機能のバグを見つけたのかもしれません。ここに報告するのもよいですが、動作の問題を解決する最善の方法は、拡張機能の開発者に問い合わせることです。
+    開発者の情報を得るには、<a data-l10n-name="support-link">その拡張機能のウェブサイトを訪れてください</a>。
 abuse-report-broken-suggestions-sitepermission =
-  拡張機能のバグを見つけたのかもしれません。ここに報告するのもよいですが、動作の問題を解決する最善の方法は、ウェブサイトの開発者に問い合わせることです。
-  開発者の情報を得るには、<a data-l10n-name="support-link">そのウェブサイトを訪れてください</a>。
+    拡張機能のバグを見つけたのかもしれません。ここに報告するのもよいですが、動作の問題を解決する最善の方法は、ウェブサイトの開発者に問い合わせることです。
+    開発者の情報を得るには、<a data-l10n-name="support-link">そのウェブサイトを訪れてください</a>。
 abuse-report-broken-suggestions-theme =
-  テーマのバグを見つけたのかもしれません。ここに報告するのもよいですが、動作の問題を解決する最善の方法は、テーマの作者に問い合わせることです。
-  作者の情報を得るには、<a data-l10n-name="support-link">そのテーマのウェブサイトを訪れてください</a>。
+    テーマのバグを見つけたのかもしれません。ここに報告するのもよいですが、動作の問題を解決する最善の方法は、テーマの作者に問い合わせることです。
+    作者の情報を得るには、<a data-l10n-name="support-link">そのテーマのウェブサイトを訪れてください</a>。
 abuse-report-policy-reason-v2 = 不愉快または暴力的、違法なコンテンツを含む
 abuse-report-policy-suggestions =
-  注意: 著作権や商標の問題は別のプロセスで報告してください。
-  <a data-l10n-name="report-infringement-link">こちらの説明に従って問題を報告してください</a>。
+    注意: 著作権や商標の問題は別のプロセスで報告してください。
+    <a data-l10n-name="report-infringement-link">こちらの説明に従って問題を報告してください</a>。
 abuse-report-unwanted-reason-v2 = 不要なのに削除の方法が分からない
 abuse-report-unwanted-example = 例: 別のプログラムがユーザーの許可なくインストールした
 abuse-report-other-reason = その他

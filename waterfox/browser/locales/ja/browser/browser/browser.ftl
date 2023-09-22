@@ -1,51 +1,19 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ## The main browser window's title
 
-# These are the default window titles everywhere except macOS. The first two
-# attributes are used when the web content opened has no title:
+# These are the default window titles everywhere except macOS.
+# .data-title-default and .data-title-private are used when the web content
+# opened has no title:
 #
 # default - "Waterfox"
 # private - "Waterfox (Private Browsing)"
 #
-# The last two are for use when there *is* a content title.
-# Variables:
-#  $content-title (String): the title of the web content.
-browser-main-window =
-    .data-title-default = { -brand-full-name }
-    .data-title-private = { -brand-full-name } (プライベートブラウジング)
-    .data-content-title-default = { $content-title } — { -brand-full-name }
-    .data-content-title-private = { $content-title } — { -brand-full-name } (プライベートブラウジング)
-# These are the default window titles on macOS. The first two are for use when
-# there is no content title:
-#
-# "default" - "Waterfox"
-# "private" - "Waterfox — (Private Browsing)"
-#
-# The last two are for use when there *is* a content title.
-# Do not use the brand name in the last two attributes, as we do on non-macOS.
-#
-# Also note the other subtle difference here: we use a `-` to separate the
-# brand name from `(Private Browsing)`, which does not happen on other OSes.
-#
-# Variables:
-#  $content-title (String): the title of the web content.
-browser-main-window-mac =
-    .data-title-default = { -brand-full-name }
-    .data-title-private = { -brand-full-name } — (プライベートブラウジング)
-    .data-content-title-default = { $content-title }
-    .data-content-title-private = { $content-title } — (プライベートブラウジング)
-
-# These are the default window titles everywhere except macOS. The first two
-# attributes are used when the web content opened has no title:
-#
-# default - "Waterfox"
-# private - "Waterfox (Private Browsing)"
-#
-# The last two are for use when there *is* a content title.
+# .data-content-title-default and .data-content-title-private are for use when
+# there *is* a content title.
 # Variables:
 #  $content-title (String): the title of the web content.
 browser-main-window-window-titles =
@@ -53,15 +21,17 @@ browser-main-window-window-titles =
     .data-title-private = { -brand-full-name } プライベートブラウジング
     .data-content-title-default = { $content-title } — { -brand-full-name }
     .data-content-title-private = { $content-title } — { -brand-full-name } プライベートブラウジング
-
-# These are the default window titles on macOS. The first two are for use when
-# there is no content title:
+# These are the default window titles on macOS.
+# .data-title-default and .data-title-private are used when the web content
+# opened has no title:
+#
 #
 # "default" - "Waterfox"
 # "private" - "Waterfox — (Private Browsing)"
 #
-# The last two are for use when there *is* a content title.
-# Do not use the brand name in the last two attributes, as we do on non-macOS.
+# .data-content-title-default and .data-content-title-private are for use when
+# there *is* a content title.
+# Do not use the brand name in these, as we do on non-macOS.
 #
 # Also note the other subtle difference here: we use a `-` to separate the
 # brand name from `(Private Browsing)`, which does not happen on other OSes.
@@ -73,14 +43,14 @@ browser-main-window-mac-window-titles =
     .data-title-private = { -brand-full-name } — プライベートブラウジング
     .data-content-title-default = { $content-title }
     .data-content-title-private = { $content-title } — プライベートブラウジング
-
 # This gets set as the initial title, and is overridden as soon as we start
 # updating the titlebar based on loaded tabs or private browsing state.
 # This should match the `data-title-default` attribute in both
 # `browser-main-window` and `browser-main-window-mac`.
 browser-main-window-title = { -brand-full-name }
-
-private-browsing-shortcut-text = { -brand-short-name } プライベートブラウジング
+# The non-variable portion of this MUST match the translation of
+# "PRIVATE_BROWSING_SHORTCUT_TITLE" in custom.properties
+private-browsing-shortcut-text-2 = { -brand-shortcut-name } プライベートブラウジング
 
 ##
 
@@ -111,16 +81,12 @@ urlbar-xr-notification-anchor =
     .tooltiptext = VR の許可設定パネルを開きます
 urlbar-storage-access-anchor =
     .tooltiptext = 行動追跡の許可設定パネルを開きます
-urlbar-translate-notification-anchor =
-    .tooltiptext = このページを翻訳します
 urlbar-web-rtc-share-screen-notification-anchor =
     .tooltiptext = ウィンドウと画面の共有を管理します
 urlbar-indexed-db-notification-anchor =
     .tooltiptext = オフラインストレージのメッセージパネルを開きます
 urlbar-password-notification-anchor =
     .tooltiptext = パスワードの保存メッセージパネルを開きます
-urlbar-translated-notification-anchor =
-    .tooltiptext = ページ翻訳を管理します
 urlbar-plugins-notification-anchor =
     .tooltiptext = 使用するプラグインを管理します
 urlbar-web-rtc-share-devices-notification-anchor =
@@ -138,11 +104,25 @@ urlbar-addons-notification-anchor =
 urlbar-tip-help-icon =
     .title = ヘルプを表示
 urlbar-search-tips-confirm = 了解しました
+urlbar-search-tips-confirm-short = 了解
 # Read out before Urlbar Tip text content so screenreader users know the
 # subsequent text is a tip offered by the browser. It should end in a colon or
 # localized equivalent.
 urlbar-tip-icon-description =
     .alt = ヒント:
+urlbar-result-menu-button =
+    .title = メニューを開く
+urlbar-result-menu-button-feedback = フィードバック
+    .title = メニューを開く
+urlbar-result-menu-learn-more =
+    .label = 詳細情報
+    .accesskey = L
+urlbar-result-menu-remove-from-history =
+    .label = 履歴から削除
+    .accesskey = R
+urlbar-result-menu-tip-get-help =
+    .label = ヘルプを表示
+    .accesskey = h
 
 ## Prompts users to use the Urlbar when they open a new tab or visit the
 ## homepage of their default search engine.
@@ -151,6 +131,8 @@ urlbar-tip-icon-description =
 
 urlbar-search-tips-onboard = 少ない入力でたくさん見つかる: アドレスバーから { $engineName } ですぐ検索します。
 urlbar-search-tips-redirect-2 = アドレスバーで検索を始めると、{ $engineName } からの検索候補と閲覧履歴が表示されます。
+# Make sure to match the name of the Search panel in settings.
+urlbar-search-tips-persist = 検索がシンプルになりました。アドレスバーで具体的な語句を用いて検索してみてください。代わりに URL を表示するには、設定の検索パネルを開いてください。
 # Prompts users to use the Urlbar when they are typing in the domain of a
 # search engine, e.g. google.com or amazon.com.
 urlbar-tabtosearch-onboard = このショートカットを選択すると、より素早く検索できます。
@@ -160,7 +142,6 @@ urlbar-tabtosearch-onboard = このショートカットを選択すると、よ
 urlbar-search-mode-bookmarks = ブックマーク
 urlbar-search-mode-tabs = タブ
 urlbar-search-mode-history = 履歴
-
 urlbar-search-mode-actions = アクション
 
 ##
@@ -199,11 +180,6 @@ urlbar-star-add-bookmark =
     .tooltiptext = このページをブックマークに追加します ({ $shortcut })
 
 ## Page Action Context Menu
-
-page-action-manage-extension =
-    .label = 拡張機能を管理...
-page-action-remove-extension =
-    .label = 拡張機能を削除
 
 page-action-manage-extension2 =
     .label = 拡張機能を管理...
@@ -269,72 +245,67 @@ search-one-offs-tabs =
     .tooltiptext = タブ ({ $restrict })
 search-one-offs-history =
     .tooltiptext = 履歴 ({ $restrict })
-
 search-one-offs-actions =
     .tooltiptext = アクション ({ $restrict })
-
-## QuickActions are shown in the urlbar as the user types a matching string
 
 ## QuickActions are shown in the urlbar as the user types a matching string
 ## The -cmd- strings are comma separated list of keywords that will match
 ## the action.
 
-# Opens the about:addons page
+# Opens the about:addons page in the home / recommendations section
 quickactions-addons = アドオンを表示
-quickactions-cmd-addons = add-ons, extensions, themes
-
+quickactions-cmd-addons2 = add-ons
 # Opens the bookmarks library window
-quickactions-bookmarks = ブックマークを表示
+quickactions-bookmarks2 = ブックマークを管理
 quickactions-cmd-bookmarks = bookmarks
-
 # Opens a SUMO article explaining how to clear history
 quickactions-clearhistory = 履歴を消去
 quickactions-cmd-clearhistory = clear history
-
 # Opens about:downloads page
-quickactions-downloads = ダウンロードを開く
+quickactions-downloads2 = ダウンロードを表示
 quickactions-cmd-downloads = downloads
-
+# Opens about:addons page in the extensions section
+quickactions-extensions = 拡張機能を管理
+quickactions-cmd-extensions = extensions
 # Opens the devtools web inspector
-quickactions-inspector = インスペクターを開く
+quickactions-inspector2 = 開発ツールを開く
 quickactions-cmd-inspector = inspector, devtools
-
 # Opens about:logins
-quickactions-logins = ログイン情報を表示
+quickactions-logins2 = パスワードを管理
 quickactions-cmd-logins = logins, passwords
-
+# Opens about:addons page in the plugins section
+quickactions-plugins = プラグインを管理
+quickactions-cmd-plugins = plugins
 # Opens the print dialog
-quickactions-print = 印刷
+quickactions-print2 = ページを印刷
 quickactions-cmd-print = print
-
 # Opens a new private browsing window
-quickactions-private = プライベートブラウジングウィンドウを開く
+quickactions-private2 = プライベートウィンドウを開く
 quickactions-cmd-private = private browsing
-
 # Opens a SUMO article explaining how to refresh
 quickactions-refresh = { -brand-short-name } をリフレッシュ
 quickactions-cmd-refresh = refresh
-
 # Restarts the browser
 quickactions-restart = { -brand-short-name } を再起動
 quickactions-cmd-restart = restart
-
 # Opens the screenshot tool
-quickactions-screenshot2 = スクリーンショットを撮影
+quickactions-screenshot3 = スクリーンショットを撮影
 quickactions-cmd-screenshot = screenshot
-
 # Opens about:preferences
-quickactions-settings = 設定を開く
+quickactions-settings2 = 設定を管理
 quickactions-cmd-settings = settings, preferences, options
-
+# Opens about:addons page in the themes section
+quickactions-themes = テーマを管理
+quickactions-cmd-themes = themes
 # Opens a SUMO article explaining how to update the browser
 quickactions-update = { -brand-short-name } を更新
 quickactions-cmd-update = update
-
 # Opens the view-source UI with current pages source
-quickactions-viewsource = ソースを表示
-
+quickactions-viewsource2 = ページのソースを表示
 quickactions-cmd-viewsource = view source, source
+# Tooltip text for the help button shown in the result.
+quickactions-learn-more =
+    .title = クイックアクションについての詳細
 
 ## Bookmark Panel
 
@@ -375,13 +346,14 @@ identity-connection-internal = このページは { -brand-short-name } の安�
 identity-connection-file = これはあなたのコンピューターに保存されているページです。
 identity-extension-page = このページは拡張機能から読み込まれています。
 identity-active-blocked = このページの一部が安全でないため { -brand-short-name } がブロックしました。
-identity-custom-root = Waterfox が承認していない発行者の証明書で検証された接続です。
+identity-custom-root = BrowserWorks が承認していない発行者の証明書で検証された接続です。
 identity-passive-loaded = このページの一部 (画像など) は安全ではありません。
 identity-active-loaded = このページでの保護は無効に設定されています。
 identity-weak-encryption = このページは脆弱な暗号を使用しています。
 identity-insecure-login-forms = このページのログインフォームは安全ではありません。
-identity-https-only-connection-upgraded = (HTTPS で接続中)
+identity-https-only-connection-upgraded = (安全な HTTPS で接続中)
 identity-https-only-label = HTTPS-Only モード
+identity-https-only-label2 = このサイトを自動的に安全な接続にアップグレードします
 identity-https-only-dropdown-on =
     .label = オン
 identity-https-only-dropdown-off =
@@ -390,6 +362,8 @@ identity-https-only-dropdown-off-temporarily =
     .label = 一時的にオフ
 identity-https-only-info-turn-on2 = このサイトで { -brand-short-name } に可能な限り接続をアップグレードさせたい場合は、HTTPS-Only モードをオンにしてください。
 identity-https-only-info-turn-off2 = ページが動作しない場合は HTTPS-Only モードをオフにして、安全でない HTTP 接続でこのサイトを再読み込みするとよいでしょう。
+identity-https-only-info-turn-on3 = このサイトで { -brand-short-name } に可能な限り接続をアップグレードさせたい場合は、HTTPS アップグレードをオンにしてください。
+identity-https-only-info-turn-off3 = ページが動作しない場合は HTTPS アップグレードをオフにして、安全でない HTTP 接続でこのサイトを再読み込みするとよいでしょう。
 identity-https-only-info-no-upgrade = 接続を HTTP からアップグレードできません。
 identity-permissions-storage-access-header = クロスサイト Cookie
 identity-permissions-storage-access-hint = 以下のサイトが、あなたがこのサイトにいる間、クロスサイト Cookie とサイトデータにアクセスできます。
@@ -400,7 +374,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = このサイトとの接続は安全ではありません。
 identity-connection-verified = このサイトとの接続は安全です。
 identity-ev-owner-label = 証明書の発行先:
-identity-description-custom-root = Waterfox はこの証明書の発行者を承認していません。OS またはシステム管理者により追加された可能性があります。 <label data-l10n-name="link">詳細情報</label>
+identity-description-custom-root2 = BrowserWorks はこの証明書の発行者を承認していません。OS またはシステム管理者により追加された可能性があります。
 identity-remove-cert-exception =
     .label = 例外から削除
     .accesskey = R
@@ -408,14 +382,12 @@ identity-description-insecure = このサイトへの接続は秘密が保たれ
 identity-description-insecure-login-forms = このページに入力したログイン情報は安全に送信されません。第三者に盗み見られる可能性があります。
 identity-description-weak-cipher-intro = このウェブサイトとの接続には脆弱な暗号が使用されており、秘密が保たれません。
 identity-description-weak-cipher-risk = 第三者にあなたの情報を盗み見られたりウェブサイトの動作を不正に改変される可能性があります。
-identity-description-active-blocked = { -brand-short-name } がこのページ上の安全でないコンテンツをブロックしました。 <label data-l10n-name="link">詳細情報</label>
+identity-description-active-blocked2 = { -brand-short-name } がこのページ上の安全でないコンテンツをブロックしました。
 identity-description-passive-loaded = この接続は安全でないため、サイトと共有したあなたの情報が第三者に盗み見られる可能性があります。
-identity-description-passive-loaded-insecure = このウェブサイトには安全でないコンテンツ (画像など) が含まれています。 <label data-l10n-name="link">詳細情報</label>
-identity-description-passive-loaded-mixed = { -brand-short-name } が一部のコンテンツをブロックしていますが、ページ上には安全でないコンテンツ (画像など) が含まれています。 <label data-l10n-name="link">詳細情報</label>
+identity-description-passive-loaded-insecure2 = このウェブサイトには安全でないコンテンツ (画像など) が含まれています。
+identity-description-passive-loaded-mixed2 = { -brand-short-name } が一部のコンテンツをブロックしていますが、ページ上には安全でないコンテンツ (画像など) が含まれています。
 identity-description-active-loaded = このウェブサイトには安全でないコンテンツ (スクリプトなど) が含まれており、サイトとの接続は秘密が保たれません。
 identity-description-active-loaded-insecure = このサイトと共有したあなたの情報 (パスワードやメッセージ、クレジットカード情報など) が第三者に盗み見られる可能性があります。
-identity-learn-more =
-    .value = 詳細情報
 identity-disable-mixed-content-blocking =
     .label = このセッションのみ保護を無効にする
     .accesskey = D
@@ -488,14 +460,10 @@ popup-select-microphone-icon =
     .tooltiptext = マイク
 popup-select-speaker-icon =
     .tooltiptext = スピーカー
+popup-select-window-or-screen =
+    .label = ウィンドウまたは画面:
+    .accesskey = W
 popup-all-windows-shared = 画面に表示されているすべてのウィンドウを共有します。
-popup-screen-sharing-block =
-    .label = ブロック
-    .accesskey = B
-popup-screen-sharing-always-block =
-    .label = 常にブロック
-    .accesskey = w
-popup-mute-notifications-checkbox = 共有中はウェブサイトからの通知を無効にする
 
 ## WebRTC window or screen share tab switch warning
 
@@ -508,7 +476,7 @@ sharing-warning-disable-for-session =
 
 ## DevTools F12 popup
 
-enable-devtools-popup-description = F12 ショートカットを使うには、最初にメニューのウェブ開発から開発ツールを開いてください。
+enable-devtools-popup-description2 = F12 ショートカットを使うには、最初にメニューのブラウザーツールから開発ツールを開いてください。
 
 ## URL Bar
 
@@ -544,12 +512,10 @@ urlbar-placeholder-search-mode-other-history =
 urlbar-placeholder-search-mode-other-tabs =
     .placeholder = 検索語句を入力します
     .aria-label = タブを検索
-
 # This placeholder is used when searching quick actions.
 urlbar-placeholder-search-mode-other-actions =
     .placeholder = 検索語句を入力します
     .aria-label = アクションを検索
-
 # Variables
 #  $name (String): the name of the user's default search engine
 urlbar-placeholder-with-name =
@@ -590,6 +556,8 @@ urlbar-result-action-search-w-engine = { $engine } で検索
 urlbar-result-action-sponsored = 広告
 urlbar-result-action-switch-tab = タブを表示
 urlbar-result-action-visit = 開く
+# Allows the user to visit a URL that was previously copied to the clipboard.
+urlbar-result-action-visit-from-your-clipboard = クリップボードから開く
 # Directs a user to press the Tab key to perform a search with the specified
 # engine.
 # Variables
@@ -625,7 +593,6 @@ urlbar-result-action-calculator-result = = { $result }
 urlbar-result-action-search-bookmarks = ブックマークを検索
 urlbar-result-action-search-history = 履歴を検索
 urlbar-result-action-search-tabs = タブを検索
-
 urlbar-result-action-search-actions = アクションを検索
 
 ## Labels shown above groups of urlbar results
@@ -640,10 +607,32 @@ urlbar-group-firefox-suggest =
 #  $engine (String): the name of the search engine providing the suggestions
 urlbar-group-search-suggestions =
     .label = { $engine } の検索候補
-
 # A label shown above Quick Actions in the urlbar results.
 urlbar-group-quickactions =
     .label = クイックアクション
+
+## Reader View toolbar buttons
+
+# This should match menu-view-enter-readerview in menubar.ftl
+reader-view-enter-button =
+    .aria-label = リーダービューで開く
+# This should match menu-view-close-readerview in menubar.ftl
+reader-view-close-button =
+    .aria-label = リーダービューを閉じる
+
+## Picture-in-Picture urlbar button
+## Variables:
+##   $shortcut (String) - Keyboard shortcut to execute the command.
+
+picture-in-picture-urlbar-button-open =
+    .tooltiptext = ピクチャーインピクチャーを開きます ({ $shortcut })
+picture-in-picture-urlbar-button-close =
+    .tooltiptext = ピクチャーインピクチャーを閉じます ({ $shortcut })
+picture-in-picture-panel-header = ピクチャーインピクチャー
+picture-in-picture-panel-headline = このウェブサイトでのピクチャーインピクチャーはおすすめしません
+picture-in-picture-panel-body = ピクチャーインピクチャーを有効にした場合、動画が開発者の意図したように表示されない可能性があります。
+picture-in-picture-enable-toggle =
+    .label = とにかく有効化
 
 ## Full Screen and Pointer Lock UI
 
@@ -661,19 +650,6 @@ fullscreen-exit-mac-button = 全画面表示モードを終了 (esc)
 pointerlock-warning-domain = マウスポインターは現在、 <span data-l10n-name="domain">{ $domain }</span> が制御しています。制御を取り戻すには、ESC キーを押してください。
 pointerlock-warning-no-domain = マウスポインターは現在、このページが制御しています。制御を取り戻すには、ESC キーを押してください。
 
-## Subframe crash notification
-
-crashed-subframe-message = <strong>このページの一部がクラッシュしました。</strong> { -brand-product-name } にこの問題を知らせて素早く修正するために、レポートを送信してください。
-# The string for crashed-subframe-title.title should match crashed-subframe-message,
-# but without any markup.
-crashed-subframe-title =
-    .title = このページの一部がクラッシュしました。{ -brand-product-name } にこの問題を知らせて素早く修正するために、レポートを送信してください。
-crashed-subframe-learnmore-link =
-    .value = 詳細
-crashed-subframe-submit =
-    .label = レポートを送信
-    .accesskey = S
-
 ## Bookmarks panels, menus and toolbar
 
 bookmarks-manage-bookmarks =
@@ -689,6 +665,11 @@ bookmarks-other-bookmarks-menu =
     .label = 他のブックマーク
 bookmarks-mobile-bookmarks-menu =
     .label = モバイルのブックマーク
+
+## Variables:
+##   $isVisible (boolean): if the specific element (e.g. bookmarks sidebar,
+##                         bookmarks toolbar, etc.) is visible or not.
+
 bookmarks-tools-sidebar-visibility =
     .label =
         { $isVisible ->
@@ -713,12 +694,15 @@ bookmarks-tools-menu-button-visibility =
             [true] ブックマークメニューをツールバーから削除
            *[other] ブックマークメニューをツールバーに追加
         }
+
+##
+
 bookmarks-search =
     .label = ブックマークを検索
 bookmarks-tools =
     .label = ブックマークツール
-bookmarks-bookmark-edit-panel =
-    .label = このブックマークを編集
+bookmarks-subview-edit-bookmark =
+    .label = このブックマークを編集...
 # The aria-label is a spoken label that should not include the word "toolbar" or
 # such, because screen readers already know that this container is a toolbar.
 # This avoids double-speaking.
@@ -733,8 +717,8 @@ bookmarks-toolbar-placeholder =
 bookmarks-toolbar-placeholder-button =
     .label = ブックマークツールバーの項目
 # "Bookmark" is a verb, as in "Add current tab to bookmarks".
-bookmarks-current-tab =
-    .label = 現在のタブをブックマークに追加
+bookmarks-subview-bookmark-tab =
+    .label = 現在のタブをブックマークに追加...
 
 ## Library Panel items
 
@@ -758,11 +742,6 @@ repair-text-encoding-button =
 ## Customize Toolbar Buttons
 
 # Variables:
-#  $shortcut (String): keyboard shortcut to open the add-ons manager
-toolbar-addons-themes-button =
-    .label = アドオンとテーマ
-    .tooltiptext = アドオンとテーマを管理します ({ $shortcut })
-# Variables:
 #  $shortcut (String): keyboard shortcut to open settings (only on macOS)
 toolbar-settings-button =
     .label = 設定
@@ -771,13 +750,15 @@ toolbar-settings-button =
             [macos] 設定を開きます ({ $shortcut })
            *[other] 設定を開きます
         }
-
 toolbar-overflow-customize-button =
     .label = ツールバーをカスタマイズ...
     .accesskey = C
 toolbar-button-email-link =
     .label = ページの URL をメールで送信
     .tooltiptext = このページの URL をメールで送信します
+toolbar-button-logins =
+    .label = パスワード
+    .tooltiptext = 保存されているパスワードを表示、管理します
 # Variables:
 #  $shortcut (String): keyboard shortcut to save a copy of the page
 toolbar-button-save-page =
@@ -809,13 +790,6 @@ eme-notifications-drm-content-playing-dismiss-accesskey = D
 
 panel-save-update-username = ユーザー名
 panel-save-update-password = パスワード
-
-## Add-on removal warning
-
-# Variables:
-#  $name (String): The name of the addon that will be removed.
-addon-removal-title = { $name } を削除しますか？
-addon-removal-abuse-report-checkbox = この拡張機能を { -vendor-short-name } に報告する
 
 ##
 
@@ -884,8 +858,6 @@ navbar-library =
     .tooltiptext = 履歴や保存したブックマークなどを表示します
 navbar-search =
     .title = 検索
-navbar-accessibility-indicator =
-    .tooltiptext = アクセシビリティ機能が有効です
 # Name for the tabs toolbar as spoken by screen readers. The word
 # "toolbar" is appended automatically and should not be included in
 # in the string
@@ -903,13 +875,12 @@ tabs-toolbar-list-all-tabs =
 restore-session-startup-suggestion-message = <strong>前回のタブを開きますか？</strong> { -brand-short-name } アプリケーションメニュー<img data-l10n-name="icon"/>の履歴から前回のセッションを復元できます。
 restore-session-startup-suggestion-button = 方法を確認
 
-## Waterfox data reporting notification (Telemetry, Waterfox Health Report, etc)
+## BrowserWorks data reporting notification (Telemetry, Waterfox Health Report, etc)
 
 data-reporting-notification-message = ユーザー体験の向上のため、{ -brand-short-name } は自動的にいくつかのデータを { -vendor-short-name } に送信します。
 data-reporting-notification-button =
     .label = 共有するデータを選択
     .accesskey = C
-
 # Label for the indicator shown in the private browsing window titlebar.
 private-browsing-indicator-label = プライベートブラウジング
 
@@ -918,3 +889,68 @@ private-browsing-indicator-label = プライベートブラウジング
 unified-extensions-button =
     .label = 拡張機能
     .tooltiptext = 拡張機能
+
+## Unified extensions button when permission(s) are needed.
+## Note that the new line is intentionally part of the tooltip.
+
+unified-extensions-button-permissions-needed =
+    .label = 拡張機能
+    .tooltiptext =
+        拡張機能
+        権限が必要です
+
+## Unified extensions button when some extensions are quarantined.
+## Note that the new line is intentionally part of the tooltip.
+
+unified-extensions-button-quarantined =
+    .label = 拡張機能
+    .tooltiptext =
+        拡張機能
+        一部の拡張機能は許可されていません
+
+## Autorefresh blocker
+
+refresh-blocked-refresh-label = { -brand-short-name } がこのページの自動再読み込みをブロックしました。
+refresh-blocked-redirect-label = { -brand-short-name } がこのページから他のページへの自動転送をブロックしました。
+refresh-blocked-allow =
+    .label = 許可
+    .accesskey = A
+
+## Waterfox Relay integration
+
+firefox-relay-offer-why-to-use-relay = 安全で簡単に使えるメールマスクがあなたのメールアドレスを隠して個人情報を守り、迷惑メールを防ぎます。
+# Variables:
+#  $useremail (String): user email that will receive messages
+firefox-relay-offer-what-relay-provides = メールマスクに送信されたすべてのメールは (これらをブロックしない限り) <strong>{ $useremail }</strong> に転送されます。
+firefox-relay-offer-legal-notice = [メールマスクを使用] をクリックすることにより、<label data-l10n-name="tos-url">サービス利用規約</label> および <label data-l10n-name="privacy-url">プライバシー通知</label> に同意したものとみなされます。
+
+## Add-on Pop-up Notifications
+
+popup-notification-addon-install-unsigned =
+    .value = (未検証)
+popup-notification-xpinstall-prompt-learn-more = アドオンの安全なインストールの詳細
+
+## Pop-up warning
+
+# Variables:
+#   $popupCount (Number): the number of pop-ups blocked.
+popup-warning-message = { -brand-short-name } が { $popupCount } 個のポップアップをブロックしました。
+# The singular form is left out for English, since the number of blocked pop-ups is always greater than 1.
+# Variables:
+#   $popupCount (Number): the number of pop-ups blocked.
+popup-warning-exceeded-message = { -brand-short-name } がこのサイトで { $popupCount } 個のポップアップウィンドウをブロックしました。
+popup-warning-button =
+    .label =
+        { PLATFORM() ->
+            [windows] 設定
+           *[other] 設定
+        }
+    .accesskey =
+        { PLATFORM() ->
+            [windows] O
+           *[other] P
+        }
+# Variables:
+#   $popupURI (String): the URI for the pop-up window
+popup-show-popup-menuitem =
+    .label = “{ $popupURI }” を表示

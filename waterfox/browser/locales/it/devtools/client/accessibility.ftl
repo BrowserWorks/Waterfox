@@ -1,6 +1,7 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 
 ### These strings are used inside the Accessibility panel.
 
@@ -12,14 +13,34 @@ accessibility-keyboard-header = Tastiera
 
 ## Text entries that are used as text alternative for icons that depict accessibility isses.
 
+
+## These strings are used in the overlay displayed when running an audit in the accessibility panel
+
+accessibility-progress-initializing = Inizializzazione…
+    .aria-valuetext = Inizializzazione…
+
+# This string is displayed in the audit progress bar in the accessibility panel.
+# Variables:
+#   $nodeCount (Integer) - The number of nodes for which the audit was run so far.
+accessibility-progress-progressbar =
+    { $nodeCount ->
+        [one] Controllo di { $nodeCount } nodo
+       *[other] Controllo di { $nodeCount } nodi
+    }
+
+accessibility-progress-finishing = Conclusione…
+    .aria-valuetext = Conclusione…
+
+## Text entries that are used as text alternative for icons that depict accessibility issues.
+
 accessibility-warning =
-  .alt = Avviso
+    .alt = Avviso
 
 accessibility-fail =
-  .alt = Errore
+    .alt = Errore
 
 accessibility-best-practices =
-  .alt = Procedure consigliate
+    .alt = Procedure consigliate
 
 ## Text entries for a paragraph used in the accessibility panel sidebar's checks section
 ## that describe that currently selected accessible object has an accessibility issue
@@ -76,3 +97,4 @@ accessibility-keyboard-issue-focusable = Gli elementi interattivi devono poter e
 accessibility-keyboard-issue-focus-visible = Gli elementi che possono essere attivati (“focusable”) potrebbero non avere uno stile associato per il focus. <a>Ulteriori informazioni</a>
 
 accessibility-keyboard-issue-mouse-only = Gli elementi selezionabili (“clickable”) devono poter essere attivati (“focusable”) e avere una semantica interattiva. <a>Ulteriori informazioni</a>
+

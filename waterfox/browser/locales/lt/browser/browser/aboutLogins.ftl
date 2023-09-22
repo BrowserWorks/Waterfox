@@ -1,14 +1,9 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
 
 about-logins-page-title = Prisijungimai ir slaptažodžiai
-
-login-filter =
-    .placeholder = Ieškoti prisijungimų
-
-create-login-button = Sukurti naują prisijungimą
 
 fxaccounts-sign-in-text = Turėkite savo slaptažodžius ir kituose įrenginiuose
 fxaccounts-sign-in-sync-button = Prisijungti sinchronizavimui
@@ -100,9 +95,10 @@ login-item-copied-password-button-text = Nukopijuota!
 login-item-save-changes-button = Įrašyti pakeitimus
 login-item-save-new-button = Įrašyti
 login-item-cancel-button = Atsisakyti
-login-item-time-changed = Paskutinis atnaujinimas: { DATETIME($timeChanged, day: "numeric", month: "long", year: "numeric") }
-login-item-time-created = Sukurta: { DATETIME($timeCreated, day: "numeric", month: "long", year: "numeric") }
-login-item-time-used = Paskutinis naudojimas: { DATETIME($timeUsed, day: "numeric", month: "long", year: "numeric") }
+
+## The date is displayed in a timeline showing the password evolution.
+## A label is displayed under the date to describe the type of change.
+## (e.g. updated, created, etc.)
 
 ## OS Authentication dialog
 
@@ -153,6 +149,9 @@ about-logins-confirm-remove-dialog-title = Pašalinti šį prisijungimą?
 confirm-delete-dialog-message = Atlikus šį veiksmą, jo atšaukti neįmanoma.
 about-logins-confirm-remove-dialog-confirm-button = Pašalinti
 
+## Variables
+##   $count (number) - Number of items
+
 about-logins-confirm-remove-all-dialog-confirm-button-label =
     { $count ->
         [1] Pašalinti
@@ -197,6 +196,8 @@ about-logins-confirm-remove-all-sync-dialog-message =
        *[other] Bus pašalinti į „{ -brand-short-name }“ įrašyti prisijungimai, iš visų su „{ -fxaccount-brand-name }“ paskyra susietų įrenginių. Tuo pačiu bus pašalinti čia matomi nutekėjimų pranešimai. Šis veiksmas galutinis.
     }
 
+##
+
 about-logins-confirm-export-dialog-title = Eksportuoti prisijungimus ir slaptažodžius
 about-logins-confirm-export-dialog-message = Jūsų slaptažodžiai bus įrašyti kaip perskaitomas tekstas (pvz., BlogasSl@ptaz0dis), tad bet kas galintis atverti eksportuotą failą galės juos peržiūrėti.
 about-logins-confirm-export-dialog-confirm-button = Eksportuoti…
@@ -216,7 +217,6 @@ about-logins-breach-alert-date = Šis pažeidimas įvyko { DATETIME($date, day: 
 # Variables:
 #   $hostname (String) - The hostname of the website associated with the login, e.g. "example.com"
 about-logins-breach-alert-link = Eiti į { $hostname }
-about-logins-breach-alert-learn-more-link = Sužinoti daugiau
 
 ## Vulnerable Password notification
 

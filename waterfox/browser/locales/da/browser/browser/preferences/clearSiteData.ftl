@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-clear-site-data-window =
+clear-site-data-window2 =
     .title = Ryd data
-    .style = width: 35em
+    .style = min-width: 35em
 
 clear-site-data-description = Ved at rydde cookies og webstedsdata logger { -brand-short-name } dig muligvis ud fra websteder, og offline webstedsdata kan blive fjernet. Det påvirker ikke dine logins at rydde cache-data
 

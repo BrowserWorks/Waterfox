@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,9 +23,11 @@ policy-BlockAboutConfig = Bloker adgang til about:config.
 policy-BlockAboutProfiles = Bloker adgang til about:profiles.
 policy-BlockAboutSupport = Bloker adgang til about:support.
 policy-Bookmarks = Opret bogmærker i Bogmærkelinjen, i menuen Bogmærker eller en nærmere angivet mappe i dem.
-policy-CaptivePortal = Slå understøttelse af captive portal til eller fra.
+policy-CaptivePortal = Slå understøttelse af tvungen portal til eller fra.
 policy-CertificatesDescription = Tilføj certifikater eller brug indbyggede certifikater.
 policy-Cookies = Tillad eller nægt websteder at sætte cookies.
+# Containers in this context is referring to container tabs in Waterfox.
+policy-Containers = Angiv politikker relateret til kontekster.
 policy-DisabledCiphers = Deaktiver ciphers.
 policy-DefaultDownloadDirectory = Indstil standard-mappe for hentede filer.
 policy-DisableAppUpdate = Deaktiver opdatering af browseren.
@@ -41,7 +43,7 @@ policy-DisableForgetButton = Bloker adgang til knappen Glem.
 policy-DisableFormHistory = Husk ikke formular- og søgehistorik.
 policy-DisablePrimaryPasswordCreation = En hovedadgangskode kan ikke oprettes, hvis værdien er sat til true.
 policy-DisablePasswordReveal = Tillad ikke adgangskoder at blive vist i gemte logins.
-policy-DisablePocket = Deaktiver funktionen at gemme websider til Pocket.
+policy-DisablePocket2 = Deaktiver funktionen at gemme websider til { -pocket-brand-name }.
 policy-DisablePrivateBrowsing = Deaktiver privat browsing.
 policy-DisableProfileImport = Deaktiver menu-kommandoen til at importere data fra en anden browser.
 policy-DisableProfileRefresh = Deaktiver knappen Nulstil { -brand-short-name } på siden about:support.
@@ -50,6 +52,7 @@ policy-DisableSecurityBypass = Deaktiver brugerens mulighed for at omgå bestemt
 policy-DisableSetAsDesktopBackground = Deaktiver menu-kommandoen Brug som skrivebordsbaggrund
 policy-DisableSystemAddonUpdate = Deaktiver browserens mulighed for at installere og opdatere system-tilføjelser.
 policy-DisableTelemetry = Slå Telemetry fra.
+policy-DisableThirdPartyModuleBlocking = Deaktiver brugerens mulighed for at blokere tredjeparts-moduler, der bliver tilført { -brand-short-name }-processen.
 policy-DisplayBookmarksToolbar = Vis bogmærkelinjen som standard.
 policy-DisplayMenuBar = Vis menulinjen som standard.
 policy-DNSOverHTTPS = Opsæt DNS via HTTPS.
@@ -66,9 +69,8 @@ policy-ExemptDomainFileTypePairsFromFileTypeDownloadWarnings = Deaktiver advarsl
 policy-Extensions = Installer, afinstaller eller lås udvidelser. Valgmuligheden Installer tager URL’er eller stier som parametre. Valgmulighederne Afinstaller og Låst tager udvidelelses-ID som parameter.
 policy-ExtensionSettings = Håndter alle aspekter af udvidelses-installering.
 policy-ExtensionUpdate = Slå automatisk opdatering af udvidelser til eller fra.
-policy-WaterfoxHome = Indstil Waterfox' startside.
 policy-WaterfoxHome2 = Konfigurer { -firefox-home-brand-name }.
-policy-FlashPlugin = Tillad eller afvis brug af Flash-plugin.
+policy-WaterfoxSuggest = Konfigurer { -firefox-suggest-brand-name }.
 policy-GoToIntranetSiteForSingleWordEntryInAddressBar = Gennemtving direkte intranet-navigation fremfor søgning, når der indtastes enkelte ord i adresselinjen.
 policy-Handlers = Indstil håndtering af standard-applikationer.
 policy-HardwareAcceleration = False slår hardware-acceleration fra.
@@ -110,8 +112,8 @@ policy-SanitizeOnShutdown2 = Ryd browsing-data ved lukning.
 policy-SearchBar = Indstil standard-placering af søgefeltet. Brugeren kan stadig tilpasse feltet.
 policy-SearchEngines = Opsæt indstillinger for søgetjenester. Denne politik er kun tilgængelig for Extended Support Release (ESR).
 policy-SearchSuggestEnabled = Slå søgeforslag til eller fra.
-# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
-policy-SecurityDevices = Installer PKCS #11 moduler.
+# For more information, see https://wikipedia.org/wiki/PKCS_11
+policy-SecurityDevices2 = Tilføj eller slet PKCS #11-moduler
 policy-ShowHomeButton = Vis hjem-knappen på værktøjslinjen.
 policy-SSLVersionMax = Angiv den højeste SSL-version.
 policy-SSLVersionMin = Angiv den laveste SSL-version.

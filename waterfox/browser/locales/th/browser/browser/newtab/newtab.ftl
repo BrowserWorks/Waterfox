@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -21,12 +21,12 @@ newtab-search-box-search-button =
     .title = ค้นหา
     .aria-label = ค้นหา
 
-# Variables
-#  $engine (String): the name of the user's default search engine
+# Variables:
+#   $engine (string) - The name of the user's default search engine
 newtab-search-box-handoff-text = ค้นหาด้วย { $engine } หรือป้อนที่อยู่
 newtab-search-box-handoff-text-no-engine = ค้นหาหรือป้อนที่อยู่
-# Variables
-#  $engine (String): the name of the user's default search engine
+# Variables:
+#   $engine (string) - The name of the user's default search engine
 newtab-search-box-handoff-input =
     .placeholder = ค้นหาด้วย { $engine } หรือป้อนที่อยู่
     .title = ค้นหาด้วย { $engine } หรือป้อนที่อยู่
@@ -92,7 +92,7 @@ newtab-dismiss-button-tooltip =
 
 # This tooltip is for the context menu of Pocket cards or Topsites
 # Variables:
-#  $title (String): The label or hostname of the site. This is for screen readers when the context menu button is focused/active.
+#   $title (string) - The label or hostname of the site. This is for screen readers when the context menu button is focused/active.
 newtab-menu-content-tooltip =
     .title = เปิดเมนู
     .aria-label = เปิดเมนูบริบทสำหรับ { $title }
@@ -165,18 +165,18 @@ newtab-label-download = ดาวน์โหลดแล้ว
 
 # This string is used in the story cards to indicate sponsored content
 # Variables:
-#  $sponsorOrSource (String): This is the name of a company or their domain
+#   $sponsorOrSource (string) - The name of a company or their domain
 newtab-label-sponsored = { $sponsorOrSource } · ผู้สนับสนุน
 
 # This string is used at the bottom of story cards to indicate sponsored content
 # Variables:
-#  $sponsor (String): This is the name of a sponsor
+#   $sponsor (string) - The name of a sponsor
 newtab-label-sponsored-by = สนับสนุนโดย { $sponsor }
 
 # This string is used under the image of story cards to indicate source and time to read
 # Variables:
-#  $source (String): This is the name of a company or their domain
-#  $timeToRead (Number): This is the estimated number of minutes to read this story
+#   $source (string) - The name of a company or their domain
+#   $timeToRead (number) - The estimated number of minutes to read this story
 newtab-label-source-read-time = { $source } · { $timeToRead } นาที
 
 ## Section Menu: These strings are displayed in the section context menu and are
@@ -191,7 +191,7 @@ newtab-section-menu-add-topsite = เพิ่มไซต์เด่น
 newtab-section-menu-add-search-engine = เพิ่มเครื่องมือค้นหา
 newtab-section-menu-move-up = ย้ายขึ้น
 newtab-section-menu-move-down = ย้ายลง
-newtab-section-menu-privacy-notice = ประกาศความเป็นส่วนตัว
+newtab-section-menu-privacy-notice = ข้อกำหนดความเป็นส่วนตัว
 
 ## Section aria-labels
 
@@ -205,7 +205,7 @@ newtab-section-expand-section-label =
 newtab-section-header-topsites = ไซต์เด่น
 newtab-section-header-recent-activity = กิจกรรมล่าสุด
 # Variables:
-#  $provider (String): Name of the corresponding content provider.
+#   $provider (string) - Name of the corresponding content provider.
 newtab-section-header-pocket = แนะนำโดย { $provider }
 
 ## Empty Section States: These show when there are no more items in a section. Ex. When there are no more Pocket story recommendations, in the space where there would have been stories, this is shown instead.
@@ -214,7 +214,7 @@ newtab-empty-section-highlights = เริ่มเรียกดูและ�
 
 # Ex. When there are no more Pocket story recommendations, in the space where there would have been stories, this is shown instead.
 # Variables:
-#  $provider (String): Name of the content provider for this section, e.g "Pocket".
+#   $provider (string) - Name of the content provider for this section, e.g "Pocket".
 newtab-empty-section-topstories = คุณได้อ่านเรื่องราวครบทั้งหมดแล้ว คุณสามารถกลับมาตรวจดูเรื่องราวเด่นจาก { $provider } ได้ภายหลัง อดใจรอไม่ได้งั้นหรือ? เลือกหัวข้อยอดนิยมเพื่อค้นหาเรื่องราวที่ยอดเยี่ยมจากเว็บต่าง ๆ
 
 ## Empty Section (Content Discovery Experience). These show when there are no more stories or when some stories fail to load.
@@ -237,20 +237,17 @@ newtab-pocket-cta-button = รับ { -pocket-brand-name }
 newtab-pocket-cta-text = บันทึกเรื่องราวที่คุณรักลงใน { -pocket-brand-name } และเติมเต็มสมองของคุณด้วยบทความที่น่าหลงใหล
 newtab-pocket-pocket-firefox-family = { -pocket-brand-name } เป็นส่วนหนึ่งของตระกูล { -brand-product-name }
 
-# A save to Pocket button that shows over the card thumbnail on hover.
-newtab-pocket-save-to-pocket = บันทึกไปยัง { -pocket-brand-name }
-newtab-pocket-saved-to-pocket = บันทึกไปยัง { -pocket-brand-name } แล้ว
-
-# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
-newtab-pocket-load-more-stories-button = โหลดเรื่องราวเพิ่มเติม
-
 ## Pocket Final Card Section.
 ## This is for the final card in the Pocket grid.
 
-newtab-pocket-last-card-title = คุณได้อ่านเรื่องราวครบทั้งหมดแล้ว!
-newtab-pocket-last-card-desc = คุณสามารถกลับมาตรวจดูเรื่องราวเพิ่มเติมได้ภายหลัง
-newtab-pocket-last-card-image =
-    .alt = คุณได้อ่านเรื่องราวครบทั้งหมดแล้ว
+# A save to Pocket button that shows over the card thumbnail on hover.
+newtab-pocket-save = บันทึก
+newtab-pocket-saved = บันทึกแล้ว
+
+## Pocket content onboarding experience dialog and modal for new users seeing the Pocket section for the first time, shown as the first item in the Pocket section.
+
+newtab-pocket-onboarding-discover = ค้นพบสุดยอดเว็บ
+newtab-pocket-onboarding-cta = { -pocket-brand-name } สำรวจสิ่งพิมพ์ที่หลากหลายเพื่อนำเนื้อหาที่ให้ข้อมูล สร้างแรงบันดาลใจ และน่าเชื่อถือที่สุดมาสู่เบราว์เซอร์ { -brand-product-name } ของคุณ
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -262,6 +259,8 @@ newtab-error-fallback-refresh-link = เรียกหน้าใหม่เ�
 
 newtab-custom-shortcuts-title = ทางลัด
 newtab-custom-shortcuts-subtitle = ไซต์ที่คุณบันทึกหรือเยี่ยมชม
+# Variables
+#   $num (number) - Number of rows to display
 newtab-custom-row-selector =
     { $num ->
        *[other] { $num } แถว
@@ -270,6 +269,7 @@ newtab-custom-sponsored-sites = ทางลัดที่ได้รับก
 newtab-custom-pocket-title = แนะนำโดย { -pocket-brand-name }
 newtab-custom-pocket-subtitle = เนื้อหาสุดพิเศษที่คัดสรรโดย { -pocket-brand-name } ซึ่งเป็นส่วนหนึ่งของตระกูล { -brand-product-name }
 newtab-custom-pocket-sponsored = เรื่องราวที่ได้รับการสนับสนุน
+newtab-custom-pocket-show-recent-saves = แสดงบันทึกล่าสุด
 newtab-custom-recent-title = กิจกรรมล่าสุด
 newtab-custom-recent-subtitle = ไซต์และเนื้อหาล่าสุดที่คัดสรรมา
 newtab-custom-close-button = ปิด

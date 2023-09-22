@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -11,11 +11,11 @@ process-type-web = Nội dung web
 
 # process used to run privileged about pages,
 # such as about:home
-process-type-privilegedabout = Giới thiệu đặc quyền
+process-type-privilegedabout = Trang about đặc quyền
 
 # process used to run privileged mozilla pages,
 # such as accounts.firefox.com
-process-type-privilegedmozilla = Nội dung Waterfox đặc quyền
+process-type-privilegedmozilla = Nội dung BrowserWorks đặc quyền
 
 process-type-extension = Tiện ích mở rộng
 
@@ -49,6 +49,9 @@ process-type-socket = Socket
 
 # process used to decode media
 process-type-rdd = RDD
+
+# process used to run some IPC actor in their own sandbox
+process-type-utility = Tác nhân IPC hộp cát
 
 ##
 ## Other

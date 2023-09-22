@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,20 +8,18 @@
 # Variables:
 #   $addon-name (string) - Name of the add-on being reported
 abuse-report-dialog-title = Laporan untuk { $addon-name }
-
 abuse-report-title-extension = Laporkan Ekstensi Ini ke { -vendor-short-name }
 abuse-report-title-sitepermission = Laporkan pengaya Izin Situs Ini ke { -vendor-short-name }
 abuse-report-title-theme = Laporkan Tema Ini ke { -vendor-short-name }
 abuse-report-subtitle = Apa masalahnya?
-
 # Variables:
 #   $author-name (string) - Name of the add-on author
 abuse-report-addon-authored-by = oleh <a data-l10n-name="author-name">{ $author-name }</a>
-
 abuse-report-learnmore =
     Tidak yakin masalah apa yang harus dipilih?
     <a data-l10n-name="learnmore-link">Pelajari lebih lanjut tentang melaporkan ekstensi dan tema</a>
-
+abuse-report-learnmore-intro = Tidak yakin masalah apa yang harus dipilih?
+abuse-report-learnmore-link = Pelajari lebih lanjut tentang melaporkan ekstensi dan tema
 abuse-report-submit-description = Jelaskan masalahnya (opsional)
 abuse-report-textarea =
     .placeholder = Akan lebih memudahkan bagi kami untuk menangani masalah jika memahami rinciannya. Harap jelaskan apa yang Anda alami. Terima kasih telah membantu kami menjaga Internet tetap sehat.
@@ -50,6 +48,24 @@ abuse-report-messagebar-removed-sitepermission = Terima kasih telah mengirimkan 
 abuse-report-messagebar-removed-theme = Terima kasih telah mengirimkan laporan. Anda telah menghapus tema <span data-l10n-name="addon-name">{ $addon-name }</span>.
 abuse-report-messagebar-error = Terjadi kesalahan saat mengirim laporan untuk <span data-l10n-name="addon-name">{ $addon-name }</span>.
 abuse-report-messagebar-error-recent-submit = Laporan untuk <span data-l10n-name="addon-name">{ $addon-name }</span> tidak terkirim karena laporan lain telah dikirimkan baru-baru ini.
+abuse-report-messagebar-aborted2 =
+    .message = Laporan untuk { $addon-name } dibatalkan.
+abuse-report-messagebar-submitting2 =
+    .message = Mengirim laporan untuk { $addon-name }.
+abuse-report-messagebar-submitted2 =
+    .message = Terima kasih telah mengirimkan laporan. Apakah Anda ingin menghapus { $addon-name }?
+abuse-report-messagebar-submitted-noremove2 =
+    .message = Terima kasih telah mengirimkan laporan.
+abuse-report-messagebar-removed-extension2 =
+    .message = Terima kasih telah mengirimkan laporan. Anda telah menghapus ekstensi { $addon-name }.
+abuse-report-messagebar-removed-sitepermission2 =
+    .message = Terima kasih telah mengirimkan laporan. Anda telah menghapus pengaya Izin Situs { $addon-name }.
+abuse-report-messagebar-removed-theme2 =
+    .message = Terima kasih telah mengirimkan laporan. Anda telah menghapus tema { $addon-name }.
+abuse-report-messagebar-error2 =
+    .message = Terjadi kesalahan saat mengirim laporan untuk { $addon-name }.
+abuse-report-messagebar-error-recent-submit2 =
+    .message = Laporan untuk { $addon-name } tidak terkirim karena laporan lain telah dikirimkan baru-baru ini.
 
 ## Message bars actions.
 
@@ -66,18 +82,14 @@ abuse-report-messagebar-action-cancel = Batal
 
 abuse-report-damage-reason-v2 = Ini merusak komputer saya atau membahayakan data saya
 abuse-report-damage-example = Misal: memuat malware atau mencuri data
-
 abuse-report-spam-reason-v2 = Ini mengandung spam atau menyisipkan iklan yang tidak diinginkan
 abuse-report-spam-example = Misal: Memuat iklan di laman web
-
 abuse-report-settings-reason-v2 = Ini mengubah setelan pencarian, beranda, atau tab baru tanpa memberitahu atau bertanya pada saya
 abuse-report-settings-suggestions = Sebelum melaporkan ekstensi, Anda dapat mencoba mengubah pengaturan Anda:
 abuse-report-settings-suggestions-search = Ubah setelan pencarian baku Anda
 abuse-report-settings-suggestions-homepage = Ubah beranda dan tab baru Anda
-
 abuse-report-deceptive-reason-v2 = Berpura-pura menjadi sesuatu
 abuse-report-deceptive-example = Contoh: Deskripsi atau gambar yang menyesatkan
-
 abuse-report-broken-reason-extension-v2 = Ini tidak berfungsi, tampilan situs web rusak, atau memperlambat { -brand-product-name }
 abuse-report-broken-reason-sitepermission-v2 = Ini tidak berfungsi, tampilan situs web rusak, atau memperlambat { -brand-product-name }
 abuse-report-broken-reason-theme-v2 = Ini tidak berfungsi atau merusak tampilan peramban
@@ -94,11 +106,8 @@ abuse-report-broken-suggestions-theme =
     Sepertinya Anda telah menemukan bug. Selain mengirimkan laporan di sini, cara terbaik
     untuk menyelesaikan masalah fungsionalitas adalah menghubungi pengembang tema.
     <a data-l10n-name="support-link">Kunjungi situs web tema</a> untuk mendapatkan informasi pengembang.
-
 abuse-report-policy-reason-v2 = Ini mengandung konten yang berisi kebencian, kekerasan, atau melanggar hukum
 abuse-report-policy-suggestions = Catatan: Masalah berkaitan dengan hak cipta dan merek dagang wajib dilaporkan dalama proses terpisah. <a data-l10n-name="report-infringement-link">Gunakan langkah ini</a> untuk melaporkannya.
-
 abuse-report-unwanted-reason-v2 = Saya tidak pernah menginginkannya dan tidak tahu bagaimana cara menghilangkannya
 abuse-report-unwanted-example = Contoh: Sebuah aplikasi memasang sesuatu tanpa izin saya
-
 abuse-report-other-reason = Lainnya

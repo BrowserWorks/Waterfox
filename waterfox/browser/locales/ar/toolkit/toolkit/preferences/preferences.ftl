@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,6 @@ password-not-set =
 failed-pp-change = تعذّر تغيير كلمة السر الرئيسيّة.
 incorrect-pp = لم تدخل كلمة السر الرئيسيّة الصّحيحة. الرّجاء المحاولة مرّة ثانية.
 pp-change-ok = غُيّرت كلمة السر الرئيسيّة بنجاح.
-
-pp-empty-warning = لن تُحمى كلمات السر المحفوظة ولا المفاتيح الخاصة.
-pp-erased-ok = حذفتَ كلمة سرك الرئيسيّة. { pp-empty-warning }
-pp-not-wanted = تحذير! قرّرت عدم استخدام كلمة سر رئيسة. { pp-empty-warning }
 
 pp-change2empty-in-fips-mode = أنت حاليًّا في وضع FIPS. يتطلّب FIPS كلمة سر رئيسية غير فارغة.
 pw-change-success-title = نجح تغيير كلمة السر

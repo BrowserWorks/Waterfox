@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,13 +34,6 @@ about-networking-messages-received = 收到的信息数
 about-networking-bytes-sent = 发送字节数
 about-networking-bytes-received = 接收字节数
 about-networking-logging = 日志
-about-networking-log-tutorial = 参见 <a data-l10n-name="logging">HTTP 日志</a> 了解如何使用此工具。
-about-networking-current-log-file = 当前日志文件：
-about-networking-current-log-modules = 当前日志模块：
-about-networking-set-log-file = 设置日志文件
-about-networking-set-log-modules = 设置日志模块
-about-networking-start-logging = 开始记录日志
-about-networking-stop-logging = 停止记录日志
 about-networking-dns-lookup = DNS 查询
 about-networking-dns-lookup-button = 解析
 about-networking-dns-domain = 域名：
@@ -63,6 +56,8 @@ about-networking-rcwn-cache-slow = 缓存较慢次数
 about-networking-rcwn-cache-not-slow = 缓存非慢次数
 about-networking-networkid = 网络 ID
 about-networking-networkid-id = 网络 ID
+# Note: do not translate about:logging, as it is a URL.
+about-networking-moved-about-logging = 此页面已移动至 <a data-l10n-name="about-logging-url">about:logging</a>。
 
 ## Link is intended as "network link"
 

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -52,12 +52,10 @@ etp-card-title-always = Rozšířená ochrana proti sledování: vždy zapnutá
 etp-card-title-custom-not-blocking = Rozšířená ochrana proti sledování: vypnutá
 etp-card-content-description = { -brand-short-name } automaticky zabrání společnostem v tajném sledování vašeho prohlížení webu.
 protection-report-etp-card-content-custom-not-blocking =
-    Všechny ochrany jsou v tuto chvíli vypnuté. V nastavení { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "gen") }
-        [feminine] { -brand-short-name(case: "gen") }
-        [neuter] { -brand-short-name(case: "gen") }
-       *[other] aplikace { -brand-short-name }
-    } vyberte, které sledovací prvky chcete blokovat.
+    { -brand-short-name.case-status ->
+        [with-cases] Všechny ochrany jsou v tuto chvíli vypnuté. V nastavení { -brand-short-name(case: "gen") } vyberte, které sledovací prvky chcete blokovat.
+       *[no-cases] Všechny ochrany jsou v tuto chvíli vypnuté. V nastavení aplikace { -brand-short-name } vyberte, které sledovací prvky chcete blokovat.
+    }
 protection-report-manage-protections = Nastavení
 
 # This string is used to label the X axis of a graph. Other days of the week are generated via Intl.DateTimeFormat,
@@ -126,15 +124,15 @@ monitor-link = Jak to funguje
 monitor-header-content-no-account = { -monitor-brand-name } zkontroluje, zda byly vaše údaje součástí nějakého známého úniku dat, a může vás i upozornit, pokud se vyskytnou v nějakém novém.
 monitor-header-content-signed-in = { -monitor-brand-name } vás upozorní, pokud se nějaké vaše údaje objeví ve známém úniku dat.
 monitor-sign-up-link = Nastavit upozornění na úniky dat
-    .title = Nastavit v { -monitor-brand-name(case: "loc") } upozornění na úniky dat
+    .title = Nastavit ve { -monitor-brand-name(case: "loc") } upozornění na úniky dat
 auto-scan = Automaticky skenováno: dnes
 
 monitor-emails-tooltip =
-    .title = Zobrazit e-mailové adresy sledované službou { -monitor-brand-short-name }
+    .title = Zobrazit e-mailové adresy sledované { -monitor-brand-short-name(case: "ins") }
 monitor-breaches-tooltip =
-    .title = Zobrazit uniky dat známé službě { -monitor-brand-short-name }
+    .title = Zobrazit uniky dat známé { -monitor-brand-short-name(case: "dat") }
 monitor-passwords-tooltip =
-    .title = Zobrazit ve službě { -monitor-brand-short-name } seznam uniklých hesel
+    .title = Zobrazit v { -monitor-brand-short-name(case: "loc") } seznam uniklých hesel
 
 # This string is displayed after a large numeral that indicates the total number
 # of email addresses being monitored. Don’t add $count to
@@ -199,7 +197,7 @@ monitor-partial-breaches-percentage = Hotovo na { $percentageResolved } %
 monitor-partial-breaches-motivation-title-start = Skvělý začátek
 monitor-partial-breaches-motivation-title-middle = Jen tak dál
 monitor-partial-breaches-motivation-title-end = Máte skoro hotovo, jen tak dál.
-monitor-partial-breaches-motivation-description = Vyřešte zbytek úniků díky službě { -monitor-brand-short-name }.
+monitor-partial-breaches-motivation-description = Vyřešte zbytek úniků díky { -monitor-brand-short-name(case: "dat") }.
 monitor-resolve-breaches-link = Vyřešit úniky
     .title = Vyřešte úniky díky { -monitor-brand-short-name(case: "dat") }
 

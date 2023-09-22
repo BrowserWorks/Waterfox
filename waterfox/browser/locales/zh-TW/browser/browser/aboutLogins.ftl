@@ -1,15 +1,14 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
 
 about-logins-page-title = 登入資訊與密碼
-
-login-filter =
+about-logins-login-filter =
     .placeholder = 搜尋登入資訊
-
-create-login-button = 新增登入資訊
-
+    .key = F
+create-new-login-button =
+    .title = 新增登入資訊
 fxaccounts-sign-in-text = 在其他裝置上使用您的密碼
 fxaccounts-sign-in-sync-button = 登入進行同步
 fxaccounts-avatar-button =
@@ -35,10 +34,16 @@ about-logins-menu-menuitem-help = 說明
 
 login-list =
     .aria-label = 符合搜尋條件的登入資訊
+# Variables
+#   $count (number) - Number of logins
 login-list-count =
     { $count ->
        *[other] { $count } 筆登入資訊
     }
+# Variables
+#   $count (number) - Number of filtered logins
+#   $total (number) - Total number of logins
+login-list-filtered-count = 找到 { $count } 筆，共 { $total } 筆登入資訊
 login-list-sort-label-text = 排序依照:
 login-list-name-option = 名稱（A-Z 排序）
 login-list-name-reverse-option = 名稱（Z-A 排序）
@@ -71,6 +76,7 @@ about-logins-login-intro-heading-logged-out2 = 在找先前儲存過的登入資
 about-logins-login-intro-heading-logged-in = 找不到同步的登入資訊。
 login-intro-description = 若您在其他裝置上儲存登入資訊到 { -brand-product-name } 過，請參考下列步驟，即可在此裝置使用:
 login-intro-instructions-fxa = 在您儲存登入資訊的裝置註冊或登入 { -fxaccount-brand-name }。
+login-intro-instructions-fxa2 = 在您儲存登入資訊的裝置，註冊或登入帳號。
 login-intro-instructions-fxa-settings = 到「設定 > 同步 > 開啟同步…」勾選「登入資訊與密碼」選取框。
 login-intro-instructions-fxa-passwords-help = 若需更多說明，請造訪<a data-l10n-name="passwords-help-link">密碼支援</a>說明頁面。
 about-logins-intro-browser-only-import = 若登入資訊儲存在其他瀏覽器，您可以<a data-l10n-name="import-link">匯入到 { -brand-product-name }</a>
@@ -98,9 +104,17 @@ login-item-copied-password-button-text = 已複製！
 login-item-save-changes-button = 儲存變更
 login-item-save-new-button = 儲存
 login-item-cancel-button = 取消
-login-item-time-changed = 上次修改: { DATETIME($timeChanged, day: "numeric", month: "long", year: "numeric") }
-login-item-time-created = 建立於: { DATETIME($timeCreated, day: "numeric", month: "long", year: "numeric") }
-login-item-time-used = 上次使用: { DATETIME($timeUsed, day: "numeric", month: "long", year: "numeric") }
+
+## The date is displayed in a timeline showing the password evolution.
+## A label is displayed under the date to describe the type of change.
+## (e.g. updated, created, etc.)
+
+# Variables
+#   $datetime (date) - Event date
+login-item-timeline-point-date = { DATETIME($datetime, day: "numeric", month: "short", year: "numeric") }
+login-item-timeline-action-created = 建立於
+login-item-timeline-action-updated = 最後更新於
+login-item-timeline-action-used = 上次使用於
 
 ## OS Authentication dialog
 
@@ -115,19 +129,16 @@ about-logins-edit-login-os-auth-dialog-message-win = 請在下方輸入您的 Wi
 # This message can be seen when attempting to edit a login in about:logins
 # On MacOS, only provide the reason that account verification is needed. Do not put a complete sentence here.
 about-logins-edit-login-os-auth-dialog-message-macosx = 編輯儲存的登入資訊
-
 # This message can be seen when attempting to reveal a password in about:logins on Windows.
 about-logins-reveal-password-os-auth-dialog-message-win = 請在下方輸入您的 Windows 登入帳號密碼才能檢視密碼。這個動作是為了保護您的登入資訊安全。
 # This message can be seen when attempting to reveal a password in about:logins
 # On MacOS, only provide the reason that account verification is needed. Do not put a complete sentence here.
 about-logins-reveal-password-os-auth-dialog-message-macosx = 顯示儲存的網站密碼
-
 # This message can be seen when attempting to copy a password in about:logins on Windows.
 about-logins-copy-password-os-auth-dialog-message-win = 請在下方輸入您的 Windows 登入帳號密碼才能複製密碼。這個動作是為了保護您的登入資訊安全。
 # This message can be seen when attempting to copy a password in about:logins
 # On MacOS, only provide the reason that account verification is needed. Do not put a complete sentence here.
 about-logins-copy-password-os-auth-dialog-message-macosx = 複製儲存的網站密碼
-
 # This message can be seen when attempting to export a password in about:logins on Windows.
 about-logins-export-password-os-auth-dialog-message-win = 請在下方輸入您的 Windows 登入帳號密碼才能匯出登入資訊。這個動作是為了保護您的登入資訊安全。
 # This message can be seen when attempting to export a password in about:logins
@@ -146,23 +157,23 @@ master-password-reload-button =
 confirmation-dialog-cancel-button = 取消
 confirmation-dialog-dismiss-button =
     .title = 取消
-
 about-logins-confirm-remove-dialog-title = 要移除這筆登入資訊嗎？
 confirm-delete-dialog-message = 此動作無法復原。
 about-logins-confirm-remove-dialog-confirm-button = 移除
+
+## Variables
+##   $count (number) - Number of items
 
 about-logins-confirm-remove-all-dialog-confirm-button-label =
     { $count ->
         [1] 移除
        *[other] 移除全部
     }
-
 about-logins-confirm-remove-all-dialog-checkbox-label =
     { $count ->
         [1] 好，移除這筆登入資訊
        *[other] 好，移除這些登入資訊
     }
-
 about-logins-confirm-remove-all-dialog-title =
     { $count ->
         [one] 要移除 { $count } 筆登入資訊嗎？
@@ -172,7 +183,6 @@ about-logins-confirm-remove-all-dialog-message =
     { $count ->
        *[other] 將移除您已儲存到 { -brand-short-name } 的登入資訊，以及在此顯示的任何資料外洩警報。將無法還原此操作。
     }
-
 about-logins-confirm-remove-all-sync-dialog-title =
     { $count ->
        *[other] 要從所有裝置移除 { $count } 筆登入資訊嗎？
@@ -181,14 +191,19 @@ about-logins-confirm-remove-all-sync-dialog-message =
     { $count ->
        *[other] 將在您所有與 { -fxaccount-brand-name } 同步的裝置中，移除儲存到 { -brand-short-name } 的登入資訊，以及在此顯示的任何資料外洩警報。將無法還原此操作。
     }
+about-logins-confirm-remove-all-sync-dialog-message2 =
+    { $count ->
+        [1] 將在您所有同步的裝置中，移除儲存到 { -brand-short-name } 的登入資訊，以及在此顯示的任何資料外洩警報。將無法還原此操作。
+       *[other] 將在您所有同步的裝置中，移除儲存到 { -brand-short-name } 的登入資訊，以及在此顯示的任何資料外洩警報。將無法還原此操作。
+    }
+
+##
 
 about-logins-confirm-export-dialog-title = 匯出登入資訊與密碼
 about-logins-confirm-export-dialog-message = 您的密碼將以可閱讀的明文格式（例如 BadP@ssw0rd）儲存，任何能夠開啟檔案的人都能得知密碼內容。
 about-logins-confirm-export-dialog-confirm-button = 匯出…
-
 about-logins-alert-import-title = 匯入完成
 about-logins-alert-import-message = 檢視詳細的匯入摘要
-
 confirm-discard-changes-dialog-title = 要放棄未儲存的變更嗎？
 confirm-discard-changes-dialog-message = 將失去所有未儲存的變更。
 confirm-discard-changes-dialog-confirm-button = 捨棄
@@ -201,7 +216,6 @@ about-logins-breach-alert-date = 此事件發生於: { DATETIME($date, day: "num
 # Variables:
 #   $hostname (String) - The hostname of the website associated with the login, e.g. "example.com"
 about-logins-breach-alert-link = 前往 { $hostname }
-about-logins-breach-alert-learn-more-link = 了解更多
 
 ## Vulnerable Password notification
 
@@ -219,7 +233,6 @@ about-logins-vulnerable-alert-learn-more-link = 了解更多
 # Variables:
 #   $loginTitle (String) - The title of the website associated with the login.
 about-logins-error-message-duplicate-login-with-link = 已有於 { $loginTitle } 使用相同使用者名稱的項目存在。<a data-l10n-name="duplicate-link">要前往現有項目嗎？</a>
-
 # This is a generic error message.
 about-logins-error-message-default = 嘗試儲存此密碼時發生錯誤。
 
@@ -268,12 +281,10 @@ about-logins-import-dialog-items-added =
     { $count ->
        *[other] <span>新增的登入資訊:</span> <span data-l10n-name="count">{ $count }</span>
     }
-
 about-logins-import-dialog-items-modified =
     { $count ->
        *[other] <span>更新的現有登入資訊:</span> <span data-l10n-name="count">{ $count }</span>
     }
-
 about-logins-import-dialog-items-no-change =
     { $count ->
        *[other] <span>重複的登入資訊:</span> <span data-l10n-name="count">{ $count }</span><span data-l10n-name="meta">（未匯入）</span>
@@ -283,7 +294,6 @@ about-logins-import-dialog-items-error =
        *[other] <span>錯誤:</span> <span data-l10n-name="count">{ $count }</span> <span data-l10n-name="meta">（未匯入）</span>
     }
 about-logins-import-dialog-done = 完成
-
 about-logins-import-dialog-error-title = 匯入錯誤
 about-logins-import-dialog-error-conflicting-values-title = 單筆登入資訊當中有多筆衝突的值
 about-logins-import-dialog-error-conflicting-values-description = 例如: 單一筆登入資訊中出現了多組使用者名稱、密碼、網址等等。
@@ -297,10 +307,8 @@ about-logins-import-dialog-error-no-logins-imported = 未匯入任何登入資�
 about-logins-import-dialog-error-learn-more = 了解更多
 about-logins-import-dialog-error-try-import-again = 再嘗試匯入一次…
 about-logins-import-dialog-error-cancel = 取消
-
 about-logins-import-report-title = 匯入摘要
 about-logins-import-report-description = 已將登入資訊與密碼匯入到 { -brand-short-name }。
-
 #
 # Variables:
 #  $number (number) - The number of the row

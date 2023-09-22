@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,6 +18,10 @@ support-addons-type = Type
 support-addons-enabled = Ingeschakeld
 support-addons-version = Versie
 support-addons-id = ID
+legacy-user-stylesheets-title = Verouderde gebruikersstijlbladen
+legacy-user-stylesheets-enabled = Actief
+legacy-user-stylesheets-stylesheet-types = Stijlbladen
+legacy-user-stylesheets-no-stylesheets-found = Geen stijlbladen gevonden
 security-software-title = Beveiligingssoftware
 security-software-type = Type
 security-software-name = Naam
@@ -73,10 +77,11 @@ app-basics-remote-processes-count = Externe processen
 app-basics-enterprise-policies = Bedrijfsbeleidsregels
 app-basics-location-service-key-google = Google-locatieservicesleutel
 app-basics-safebrowsing-key-google = Google Safe Browsing-sleutel
-app-basics-key-mozilla = Waterfox-locatieservicesleutel
+app-basics-key-mozilla = BrowserWorks-locatieservicesleutel
 app-basics-safe-mode = Veilige modus
 app-basics-memory-size = Geheugengrootte (RAM)
 app-basics-disk-available = Beschikbare schijfruimte
+app-basics-pointing-devices = Aanwijsapparaten
 # Variables:
 #   $value (number) - Amount of data being stored
 #   $unit (string) - The unit of data being stored (e.g. MB)
@@ -110,11 +115,21 @@ graphics-gpu2-title = GPU #2
 graphics-decision-log-title = Beslissingenlogboek
 graphics-crash-guards-title = Door crashbeveiliging uitgeschakelde functies
 graphics-workarounds-title = Workarounds
+graphics-device-pixel-ratios = Pixelverhoudingen van vensterapparaat
 # Windowing system in use on Linux (e.g. X11, Wayland).
 graphics-window-protocol = Vensterprotocol
 # Desktop environment in use on Linux (e.g. GNOME, KDE, XFCE, etc).
 graphics-desktop-environment = Desktopomgeving
 place-database-title = Places-database
+place-database-stats = Statistieken
+place-database-stats-show = Statistieken tonen
+place-database-stats-hide = Statistieken verbergen
+place-database-stats-entity = Entiteit
+place-database-stats-count = Aantal
+place-database-stats-size-kib = Grootte (KB)
+place-database-stats-size-perc = Grootte (%)
+place-database-stats-efficiency-perc = Efficiëntie (%)
+place-database-stats-sequentiality-perc = Volgorde (%)
 place-database-integrity = Integriteit
 place-database-verify-integrity = Integriteit verifiëren
 a11y-title = Toegankelijkheid
@@ -164,6 +179,15 @@ media-capabilities-title = Mediamogelijkheden
 media-codec-support-info = Codec-ondersteuningsinformatie
 # List all the entries of the database.
 media-capabilities-enumerate = Database inventariseren
+
+## Codec support table
+
+media-codec-support-sw-decoding = Software-decodering
+media-codec-support-hw-decoding = Hardware-decodering
+media-codec-support-codec-name = Codecnaam
+media-codec-support-supported = Ondersteund
+media-codec-support-unsupported = Niet ondersteund
+media-codec-support-error = Codec-ondersteuningsinformatie niet beschikbaar. Probeer het opnieuw na het afspelen van een mediabestand.
 
 ##
 
@@ -278,6 +302,8 @@ webgl2-renderer = Renderer van  WebGL 2-stuurprogramma
 webgl2-version = Versie van WebGL 2-stuurprogramma
 webgl2-driver-extensions = Extensies van WebGL 2-stuurprogramma
 webgl2-extensions = WebGL 2-extensies
+webgpu-default-adapter = WebGPU-standaardadapter
+webgpu-fallback-adapter = WebGPU-terugvaladapter
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = Geblokkeerd vanwege bekende problemen: <a data-l10n-name="bug-link">bug { $bugNumber }</a>
@@ -307,6 +333,7 @@ can-sandbox-media = Mediaplug-in-sandboxing
 content-sandbox-level = Sandboxniveau van inhoudsproces
 effective-content-sandbox-level = Effectief sandboxniveau van inhoudsproces
 content-win32k-lockdown-state = Win32k-vergrendelingsstatus voor inhoudsproces
+support-sandbox-gpu-level = Sandboxniveau van GPU-proces
 sandbox-proc-type-content = inhoud
 sandbox-proc-type-file = bestandsinhoud
 sandbox-proc-type-media-plugin = mediaplug-in
@@ -378,3 +405,10 @@ support-remote-experiments-see-about-studies = Zie <a data-l10n-name="support-ab
 support-remote-features-title = Externe functies
 support-remote-features-name = Naam
 support-remote-features-status = Status
+
+## Pointing devices
+
+pointing-device-mouse = Muis
+pointing-device-touchscreen = Aanraakscherm
+pointing-device-pen-digitizer = Pen Digitizer
+pointing-device-none = Geen aanwijsapparaten

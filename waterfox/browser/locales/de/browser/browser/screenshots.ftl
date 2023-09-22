@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -55,3 +55,6 @@ screenshots-private-window-error-details = Wir bitten um Entschuldigung für die
 
 screenshots-generic-error-title = { -screenshots-brand-name } funktioniert nicht richtig.
 screenshots-generic-error-details = Wir wissen auch nicht, was gerade passiert ist. Könnten Sie das Bildschirmfoto erneut oder auf einer anderen Seite aufnehmen?
+
+screenshots-too-large-error-title = Ihr Bildschirmfoto wurde zugeschnitten, weil es zu groß war
+screenshots-too-large-error-details = Versuchen Sie, eine Region auszuwählen, die auf ihrer längsten Seite kleiner als 32.700 Pixel ist oder eine Gesamtfläche von maximal 124.900.000 Pixel hat.

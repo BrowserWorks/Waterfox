@@ -1,13 +1,13 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-connection-window =
+connection-window2 =
     .title = Ρυθμίσεις σύνδεσης
     .style =
         { PLATFORM() ->
-            [macos] width: 44em
-           *[other] width: 49em
+            [macos] min-width: 44em
+           *[other] min-width: 49em
         }
 
 connection-close-key =
@@ -36,8 +36,8 @@ connection-proxy-http = Διακομιστής μεσολάβησης HTTP
 connection-proxy-http-port = Θύρα
     .accesskey = Θ
 connection-proxy-https-sharing =
-    .label = Να χρησιμοποιείται ο διακομιστής μεσολάβησης και για HTTPS
-    .accesskey = χ
+    .label = Χρήση αυτού του διακομιστή μεσολάβησης και για HTTPS
+    .accesskey = ρ
 
 connection-proxy-https = Διακομιστής μεσολάβησης HTTPS
     .accesskey = H
@@ -72,20 +72,18 @@ connection-proxy-reload =
     .accesskey = ν
 
 connection-proxy-autologin =
-    .label = Να μην ζητείται ταυτοποίηση αν είναι αποθηκευμένος ο κωδικός πρόσβασης
+    .label = Να μη ζητείται ταυτοποίηση αν είναι αποθηκευμένος ο κωδικός πρόσβασης
     .accesskey = μ
     .tooltip = Αυτή η επιλογή ελέγχει κρυφά την ταυτότητά σας σε διακομιστές μεσολάβησης όταν έχετε αποθηκεύσει τα διαπιστευτήριά τους. Θα ειδοποιηθείτε αν αποτύχει η ταυτοποίηση.
+
+connection-proxy-autologin-checkbox =
+    .label = Να μη ζητείται ταυτοποίηση αν είναι αποθηκευμένος ο κωδικός πρόσβασης
+    .accesskey = μ
+    .tooltiptext = Αυτή η επιλογή ελέγχει κρυφά την ταυτότητά σας σε διακομιστές μεσολάβησης όταν έχετε αποθηκεύσει τα διαπιστευτήριά τους. Θα ειδοποιηθείτε αν αποτύχει η ταυτοποίηση.
 
 connection-proxy-socks-remote-dns =
     .label = Διακομιστής μεσολάβησης DNS κατά τη χρήση SOCKS v5
     .accesskey = D
-
-connection-dns-over-https =
-    .label = Ενεργοποίηση DNS over HTTPS
-    .accesskey = γ
-
-connection-dns-over-https-url-resolver = Χρήση παρόχου
-    .accesskey = Χ
 
 # Variables:
 #   $name (String) - Display name or URL for the DNS over HTTPS provider

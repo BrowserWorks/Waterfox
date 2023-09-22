@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-webpage-languages-window =
+webpage-languages-window2 =
     .title = 웹 페이지 언어 설정
-    .style = width: 40em
+    .style = min-width: 40em
 
 languages-close-key =
     .key = w
@@ -49,9 +49,9 @@ languages-code-format =
 languages-active-code-format =
     .value = { languages-code-format.label }
 
-browser-languages-window =
+browser-languages-window2 =
     .title = { -brand-short-name } 언어 설정
-    .style = width: 40em
+    .style = min-width: 40em
 
 browser-languages-description = { -brand-short-name }가 첫번째 언어를 기본 언어로 표시하고 필요한 경우 순서대로 대체 언어를 표시합니다.
 

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,6 +22,12 @@ bookmark-overlay-folders-expander =
     .tooltiptextdown = { bookmark-overlay-folders-expander.tooltiptext }
     .tooltiptextup = Nascondi
 
+bookmark-overlay-folders-expander2 =
+    .tooltiptext = Visualizza tutte le cartelle dei segnalibri
+
+bookmark-overlay-folders-expander-hide =
+    .tooltiptext = Nascondi
+
 bookmark-overlay-new-folder-button =
     .label = Nuova cartella
     .accesskey = o
@@ -38,6 +44,12 @@ bookmark-overlay-tags-expander =
     .tooltiptextdown = { bookmark-overlay-tags-expander.tooltiptext }
     .tooltiptextup = Nascondi
 
+bookmark-overlay-tags-expander2 =
+    .tooltiptext = Visualizza tutte le etichette
+
+bookmark-overlay-tags-expander-hide =
+    .tooltiptext = Nascondi
+
 bookmark-overlay-keyword-2 =
     .value = Parola chiave
     .accesskey = P
@@ -45,3 +57,4 @@ bookmark-overlay-keyword-2 =
 bookmark-overlay-tags-caption-label = Utilizza le etichette per organizzare i tuoi siti preferiti e cercare nei segnalibri usando la barra degli indirizzi
 
 bookmark-overlay-keyword-caption-label-2 = Utilizza una singola parola chiave per aprire il segnalibro direttamente dalla barra degli indirizzi
+

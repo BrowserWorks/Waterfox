@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,7 +20,7 @@ import-from-edge =
     .accesskey = E
 import-from-edge-legacy =
     .label = Microsoft Edge Legacy
-    .accesskey = o
+    .accesskey = y
 import-from-edge-beta =
     .label = Microsoft Edge Beta
     .accesskey = B
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -55,6 +61,10 @@ import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
 
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
+
 no-migration-sources = Non è stato trovato alcun programma contenente segnalibri, cronologie o password.
 
 import-source-page-title = Importa impostazioni e dati
@@ -64,8 +74,7 @@ import-items-description = Selezionare gli oggetti da importare:
 
 import-permissions-page-title = Garantire a { -brand-short-name } i permessi necessari
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = In macOS è necessario garantire esplicitamente a { -brand-short-name } il permesso di accedere ai segnalibri in Safari. Fare clic su “Continua” e selezionare il file “Bookmarks.plist” nel pannello che verrà visualizzato.
+import-safari-permissions-string = In macOS è necessario garantire esplicitamente a { -brand-short-name } il permesso di accedere ai dati di Safari. Fare clic su “Continua”, selezionare la cartella “Safari” nella finestra del Finder che verrà visualizzata e fare clic su “Apri”.
 
 import-migrating-page-title = Importazione…
 
@@ -171,3 +180,8 @@ browser-data-session-checkbox =
     .label = Finestre e schede
 browser-data-session-label =
     .value = Finestre e schede
+
+browser-data-payment-methods-checkbox =
+  .label = Metodi di pagamento
+browser-data-payment-methods-label =
+  .value = Metodi di pagamento

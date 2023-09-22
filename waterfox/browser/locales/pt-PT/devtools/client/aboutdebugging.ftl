@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -220,7 +220,7 @@ about-debugging-browser-version-too-old = O navegador ligado tem uma versão ant
 
 # Dedicated message for a backward compatibility issue that occurs when connecting:
 # from Fx 70+ to the old Waterfox for Android (aka Fennec) which uses Fx 68.
-about-debugging-browser-version-too-old-fennec = Esta versão do Waterfox não pode depurar o Waterfox para Android (68). Nós recomendamos a instalação do Waterfox Nightly para Android no seu telefone para fazer testes. <a>Mais detalhes</a>
+about-debugging-browser-version-too-old-fennec = Esta versão do Waterfox não pode depurar o Waterfox para Android (68). Nós recomendamos a instalação do Waterfox Nightly para Android no seu telemóvel para fazer testes. <a>Mais detalhes</a>
 
 # This string is displayed in the runtime page if the remote browser version is too recent.
 # "Troubleshooting" link points to https://firefox-source-docs.mozilla.org/devtools-user/about_colon_debugging/
@@ -378,14 +378,6 @@ about-debugging-worker-inspect-action-disabled =
 # Displayed as title of the inspect button for zombie tabs (e.g. tabs loaded via a session restore).
 about-debugging-zombie-tab-inspect-action-disabled =
     .title = O separador não está totalmente carregado e não pode ser inspecionado
-
-# Displayed as name for the Main Process debug target in the Processes category. Only for
-# remote runtimes, if `devtools.aboutdebugging.process-debugging` is true.
-about-debugging-main-process-name = Processo principal
-
-# Displayed as description for the Main Process debug target in the Processes category.
-# Only for remote browsers, if `devtools.aboutdebugging.process-debugging` is true.
-about-debugging-main-process-description2 = Processo principal para o navegador de destino
 
 # Displayed instead of the Main Process debug target when the preference
 # `devtools.browsertoolbox.fission` is true.

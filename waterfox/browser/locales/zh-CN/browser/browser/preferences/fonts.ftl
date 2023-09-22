@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -42,7 +42,7 @@ fonts-langgroup-gurmukhi =
 fonts-langgroup-japanese =
     .label = 日文
 fonts-langgroup-hebrew =
-    .label = 希伯莱文
+    .label = 希伯来文
 fonts-langgroup-kannada =
     .label = 卡纳达文
 fonts-langgroup-khmer =
@@ -107,11 +107,6 @@ fonts-minsize-none =
 fonts-allow-own =
     .label = 允许页面选择自己的字体代替您的上述选择
     .accesskey = A
-
-## Text Encodings
-##
-## Translate the encoding names as adjectives for an encoding, not as the name
-## of the language.
 
 # Variables:
 #   $name {string, "Arial"} - Name of the default font

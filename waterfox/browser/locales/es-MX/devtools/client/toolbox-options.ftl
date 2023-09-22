@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -45,6 +45,12 @@ options-collapse-attrs-tooltip =
 options-inspector-draggable-properties-label = Haz clic y arrastra para editar los valores de tamaño
 options-inspector-draggable-properties-tooltip =
     .title = Haz clic y arrastra para editar los valores de tamaño en la vista de reglas del inspector.
+
+# The label for the checkbox option to enable simplified highlighting on page elements
+# within the inspector for users who enabled prefers-reduced-motion = reduce
+options-inspector-simplified-highlighters-label = Usa resaltadores más simples con prefers-reduced-motion
+options-inspector-simplified-highlighters-tooltip =
+    .title = Habilita resaltadores simplificados cuando se habilita prefers-reduced-motion. Dibuja líneas en lugar de rectángulos rellenados alrededor de los elementos resaltados para evitar efectos de parpadeo.
 
 ## "Default Color Unit" options for the Inspector
 
@@ -141,9 +147,3 @@ options-source-maps-tooltip =
 
 # The message shown for settings that trigger page reload
 options-context-triggers-page-refresh = * Sólo la sesión actual, recarga la página
-
-# The label for the checkbox that toggles the display of the platform data in the
-# Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference in about:config
-options-show-platform-data-label = Mostrar plataforma de datos de Gecko
-options-show-platform-data-tooltip =
-    .title = Si activas esta opción, los informes del perfilador de JavaScript incluirán Símbolos de plataforma de Gecko

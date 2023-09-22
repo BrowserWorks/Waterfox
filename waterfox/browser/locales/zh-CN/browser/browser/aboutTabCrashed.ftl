@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,8 +8,8 @@ crashed-restore-tab-button = 恢复此标签页
 crashed-restore-all-button = 恢复所有已崩溃的标签页
 crashed-header = 哎呀，您的标签页崩溃了。
 crashed-offer-help = 让我们来帮忙！
-crashed-single-offer-help-message = 点击“{ crashed-restore-tab-button }”可重新载入该页面。
-crashed-multiple-offer-help-message = 点击“{ crashed-restore-tab-button }”或“{ crashed-restore-all-button }”可重新载入该页面。
+crashed-single-offer-help-message = 点击“{ crashed-restore-tab-button }”可重新加载该页面。
+crashed-multiple-offer-help-message = 点击“{ crashed-restore-tab-button }”或“{ crashed-restore-all-button }”可重新加载该页面。
 crashed-request-help = 你愿意帮我们个忙吗？
 crashed-request-help-message = 反馈崩溃报告能帮助我们找出问题所在，不断改进 { -brand-short-name }。
 crashed-request-report-title = 反馈此标签页

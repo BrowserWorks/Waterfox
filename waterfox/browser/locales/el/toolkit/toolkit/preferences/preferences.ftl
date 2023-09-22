@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,9 +9,8 @@ failed-pp-change = Δεν ήταν δυνατή η αλλαγή του κύρι�
 incorrect-pp = Δεν πληκτρολογήσατε το σωστό κύριο κωδικό πρόσβασης. Παρακαλούμε δοκιμάστε ξανά.
 pp-change-ok = Επιτυχής αλλαγή κύριου κωδικού πρόσβασης.
 
-pp-empty-warning = Οι αποθηκευμένοι κωδικοί πρόσβασης και τα ιδιωτικά σας κλειδιά δεν θα προστατεύονται.
-pp-erased-ok = Έχετε διαγράψει τον κύριο κωδικό πρόσβασής σας. { pp-empty-warning }
-pp-not-wanted = Προσοχή! Αποφασίσατε να μην κάνετε χρήση ενός κύριου κωδικού πρόσβασης. { pp-empty-warning }
+settings-pp-erased-ok = Έχετε διαγράψει τον κύριο κωδικό πρόσβασής σας. Δεν θα προστατεύονται οι αποθηκευμένοι κωδικοί πρόσβασης και τα ιδιωτικά κλειδιά πιστοποιητικών που διαχειρίζεται το { -brand-short-name }.
+settings-pp-not-wanted = Προειδοποίηση! Έχετε αποφασίσει να μη χρησιμοποιήσετε κύριο κωδικό πρόσβασης. Δεν θα προστατεύονται οι αποθηκευμένοι κωδικοί πρόσβασης και τα ιδιωτικά κλειδιά πιστοποιητικών που διαχειρίζεται το { -brand-short-name }.
 
 pp-change2empty-in-fips-mode = Είστε σε λειτουργία FIPS. Το FIPS απαιτεί μη κενό κύριο κωδικό πρόσβασης.
 pw-change-success-title = Επιτυχής αλλαγή κωδικού

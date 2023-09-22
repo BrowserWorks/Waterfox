@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -180,6 +180,17 @@ menu-view-full-screen =
     .label = Toàn màn hình
     .accesskey = F
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Vào chế độ đọc sách
+    .accesskey = R
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Đóng chế độ đọc sách
+    .accesskey = R
+
 ##
 
 menu-view-show-all-tabs =
@@ -208,8 +219,9 @@ menu-history-undo-menu =
     .label = Thẻ mới đóng gần đây
 menu-history-undo-window-menu =
     .label = Các cửa sổ mới đóng
-menu-history-reopen-all-tabs = Mở lại tất cả các thẻ
-menu-history-reopen-all-windows = Mở lại tất cả các cửa sổ
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = Tìm kiếm lịch sử
 
 ## Bookmarks Menu
 
@@ -218,14 +230,13 @@ menu-bookmarks-menu =
     .accesskey = B
 menu-bookmarks-manage =
     .label = Quản lý dấu trang
-menu-bookmark-current-tab =
-    .label = Đánh dấu thẻ hiện tại
-menu-bookmark-edit =
-    .label = Chỉnh sửa dấu trang này
 menu-bookmark-tab =
     .label = Đánh dấu thẻ hiện tại…
 menu-edit-bookmark =
     .label = Chỉnh sửa dấu trang này…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = Tìm kiếm dấu trang
 menu-bookmarks-all-tabs =
     .label = Đánh dấu tất cả các thẻ…
 menu-bookmarks-toolbar =
@@ -319,6 +330,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = Tắt chế độ xử lý sự cố
     .accesskey = M
+menu-help-switch-device =
+    .label = Chuyển sang một thiết bị mới
+    .accesskey = N
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =

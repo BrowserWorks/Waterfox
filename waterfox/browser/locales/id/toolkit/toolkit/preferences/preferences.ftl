@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,6 @@ password-not-set =
 failed-pp-change = Gagal mengubah Sandi Utama.
 incorrect-pp = Anda tidak memasukkan Sandi Utama dengan benar. Silakan coba lagi.
 pp-change-ok = Sandi Utama berhasil diubah.
-
-pp-empty-warning = Kata sandi dan kunci pribadi yang Anda simpan tidak akan dilindungi.
-pp-erased-ok = Anda telah menghapus Sandi Utama Anda. { pp-empty-warning }
-pp-not-wanted = Peringatan! Anda memutuskan untuk tidak menggunakan Sandi Utama. { pp-empty-warning }
 
 pp-change2empty-in-fips-mode = Anda sedang dalam mode FIPS. Mode ini mewajibkan Sandi Utama harus diisi.
 pw-change-success-title = Sandi Berhasil Diubah

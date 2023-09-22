@@ -1,17 +1,17 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-create-profile-window =
+create-profile-window2 =
     .title = Profilio kūrimo vediklis
-    .style = width: 45em; height: 32em;
+    .style = min-width: 45em; min-height: 32em;
 
 ## First wizard page
 
-create-profile-first-page-header =
+create-profile-first-page-header2 =
     { PLATFORM() ->
         [macos] Pradžia
-       *[other] Sveiki! Čia { create-profile-window.title }
+       *[other] Sveiki! Čia { create-profile-window2.title }
     }
 
 profile-creation-explanation-1 = Informacija apie „{ -brand-short-name }“ nuostatas, tinklaviečių adresynas, laiškai ir t. t. laikoma asmeniniuose profiliuose.
@@ -28,10 +28,10 @@ profile-creation-explanation-4 =
 
 ## Second wizard page
 
-create-profile-last-page-header =
+create-profile-last-page-header2 =
     { PLATFORM() ->
         [macos] Pabaiga
-       *[other] Baigiama: { create-profile-window.title }
+       *[other] Baigiama: { create-profile-window2.title }
     }
 
 profile-creation-intro = Jeigu turite kelis profilius, juos atskirsite pagal vardus. Galite pasirinkti čia pateiktą vardą arba surinkti kitą.
