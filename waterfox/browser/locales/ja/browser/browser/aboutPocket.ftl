@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,14 +20,13 @@ pocket-panel-saved-page-removed = ページを削除しました
 pocket-panel-saved-page-saved = { -pocket-brand-name } に保存しました
 pocket-panel-saved-page-saved-b = { -pocket-brand-name } に保存しました！
 pocket-panel-saved-processing-remove = ページを削除しています...
-pocket-panel-saved-removed = リストからページを削除しました
+pocket-panel-saved-removed-updated = 保存リストからページを削除しました
 pocket-panel-saved-processing-tags = タグを追加しています...
 pocket-panel-saved-remove-page = ページを削除
 pocket-panel-saved-save-tags = 保存
 pocket-panel-saved-saving-tags = 保存しています...
 pocket-panel-saved-suggested-tags = 提案タグ
 pocket-panel-saved-tags-saved = タグを追加しました
-pocket-panel-signup-view-list = リストを表示
 
 # This is displayed above a field where the user can add tags
 pocket-panel-signup-add-tags = タグを追加:
@@ -45,13 +44,12 @@ pocket-panel-signup-tagline-story-one = { -brand-product-name } で { -pocket-br
 pocket-panel-signup-tagline-story-two = { -pocket-brand-name } でいつでもどこでも閲覧できます。
 
 pocket-panel-signup-cta-a-fix = インターネットの保存ボタンです
-pocket-panel-signup-cta-b = { -pocket-brand-name } ボタンをクリックすると記事、動画、リンクを保存できます。いつでもどの端末からでも保存リストを開けます。
+pocket-panel-signup-cta-b-updated = { -pocket-brand-name } ボタンをクリックすると記事、動画、リンクを保存できます。いつでもどの端末からでも保存リストを開けます。
 pocket-panel-signup-cta-b-short = { -pocket-brand-name } ボタンをクリックすると記事、動画、リンクを保存できます。
-pocket-panel-signup-cta-c = いつでもどの端末からでも保存リストを開けます。
+pocket-panel-signup-cta-c-updated = いつでもどの端末からでも保存リストを開けます。
 
 ## about:pocket-home panel
 
-pocket-panel-home-my-list = マイリスト
 pocket-panel-home-welcome-back = おかえりなさい
 pocket-panel-home-paragraph = { -pocket-brand-name } でウェブページ、記事、動画、ポッドキャストを探して保存したり、読んでいた記事に戻ることができます。
 pocket-panel-home-explore-popular-topics = 人気の記事を探す
@@ -65,7 +63,7 @@ pocket-panel-home-new-user-message = 最近保存したものを表示します�
 
 ## Pocket panel header component
 
-pocket-panel-header-my-list = マイリストを表示
+pocket-panel-header-my-saves = 保存リストを表示
 pocket-panel-header-sign-in = ログイン
 
 ## Pocket panel buttons

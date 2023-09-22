@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -24,6 +24,12 @@ bookmark-overlay-folders-expander =
     .tooltiptextdown = { bookmark-overlay-folders-expander.tooltiptext }
     .tooltiptextup = Απόκρυψη
 
+bookmark-overlay-folders-expander2 =
+    .tooltiptext = Εμφάνιση όλων των φακέλων σελιδοδεικτών
+
+bookmark-overlay-folders-expander-hide =
+    .tooltiptext = Απόκρυψη
+
 bookmark-overlay-new-folder-button =
     .label = Νέος φάκελος
     .accesskey = ο
@@ -39,6 +45,12 @@ bookmark-overlay-tags-expander =
     .tooltiptext = Εμφάνιση όλων των ετικετών
     .tooltiptextdown = { bookmark-overlay-tags-expander.tooltiptext }
     .tooltiptextup = Απόκρυψη
+
+bookmark-overlay-tags-expander2 =
+    .tooltiptext = Εμφάνιση όλων των ετικετών
+
+bookmark-overlay-tags-expander-hide =
+    .tooltiptext = Απόκρυψη
 
 bookmark-overlay-keyword-2 =
     .value = Λέξη-κλειδί

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -47,5 +47,4 @@ welcome-back-restore-button =
 welcome-back-restore-all-label = Restaurar todas las ventanas & pestañas
 welcome-back-restore-some-label = Restaurar solo las que quieres
 
-welcome-back-page-info-link = Tus complementos y personalizaciones han sido eliminados y la configuración de tu navegador se ha restaurado a los valores predeterminados. Si esto no arregla el problema, <a data-l10n-name="link-more">conoce más acerca de lo que puedes hacer.</a>
-
+welcome-back-page-info-link = Tus complementos y personalizaciones han sido eliminados y los ajustes de tu navegador se ha restaurado a los valores predeterminados. Si esto no arregla el problema, <a data-l10n-name="link-more">conoce más acerca de lo que puedes hacer.</a>

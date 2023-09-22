@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,6 +26,9 @@ policy-Bookmarks = Bladwijzers maken in de Bladwijzerwerkbalk, het menu Bladwijz
 policy-CaptivePortal = Ondersteuning voor hotspot-aanmeldingspagina inschakelen of uitschakelen.
 policy-CertificatesDescription = Certificaten toevoegen of ingebouwde certificaten gebruiken.
 policy-Cookies = Toestaan of weigeren dat websites cookies instellen.
+# Containers in this context is referring to container tabs in Waterfox.
+policy-Containers = Beleid met betrekking tot containers instellen.
+policy-DisableAccounts = Accountgebaseerde services uitschakelen, waaronder synchronisatie.
 policy-DisabledCiphers = Coderingssuites uitschakelen.
 policy-DefaultDownloadDirectory = Standaard downloadmap instellen.
 policy-DisableAppUpdate = Voorkomen dat de browser wordt bijgewerkt.
@@ -41,7 +44,7 @@ policy-DisableForgetButton = Toegang tot de knop Vergeten voorkomen.
 policy-DisableFormHistory = Geen zoek- en formuliergeschiedenis onthouden.
 policy-DisablePrimaryPasswordCreation = Wanneer true, kan geen hoofdwachtwoord worden aangemaakt.
 policy-DisablePasswordReveal = Niet toestaan dat wachtwoorden worden onthuld in opgeslagen aanmeldingen.
-policy-DisablePocket = De functie voor het opslaan van webpagina’s naar Pocket uitschakelen.
+policy-DisablePocket2 = De functie voor het opslaan van webpagina’s naar { -pocket-brand-name } uitschakelen.
 policy-DisablePrivateBrowsing = Privénavigatie uitschakelen.
 policy-DisableProfileImport = De menuopdracht voor het importeren van gegevens vanuit een andere browser uitschakelen.
 policy-DisableProfileRefresh = De knop { -brand-short-name } opfrissen in de about:support-pagina uitschakelen.
@@ -50,6 +53,7 @@ policy-DisableSecurityBypass = Voorkomen dat de gebruiker bepaalde beveiligingsi
 policy-DisableSetAsDesktopBackground = De menuopdracht Als bureaubladachtergrond instellen voor afbeeldingen uitschakelen.
 policy-DisableSystemAddonUpdate = Voorkomen dat de browser systeemadd-ons installeert en bijwerkt.
 policy-DisableTelemetry = Telemetry uitschakelen.
+policy-DisableThirdPartyModuleBlocking = Voorkomen dat de gebruiker modules van derden die in het { -brand-short-name }-proces worden geïnjecteerd blokkeert
 policy-DisplayBookmarksToolbar = Standaard de Bladwijzerwerkbalk weergeven.
 policy-DisplayMenuBar = Standaard de Menubalk weergeven.
 policy-DNSOverHTTPS = DNS over HTTPS configureren.
@@ -66,9 +70,8 @@ policy-ExemptDomainFileTypePairsFromFileTypeDownloadWarnings = Waarschuwingen ui
 policy-Extensions = Extensies installeren, de-installeren of vergrendelen. De optie voor installeren gebruikt URL’s of paden als parameters. De opties voor de-installeren en vergrendelen gebruiken extensie-ID’s.
 policy-ExtensionSettings = Alle aspecten van installatie van extensies beheren.
 policy-ExtensionUpdate = Automatische extensie-updates inschakelen of uitschakelen.
-policy-WaterfoxHome = De startpagina van Waterfox instellen.
 policy-WaterfoxHome2 = { -firefox-home-brand-name } configureren.
-policy-FlashPlugin = Gebruik van de Flash-plug-in toestaan of weigeren.
+policy-WaterfoxSuggest = { -firefox-suggest-brand-name } configureren.
 policy-GoToIntranetSiteForSingleWordEntryInAddressBar = Directe navigatie op intranetsites forceren in plaats van zoeken bij het typen van enkele woorden in de adresbalk.
 policy-Handlers = Standaard toepassinghandlers configureren
 policy-HardwareAcceleration = Wanneer false, hardwareversnelling uitschakelen.
@@ -110,8 +113,8 @@ policy-SanitizeOnShutdown2 = Navigatiegegevens wissen bij afsluiten.
 policy-SearchBar = De standaardlocatie van de zoekbalk instellen. De gebruiker mag deze nog steeds aanpassen.
 policy-SearchEngines = Instellingen voor zoekmachines configureren. Deze beleidsregel is alleen beschikbaar in de Extended Support Release (ESR)-versie.
 policy-SearchSuggestEnabled = Zoeksuggesties inschakelen of uitschakelen.
-# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
-policy-SecurityDevices = PKCS #11-modules installeren.
+# For more information, see https://wikipedia.org/wiki/PKCS_11
+policy-SecurityDevices2 = PKCS #11-modules toevoegen of verwijderen.
 policy-ShowHomeButton = De startpaginaknop op de werkbalk tonen.
 policy-SSLVersionMax = De maximale SSL-versie instellen.
 policy-SSLVersionMin = De minimale SSL-versie instellen.

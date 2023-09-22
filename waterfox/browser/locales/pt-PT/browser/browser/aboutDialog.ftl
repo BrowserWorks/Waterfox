@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,8 +16,15 @@ update-updateButton =
     .accesskey = R
 
 update-checkingForUpdates = A procurar atualizações…
-update-downloading = <img data-l10n-name="icon"/>A transferir atualização — <label data-l10n-name="download-status"/>
-update-downloading-message = A transferir a atualização — <label data-l10n-name="download-status"/>
+
+## Variables:
+##   $transfer (string) - Transfer progress.
+
+settings-update-downloading = <img data-l10n-name="icon"/>A transferir atualização — <label data-l10n-name="download-status">{ $transfer }</label>
+aboutdialog-update-downloading = A transferir a atualização — <label data-l10n-name="download-status">{ $transfer }</label>
+
+##
+
 update-applying = A aplicar atualização…
 
 update-failed = A atualização falhou. <label data-l10n-name="failed-link">Transferir a versão mais recente</label>
@@ -25,15 +32,26 @@ update-failed-main = A atualização falhou. <a data-l10n-name="failed-link-main
 
 update-adminDisabled = Atualizações desativadas pelo seu administrador do sistema
 update-noUpdatesFound = O { -brand-short-name } está atualizado
+aboutdialog-update-checking-failed = Incapaz de verificar a existência de atualizações.
 update-otherInstanceHandlingUpdates = O { -brand-short-name } já está a ser atualizado por outra instância
 
-update-manual = Atualizações disponíveis em <label data-l10n-name="manual-link"/>
+## Variables:
+##   $displayUrl (String): URL to page with download instructions. Example: www.mozilla.org/firefox/nightly/
+
+aboutdialog-update-manual-with-link = Atualizações disponíveis em <label data-l10n-name="manual-link">{ $displayUrl }</label>
+settings-update-manual-with-link = Atualizações disponíveis em <a data-l10n-name="manual-link">{ $displayUrl }</a>
 
 update-unsupported = Não pode realizar mais atualizações neste sistema. <label data-l10n-name="unsupported-link">Saber mais</label>
 
 update-restarting = A reiniciar…
 
-channel-description = Atualmente, está no canal de atualização <label data-l10n-name="current-channel"></label>.{ " " }
+update-internal-error2 = Não foi possível procurar por atualizações devido a um erro interno. As atualização estão disponíveis em <label data-l10n-name="manual-link">{ $displayUrl }</label>
+
+##
+
+# Variables:
+#   $channel (String): description of the update channel (e.g. "release", "beta", "nightly" etc.)
+aboutdialog-channel-description = Atualmente, está no canal de atualização <label data-l10n-name="current-channel">{ $channel }</label>.
 
 warningDesc-version = O { -brand-short-name } é experimental e poderá ser instável.
 

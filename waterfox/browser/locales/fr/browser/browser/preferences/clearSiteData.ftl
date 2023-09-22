@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-clear-site-data-window =
+clear-site-data-window2 =
     .title = Effacer les données
-    .style = width: 35em
+    .style = min-width: 35em
 
 clear-site-data-description = Effacer l’ensemble des cookies et des données de sites stockés par { -brand-short-name } peut vous déconnecter de certains sites web et supprimer du contenu web hors connexion. Effacer les données mises en cache n’affectera pas vos identifiants.
 

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,17 +13,45 @@ safeb-blocked-harmful-page-short-desc = { -brand-short-name } hat diese Seite bl
 safeb-palm-advisory-desc = Warnung bereitgestellt von <a data-l10n-name='advisory_provider'>{ $advisoryname }</a>
 safeb-palm-accept-label = Zurück
 safeb-palm-see-details-label = Details ansehen
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-phishing-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> wurde als <a data-l10n-name='error_desc_link'>betrügerische Seite gemeldet</a>. Sie können dies <a data-l10n-name='report_detection'>als Fehlerkennung melden</a> oder aber auch <a data-l10n-name='ignore_warning_link'>das Risiko ignorieren</a> und diese nicht sichere Seite aufrufen.
 safeb-blocked-phishing-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> wurde als <a data-l10n-name='error_desc_link'>betrügerische Seite gemeldet</a>. Sie können dies <a data-l10n-name='report_detection'>als Fehlerkennung melden</a>.
+
+##
+
 safeb-blocked-phishing-page-learn-more = Wenn Sie mehr über betrügerische Websites und Phishing erfahren wollen, so besuchen Sie <a data-l10n-name='learn_more_link'>www.antiphishing.org</a>. Weitere Informationen zum Schutz vor Betrug und Schadsoftware in { -brand-short-name } stehen unter <a data-l10n-name='firefox_support'>support.mozilla.org</a> bereit.
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-malware-page-error-desc-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> wurde als <a data-l10n-name='error_desc_link'>Seite mit böswilliger Software gemeldet</a>. Sie können aber auch <a data-l10n-name='ignore_warning_link'>das Risiko ignorieren</a> und diese nicht sichere Seite aufrufen.
 safeb-blocked-malware-page-error-desc-no-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> wurde als <a data-l10n-name='error_desc_link'>Seite mit böswilliger Software gemeldet</a>.
+
+##
+
 safeb-blocked-malware-page-learn-more-sumo = Weitere Informationen zum Schutz vor Betrug und Schadsoftware in { -brand-short-name } stehen unter <a data-l10n-name='firefox_support'>support.mozilla.org</a> bereit.
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-unwanted-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> wurde als <a data-l10n-name='error_desc_link'>Seite mit schädlicher Software gemeldet</a>. Sie können aber auch <a data-l10n-name='ignore_warning_link'>das Risiko ignorieren</a> und diese nicht sichere Seite aufrufen.
 safeb-blocked-unwanted-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> wurde als <a data-l10n-name='error_desc_link'>Seite mit schädlicher Software gemeldet</a>.
+
+##
+
 safeb-blocked-unwanted-page-learn-more = Wenn Sie mehr über schädigende oder unerwünschte Software erfahren wollen, so besuchen Sie die <a data-l10n-name='learn_more_link'>Richtlinie zu unerwünschter Software</a>. Weitere Informationen zum Schutz vor Betrug und Schadsoftware in { -brand-short-name } stehen unter <a data-l10n-name='firefox_support'>support.mozilla.org</a> bereit.
+
+## Variables
+##  $sitename (string) - Domain name for the blocked page
+
 safeb-blocked-harmful-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> wurde als <a data-l10n-name='error_desc_link'>Seite mit potenziell gefährlicher Software gemeldet</a>. Sie können aber auch <a data-l10n-name='ignore_warning_link'>das Risiko ignorieren</a> und diese nicht sichere Seite aufrufen.
 safeb-blocked-harmful-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> wurde als <a data-l10n-name='error_desc_link'>Seite mit potenziell gefährlicher Software gemeldet</a>.
+
+##
+
 safeb-blocked-harmful-page-learn-more = Weitere Informationen zum Schutz vor Betrug und Schadsoftware in { -brand-short-name } stehen unter <a data-l10n-name='firefox_support'>support.mozilla.org</a> bereit.
 safeb-palm-notdeceptive =
     .label = Dies ist keine betrügerische Website…

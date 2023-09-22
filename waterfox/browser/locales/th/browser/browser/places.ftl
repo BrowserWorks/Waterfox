@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = เปิดในหน้าต่างส่วนตัวใหม่
     .accesskey = ส
+
+places-empty-bookmarks-folder =
+    .label = (ว่าง)
 
 places-add-bookmark =
     .label = เพิ่มที่คั่นหน้า…
@@ -86,6 +89,15 @@ places-delete-folder =
            *[other] ลบโฟลเดอร์
         }
     .accesskey = ล
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] ลบหน้า
+           *[other] ลบหน้า
+        }
+    .accesskey = ล
 
 # Managed bookmarks are created by an administrator and cannot be changed by the user.
 managed-bookmarks =
@@ -112,6 +124,20 @@ places-delete-bookmark =
         }
     .accesskey = ล
 
+# Variables:
+#   $count (number) - The number of bookmarks being added.
+places-create-bookmark =
+    .label =
+        { $count ->
+            [1] เพิ่มที่คั่นหน้าสำหรับหน้า…
+           *[other] เพิ่มที่คั่นหน้าสำหรับหน้า…
+        }
+    .accesskey = ท
+
+places-untag-bookmark =
+    .label = เอาแท็กออก
+    .accesskey = อ
+
 places-manage-bookmarks =
     .label = จัดการที่คั่นหน้า
     .accesskey = M
@@ -120,13 +146,12 @@ places-forget-about-this-site-confirmation-title = ลืมเกี่ยว�
 
 # Variables:
 # $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
-places-forget-about-this-site-confirmation-message = การดำเนินการนี้จะลบข้อมูลทั้งหมดที่เกี่ยวข้องกับ { $hostOrBaseDomain } รวมถึงประวัติ รหัสผ่าน คุกกี้ แคช และการตั้งค่าเนื้อหา คุณแน่ใจหรือไม่ว่าต้องการดำเนินการต่อ
+places-forget-about-this-site-confirmation-msg = การดำเนินการนี้จะลบข้อมูลที่เกี่ยวข้องกับ { $hostOrBaseDomain } รวมถึงประวัติ คุกกี้ แคช และการกำหนดลักษณะเนื้อหา ที่คั่นหน้าและรหัสผ่านที่เกี่ยวข้องจะไม่ถูกลบ คุณแน่ใจหรือไม่ว่าต้องการดำเนินการต่อ
 
 places-forget-about-this-site-forget = ลืม
 
-places-library =
+places-library3 =
     .title = ห้องสมุด
-    .style = width:700px; height:500px;
 
 places-organize-button =
     .label = จัดระเบียบ
@@ -210,7 +235,7 @@ places-view-sort-col-name =
     .label = ชื่อ
 
 places-view-sort-col-tags =
-    .label = ป้ายกำกับ
+    .label = แท็ก
 
 places-view-sort-col-url =
     .label = ตำแหน่งที่ตั้ง
@@ -227,6 +252,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = วันที่เปลี่ยนแปลงล่าสุด
 
+places-view-sortby-name =
+    .label = เรียงตามชื่อ
+    .accesskey = ร
+places-view-sortby-url =
+    .label = เรียงตามตำแหน่งที่ตั้ง
+    .accesskey = ง
+places-view-sortby-date =
+    .label = เรียงตามวันที่เยี่ยมชมล่าสุด
+    .accesskey = ต
+places-view-sortby-visit-count =
+    .label = เรียงตามจำนวนการเข้าชม
+    .accesskey = ม
+places-view-sortby-date-added =
+    .label = เรียงตามวันที่เพิ่ม
+    .accesskey = ว
+places-view-sortby-last-modified =
+    .label = เรียงตามวันที่เปลี่ยนแปลงล่าสุด
+    .accesskey = น
+places-view-sortby-tags =
+    .label = เรียงตามป้ายกำกับ
+    .accesskey = ย
+
 places-cmd-find-key =
     .key = f
 
@@ -237,3 +284,24 @@ places-forward-button =
     .tooltiptext = เดินหน้า
 
 places-details-pane-select-an-item-description = เลือกรายการเพื่อดูและแก้ไขคุณสมบัติ
+
+places-details-pane-no-items =
+    .value = ไม่มีรายการ
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value = { $count } รายการ
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = ค้นหาที่คั่นหน้า
+places-search-history =
+    .placeholder = ค้นหาประวัติ
+places-search-downloads =
+    .placeholder = ค้นหาการดาวน์โหลด
+
+##
+
+places-locked-prompt = ระบบที่คั่นหน้าและประวัติจะไม่ทำงานเนื่องจากหนึ่งในไฟล์ของ { -brand-short-name } มีการใช้งานโดยแอปพลิเคชันอื่น ซอฟต์แวร์ความปลอดภัยบางตัวสามารถก่อให้เกิดปัญหานี้

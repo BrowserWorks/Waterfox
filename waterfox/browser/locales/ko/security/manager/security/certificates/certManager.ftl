@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,9 +26,9 @@ certmgr-people = 다음 사람들을 확인하는 파일의 인증서를 가지�
 certmgr-server = 이 항목은 서버 인증서 오류 예외를 식별합니다.
 certmgr-ca = 다음 인증 권한을 확인하는 파일의 인증서를 가지고 있습니다
 
-certmgr-edit-ca-cert =
+certmgr-edit-ca-cert2 =
     .title = CA 인증서 신뢰도 설정 편집
-    .style = width: 48em;
+    .style = min-width: 48em;
 
 certmgr-edit-cert-edit-trust = 신뢰도 설정 편집:
 
@@ -38,9 +38,9 @@ certmgr-edit-cert-trust-ssl =
 certmgr-edit-cert-trust-email =
     .label = 아래 인증서는 메일 사용자를 인증합니다.
 
-certmgr-delete-cert =
+certmgr-delete-cert2 =
     .title = 인증서 삭제
-    .style = width: 48em; height: 24em;
+    .style = min-width: 48em; min-height: 24em;
 
 certmgr-cert-host =
     .label = 호스트
@@ -50,9 +50,6 @@ certmgr-cert-name =
 
 certmgr-cert-server =
     .label = 서버
-
-certmgr-override-lifetime =
-    .label = 수명
 
 certmgr-token-name =
     .label = 보안 장치
@@ -68,6 +65,9 @@ certmgr-email =
 
 certmgr-serial =
     .label = 일련 번호
+
+certmgr-fingerprint-sha-256 =
+    .label = SHA-256 지문
 
 certmgr-view =
     .label = 보기…
@@ -185,8 +185,6 @@ delete-email-cert-impact = 개인 전자 메일 인증서를 삭제하면 더 �
 #   $serialNumber : the serial number of the cert in AA:BB:CC hex format.
 cert-with-serial =
     .value = 일련 번호 인증서: { $serialNumber }
-
-## Cert Viewer
 
 # Used to indicate that the user chose not to send a client authentication certificate to a server that requested one in a TLS handshake.
 send-no-client-certificate = 클라이언트 인증서를 보내지 않음

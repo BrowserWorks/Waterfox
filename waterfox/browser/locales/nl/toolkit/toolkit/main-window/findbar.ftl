@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -36,3 +36,41 @@ findbar-entire-word =
     .label = Hele woorden
     .accesskey = e
     .tooltiptext = Alleen hele woorden zoeken
+
+findbar-not-found = Tekst niet gevonden
+
+findbar-wrapped-to-top = Onderkant van pagina bereikt, doorgegaan vanaf bovenkant
+findbar-wrapped-to-bottom = Bovenkant van pagina bereikt, doorgegaan vanaf onderkant
+
+findbar-normal-find =
+    .placeholder = Zoeken op pagina
+findbar-fast-find =
+    .placeholder = Snel zoeken
+findbar-fast-find-links =
+    .placeholder = Snel zoeken (alleen koppelingen)
+
+findbar-case-sensitive-status =
+    .value = (Hoofdlettergevoelig)
+findbar-match-diacritics-status =
+    .value = (Overeenkomende diakritische tekens)
+findbar-entire-word-status =
+    .value = (Alleen hele woorden)
+
+# Variables:
+#   $current (Number): Index of the currently selected match
+#   $total (Number): Total count of matches
+findbar-found-matches =
+    .value =
+        { $total ->
+            [one] { $current } van { $total } overeenkomst
+           *[other] { $current } van { $total } overeenkomsten
+        }
+
+# Variables:
+#   $limit (Number): Total count of matches allowed before counting stops
+findbar-found-matches-count-limit =
+    .value =
+        { $limit ->
+            [one] Meer dan { $limit } overeenkomst
+           *[other] Meer dan { $limit } overeenkomsten
+        }

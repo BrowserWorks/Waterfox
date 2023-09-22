@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,20 +12,38 @@ synced-tabs-sidebar-tabsnotsyncing = Aktivér synkronisering af faneblade for at
 synced-tabs-sidebar-connect-another-device = Opret forbindelse til en ny enhed
 synced-tabs-sidebar-search =
     .placeholder = Søg i synkroniserede faneblade
+
+## Displayed in the Synced Tabs sidebar's context menu when right-clicking tabs
+## and/or devices in the list. The "Open" strings below should be translated
+## consistently with the equivalent strings for the bookmarks manager's context
+## menu. That menu is activated by right-clicking a bookmark in the Library
+## window. The bookmarks manager context's strings are located in places.ftl.
+
 synced-tabs-context-open =
     .label = Åbn
     .accesskey = Å
-synced-tabs-context-open-in-new-tab =
-    .label = Åbn i et nyt faneblad
+synced-tabs-context-open-in-tab =
+    .label = Åbn i nyt faneblad
     .accesskey = f
-synced-tabs-context-open-in-new-window =
+synced-tabs-context-open-in-container-tab =
+    .label = Åbn i nyt kontekst-faneblad
+    .accesskey = n
+synced-tabs-context-open-in-window =
     .label = Åbn i et nyt vindue
     .accesskey = v
-synced-tabs-context-open-in-new-private-window =
-    .label = Åbn i et nyt privat vindue
+synced-tabs-context-open-in-private-window =
+    .label = Åbn i nyt privat vindue
     .accesskey = p
-synced-tabs-context-bookmark-single-tab =
-    .label = Bogmærk dette faneblad…
+
+##
+
+# Displayed in the Synced Tabs sidebar's context menu when right-clicking tabs
+# and/or devices in the list. This string is for a menuitem equivalent to one in
+# the tab context menu (activated by right-clicking a tab in the tabstrip). That
+# string is located in tabContextMenu.ftl. So, this string should be translated
+# consistently with the "Bookmark Tab…" string there.
+synced-tabs-context-bookmark =
+    .label = Bogmærk faneblad…
     .accesskey = B
 synced-tabs-context-copy =
     .label = Kopier

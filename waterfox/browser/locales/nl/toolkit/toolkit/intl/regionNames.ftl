@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,7 @@ region-name-bl = Sint-Bartholomeus
 region-name-bm = Bermuda
 region-name-bn = Brunei
 region-name-bo = Bolivia
-region-name-bq = Bonaire, Sint Eustatius en Saba
+region-name-bq-2018 = Caribisch Nederland
 region-name-br = Brazilië
 region-name-bs = Bahama’s, de
 region-name-bt = Bhutan
@@ -57,11 +57,11 @@ region-name-co = Colombia
 region-name-cp = Clipperton
 region-name-cr = Costa Rica
 region-name-cu = Cuba
-region-name-cv = Kaapverdië
+region-name-cv-2020 = Kaapverdië
 region-name-cw = Curaçao
 region-name-cx = Christmaseiland
 region-name-cy = Cyprus
-region-name-cz = Tsjechië
+region-name-cz-2019 = Tsjechië
 region-name-de = Duitsland
 region-name-dg = Diego Garcia
 region-name-dj = Djibouti
@@ -150,7 +150,7 @@ region-name-me = Montenegro
 region-name-mf = Saint Martin
 region-name-mg = Madagaskar
 region-name-mh = Marshalleilanden
-region-name-mk = Macedonië
+region-name-mk-2019 = Noord-Macedonië
 region-name-ml = Mali
 region-name-mm = Myanmar
 region-name-mn = Mongolië
@@ -223,7 +223,7 @@ region-name-st = Sao Tomé en Principe
 region-name-sv = El Salvador
 region-name-sx = Sint Maarten
 region-name-sy = Syrië
-region-name-sz = Swaziland
+region-name-sz-2019 = Swaziland
 region-name-tc = Turks- en Caicoseilanden
 region-name-td = Tsjaad
 region-name-tf = Franse Zuidelijke en Antarctische Gebieden

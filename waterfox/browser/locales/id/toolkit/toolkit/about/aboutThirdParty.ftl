@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -29,10 +29,12 @@ third-party-tag-shellex = Ekstensi Shell
     .title = Modul jenis ini dimuat ketika Anda membuka dialog file sistem.
 third-party-tag-background = Latar Belakang
     .title = Modul ini tidak memblokir aplikasi karena dimuat di latar belakang.
-third-party-unsigned-icon =
+third-party-icon-unsigned =
     .title = Modul ini tidak ditandatangani
-third-party-warning-icon =
+    .alt = Modul ini tidak ditandatangani
+third-party-icon-warning =
     .title = { -brand-short-name } mogok karena kode program dari modul ini
+    .alt = { -brand-short-name } mogok karena kode program dari modul ini
 
 third-party-status-loaded = Dimuat
 third-party-status-blocked = Terblokir
@@ -43,7 +45,26 @@ third-party-button-reload = Muat ulang dengan info sistem
     .title = Muat ulang dengan informasi sistem
 third-party-button-open =
     .title = Buka lokasi berkas…
+third-party-button-to-block =
+    .title = Blokir modul ini
+    .aria-label = Blokir modul ini
+third-party-button-to-unblock =
+    .title = Saat ini diblokir. Klik untuk membuka blokir.
+    .aria-label = Saat ini diblokir. Klik untuk membuka blokir.
+third-party-button-to-unblock-disabled =
+    .title =
+        Saat ini ditandai sebagai diblokir, meskipun daftar blokir dinonaktifkan untuk proses ini
+        dari { -brand-short-name }. Klik untuk membuka blokir.
+    .aria-label =
+        Saat ini ditandai sebagai diblokir, meskipun daftar blokir dinonaktifkan untuk proses ini
+        dari { -brand-short-name }. Klik untuk membuka blokir.
 third-party-button-expand =
     .title = Tampilkan informasi rinci
 third-party-button-collapse =
     .title = Ciutkan informasi rinci
+third-party-should-restart-title = Mulai Ulang { -brand-short-name }
+third-party-restart-later = Mulai ulang nanti
+
+third-party-blocked-by-builtin =
+    .title = Diblokir oleh { -brand-short-name }
+    .alt = Diblokir oleh { -brand-short-name }

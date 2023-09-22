@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -10,10 +10,8 @@
 
 opensearch-error-duplicate-title = Error de instalación
 opensearch-error-duplicate-desc = { -brand-short-name } no pudo instalar el plugin de búsqueda desde "{ $location-url }" porque ya existe un buscador con el mismo nombre.
-
 opensearch-error-format-title = Formato no válido
-opensearch-error-format-desc = { -brand-short-name } no se ha podido instalar el buscador de: { $location-url }
-
+opensearch-error-format-desc = { -brand-short-name } no ha podido instalar el buscador de: { $location-url }
 opensearch-error-download-title = Error al descargar
 opensearch-error-download-desc = { -brand-short-name } no ha podido descargar el plugin de búsqueda desde: { $location-url }
 
@@ -21,11 +19,9 @@ opensearch-error-download-desc = { -brand-short-name } no ha podido descargar el
 
 searchbar-submit =
     .tooltiptext = Enviar búsqueda
-
 # This string is displayed in the search box when the input field is empty
 searchbar-input =
     .placeholder = Buscar
-
 searchbar-icon =
     .tooltiptext = Buscar
 

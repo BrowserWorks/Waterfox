@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -45,6 +45,12 @@ options-collapse-attrs-tooltip =
 options-inspector-draggable-properties-label = Click and drag to edit size values
 options-inspector-draggable-properties-tooltip =
     .title = Click and drag to edit size values in the inspector rules view.
+
+# The label for the checkbox option to enable simplified highlighting on page elements
+# within the inspector for users who enabled prefers-reduced-motion = reduce
+options-inspector-simplified-highlighters-label = Use simpler highlighters with prefers-reduced-motion
+options-inspector-simplified-highlighters-tooltip =
+    .title = Enables simplified highlighters when prefers-reduced-motion is enabled. Draws lines instead of filled rectangles around highlighted elements to avoid flashing effects.
 
 ## "Default Color Unit" options for the Inspector
 
@@ -124,6 +130,11 @@ options-enable-remote-label = Enable remote debugging
 options-enable-remote-tooltip2 =
     .title = Turning this option on will allow to debug this browser instance remotely
 
+# The label for checkbox that enables F12 as a shortcut to open DevTools
+options-enable-f12-label = Use the F12 key to open or close DevTools
+options-enable-f12-tooltip =
+    .title = Turning this option on will bind the F12 key to open or close the DevTools toolbox
+
 # The label for checkbox that toggles custom formatters for objects
 options-enable-custom-formatters-label = Enable custom formatters
 options-enable-custom-formatters-tooltip =
@@ -141,9 +152,3 @@ options-source-maps-tooltip =
 
 # The message shown for settings that trigger page reload
 options-context-triggers-page-refresh = * Current session only, reloads the page
-
-# The label for the checkbox that toggles the display of the platform data in the
-# Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference in about:config
-options-show-platform-data-label = Show Gecko platform data
-options-show-platform-data-tooltip =
-    .title = If you enable this option the JavaScript Profiler reports will include Gecko platform symbols
