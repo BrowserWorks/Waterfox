@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -36,3 +36,33 @@ findbar-entire-word =
     .label = ทั้งคำ
     .accesskey = ท
     .tooltiptext = ค้นหาทั้งคำเท่านั้น
+
+findbar-not-found = ไม่พบวลี
+
+findbar-wrapped-to-top = ค้นหาถึงจุดสิ้นสุดหน้า เริ่มค้นต่อจากด้านบน
+findbar-wrapped-to-bottom = ค้นหาถึงจุดเริ่มต้นของหน้า เริ่มค้นต่อจากด้านล่าง
+
+findbar-normal-find =
+    .placeholder = ค้นหาในหน้า
+findbar-fast-find =
+    .placeholder = ค้นแบบเร็ว
+findbar-fast-find-links =
+    .placeholder = ค้นแบบเร็ว (ลิงก์เท่านั้น)
+
+findbar-case-sensitive-status =
+    .value = (ตัวพิมพ์ใหญ่เล็กตรงกัน)
+findbar-match-diacritics-status =
+    .value = (ตรงกับเครื่องหมายการออกเสียง)
+findbar-entire-word-status =
+    .value = (ทั้งคำเท่านั้น)
+
+# Variables:
+#   $current (Number): Index of the currently selected match
+#   $total (Number): Total count of matches
+findbar-found-matches =
+    .value = { $current } จาก { $total } ที่ตรงกัน
+
+# Variables:
+#   $limit (Number): Total count of matches allowed before counting stops
+findbar-found-matches-count-limit =
+    .value = มากกว่า { $limit } ที่ตรงกัน

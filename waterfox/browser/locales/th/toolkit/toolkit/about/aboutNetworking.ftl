@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,13 +34,6 @@ about-networking-messages-received = ข้อความที่รับ
 about-networking-bytes-sent = จำนวนไบต์ที่ส่ง
 about-networking-bytes-received = จำนวนไบต์ที่รับ
 about-networking-logging = การบันทึก
-about-networking-log-tutorial = ดู<a data-l10n-name="logging">การบันทึกล็อก HTTP</a>สำหรับคำแนะนำเกี่ยวกับวิธีการใช้เครื่องมือนี้
-about-networking-current-log-file = ไฟล์รายการบันทึกปัจจุบัน:
-about-networking-current-log-modules = โมดูลรายการบันทึกปัจจุบัน:
-about-networking-set-log-file = ตั้งไฟล์รายการบันทึก
-about-networking-set-log-modules = ตั้งโมดูลรายการบันทึก
-about-networking-start-logging = เริ่มการบันทึก
-about-networking-stop-logging = หยุดการบันทึก
 about-networking-dns-lookup = การค้นหา DNS
 about-networking-dns-lookup-button = แปลงที่อยู่
 about-networking-dns-domain = โดเมน:
@@ -63,6 +56,8 @@ about-networking-rcwn-cache-slow = จำนวนแคชที่หน่ว
 about-networking-rcwn-cache-not-slow = จำนวนแคชที่ไม่ได้หน่วงเวลา
 about-networking-networkid = ID เครือข่าย
 about-networking-networkid-id = ID เครือข่าย
+# Note: do not translate about:logging, as it is a URL.
+about-networking-moved-about-logging = หน้านี้ถูกย้ายไปที่ <a data-l10n-name="about-logging-url">about:logging</a> แล้ว
 
 ## Link is intended as "network link"
 

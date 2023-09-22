@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,6 +38,8 @@ appmenuitem-print =
     .label = Stampa…
 appmenuitem-find-in-page =
     .label = Trova nella pagina…
+appmenuitem-translate =
+    .label = Traduci pagina…
 appmenuitem-zoom =
     .value = Zoom
 appmenuitem-more-tools =
@@ -101,6 +103,7 @@ appmenuitem-fxa-toolbar-sync-now2 = Sincronizza adesso
 appmenuitem-fxa-sign-in = Accedi a { -brand-product-name }
 appmenuitem-fxa-manage-account = Gestisci account
 appmenu-fxa-header2 = { -fxaccount-brand-name(capitalization: "uppercase") }
+appmenu-account-header = Account
 # Variables
 # $time (string) - Localized relative time since last sync (e.g. 1 second ago,
 # 3 hours ago, etc.)
@@ -140,8 +143,7 @@ profiler-popup-button-capturing =
     .label = Profiler
     .tooltiptext = Cattura del profilo in corso…
 
-profiler-popup-title =
-    .value = { -profiler-brand-name }
+profiler-popup-header-text = { -profiler-brand-name }
 
 profiler-popup-reveal-description-button =
     .aria-label = Visualizza ulteriori informazioni
@@ -192,17 +194,21 @@ profiler-popup-capture-shortcut =
 # devtools/client/performance-new/popup/background.jsm.js
 # Please take care that the same values are also defined in devtools' perftools.ftl.
 
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/shared/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
 profiler-popup-presets-web-developer-description = Preset consigliato per il debug della maggior parte delle applicazioni web, con overhead limitato.
 profiler-popup-presets-web-developer-label =
     .label = Sviluppo web
 
 profiler-popup-presets-firefox-description = Preset consigliato per la profilazione di { -brand-shorter-name }.
 profiler-popup-presets-firefox-label =
-  .label = { -brand-shorter-name }
+    .label = { -brand-shorter-name }
 
 profiler-popup-presets-graphics-description = Preset per la diagnosi di problemi grafici in { -brand-shorter-name }.
 profiler-popup-presets-graphics-label =
-  .label = Grafica
+    .label = Grafica
 
 profiler-popup-presets-media-description2 = Preset per la diagnosi di problemi audio e video in { -brand-shorter-name }.
 profiler-popup-presets-media-label =
@@ -210,11 +216,11 @@ profiler-popup-presets-media-label =
 
 profiler-popup-presets-networking-description = Preset per la diagnosi di problemi di rete in { -brand-shorter-name }.
 profiler-popup-presets-networking-label =
-  .label = Rete
+    .label = Rete
 
 profiler-popup-presets-power-description = Preset per la diagnosi di problemi relativi al consumo di energia in { -brand-shorter-name }, con overhead limitato.
 profiler-popup-presets-power-label =
-  .label = Energia
+    .label = Energia
 
 profiler-popup-presets-custom-label =
     .label = Personalizzato
@@ -223,8 +229,6 @@ profiler-popup-presets-custom-label =
 
 appmenu-manage-history =
     .label = Gestisci cronologia
-appmenu-reopen-all-tabs = Riapri tutte le schede
-appmenu-reopen-all-windows = Riapri tutte le finestre
 appmenu-restore-session =
     .label = Ripristina la sessione precedente
 appmenu-clear-history =
@@ -234,6 +238,10 @@ appmenu-recently-closed-tabs =
     .label = Schede chiuse di recente
 appmenu-recently-closed-windows =
     .label = Finestre chiuse di recente
+
+# This allows to search through the browser's history.
+appmenu-search-history =
+    .label = Cerca nella cronologia
 
 ## Help panel
 
@@ -252,7 +260,10 @@ appmenu-help-report-site-issue =
     .label = Segnala problema con questo sito…
 appmenu-help-share-ideas =
     .label = Condividi idee e feedback…
-   .accesskey = k
+    .accesskey = k
+
+appmenu-help-switch-device =
+    .label = Passaggio a un nuovo dispositivo
 
 ## appmenu-help-enter-troubleshoot-mode and appmenu-help-exit-troubleshoot-mode
 ## are mutually exclusive, so it's possible to use the same accesskey for both.
@@ -282,3 +293,4 @@ appmenu-customizetoolbar =
 appmenu-developer-tools-subheader = Strumenti del browser
 appmenu-developer-tools-extensions =
     .label = Estensioni per sviluppatori
+

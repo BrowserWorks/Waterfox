@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -96,44 +96,6 @@ main-context-menu-page-save =
 
 ## Simple menu items
 
-main-context-menu-bookmark-add =
-    .aria-label = علّم هذه الصفحة
-    .accesskey = ه
-    .tooltiptext = علّم هذه الصفحة
-
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-edit-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-add-mac =
-    .label = علِّم الصفحة
-    .accesskey = ع
-
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-add-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-edit-mac =
-    .label = حرّر العلامة
-    .accesskey = ح
-
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the add bookmark command.
-main-context-menu-bookmark-add-with-shortcut =
-    .aria-label = علّم هذه الصفحة
-    .accesskey = ه
-    .tooltiptext = علّم هذه الصفحة ({ $shortcut })
-
-main-context-menu-bookmark-change =
-    .aria-label = حرّر هذه العلامة
-    .accesskey = ه
-    .tooltiptext = حرّر هذه العلامة
-
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the edit bookmark command.
-main-context-menu-bookmark-change-with-shortcut =
-    .aria-label = حرّر هذه العلامة
-    .accesskey = ه
-    .tooltiptext = حرّر هذه العلامة ({ $shortcut })
-
 main-context-menu-open-link =
     .label = افتح الرابط
     .accesskey = ر
@@ -153,10 +115,6 @@ main-context-menu-open-link-new-window =
 main-context-menu-open-link-new-private-window =
     .label = افتح الرابط في نافذة خاصة جديدة
     .accesskey = خ
-
-main-context-menu-bookmark-link =
-    .label = علّم الرابط
-    .accesskey = ع
 
 main-context-menu-save-link =
     .label = احفظ الرابط باسم…
@@ -320,14 +278,6 @@ main-context-menu-audio-email =
     .label = أرسل الصوت بالبريد…
     .accesskey = ت
 
-main-context-menu-plugin-play =
-    .label = فعّل هذه المُلحقة
-    .accesskey = ف
-
-main-context-menu-plugin-hide =
-    .label = أخفِ هذه المُلحقة
-    .accesskey = خ
-
 main-context-menu-save-to-pocket =
     .label = احفظ الصفحة في { -pocket-brand-name }
     .accesskey = ح
@@ -386,10 +336,6 @@ main-context-menu-frame-reload =
     .label = أعِد تحميل الإطار
     .accesskey = ت
 
-main-context-menu-frame-bookmark =
-    .label = علِّم هذا الإطار
-    .accesskey = ط
-
 main-context-menu-frame-save-as =
     .label = احفظ الإطار باسم…
     .accesskey = ط
@@ -404,10 +350,6 @@ main-context-menu-frame-view-source =
 
 main-context-menu-frame-view-info =
     .label = اعرض معلومات الإطار
-    .accesskey = ط
-
-main-context-menu-print-selection =
-    .label = اطبع المحدّد
     .accesskey = ط
 
 main-context-menu-view-selection-source =

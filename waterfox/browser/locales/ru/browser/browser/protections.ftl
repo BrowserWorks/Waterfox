@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -49,8 +49,8 @@ graph-today = Сегодня
 # This string is used to describe the graph for screenreader users.
 graph-legend-description = График содержит общее число трекеров каждого типа, заблокированных на этой неделе.
 
-social-tab-title = Трекеры социальных сетей
-social-tab-contant = Социальные сети размещают трекеры на других веб-сайтах, чтобы следить за тем, что вы делаете, видите и смотрите в Интернете. Это позволяет их владельцам узнавать о вас больше, чем вы указываете в своих профилях в социальных сетях. <a data-l10n-name="learn-more-link">Подробнее</a>
+social-tab-title = Трекеры соцсетей
+social-tab-contant = Соцсети размещают трекеры на других сайтах, чтобы следить за тем, что вы делаете, видите и смотрите в Интернете. Это позволяет их владельцам узнавать о вас больше, чем вы указываете на своих страницах в соцсетях. <a data-l10n-name="learn-more-link">Подробнее</a>
 
 cookie-tab-title = Межсайтовые отслеживающие куки
 cookie-tab-content = Такие куки ходят за вами с сайта на сайт для сбора информации о том, что вы делаете в Интернете. Они устанавливаются такими сторонними организациями, как рекламодатели и аналитические компании. Блокировка межсайтовых отслеживающих куков снижает количество рекламы, отслеживающей вас. <a data-l10n-name="learn-more-link">Подробнее</a>

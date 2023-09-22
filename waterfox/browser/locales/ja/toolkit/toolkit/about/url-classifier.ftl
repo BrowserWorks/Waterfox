@@ -1,11 +1,15 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 url-classifier-title = URL Classifier 情報
 url-classifier-search-title = 検索
 url-classifier-search-result-title = 結果
+# Variables:
+#   $uri (string) - URI of blocked page
 url-classifier-search-result-uri = URI: { $uri }
+# Variables:
+#   $list (string) - List of tables where the page is blocked
 url-classifier-search-result-list = テーブルのリスト: { $list }
 url-classifier-search-input = URL
 url-classifier-search-error-invalid-url = 不正な URL
@@ -40,7 +44,6 @@ url-classifier-debug-sb-modules = セーフブラウジングのログモジュ�
 url-classifier-debug-modules = 現在のログモジュール
 url-classifier-debug-sbjs-modules = セーフブラウジングの JS ログ
 url-classifier-debug-file = 現在のログファイル
-
 url-classifier-trigger-update = 更新
 url-classifier-not-available = なし
 url-classifier-disable-sbjs-log = セーフブラウジングの JS ログを無効化
@@ -50,5 +53,9 @@ url-classifier-disabled = 無効
 url-classifier-updating = 更新中
 url-classifier-cannot-update = 更新できません
 url-classifier-success = 完了
+
+## Variables
+##   $error (string) - Error message
+
 url-classifier-update-error = 更新エラー ({ $error })
 url-classifier-download-error = ダウンロードエラー ({ $error })

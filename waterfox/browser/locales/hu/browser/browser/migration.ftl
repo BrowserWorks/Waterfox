@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,6 +60,9 @@ import-from-firefox =
 import-from-360se =
     .label = 360 biztonságos böngésző
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
 
 no-migration-sources = Nem található olyan program, amely könyvjelzőket, előzményeket vagy jelszóadatokat tartalmaz.
 
@@ -64,8 +73,8 @@ import-items-description = Válassza ki az importálni kívánt elemeket:
 
 import-permissions-page-title = Kérjük adjon engedélyt a { -brand-short-name }nak
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = A macOS megköveteli, hogy kifejezetten engedélyezze, hogy a { -brand-short-name } elérje a Safari könyvjelzőit. Kattintson a „Folytatás” gombra és a megjelenő Fájl megnyitása panelen válassza ki a „Bookmarks.plist” fájlt.
+# Do not translate "Safari" (the name of the browser on Apple devices)
+import-safari-permissions-string = A macOS megköveteli, hogy kifejezetten engedélyezze, hogy a { -brand-short-name } elérje a Safari adatait. Kattintson a „Folytatás” gombra, és válassza ki a „Safari” mappát a Finder párbeszédablakán, majd kattintson a „Megnyitás” gombra.
 
 import-migrating-page-title = Importálás…
 
@@ -158,3 +167,8 @@ browser-data-session-checkbox =
     .label = Ablakok és lapok
 browser-data-session-label =
     .value = Ablakok és lapok
+
+browser-data-payment-methods-checkbox =
+    .label = Fizetési módok
+browser-data-payment-methods-label =
+    .value = Fizetési módok

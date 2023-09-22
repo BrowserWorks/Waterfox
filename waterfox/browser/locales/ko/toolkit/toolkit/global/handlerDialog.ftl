@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,11 +9,28 @@
 ##  $scheme - the type of link that's being opened.
 ##  $appName - Name of the application that will be opened.
 
+
+## Permission Dialog
+## Variables:
+##  $host - the hostname that is initiating the request
+##  $scheme - the type of link that's being opened.
+##  $appName - Name of the application that will be opened.
+##  $extension - Name of extension that initiated the request
+
+## Permission Dialog
+## Variables:
+##  $host (string) - The hostname that is initiating the request
+##  $scheme (string) - The type of link that's being opened.
+##  $appName (string) - Name of the application that will be opened.
+##  $extension (string) - Name of extension that initiated the request
+
 permission-dialog-description = 이 사이트가 { $scheme } 링크를 열도록 허용하시겠습니까?
 
 permission-dialog-description-file = 이 파일이 { $scheme } 링크를 열도록 허용하시겠습니까?
 
 permission-dialog-description-host = { $host } 사이트가 { $scheme } 링크를 열도록 허용하시겠습니까?
+
+permission-dialog-description-extension = { $extension } 확장 기능이 { $scheme } 링크를 열도록 허용하시겠습니까?
 
 permission-dialog-description-app = 이 사이트가 { $appName } 애플리케이션으로 { $scheme } 링크를 열도록 허용하시겠습니까?
 
@@ -21,13 +38,24 @@ permission-dialog-description-host-app = { $host } 사이트가 { $appName } 애
 
 permission-dialog-description-file-app = 이 파일이 { $appName } 애플리케이션으로 { $scheme } 링크를 열도록 허용하시겠습니까?
 
+permission-dialog-description-extension-app = { $extension } 확장 기능이 { $appName }에서 { $scheme } 링크를 열도록 허용하시겠습니까?
+
 ## Please keep the emphasis around the hostname and scheme (ie the
 ## `<strong>` HTML tags). Please also keep the hostname as close to the start
 ## of the sentence as your language's grammar allows.
 
+## Please keep the emphasis around the hostname and scheme (ie the
+## `<strong>` HTML tags). Please also keep the hostname as close to the start
+## of the sentence as your language's grammar allows.
+## Variables:
+##  $host (string) - The hostname that is initiating the request
+##  $scheme (string) - The type of link that's being opened.
+
 permission-dialog-remember = 항상 <strong>{ $host }</strong> 사이트가 <strong>{ $scheme }</strong> 링크를 열도록 허용
 
 permission-dialog-remember-file = 항상 이 파일이 <strong>{ $scheme }</strong> 링크를 열도록 허용
+
+permission-dialog-remember-extension = 항상 이 확장 기능이 <strong>{ $scheme }</strong> 링크를 열도록 허용
 
 ##
 
@@ -46,6 +74,10 @@ permission-dialog-set-change-app-link = 다른 애플리케이션 선택…
 ## Chooser dialog
 ## Variables:
 ##  $scheme - the type of link that's being opened.
+
+## Chooser dialog
+## Variables:
+##  $scheme (string) - The type of link that's being opened.
 
 chooser-window =
     .title = 애플리케이션 선택

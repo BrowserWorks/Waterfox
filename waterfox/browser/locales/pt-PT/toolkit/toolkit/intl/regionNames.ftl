@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,7 @@ region-name-bl = Saint Barthelemy
 region-name-bm = Bermuda
 region-name-bn = Brunei
 region-name-bo = Bolívia
-region-name-bq = Bonaire, Sint Eustatius e Saba
+region-name-bq-2018 = Caraíbas dos Países Baixos
 region-name-br = Brasil
 region-name-bs = Bahamas
 region-name-bt = Butão
@@ -57,11 +57,11 @@ region-name-co = Colômbia
 region-name-cp = Ilha Clipperton
 region-name-cr = Costa Rica
 region-name-cu = Cuba
-region-name-cv = Cabo Verde
+region-name-cv-2020 = Cabo Verde
 region-name-cw = Coração
 region-name-cx = Ilha do Natal
 region-name-cy = Chipre
-region-name-cz = República Checa
+region-name-cz-2019 = República Checa
 region-name-de = Alemanha
 region-name-dg = Diego Garcia
 region-name-dj = Jibouti
@@ -150,7 +150,7 @@ region-name-me = Montenegro
 region-name-mf = Saint Martin
 region-name-mg = Madagáscar
 region-name-mh = Ilhas Marshall
-region-name-mk = Macedónia
+region-name-mk-2019 = Macedónia do Norte
 region-name-ml = Mali
 region-name-mm = Burma
 region-name-mn = Mongólia
@@ -223,7 +223,7 @@ region-name-st = São Tomé e Príncipe
 region-name-sv = El Salvador
 region-name-sx = São Martinho (Sint Maarten)
 region-name-sy = Síria
-region-name-sz = Swazilândia
+region-name-sz-2019 = Essuatíni
 region-name-tc = Ilhas Turks e Caicos
 region-name-td = Chad
 region-name-tf = Territórios Austrais e Antárticos Franceses

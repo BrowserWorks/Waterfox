@@ -1,14 +1,16 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
 
 about-logins-page-title = Dane logowania i hasła
 
-login-filter =
+about-logins-login-filter =
     .placeholder = Szukaj danych logowania
+    .key = F
 
-create-login-button = Utwórz nowe dane logowania
+create-new-login-button =
+    .title = Utwórz nowe dane logowania
 
 fxaccounts-sign-in-text = Korzystaj ze swoich haseł na innych urządzeniach
 fxaccounts-sign-in-sync-button = Zaloguj się do synchronizacji
@@ -35,11 +37,22 @@ about-logins-menu-menuitem-help = Pomoc
 
 login-list =
     .aria-label = Dane logowania pasujące do zapytania
+# Variables
+#   $count (number) - Number of logins
 login-list-count =
     { $count ->
         [one] { $count } dane logowania
         [few] { $count } dane logowania
        *[many] { $count } danych logowania
+    }
+# Variables
+#   $count (number) - Number of filtered logins
+#   $total (number) - Total number of logins
+login-list-filtered-count =
+    { $total ->
+        [one] { $count } z { $total } danych logowania
+        [few] { $count } z { $total } danych logowania
+       *[many] { $count } z { $total } danych logowania
     }
 login-list-sort-label-text = Sortuj wg:
 login-list-name-option = Nazwa (A-Z)
@@ -100,9 +113,17 @@ login-item-copied-password-button-text = Skopiowano
 login-item-save-changes-button = Zapisz zmiany
 login-item-save-new-button = Zapisz
 login-item-cancel-button = Anuluj
-login-item-time-changed = Ostatnia modyfikacja: { DATETIME($timeChanged, day: "numeric", month: "long", year: "numeric") }
-login-item-time-created = Utworzono: { DATETIME($timeCreated, day: "numeric", month: "long", year: "numeric") }
-login-item-time-used = Ostatnie użycie: { DATETIME($timeUsed, day: "numeric", month: "long", year: "numeric") }
+
+## The date is displayed in a timeline showing the password evolution.
+## A label is displayed under the date to describe the type of change.
+## (e.g. updated, created, etc.)
+
+# Variables
+#   $datetime (date) - Event date
+login-item-timeline-point-date = { DATETIME($datetime, day: "numeric", month: "short", year: "numeric") }
+login-item-timeline-action-created = Utworzenie
+login-item-timeline-action-updated = Aktualizacja
+login-item-timeline-action-used = Użycie
 
 ## OS Authentication dialog
 
@@ -153,6 +174,9 @@ about-logins-confirm-remove-dialog-title = Czy usunąć te dane logowania?
 confirm-delete-dialog-message = Tej czynności nie można cofnąć.
 about-logins-confirm-remove-dialog-confirm-button = Usuń
 
+## Variables
+##   $count (number) - Number of items
+
 about-logins-confirm-remove-all-dialog-confirm-button-label =
     { $count ->
         [1] Usuń
@@ -195,6 +219,8 @@ about-logins-confirm-remove-all-sync-dialog-message =
        *[many] Spowoduje to usunięcie danych logowania zachowanych w przeglądarce { -brand-short-name } na wszystkich urządzeniach synchronizowanych z { -fxaccount-brand-name(case: "ins", capitalization: "lower") } oraz widocznych tutaj powiadomień o wyciekach danych. Tego działania nie można cofnąć.
     }
 
+##
+
 about-logins-confirm-export-dialog-title = Eksport danych logowania i haseł
 about-logins-confirm-export-dialog-message = Twoje hasła zostaną zapisane jako zwykły tekst (np. SłabeH@s1o), więc każdy, kto może otworzyć wyeksportowany plik, będzie mógł je zobaczyć.
 about-logins-confirm-export-dialog-confirm-button = Eksportuj…
@@ -214,7 +240,6 @@ about-logins-breach-alert-date = Wyciek z { DATETIME($date, day: "numeric", mon
 # Variables:
 #   $hostname (String) - The hostname of the website associated with the login, e.g. "example.com"
 about-logins-breach-alert-link = Otwórz witrynę { $hostname }
-about-logins-breach-alert-learn-more-link = Więcej informacji
 
 ## Vulnerable Password notification
 

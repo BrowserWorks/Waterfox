@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,15 +15,19 @@ toolbox-meatball-menu-dock-bottom-label = Fijar en la parte inferior
 toolbox-meatball-menu-dock-left-label = Anclar a la izquierda
 toolbox-meatball-menu-dock-right-label = Anclar a la derecha
 toolbox-meatball-menu-dock-separate-window-label = Ventana dividida
+
 toolbox-meatball-menu-splitconsole-label = Mostrar la consola dividida
 toolbox-meatball-menu-hideconsole-label = Ocultar consola dividida
+
 toolbox-meatball-menu-settings-label = Ajustes
 toolbox-meatball-menu-documentation-label = Documentación…
 toolbox-meatball-menu-community-label = Comunidad…
+
 # This menu item is only available in the browser toolbox. It forces the popups/panels
 # to stay visible on blur, which is primarily useful for addon developers and Waterfox
 # contributors.
 toolbox-meatball-menu-noautohide-label = Desactivar la ocultación automática de ventanas emergentes
+
 toolbox-meatball-menu-pseudo-locale-accented = Habilitar idioma “acentuado”
 toolbox-meatball-menu-pseudo-locale-bidi = Habilitar idioma “bidi”
 
@@ -34,11 +38,18 @@ toolbox-meatball-menu-pseudo-locale-bidi = Habilitar idioma “bidi”
 
 toolbox-mode-browser-toolbox-label = Modo de caja de herramientas del navegador
 toolbox-mode-browser-console-label = Modo de consola del navegador
+
 toolbox-mode-everything-label = Multiproceso
 toolbox-mode-everything-sub-label = (Más lento)
 toolbox-mode-everything-container =
     .title = Depurar todo en todos los procesos
+
 toolbox-mode-parent-process-label = Solo proceso principal
 toolbox-mode-parent-process-sub-label = (Rápido)
 toolbox-mode-parent-process-container =
     .title = Concéntrate únicamente en los recursos del proceso principal.
+
+toolbox-always-on-top-enabled2 = Desactivar siempre visible
+    .title = Esto reiniciará las herramientas de desarrollo
+toolbox-always-on-top-disabled2 = Habilitar siempre visible
+    .title = Esto reiniciará las herramientas de desarrollo

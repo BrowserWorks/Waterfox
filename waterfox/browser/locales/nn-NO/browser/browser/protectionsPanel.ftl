@@ -1,8 +1,8 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-protections-panel-sendreportview-error = Ein feil oppstod ved innsending av rapporten. Prøv igjen seinare.
+protections-panel-sendreportview-error = Ein feil oppstod ved innsending av rapporten. Prøv på nytt seinare.
 # A link shown when ETP is disabled for a site. Opens the breakage report subview when clicked.
 protections-panel-sitefixedsendreport-label = Fungerer nettstaden no? Send rapport
 
@@ -23,6 +23,20 @@ protections-panel-etp-more-info =
     .aria-label = Meir informasjon om utvida sporingsvern
 protections-panel-etp-on-header = Utvida sporingsvern er slått PÅ for denne nettstaden
 protections-panel-etp-off-header = Utvida sporingsvern er slått AV for denne nettstaden
+
+## Text for the toggles shown when ETP is enabled/disabled for a given site.
+## .description is transferred into a separate paragraph by the moz-toggle
+## custom element code.
+##   $host (String): the hostname of the site that is being displayed.
+
+protections-panel-etp-on-toggle =
+    .label = Utvida sporingsvern
+    .description = På for denne nettstaden
+    .aria-label = Slå av vern for { $host }
+protections-panel-etp-off-toggle =
+    .label = Utvida sporingsvern
+    .description = Av for denne nettstaden
+    .aria-label = Slå på vern for { $host }
 # The link to be clicked to open the sub-panel view
 protections-panel-site-not-working = Fungerer ikkje nettstaden?
 # The heading/title of the sub-panel view
@@ -70,6 +84,7 @@ protections-panel-site-not-working-view-issue-list-forms = Skjema
 protections-panel-site-not-working-view-issue-list-payments = Betalingar
 protections-panel-site-not-working-view-issue-list-comments = Kommentarar
 protections-panel-site-not-working-view-issue-list-videos = Videoar
+protections-panel-site-not-working-view-issue-list-fonts = Skrifttypar
 protections-panel-site-not-working-view-send-report = Send inn ein rapport
 
 ##
@@ -88,7 +103,8 @@ protections-panel-content-blocking-manage-settings =
     .accesskey = n
 protections-panel-content-blocking-breakage-report-view =
     .title = Rapporter problem med ein nettstad
-protections-panel-content-blocking-breakage-report-view-description = Blokkering av visse sporarar kan føre til problem med enkelte nettstadar. Rapportering av desse problema er med på å gjere { -brand-short-name } betre for alle. Ved sending av denne rapporten vil du sende ein URL og informasjon om nettlesarinnstillingane dine, til Waterfox. <label data-l10n-name="learn-more">Les meir</label>
+protections-panel-content-blocking-breakage-report-view-description = Blokkering av visse sporarar kan føre til problem med enkelte nettstadar. Rapportering av desse problema er med på å gjere { -brand-short-name } betre for alle. Ved sending av denne rapporten vil du sende ein URL og informasjon om nettlesarinnstillingane dine, til BrowserWorks. <label data-l10n-name="learn-more">Les meir</label>
+protections-panel-content-blocking-breakage-report-view-description2 = Blokkering av visse sporarar kan føre til problem med enkelte nettstadar. Rapportering av desse problema er med på å gjere { -brand-short-name } betre for alle. Ved sending av denne rapporten vil du sende ein URL og informasjon om nettlesarinnstillingane dine, til { -vendor-short-name }.
 protections-panel-content-blocking-breakage-report-view-collection-url = URL-adresse
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = URL-adresse
@@ -99,3 +115,21 @@ protections-panel-content-blocking-breakage-report-view-cancel =
     .label = Avbryt
 protections-panel-content-blocking-breakage-report-view-send-report =
     .label = Send rapport
+
+# Cookie Banner Handling
+
+protections-panel-cookie-banner-handling-header = Redusering av infokapselbanner
+protections-panel-cookie-banner-handling-enabled = På for denne nettstaden
+protections-panel-cookie-banner-handling-disabled = Av for denne nettstaden
+protections-panel-cookie-banner-handling-undetected = Nettstaden er for augneblinken ikkje støtta
+protections-panel-cookie-banner-view-title =
+    .title = Redusering av infokapselbanner
+# Variables
+#  $host (String): the hostname of the site that is being displayed.
+protections-panel-cookie-banner-view-turn-off-for-site = Vil du deaktivere reduksjon av infokapselbanner for { $host }?
+protections-panel-cookie-banner-view-turn-on-for-site = Aktiver reduksjon av infokapselbanner på denne nettstaden
+protections-panel-cookie-banner-view-cookie-clear-warning = { -brand-short-name } vill slette infokapslar og oppdatere sida. Sletting av alle infokapslar kan føre til at du blir logga ut eller at handlekorger blir tømde.
+protections-panel-cookie-banner-view-turn-on-description = { -brand-short-name } prøver å automatisk avvise alle infokapselførespurnadar på støtta nettstadar.
+protections-panel-cookie-banner-view-cancel = Avbryt
+protections-panel-cookie-banner-view-turn-off = Slå av
+protections-panel-cookie-banner-view-turn-on = Slå på

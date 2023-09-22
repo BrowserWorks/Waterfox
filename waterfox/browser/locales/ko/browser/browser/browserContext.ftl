@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -86,38 +86,6 @@ main-context-menu-page-save =
 
 ## Simple menu items
 
-main-context-menu-bookmark-add =
-    .aria-label = 이 페이지 북마크
-    .accesskey = m
-    .tooltiptext = 이 페이지 북마크
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-edit-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-add-mac =
-    .label = 페이지 북마크
-    .accesskey = m
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-add-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-edit-mac =
-    .label = 북마크 편집
-    .accesskey = m
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the add bookmark command.
-main-context-menu-bookmark-add-with-shortcut =
-    .aria-label = 이 페이지 북마크
-    .accesskey = m
-    .tooltiptext = 이 페이지 북마크 ({ $shortcut })
-main-context-menu-bookmark-change =
-    .aria-label = 이 북마크 편집
-    .accesskey = m
-    .tooltiptext = 북마크 편집
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the edit bookmark command.
-main-context-menu-bookmark-change-with-shortcut =
-    .aria-label = 이 북마크 편집
-    .accesskey = m
-    .tooltiptext = 북마크 편집 ({ $shortcut })
 main-context-menu-bookmark-page =
     .aria-label = 페이지 북마크…
     .accesskey = m
@@ -165,9 +133,6 @@ main-context-menu-open-link-new-window =
 main-context-menu-open-link-new-private-window =
     .label = 링크를 새 사생활 보호 창에서 열기
     .accesskey = P
-main-context-menu-bookmark-link =
-    .label = 링크 북마크
-    .accesskey = B
 main-context-menu-bookmark-link-2 =
     .label = 링크 북마크…
     .accesskey = B
@@ -191,6 +156,11 @@ main-context-menu-copy-phone =
 main-context-menu-copy-link-simple =
     .label = 링크 복사
     .accesskey = L
+# This command copies the link, removing additional
+# query parameters used to track users across sites.
+main-context-menu-strip-on-share-link =
+    .label = 사이트 추적 없이 링크 복사
+    .accesskey = y
 
 ## Media (video/audio) controls
 ##
@@ -299,7 +269,7 @@ main-context-menu-audio-save-as =
     .label = 오디오를 다른 이름으로 저장…
     .accesskey = v
 main-context-menu-video-take-snapshot =
-    .label = 스냅샷 찍기…
+    .label = 동영상 프레임 저장…
     .accesskey = S
 main-context-menu-video-email =
     .label = 메일로 동영상 보내기…
@@ -307,12 +277,6 @@ main-context-menu-video-email =
 main-context-menu-audio-email =
     .label = 메일로 오디오 보내기…
     .accesskey = a
-main-context-menu-plugin-play =
-    .label = 이 플러그인 활성화
-    .accesskey = c
-main-context-menu-plugin-hide =
-    .label = 이 플러그인 숨기기
-    .accesskey = H
 main-context-menu-save-to-pocket =
     .label = 페이지를 { -pocket-brand-name }에 저장
     .accesskey = k
@@ -333,6 +297,9 @@ main-context-menu-use-saved-password =
 
 ##
 
+main-context-menu-use-relay-mask =
+    .label = { -relay-brand-short-name } 이메일 마스크 사용
+    .accesskey = E
 main-context-menu-suggest-strong-password =
     .label = 강력한 비밀번호 제안…
     .accesskey = S
@@ -360,9 +327,6 @@ main-context-menu-frame-open-window =
 main-context-menu-frame-reload =
     .label = 프레임 새로 고침
     .accesskey = R
-main-context-menu-frame-bookmark =
-    .label = 이 프레임 북마크
-    .accesskey = m
 main-context-menu-frame-add-bookmark =
     .label = 프레임 북마크…
     .accesskey = m
@@ -378,9 +342,6 @@ main-context-menu-frame-view-source =
 main-context-menu-frame-view-info =
     .label = 프레임 정보 보기
     .accesskey = I
-main-context-menu-print-selection =
-    .label = 선택 영역 인쇄
-    .accesskey = r
 main-context-menu-print-selection-2 =
     .label = 선택 영역 인쇄…
     .accesskey = r

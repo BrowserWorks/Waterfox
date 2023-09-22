@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -71,7 +71,7 @@ certificate-viewer-subject-alt-names = Alternativt namn skrive ut til
 certificate-viewer-public-key-info = Informasjon om offentleg nøkkel
 certificate-viewer-miscellaneous = Diverse
 certificate-viewer-fingerprints = Fingeravtrykk
-certificate-viewer-basic-constraints = Grunnleggande avgrensingar
+certificate-viewer-basic-constraints = Grunnleggjande avgrensingar
 certificate-viewer-key-usages = Nøkkelbruk
 certificate-viewer-extended-key-usages = Utvida nøkkelbruk
 certificate-viewer-ocsp-stapling = OCSP-stapling
@@ -81,7 +81,6 @@ certificate-viewer-authority-info-aia = Autoritetsinfo (AIA)
 certificate-viewer-certificate-policies = Reglar for sertifikat
 certificate-viewer-embedded-scts = Innebygde SCT-ar
 certificate-viewer-crl-endpoints = CRL-endpoints
-
 # This message is used as a row header in the Miscellaneous section.
 # The associated data cell contains links to download the certificate.
 certificate-viewer-download = Last ned
@@ -101,7 +100,6 @@ certificate-viewer-download-pem = PEM (cert)
     .download = { $fileName }.pem
 certificate-viewer-download-pem-chain = PEM (chain)
     .download = { $fileName }-chain.pem
-
 # The title attribute for Critical Extension icon
 certificate-viewer-critical-extension =
     .title = Denne utvidinga er merkt som kritisk, noko som tyder at klientar må avvise sertifikatet dersom dei ikkje forstår det.

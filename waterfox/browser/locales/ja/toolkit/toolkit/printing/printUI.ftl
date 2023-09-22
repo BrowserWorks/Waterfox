@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,10 +15,11 @@ printui-sheets-count =
     }
 
 printui-page-range-all = すべて
+printui-page-range-current = 現在のページのみ
 printui-page-range-odd = 奇数ページ
 printui-page-range-even = 偶数ページ
-printui-page-range-custom = 指定範囲
-printui-page-range-label = 指定ページ
+printui-page-range-custom = ページ範囲
+printui-page-range-label = ページ指定
 printui-page-range-picker =
   .aria-label = ページ範囲を選択してください
 printui-page-custom-range-input =

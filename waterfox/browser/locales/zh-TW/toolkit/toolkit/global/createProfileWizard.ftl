@@ -1,17 +1,17 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-create-profile-window =
+create-profile-window2 =
     .title = 建立設定檔精靈
-    .style = width: 45em; height: 32em;
+    .style = min-width: 45em; min-height: 32em;
 
 ## First wizard page
 
-create-profile-first-page-header =
+create-profile-first-page-header2 =
     { PLATFORM() ->
         [macos] 介紹
-       *[other] 歡迎使用{ create-profile-window.title }
+       *[other] 歡迎使用{ create-profile-window2.title }
     }
 
 profile-creation-explanation-1 = { -brand-short-name } 把您的設定、偏好等各種資料存於您的個人設定檔 (Profile) 中。
@@ -28,10 +28,10 @@ profile-creation-explanation-4 =
 
 ## Second wizard page
 
-create-profile-last-page-header =
+create-profile-last-page-header2 =
     { PLATFORM() ->
         [macos] 最後一步
-       *[other] 完成{ create-profile-window.title }
+       *[other] 完成{ create-profile-window2.title }
     }
 
 profile-creation-intro = 可用名稱來區分不同的設定檔。您可參考下列建議，或使用自己喜歡的名稱。
