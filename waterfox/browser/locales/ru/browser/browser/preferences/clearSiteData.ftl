@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-clear-site-data-window =
+clear-site-data-window2 =
     .title = Удаление данных
-    .style = width: 35em
+    .style = min-width: 35em
 
-clear-site-data-description = Удаление всех кук и данных сайтов, хранимых в { -brand-short-name }, может привести к разрегистрации вас на веб-сайтах и удалению данных автономных веб-сайтов. Очистка кэша не затронет ваши логины.
+clear-site-data-description = Удаление всех кук и данных сайтов, хранимых в { -brand-short-name }, может привести к разрегистрации вас на веб-сайтах и удалению данных автономных веб-сайтов. Очистка кеша не затронет ваши логины.
 
 clear-site-data-close-key =
     .key = w
@@ -37,7 +37,7 @@ clear-site-data-cookies-info = Удаление может привести к �
 #   $amount (Number) - Amount of cache currently stored on disk
 #   $unit (String) - Abbreviation of the unit that $amount is in, e.g. "MB"
 clear-site-data-cache-with-data =
-    .label = Кэш веб-содержимого ({ $amount } { $unit })
+    .label = Кеш веб-содержимого ({ $amount } { $unit })
     .accesskey = ш
 
 # This string is a placeholder for while the data used to fill
@@ -46,7 +46,7 @@ clear-site-data-cache-with-data =
 # or the same as clear-site-data-cache-with-data (except the amount and unit),
 # to avoid flickering.
 clear-site-data-cache-empty =
-    .label = Кэш веб-содержимого
+    .label = Кеш веб-содержимого
     .accesskey = ш
 
 clear-site-data-cache-info = Веб-сайтам потребуется перезагрузить изображения и данные

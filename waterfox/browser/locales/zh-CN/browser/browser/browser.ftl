@@ -1,50 +1,19 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ## The main browser window's title
 
-# These are the default window titles everywhere except macOS. The first two
-# attributes are used when the web content opened has no title:
+# These are the default window titles everywhere except macOS.
+# .data-title-default and .data-title-private are used when the web content
+# opened has no title:
 #
 # default - "Waterfox"
 # private - "Waterfox (Private Browsing)"
 #
-# The last two are for use when there *is* a content title.
-# Variables:
-#  $content-title (String): the title of the web content.
-browser-main-window =
-    .data-title-default = { -brand-full-name }
-    .data-title-private = { -brand-full-name } （隐私浏览）
-    .data-content-title-default = { $content-title } — { -brand-full-name }
-    .data-content-title-private = { $content-title } — { -brand-full-name } （隐私浏览）
-# These are the default window titles on macOS. The first two are for use when
-# there is no content title:
-#
-# "default" - "Waterfox"
-# "private" - "Waterfox — (Private Browsing)"
-#
-# The last two are for use when there *is* a content title.
-# Do not use the brand name in the last two attributes, as we do on non-macOS.
-#
-# Also note the other subtle difference here: we use a `-` to separate the
-# brand name from `(Private Browsing)`, which does not happen on other OSes.
-#
-# Variables:
-#  $content-title (String): the title of the web content.
-browser-main-window-mac =
-    .data-title-default = { -brand-full-name }
-    .data-title-private = { -brand-full-name } —（隐私浏览）
-    .data-content-title-default = { $content-title }
-    .data-content-title-private = { $content-title } —（隐私浏览）
-# These are the default window titles everywhere except macOS. The first two
-# attributes are used when the web content opened has no title:
-#
-# default - "Waterfox"
-# private - "Waterfox (Private Browsing)"
-#
-# The last two are for use when there *is* a content title.
+# .data-content-title-default and .data-content-title-private are for use when
+# there *is* a content title.
 # Variables:
 #  $content-title (String): the title of the web content.
 browser-main-window-window-titles =
@@ -52,14 +21,17 @@ browser-main-window-window-titles =
     .data-title-private = { -brand-full-name } 隐私浏览
     .data-content-title-default = { $content-title } — { -brand-full-name }
     .data-content-title-private = { $content-title } — { -brand-full-name } 隐私浏览
-# These are the default window titles on macOS. The first two are for use when
-# there is no content title:
+# These are the default window titles on macOS.
+# .data-title-default and .data-title-private are used when the web content
+# opened has no title:
+#
 #
 # "default" - "Waterfox"
 # "private" - "Waterfox — (Private Browsing)"
 #
-# The last two are for use when there *is* a content title.
-# Do not use the brand name in the last two attributes, as we do on non-macOS.
+# .data-content-title-default and .data-content-title-private are for use when
+# there *is* a content title.
+# Do not use the brand name in these, as we do on non-macOS.
 #
 # Also note the other subtle difference here: we use a `-` to separate the
 # brand name from `(Private Browsing)`, which does not happen on other OSes.
@@ -76,7 +48,9 @@ browser-main-window-mac-window-titles =
 # This should match the `data-title-default` attribute in both
 # `browser-main-window` and `browser-main-window-mac`.
 browser-main-window-title = { -brand-full-name }
-private-browsing-shortcut-text = { -brand-short-name } 隐私浏览
+# The non-variable portion of this MUST match the translation of
+# "PRIVATE_BROWSING_SHORTCUT_TITLE" in custom.properties
+private-browsing-shortcut-text-2 = { -brand-shortcut-name } 隐私浏览
 
 ##
 
@@ -107,16 +81,12 @@ urlbar-xr-notification-anchor =
     .tooltiptext = 打开虚拟现实权限面板
 urlbar-storage-access-anchor =
     .tooltiptext = 打开上网活动权限面板
-urlbar-translate-notification-anchor =
-    .tooltiptext = 翻译此页面
 urlbar-web-rtc-share-screen-notification-anchor =
     .tooltiptext = 管理您是否与该网站共享窗口或屏幕
 urlbar-indexed-db-notification-anchor =
     .tooltiptext = 打开离线存储消息面板
 urlbar-password-notification-anchor =
     .tooltiptext = 打开保存密码消息面板
-urlbar-translated-notification-anchor =
-    .tooltiptext = 管理页面翻译
 urlbar-plugins-notification-anchor =
     .tooltiptext = 管理插件使用
 urlbar-web-rtc-share-devices-notification-anchor =
@@ -134,11 +104,25 @@ urlbar-addons-notification-anchor =
 urlbar-tip-help-icon =
     .title = 获取帮助
 urlbar-search-tips-confirm = 好的，明白了
+urlbar-search-tips-confirm-short = 知道了
 # Read out before Urlbar Tip text content so screenreader users know the
 # subsequent text is a tip offered by the browser. It should end in a colon or
 # localized equivalent.
 urlbar-tip-icon-description =
     .alt = 提示：
+urlbar-result-menu-button =
+    .title = 打开菜单
+urlbar-result-menu-button-feedback = 意见反馈
+    .title = 打开菜单
+urlbar-result-menu-learn-more =
+    .label = 详细了解
+    .accesskey = L
+urlbar-result-menu-remove-from-history =
+    .label = 从历史记录移除
+    .accesskey = R
+urlbar-result-menu-tip-get-help =
+    .label = 获取帮助
+    .accesskey = h
 
 ## Prompts users to use the Urlbar when they open a new tab or visit the
 ## homepage of their default search engine.
@@ -147,6 +131,8 @@ urlbar-tip-icon-description =
 
 urlbar-search-tips-onboard = 输入寥寥，搜遍万千：在地址栏就能用 { $engineName } 搜索。
 urlbar-search-tips-redirect-2 = 在地址栏搜索，可以看到 { $engineName } 提供的建议，还有您的相关浏览历史。
+# Make sure to match the name of the Search panel in settings.
+urlbar-search-tips-persist = 搜索向简洁进化，让您的搜索在地址栏更直观。若要改回显示网址，可到设置中的“搜索”切换。
 # Prompts users to use the Urlbar when they are typing in the domain of a
 # search engine, e.g. google.com or amazon.com.
 urlbar-tabtosearch-onboard = 一键直达，高效搜索。
@@ -195,10 +181,6 @@ urlbar-star-add-bookmark =
 
 ## Page Action Context Menu
 
-page-action-manage-extension =
-    .label = 管理扩展…
-page-action-remove-extension =
-    .label = 移除扩展
 page-action-manage-extension2 =
     .label = 管理扩展…
     .accesskey = E
@@ -267,42 +249,38 @@ search-one-offs-actions =
     .tooltiptext = 操作（{ $restrict }）
 
 ## QuickActions are shown in the urlbar as the user types a matching string
-
-
-## QuickActions are shown in the urlbar as the user types a matching string
 ## The -cmd- strings are comma separated list of keywords that will match
 ## the action.
 
 # Opens the about:addons page in the home / recommendations section
 quickactions-addons = 查看附加组件
-quickactions-cmd-addons = 附加组件, 扩展, 主题, add-ons, extensions, themes
 quickactions-cmd-addons2 = 附加组件
 # Opens the bookmarks library window
-quickactions-bookmarks = 查看书签
+quickactions-bookmarks2 = 管理书签
 quickactions-cmd-bookmarks = 书签, bookmarks
 # Opens a SUMO article explaining how to clear history
 quickactions-clearhistory = 清除历史
 quickactions-cmd-clearhistory = 清除历史, clear history
 # Opens about:downloads page
-quickactions-downloads = 打开下载
+quickactions-downloads2 = 查看下载
 quickactions-cmd-downloads = 下载, downloads
 # Opens about:addons page in the extensions section
 quickactions-extensions = 管理扩展
 quickactions-cmd-extensions = 扩展
 # Opens the devtools web inspector
-quickactions-inspector = 查看源代码
+quickactions-inspector2 = 打开开发者工具
 quickactions-cmd-inspector = 查看器, 开发工具, inspector, devtools
 # Opens about:logins
-quickactions-logins = 查看登录信息
+quickactions-logins2 = 管理密码
 quickactions-cmd-logins = 登录信息, 密码, logins, passwords
 # Opens about:addons page in the plugins section
 quickactions-plugins = 管理插件
 quickactions-cmd-plugins = 插件
 # Opens the print dialog
-quickactions-print = 打印
+quickactions-print2 = 打印页面
 quickactions-cmd-print = 打印, print
 # Opens a new private browsing window
-quickactions-private = 打开隐私浏览窗口
+quickactions-private2 = 打开隐私窗口
 quickactions-cmd-private = 隐私浏览, private browsing
 # Opens a SUMO article explaining how to refresh
 quickactions-refresh = 翻新 { -brand-short-name }
@@ -311,10 +289,10 @@ quickactions-cmd-refresh = 刷新, refresh
 quickactions-restart = 重启 { -brand-short-name }
 quickactions-cmd-restart = 重新启动, 重启, restart
 # Opens the screenshot tool
-quickactions-screenshot2 = 截图
+quickactions-screenshot3 = 截图
 quickactions-cmd-screenshot = 截图, screenshot
 # Opens about:preferences
-quickactions-settings = 打开设置
+quickactions-settings2 = 管理设置
 quickactions-cmd-settings = 设置, 偏好设置, 选项, settings, preferences, options
 # Opens about:addons page in the themes section
 quickactions-themes = 管理主题
@@ -323,8 +301,11 @@ quickactions-cmd-themes = 主题
 quickactions-update = 更新 { -brand-short-name }
 quickactions-cmd-update = 更新, update
 # Opens the view-source UI with current pages source
-quickactions-viewsource = 查看源代码
+quickactions-viewsource2 = 查看页面源代码
 quickactions-cmd-viewsource = 查看源代码, 源代码, view source, source
+# Tooltip text for the help button shown in the result.
+quickactions-learn-more =
+    .title = 详细了解“快捷操作”
 
 ## Bookmark Panel
 
@@ -365,13 +346,14 @@ identity-connection-internal = 这是安全的 { -brand-short-name } 页面。
 identity-connection-file = 此页面存储在您的计算机上。
 identity-extension-page = 此页面是扩展页面。
 identity-active-blocked = { -brand-short-name } 已拦截此页面上不安全的内容。
-identity-custom-root = 连接由 Waterfox 不认可的证书颁发者所验证。
+identity-custom-root = 连接由 BrowserWorks 不认可的证书颁发者所验证。
 identity-passive-loaded = 此页面上部分内容不安全（例如图像）。
 identity-active-loaded = 您在此页面上已禁用保护。
 identity-weak-encryption = 此页面使用较弱加密。
 identity-insecure-login-forms = 在此网页上输入的登录信息可能会泄露。
 identity-https-only-connection-upgraded = （升级为 HTTPS）
 identity-https-only-label = HTTPS-Only 模式
+identity-https-only-label2 = 自动将此网站的连接升级为安全连接
 identity-https-only-dropdown-on =
     .label = 开启
 identity-https-only-dropdown-off =
@@ -379,18 +361,20 @@ identity-https-only-dropdown-off =
 identity-https-only-dropdown-off-temporarily =
     .label = 暂时关闭
 identity-https-only-info-turn-on2 = 若想要 { -brand-short-name } 尽可能升级为安全连接，请为此网站开启 HTTPS-Only 模式。
-identity-https-only-info-turn-off2 = 若页面看起来不正常，则可能需要为此网站关闭 HTTPS-Only 模式，使用不安全的 HTTP 重新载入。
+identity-https-only-info-turn-off2 = 若页面看起来不正常，则可能需要为此网站关闭 HTTPS-Only 模式，使用不安全的 HTTP 重新加载。
+identity-https-only-info-turn-on3 = 若想要 { -brand-short-name } 尽可能升级为安全连接，请为此网站开启“升级为 HTTPS”。
+identity-https-only-info-turn-off3 = 如果页面看起来不正常，则可能需要为此网站关闭“升级为 HTTPS”，使用不安全的 HTTP 重新加载。
 identity-https-only-info-no-upgrade = 无法将网站连接从 HTTP 升级。
-identity-permissions-storage-access-header = 跨网站 Cookie
-identity-permissions-storage-access-hint = 当您在此网站上时，以下各方可以使用跨网站 Cookie 和网站数据。
+identity-permissions-storage-access-header = 跨站 Cookie
+identity-permissions-storage-access-hint = 当您在此网站上时，以下各方可以使用跨站 Cookie 和网站数据。
 identity-permissions-storage-access-learn-more = 详细了解
-identity-permissions-reload-hint = 您可能需要重新载入此页面以应用更改。
+identity-permissions-reload-hint = 您可能需要重新加载此页面以应用更改。
 identity-clear-site-data =
     .label = 清除 Cookie 和网站数据…
 identity-connection-not-secure-security-view = 您并未安全地连接至此网站。
 identity-connection-verified = 您已安全地连接至此网站。
 identity-ev-owner-label = 证书颁发给：
-identity-description-custom-root = Waterfox 不认识此证书颁发者。它可能是由您的操作系统或管理员身份添加。 <label data-l10n-name="link">详细了解</label>
+identity-description-custom-root2 = BrowserWorks 不认识此证书颁发者。它可能是由您的操作系统或管理员身份添加。
 identity-remove-cert-exception =
     .label = 移除例外
     .accesskey = R
@@ -398,14 +382,12 @@ identity-description-insecure = 您至此网站的连接非私密。您提交的
 identity-description-insecure-login-forms = 在此页面输入您的登录信息并不安全，可能会泄露。
 identity-description-weak-cipher-intro = 您与此网站的连接使用了较弱的加密，并不私密。
 identity-description-weak-cipher-risk = 其他人可能查看您的信息或修改该网站的行为。
-identity-description-active-blocked = { -brand-short-name } 已拦截此页面上不安全的内容。 <label data-l10n-name="link">详细了解</label>
+identity-description-active-blocked2 = { -brand-short-name } 已拦截此页面上不安全的内容。
 identity-description-passive-loaded = 您的连接并不私密，您提供给此网站的信息可能会被其他人看到。
-identity-description-passive-loaded-insecure = 此网站包含不安全的内容（例如图像）。 <label data-l10n-name="link">详细了解</label>
-identity-description-passive-loaded-mixed = 尽管 { -brand-short-name } 已拦截部分内容，但页面上仍有内容不安全（例如图像）。 <label data-l10n-name="link">详细了解</label>
+identity-description-passive-loaded-insecure2 = 此网站包含不安全的内容（例如图像）。
+identity-description-passive-loaded-mixed2 = 尽管 { -brand-short-name } 已拦截部分内容，但页面上仍有内容不安全（例如图像）。
 identity-description-active-loaded = 此网站包含的内容不安全（例如脚本），并且您至它的连接非私密。
 identity-description-active-loaded-insecure = 您提供给此网站的信息（例如密码、聊天消息、信用卡等）可能会被其他人看到。
-identity-learn-more =
-    .value = 详细了解
 identity-disable-mixed-content-blocking =
     .label = 暂时解除保护
     .accesskey = D
@@ -478,14 +460,10 @@ popup-select-microphone-icon =
     .tooltiptext = 麦克风
 popup-select-speaker-icon =
     .tooltiptext = 音频输出设备
+popup-select-window-or-screen =
+    .label = 窗口或屏幕：
+    .accesskey = W
 popup-all-windows-shared = 您的屏幕上的所有可见窗口都将被共享。
-popup-screen-sharing-block =
-    .label = 阻止
-    .accesskey = B
-popup-screen-sharing-always-block =
-    .label = 一律阻止
-    .accesskey = w
-popup-mute-notifications-checkbox = 共享期间不显示网站通知
 
 ## WebRTC window or screen share tab switch warning
 
@@ -498,7 +476,7 @@ sharing-warning-disable-for-session =
 
 ## DevTools F12 popup
 
-enable-devtools-popup-description = 请通过“Web 开发者”菜单打开开发者工具，才能使用 F12 快捷键。
+enable-devtools-popup-description2 = 要使用 F12 快捷键，请先由“浏览器工具”菜单打开开发者工具。
 
 ## URL Bar
 
@@ -578,6 +556,8 @@ urlbar-result-action-search-w-engine = 使用 { $engine } 搜索
 urlbar-result-action-sponsored = 赞助项目
 urlbar-result-action-switch-tab = 切换到标签页
 urlbar-result-action-visit = 访问
+# Allows the user to visit a URL that was previously copied to the clipboard.
+urlbar-result-action-visit-from-your-clipboard = 访问剪贴板中的网址
 # Directs a user to press the Tab key to perform a search with the specified
 # engine.
 # Variables
@@ -631,6 +611,29 @@ urlbar-group-search-suggestions =
 urlbar-group-quickactions =
     .label = 快捷操作
 
+## Reader View toolbar buttons
+
+# This should match menu-view-enter-readerview in menubar.ftl
+reader-view-enter-button =
+    .aria-label = 进入阅读模式
+# This should match menu-view-close-readerview in menubar.ftl
+reader-view-close-button =
+    .aria-label = 关闭阅读模式
+
+## Picture-in-Picture urlbar button
+## Variables:
+##   $shortcut (String) - Keyboard shortcut to execute the command.
+
+picture-in-picture-urlbar-button-open =
+    .tooltiptext = 打开画中画（{ $shortcut }）
+picture-in-picture-urlbar-button-close =
+    .tooltiptext = 关闭画中画（{ $shortcut }）
+picture-in-picture-panel-header = 画中画
+picture-in-picture-panel-headline = 不推荐在此网站使用画中画
+picture-in-picture-panel-body = 开启画中画后，视频可能会不按开发者预期的效果显示。
+picture-in-picture-enable-toggle =
+    .label = 仍要启用
+
 ## Full Screen and Pointer Lock UI
 
 # Please ensure that the domain stays in the `<span data-l10n-name="domain">` markup.
@@ -638,27 +641,14 @@ urlbar-group-quickactions =
 #  $domain (String): the domain that is full screen, e.g. "mozilla.org"
 fullscreen-warning-domain = <span data-l10n-name="domain">{ $domain }</span> 已进入全屏模式
 fullscreen-warning-no-domain = 此文档已进入全屏模式
-fullscreen-exit-button = 退出全屏模式(Esc)
+fullscreen-exit-button = 退出全屏模式 (Esc)
 # "esc" is lowercase on mac keyboards, but uppercase elsewhere.
-fullscreen-exit-mac-button = 退出全屏模式 (Esc)
+fullscreen-exit-mac-button = 退出全屏模式 (esc)
 # Please ensure that the domain stays in the `<span data-l10n-name="domain">` markup.
 # Variables
 #  $domain (String): the domain that is using pointer-lock, e.g. "mozilla.org"
 pointerlock-warning-domain = <span data-l10n-name="domain">{ $domain }</span> 已控制您的鼠标指针。按 Esc 键可收回控制权。
 pointerlock-warning-no-domain = 此文档已控制您的鼠标指针。按 Esc 键可收回控制权。
-
-## Subframe crash notification
-
-crashed-subframe-message = <strong>此页面中的部分内容出现崩溃。</strong>您可以向 { -brand-product-name } 报告此问题，以尽快修复。
-# The string for crashed-subframe-title.title should match crashed-subframe-message,
-# but without any markup.
-crashed-subframe-title =
-    .title = 此页面中的部分内容出现崩溃。您可以向 { -brand-product-name } 报告此问题，以尽快修复。
-crashed-subframe-learnmore-link =
-    .value = 详细了解
-crashed-subframe-submit =
-    .label = 提交报告
-    .accesskey = S
 
 ## Bookmarks panels, menus and toolbar
 
@@ -675,6 +665,11 @@ bookmarks-other-bookmarks-menu =
     .label = 其他书签
 bookmarks-mobile-bookmarks-menu =
     .label = 移动设备上的书签
+
+## Variables:
+##   $isVisible (boolean): if the specific element (e.g. bookmarks sidebar,
+##                         bookmarks toolbar, etc.) is visible or not.
+
 bookmarks-tools-sidebar-visibility =
     .label =
         { $isVisible ->
@@ -699,12 +694,13 @@ bookmarks-tools-menu-button-visibility =
             [true] 从工具栏移除书签菜单
            *[other] 添加书签菜单到工具栏
         }
+
+##
+
 bookmarks-search =
     .label = 搜索书签
 bookmarks-tools =
     .label = 书签工具
-bookmarks-bookmark-edit-panel =
-    .label = 编辑此书签
 bookmarks-subview-edit-bookmark =
     .label = 编辑此书签…
 # The aria-label is a spoken label that should not include the word "toolbar" or
@@ -720,9 +716,6 @@ bookmarks-toolbar-placeholder =
     .title = 书签工具栏项目
 bookmarks-toolbar-placeholder-button =
     .label = 书签工具栏项目
-# "Bookmark" is a verb, as in "Add current tab to bookmarks".
-bookmarks-current-tab =
-    .label = 将当前标签页加入书签
 # "Bookmark" is a verb, as in "Add current tab to bookmarks".
 bookmarks-subview-bookmark-tab =
     .label = 将当前标签页加入书签…
@@ -749,11 +742,6 @@ repair-text-encoding-button =
 ## Customize Toolbar Buttons
 
 # Variables:
-#  $shortcut (String): keyboard shortcut to open the add-ons manager
-toolbar-addons-themes-button =
-    .label = 扩展和主题
-    .tooltiptext = 管理您的扩展和主题（{ $shortcut }）
-# Variables:
 #  $shortcut (String): keyboard shortcut to open settings (only on macOS)
 toolbar-settings-button =
     .label = 设置
@@ -768,6 +756,9 @@ toolbar-overflow-customize-button =
 toolbar-button-email-link =
     .label = 用邮件发送链接
     .tooltiptext = 用邮件发送此页链接
+toolbar-button-logins =
+    .label = 密码
+    .tooltiptext = 查看并管理您存放的密码
 # Variables:
 #  $shortcut (String): keyboard shortcut to save a copy of the page
 toolbar-button-save-page =
@@ -799,13 +790,6 @@ eme-notifications-drm-content-playing-dismiss-accesskey = D
 
 panel-save-update-username = 用户名
 panel-save-update-password = 密码
-
-## Add-on removal warning
-
-# Variables:
-#  $name (String): The name of the addon that will be removed.
-addon-removal-title = 要移除 { $name } 吗？
-addon-removal-abuse-report-checkbox = 向 { -vendor-short-name } 举报此扩展
 
 ##
 
@@ -874,8 +858,6 @@ navbar-library =
     .tooltiptext = 查看浏览历史、已保存的书签等
 navbar-search =
     .title = 搜索
-navbar-accessibility-indicator =
-    .tooltiptext = 无障碍功能已启用
 # Name for the tabs toolbar as spoken by screen readers. The word
 # "toolbar" is appended automatically and should not be included in
 # in the string
@@ -891,9 +873,9 @@ tabs-toolbar-list-all-tabs =
 
 # <img data-l10n-name="icon"/> will be replaced by the application menu icon
 restore-session-startup-suggestion-message = <strong>想打开先前的标签页？</strong>您可以从 { -brand-short-name } 应用程序菜单 <img data-l10n-name="icon"/> 中的“历史”恢复先前的浏览状态。
-restore-session-startup-suggestion-button = 告诉我如何做
+restore-session-startup-suggestion-button = 怎么做
 
-## Waterfox data reporting notification (Telemetry, Waterfox Health Report, etc)
+## BrowserWorks data reporting notification (Telemetry, Waterfox Health Report, etc)
 
 data-reporting-notification-message = { -brand-short-name } 会自动向 { -vendor-short-name } 反馈一些数据，以便我们改善您的使用体验。
 data-reporting-notification-button =
@@ -907,3 +889,66 @@ private-browsing-indicator-label = 隐私浏览
 unified-extensions-button =
     .label = 扩展
     .tooltiptext = 扩展
+
+## Unified extensions button when permission(s) are needed.
+## Note that the new line is intentionally part of the tooltip.
+
+unified-extensions-button-permissions-needed =
+    .label = 扩展
+    .tooltiptext = 扩展所需权限
+
+## Unified extensions button when some extensions are quarantined.
+## Note that the new line is intentionally part of the tooltip.
+
+unified-extensions-button-quarantined =
+    .label = 扩展
+    .tooltiptext =
+        扩展
+        已禁用部分扩展
+
+## Autorefresh blocker
+
+refresh-blocked-refresh-label = { -brand-short-name } 阻止了此页面自动重新加载。
+refresh-blocked-redirect-label = { -brand-short-name } 阻止了此页面自动重定向至其他页面。
+refresh-blocked-allow =
+    .label = 允许
+    .accesskey = A
+
+## Waterfox Relay integration
+
+firefox-relay-offer-why-to-use-relay = 我们安全且易用的邮箱马甲通过隐藏您的电子邮件地址来保护您的身份并防止垃圾邮件。
+# Variables:
+#  $useremail (String): user email that will receive messages
+firefox-relay-offer-what-relay-provides = 发送到马甲邮箱的所有电子邮件都将转发到 <strong>{ $useremail }</strong>（除非您决定阻止它们）。
+firefox-relay-offer-legal-notice = 点击“使用马甲邮箱”，即表示您同意<label data-l10n-name="tos-url">服务条款</label>和<label data-l10n-name="privacy-url">隐私声明</label>。
+
+## Add-on Pop-up Notifications
+
+popup-notification-addon-install-unsigned =
+    .value = （未验证）
+popup-notification-xpinstall-prompt-learn-more = 详细了解如何安全地安装附加组件
+
+## Pop-up warning
+
+# Variables:
+#   $popupCount (Number): the number of pop-ups blocked.
+popup-warning-message = { -brand-short-name } 阻止了此网站的 { $popupCount } 个弹窗。
+# The singular form is left out for English, since the number of blocked pop-ups is always greater than 1.
+# Variables:
+#   $popupCount (Number): the number of pop-ups blocked.
+popup-warning-exceeded-message = { -brand-short-name } 阻止了此网站打开超过 { $popupCount } 个弹出式窗口。
+popup-warning-button =
+    .label =
+        { PLATFORM() ->
+            [windows] 选项
+           *[other] 首选项
+        }
+    .accesskey =
+        { PLATFORM() ->
+            [windows] O
+           *[other] P
+        }
+# Variables:
+#   $popupURI (String): the URI for the pop-up window
+popup-show-popup-menuitem =
+    .label = 显示“{ $popupURI }”

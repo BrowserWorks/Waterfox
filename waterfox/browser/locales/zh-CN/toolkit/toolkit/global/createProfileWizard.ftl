@@ -1,17 +1,17 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-create-profile-window =
+create-profile-window2 =
     .title = 创建配置文件向导
-    .style = width: 45em; height: 32em;
+    .style = min-width: 45em; min-height: 32em;
 
 ## First wizard page
 
-create-profile-first-page-header =
+create-profile-first-page-header2 =
     { PLATFORM() ->
         [macos] 介绍
-       *[other] 欢迎使用 { create-profile-window.title }
+       *[other] 欢迎使用 { create-profile-window2.title }
     }
 
 profile-creation-explanation-1 = { -brand-short-name } 把您的偏好设置等各种数据保存在您的个人配置文件中。
@@ -28,10 +28,10 @@ profile-creation-explanation-4 =
 
 ## Second wizard page
 
-create-profile-last-page-header =
+create-profile-last-page-header2 =
     { PLATFORM() ->
         [macos] 总结
-       *[other] 正在完成 { create-profile-window.title }
+       *[other] 正在完成 { create-profile-window2.title }
     }
 
 profile-creation-intro = 您需要为各个配置文件取不同的名称。您可以用这里提供的名称，也可以自行指定。

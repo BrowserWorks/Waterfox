@@ -1,13 +1,13 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-connection-window =
+connection-window2 =
     .title = Tilkoplingsinnstillingar
     .style =
         { PLATFORM() ->
-            [macos] width: 44em
-           *[other] width: 49em
+            [macos] min-width: 44em
+           *[other] min-width: 49em
         }
 
 connection-close-key =
@@ -35,7 +35,6 @@ connection-proxy-http = HTTP-proxy
     .accesskey = x
 connection-proxy-http-port = Port
     .accesskey = P
-
 connection-proxy-https-sharing =
     .label = Bruk også denne proxyserveren for HTTPS
     .accesskey = s
@@ -77,16 +76,14 @@ connection-proxy-autologin =
     .accesskey = i
     .tooltip = Dette valet stadfestar identiteten din stille mot proxiar når du har lagra innloggingsdetaljar for dei. Du vil få spørsmål dersom autentiseringa er mislykka.
 
+connection-proxy-autologin-checkbox =
+    .label = Ikkje spør om stadfesting dersom passordet er lagra
+    .accesskey = i
+    .tooltiptext = Dette valet stadfestar identiteten din stille mot proxiar når du har lagra innloggingsdetaljar for dei. Du vil få spørsmål dersom autentiseringa er mislykka.
+
 connection-proxy-socks-remote-dns =
     .label = Proxy DNS når du brukar SOCKS v5
     .accesskey = d
-
-connection-dns-over-https =
-    .label = Slå på DNS-over-HTTPS
-    .accesskey = H
-
-connection-dns-over-https-url-resolver = Bruk leverandør
-    .accesskey = B
 
 # Variables:
 #   $name (String) - Display name or URL for the DNS over HTTPS provider

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,18 +8,16 @@
 # Variables:
 #   $addon-name (string) - Name of the add-on being reported
 abuse-report-dialog-title = Reportar para { $addon-name }
-
 abuse-report-title-extension = Denunciar esta extensión a { -vendor-short-name }
 abuse-report-title-sitepermission = Informar sobre este complemento de permisos de este sitio a { -vendor-short-name }
 abuse-report-title-theme = Denunciar este tema a { -vendor-short-name }
 abuse-report-subtitle = ¿Cuál es el problema?
-
 # Variables:
 #   $author-name (string) - Name of the add-on author
 abuse-report-addon-authored-by = por <a data-l10n-name="author-name">{ $author-name }</a>
-
 abuse-report-learnmore = ¿No sabes que problema seleccionar? <a data-l10n-name="learnmore-link">Aprende más acerca de reportar extensiones y temas</a>
-
+abuse-report-learnmore-intro = ¿No sabes que problema seleccionar?
+abuse-report-learnmore-link = Aprende más acerca de reportar extensiones y temas
 abuse-report-submit-description = Describe el problema (opcional)
 abuse-report-textarea =
     .placeholder = Para nosotros es más fácil solucionar un problema si tenemos detalles específicos. Describe tu problema. Gracias por ayudarnos a que Internet siga siendo saludable.
@@ -46,6 +44,24 @@ abuse-report-messagebar-removed-sitepermission = Gracias por enviar un reporte. 
 abuse-report-messagebar-removed-theme = Gracias por enviar el informe. Has eliminado el tema <span data-l10n-name="addon-name">{ $addon-name }</span>.
 abuse-report-messagebar-error = Hubo un error al enviar el informe sobre <span data-l10n-name="addon-name">{ $addon-name }</span>.
 abuse-report-messagebar-error-recent-submit = No se envió el informe sobre <span data-l10n-name="addon-name">{ $addon-name }</span> porque otro informe se envió recientemente.
+abuse-report-messagebar-aborted2 =
+    .message = Se canceló el informe sobre { $addon-name }.
+abuse-report-messagebar-submitting2 =
+    .message = Enviando informe sobre { $addon-name }.
+abuse-report-messagebar-submitted2 =
+    .message = Gracias por enviar el informe. ¿Quieres eliminar { $addon-name }?
+abuse-report-messagebar-submitted-noremove2 =
+    .message = Gracias por enviar un informe.
+abuse-report-messagebar-removed-extension2 =
+    .message = Gracias por enviar el informe. Has eliminado la extensión { $addon-name }.
+abuse-report-messagebar-removed-sitepermission2 =
+    .message = Gracias por enviar un reporte. Has eliminado el complemento Permisos del sitio { $addon-name }.
+abuse-report-messagebar-removed-theme2 =
+    .message = Gracias por enviar el informe. Has eliminado el tema { $addon-name }.
+abuse-report-messagebar-error2 =
+    .message = Hubo un error al enviar el informe sobre { $addon-name }.
+abuse-report-messagebar-error-recent-submit2 =
+    .message = No se envió el informe sobre { $addon-name } porque otro informe se envió recientemente.
 
 ## Message bars actions.
 
@@ -62,18 +78,14 @@ abuse-report-messagebar-action-cancel = Cancelar
 
 abuse-report-damage-reason-v2 = Ha dañado mi computadora o mis datos se vieron comprometidos
 abuse-report-damage-example = Ejemplo: instaló malware o robó información
-
 abuse-report-spam-reason-v2 = Contiene spam o inserta publicidad no solicitada
 abuse-report-spam-example = Ejemplo: inserta publicidad en páginas web
-
 abuse-report-settings-reason-v2 = Cambió mi motor de búsqueda, página de inicio o nueva pestaña sin informarme o preguntarme
 abuse-report-settings-suggestions = Antes de informar sobre la extensión, intenta cambiar la configuración:
 abuse-report-settings-suggestions-search = Cambia la configuración predeterminada de las búsquedas
 abuse-report-settings-suggestions-homepage = Cambia tu página de inicio y de nueva pestaña
-
 abuse-report-deceptive-reason-v2 = Simula ser algo que no es
 abuse-report-deceptive-example = Ejemplo: descripción o imágenes erróneas
-
 abuse-report-broken-reason-extension-v2 = No funciona, daño sitios web o ralentiza { -brand-product-name }
 abuse-report-broken-reason-sitepermission-v2 = No funciona, daño los sitios web o ralentiza { -brand-product-name }
 abuse-report-broken-reason-theme-v2 = No funciona o interrumpe la visualización del navegador
@@ -84,14 +96,11 @@ abuse-report-broken-suggestions-sitepermission =
     para resolver un problema de funcionalidad es ponerse en contacto con el desarrollador del sitio web.
     <a data-l10n-name="support-link"> Visita el sitio web </a> para obtener la información del desarrollador.
 abuse-report-broken-suggestions-theme = Parece que has identificado un problema. Además de enviar un informe por aquí, lo mejor para conseguir que se resuelva un problema de funcionalidad es contactar con el desarrollador del tema. <a data-l10n-name="support-link">Accede al sitio web del tema</a> para conseguir los datos de contacto del desarrollador.
-
 abuse-report-policy-reason-v2 = Se muestra contenido de odio, violencia o ilegal
 abuse-report-policy-suggestions =
     Nota: Los problemas relacionados con derechos de autor y marcas registradas deben informarse en un proceso separado.
     <a data-l10n-name="report-infringement-link">Usa estas instrucciones</a> para
     informar del problema
-
 abuse-report-unwanted-reason-v2 = Nunca lo quise y no sé cómo deshacerme de él
 abuse-report-unwanted-example = Ejemplo: una aplicación la instaló sin mi consentimiento
-
 abuse-report-other-reason = Algo más

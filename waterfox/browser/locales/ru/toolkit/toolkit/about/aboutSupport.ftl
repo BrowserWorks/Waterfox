@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,6 +15,10 @@ support-addons-type = Тип
 support-addons-enabled = Включено
 support-addons-version = Версия
 support-addons-id = ID
+legacy-user-stylesheets-title = Устаревшие пользовательские таблицы стилей
+legacy-user-stylesheets-enabled = Активны
+legacy-user-stylesheets-stylesheet-types = Таблицы стилей
+legacy-user-stylesheets-no-stylesheets-found = Таблицы стилей не найдены
 security-software-title = Программы обеспечения безопасности
 security-software-type = Тип
 security-software-name = Наименование
@@ -38,7 +42,7 @@ app-basics-update-channel = Канал обновления
 # as in "Folder for updates". "Update" is a noun, not a verb.
 app-basics-update-dir =
     { PLATFORM() ->
-        [linux] Каталог обновления
+        [linux] Папка обновления
        *[other] Папка обновления
     }
 app-basics-update-history = Журнал обновлений
@@ -47,7 +51,7 @@ app-basics-show-update-history = Показать журнал обновлен�
 app-basics-binary = Бинарный файл приложения
 app-basics-profile-dir =
     { PLATFORM() ->
-        [linux] Каталог профиля
+        [linux] Папка профиля
        *[other] Папка профиля
     }
 app-basics-enabled-plugins = Включённые плагины
@@ -70,10 +74,11 @@ app-basics-remote-processes-count = Удалённые процессы
 app-basics-enterprise-policies = Корпоративные политики
 app-basics-location-service-key-google = Ключ Службы определения местоположения от Google
 app-basics-safebrowsing-key-google = Ключ Google Safebrowsing
-app-basics-key-mozilla = Ключ Службы определения местоположения от Waterfox
+app-basics-key-mozilla = Ключ Службы определения местоположения от BrowserWorks
 app-basics-safe-mode = Безопасный Режим
 app-basics-memory-size = Объём памяти (ОЗУ)
-app-basics-disk-available = Доступное место на диске
+app-basics-disk-available = Доступное место на накопителе
+app-basics-pointing-devices = Манипуляторы
 # Variables:
 #   $value (number) - Amount of data being stored
 #   $unit (string) - The unit of data being stored (e.g. MB)
@@ -82,7 +87,7 @@ show-dir-label =
     { PLATFORM() ->
         [macos] Показать в Finder
         [windows] Открыть папку
-       *[other] Открыть каталог
+       *[other] Открыть папку
     }
 environment-variables-title = Переменные среды
 environment-variables-name = Имя
@@ -107,11 +112,21 @@ graphics-gpu2-title = Видеокарта №2
 graphics-decision-log-title = Лог решения
 graphics-crash-guards-title = Возможности, отключённые защитой от падения
 graphics-workarounds-title = Способы обхода
+graphics-device-pixel-ratios = Пиксельные соотношения окна устройства
 # Windowing system in use on Linux (e.g. X11, Wayland).
 graphics-window-protocol = Протокол управления окнами
 # Desktop environment in use on Linux (e.g. GNOME, KDE, XFCE, etc).
 graphics-desktop-environment = Среда рабочего стола
 place-database-title = База данных Places
+place-database-stats = Статистика
+place-database-stats-show = Показать статистику
+place-database-stats-hide = Скрыть статистику
+place-database-stats-entity = Объект
+place-database-stats-count = Количество
+place-database-stats-size-kib = Размер (КиБ)
+place-database-stats-size-perc = Размер (%)
+place-database-stats-efficiency-perc = Эффективность (%)
+place-database-stats-sequentiality-perc = Последовательность (%)
 place-database-integrity = Целостность
 place-database-verify-integrity = Проверить целостность
 a11y-title = Поддержка доступности
@@ -120,8 +135,8 @@ a11y-force-disabled = Отключение поддержки доступнос
 a11y-handler-used = Используемый обработчик Доступности
 a11y-instantiator = Исполняемый файл поддержки доступности
 library-version-title = Версии библиотек
-copy-text-to-clipboard-label = Копировать текст в буфер обмена
-copy-raw-data-to-clipboard-label = Копировать необработанные данные в буфер обмена
+copy-text-to-clipboard-label = Скопировать текст в буфер обмена
+copy-raw-data-to-clipboard-label = Скопировать необработанные данные в буфер обмена
 sandbox-title = Песочница
 sandbox-sys-call-log-title = Отклонённые cистемные вызовы
 sandbox-sys-call-index = #
@@ -133,9 +148,9 @@ sandbox-sys-call-number = Системный вызов
 sandbox-sys-call-args = Параметры
 troubleshoot-mode-title = Диагностика проблем
 restart-in-troubleshoot-mode-label = Безопасный режим…
-clear-startup-cache-title = Попробуйте очистить кэш запуска
-clear-startup-cache-label = Очистить кэш запуска…
-startup-cache-dialog-title2 = Перезапустить { -brand-short-name } чтобы очистить кэш запуска?
+clear-startup-cache-title = Попробуйте очистить кеш запуска
+clear-startup-cache-label = Очистить кеш запуска…
+startup-cache-dialog-title2 = Перезапустить { -brand-short-name } чтобы очистить кеш запуска?
 startup-cache-dialog-body2 = Это действие не изменит ваши настройки и не удалит расширения.
 restart-button-label = Перезапустить
 
@@ -161,6 +176,15 @@ media-capabilities-title = Возможности медиа
 media-codec-support-info = Информация о поддержке кодеков
 # List all the entries of the database.
 media-capabilities-enumerate = Вывести записи из базы данных
+
+## Codec support table
+
+media-codec-support-sw-decoding = Программное декодирование
+media-codec-support-hw-decoding = Аппаратное декодирование
+media-codec-support-codec-name = Название кодека
+media-codec-support-supported = Поддерживается
+media-codec-support-unsupported = Не поддерживается
+media-codec-support-error = Информация о поддержке кодека недоступна. Попробуйте снова после проигрывания медиафайла.
 
 ##
 
@@ -280,6 +304,8 @@ webgl2-renderer = WebGL 2 - Визуализатор драйвера
 webgl2-version = WebGL 2 - Версия драйвера
 webgl2-driver-extensions = WebGL 2 - Расширения драйвера
 webgl2-extensions = WebGL 2 - Расширения
+webgpu-default-adapter = Адаптер WebGPU по умолчанию
+webgpu-fallback-adapter = Резервный адаптер WebGPU
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = Занесено в чёрный список из-за известных проблем: <a data-l10n-name="bug-link">баг { $bugNumber }</a>
@@ -309,15 +335,16 @@ can-sandbox-media = Песочница для медиаплагина
 content-sandbox-level = Степень изоляции процесса контента
 effective-content-sandbox-level = Эффективная степень изоляции процесса контента
 content-win32k-lockdown-state = Состояние блокировки Win32k для процесса содержимого
+support-sandbox-gpu-level = Уровень песочницы процесса GPU
 sandbox-proc-type-content = контент
 sandbox-proc-type-file = содержимое файла
 sandbox-proc-type-media-plugin = медиаплагин
 sandbox-proc-type-data-decoder = декодер данных
-startup-cache-title = Кэш запуска
-startup-cache-disk-cache-path = Путь к дисковому кэшу
-startup-cache-ignore-disk-cache = Игнорировать дисковый кэш
-startup-cache-found-disk-cache-on-init = При инициализации обнаружен дисковый кэш
-startup-cache-wrote-to-disk-cache = Записано в дисковый кэш
+startup-cache-title = Кеш запуска
+startup-cache-disk-cache-path = Путь к дисковому кешу
+startup-cache-ignore-disk-cache = Игнорировать дисковый кеш
+startup-cache-found-disk-cache-on-init = При инициализации обнаружен дисковый кеш
+startup-cache-wrote-to-disk-cache = Записано в дисковый кеш
 launcher-process-status-0 = Включён
 launcher-process-status-1 = Отключён из-за сбоя
 launcher-process-status-2 = Принудительно отключён
@@ -380,3 +407,10 @@ support-remote-experiments-see-about-studies = Ознакомьтесь со с�
 support-remote-features-title = Дистанционно распространяемые функции
 support-remote-features-name = Имя
 support-remote-features-status = Статус
+
+## Pointing devices
+
+pointing-device-mouse = Мышь
+pointing-device-touchscreen = Сенсорный экран
+pointing-device-pen-digitizer = Графический планшет
+pointing-device-none = Манипуляторы отсутствуют

@@ -1,13 +1,13 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-connection-window =
+connection-window2 =
     .title = Cài đặt kết nối
     .style =
         { PLATFORM() ->
-            [macos] width: 44em
-           *[other] width: 49em
+            [macos] min-width: 44em
+           *[other] min-width: 49em
         }
 
 connection-close-key =
@@ -35,7 +35,6 @@ connection-proxy-http = Proxy HTTP
     .accesskey = x
 connection-proxy-http-port = Cổng
     .accesskey = C
-
 connection-proxy-https-sharing =
     .label = Đồng thời sử dụng proxy này cho HTTPS
     .accesskey = s
@@ -77,16 +76,14 @@ connection-proxy-autologin =
     .accesskey = n
     .tooltip = Tùy chọn này xác thực ngầm bạn với proxy khi bạn đã lưu thông tin ủy nhiệm của chúng. Bạn sẽ được yêu cầu nếu việc xác thực thất bại.
 
+connection-proxy-autologin-checkbox =
+    .label = Không yêu cầu xác nhận nếu đã lưu mật khẩu
+    .accesskey = n
+    .tooltiptext = Tùy chọn này xác thực ngầm bạn với proxy khi bạn đã lưu thông tin ủy nhiệm của chúng. Bạn sẽ được yêu cầu nếu việc xác thực thất bại.
+
 connection-proxy-socks-remote-dns =
     .label = DNS của proxy khi dùng SOCKS v5
     .accesskey = d
-
-connection-dns-over-https =
-    .label = Kích hoạt DNS over HTTPS
-    .accesskey = b
-
-connection-dns-over-https-url-resolver = Sử dụng nhà cung cấp
-    .accesskey = c
 
 # Variables:
 #   $name (String) - Display name or URL for the DNS over HTTPS provider

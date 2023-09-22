@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,12 +16,16 @@ learn-more = <span data-l10n-name="link">További tudnivalók</span>
 
 inactive-css-not-grid-or-flex-container = A(z) <strong>{ $property }</strong> nem befolyásolja ezt az elemet, mivel nem flexibilis vagy rácstároló.
 inactive-css-not-grid-or-flex-container-or-multicol-container = A(z) <strong>{ $property }</strong> nem befolyásolja ezt az elemet, mivel ez nem flex konténer, rács- vagy többoszlopos tároló.
+inactive-css-not-multicol-container = A(z) <strong>{ $property }</strong> nem befolyásolja ezt az elemet, mivel nem többoszlopos tároló.
 inactive-css-not-grid-or-flex-item = A(z) <strong>{ $property }</strong> nem befolyásolja ezt az elemet, mivel nem rács vagy flexibilis elem.
 inactive-css-not-grid-item = A(z) <strong>{ $property }</strong> nem befolyásolja ezt az elemet, mivel nem egy rácselem.
 inactive-css-not-grid-container = A(z) <strong>{ $property }</strong> nem befolyásolja ezt az elemet, mivel nem rácstároló.
 inactive-css-not-flex-item = A(z) <strong>{ $property }</strong> nem befolyásolja ezt az elemet, mivel nem flexibilis elem.
 inactive-css-not-flex-container = A(z) <strong>{ $property }</strong> nem befolyásolja ezt az elemet, mivel nem flexibilis tároló.
 inactive-css-not-inline-or-tablecell = A(z) <strong>{ $property }</strong> nem befolyásolja ezt az elemet, mivel nem „inline” vagy „table-cell” elem.
+inactive-css-first-line-pseudo-element-not-supported = A(z) <strong>{ $property }</strong> nem támogatott a ::first-line pszeudoelemeken.
+inactive-css-first-letter-pseudo-element-not-supported = A(z) <strong>{ $property }</strong> nem támogatott a ::first-letter pszeudoelemeken.
+inactive-css-placeholder-pseudo-element-not-supported = A(z) <strong>{ $property }</strong> nem támogatott a ::placeholder pszeudoelemeken.
 inactive-css-property-because-of-display = A(z) <strong>{ $property }</strong> nem befolyásolja ezt az elemet, mivel a „display” értéke <strong>{ $display }</strong>.
 inactive-css-not-display-block-on-floated = A <strong>display</strong> értéket <strong>blokkolásra</strong> változtatta a motor, mert az elem <strong>lebegő</strong>.
 inactive-css-property-is-impossible-to-override-in-visited = A(z) <strong>{ $property }</strong> felülbírálása a <strong>:visited</strong> korlátozás miatt lehetetlen.
@@ -30,9 +34,12 @@ inactive-text-overflow-when-no-overflow = A(z) <strong>{ $property }</strong> ne
 inactive-css-not-for-internal-table-elements = A(z) <strong>{ $property }</strong> nincs hatással a belső táblázatelemekre.
 inactive-css-not-for-internal-table-elements-except-table-cells = A(z) <strong>{ $property }</strong> nincs hatással a belső táblázatelemekre, kivéve a táblázatcellákat.
 inactive-css-not-table = A(z) <strong>{ $property }</strong> nem befolyásolja ezt az elemet, mivel nem táblázat.
+inactive-css-not-table-cell = A(z) <strong>{ $property }</strong> nem befolyásolja ezt az elemet, mivel nem táblázatcella.
 inactive-scroll-padding-when-not-scroll-container = A(z) <strong>{ $property }</strong> nem befolyásolja ezt az elemet, mivel nem görgethető.
 inactive-css-border-image = A(z) <strong>{ $property }</strong> nincs hatással erre az elemre, mivel nem alkalmazható olyan belső táblázatelemekre, ahol a <strong>border-collapse</strong> <strong>collapse</strong> értékre van állítva szülő táblázatelem.
 inactive-css-ruby-element = A(z) <strong>{ $property }</strong> nincs hatással erre az elemre, mert ez egy rubi elem. A méretét a rubi szöveg mérete határozza meg.
+inactive-css-highlight-pseudo-elements-not-supported = A(z) <strong>{ $property }</strong> nem támogatott a kiemelt pszeudoelemeken.
+inactive-css-cue-pseudo-element-not-supported = A(z) <strong>{ $property }</strong> nem támogatott a ::cue pszeudoelemeken.
 
 ## In the Rule View when a CSS property cannot be successfully applied we display
 ## an icon. When this icon is hovered this message is displayed to explain how
@@ -40,6 +47,7 @@ inactive-css-ruby-element = A(z) <strong>{ $property }</strong> nincs hatással 
 
 inactive-css-not-grid-or-flex-container-fix = Próbálja meg ezeket hozzáadni: <strong>display:grid</strong> vagy <strong>display:flex</strong>. { learn-more }
 inactive-css-not-grid-or-flex-container-or-multicol-container-fix = Próbálja meg ezeket hozzáadni: <strong>display:grid</strong>, <strong>display:flex</strong> vagy <strong>columns:2</strong>. { learn-more }
+inactive-css-not-multicol-container-fix = Próbálja meg ezek egyikét hozzáadni: <strong>column-count</strong> vagy <strong>column-width</strong>. { learn-more }
 inactive-css-not-grid-or-flex-item-fix-3 = Próbálja meg ezeket hozzáadni az elem szülőjéhez: <strong>display:grid</strong>, <strong>display:flex</strong>, <strong>display:inline-grid</strong> vagy <strong>display:inline-flex</strong>. { learn-more }
 inactive-css-not-grid-item-fix-2 = Próbálja meg ezeket hozzáadni az elem szülőjéhez: <strong>display:grid</strong> vagy <strong>display:inline-grid</strong>. { learn-more }
 inactive-css-not-grid-container-fix = Próbálja meg ezeket hozzáadni: <strong>display:grid</strong> vagy <strong>display:inline-grid</strong>. { learn-more }
@@ -54,6 +62,7 @@ inactive-text-overflow-when-no-overflow-fix = Próbálja meg ezt hozzáadni: <st
 inactive-css-not-for-internal-table-elements-fix = Próbálja meg a <strong>display</strong> tulajdonságot másra állítani, mint a <strong>table-cell</strong>, <strong>table-column</strong>, <strong>table-row</strong>, <strong>table-column-group</strong>, <strong>table-row-group</strong> vagy <strong>table-footer-group</strong>. { learn-more }
 inactive-css-not-for-internal-table-elements-except-table-cells-fix = Próbálja meg a <strong>display</strong> tulajdonságot másra állítani, mint a <strong>table-column</strong>, <strong>table-row</strong>, <strong>table-column-group</strong>, <strong>table-row-group</strong> vagy <strong>table-footer-group</strong>. { learn-more }
 inactive-css-not-table-fix = Próbálja meg ezeket hozzáadni: <strong>display:table</strong> vagy <strong>display:inline-table</strong>. { learn-more }
+inactive-css-not-table-cell-fix = Próbálja meg ezt hozzáadni: <strong>display:table-cell</strong>. { learn-more }
 inactive-scroll-padding-when-not-scroll-container-fix = Próbálkozzon az <strong>overflow:auto</strong>, <strong>overflow:scroll</strong> vagy <strong>overflow:hidden</strong> hozzáadásával. { learn-more }
 inactive-css-border-image-fix = Távolítsa el a tulajdonságot a szülő táblázatelemen, vagy módosítsa a <strong>border-collapse</strong> értékét a <strong>collapse</strong>-től eltérő értékre. { learn-more }
 inactive-css-ruby-element-fix = Próbálja módosítani a rubi szöveg <strong>betűméretét</strong>. { learn-more }

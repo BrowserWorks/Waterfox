@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -54,9 +54,17 @@ whypaused-resume-limit = Đã tạm dừng trong khi step
 # currently paused on a dom event
 whypaused-pause-on-dom-events = Đã tạm dừng do event listener
 
+# The text that is displayed in an info block when evaluating a conditional
+# breakpoint throws an error
+whypaused-breakpoint-condition-thrown = Lỗi với điểm dừng điều kiện
+
 # The text that is displayed in a info block explaining how the debugger is
 # currently paused on an xml http request
 whypaused-xhr = Đã tạm dừng do XMLHttpRequest
+
+# The text that is displayed in a info block explaining how the debugger is
+# currently paused on a promise rejection
+whypaused-promise-rejection = Đã tạm dừng do từ chối promise
 
 # The text that is displayed in a info block explaining how the debugger is
 # currently paused at a watchpoint on an object property
@@ -65,6 +73,10 @@ whypaused-get-watchpoint = Đã tạm dừng do thuộc tính get
 # The text that is displayed in an info block explaining how the debugger is
 # currently paused at a watchpoint on an object property
 whypaused-set-watchpoint = Đã tạm dừng do thuộc tính set
+
+# The text that is displayed in a info block explaining how the debugger is
+# currently paused on an assert
+whypaused-assert = Đã tạm dừng do assertion
 
 # The text that is displayed in a info block explaining how the debugger is
 # currently paused on a debugger statement

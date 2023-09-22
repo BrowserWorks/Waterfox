@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,6 +30,12 @@ import-from-nothing =
 import-from-safari =
     .label = Safari
     .accesskey = S
+import-from-opera =
+    .label = Opera
+    .accesskey = O
+import-from-vivaldi =
+    .label = Vivaldi
+    .accesskey = V
 import-from-brave =
     .label = Brave
     .accesskey = r
@@ -54,6 +60,9 @@ import-from-firefox =
 import-from-360se =
     .label = 360 安全瀏覽器
     .accesskey = 3
+import-from-opera-gx =
+    .label = Opera GX
+    .accesskey = G
 
 no-migration-sources = 找不到包含書籤、瀏覽記錄或密碼等個人資訊的瀏覽程式。
 
@@ -64,8 +73,8 @@ import-items-description = 選取要匯入的項目:
 
 import-permissions-page-title = 請授權 { -brand-short-name }
 
-# Do not translate "Bookmarks.plist"; the file name is the same everywhere.
-import-permissions-description = macOS 要求您明確允許 { -brand-short-name } 存取 Safari 的書籤才能繼續。請點擊「繼續」，並從顯示的開啟檔案面板選擇「Bookmarks.plist」檔案。
+# Do not translate "Safari" (the name of the browser on Apple devices)
+import-safari-permissions-string = macOS 要求您明確允許 { -brand-short-name } 存取 Safari 資料。請在顯示的 Finder 對話框當中選擇「Safari」資料夾，然後點擊「開啟」。
 
 import-migrating-page-title = 匯入中…
 
@@ -158,3 +167,8 @@ browser-data-session-checkbox =
     .label = 視窗與分頁
 browser-data-session-label =
     .value = 視窗與分頁
+
+browser-data-payment-methods-checkbox =
+    .label = 付款方式
+browser-data-payment-methods-label =
+    .value = 付款方式

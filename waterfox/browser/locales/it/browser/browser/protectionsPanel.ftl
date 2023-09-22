@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -24,6 +24,20 @@ protections-panel-etp-more-info =
 
 protections-panel-etp-on-header = La protezione antitracciamento avanzata è ATTIVA per questo sito.
 protections-panel-etp-off-header = La protezione antitracciamento avanzata è DISATTIVATA per questo sito
+
+## Text for the toggles shown when ETP is enabled/disabled for a given site.
+## .description is transferred into a separate paragraph by the moz-toggle
+## custom element code.
+##   $host (String): the hostname of the site that is being displayed.
+
+protections-panel-etp-on-toggle =
+  .label = Protezione antitracciamento avanzata
+  .description = Attiva per questo sito
+  .aria-label = Disattiva protezioni per { $host }
+protections-panel-etp-off-toggle =
+  .label = Protezione antitracciamento avanzata
+  .description = Disattivata per questo sito
+  .aria-label = Attiva protezioni per { $host }
 
 # The link to be clicked to open the sub-panel view
 protections-panel-site-not-working = Il sito non funziona?
@@ -77,6 +91,8 @@ protections-panel-site-not-working-view-issue-list-payments = Pagamenti
 protections-panel-site-not-working-view-issue-list-comments = Commenti
 protections-panel-site-not-working-view-issue-list-videos = Video
 
+protections-panel-site-not-working-view-issue-list-fonts = Caratteri
+
 protections-panel-site-not-working-view-send-report = Invia una segnalazione
 
 ##
@@ -90,7 +106,7 @@ protections-panel-social-media-trackers = I social network impostano elementi tr
 protections-panel-description-shim-allowed = Alcuni elementi traccianti, indicati in seguito, sono stati parzialmente sbloccati in quanto hai interagito con loro.
 protections-panel-description-shim-allowed-learn-more = Ulteriori informazioni
 protections-panel-shim-allowed-indicator =
-  .tooltiptext = Elemento tracciante parzialmente sbloccato
+    .tooltiptext = Elemento tracciante parzialmente sbloccato
 
 protections-panel-content-blocking-manage-settings =
     .label = Gestisci impostazioni protezione
@@ -98,7 +114,8 @@ protections-panel-content-blocking-manage-settings =
 
 protections-panel-content-blocking-breakage-report-view =
     .title = Segnala problemi con il sito
-protections-panel-content-blocking-breakage-report-view-description = Il blocco di determinati elementi traccianti può creare problemi in alcuni siti web. Segnalando questi problemi contribuisci a migliorare { -brand-short-name } per tutti gli utenti. Questa segnalazione verrà inviata a Waterfox e include l’indirizzo del sito e informazioni sulle impostazioni del browser. <label data-l10n-name="learn-more">Ulteriori informazioni</label>
+protections-panel-content-blocking-breakage-report-view-description = Il blocco di determinati elementi traccianti può creare problemi in alcuni siti web. Segnalando questi problemi contribuisci a migliorare { -brand-short-name } per tutti gli utenti. Questa segnalazione verrà inviata a BrowserWorks e include l’indirizzo del sito e informazioni sulle impostazioni del browser. <label data-l10n-name="learn-more">Ulteriori informazioni</label>
+protections-panel-content-blocking-breakage-report-view-description2 = Il blocco di determinati elementi traccianti può creare problemi in alcuni siti web. Segnalando questi problemi contribuisci a migliorare { -brand-short-name } per tutti gli utenti. Questa segnalazione verrà inviata a { -vendor-short-name } e include l’indirizzo del sito e informazioni sulle impostazioni del browser.
 protections-panel-content-blocking-breakage-report-view-collection-url = Indirizzo
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = Indirizzo
@@ -109,3 +126,22 @@ protections-panel-content-blocking-breakage-report-view-cancel =
     .label = Annulla
 protections-panel-content-blocking-breakage-report-view-send-report =
     .label = Invia segnalazione
+
+# Cookie Banner Handling
+
+protections-panel-cookie-banner-handling-header = Riduzione banner per i cookie
+protections-panel-cookie-banner-handling-enabled = Attiva per questo sito
+protections-panel-cookie-banner-handling-disabled = Disattivata per questo sito
+protections-panel-cookie-banner-handling-undetected = Sito attualmente non supportato
+
+protections-panel-cookie-banner-view-title =
+    .title = Riduzione banner per i cookie
+# Variables
+#  $host (String): the hostname of the site that is being displayed.
+protections-panel-cookie-banner-view-turn-off-for-site = Disattivare Riduzione banner per i cookie per { $host }?
+protections-panel-cookie-banner-view-turn-on-for-site = Attivare Riduzione banner per i cookie per questo sito?
+protections-panel-cookie-banner-view-cookie-clear-warning = { -brand-short-name } eliminerà i cookie per questo sito e aggiornerà la pagina. L’eliminazione dei cookie potrebbe disconnetterti dal sito o svuotare eventuali carrelli in sospeso.
+protections-panel-cookie-banner-view-turn-on-description = { -brand-short-name } cerca di rifiutare automaticamente tutte le richieste per i cookie nei siti supportati.
+protections-panel-cookie-banner-view-cancel = Annulla
+protections-panel-cookie-banner-view-turn-off = Disattiva
+protections-panel-cookie-banner-view-turn-on = Attiva

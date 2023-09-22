@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -35,3 +35,5 @@ devtools-commandkey-accessibility-f12 = VK_F12
 devtools-commandkey-profiler-start-stop = VK_1
 # Key pressed to capture a recorded performance profile
 devtools-commandkey-profiler-capture = VK_2
+# Key pressed to toggle the JavaScript tracing
+devtools-commandkey-javascript-tracing-toggle = VK_5

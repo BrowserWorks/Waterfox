@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -182,6 +182,17 @@ menu-view-full-screen =
     .label = Tryb pełnoekranowy
     .accesskey = T
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Popraw czytelność
+    .accesskey = P
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Wygląd oryginalny
+    .accesskey = W
+
 ##
 
 menu-view-show-all-tabs =
@@ -210,8 +221,9 @@ menu-history-undo-menu =
     .label = Ostatnio zamknięte karty
 menu-history-undo-window-menu =
     .label = Ostatnio zamknięte okna
-menu-history-reopen-all-tabs = Przywróć wszystkie karty
-menu-history-reopen-all-windows = Przywróć wszystkie okna
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = Szukaj w historii
 
 ## Bookmarks Menu
 
@@ -220,14 +232,13 @@ menu-bookmarks-menu =
     .accesskey = Z
 menu-bookmarks-manage =
     .label = Zarządzaj zakładkami
-menu-bookmark-current-tab =
-    .label = Dodaj zakładkę do tej karty
-menu-bookmark-edit =
-    .label = Edytuj tę zakładkę
 menu-bookmark-tab =
     .label = Dodaj zakładkę do tej karty…
 menu-edit-bookmark =
     .label = Edytuj tę zakładkę…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = Szukaj w zakładkach
 menu-bookmarks-all-tabs =
     .label = Dodaj zakładki do wszystkich kart…
 menu-bookmarks-toolbar =
@@ -321,6 +332,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = Wyłącz tryb rozwiązywania problemów
     .accesskey = t
+menu-help-switch-device =
+    .label = Przechodzenie na nowe urządzenie
+    .accesskey = P
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =

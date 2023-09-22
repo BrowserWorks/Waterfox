@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -27,7 +27,7 @@ about-private-browsing-get-privacy = Получите защиту приват�
 about-private-browsing-hide-activity-1 = Скрывайте активность и местоположение в любой части Интернета с помощью { -mozilla-vpn-brand-name }. Одним щелчком мыши создавайте безопасное соединение даже при использовании общедоступной сети Wi-Fi.
 about-private-browsing-prominent-cta = Сохраняйте приватность с { -mozilla-vpn-brand-name }
 about-private-browsing-focus-promo-cta = Загрузить { -focus-brand-name }
-about-private-browsing-focus-promo-header = { -focus-brand-name }: Приватный веб-сёрфинг на лету
+about-private-browsing-focus-promo-header = { -focus-brand-name }: Приватный просмотр сети на лету
 about-private-browsing-focus-promo-text = Наше специальное мобильное приложение для приватного просмотра каждый раз удаляет вашу историю и куки.
 
 ## The following strings will be used for experiments in Fx99 and Fx100
@@ -59,4 +59,18 @@ about-private-browsing-pin-promo-link-text =
         [macos] Добавить в Dock
        *[other] Закрепить на панели задач
     }
-about-private-browsing-pin-promo-title = Никаких сохранённых кук или истории, прямо с вашего рабочего стола. Сёрфите так, как будто никто не смотрит.
+about-private-browsing-pin-promo-title = Никаких сохранённых кук или истории, прямо с вашего рабочего стола. Просматривайте сеть так, как будто никто не смотрит.
+
+## Strings used in a promotion message for cookie banner reduction
+
+# Simplified version of the headline if the original text doesn't work
+# in your language: `See fewer cookie requests`.
+about-private-browsing-cookie-banners-promo-header = Уберите уведомления о куках!
+about-private-browsing-cookie-banners-promo-button = Уменьшить число уведомлений о куках
+about-private-browsing-cookie-banners-promo-message = Разрешите { -brand-short-name } автоматически отвечать на уведомления о куках, чтобы не отвлекаться на них при просмотре сети. { -brand-short-name } будет отклонять все запросы, если это возможно.
+
+## Strings for Felt Privacy v1 experiments in 119
+
+about-private-browsing-felt-privacy-v1-info-header = Не оставлять следов на этом устройстве
+about-private-browsing-felt-privacy-v1-info-body = { -brand-short-name } удаляет ваши куки, историю и данные сайтов, когда вы закрываете все свои приватные окна.
+about-private-browsing-felt-privacy-v1-info-link = Кто может видеть мою активность?
