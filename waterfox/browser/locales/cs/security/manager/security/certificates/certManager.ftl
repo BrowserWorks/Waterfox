@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,9 +26,9 @@ certmgr-people = Tyto certifikáty jsou dostupné pro identifikaci následujíc�
 certmgr-server = Tento seznam obsahuje výjimky pro chyby serverových certifikátů
 certmgr-ca = Tyto certifikáty jsou dostupné pro identifikaci certifikačních autorit
 
-certmgr-edit-ca-cert =
+certmgr-edit-ca-cert2 =
     .title = Upravit nastavení důvěryhodnosti CA
-    .style = width: 48em;
+    .style = min-width: 48em;
 
 certmgr-edit-cert-edit-trust = Upravit nastavení důvěryhodnosti:
 
@@ -38,9 +38,9 @@ certmgr-edit-cert-trust-ssl =
 certmgr-edit-cert-trust-email =
     .label = Tento certifikát může identifikovat uživatele e-mailu.
 
-certmgr-delete-cert =
+certmgr-delete-cert2 =
     .title = Smazat certifikát
-    .style = width: 48em; height: 24em;
+    .style = min-width: 48em; min-height: 24em;
 
 certmgr-cert-host =
     .label = Server
@@ -50,9 +50,6 @@ certmgr-cert-name =
 
 certmgr-cert-server =
     .label = Server
-
-certmgr-override-lifetime =
-    .label = Platnost
 
 certmgr-token-name =
     .label = Bezpečnostní zařízení
@@ -68,6 +65,9 @@ certmgr-email =
 
 certmgr-serial =
     .label = Sériové číslo
+
+certmgr-fingerprint-sha-256 =
+    .label = Otisk SHA-256
 
 certmgr-view =
     .label = Zobrazit…
@@ -185,8 +185,6 @@ delete-email-cert-impact = Pokud smažete poštovní certifikát nějaké osoby,
 #   $serialNumber : the serial number of the cert in AA:BB:CC hex format.
 cert-with-serial =
     .value = Certifikát se sériovým číslem: { $serialNumber }
-
-## Cert Viewer
 
 # Used to indicate that the user chose not to send a client authentication certificate to a server that requested one in a TLS handshake.
 send-no-client-certificate = Neposílat klientský certifikát

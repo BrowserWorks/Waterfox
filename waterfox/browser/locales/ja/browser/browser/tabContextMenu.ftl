@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -54,8 +54,8 @@ unpin-selected-tabs =
 bookmark-selected-tabs =
     .label = タブをブックマーク...
     .accesskey = B
-bookmark-tab =
-    .label = タブをブックマーク
+tab-context-bookmark-tab =
+    .label = タブをブックマーク...
     .accesskey = B
 tab-context-open-in-new-container-tab =
     .label = 新しいコンテナータブで開く
@@ -93,5 +93,9 @@ tab-context-move-tabs =
     .label = タブを移動
     .accesskey = v
 tab-context-send-tabs-to-device =
-    .label = { $tabCount } 個のタブを端末へ送信
+    .label =
+        { $tabCount ->
+            [1] タブを端末へ送信
+           *[other] { $tabCount } 個のタブを端末へ送信
+        }
     .accesskey = n

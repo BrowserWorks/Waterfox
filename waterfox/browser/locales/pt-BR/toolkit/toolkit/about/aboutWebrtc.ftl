@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,21 +12,39 @@ about-webrtc-document-title = Informações internas do WebRTC
 # translated. This string is used as a title for a file save dialog box.
 about-webrtc-save-page-dialog-title = salvar página about:webrtc como
 
+## These labels are for a disclosure which contains the information for closed PeerConnection sections
+
+about-webrtc-closed-peerconnection-disclosure-show-msg = Exibir PeerConnections fechadas
+about-webrtc-closed-peerconnection-disclosure-hide-msg = Ocultar PeerConnections fechadas
+
 ## AEC is an abbreviation for Acoustic Echo Cancellation.
 
 about-webrtc-aec-logging-msg-label = Registro AEC
 about-webrtc-aec-logging-off-state-label = Iniciar registro AEC
 about-webrtc-aec-logging-on-state-label = Parar registro AEC
 about-webrtc-aec-logging-on-state-msg = Registro AEC ativo (fale com o remetente da chamada durante alguns minutos e depois pare a captura)
-# The autorefresh checkbox causes the page to autorefresh its content when checked
-about-webrtc-auto-refresh-label = Atualizar automaticamente
+about-webrtc-aec-logging-toggled-on-state-msg = Registro AEC ativo (fale com o remetente da chamada durante alguns minutos e depois pare a captura)
+about-webrtc-aec-logging-unavailable-sandbox = A variável de ambiente MOZ_DISABLE_CONTENT_SANDBOX=1 é necessária para exportar logs de AEC (cancelamento de eco acústico). Só defina esta variável se você entender os possíveis riscos.
+# Variables:
+#  $path (String) - The path to which the aec log file is saved.
+about-webrtc-aec-logging-toggled-off-state-msg = Arquivos de log capturados podem ser encontradas em: { $path }
 
 ##
 
+# The autorefresh checkbox causes a stats section to autorefresh its content when checked
+about-webrtc-auto-refresh-label = Atualizar automaticamente
+# Determines the default state of the Auto Refresh check boxes
+about-webrtc-auto-refresh-default-label = Atualização automática por padrão
+# A button which forces a refresh of displayed statistics
+about-webrtc-force-refresh-button = Atualizar
 # "PeerConnection" is a proper noun associated with the WebRTC module. "ID" is
 # an abbreviation for Identifier. This string should not normally be translated
 # and is used as a data label.
 about-webrtc-peerconnection-id-label = ID PeerConnection:
+# The number of DataChannels that a PeerConnection has opened
+about-webrtc-data-channels-opened-label = Canais de dados abertos:
+# The number of once open DataChannels that a PeerConnection has closed
+about-webrtc-data-channels-closed-label = Canais de dados fechados:
 
 ## "SDP" is an abbreviation for Session Description Protocol, an IETF standard.
 ## See http://wikipedia.org/wiki/Session_Description_Protocol
@@ -80,6 +98,7 @@ about-webrtc-save-page-label = Salvar página
 about-webrtc-debug-mode-msg-label = Modo de depuração
 about-webrtc-debug-mode-off-state-label = Iniciar modo de depuração
 about-webrtc-debug-mode-on-state-label = Parar modo de depuração
+about-webrtc-enable-logging-label = Ativar predefinição de log de WebRTC
 about-webrtc-stats-heading = Estatísticas da sessão
 about-webrtc-stats-clear = Limpar histórico
 about-webrtc-log-heading = Registro de conexão
@@ -88,6 +107,12 @@ about-webrtc-log-show-msg = mostrar registro
     .title = clique para expandir esta seção
 about-webrtc-log-hide-msg = ocultar registro
     .title = clique para recolher esta seção
+about-webrtc-log-section-show-msg = Mostrar registro
+    .title = Clique para expandir esta seção
+about-webrtc-log-section-hide-msg = Ocultar registro
+    .title = Clique para recolher esta seção
+about-webrtc-copy-report-button = Copiar relatório
+about-webrtc-copy-report-history-button = Copiar histórico de relatórios
 
 ## These are used to display a header for a PeerConnection.
 ## Variables:
@@ -98,6 +123,14 @@ about-webrtc-log-hide-msg = ocultar registro
 
 about-webrtc-connection-open = [ { $browser-id } | { $id } ] { $url } { $now }
 about-webrtc-connection-closed = [ { $browser-id } | { $id } ] { $url } (fechado) { $now }
+
+## These are used to indicate what direction media is flowing.
+## Variables:
+##  $codecs - a list of media codecs
+
+about-webrtc-short-send-receive-direction = Envio/recebimento: { $codecs }
+about-webrtc-short-send-direction = Envio: { $codecs }
+about-webrtc-short-receive-direction = Recebimento: { $codecs }
 
 ##
 
@@ -110,11 +143,19 @@ about-webrtc-raw-cand-show-msg = mostrar candidatos brutos
     .title = clique para expandir esta seção
 about-webrtc-raw-cand-hide-msg = ocultar candidatos brutos
     .title = clique para recolher esta seção
+about-webrtc-raw-cand-section-show-msg = Mostrar candidatos brutos
+    .title = Clique para expandir esta seção
+about-webrtc-raw-cand-section-hide-msg = Ocultar candidatos brutos
+    .title = Clique para recolher esta seção
 about-webrtc-priority = Prioridade
 about-webrtc-fold-show-msg = mostrar detalhes
     .title = clique para expandir esta seção
 about-webrtc-fold-hide-msg = ocultar detalhes
     .title = clique para recolher esta seção
+about-webrtc-fold-default-show-msg = Mostrar detalhes
+    .title = Clique para expandir esta seção
+about-webrtc-fold-default-hide-msg = Ocultar detalhes
+    .title = Clique para recolher esta seção
 about-webrtc-dropped-frames-label = Quadros perdidos:
 about-webrtc-discarded-packets-label = Pacotes descartados:
 about-webrtc-decoder-label = Decodificador
@@ -136,6 +177,12 @@ about-webrtc-last-frame-timestamp = Estampa de tempo da recepção do último qu
 about-webrtc-local-receive-ssrc = SSRC de recebimento local
 # This is an SSRC on the remote side of the connection that is sending RTP
 about-webrtc-remote-send-ssrc = SSRC de envio remoto
+
+## These are displayed on the button that shows or hides the
+## PeerConnection configuration disclosure
+
+about-webrtc-pc-configuration-show-msg = Mostrar configuração
+about-webrtc-pc-configuration-hide-msg = Ocultar configuração
 
 ##
 
@@ -177,9 +224,13 @@ about-webrtc-save-page-msg = página salva em: { $path }
 about-webrtc-debug-mode-off-state-msg = o registro de acompanhamento pode ser encontrado em: { $path }
 about-webrtc-debug-mode-on-state-msg = modo de depuração ativo, registro de execução em: { $path }
 about-webrtc-aec-logging-off-state-msg = arquivos de log capturados podem ser encontradas em: { $path }
-
-##
-
+# This path is used for saving the about:webrtc page so it can be attached to
+# bug reports.
+# Variables:
+#  $path (String) - The path to which the file is saved.
+about-webrtc-save-page-complete-msg = Página salva em: { $path }
+about-webrtc-debug-mode-toggled-off-state-msg = O registro de acompanhamento pode ser encontrado em: { $path }
+about-webrtc-debug-mode-toggled-on-state-msg = Modo de depuração ativo, registro de execução em: { $path }
 # This is the total number of frames encoded or decoded over an RTP stream.
 # Variables:
 #  $frames (Number) - The number of frames encoded or decoded.
@@ -246,6 +297,22 @@ about-webrtc-sdp-set-at-timestamp-remote = Definir SDP remoto na estampa de temp
 #  $timestamp (Number) - The Unix Epoch time at which the SDP was set.
 #  $relative-timestamp (Number) - The timestamp relative to the timestamp of the earliest received SDP.
 about-webrtc-sdp-set-timestamp = Timestamp { NUMBER($timestamp, useGrouping: "false") } (+ { $relative-timestamp } ms)
+
+## These are displayed on the button that shows or hides the SDP information disclosure
+
+about-webrtc-show-msg-sdp = Mostrar SDP
+about-webrtc-hide-msg-sdp = Ocultar SDP
+
+## These are displayed on the button that shows or hides the Media Context information disclosure.
+## The Media Context is the set of preferences and detected capabilities that informs
+## the negotiated CODEC settings.
+
+about-webrtc-media-context-show-msg = Exibir contexto de mídia
+about-webrtc-media-context-hide-msg = Ocultar contexto de mídia
+about-webrtc-media-context-heading = Contexto de mídia
+
+##
+
 
 ##
 

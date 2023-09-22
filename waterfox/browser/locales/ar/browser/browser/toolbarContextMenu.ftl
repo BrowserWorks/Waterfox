@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -41,7 +41,7 @@ toolbar-context-menu-remove-extension =
     .accesskey = ت
 
 # This label is used in the extensions toolbar buttons context menus,
-# a user can use this command to submit to Waterfox an abuse report
+# a user can use this command to submit to BrowserWorks an abuse report
 # related to that extension. "Report" is a verb.
 toolbar-context-menu-report-extension =
     .label = أبلِغ عن الامتداد

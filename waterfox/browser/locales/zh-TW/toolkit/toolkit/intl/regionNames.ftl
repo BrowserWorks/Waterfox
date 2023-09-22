@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,7 @@ region-name-bl = 聖巴泰勒米
 region-name-bm = 百慕達
 region-name-bn = 汶萊
 region-name-bo = 玻利維亞
-region-name-bq = 荷屬波奈、聖佑達修斯、薩巴
+region-name-bq-2018 = 荷蘭加勒比區
 region-name-br = 巴西
 region-name-bs = 巴哈馬
 region-name-bt = 不丹
@@ -57,11 +57,11 @@ region-name-co = 哥倫比亞
 region-name-cp = 克利珀頓島
 region-name-cr = 哥斯大黎加
 region-name-cu = 古巴
-region-name-cv = 維德角
+region-name-cv-2020 = 維德角島
 region-name-cw = 古拉索
 region-name-cx = 聖誕島
 region-name-cy = 賽普勒斯
-region-name-cz = 捷克
+region-name-cz-2019 = 捷克
 region-name-de = 德國
 region-name-dg = 迪戈加西亞島
 region-name-dj = 吉布地
@@ -150,7 +150,7 @@ region-name-me = 蒙特內哥羅
 region-name-mf = 法屬聖馬丁
 region-name-mg = 馬達加斯加
 region-name-mh = 馬紹爾群島
-region-name-mk = 馬其頓
+region-name-mk-2019 = 北馬其頓
 region-name-ml = 馬利
 region-name-mm = 緬甸
 region-name-mn = 蒙古
@@ -223,7 +223,7 @@ region-name-st = 聖多美普林西比
 region-name-sv = 薩爾瓦多
 region-name-sx = 荷屬聖馬丁
 region-name-sy = 敘利亞
-region-name-sz = 史瓦濟蘭
+region-name-sz-2019 = 史瓦帝尼
 region-name-tc = 土克斯及開科斯群島
 region-name-td = 查德
 region-name-tf = 法屬南部和南極領地

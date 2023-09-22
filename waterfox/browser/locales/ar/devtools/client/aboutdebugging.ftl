@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -305,10 +305,6 @@ about-debugging-worker-status-registering = يُسجّل
 # Displayed as title of the inspect button for zombie tabs (e.g. tabs loaded via a session restore).
 about-debugging-zombie-tab-inspect-action-disabled =
     .title = لم يُحمّل اللسان تمامًا ولا يمكن فحصه
-
-# Displayed as name for the Main Process debug target in the Processes category. Only for
-# remote runtimes, if `devtools.aboutdebugging.process-debugging` is true.
-about-debugging-main-process-name = السيرورة الأساسية
 
 # Displayed instead of the Main Process debug target when the preference
 # `devtools.browsertoolbox.fission` is true.

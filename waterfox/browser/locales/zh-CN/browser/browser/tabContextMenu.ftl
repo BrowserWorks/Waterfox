@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -54,9 +54,6 @@ unpin-selected-tabs =
 bookmark-selected-tabs =
     .label = 为标签页添加书签…
     .accesskey = k
-bookmark-tab =
-    .label = 为标签页添加书签
-    .accesskey = B
 tab-context-bookmark-tab =
     .label = 将标签页加入书签…
     .accesskey = B
@@ -103,6 +100,7 @@ tab-context-move-tabs =
            *[other] 移动标签页
         }
     .accesskey = v
+
 tab-context-send-tabs-to-device =
     .label =
         { $tabCount ->

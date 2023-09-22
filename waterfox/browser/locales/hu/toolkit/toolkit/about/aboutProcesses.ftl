@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -52,7 +52,6 @@ about-processes-socket-process = Hálózat ({ $pid })
 about-processes-remote-sandbox-broker-process = Távoli homokozóbróker ({ $pid })
 about-processes-fork-server-process = Fork kiszolgáló ({ $pid })
 about-processes-preallocated-process = Előre kiosztott ({ $pid })
-
 about-processes-utility-process = Segédprogram ({ $pid })
 
 # Unknown process names
@@ -69,8 +68,8 @@ about-processes-unknown-process = Egyéb: { $type } ({ $pid })
 about-processes-web-isolated-process = { $origin } ({ $pid })
 about-processes-web-serviceworker = { $origin } ({ $pid }, serviceworker)
 about-processes-with-coop-coep-process = { $origin } ({ $pid }, eredet szerint elkülönítve)
-about-processes-web-isolated-process-private = { $origin } – Privát ({ $pid })
-about-processes-with-coop-coep-process-private = { $origin } – Privát ({ $pid }, eredet szerint elkülönítve)
+about-processes-web-isolated-process-private = { $origin } – privát ({ $pid })
+about-processes-with-coop-coep-process-private = { $origin } – privát ({ $pid }, eredet szerint elkülönítve)
 
 ## Details within processes
 
@@ -126,9 +125,16 @@ about-processes-frame-name-one = Részkeret: { $url }
 #   $shortUrl (String) The shared prefix for the subframes in the group.
 about-processes-frame-name-many = Részkeretek ({ $number }): { $shortUrl }
 
-# Utility process actor names
+## Utility process actor names
+
 about-processes-utility-actor-unknown = Ismeretlen szereplő
-about-processes-utility-actor-audio-decoder = Hangdekóder
+about-processes-utility-actor-audio-decoder-generic = Általános hangdekóder
+about-processes-utility-actor-audio-decoder-applemedia = Apple Media hangdekóder
+about-processes-utility-actor-audio-decoder-wmf = Windows Media Framework hangdekóder
+about-processes-utility-actor-mf-media-engine = Windows Media Foundation Media Engine CDM
+# "Oracle" refers to an internal Waterfox process and should be kept in English
+about-processes-utility-actor-js-oracle = JavaScript Oracle
+about-processes-utility-actor-windows-utils = Windowsos segédprogramok
 
 ## Displaying CPU (percentage and total)
 ## Variables:

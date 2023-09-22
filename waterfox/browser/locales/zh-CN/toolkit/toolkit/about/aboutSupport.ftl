@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,6 +18,10 @@ support-addons-type = 类型
 support-addons-enabled = 已启用
 support-addons-version = 版本
 support-addons-id = ID
+legacy-user-stylesheets-title = 旧版用户样式表单
+legacy-user-stylesheets-enabled = 启用
+legacy-user-stylesheets-stylesheet-types = 样式表
+legacy-user-stylesheets-no-stylesheets-found = 未找到样式表
 security-software-title = 安全软件
 security-software-type = 类型
 security-software-name = 名称
@@ -73,10 +77,11 @@ app-basics-remote-processes-count = 远程进程
 app-basics-enterprise-policies = 企业策略
 app-basics-location-service-key-google = Google 位置服务密钥
 app-basics-safebrowsing-key-google = Google 安全浏览密钥
-app-basics-key-mozilla = Waterfox 位置服务密钥
+app-basics-key-mozilla = BrowserWorks 位置服务密钥
 app-basics-safe-mode = 安全模式
 app-basics-memory-size = 内存大小（RAM）
 app-basics-disk-available = 磁盘可用空间
+app-basics-pointing-devices = 定点设备
 # Variables:
 #   $value (number) - Amount of data being stored
 #   $unit (string) - The unit of data being stored (e.g. MB)
@@ -110,11 +115,21 @@ graphics-gpu2-title = GPU #2
 graphics-decision-log-title = 决策日志
 graphics-crash-guards-title = 被崩溃守卫禁用的功能
 graphics-workarounds-title = 变通方法
+graphics-device-pixel-ratios = 窗口设备像素比
 # Windowing system in use on Linux (e.g. X11, Wayland).
 graphics-window-protocol = 窗口协议
 # Desktop environment in use on Linux (e.g. GNOME, KDE, XFCE, etc).
 graphics-desktop-environment = 桌面环境
 place-database-title = Places 数据库
+place-database-stats = 统计信息
+place-database-stats-show = 显示统计信息
+place-database-stats-hide = 隐藏统计信息
+place-database-stats-entity = 实体
+place-database-stats-count = 数量
+place-database-stats-size-kib = 大小 (KiB)
+place-database-stats-size-perc = 大小 (%)
+place-database-stats-efficiency-perc = 效率 (%)
+place-database-stats-sequentiality-perc = 顺序性 (%)
 place-database-integrity = 完整性
 place-database-verify-integrity = 验证完整性
 a11y-title = 无障碍环境
@@ -164,6 +179,15 @@ media-capabilities-title = 媒体能力
 media-codec-support-info = 解码器支持信息
 # List all the entries of the database.
 media-capabilities-enumerate = 枚举数据库
+
+## Codec support table
+
+media-codec-support-sw-decoding = 软件解码
+media-codec-support-hw-decoding = 硬件解码
+media-codec-support-codec-name = 编解码器名称
+media-codec-support-supported = 已支持
+media-codec-support-unsupported = 不支持
+media-codec-support-error = 无法获取编解码器支持信息，请在播放媒体文件后重试。
 
 ##
 
@@ -258,6 +282,8 @@ webgl2-renderer = WebGL2 渲染器
 webgl2-version = WebGL 2 驱动程序版本
 webgl2-driver-extensions = WebGL 2 驱动程序扩展
 webgl2-extensions = WebGL 2 扩展
+webgpu-default-adapter = WebGPU 默认显卡
+webgpu-fallback-adapter = WebGPU 备用显卡
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = 由于已知问题，被列入屏蔽列表：<a data-l10n-name="bug-link">bug { $bugNumber }</a>
@@ -287,6 +313,7 @@ can-sandbox-media = 媒体插件沙盒化
 content-sandbox-level = 内容进程沙盒级别
 effective-content-sandbox-level = 生效的内容进程沙盒级别
 content-win32k-lockdown-state = 内容进程的 Win32k 锁定状态
+support-sandbox-gpu-level = GPU 进程沙盒级别
 sandbox-proc-type-content = 内容
 sandbox-proc-type-file = 文件内容
 sandbox-proc-type-media-plugin = 媒体插件
@@ -358,3 +385,10 @@ support-remote-experiments-see-about-studies = 欲详细了解，请参见 <a da
 support-remote-features-title = 远程功能
 support-remote-features-name = 名称
 support-remote-features-status = 状态
+
+## Pointing devices
+
+pointing-device-mouse = 鼠标
+pointing-device-touchscreen = 触摸屏
+pointing-device-pen-digitizer = 数位板
+pointing-device-none = 无定点设备

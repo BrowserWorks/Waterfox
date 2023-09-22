@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,9 +38,11 @@ menu-quit =
             [windows] B
            *[other] B
         }
+
 # This menu-quit-mac string is only used on macOS.
 menu-quit-mac =
     .label = Baigti „{ -brand-shorter-name }“ darbą
+
 menu-about =
     .label = Apie „{ -brand-shorter-name }“
     .accesskey = A
@@ -182,6 +184,17 @@ menu-view-full-screen =
     .label = Visas ekranas
     .accesskey = V
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Pereiti į skaitymo rodinį
+    .accesskey = s
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Išjungti skaitymo rodinį
+    .accesskey = s
+
 ##
 
 menu-view-show-all-tabs =
@@ -210,8 +223,6 @@ menu-history-undo-menu =
     .label = Paskiausiai užvertos kortelės
 menu-history-undo-window-menu =
     .label = Paskiausiai užverti langai
-menu-history-reopen-all-tabs = Įkelti visas korteles
-menu-history-reopen-all-windows = Įkelti visus langus
 
 ## Bookmarks Menu
 
@@ -220,10 +231,10 @@ menu-bookmarks-menu =
     .accesskey = A
 menu-bookmarks-manage =
     .label = Tvarkyti adresyną
-menu-bookmark-current-tab =
-    .label = Įrašyti šią kortelę į adresyną
-menu-bookmark-edit =
-    .label = Taisyti adresyno įrašą
+menu-bookmark-tab =
+    .label = Įrašyti šią kortelę į adresyną…
+menu-edit-bookmark =
+    .label = Taisyti šį adresyno įrašą…
 menu-bookmarks-all-tabs =
     .label = Visas korteles įtraukti į adresyną…
 menu-bookmarks-toolbar =

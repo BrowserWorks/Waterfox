@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -19,7 +19,7 @@ about-telemetry-current-store = Penyimpanan Saat Ini:
 about-telemetry-more-information = Butuh informasi lebih lanjut?
 about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Waterfox Data Documentation</a> berisi panduan tentang bagaimana bekerja dengan alat data kami.
 about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Dokumentasi klien Waterfox Telemetry</a> termasuk definisi untuk konsep, dokumentasi API, dan referensi data.
-about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Dasbor Telemetry</a> mengizinkan Anda memvisualkan data yang diterima Waterfox via Telemetry.
+about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Dasbor Telemetry</a> mengizinkan Anda memvisualkan data yang diterima BrowserWorks via Telemetry.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Probe Dictionary</a> menyediakan rincian dan deskripsi tentang data-data pemeriksaan yang dikumpulkan oleh Telemetry.
 about-telemetry-show-in-Waterfox-json-viewer = Buka di penampil JSON
 about-telemetry-home-section = Beranda
@@ -66,7 +66,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } sampel, rata-rata = { $prettyAverage }, jumlah = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "BrowserWorks"
 about-telemetry-page-subtitle = Laman ini berisi informasi tentang kinerja, perangkat keras, penggunaan, dan pengubahsuaian yang dikumpulkan oleh Telemetri. Informasi ini dikirimkan ke { $telemetryServerOwner } untuk membantu menyempurnakan { -brand-full-name }.
 about-telemetry-settings-explanation = Telemetry mengumpulkan { about-telemetry-data-type } dan mengunggah <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
 # Variables:
@@ -130,12 +130,6 @@ about-telemetry-category-header = kategori
 about-telemetry-method-header = metode
 about-telemetry-object-header = objek
 about-telemetry-extra-header = ekstra
-about-telemetry-origin-section = Sumber Telemetri
-about-telemetry-origin-origin = sumber
-about-telemetry-origin-count = jumlah
-# Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Waterfox Origin Telemetry</a> mengenkode data sebelum dikirim agar { $telemetryServerOwner } bisa menghitung, tetapi tidak bisa mengetahui apakah { -brand-product-name } yang disediakan telah atau tidak berkontribusi atas perhitungan. (<a data-l10n-name="prio-blog-link">pelajari lebih lanjut</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = { $process } proses

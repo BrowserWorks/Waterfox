@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -86,38 +86,6 @@ main-context-menu-page-save =
 
 ## Simple menu items
 
-main-context-menu-bookmark-add =
-    .aria-label = Bokmärk denna sida
-    .accesskey = m
-    .tooltiptext = Bokmärk denna sida
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-edit-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-add-mac =
-    .label = Bokmärk sida
-    .accesskey = m
-# This menuitem is only visible on macOS
-# Cannot be shown at the same time as main-context-menu-bookmark-add-mac,
-# so should probably have the same access key if possible.
-main-context-menu-bookmark-edit-mac =
-    .label = Redigera bokmärke
-    .accesskey = m
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the add bookmark command.
-main-context-menu-bookmark-add-with-shortcut =
-    .aria-label = Bokmärk denna sida
-    .accesskey = m
-    .tooltiptext = Bokmärk denna sida ({ $shortcut })
-main-context-menu-bookmark-change =
-    .aria-label = Redigera bokmärket
-    .accesskey = m
-    .tooltiptext = Redigera detta bokmärke
-# Variables
-#   $shortcut (String) - A keyboard shortcut for the edit bookmark command.
-main-context-menu-bookmark-change-with-shortcut =
-    .aria-label = Redigera bokmärket
-    .accesskey = m
-    .tooltiptext = Redigera detta bokmärke ({ $shortcut })
 main-context-menu-bookmark-page =
     .aria-label = Bokmärk sida…
     .accesskey = m
@@ -165,9 +133,6 @@ main-context-menu-open-link-new-window =
 main-context-menu-open-link-new-private-window =
     .label = Öppna länk i nytt privat fönster
     .accesskey = i
-main-context-menu-bookmark-link =
-    .label = Bokmärk länk
-    .accesskey = B
 main-context-menu-bookmark-link-2 =
     .label = Bokmärk länk…
     .accesskey = n
@@ -191,6 +156,11 @@ main-context-menu-copy-phone =
 main-context-menu-copy-link-simple =
     .label = Kopiera länk
     .accesskey = K
+# This command copies the link, removing additional
+# query parameters used to track users across sites.
+main-context-menu-strip-on-share-link =
+    .label = Kopiera länk utan webbplatsspårning
+    .accesskey = w
 
 ## Media (video/audio) controls
 ##
@@ -307,12 +277,6 @@ main-context-menu-video-email =
 main-context-menu-audio-email =
     .label = E-posta ljud…
     .accesskey = E
-main-context-menu-plugin-play =
-    .label = Aktivera insticksmodulen
-    .accesskey = k
-main-context-menu-plugin-hide =
-    .label = Dölj insticksmodulen
-    .accesskey = ö
 main-context-menu-save-to-pocket =
     .label = Spara sida till { -pocket-brand-name }
     .accesskey = k
@@ -333,6 +297,9 @@ main-context-menu-use-saved-password =
 
 ##
 
+main-context-menu-use-relay-mask =
+    .label = Använd { -relay-brand-short-name } e-postalias
+    .accesskey = A
 main-context-menu-suggest-strong-password =
     .label = Föreslå starkt lösenord…
     .accesskey = F
@@ -360,9 +327,6 @@ main-context-menu-frame-open-window =
 main-context-menu-frame-reload =
     .label = Uppdatera ram
     .accesskey = U
-main-context-menu-frame-bookmark =
-    .label = Bokmärk den här ramen
-    .accesskey = r
 main-context-menu-frame-add-bookmark =
     .label = Bokmärk ram…
     .accesskey = r
@@ -378,9 +342,6 @@ main-context-menu-frame-view-source =
 main-context-menu-frame-view-info =
     .label = Visa raminfo
     .accesskey = i
-main-context-menu-print-selection =
-    .label = Skriv ut markering
-    .accesskey = r
 main-context-menu-print-selection-2 =
     .label = Skriv ut markering…
     .accesskey = r

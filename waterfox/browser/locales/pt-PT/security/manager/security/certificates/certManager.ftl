@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,9 +26,9 @@ certmgr-people = Tem certificados em ficheiro que identificam estas pessoas
 certmgr-server = Estas entradas identificam exceções de erro do certificado do servidor
 certmgr-ca = Tem certificados em ficheiro que identificam estas autoridades de certificados
 
-certmgr-edit-ca-cert =
+certmgr-edit-ca-cert2 =
     .title = Editar definições de confiança do certificado CA
-    .style = width: 48em;
+    .style = min-width: 48em;
 
 certmgr-edit-cert-edit-trust = Editar definições de confiança:
 
@@ -38,9 +38,9 @@ certmgr-edit-cert-trust-ssl =
 certmgr-edit-cert-trust-email =
     .label = Este certificado pode identificar utilizadores de e-mail.
 
-certmgr-delete-cert =
+certmgr-delete-cert2 =
     .title = Apagar certificado
-    .style = width: 48em; height: 24em;
+    .style = min-width: 48em; min-height: 24em;
 
 certmgr-cert-host =
     .label = Anfitrião
@@ -50,9 +50,6 @@ certmgr-cert-name =
 
 certmgr-cert-server =
     .label = Servidor
-
-certmgr-override-lifetime =
-    .label = Validade
 
 certmgr-token-name =
     .label = Dispositivo de segurança
@@ -68,6 +65,9 @@ certmgr-email =
 
 certmgr-serial =
     .label = Número de série
+
+certmgr-fingerprint-sha-256 =
+    .label = Impressão digital SHA-256
 
 certmgr-view =
     .label = Ver…
@@ -185,8 +185,6 @@ delete-email-cert-impact = Se apagar o certificado de e-mail de uma pessoa, já 
 #   $serialNumber : the serial number of the cert in AA:BB:CC hex format.
 cert-with-serial =
     .value = Certificado com número de série: { $serialNumber }
-
-## Cert Viewer
 
 # Used to indicate that the user chose not to send a client authentication certificate to a server that requested one in a TLS handshake.
 send-no-client-certificate = Não enviar nenhum certificado de cliente

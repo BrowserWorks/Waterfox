@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -24,6 +24,12 @@ bookmark-overlay-folders-expander =
     .tooltiptextdown = { bookmark-overlay-folders-expander.tooltiptext }
     .tooltiptextup = Ocultar
 
+bookmark-overlay-folders-expander2 =
+    .tooltiptext = Mostrar todas las carpetas de marcadores
+
+bookmark-overlay-folders-expander-hide =
+    .tooltiptext = Ocultar
+
 bookmark-overlay-new-folder-button =
     .label = Nueva carpeta
     .accesskey = t
@@ -39,6 +45,12 @@ bookmark-overlay-tags-expander =
     .tooltiptext = Mostrar todas las etiquetas
     .tooltiptextdown = { bookmark-overlay-tags-expander.tooltiptext }
     .tooltiptextup = Ocultar
+
+bookmark-overlay-tags-expander2 =
+    .tooltiptext = Mostrar todas las etiquetas
+
+bookmark-overlay-tags-expander-hide =
+    .tooltiptext = Ocultar
 
 bookmark-overlay-keyword-2 =
     .value = Palabra clave

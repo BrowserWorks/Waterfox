@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -56,3 +56,8 @@ remote-node-picker-notice-action-touch = Toccare un elemento per selezionarlo in
 # clicks on the "Pick an element from the page" in about:devtools-toolbox inspector panel,
 # when debugging a remote page.
 remote-node-picker-notice-hide-button = Nascondi
+
+simple-highlighters-message = Quando prefers-reduced-motion è attivo, è possibile selezionare evidenziatori semplificati nel pannello impostazioni per evitare il lampeggiamento di colori.
+
+simple-highlighters-settings-button = Apri impostazioni
+

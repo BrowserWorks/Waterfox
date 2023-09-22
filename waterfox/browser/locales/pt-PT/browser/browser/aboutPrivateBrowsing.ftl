@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -32,7 +32,7 @@ about-private-browsing-focus-promo-text = A nossa app móvel dedicada a uma nave
 
 ## The following strings will be used for experiments in Fx99 and Fx100
 
-about-private-browsing-focus-promo-header-b = Leve a navegação privada para o seu telefone
+about-private-browsing-focus-promo-header-b = Leve a navegação privada para o seu telemóvel
 about-private-browsing-focus-promo-text-b = Use o { -focus-brand-name } para as pesquisas privadas que não deseja que o seu navegador principal para dispositivos móveis veja.
 about-private-browsing-focus-promo-header-c = Privacidade do próximo nível em dispositivos móveis
 about-private-browsing-focus-promo-text-c = O { -focus-brand-name } limpa o seu histórico todas as vezes enquanto bloqueia anúncios e rastreadores.
@@ -53,8 +53,22 @@ about-private-browsing-promo-close-button =
 
 ## Strings used in a “pin promotion” message, which prompts users to pin a private window
 
+about-private-browsing-pin-promo-header = Liberdade da navegação privada num clique
 about-private-browsing-pin-promo-link-text =
     { PLATFORM() ->
-        [macos] Fixar na Doca
+        [macos] Manter na Doca
        *[other] Fixar na barra de tarefas
     }
+about-private-browsing-pin-promo-title = Sem cookies ou histórico salvos, diretamente a partir do seu ambiente de trabalho. Navegue como se ninguém estivesse a ver.
+
+## Strings used in a promotion message for cookie banner reduction
+
+# Simplified version of the headline if the original text doesn't work
+# in your language: `See fewer cookie requests`.
+about-private-browsing-cookie-banners-promo-header = Desapareçam faixas de cookies!
+about-private-browsing-cookie-banners-promo-button = Reduza as faixas de cookies
+about-private-browsing-cookie-banners-promo-message = Permitir que o { -brand-short-name } responda automaticamente a pop-ups de cookies para que possa voltar a navegar sem distrações. O { -brand-short-name } irá rejeitar todos os pedidos, se for possível.
+
+## Strings for Felt Privacy v1 experiments in 119
+
+about-private-browsing-felt-privacy-v1-info-header = Não deixe evidências neste dispositivo

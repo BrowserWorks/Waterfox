@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,9 @@ places-open-in-window =
 places-open-in-private-window =
     .label = Mở trong cửa sổ riêng tư mới
     .accesskey = P
+
+places-empty-bookmarks-folder =
+    .label = (Trống)
 
 places-add-bookmark =
     .label = Thêm dấu trang…
@@ -86,6 +89,15 @@ places-delete-folder =
            *[other] Xóa thư mục
         }
     .accesskey = D
+# Variables:
+#   $count (number) - The number of pages selected for removal.
+places-delete-page =
+    .label =
+        { $count ->
+            [1] Xóa trang
+           *[other] Xóa trang
+        }
+    .accesskey = D
 
 # Managed bookmarks are created by an administrator and cannot be changed by the user.
 managed-bookmarks =
@@ -112,6 +124,20 @@ places-delete-bookmark =
         }
     .accesskey = D
 
+# Variables:
+#   $count (number) - The number of bookmarks being added.
+places-create-bookmark =
+    .label =
+        { $count ->
+            [1] Đánh dấu trang…
+           *[other] Đánh dấu các trang…
+        }
+    .accesskey = B
+
+places-untag-bookmark =
+    .label = Xóa thẻ
+    .accesskey = R
+
 places-manage-bookmarks =
     .label = Quản lý dấu trang
     .accesskey = M
@@ -120,13 +146,12 @@ places-forget-about-this-site-confirmation-title = Quên trang web này
 
 # Variables:
 # $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
-places-forget-about-this-site-confirmation-message = Hành động này sẽ xóa tất cả dữ liệu liên quan đến { $hostOrBaseDomain } bao gồm lịch sử, mật khẩu, cookie, bộ nhớ đệm và tùy chỉnh nội dung. Bạn có chắc muốn tiếp tục?
+places-forget-about-this-site-confirmation-msg = Hành động này sẽ xóa dữ liệu liên quan đến { $hostOrBaseDomain } bao gồm lịch sử, cookie, bộ nhớ đệm và tùy chỉnh nội dung. Dấu trang và mật khẩu liên quan sẽ không bị xóa. Bạn có chắc muốn tiếp tục?
 
 places-forget-about-this-site-forget = Quên
 
-places-library =
+places-library3 =
     .title = Thư viện
-    .style = width:700px; height:500px;
 
 places-organize-button =
     .label = Quản lí
@@ -227,6 +252,28 @@ places-view-sort-col-date-added =
 places-view-sort-col-last-modified =
     .label = Sửa đổi lần cuối
 
+places-view-sortby-name =
+    .label = Sắp xếp theo tên
+    .accesskey = t
+places-view-sortby-url =
+    .label = Sắp xếp theo địa chỉ
+    .accesskey = c
+places-view-sortby-date =
+    .label = Sắp xếp theo lần xem gần đây
+    .accesskey = g
+places-view-sortby-visit-count =
+    .label = Sắp xếp theo số lần xem
+    .accesskey = s
+places-view-sortby-date-added =
+    .label = Sắp xếp theo thời điểm thêm vào
+    .accesskey = t
+places-view-sortby-last-modified =
+    .label = Sắp xếp theo sửa đổi lần cuối
+    .accesskey = c
+places-view-sortby-tags =
+    .label = Sắp xếp theo nhãn
+    .accesskey = n
+
 places-cmd-find-key =
     .key = f
 
@@ -237,3 +284,24 @@ places-forward-button =
     .tooltiptext = Tiến
 
 places-details-pane-select-an-item-description = Chọn một mục để xem và chỉnh sửa thuộc tính của nó
+
+places-details-pane-no-items =
+    .value = Không có mục nào
+# Variables:
+#   $count (Number): number of items
+places-details-pane-items-count =
+    .value = { $count } mục
+
+## Strings used as a placeholder in the Library search field. For example,
+## "Search History" stands for "Search through the browser's history".
+
+places-search-bookmarks =
+    .placeholder = Tìm kiếm dấu trang
+places-search-history =
+    .placeholder = Tìm kiếm lịch sử
+places-search-downloads =
+    .placeholder = Tìm kiếm dữ liệu đã tải xuống
+
+##
+
+places-locked-prompt = Hệ thống các dấu trang và lịch sử sẽ không hoạt động vì một tập tin của { -brand-short-name } đang bị một ứng dụng khác sử dụng. Một phần mềm bảo mật nào đó cũng có thể gây ra vấn đề này.

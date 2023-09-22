@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,9 +26,9 @@ certmgr-people = Vous possédez des certificats enregistrés identifiant ces per
 certmgr-server = Ces entrées identifient les exceptions aux erreurs de certificat serveur
 certmgr-ca = Vous possédez des certificats enregistrés identifiant ces autorités de certification
 
-certmgr-edit-ca-cert =
+certmgr-edit-ca-cert2 =
     .title = Édition des paramètres de confiance de l’autorité de certification (CA)
-    .style = width: 48em;
+    .style = min-width: 48em;
 
 certmgr-edit-cert-edit-trust = Modifier les paramètres de confiance :
 
@@ -38,9 +38,9 @@ certmgr-edit-cert-trust-ssl =
 certmgr-edit-cert-trust-email =
     .label = Ce certificat peut identifier des utilisateurs de courrier électronique.
 
-certmgr-delete-cert =
+certmgr-delete-cert2 =
     .title = Suppression d’un certificat
-    .style = width: 48em; height: 24em;
+    .style = min-width: 48em; min-height: 24em;
 
 certmgr-cert-host =
     .label = Hôte
@@ -50,9 +50,6 @@ certmgr-cert-name =
 
 certmgr-cert-server =
     .label = Serveur
-
-certmgr-override-lifetime =
-    .label = Durée de vie
 
 certmgr-token-name =
     .label = Périphérique de sécurité
@@ -64,10 +61,13 @@ certmgr-expires-label =
     .label = Expire le
 
 certmgr-email =
-    .label = Adresse électronique
+    .label = Adresse e-mail
 
 certmgr-serial =
     .label = Numéro de série
+
+certmgr-fingerprint-sha-256 =
+    .label = Empreinte numérique SHA-256
 
 certmgr-view =
     .label = Voir…
@@ -185,8 +185,6 @@ delete-email-cert-impact = Si vous supprimez le certificat de courrier d’une p
 #   $serialNumber : the serial number of the cert in AA:BB:CC hex format.
 cert-with-serial =
     .value = Certificat avec numéro de série : { $serialNumber }
-
-## Cert Viewer
 
 # Used to indicate that the user chose not to send a client authentication certificate to a server that requested one in a TLS handshake.
 send-no-client-certificate = Ne pas envoyer de certificat client

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -31,11 +31,12 @@ downloads-cmd-cancel-panel =
     .aria-label = Annulla
 
 downloads-cmd-show-menuitem-2 =
-  .label = { PLATFORM() ->
-      [macos] Mostra nel Finder
-     *[other] Mostra nella cartella
-  }
-  .accesskey = n
+    .label =
+        { PLATFORM() ->
+            [macos] Mostra nel Finder
+           *[other] Mostra nella cartella
+        }
+    .accesskey = n
 
 ## Displayed in the downloads context menu for files that can be opened.
 ## Variables:
@@ -43,28 +44,26 @@ downloads-cmd-show-menuitem-2 =
 ##   Example: "Notepad", "Acrobat Reader DC", "7-Zip File Manager"
 
 downloads-cmd-use-system-default =
-  .label = Apri nel visualizzatore del sistema
-  .accesskey = n
-
+    .label = Apri nel visualizzatore del sistema
+    .accesskey = n
 downloads-cmd-use-system-default-named =
-  .label = Apri in { $handler }
-  .accesskey = n
+    .label = Apri in { $handler }
+    .accesskey = n
 
 downloads-cmd-always-use-system-default =
-  .label = Apri sempre nel visualizzatore del sistema
-  .accesskey = m
-
+    .label = Apri sempre nel visualizzatore del sistema
+    .accesskey = m
 downloads-cmd-always-use-system-default-named =
-  .label = Apri sempre in { $handler }
-  .accesskey = m
+    .label = Apri sempre in { $handler }
+    .accesskey = m
 
 ##
 
 # We can use the same accesskey as downloads-cmd-always-use-system-default.
 # Both should not be visible in the downloads context menu at the same time.
 downloads-cmd-always-open-similar-files =
-  .label = Apri sempre file simili a questo
-  .accesskey = m
+    .label = Apri sempre file simili a questo
+    .accesskey = m
 
 downloads-cmd-show-button-2 =
     .tooltiptext =
@@ -159,13 +158,18 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = Verrà aperto in { $hours }h { $minutes }m…
-downloading-file-opens-in-minutes = Verrà aperto in { $minutes }m…
-downloading-file-opens-in-minutes-and-seconds = Verrà aperto in { $minutes }m { $seconds }s…
-downloading-file-opens-in-seconds = Verrà aperto in { $seconds }s…
-downloading-file-opens-in-some-time = Verrà aperto non appena completato…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = Verrà aperto in { $hours }h { $minutes }m…
+downloading-file-opens-in-minutes-2 =
+    .value = Verrà aperto in { $minutes }m…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = Verrà aperto in { $minutes }m { $seconds }s…
+downloading-file-opens-in-seconds-2 =
+    .value = Verrà aperto in { $seconds }s…
+downloading-file-opens-in-some-time-2 =
+    .value = Verrà aperto non appena completato…
 downloading-file-click-to-open =
-  .value = Apri non appena completato
+    .value = Apri non appena completato
 
 ##
 
@@ -196,10 +200,11 @@ downloads-details =
 ##   $num (number) - Number of blocked downloads.
 ##   $url (string) - The url of the suspicious site, stripped of http, https and www prefix.
 
-downloads-files-not-downloaded = { $num ->
-    [one] File non scaricato.
-   *[other] {$num} file non scaricati.
-}
+downloads-files-not-downloaded =
+    { $num ->
+        [one] File non scaricato.
+       *[other] { $num } file non scaricati.
+    }
 downloads-blocked-from-url = Bloccati download da { $url }.
 downloads-blocked-download-detailed-info = { $url } ha cercato di scaricare automaticamente diversi file. È possibile che il sito contenga degli errori o che stia cercando di salvare contenuti indesiderati sul tuo dispositivo.
 
@@ -227,3 +232,17 @@ downloads-more-downloading =
         [one] { $count } altro file in download
        *[other] Altri { $count } file in download
     }
+
+## Download errors
+
+downloads-error-alert-title = Errore download
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = Impossibile salvare il download in quanto è bloccato da { $extension }.
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = Impossibile salvare il download in quanto è bloccato da un’estensione.
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    Si è verificato un errore sconosciuto e il download non è stato salvato.
+    
+    Si consiglia di ritentare.

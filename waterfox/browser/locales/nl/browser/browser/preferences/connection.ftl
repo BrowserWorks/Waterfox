@@ -1,13 +1,13 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-connection-window =
+connection-window2 =
     .title = Verbindingsinstellingen
     .style =
         { PLATFORM() ->
-            [macos] width: 46em
-           *[other] width: 51em
+            [macos] min-width: 46em
+           *[other] min-width: 51em
         }
 
 connection-close-key =
@@ -35,7 +35,6 @@ connection-proxy-http = HTTP-proxy
     .accesskey = x
 connection-proxy-http-port = Poort
     .accesskey = P
-
 connection-proxy-https-sharing =
     .label = Deze proxy ook voor HTTPS gebruiken
     .accesskey = g
@@ -77,16 +76,14 @@ connection-proxy-autologin =
     .accesskey = i
     .tooltip = Deze optie authenticeert u automatisch bij proxy’s als u hiervoor referenties hebt opgeslagen. Als authenticatie mislukt, wordt hierom gevraagd.
 
+connection-proxy-autologin-checkbox =
+    .label = Niet om authenticatie vragen als wachtwoord is opgeslagen
+    .accesskey = i
+    .tooltiptext = Deze optie authenticeert u automatisch bij proxy’s als u hiervoor referenties hebt opgeslagen. Als authenticatie mislukt, wordt hierom gevraagd.
+
 connection-proxy-socks-remote-dns =
     .label = DNS via proxy bij gebruik van SOCKS v5
     .accesskey = D
-
-connection-dns-over-https =
-    .label = DNS over HTTPS inschakelen
-    .accesskey = N
-
-connection-dns-over-https-url-resolver = Provider gebruiken
-    .accesskey = P
 
 # Variables:
 #   $name (String) - Display name or URL for the DNS over HTTPS provider

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -26,9 +26,9 @@ certmgr-people = Turite liudijimus, identifikuojančius šiuos asmenis
 certmgr-server = Šie įrašai nurodo serverių liudijimų klaidų išimtis
 certmgr-ca = Turite liudijimus, identifikuojančius šias liudijimų įstaigas
 
-certmgr-edit-ca-cert =
+certmgr-edit-ca-cert2 =
     .title = Pasitikėjimo LĮ liudijimu nuostatos
-    .style = width: 48em;
+    .style = min-width: 48em;
 
 certmgr-edit-cert-edit-trust = Pasitikėjimo nuostatos:
 
@@ -38,9 +38,9 @@ certmgr-edit-cert-trust-ssl =
 certmgr-edit-cert-trust-email =
     .label = Šis liudijimas gali patvirtinti el. pašto naudotojų tapatybę
 
-certmgr-delete-cert =
+certmgr-delete-cert2 =
     .title = Liudijimo šalinimas
-    .style = width: 48em; height: 24em;
+    .style = min-width: 48em; min-height: 24em;
 
 certmgr-cert-host =
     .label = Serveris
@@ -50,9 +50,6 @@ certmgr-cert-name =
 
 certmgr-cert-server =
     .label = Serveris
-
-certmgr-override-lifetime =
-    .label = Galiojimo laikas
 
 certmgr-token-name =
     .label = Saugumo priemonė
@@ -185,8 +182,6 @@ delete-email-cert-impact = Jei pašalinsite adresato el. pašto liudijimą, nebe
 #   $serialNumber : the serial number of the cert in AA:BB:CC hex format.
 cert-with-serial =
     .value = Liudijimas su numeriu: { $serialNumber }
-
-## Cert Viewer
 
 # Used to indicate that the user chose not to send a client authentication certificate to a server that requested one in a TLS handshake.
 send-no-client-certificate = Nesiųsti kliento liudijimo

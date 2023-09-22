@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -24,14 +24,8 @@ about-private-browsing-info-description-simplified = { -brand-short-name } vyma�
 about-private-browsing-learn-more-link = Zjistit více
 about-private-browsing-hide-activity = Skryjte své aktivity a polohu, ať už web prohlížíte odkudkoliv
 about-private-browsing-get-privacy = Ochraňte své soukromí, ať jste kdekoliv
-about-private-browsing-hide-activity-1 = Skryjte informace o svém prohlížením se službou { -mozilla-vpn-brand-name }. Jediné klepnutí naváže bezpečné spojení, a to i na veřejných Wi-Fi sítích.
-about-private-browsing-prominent-cta =
-    Ochraňte své soukromí { -mozilla-vpn-brand-name.gender ->
-        [masculine] s { -mozilla-vpn-brand-name(case: "ins") }
-        [feminine] s { -mozilla-vpn-brand-name(case: "ins") }
-        [neuter] s { -mozilla-vpn-brand-name(case: "ins") }
-       *[other] se službou { -mozilla-vpn-brand-name }
-    }
+about-private-browsing-hide-activity-1 = Skryjte informace o svém prohlížením s { -mozilla-vpn-brand-name(case: "ins") }. Jediné klepnutí naváže bezpečné spojení, a to i na veřejných Wi-Fi sítích.
+about-private-browsing-prominent-cta = Ochraňte své soukromí s { -mozilla-vpn-brand-name(case: "ins") }
 about-private-browsing-focus-promo-cta = Stáhnout { -focus-brand-name(case: "acc") }
 about-private-browsing-focus-promo-header = { -focus-brand-name }: anonymní prohlížení na cesty
 about-private-browsing-focus-promo-text = Náš speciální mobilní prohlížeč, který pokaždé smaže cookies a historii vašeho prohlížení.
@@ -59,8 +53,28 @@ about-private-browsing-promo-close-button =
 
 ## Strings used in a “pin promotion” message, which prompts users to pin a private window
 
+about-private-browsing-pin-promo-header = Svoboda soukromého prohlížení na jedno klepnutí
 about-private-browsing-pin-promo-link-text =
     { PLATFORM() ->
         [macos] Připnout do docku
        *[other] Připnout na lištu
     }
+about-private-browsing-pin-promo-title = Žádné uložené cookies ani historie, přímo z vaší plochy. Prohlížejte, jako když se nikdo nedívá.
+
+## Strings used in a promotion message for cookie banner reduction
+
+# Simplified version of the headline if the original text doesn't work
+# in your language: `See fewer cookie requests`.
+about-private-browsing-cookie-banners-promo-header = Cookie lišty jsou fuč!
+about-private-browsing-cookie-banners-promo-button = Omezit cookie lišty
+about-private-browsing-cookie-banners-promo-message =
+    Nechte { -brand-short-name.case-status ->
+        [with-cases] { -brand-short-name(case: "acc") }
+       *[no-cases] aplikaci { -brand-short-name }
+    } automaticky odpovídat na vyskakovací okna souborů cookie za vás, abyste se mohli vrátit k procházení bez rozptylování. { -brand-short-name } odmítne všechny požadavky, pokud je to možné.
+
+## Strings for Felt Privacy v1 experiments in 119
+
+about-private-browsing-felt-privacy-v1-info-header = Nezanechávejte na tomto zařízení žádné stopy
+about-private-browsing-felt-privacy-v1-info-body = Když zavřete všechna anonymní okna, { -brand-short-name } odstraní vaše soubory cookie, historii a data stránek.
+about-private-browsing-felt-privacy-v1-info-link = Kdo může vidět mou aktivitu?

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,7 @@ region-name-bl = Saint Barthelemy
 region-name-bm = Bermuda
 region-name-bn = Brunei
 region-name-bo = Bolivia
-region-name-bq = Bonaire, Sint Eustatius dan Saba
+region-name-bq-2018 = Belanda Karibia
 region-name-br = Brasil
 region-name-bs = Bahamas
 region-name-bt = Bhutan
@@ -57,11 +57,11 @@ region-name-co = Kolombia
 region-name-cp = Kepulauan Clipperton
 region-name-cr = Kosta Rika
 region-name-cu = Kuba
-region-name-cv = Tanjung Verde
+region-name-cv-2020 = Cape Verde
 region-name-cw = Curaçao
 region-name-cx = Natal, Pulau
 region-name-cy = Siprus
-region-name-cz = Ceko, Republik
+region-name-cz-2019 = Republik Ceko
 region-name-de = Jerman
 region-name-dg = Diego Garcia
 region-name-dj = Djibouti
@@ -150,7 +150,7 @@ region-name-me = Montenegro
 region-name-mf = Saint Martin
 region-name-mg = Madagaskar
 region-name-mh = Marshall, Kepulauan
-region-name-mk = Macedonia
+region-name-mk-2019 = Makedonia Utara
 region-name-ml = Mali
 region-name-mm = Birma
 region-name-mn = Mongolia
@@ -223,7 +223,7 @@ region-name-st = Sao Tome dan Principe
 region-name-sv = El Salvador
 region-name-sx = Saint Martin
 region-name-sy = Suriah
-region-name-sz = Swaziland
+region-name-sz-2019 = Eswatini
 region-name-tc = Turks dan Caicos, Kepulauan
 region-name-td = Chad
 region-name-tf = Perancis, Wilayah Bagian Selatan dan Antartika

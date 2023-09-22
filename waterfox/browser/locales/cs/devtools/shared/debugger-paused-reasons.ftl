@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,12 +23,28 @@ whypaused-debugger-statement = Pozastaveno při odlaďování
 whypaused-breakpoint = Pozastaveno na zarážce
 
 # The text that is displayed in a info block explaining how the debugger is
+# currently paused on an event breakpoint.
+whypaused-event-breakpoint = Pozastaveno na zarážce události
+
+# The text that is displayed in a info block explaining how the debugger is
 # currently paused on an exception
 whypaused-exception = Pozastaveno na výjimce
 
 # The text that is displayed in a info block explaining how the debugger is
 # currently paused on a DOM mutation breakpoint
 whypaused-mutation-breakpoint = Pozastaveno na mutaci DOMu
+
+# The text that is displayed to describe an added node which triggers a subtree
+# modification
+whypaused-mutation-breakpoint-added = Přidáno:
+
+# The text that is displayed to describe a removed node which triggers a subtree
+# modification
+whypaused-mutation-breakpoint-removed = Odebráno:
+
+# The text that is displayed in a info block explaining how the debugger is
+# currently paused at a JS execution
+whypaused-interrupted = Pozastaveno za běhu
 
 # The text that is displayed in a info block explaining how the debugger is
 # currently paused while stepping in or out of the stack
@@ -43,8 +59,20 @@ whypaused-pause-on-dom-events = Pozastaveno na posluchači událostí
 whypaused-breakpoint-condition-thrown = Chyba spojená s podmíněnou zarážkou
 
 # The text that is displayed in a info block explaining how the debugger is
+# currently paused on an xml http request
+whypaused-xhr = Pozastaveno na XMLHttpRequest
+
+# The text that is displayed in a info block explaining how the debugger is
 # currently paused on a promise rejection
 whypaused-promise-rejection = Pozastaveno na odmítnuté promise
+
+# The text that is displayed in a info block explaining how the debugger is
+# currently paused at a watchpoint on an object property
+whypaused-get-watchpoint = Pozastaveno při čtení vlastnosti
+
+# The text that is displayed in an info block explaining how the debugger is
+# currently paused at a watchpoint on an object property
+whypaused-set-watchpoint = Pozastaveno při zapisování vlastnosti
 
 # The text that is displayed in a info block explaining how the debugger is
 # currently paused on an assert

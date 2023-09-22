@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,11 +30,11 @@ region-name-bg = Bulgaria
 region-name-bh = Bahrain
 region-name-bi = Burundi
 region-name-bj = Benin
-region-name-bl = Saint Barthelemy
+region-name-bl = Saint Barthélemy
 region-name-bm = Bermuda
 region-name-bn = Brunei
 region-name-bo = Bolivia
-region-name-bq = Bonaire, Sint Eustatius, and Saba
+region-name-bq-2018 = Caribbean Netherlands
 region-name-br = Brazil
 region-name-bs = Bahamas, The
 region-name-bt = Bhutan
@@ -57,11 +57,11 @@ region-name-co = Colombia
 region-name-cp = Clipperton Island
 region-name-cr = Costa Rica
 region-name-cu = Cuba
-region-name-cv = Cabo Verde
+region-name-cv-2020 = Cape Verde
 region-name-cw = Curaçao
 region-name-cx = Christmas Island
 region-name-cy = Cyprus
-region-name-cz = Czech Republic
+region-name-cz-2019 = Czechia
 region-name-de = Germany
 region-name-dg = Diego Garcia
 region-name-dj = Djibouti
@@ -150,7 +150,7 @@ region-name-me = Montenegro
 region-name-mf = Saint Martin
 region-name-mg = Madagascar
 region-name-mh = Marshall Islands
-region-name-mk = Macedonia
+region-name-mk-2019 = North Macedonia
 region-name-ml = Mali
 region-name-mm = Burma
 region-name-mn = Mongolia
@@ -199,7 +199,7 @@ region-name-qu = Juan de Nova Island
 region-name-qw = Wake Island
 region-name-qx = Glorioso Islands
 region-name-qz = Akrotiri
-region-name-re = Reunion
+region-name-re = Réunion
 region-name-ro = Romania
 region-name-rs = Serbia
 region-name-ru = Russia
@@ -219,11 +219,11 @@ region-name-sn = Senegal
 region-name-so = Somalia
 region-name-sr = Suriname
 region-name-ss = South Sudan
-region-name-st = Sao Tome and Principe
+region-name-st = São Tomé and Príncipe
 region-name-sv = El Salvador
 region-name-sx = Sint Maarten
 region-name-sy = Syria
-region-name-sz = Swaziland
+region-name-sz-2019 = Eswatini
 region-name-tc = Turks and Caicos Islands
 region-name-td = Chad
 region-name-tf = French Southern and Antarctic Lands

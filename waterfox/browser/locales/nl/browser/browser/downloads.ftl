@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -164,11 +164,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = Wordt geopend over { $hours } u { $minutes } m…
-downloading-file-opens-in-minutes = Wordt geopend over { $minutes } m…
-downloading-file-opens-in-minutes-and-seconds = Wordt geopend over { $minutes } m { $seconds } s…
-downloading-file-opens-in-seconds = Wordt geopend over { $seconds } s…
-downloading-file-opens-in-some-time = Wordt geopend bij voltooien…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = Wordt geopend over { $hours } u { $minutes } m…
+downloading-file-opens-in-minutes-2 =
+    .value = Wordt geopend over { $minutes } m…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = Wordt geopend over { $minutes } m { $seconds } s…
+downloading-file-opens-in-seconds-2 =
+    .value = Wordt geopend over { $seconds } s…
+downloading-file-opens-in-some-time-2 =
+    .value = Wordt geopend bij voltooien…
 downloading-file-click-to-open =
     .value = Openen bij voltooien
 
@@ -233,3 +238,17 @@ downloads-more-downloading =
         [one] Er wordt nog { $count } bestand gedownload
        *[other] Er worden nog { $count } bestanden gedownload
     }
+
+## Download errors
+
+downloads-error-alert-title = Downloadfout
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = De download kan niet worden opgeslagen, omdat deze door { $extension } wordt geblokkeerd.
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = De download kan niet worden opgeslagen, omdat deze door een extensie wordt geblokkeerd.
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    De download kan niet worden opgeslagen, omdat een onbekende fout is opgetreden.
+    
+    Probeer het opnieuw.

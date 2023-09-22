@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,21 +12,19 @@ synced-tabs-sidebar-tabsnotsyncing = Įjunkite kortelių sinchronizavimą, norė
 synced-tabs-sidebar-connect-another-device = Susieti kitą įrenginį
 synced-tabs-sidebar-search =
     .placeholder = Ieškoti tarp sinchronizuotų kortelių
+
+## Displayed in the Synced Tabs sidebar's context menu when right-clicking tabs
+## and/or devices in the list. The "Open" strings below should be translated
+## consistently with the equivalent strings for the bookmarks manager's context
+## menu. That menu is activated by right-clicking a bookmark in the Library
+## window. The bookmarks manager context's strings are located in places.ftl.
+
 synced-tabs-context-open =
     .label = Atverti
     .accesskey = A
-synced-tabs-context-open-in-new-tab =
-    .label = Atverti naujoje kortelėje
-    .accesskey = o
-synced-tabs-context-open-in-new-window =
-    .label = Atverti naujame lange
-    .accesskey = l
-synced-tabs-context-open-in-new-private-window =
-    .label = Atverti naujame privačiojo naršymo lange
-    .accesskey = p
-synced-tabs-context-bookmark-single-tab =
-    .label = Įtraukti kortelę į adresyną…
-    .accesskey = t
+
+##
+
 synced-tabs-context-copy =
     .label = Kopijuoti
     .accesskey = K
