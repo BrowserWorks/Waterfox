@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -19,7 +19,7 @@ error-long-desc1 = Los robots no deben dañar a un ser humano o, por su inacció
 # Movie: Blade Runner. Batty: "I've seen things you people wouldn’t believe..."
 error-long-desc2 = Los robots han visto cosas que ustedes los humanos no creerían.
 # Book: Hitchhiker’s Guide To The Galaxy. What the Sirius Cybernetics Corporation calls robots.
-error-long-desc3 = Los robots son sus amigos de plástico con los que se pueden divertir.
+error-long-desc3 = Los robots son tus amigos de plástico con los que te puedes divertir.
 # TV: Futurama. Bender's first line is "Bite my shiny metal ass."
 error-long-desc4 = Los robots tienen brillantes traseros metálicos que no deben ser mordidos.
 # TV: Battlestar Galactica (2004 series). From the opening text.

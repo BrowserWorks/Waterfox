@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -34,7 +34,7 @@ region-name-bl = Saint Barthélemy
 region-name-bm = Βερμούδες
 region-name-bn = Brunei Darussalam
 region-name-bo = Βολιβία
-region-name-bq = Μποναίρ, Άγιος Ευστάθιος και Σάμπα
+region-name-bq-2018 = Καραϊβική Ολλανδία
 region-name-br = Βραζιλία
 region-name-bs = Bahamas
 region-name-bt = Μπουτάν
@@ -57,11 +57,11 @@ region-name-co = Κολομβία
 region-name-cp = Νήσος Κλίπερτον
 region-name-cr = Κόστα Ρίκα
 region-name-cu = Κούβα
-region-name-cv = Cape Verde
+region-name-cv-2020 = Πράσινο Ακρωτήριο
 region-name-cw = Κουρασάο
 region-name-cx = Νήσος των Χριστουγέννων
 region-name-cy = Κύπρος
-region-name-cz = Τσεχία
+region-name-cz-2019 = Τσεχία
 region-name-de = Γερμανία
 region-name-dg = Ντιέγκο Γκαρσία
 region-name-dj = Τζιμπουτί
@@ -150,7 +150,7 @@ region-name-me = Μαυροβούνιο
 region-name-mf = Άγιος Μαρτίνος
 region-name-mg = Μαδαγασκάρη
 region-name-mh = Νήσοι Μάρσαλ
-region-name-mk = Macedonia, F.Y.R. of
+region-name-mk-2019 = Βόρεια Μακεδονία
 region-name-ml = Μαλί
 region-name-mm = Myanmar
 region-name-mn = Μογγολία
@@ -223,7 +223,7 @@ region-name-st = Σάο Τομέ και Πρίνσιπε
 region-name-sv = Ελ Σαλβαδόρ
 region-name-sx = Άγιος Μαρτίνος
 region-name-sy = Συρία
-region-name-sz = Σουαζιλάνδη
+region-name-sz-2019 = Εσουατίνι
 region-name-tc = Νήσοι Τερκς και Κέικος
 region-name-td = Τσαντ
 region-name-tf = French Southern Territories

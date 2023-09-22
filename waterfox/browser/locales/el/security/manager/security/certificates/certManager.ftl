@@ -1,97 +1,134 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 certmgr-title =
     .title = Διαχείριση πιστοποιητικών
+
 certmgr-tab-mine =
     .label = Τα πιστοποιητικά σας
+
 certmgr-tab-remembered =
     .label = Αποφάσεις ταυτοποίησης
+
 certmgr-tab-people =
     .label = Άτομα
+
 certmgr-tab-servers =
     .label = Διακομιστές
+
 certmgr-tab-ca =
     .label = Αρχές
+
 certmgr-mine = Έχετε πιστοποιητικά από αυτούς τους οργανισμούς που σας ταυτοποιούν
 certmgr-remembered = Αυτά τα πιστοποιητικά χρησιμοποιούνται για την αναγνώρισή σας σε ιστοτόπους
 certmgr-people = Έχετε πιστοποιητικά στο αρχείο που ταυτοποιούν αυτά τα άτομα
 certmgr-server = Αυτές οι καταχωρήσεις αναγνωρίζουν τις εξαιρέσεις σφαλμάτων του πιστοποιητικού διακομιστή
 certmgr-ca = Έχετε πιστοποιητικά στο αρχείο που ταυτοποιούν αυτές τις αρχές πιστοποιητικών
-certmgr-edit-ca-cert =
+
+certmgr-edit-ca-cert2 =
     .title = Επεξεργασία ρυθμίσεων αξιοπιστίας πιστοποιητικών CA
-    .style = width: 48em;
+    .style = min-width: 48em;
+
 certmgr-edit-cert-edit-trust = Επεξεργασία ρυθμίσεων εμπιστοσύνης:
+
 certmgr-edit-cert-trust-ssl =
     .label = Αυτό το πιστοποιητικό μπορεί να ταυτοποιήσει ιστοτόπους.
+
 certmgr-edit-cert-trust-email =
     .label = Το παρόν πιστοποιεί χρήστες email.
-certmgr-delete-cert =
+
+certmgr-delete-cert2 =
     .title = Διαγραφή πιστοποιητικού
-    .style = width: 48em; height: 24em;
+    .style = min-width: 48em; min-height: 24em;
+
 certmgr-cert-host =
     .label = Υπολογιστής
+
 certmgr-cert-name =
     .label = Όνομα πιστοποιητικού
+
 certmgr-cert-server =
     .label = Διακομιστής
-certmgr-override-lifetime =
-    .label = Διάρκεια ζωής
+
 certmgr-token-name =
     .label = Συσκευή ασφάλειας
+
 certmgr-begins-label =
     .label = Αρχίζει στις
+
 certmgr-expires-label =
     .label = Λήγει στις
+
 certmgr-email =
     .label = Διεύθυνση email
+
 certmgr-serial =
     .label = Σειριακός αριθμός
+
+certmgr-fingerprint-sha-256 =
+    .label = Αποτύπωμα SHA-256
+
 certmgr-view =
     .label = Προβολή…
     .accesskey = β
+
 certmgr-edit =
     .label = Επεξεργασία εμπιστοσύνης…
     .accesskey = Ε
+
 certmgr-export =
     .label = Εξαγωγή…
     .accesskey = ξ
+
 certmgr-delete =
     .label = Διαγραφή…
     .accesskey = Δ
+
 certmgr-delete-builtin =
     .label = Διαγραφή ή άρση εμπιστοσύνης…
     .accesskey = Δ
+
 certmgr-backup =
     .label = Αντίγραφο ασφαλείας…
     .accesskey = φ
+
 certmgr-backup-all =
     .label = Αντίγραφο όλων…
     .accesskey = ν
+
 certmgr-restore =
     .label = Εισαγωγή…
     .accesskey = ι
+
 certmgr-add-exception =
     .label = Προσθήκη εξαίρεσης…
     .accesskey = θ
+
 exception-mgr =
     .title = Προσθήκη εξαίρεσης ασφαλείας
+
 exception-mgr-extra-button =
     .label = Επιβεβαίωση εξαίρεσης ασφαλείας
     .accesskey = β
+
 exception-mgr-supplemental-warning = Οι νόμιμες τράπεζες, τα καταστήματα και άλλες δημόσιες σελίδες δεν θα σας ζητήσουν να το κάνετε αυτό.
+
 exception-mgr-cert-location-url =
     .value = Τοποθεσία:
+
 exception-mgr-cert-location-download =
     .label = Λήψη πιστοποιητικού
     .accesskey = η
+
 exception-mgr-cert-status-view-cert =
     .label = Προβολή…
     .accesskey = ο
+
 exception-mgr-permanent =
     .label = Οριστική αποθήκευση εξαίρεσης
     .accesskey = ρ
+
 pk11-bad-password = Ο κωδικός που εισάγατε ήταν εσφαλμένος.
 pkcs12-decode-err = Αποτυχία αποκωδικοποίησης αρχείου. Είτε δεν είναι σε μορφή PKCS#12, είτε ο κωδικός που εισάγατε δεν είναι σωστός.
 pkcs12-unknown-err-restore = Αποτυχία ανάκτησης του αρχείου  PKCS#12 για άγνωστους λόγους
@@ -124,28 +161,37 @@ delete-user-cert-title =
     .title = Διαγραφή των πιστοποιητικών σας
 delete-user-cert-confirm = Θέλετε σίγουρα να διαγράψετε αυτά τα πιστοποιητικά;
 delete-user-cert-impact = Αν διαγράψετε τα δικά σας πιστοποιητικά δεν θα μπορείτε πλέον να τα χρησιμοποιήσετε για να πιστοποιήσετε τον εαυτό σας.
+
+
 delete-ssl-override-title =
     .title = Διαγραφή εξαίρεσης πιστοποιητικού διακομιστή
 delete-ssl-override-confirm = Θέλετε σίγουρα να διαγράψετε αυτή την εξαίρεση διακομιστή;
 delete-ssl-override-impact = Αν διαγράψετε κάποια εξαίρεση διακομιστή, θα επαναφέρετε τους συνήθεις ελέγχους ασφαλείας για αυτό τον διακομιστή και την απαίτηση για έγκυρο πιστοποιητικό.
+
 delete-ca-cert-title =
     .title = Διαγραφή ή άρση εμπιστοσύνης πιστοποητικών CA
 delete-ca-cert-confirm = Ζητήσατε να διαγράψετε αυτά τα πιστοποιητικά CA. Για τα ενσωματωμένα πιστοποιητικά υπάρχει και η επιλογή της άρσης εμπιστοσύνης που έχει το ίδιο αποτέλεσμα. Θέλετε τα τα διαγράψετε ή να άρετε την εμπιστοσύνη σας;
 delete-ca-cert-impact = Αν διαγράψετε ή άρετε την εμπιστοσύνη σας σε ένα πιστοποιητικό αρχής πιστοποίησης (CA), αυτή η εφαρμογή δεν θα εμπιστεύεται πια πιστοποιητικά από αυτή την CA.
+
+
 delete-email-cert-title =
     .title = Διαγραφή πιστοποιητικών email
 delete-email-cert-confirm = Θέλετε σίγουρα να διαγράψετε τα πιστοποιητικά email αυτών των ατόμων;
 delete-email-cert-impact = Εάν διαγράψετε το πιστοποιητικό email ενός ατόμου, δεν θα μπορείτε πλέον να του στέλνετε κρυπτογραφημένα email.
+
 # Used for semi-uniquely representing a cert.
 #
 # Variables:
 #   $serialNumber : the serial number of the cert in AA:BB:CC hex format.
 cert-with-serial =
     .value = Πιστοποιητικό με σειριακό αριθμό: { $serialNumber }
+
 # Used to indicate that the user chose not to send a client authentication certificate to a server that requested one in a TLS handshake.
 send-no-client-certificate = Χωρίς αποστολή πιστοποιητικού πελάτη
+
 # Used when no cert is stored for an override
 no-cert-stored-for-override = (Μη αποθηκευμένο)
+
 # When a certificate is unavailable (for example, it has been deleted or the token it exists on has been removed).
 certificate-not-available = (Μη διαθέσιμο)
 

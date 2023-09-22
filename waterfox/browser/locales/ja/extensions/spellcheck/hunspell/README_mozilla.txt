@@ -1,6 +1,2 @@
-README_mozilla
-
-To edit the dictionary use "dictionary-sources/edit-dictionary".
-
-For additional info see dictionary-sources/README.
-
+See Waterfox Source Docs for information about these scripts, and how to add new words.
+https://firefox-source-docs.mozilla.org/extensions/spellcheck/index.html

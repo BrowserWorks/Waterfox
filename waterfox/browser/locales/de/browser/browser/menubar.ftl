@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -180,6 +180,17 @@ menu-view-full-screen =
     .label = Vollbild
     .accesskey = V
 
+## These menu items may use the same accesskey.
+
+# This should match reader-view-enter-button in browser.ftl
+menu-view-enter-readerview =
+    .label = Leseansicht öffnen
+    .accesskey = L
+# This should match reader-view-close-button in browser.ftl
+menu-view-close-readerview =
+    .label = Leseansicht beenden
+    .accesskey = L
+
 ##
 
 menu-view-show-all-tabs =
@@ -208,8 +219,9 @@ menu-history-undo-menu =
     .label = Kürzlich geschlossene Tabs
 menu-history-undo-window-menu =
     .label = Kürzlich geschlossene Fenster
-menu-history-reopen-all-tabs = Alle Tabs wieder öffnen
-menu-history-reopen-all-windows = Alle Fenster wieder öffnen
+# "Search" is a verb, as in "Search in History"
+menu-history-search =
+    .label = Chronik durchsuchen
 
 ## Bookmarks Menu
 
@@ -218,14 +230,13 @@ menu-bookmarks-menu =
     .accesskey = L
 menu-bookmarks-manage =
     .label = Lesezeichen verwalten
-menu-bookmark-current-tab =
-    .label = Aktuellen Tab als Lesezeichen hinzufügen
-menu-bookmark-edit =
-    .label = Lesezeichen bearbeiten
 menu-bookmark-tab =
     .label = Aktuellen Tab als Lesezeichen hinzufügen…
 menu-edit-bookmark =
     .label = Dieses Lesezeichen bearbeiten…
+# "Search" is a verb, as in "Search in bookmarks"
+menu-bookmarks-search =
+    .label = Lesezeichen durchsuchen
 menu-bookmarks-all-tabs =
     .label = Lesezeichen für alle Tabs hinzufügen…
 menu-bookmarks-toolbar =
@@ -319,6 +330,9 @@ menu-help-enter-troubleshoot-mode2 =
 menu-help-exit-troubleshoot-mode =
     .label = Fehlerbehebungsmodus deaktivieren
     .accesskey = m
+menu-help-switch-device =
+    .label = Zu einem neuen Gerät wechseln
+    .accesskey = n
 # Label of the Help menu item. Either this or
 # menu-help-notdeceptive is shown.
 menu-help-report-deceptive-site =

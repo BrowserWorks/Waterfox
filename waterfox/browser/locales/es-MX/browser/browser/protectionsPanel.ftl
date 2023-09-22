@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -63,7 +63,6 @@ protections-panel-not-found-label = No detectado
 ##
 
 protections-panel-settings-label = Configuración de protección
-# This should match the "appmenuitem-protection-dashboard-title" string in browser/appmenu.ftl.
 protections-panel-protectionsdashboard-label = Panel de protección
 
 ## In the Site Not Working? view, we suggest turning off protections if
@@ -78,6 +77,7 @@ protections-panel-site-not-working-view-issue-list-forms = Formularios
 protections-panel-site-not-working-view-issue-list-payments = Pagos
 protections-panel-site-not-working-view-issue-list-comments = Comentarios
 protections-panel-site-not-working-view-issue-list-videos = Videos
+protections-panel-site-not-working-view-issue-list-fonts = Fuentes
 
 protections-panel-site-not-working-view-send-report = Envía un reporte
 
@@ -100,7 +100,8 @@ protections-panel-content-blocking-manage-settings =
 
 protections-panel-content-blocking-breakage-report-view =
     .title = Informar de un sitio no funcional
-protections-panel-content-blocking-breakage-report-view-description = El bloqueo de ciertos rastreadores puede causar problemas con algunos sitios web. Informar sobre estos problemas ayuda a que { -brand-short-name } sea mejor para todos. Al enviar este informe, se enviará a Waterfox una URL e información sobre la configuración de tu navegador. <label data-l10n-name="learn-more">Más información</label>
+protections-panel-content-blocking-breakage-report-view-description = El bloqueo de ciertos rastreadores puede causar problemas con algunos sitios web. Informar sobre estos problemas ayuda a que { -brand-short-name } sea mejor para todos. Al enviar este informe, se enviará a BrowserWorks una URL e información sobre la configuración de tu navegador. <label data-l10n-name="learn-more">Más información</label>
+protections-panel-content-blocking-breakage-report-view-description2 = El bloqueo de ciertos rastreadores puede causar problemas con algunos sitios web. Informar sobre estos problemas ayuda a que { -brand-short-name } sea mejor para todos. Al enviar este informe, se enviará a { -vendor-short-name } una URL e información sobre la configuración de tu navegador.
 protections-panel-content-blocking-breakage-report-view-collection-url = URL
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = URL
@@ -111,3 +112,24 @@ protections-panel-content-blocking-breakage-report-view-cancel =
     .label = Cancelar
 protections-panel-content-blocking-breakage-report-view-send-report =
     .label = Enviar reporte
+
+# Cookie Banner Handling
+
+protections-panel-cookie-banner-handling-header = Reducción de banner de cookies
+protections-panel-cookie-banner-handling-enabled = Activar para este sitio
+protections-panel-cookie-banner-handling-disabled = Desactivar para este sitio
+protections-panel-cookie-banner-handling-undetected = Sitio actualmente no soportado
+
+protections-panel-cookie-banner-view-title =
+    .title = Reducción de banner de cookies
+# Variables
+#  $host (String): the hostname of the site that is being displayed.
+protections-panel-cookie-banner-view-turn-off-for-site = ¿Desactivar la reducción de banner de cookies para { $host }?
+protections-panel-cookie-banner-view-turn-on-for-site = ¿Activar la reducción de banner de cookies para este sitio?
+protections-panel-cookie-banner-view-cookie-clear-warning =
+    { -brand-short-name } borrará las cookies este sitios y actualizará la página.
+    Borrar todas las cookies puede cerrar tu sesión o vaciar los carritos de compra.
+protections-panel-cookie-banner-view-turn-on-description = { -brand-short-name } intenta rechazar automáticamente todas las solicitudes de cookies en los sitios admitidos.
+protections-panel-cookie-banner-view-cancel = Cancelar
+protections-panel-cookie-banner-view-turn-off = Desactivar
+protections-panel-cookie-banner-view-turn-on = Activar

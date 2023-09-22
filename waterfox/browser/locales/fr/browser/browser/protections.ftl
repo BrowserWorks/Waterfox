@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -108,7 +108,7 @@ monitor-sign-up-link = S’inscrire aux alertes de fuites de données
 auto-scan = Vérifiées aujourd’hui automatiquement
 
 monitor-emails-tooltip =
-    .title = Afficher les adresses électroniques surveillées sur { -monitor-brand-short-name }
+    .title = Afficher les adresses e-mail surveillées sur { -monitor-brand-short-name }
 monitor-breaches-tooltip =
     .title = Afficher les fuites de données connues sur { -monitor-brand-short-name }
 monitor-passwords-tooltip =
@@ -119,8 +119,8 @@ monitor-passwords-tooltip =
 # your localization, because it would result in the number showing twice.
 info-monitored-emails =
     { $count ->
-        [one] adresse électronique surveillée
-       *[other] adresses électroniques surveillées
+        [one] adresse e-mail surveillée
+       *[other] adresses e-mail surveillées
     }
 
 # This string is displayed after a large numeral that indicates the total number
@@ -168,7 +168,7 @@ monitor-breaches-unresolved-description = Après avoir examiné les détails des
 monitor-manage-breaches-link = Gérer les fuites de données
     .title = Gérer les fuites de données avec { -monitor-brand-short-name }
 monitor-breaches-resolved-title = Bien ! Vous avez réglé toutes les fuites de données connues.
-monitor-breaches-resolved-description = Si votre adresse électronique figure dans de nouvelles fuites de donnés, nous vous préviendrons.
+monitor-breaches-resolved-description = Si votre adresse e-mail figure dans de nouvelles fuites de donnés, nous vous préviendrons.
 
 # Variables:
 # $numBreachesResolved (Number) - Number of breaches marked as resolved by the user on Monitor.

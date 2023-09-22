@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,18 +22,6 @@ synced-tabs-sidebar-search =
 synced-tabs-context-open =
     .label = Abrir
     .accesskey = A
-synced-tabs-context-open-in-new-tab =
-    .label = Abrir em nova aba
-    .accesskey = v
-synced-tabs-context-open-in-new-window =
-    .label = Abrir em nova janela
-    .accesskey = n
-synced-tabs-context-open-in-new-private-window =
-    .label = Abrir em nova janela privativa
-    .accesskey = p
-synced-tabs-context-bookmark-single-tab =
-    .label = Adicionar esta aba aos favoritos…
-    .accesskey = F
 synced-tabs-context-open-in-tab =
     .label = Abrir em nova aba
     .accesskey = b
@@ -49,14 +37,6 @@ synced-tabs-context-open-in-private-window =
 
 ##
 
-# Displayed in the Synced Tabs sidebar's context menu when right-clicking tabs
-# and/or devices in the list. This string is for a menuitem equivalent to one in
-# the tab context menu (activated by right-clicking a tab in the tabstrip). That
-# string is located in tabContextMenu.ftl. So, this string should be translated
-# consistently with the "Bookmark Tab" string there.
-synced-tabs-context-bookmark-tab =
-    .label = Adicionar aba aos favoritos
-    .accesskey = A
 # Displayed in the Synced Tabs sidebar's context menu when right-clicking tabs
 # and/or devices in the list. This string is for a menuitem equivalent to one in
 # the tab context menu (activated by right-clicking a tab in the tabstrip). That
@@ -77,5 +57,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = Sincronizar agora
     .accesskey = n
-synced-tabs-fxa-sign-in = Entrar para sincronizar
+synced-tabs-fxa-sign-in = Entrar na conta para sincronizar
 synced-tabs-turn-on-sync = Ativar sincronização

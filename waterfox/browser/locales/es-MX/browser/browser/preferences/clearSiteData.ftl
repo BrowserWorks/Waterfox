@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-clear-site-data-window =
+clear-site-data-window2 =
     .title = Borrar datos
-    .style = width: 35em
+    .style = min-width: 35em
 
 clear-site-data-description = Limpiar las cookies y los datos de sitios almacenados por { -brand-short-name } puede ocasionar que se cierren tus sesiones activas y eliminar el contenido web sin conexión. Limpiar los datos de caché no afectará tus sesiones activas.
 

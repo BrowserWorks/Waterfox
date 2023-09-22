@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -101,8 +101,8 @@ downloads-cmd-go-to-download-page =
     .label = Перейти на страницу загрузки
     .accesskey = н
 downloads-cmd-copy-download-link =
-    .label = Копировать ссылку на загрузку
-    .accesskey = с
+    .label = Скопировать ссылку на загрузку
+    .accesskey = ы
 downloads-cmd-remove-from-history =
     .label = Удалить из истории
     .accesskey = л
@@ -164,11 +164,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = Откроется через { $hours } ч { $minutes } мин…
-downloading-file-opens-in-minutes = Откроется через { $minutes } мин…
-downloading-file-opens-in-minutes-and-seconds = Откроется через { $minutes } мин { $seconds } с…
-downloading-file-opens-in-seconds = Откроется через { $seconds } с…
-downloading-file-opens-in-some-time = Откроется после завершения…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = Откроется через { $hours } ч { $minutes } мин…
+downloading-file-opens-in-minutes-2 =
+    .value = Откроется через { $minutes } мин…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = Откроется через { $minutes } мин { $seconds } с…
+downloading-file-opens-in-seconds-2 =
+    .value = Откроется через { $seconds } с…
+downloading-file-opens-in-some-time-2 =
+    .value = Откроется после завершения…
 downloading-file-click-to-open =
     .value = Открыть по завершении
 
@@ -235,3 +240,17 @@ downloads-more-downloading =
         [few] Загружается ещё { $count } файла
        *[many] Загружается ещё { $count } файлов
     }
+
+## Download errors
+
+downloads-error-alert-title = Ошибка загрузки
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = Загруженный файл не может быть сохранён, так как он был заблокирован { $extension }.
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = Загруженный файл не может быть сохранён, так как он был заблокирован расширением.
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    Загрузка не может быть сохранена, так как произошла неизвестная ошибка.
+    
+    Пожалуйста, попробуйте снова.

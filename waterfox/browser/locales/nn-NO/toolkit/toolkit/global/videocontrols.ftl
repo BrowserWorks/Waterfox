@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-videocontrols-scrubber =
-    .aria-label = Posisjon
 # This label is used by screenreaders and other assistive technology to indicate
 # to users how much of the video has been loaded from the network. It will be
 # followed by the percentage of the video that has loaded (e.g. "Loading: 13%").
@@ -26,6 +24,8 @@ videocontrols-exitfullscreen-button =
     .aria-label = Avslutt fullskjerm
 videocontrols-casting-button-label =
     .aria-label = Cast til skjerm
+# .offlabel is processed by the video control custom element to be used
+# as a text-track label
 videocontrols-closed-caption-off =
     .offlabel = Av
 # This string is used as part of the Picture-in-Picture video toggle button when
@@ -33,25 +33,18 @@ videocontrols-closed-caption-off =
 videocontrols-picture-in-picture-label = Bilde-i-bilde
 # This string is used as the label for a variation of the Picture-in-Picture video
 # toggle button when the mouse is hovering over the video.
-videocontrols-picture-in-picture-toggle-label = Sjå med i bilde-i-bilde
-# This string is used as part of a variation of the Picture-in-Picture video toggle
-# button. When using this variation, this string appears below the toggle when the
-# mouse hovers the toggle.
-videocontrols-picture-in-picture-explainer = Spel av videoar i framgrunnen medan du gjer andre ting i { -brand-short-name }
-# This string is used as the label for a variation of the Picture-in-Picture video
-# toggle button when the mouse is hovering over the video.
 videocontrols-picture-in-picture-toggle-label2 = Sprett ut denne videoen
 # This string is used as part of a variation of the Picture-in-Picture video toggle
 # button. When using this variation, this string appears below the toggle when the
 # mouse hovers the toggle.
-videocontrols-picture-in-picture-explainer2 = Fleire skjermar er kjekkare. Spel av denne videoen i bilde-i-bilde medan du surfar.
+videocontrols-picture-in-picture-explainer3 = Fleire skjermar er kjekkare. Spel av denne videoen medan du gjer andre ting.
 videocontrols-error-aborted = Videolasting stoppa.
 videocontrols-error-network = Videoavspeling avbroten på grunn av nettverksfeil.
 videocontrols-error-decode = Kan ikkje spela av video fordi fila er skada.
 videocontrols-error-src-not-supported = Videoformat eller MIME-type er ikkje støtta.
 videocontrols-error-no-source = Ingen video med eit støtta format eller MIME-type funne.
 videocontrols-error-generic = Videoavspeling avbroten på grunn av ukjend feil.
-videocontrols-status-picture-in-picture = Denne videoen vert spela av i bilde-i-bilde modus.
+videocontrols-status-picture-in-picture = Denne videoen vert spela av i bilde-i-bilde-modus.
 # This message shows the current position and total video duration
 #
 # Variables:
@@ -65,3 +58,12 @@ videocontrols-status-picture-in-picture = Denne videoen vert spela av i bilde-i-
 # duration video, $position would be "5:00" and the string which is
 # surrounded by <span> would be deleted, result string would be "5:00".
 videocontrols-position-and-duration-labels = { $position }<span data-l10n-name="position-duration-format"> / { $duration }</span>
+# This is a plain text version of the videocontrols-position-and-duration-labels
+# string, used by screenreaders.
+#
+# Variables:
+#   $position (String): The current media position
+#   $duration (String): The total video duration
+videocontrols-scrubber-position-and-duration =
+    .aria-label = Posisjon
+    .aria-valuetext = { $position } / { $duration }

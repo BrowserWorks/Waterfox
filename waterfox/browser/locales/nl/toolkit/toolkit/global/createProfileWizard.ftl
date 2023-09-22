@@ -1,17 +1,17 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-create-profile-window =
+create-profile-window2 =
     .title = Wizard Profiel aanmaken
-    .style = width: 50em; height: 37em;
+    .style = min-width: 50em; min-height: 37em;
 
 ## First wizard page
 
-create-profile-first-page-header =
+create-profile-first-page-header2 =
     { PLATFORM() ->
         [macos] Introductie
-       *[other] Welkom bij de { create-profile-window.title }
+       *[other] Welkom bij de { create-profile-window2.title }
     }
 
 profile-creation-explanation-1 = { -brand-short-name } slaat informatie over uw instellingen en voorkeuren op in uw persoonlijke profiel.
@@ -28,10 +28,10 @@ profile-creation-explanation-4 =
 
 ## Second wizard page
 
-create-profile-last-page-header =
+create-profile-last-page-header2 =
     { PLATFORM() ->
         [macos] Afronding
-       *[other] Voltooien van { create-profile-window.title }
+       *[other] Voltooien van { create-profile-window2.title }
     }
 
 profile-creation-intro = Als u meerdere profielen aanmaakt, kunt u ze onderscheiden door de profielnamen. U kunt de naam hieronder gebruiken of een eigen naam kiezen.

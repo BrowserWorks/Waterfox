@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,7 +20,7 @@ options-select-additional-tools-label = เครื่องมือนัก�
 # tool buttons.
 options-select-enabled-toolbox-buttons-label = ปุ่มกล่องเครื่องมือที่มี
 # The label for the heading of the radiobox corresponding to the theme
-options-select-dev-tools-theme-label = ชุดตกแต่ง
+options-select-dev-tools-theme-label = ชุดรูปแบบ
 
 ## Inspector section
 
@@ -38,6 +38,11 @@ options-collapse-attrs-tooltip =
 options-inspector-draggable-properties-label = คลิกและลากเพื่อแก้ไขค่าขนาด
 options-inspector-draggable-properties-tooltip =
     .title = คลิกและลากเพื่อแก้ไขค่าขนาดในมุมมองกฎของตัวตรวจสอบ
+# The label for the checkbox option to enable simplified highlighting on page elements
+# within the inspector for users who enabled prefers-reduced-motion = reduce
+options-inspector-simplified-highlighters-label = ใช้ตัวเน้นสีแบบง่ายขึ้นด้วย prefers-reduced-motion
+options-inspector-simplified-highlighters-tooltip =
+    .title = เปิดใช้งานตัวเน้นสีแบบง่ายเมื่อ prefers-reduced-motion เปิดใช้งาน วาดเส้นแทนสี่เหลี่ยมเติมสีรอบๆ องค์ประกอบที่เน้นสีไว้เพื่อหลีกเลี่ยงเอฟเฟกต์กะพริบ
 
 ## "Default Color Unit" options for the Inspector
 
@@ -108,6 +113,10 @@ options-enable-chrome-tooltip =
 options-enable-remote-label = เปิดใช้งานการดีบั๊กระยะไกล
 options-enable-remote-tooltip2 =
     .title = การเปิดตัวเลือกนี้จะอนุญาตให้สามารถดีบั๊กอินสแตนซ์เบราว์เซอร์นี้จากระยะไกลได้
+# The label for checkbox that enables F12 as a shortcut to open DevTools
+options-enable-f12-label = ใช้แป้น F12 เพื่อเปิดหรือปิด DevTools
+options-enable-f12-tooltip =
+    .title = การเปิดใช้ตัวเลือกนี้จะผูกแป้น F12 เพื่อใช้เปิดหรือปิดกล่องเครื่องมือของ DevTools
 # The label for checkbox that toggles custom formatters for objects
 options-enable-custom-formatters-label = เปิดใช้งานตัวจัดรูปแบบที่กำหนดเอง
 options-enable-custom-formatters-tooltip =
@@ -122,8 +131,3 @@ options-source-maps-tooltip =
     .title = หากคุณเปิดใช้งานตัวเลือกนี้ ต้นฉบับจะถูกแมปในเครื่องมือ
 # The message shown for settings that trigger page reload
 options-context-triggers-page-refresh = *เรียกหน้าเว็บใหม่เฉพาะวาระปัจจุบันเท่านั้น
-# The label for the checkbox that toggles the display of the platform data in the
-# Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference in about:config
-options-show-platform-data-label = แสดงข้อมูลแพลตฟอร์ม Gecko
-options-show-platform-data-tooltip =
-    .title = ถ้าคุณเปิดใช้งานตัวเลือกนี้ รายงานตัวเก็บประวัติ JavaScript จะรวมสัญลักษณ์ของ Gecko platform เข้าไปด้วย

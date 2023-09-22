@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -164,11 +164,16 @@ downloads-open-file =
 ##   $seconds (number) - Amount of seconds left till the file opens.
 ##   $minutes (number) - Amount of minutes till the file opens.
 
-downloading-file-opens-in-hours-and-minutes = { $hours }시간 { $minutes }분 후 열림…
-downloading-file-opens-in-minutes = { $minutes }분 후 열림…
-downloading-file-opens-in-minutes-and-seconds = { $minutes }분 { $seconds }초 후 열림…
-downloading-file-opens-in-seconds = { $seconds }초 후 열림…
-downloading-file-opens-in-some-time = 완료 후 열림…
+downloading-file-opens-in-hours-and-minutes-2 =
+    .value = { $hours }시간 { $minutes }분 후 열림…
+downloading-file-opens-in-minutes-2 =
+    .value = { $minutes }분 후 열림…
+downloading-file-opens-in-minutes-and-seconds-2 =
+    .value = { $minutes }분 { $seconds }초 후 열림…
+downloading-file-opens-in-seconds-2 =
+    .value = { $seconds }초 후 열림…
+downloading-file-opens-in-some-time-2 =
+    .value = 완료 후 열림…
 downloading-file-click-to-open =
     .value = 완료 후 열기
 
@@ -231,3 +236,17 @@ downloads-more-downloading =
     { $count ->
        *[other] 파일 { $count }개 더 다운로드 중
     }
+
+## Download errors
+
+downloads-error-alert-title = 다운로드 오류
+# Variables:
+#   $extension (String): the name of the blocking extension.
+downloads-error-blocked-by = 다운로드가 { $extension } 확장 기능에 의해 차단되었기 때문에 저장할 수 없습니다.
+# Used when the name of the blocking extension is unavailable.
+downloads-error-extension = 다운로드가 확장 기능에 의해 차단되었기 때문에 저장할 수 없습니다.
+# Line breaks in this message are meaningful, and should be maintained.
+downloads-error-generic =
+    알 수 없는 오류가 발생하여 다운로드를 저장할 수 없습니다.
+    
+    다시 시도하세요.

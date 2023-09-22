@@ -1,13 +1,13 @@
-# This Source Code Form is subject to the terms of the Waterfox Public
+# This Source Code Form is subject to the terms of the BrowserWorks Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-connection-window =
+connection-window2 =
     .title = Ryšio nuostatos
     .style =
         { PLATFORM() ->
-            [macos] width: 44em
-           *[other] width: 49em
+            [macos] min-width: 44em
+           *[other] min-width: 49em
         }
 
 connection-close-key =
@@ -35,7 +35,6 @@ connection-proxy-http = HTTP įgaliotasis serveris
     .accesskey = g
 connection-proxy-http-port = Prievadas
     .accesskey = P
-
 connection-proxy-https-sharing =
     .label = Taip pat naudoti šį serverį jungiantis per HTTPS
     .accesskey = s
@@ -77,16 +76,14 @@ connection-proxy-autologin =
     .accesskey = b
     .tooltip = Pažymėjus šią parinktį, bus bandoma automatiškai patvirtinti tapatybę tuose įgaliotuosiuose serveriuose, kurių slaptažodžius naršyklė turi įsiminusi. Jei šis procesas nepavyktų, jūsų bus prašoma įvesti patikslintus duomenis.
 
+connection-proxy-autologin-checkbox =
+    .label = Neprašyti tapatybės patvirtinimo, jeigu slaptažodis įrašytas
+    .accesskey = b
+    .tooltiptext = Pažymėjus šią parinktį, bus bandoma automatiškai patvirtinti tapatybę tuose įgaliotuosiuose serveriuose, kurių slaptažodžius naršyklė turi įsiminusi. Jei šis procesas nepavyktų, jūsų bus prašoma įvesti patikslintus duomenis.
+
 connection-proxy-socks-remote-dns =
     .label = Įgaliotojo serverio DNS, kai naudojamas SOCKS v5
     .accesskey = d
-
-connection-dns-over-https =
-    .label = Įjungti DNS per HTTPS
-    .accesskey = j
-
-connection-dns-over-https-url-resolver = Naudoti teikėją
-    .accesskey = t
 
 # Variables:
 #   $name (String) - Display name or URL for the DNS over HTTPS provider
