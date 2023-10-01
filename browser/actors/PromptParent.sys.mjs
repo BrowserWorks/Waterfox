@@ -26,7 +26,7 @@ XPCOMUtils.defineLazyPreferenceGetter(
 );
 
 XPCOMUtils.defineLazyGetter(lazy, "gTabBrowserLocalization", function () {
-  return new Localization(["browser/tabbrowser.ftl"], true);
+  return new Localization(["browser/tabbrowser.ftl", "browser/waterfox.ftl"], true);
 });
 
 /**
