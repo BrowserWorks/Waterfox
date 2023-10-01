@@ -259,3 +259,5 @@ telemetry-privacy-policy = Privacy Policy
 
 onboarding-grassroots-title = Supporting the grassroots
 onboarding-grassroots-subtitle = Thank you for using Waterfox, an independent, grassroots browser. With your support, we’re building a sustainable alternative to the big players out there.
+
+tabbrowser-confirm-session-restore-checkbox = Open previous windows and tabs
