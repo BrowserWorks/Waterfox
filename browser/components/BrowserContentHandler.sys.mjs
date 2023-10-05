@@ -714,7 +714,11 @@ nsBrowserContentHandler.prototype = {
             overridePage = overridePage.replace("%OLD_VERSION%", old_mstone);
             break;
           case OVERRIDE_NEW_BUILD_ID:
+            overridePage = Services.urlFormatter.formatURLPref(
+              "startup.homepage_override_url"
+            );
             if (lazy.UpdateManager.readyUpdate) {
+              overridePage = getPostUpdateOverridePage(update, overridePage);
               // Send the update ping to signal that the update was successful.
               lazy.UpdatePing.handleUpdateSuccess(old_mstone, old_buildId);
             }
