@@ -704,14 +704,14 @@ files = [
 
 [[package]]
 name = "pip"
-version = "23.0.1"
+version = "23.2.1"
 description = "The PyPA recommended tool for installing Python packages."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pip-23.0.1-py3-none-any.whl", hash = "sha256:236bcb61156d76c4b8a05821b988c7b8c35bf0da28a4b614e8d6ab5212c25c6f"},
-    {file = "pip-23.0.1.tar.gz", hash = "sha256:cd015ea1bfb0fcef59d8a286c1f8bebcb983f6317719d415dc5351efb7cd7024"},
+    {file = "pip-23.2.1-py3-none-any.whl", hash = "sha256:7ccf472345f20d35bdc9d1841ff5f313260c2c33fe417f48c30ac46cccabf5be"},
+    {file = "pip-23.2.1.tar.gz", hash = "sha256:fb0bd5435b3200c602b5bf61d2d43c2f13c02e29c1707567ae7fbc514eb9faf2"},
 ]
 
 [[package]]
@@ -1279,4 +1279,4 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=4.6)", "pytest-black (
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "73400b896922dda273e939258f76bbb8d752ec811ce33fd56ec735516b932c2b"
+content-hash = "398d5252d04bf0ebee9c2d9da4cfec4726a32f52b3f9a7628a58d35faba1d609"
