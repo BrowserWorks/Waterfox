@@ -11,6 +11,7 @@ import errno
 import logging
 import os
 import sys
+import types
 import traceback
 import types
 import uuid
