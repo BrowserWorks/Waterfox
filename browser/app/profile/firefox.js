@@ -1171,9 +1171,6 @@ pref("browser.sessionstore.collect_session_storage", true);
 // Don't quit the browser when Ctrl + Q is pressed.
 pref("browser.quitShortcut.disabled", false);
 
-// Don't close window or tab when Ctrl + W is pressed.
-pref("browser.closeShortcut.disabled", false);
-
 // allow META refresh by default
 pref("accessibility.blockautorefresh", false);
 
