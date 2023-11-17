@@ -103,6 +103,8 @@ const FILTER_IMAGES_EXTENSIONS = [
   "psd",
   "raw",
   "webp",
+  "avif",
+  "jxl",
 ];
 
 const FILTER_XML_EXTENSIONS = ["xml"];
