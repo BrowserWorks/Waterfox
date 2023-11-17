@@ -177,6 +177,9 @@ tabs = { git = "https://github.com/mozilla/application-services", rev = "86c84c2
 viaduct = { git = "https://github.com/mozilla/application-services", rev = "86c84c217036c12283d19368867323a66bf35883" }
 webext-storage = { git = "https://github.com/mozilla/application-services", rev = "86c84c217036c12283d19368867323a66bf35883" }
 
+# add unmerged mime types
+mime_guess = { path = "third_party/rust/mime_guess" }
+
 # Patch mio 0.6 to use winapi 0.3 and miow 0.3, getting rid of winapi 0.2.
 # There is not going to be new version of mio 0.6, mio now being >= 0.7.11.
 [patch.crates-io.mio]
