@@ -1427,53 +1427,52 @@ impl Item {
             }
         }
 
-        // Guess how does clang treat extern "C" blocks?
-        if cursor.kind() == CXCursor_UnexposedDecl {
-            Err(ParseError::Recurse)
-        } else {
+        match cursor.kind() {
+            // Guess how does clang treat extern "C" blocks?
+            CXCursor_UnexposedDecl => Err(ParseError::Recurse),
+
             // We allowlist cursors here known to be unhandled, to prevent being
             // too noisy about this.
-            match cursor.kind() {
-                CXCursor_MacroDefinition |
-                CXCursor_MacroExpansion |
-                CXCursor_UsingDeclaration |
-                CXCursor_UsingDirective |
-                CXCursor_StaticAssert |
-                CXCursor_FunctionTemplate => {
-                    debug!(
+            CXCursor_MacroDefinition |
+            CXCursor_MacroExpansion |
+            CXCursor_UsingDeclaration |
+            CXCursor_UsingDirective |
+            CXCursor_StaticAssert |
+            CXCursor_FunctionTemplate => {
+                debug!(
+                    "Unhandled cursor kind {:?}: {:?}",
+                    cursor.kind(),
+                    cursor
+                );
+                Err(ParseError::Continue)
+            }
+            CXCursor_InclusionDirective => {
+                let file = cursor.get_included_file_name();
+                match file {
+                    None => {
+                        warn!(
+                            "Inclusion of a nameless file in {:?}",
+                            cursor
+                        );
+                    }
+                    Some(filename) => {
+                        ctx.include_file(filename);
+                    }
+                }
+                Err(ParseError::Continue)
+            }
+            _ => {
+                // ignore toplevel operator overloads
+                let spelling = cursor.spelling();
+                if !spelling.starts_with("operator") {
+                    warn!(
                         "Unhandled cursor kind {:?}: {:?}",
                         cursor.kind(),
                         cursor
                     );
                 }
-                CXCursor_InclusionDirective => {
-                    let file = cursor.get_included_file_name();
-                    match file {
-                        None => {
-                            warn!(
-                                "Inclusion of a nameless file in {:?}",
-                                cursor
-                            );
-                        }
-                        Some(filename) => {
-                            ctx.include_file(filename);
-                        }
-                    }
-                }
-                _ => {
-                    // ignore toplevel operator overloads
-                    let spelling = cursor.spelling();
-                    if !spelling.starts_with("operator") {
-                        warn!(
-                            "Unhandled cursor kind {:?}: {:?}",
-                            cursor.kind(),
-                            cursor
-                        );
-                    }
-                }
+                Err(ParseError::Continue)
             }
-
-            Err(ParseError::Continue)
         }
     }
 
