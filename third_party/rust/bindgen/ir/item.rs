@@ -1428,8 +1428,11 @@ impl Item {
         }
 
         match cursor.kind() {
-            // Guess how does clang treat extern "C" blocks?
-            CXCursor_UnexposedDecl => Err(ParseError::Recurse),
+            // On Clang 18+, extern "C" is reported accurately as a LinkageSpec.
+            // Older LLVM treat it as UnexposedDecl.
+            CXCursor_LinkageSpec | CXCursor_UnexposedDecl => {
+                Err(ParseError::Recurse)
+            }
 
             // We allowlist cursors here known to be unhandled, to prevent being
             // too noisy about this.
