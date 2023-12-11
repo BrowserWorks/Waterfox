@@ -94,6 +94,8 @@ const wchar_t* nsUXThemeData::GetClassName(nsUXThemeClass cls) {
       return L"Communications::Rebar";
     case eUXBrowserTabBarRebar:
       return L"BrowserTabBar::Rebar";
+    case eUXScrollbar:
+      return L"Scrollbar";
     case eUXToolbar:
       return L"Toolbar";
     case eUXMediaToolbar:
