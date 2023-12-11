@@ -28,6 +28,7 @@ enum nsUXThemeClass {
   eUXCommunicationsToolbar,
   eUXProgress,
   eUXTab,
+  eUXScrollbar,
   eUXTrackbar,
   eUXSpin,
   eUXCombobox,
