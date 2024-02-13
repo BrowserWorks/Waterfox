@@ -172,6 +172,16 @@ class SuggestAutoComplete {
       Services.search.defaultEngine
     );
 
+    // Add a null check for results
+    if (!results) {
+      results = {
+        local: [],
+        remote: [],
+        formHistoryResults: [],
+        term: searchString
+      };
+    }
+
     // If form history has results, add them to the list.
     let finalResults = results.local.map(r => r.value);
 
