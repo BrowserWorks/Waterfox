@@ -177,24 +177,28 @@ export const StatusBar = {
     aWindow.statusbar.node.setAttribute("collapsed", !this.enabled);
   },
 
-  async overrideStatusPanelLabel(aWindow) {
-    // eslint-disable-next-line no-unused-vars
-    let { StatusPanel, MousePosTracker } = aWindow;
-    // eslint-disable-next-line no-unused-vars
-    let window = aWindow;
-    // TODO: Should be able to do this with a WrappedJSObject instead
-    // eslint-disable-next-line no-eval
-    eval(
-      'Object.defineProperty(StatusPanel, "_label", {' +
-        Object.getOwnPropertyDescriptor(StatusPanel, "_label")
-          .set.toString()
-          .replace(/^set _label/, "set")
-          .replace(
-            /((\s+)this\.panel\.setAttribute\("inactive", "true"\);)/,
-            "$2this._labelElement.value = val;$1"
-          ) +
-        ", enumerable: true, configurable: true});"
-    );
+  overrideStatusPanelLabel(aWindow) {
+    let StatusPanel = aWindow.StatusPanel;
+
+    // Get the original setter function for _label
+    let originalSetter = Object.getOwnPropertyDescriptor(StatusPanel, "_label").set;
+
+    // Define a new setter function
+    let newSetter = function(val) {
+      // Call the original setter function
+      originalSetter.call(this, val);
+
+      // Additional code to execute when _label is set
+      this._labelElement.value = val;
+      this.panel.setAttribute("inactive", "true");
+    };
+
+    // Override the _label property with the new setter function
+    Object.defineProperty(StatusPanel, "_label", {
+      set: newSetter,
+      enumerable: true,
+      configurable: true
+    });
   },
 
   async configureBottomBox(aWindow) {
