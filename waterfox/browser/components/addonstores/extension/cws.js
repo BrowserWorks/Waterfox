@@ -23,6 +23,7 @@ function init() {
 }
 
 let gObserver;
+const addExtensionButton = (document.querySelectorAll('main > div > section > section > div > div > button'))[0];
 init();
 
 function hideElements() {
@@ -34,45 +35,21 @@ function hideElements() {
 }
 
 function replaceButtonText() {
-  const buttons = Array.from(document.querySelectorAll('button')).filter(button => button.textContent.includes('Add to Chrome'));
-
-  for (const button of buttons) {
-    button.textContent = button.textContent.replace('Add to Chrome', 'Add to Waterfox');
-    button.style.color = 'white'; // Add this line
-  }
+  addExtensionButton.textContent = addExtensionButton.textContent = 'Add to Waterfox';
+  addExtensionButton.style.color = 'white'; // Add this line
 }
 
 function updateInstallClickHandlers(node, addHandlers) {
   if (node.nodeType === Node.ELEMENT_NODE) {
-    const buttons = Array.from(node.querySelectorAll('button')).filter(button => button.textContent.includes('Add to Chrome'));
 
-    for (const button of buttons) {
-      if (addHandlers) {
-        button.removeAttribute('disabled');
-        button.addEventListener("click", handleInstall, true);
-      } else {
-        button.setAttribute('disabled', '');
-        button.removeEventListener("click", handleInstall, true);
-      }
+    if (addHandlers) {
+      addExtensionButton.removeAttribute('disabled');
+      addExtensionButton.addEventListener("click", handleInstall, true);
+    } else {
+      addExtensionButton.setAttribute('disabled', '');
+      addExtensionButton.removeEventListener("click", handleInstall, true);
     }
   }
-}
-
-/**
- * If return is truthy, the return value is returned.
- *
- */
-function parentNodeUntil(node, maxDepth, predicate) {
-  let curNode = node;
-  let rez;
-  let depth = 0;
-  while (!rez && depth++ < maxDepth) {
-    rez = predicate(curNode);
-    if (!rez) {
-      curNode = curNode.parentNode;
-    }
-  }
-  return rez;
 }
 
 function handleInstall(e) {
@@ -89,9 +66,6 @@ function handleInstall(e) {
     );
   } else {
     let downloadURL = buildDownloadURL(extId);
-    browser.runtime.sendMessage({
-      downloadURL,
-    });
   }
 }
 
@@ -122,12 +96,3 @@ function buildDownloadURL(extId) {
     "https://clients2.google.com/service/update2/crx?response=redirect&prodversion=49.0&acceptformat=crx3&x=id%3D***%26installsource%3Dondemand%26uc";
   return baseUrl.replace("***", extId);
 }
-
-browser.runtime.onMessage.addListener(request => {
-  const ID = "waterfox-extension-test";
-  if (!document.getElementById(ID)) {
-    let el = document.createElement("div");
-    el.setAttribute("id", ID);
-    document.body.appendChild(el);
-  }
-});
