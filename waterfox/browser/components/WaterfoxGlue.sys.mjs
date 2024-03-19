@@ -279,6 +279,7 @@ export const WaterfoxGlue = {
       case "browser-delayed-startup-finished":
         this._beforeUIStartup();
         this._delayedTasks();
+        this._monitorSidebarPref();
         break;
       case "quit-application-granted":
         Services.obs.removeObserver(this, "quit-application-granted");
@@ -293,7 +294,38 @@ export const WaterfoxGlue = {
       "addonstores@waterfox.net",
       "1.0.0",
       "resource://builtin-addons/addonstores/"
-    );
+    )
+  },
+
+  async _monitorSidebarPref() {
+    const COMPONENT_PREF = "browser.sidebar.disabled";
+    const ID = "sidebar@waterfox.net";
+
+    let addon = await lazy.AddonManager.getAddonByID(ID);
+
+    // first time install of addon and install on update
+    addon =
+      (await lazy.AddonManager.maybeInstallBuiltinAddon(
+        ID,
+        "0.1.1",
+        "resource://builtin-addons/sidebar/"
+      )) || addon;
+
+    const _checkSidebarPref = async () => {
+      let componentEnabled = Services.prefs.getBoolPref(COMPONENT_PREF, false);
+      if (componentEnabled) {
+        if (addon.isActive) {
+          await addon.disable({ allowSystemAddons: true });
+        }
+      } else {
+        if (!addon.isActive) {
+          await addon.enable({ allowSystemAddons: true });
+        }
+      }
+    };
+
+    Services.prefs.addObserver(COMPONENT_PREF, _checkSidebarPref);
+    await _checkSidebarPref();
   },
 
   async _migrateUI() {
