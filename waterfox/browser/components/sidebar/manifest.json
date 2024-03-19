@@ -1,0 +1,261 @@
+{
+  "manifest_version": 3,
+  "name": "Tabs Sidebar",
+  "version": "0.1.1",
+  "author": "Waterfox",
+  "description": "Vertical tabs sidebar for Waterfox.",
+  "permissions": [
+    "activeTab",
+    "bookmarks",
+    "clipboardRead",
+    "contextualIdentities",
+    "cookies",
+    "menus",
+    "menus.overrideContext",
+    "notifications",
+    "scripting",
+    "search",
+    "sessions",
+    "storage",
+    "tabs",
+    "theme"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "page": "background/background.html"
+  },
+  "commands": {
+    "reloadTree": {
+      "description": "Reload this Tree"
+    },
+    "reloadDescendants": {
+      "description": "Reload Descendants"
+    },
+    "unblockAutoplayTree": {
+      "description": "Play this Tree"
+    },
+    "unblockAutoplayDescendants": {
+      "description": "Play Descendants"
+    },
+    "toggleMuteTree": {
+      "description": "Mute/Unmute this Tree"
+    },
+    "toggleMuteDescendants": {
+      "description": "Mute/Unmute Descendants"
+    },
+    "closeTree": {
+      "description": "Close this Tree"
+    },
+    "closeDescendants": {
+      "description": "Close Descendants"
+    },
+    "closeOthers": {
+      "description": "Close Other Tabs except this Tree"
+    },
+    "toggleSticky": {
+      "description": "Stick/Unstick Tab to Edges"
+    },
+    "collapseTree": {
+      "description": "Collapse this Tree"
+    },
+    "collapseTreeRecursively": {
+      "description": "Collapse this Tree Recursively"
+    },
+    "collapseAll": {
+      "description": "Collapse All"
+    },
+    "expandTree": {
+      "description": "Expand this Tree"
+    },
+    "expandTreeRecursively": {
+      "description": "Expand this Tree Recursively"
+    },
+    "expandAll": {
+      "description": "Expand All"
+    },
+    "bookmarkTree": {
+      "description": "Bookmark this Tree\u2026"
+    },
+    "newIndependentTab": {
+      "description": "__MSG_tabbar_newTabButton_tooltip__: __MSG_tabbar_newTabAction_independent_command__"
+    },
+    "newChildTab": {
+      "description": "__MSG_tabbar_newTabButton_tooltip__: __MSG_tabbar_newTabAction_child_command__"
+    },
+    "newChildTabTop": {
+      "description": "__MSG_tabbar_newTabButton_tooltip__: __MSG_tabbar_newTabAction_childTop_command__"
+    },
+    "newChildTabEnd": {
+      "description": "__MSG_tabbar_newTabButton_tooltip__: __MSG_tabbar_newTabAction_childEnd_command__"
+    },
+    "newSiblingTab": {
+      "description": "__MSG_tabbar_newTabButton_tooltip__: __MSG_tabbar_newTabAction_sibling_command__"
+    },
+    "newNextSiblingTab": {
+      "description": "__MSG_tabbar_newTabButton_tooltip__: __MSG_tabbar_newTabAction_nextSibling_command__"
+    },
+    "newContainerTab": {
+      "description": "New Container Tab"
+    },
+    "tabMoveUp": {
+      "description": "Move Current Tab Up"
+    },
+    "treeMoveUp": {
+      "description": "Move Current Tree Up"
+    },
+    "tabMoveDown": {
+      "description": "Move Current Tab Down"
+    },
+    "treeMoveDown": {
+      "description": "Move Current Tree Down"
+    },
+    "focusPrevious": {
+      "description": "Focus to Previous Tab (expand tree)"
+    },
+    "focusPreviousSilently": {
+      "description": "Focus to Previous Tab (don't expand tree)"
+    },
+    "focusNext": {
+      "description": "Focus to Next Tab (expand tree)"
+    },
+    "focusNextSilently": {
+      "description": "Focus to Next Tab (don't expand tree)"
+    },
+    "focusParent": {
+      "description": "Focus to Parent Tab"
+    },
+    "focusFirstChild": {
+      "description": "Focus to First Child Tab"
+    },
+    "focusLastChild": {
+      "description": "Focus to Last Child Tab"
+    },
+    "focusPreviousSibling": {
+      "description": "Focus to Previous Sibling Tab"
+    },
+    "focusNextSibling": {
+      "description": "Focus to Next Sibling Tab"
+    },
+    "tabbarUp": {
+      "description": "Scroll Tabs Up by Lines",
+      "suggested_key": {
+        "default": "Alt+Shift+Up"
+      }
+    },
+    "tabbarPageUp": {
+      "description": "Scroll Tabs Up by Page",
+      "suggested_key": {
+        "default": "Alt+Shift+PageUp"
+      }
+    },
+    "tabbarHome": {
+      "description": "Scroll Tabs to Top",
+      "suggested_key": {
+        "default": "Alt+Shift+Home"
+      }
+    },
+    "tabbarDown": {
+      "description": "Scroll Tabs Down by Lines",
+      "suggested_key": {
+        "default": "Alt+Shift+Down"
+      }
+    },
+    "tabbarPageDown": {
+      "description": "Scroll Tabs Down by Page",
+      "suggested_key": {
+        "default": "Alt+Shift+PageDown"
+      }
+    },
+    "tabbarEnd": {
+      "description": "Scroll Tabs to End",
+      "suggested_key": {
+        "default": "Alt+Shift+End"
+      }
+    },
+    "toggleSubPanel": {
+      "description": "Toggle Sub Panel",
+      "suggested_key": {
+        "default": "F2"
+      }
+    },
+    "switchSubPanel": {
+      "description": "Switch Sub Panel contents"
+    },
+    "increaseSubPanel": {
+      "description": "Increase Size of the Sub Panel"
+    },
+    "decreaseSubPanel": {
+      "description": "Decrease Size of the Sub Panel"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "/resources/group-tab.html*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "ext+ws",
+      "name": "Waterfox",
+      "uriTemplate": "/resources/protocol-handler.html?%s"
+    }
+  ],
+  "experiment_apis": {
+    "prefs": {
+      "schema": "experiments/prefs.json",
+      "parent": {
+        "scopes": [
+          "addon_parent"
+        ],
+        "paths": [
+          [
+            "prefs"
+          ]
+        ],
+        "script": "experiments/prefs.js"
+      }
+    },
+    "syncPrefs": {
+      "schema": "experiments/syncPrefs.json",
+      "child": {
+        "scopes": [
+          "addon_child"
+        ],
+        "paths": [
+          [
+            "syncPrefs"
+          ]
+        ],
+        "script": "experiments/syncPrefs.js"
+      }
+    },
+    "waterfoxBridge": {
+      "schema": "experiments/waterfoxBridge.json",
+      "parent": {
+        "scopes": [
+          "addon_parent"
+        ],
+        "paths": [
+          [
+            "waterfoxBridge"
+          ]
+        ],
+        "script": "experiments/waterfoxBridge.js"
+      }
+    }
+  },
+  "default_locale": "en",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "sidebar@waterfox.net",
+      "strict_min_version": "115.0"
+    }
+  }
+}
