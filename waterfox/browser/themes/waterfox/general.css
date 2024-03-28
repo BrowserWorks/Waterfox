@@ -187,3 +187,9 @@
   display: none !important;
   width: 0px !important;
 }
+
+@supports -moz-bool-pref("browser.tabs.closeButtons") {
+  .tab-close-button {
+    display: none !important
+  }
+}
