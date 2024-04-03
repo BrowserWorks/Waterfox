@@ -115,7 +115,7 @@ load-images =
 enable-javascript =
     .label = Enable JavaScript
 enable-dooh = 
-    .label = Use DNS over Oblivious HTTP
+    .label = Use DNS over Oblivious HTTPS
 webrtc-header = WebRTC peer connection
 ref-header = HTTP Referrer Header
 ### Look & Feel
