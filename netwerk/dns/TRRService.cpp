@@ -55,7 +55,7 @@ constexpr nsLiteralCString kTRRDomains[3][7] = {
     "private.canadianshield.cira.ca"_ns,
     "doh.xfinity.com"_ns,  // Steered clients
     "dns.shaw.ca"_ns, // Steered clients
-    "dooh.cloudflare-dns.com"_ns, // DNS over Oblivious HTTP
+    "dooh.cloudflare-dns.com"_ns, // DNS over Oblivious HTTPS
     },
     {
     "(other)_2"_ns,
@@ -64,7 +64,7 @@ constexpr nsLiteralCString kTRRDomains[3][7] = {
     "private.canadianshield.cira.ca_2"_ns,
     "doh.xfinity.com_2"_ns,  // Steered clients
     "dns.shaw.ca_2"_ns, // Steered clients
-    "dooh.cloudflare-dns.com_2"_ns, // DNS over Oblivious HTTP
+    "dooh.cloudflare-dns.com_2"_ns, // DNS over Oblivious HTTPS
     },
     {
     "(other)_3"_ns,
@@ -73,7 +73,7 @@ constexpr nsLiteralCString kTRRDomains[3][7] = {
     "private.canadianshield.cira.ca_3"_ns,
     "doh.xfinity.com_3"_ns,  // Steered clients
     "dns.shaw.ca_3"_ns, // Steered clients
-    "dooh.cloudflare-dns.com_3"_ns, // DNS over Oblivious HTTP
+    "dooh.cloudflare-dns.com_3"_ns, // DNS over Oblivious HTTPS
     },
     // clang-format on
 };
