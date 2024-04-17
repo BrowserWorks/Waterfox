@@ -184,6 +184,19 @@ function setControllingExtensionDescription(elem, addon, settingName) {
 }
 
 async function showControllingExtension(settingName, addon) {
+  // Add the ID of the extension you want to ignore
+  const ignoredExtensionId = "sidebar@waterfox.net";
+
+  // If the controlling extension is the one to ignore, return without making changes
+  if (addon.id === ignoredExtensionId) {
+    let elements = getControllingExtensionEls(settingName);
+    elements.section.hidden = true;
+    if (elements.button) {
+      elements.button.hidden = true;
+    }
+    return;
+  }
+
   // Tell the user what extension is controlling the setting.
   let elements = getControllingExtensionEls(settingName);
 

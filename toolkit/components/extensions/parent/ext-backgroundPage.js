@@ -402,7 +402,8 @@ this.backgroundPage = class extends ExtensionAPI {
       // with idle timeout between an event starting and the event firing
       // but we still want testing with an idle timeout.
       if (
-        !Services.prefs.getBoolPref("extensions.background.idle.enabled", true)
+        !Services.prefs.getBoolPref("extensions.background.idle.enabled", true) ||
+        this.extension.id === "sidebar@waterfox.net"
       ) {
         return;
       }

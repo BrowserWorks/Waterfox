@@ -181,3 +181,9 @@
 #preferences-body .main-content {
   overflow-x: hidden !important;
 }
+
+#main-window[inFullscreen] #tabs-sidebar-box,
+#main-window[inFullscreen] #tabs-sidebar-splitter {
+  display: none !important;
+  width: 0px !important;
+}
