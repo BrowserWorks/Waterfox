@@ -2287,11 +2287,12 @@ export class SearchService {
     const defaultEngines = [
       { webExtension: { id: "bing@search.waterfox.net" }, orderHint: 100 },
       { webExtension: { id: "startpage@search.waterfox.net" }, orderHint: 90 },
-      { webExtension: { id: "yahoo@search.waterfox.net" }, orderHint: 80 },
+      { webExtension: { id: "mojeek@search.waterfox.net" }, orderHint: 80 },
       { webExtension: { id: "google@search.waterfox.net" }, orderHint: 70 },
-      { webExtension: { id: "ddg@search.waterfox.net" }, orderHint: 60 },
-      { webExtension: { id: "qwant@search.waterfox.net" }, orderHint: 50 },
+      { webExtension: { id: "qwant@search.waterfox.net" }, orderHint: 60 },
+      { webExtension: { id: "ddg@search.waterfox.net" }, orderHint: 50 },
       { webExtension: { id: "ecosia@search.waterfox.net" }, orderHint: 40 },
+      { webExtension: { id: "yahoo@search.waterfox.net" }, orderHint: 30 },
     ];
 
     const validEngines = defaultEngines.map(engine => {
