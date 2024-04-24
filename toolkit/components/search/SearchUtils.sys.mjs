@@ -206,6 +206,7 @@ export var SearchUtils = {
     "google@search.waterfox.net",
     "ddg@search.waterfox.net",
     "ecosia@search.waterfox.net",
+    "mojeek@search.waterfox.net",
   ]),
 
   /**
