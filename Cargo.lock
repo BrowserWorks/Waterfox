@@ -86,6 +86,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "any_all_workaround"
+version = "0.1.0"
+source = "git+https://github.com/hsivonen/any_all_workaround?rev=7fb1b7034c9f172aade21ee1c8554e8d8a48af80#7fb1b7034c9f172aade21ee1c8554e8d8a48af80"
+dependencies = [
+ "cfg-if 1.0.0",
+ "version_check",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1436,12 +1445,12 @@ dependencies = [
 
 [[package]]
 name = "encoding_rs"
-version = "0.8.33"
+version = "0.8.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7268b386296a025e474d5140678f75d6de9493ae55a5d709eeb9dd08149945e1"
+checksum = "b45de904aa0b010bce2ab45264d0631681847fa7b6f2eaa7dab7619943bc4f59"
 dependencies = [
+ "any_all_workaround",
  "cfg-if 1.0.0",
- "packed_simd",
 ]
 
 [[package]]
@@ -3902,15 +3911,6 @@ version = "0.1.0"
 dependencies = [
  "nsstring",
  "oxilangtag",
-]
-
-[[package]]
-name = "packed_simd"
-version = "0.3.9"
-source = "git+https://github.com/hsivonen/packed_simd?rev=e588ceb568878e1a3156ea9ce551d5b63ef0cdc4#e588ceb568878e1a3156ea9ce551d5b63ef0cdc4"
-dependencies = [
- "cfg-if 1.0.0",
- "num-traits",
 ]
 
 [[package]]

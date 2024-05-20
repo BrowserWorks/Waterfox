@@ -120,6 +120,13 @@ user-id = 4484
 user-login = "hsivonen"
 user-name = "Henri Sivonen"
 
+[[publisher.encoding_rs]]
+version = "0.8.34"
+when = "2024-04-10"
+user-id = 4484
+user-login = "hsivonen"
+user-name = "Henri Sivonen"
+
 [[publisher.etagere]]
 version = "0.2.7"
 when = "2022-05-04"
