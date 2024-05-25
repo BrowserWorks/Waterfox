@@ -191,3 +191,8 @@ uniffi_bindgen = "=0.23.0"
 uniffi_build = "=0.23.0"
 uniffi_macros = "=0.23.0"
 weedle2 = "=4.0.0"
+
+[patch.crates-io.bindgen_0_64_0]
+package = "bindgen"
+version = "0.64.0"
+path = "third_party/rust/bindgen"
