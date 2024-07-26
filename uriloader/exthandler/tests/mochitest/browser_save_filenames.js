@@ -192,8 +192,8 @@ add_setup(async function () {
   expectedItems = await getItems("items");
 });
 
-function getItems(parentid) {
-  return SpecialPowers.spawn(
+async function getItems(parentid) {
+  let items = await SpecialPowers.spawn(
     gBrowser.selectedBrowser,
     [parentid, AppConstants.platform],
     (id, platform) => {
@@ -221,6 +221,8 @@ function getItems(parentid) {
       return elements;
     }
   );
+  Assert.greater(items.length, 0, "Some elements were found to test");
+  return items;
 }
 
 function getDirectoryEntries(dir) {
