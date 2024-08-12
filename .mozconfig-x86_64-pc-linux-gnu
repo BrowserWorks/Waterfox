@@ -10,12 +10,12 @@ fi
 
 if test "$WFX_RELEASE" || test "$WFX_PRE_RELEASE"; then
     ac_add_options --enable-lto=full
-    ac_add_options --enable-optimize="-march=x86-64 -msse3 -mtune=haswell -O3 -w"
+    ac_add_options --enable-optimize="-march=x86-64 -mfpmath=sse -mprfchw -mpopcnt -msse3 -mcx16 -msahf -mtune=skylake -O3 -w"
     ac_add_options --enable-release
     ac_add_options --enable-rust-simd
     ac_add_options RUSTC_OPT_LEVEL=3
     export MOZILLA_OFFICIAL=1
-    export RUSTFLAGS="$RUSTFLAGS -Ctarget-cpu=x86-64"
+    export RUSTFLAGS="$RUSTFLAGS -Ctarget-cpu=x86-64 -Ztune-cpu=skylake"
 fi
 
 ac_add_options --disable-crashreporter
@@ -66,7 +66,6 @@ if test -f "$PWD/mozilla-api"; then
     ac_add_options --with-mozilla-api-keyfile="$PWD"/mozilla-api
 fi
 
-mk_add_options AUTOCLOBBER=1
 export MOZ_INCLUDE_SOURCE_INFO=1
 export MOZ_REQUIRE_SIGNING=
 export MOZ_TELEMETRY_REPORTING=
