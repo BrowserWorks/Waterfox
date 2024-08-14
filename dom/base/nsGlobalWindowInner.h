@@ -472,7 +472,8 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
 
   virtual bool TakeFocus(bool aFocus, uint32_t aFocusMethod) override;
   MOZ_CAN_RUN_SCRIPT_BOUNDARY virtual void SetReadyForFocus() override;
-  MOZ_CAN_RUN_SCRIPT_BOUNDARY virtual void PageHidden() override;
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY virtual void PageHidden(
+      bool aIsEnteringBFCache) override;
   virtual nsresult DispatchAsyncHashchange(nsIURI* aOldURI,
                                            nsIURI* aNewURI) override;
   virtual nsresult DispatchSyncPopState() override;

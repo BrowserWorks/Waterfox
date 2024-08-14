@@ -44,6 +44,7 @@
 #include "nsRange.h"
 #include "nsFrameLoaderOwner.h"
 #include "nsQueryObject.h"
+#include "nsIXULRuntime.h"
 
 #include "mozilla/AccessibleCaretEventHub.h"
 #include "mozilla/ContentEvents.h"
@@ -400,6 +401,16 @@ nsFocusManager::GetFocusedContentBrowsingContext(
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsFocusManager::GetActiveContentBrowsingContext(
+    BrowsingContext** aBrowsingContext) {
+  MOZ_DIAGNOSTIC_ASSERT(
+      XRE_IsParentProcess(),
+      "We only have use cases for this in the parent process");
+  NS_IF_ADDREF(*aBrowsingContext = GetActiveBrowsingContextInChrome());
+  return NS_OK;
+}
+
 nsresult nsFocusManager::SetFocusedWindowWithCallerType(
     mozIDOMWindowProxy* aWindowToFocus, CallerType aCallerType) {
   LOGFOCUS(("<<SetFocusedWindow begin>>"));
@@ -718,7 +729,8 @@ void nsFocusManager::WindowRaised(mozIDOMWindowProxy* aWindow,
   if (XRE_IsParentProcess()) {
     mActiveWindow = window;
   } else if (bc->IsTop()) {
-    SetActiveBrowsingContextInContent(bc, aActionId);
+    SetActiveBrowsingContextInContent(bc, aActionId,
+                                      false /* aIsEnteringBFCache */);
   }
 
   // ensure that the window is enabled and visible
@@ -827,7 +839,8 @@ void nsFocusManager::WindowLowered(mozIDOMWindowProxy* aWindow,
   } else {
     BrowsingContext* bc = window->GetBrowsingContext();
     if (bc == bc->Top()) {
-      SetActiveBrowsingContextInContent(nullptr, aActionId);
+      SetActiveBrowsingContextInContent(nullptr, aActionId,
+                                        false /* aIsEnteringBFCache */);
     }
   }
 
@@ -999,7 +1012,7 @@ void nsFocusManager::WindowShown(mozIDOMWindowProxy* aWindow,
 }
 
 void nsFocusManager::WindowHidden(mozIDOMWindowProxy* aWindow,
-                                  uint64_t aActionId) {
+                                  uint64_t aActionId, bool aIsEnteringBFCache) {
   // if there is no window or it is not the same or an ancestor of the
   // currently focused window, just return, as the current focus will not
   // be affected.
@@ -1160,7 +1173,7 @@ void nsFocusManager::WindowHidden(mozIDOMWindowProxy* aWindow,
       mActiveBrowsingContextInContent ==
           docShellBeingHidden->GetBrowsingContext() &&
       mActiveBrowsingContextInContent->GetIsInBFCache()) {
-    SetActiveBrowsingContextInContent(nullptr, aActionId);
+    SetActiveBrowsingContextInContent(nullptr, aActionId, aIsEnteringBFCache);
   }
 
   // if the window being hidden is an ancestor of the focused window, adjust
@@ -4969,7 +4982,8 @@ void nsFocusManager::BrowsingContextDetached(BrowsingContext* aContext) {
 }
 
 void nsFocusManager::SetActiveBrowsingContextInContent(
-    mozilla::dom::BrowsingContext* aContext, uint64_t aActionId) {
+    mozilla::dom::BrowsingContext* aContext, uint64_t aActionId,
+    bool aIsEnteringBFCache) {
   MOZ_ASSERT(!XRE_IsParentProcess());
   MOZ_ASSERT(!aContext || aContext->IsInProcess());
   mozilla::dom::ContentChild* contentChild =
@@ -4988,7 +5002,12 @@ void nsFocusManager::SetActiveBrowsingContextInContent(
   if (aContext != mActiveBrowsingContextInContent) {
     if (aContext) {
       contentChild->SendSetActiveBrowsingContext(aContext, aActionId);
-    } else if (mActiveBrowsingContextInContent) {
+    } else if (mActiveBrowsingContextInContent &&
+               !(BFCacheInParent() && aIsEnteringBFCache)) {
+      // No need to tell the parent process to update the active browsing
+      // context to null if we are entering BFCache, because the browsing
+      // context that is about to show will update it.
+      //
       // We want to sync this over only if this isn't happening
       // due to the active BrowsingContext switching processes,
       // in which case the BrowserChild has already marked itself
