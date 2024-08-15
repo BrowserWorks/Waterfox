@@ -227,7 +227,7 @@ __webpack_require__.r(__webpack_exports__);
       var oldActiveTocLink = tocElement.querySelector('.' + options.activeLinkClass)
       var activeTocLink = tocElement
         .querySelector('.' + options.linkClass +
-          '.node-name--' + topHeader.nodeName +
+          '.node-name--' + CSS.escape(topHeader.nodeName) +
           '[href="' + options.basePath + '#' + topHeader.id.replace(/([ #;&,.+*~':"!^$[\]()=>|/\\@])/g, '\\$1') + '"]')
       // Performance improvement to only change the classes
       // for the toc if a new link should be highlighted.
@@ -743,7 +743,7 @@ function parseContent (options) {
    * @return {Number}
    */
   function getHeadingLevel (heading) {
-    return +heading.nodeName.toUpperCase().replace('H', '')
+    return +heading.nodeName.replace(/^html:/, '').toUpperCase().replace('H', '')
   }
 
   /**
