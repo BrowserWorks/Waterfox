@@ -64,6 +64,13 @@ jobs:
                     firefox-pkg-latest-ssl: pkg
                     firefox-langpack-latest-ssl: langpack
                 esr115:
+                    firefox-esr115-latest-ssl: installer-ssl
+                    firefox-esr115-latest: installer
+                    firefox-esr115-msi-latest-ssl: msi
+                    firefox-esr115-msix-latest-ssl: msix
+                    firefox-esr115-pkg-latest-ssl: pkg
+                    firefox-esr115-langpack-latest-ssl: langpack
+                esrXXX:  # XXX - to change when we branch next ESR
                     # when there is one ESR branch both sets of aliases work
                     # when there are two ESR branches ...
                     # ... these always point to the older branch
@@ -73,7 +80,6 @@ jobs:
                     firefox-esr-msix-latest-ssl: msix
                     firefox-esr-pkg-latest-ssl: pkg
                     firefox-esr-langpack-latest-ssl: langpack
-                esrXXX:  # XXX - to change when we branch next ESR
                     firefox-esr-next-latest-ssl: installer-ssl
                     firefox-esr-next-latest: installer
                     firefox-esr-next-msi-latest-ssl: msi
