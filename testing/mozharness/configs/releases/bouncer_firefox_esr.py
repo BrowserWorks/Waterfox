@@ -30,6 +30,17 @@ config = {
                 "win64-aarch64",
             ],
         },
+        "installer-115-latest": {
+            "product-name": "Firefox-esr115-latest",
+            "platforms": [
+                "linux",
+                "linux64",
+                "osx",
+                "win",
+                "win64",
+                "win64-aarch64",
+            ],
+        },
         "installer-next-latest": {
             "product-name": "Firefox-esr-next-latest",
             "platforms": [
@@ -54,6 +65,17 @@ config = {
         },
         "installer-latest-ssl": {
             "product-name": "Firefox-esr-latest-SSL",
+            "platforms": [
+                "linux",
+                "linux64",
+                "osx",
+                "win",
+                "win64",
+                "win64-aarch64",
+            ],
+        },
+        "installer-115-latest-ssl": {
+            "product-name": "Firefox-esr115-latest-SSL",
             "platforms": [
                 "linux",
                 "linux64",
@@ -88,6 +110,13 @@ config = {
                 "win64",
             ],
         },
+        "msi-115-latest": {
+            "product-name": "Firefox-esr115-msi-latest-SSL",
+            "platforms": [
+                "win",
+                "win64",
+            ],
+        },
         "msi-next-latest": {
             "product-name": "Firefox-esr-next-msi-latest-SSL",
             "platforms": [
@@ -109,6 +138,13 @@ config = {
                 "win64",
             ],
         },
+        "msix-115-latest": {
+            "product-name": "Firefox-esr115-msix-latest-SSL",
+            "platforms": [
+                "win",
+                "win64",
+            ],
+        },
         "msix-next-latest": {
             "product-name": "Firefox-esr-next-msix-latest-SSL",
             "platforms": [
@@ -122,6 +158,10 @@ config = {
         },
         "pkg-latest": {
             "product-name": "Firefox-esr-pkg-latest-SSL",
+            "platforms": ["osx"],
+        },
+        "pkg-115-latest": {
+            "product-name": "Firefox-esr115-pkg-latest-SSL",
             "platforms": ["osx"],
         },
         "pkg-next-latest": {
@@ -140,6 +180,16 @@ config = {
         },
         "langpack-latest": {
             "product-name": "Firefox-esr-langpack-latest-SSL",
+            "platforms": [
+                "linux",
+                "linux64",
+                "osx",
+                "win",
+                "win64",
+            ],
+        },
+        "langpack-115-latest": {
+            "product-name": "Firefox-esr115-langpack-latest-SSL",
             "platforms": [
                 "linux",
                 "linux64",
