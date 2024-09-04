@@ -102,6 +102,7 @@ jobs:
         run: sccache --start-server
       - name: "\U0001F4BF Build dependencies"
         run: |
+          sudo apt update
           sudo apt install msitools
           rustup default 1.77.2
           rustup target add x86_64-pc-windows-msvc
@@ -257,6 +258,7 @@ jobs:
         run: sccache --start-server
       - name: "\U0001F4BF Build dependencies"
         run: |
+          sudo apt update
           sudo apt install msitools
           rustup default 1.77.2
           rustup target add x86_64-pc-windows-msvc
@@ -517,6 +519,7 @@ jobs:
         run: sccache --start-server
       - name: "\U0001F4BF Build dependencies"
         run: |
+          sudo apt update
           sudo apt install nasm
           rustup default 1.77.2
           rustup target add ${{ matrix.arch }}
@@ -694,6 +697,7 @@ jobs:
         run: sccache --start-server
       - name: "\U0001F4BF Build dependencies"
         run: |
+          sudo apt update
           sudo apt install nasm
           rustup default 1.77.2
           rustup target add ${{ matrix.arch }}
