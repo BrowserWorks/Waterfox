@@ -276,7 +276,9 @@ do
         eval "${config_line}"
         for locale in ${locales}
         do
-            echo "${aus_server}/update/3/$product/$release/$build_id/$platform/$locale/$channel/default/default/default/update.xml?force=1" "${patch_types// /,}" "${cfg_file}" "${line_no}"
+            # use a specific osVersion so we match the esr115 rule instead of the upgrade to esr128
+            osVersion=esr115-uv
+            echo "${aus_server}/update/3/$product/$release/$build_id/$platform/$locale/$channel/${osVersion}/default/default/update.xml?force=1" "${patch_types// /,}" "${cfg_file}" "${line_no}"
         done
     done
 done > "${update_xml_urls}"

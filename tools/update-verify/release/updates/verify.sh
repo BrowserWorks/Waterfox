@@ -138,7 +138,9 @@ do
     rm -f update/partial.size update/complete.size
     for patch_type in $patch_types
     do
-      update_path="${product}/${release}/${build_id}/${platform}/${locale}/${channel}/default/default/default"
+      # use a specific osVersion so we match the esr115 rule instead of the upgrade to esr128
+      osVersion=esr115-uv
+      update_path="${product}/${release}/${build_id}/${platform}/${locale}/${channel}/${osVersion}/default/default"
       if [ "$runmode" == "$MARS_ONLY" ] || [ "$runmode" == "$COMPLETE" ] ||
          [ "$runmode" == "$TEST_ONLY" ]
       then
