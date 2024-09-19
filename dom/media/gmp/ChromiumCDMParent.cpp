@@ -962,6 +962,36 @@ already_AddRefed<VideoData> ChromiumCDMParent::CreateVideoFrame(
 
   b.mChromaSubsampling = gfx::ChromaSubsampling::HALF_WIDTH_AND_HEIGHT;
 
+  // Ensure that each plane fits within the buffer bounds.
+  for (const auto& plane : b.mPlanes) {
+    auto rowSize = CheckedInt<uint32_t>(plane.mWidth);
+    if (NS_WARN_IF(!rowSize.isValid() || rowSize.value() > plane.mStride)) {
+      GMP_LOG_DEBUG(
+          "ChromiumCDMParent::CreateVideoFrame(this=%p) Plane width %u stride "
+          "%u mismatch, bailing.",
+          this, plane.mWidth, plane.mStride);
+      return nullptr;
+    }
+    auto size = CheckedInt<uint32_t>(plane.mStride) * plane.mHeight;
+    if (NS_WARN_IF(!size.isValid())) {
+      GMP_LOG_DEBUG(
+          "ChromiumCDMParent::CreateVideoFrame(this=%p) Plane height %u stride "
+          "%u integer overflow, bailing.",
+          this, plane.mHeight, plane.mStride);
+      return nullptr;
+    }
+    auto offset = plane.mData - aData.Elements();
+    auto required = size + offset;
+    if (NS_WARN_IF(!required.isValid() || required.value() > aData.Length())) {
+      GMP_LOG_DEBUG(
+          "ChromiumCDMParent::CreateVideoFrame(this=%p) Plane height %u stride "
+          "%u offset %u buffer length %zu overflow, bailing.",
+          this, plane.mHeight, plane.mStride, static_cast<uint32_t>(offset),
+          aData.Length());
+      return nullptr;
+    }
+  }
+
   // We unfortunately can't know which colorspace the video is using at this
   // stage.
   b.mYUVColorSpace =
