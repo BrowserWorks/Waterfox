@@ -31,7 +31,7 @@ job-defaults:
         max-run-time: 10800
 jobs:
     windows2012-64-firefox:
-        worker-type: b-win2012
+        worker-type: b-win2022
         description: Creates or updates conditioned profiles on Win64
         run-on-projects: ['mozilla-central']
         treeherder:
