@@ -172,6 +172,8 @@ Maybe<ModuleTrustFlags> ModuleEvaluator::GetTrust(
       return Some(ModuleTrustFlags::MicrosoftWindowsSignature);
     } else if (signedBy.EqualsLiteral("Microsoft Corporation")) {
       return Some(ModuleTrustFlags::MicrosoftWindowsSignature);
+    } else if (signedBy.EqualsLiteral("Microsoft Windows Software Compatibility Publisher")) {
+      return Some(ModuleTrustFlags::MicrosoftWindowsSignature);
     } else if (signedBy.EqualsLiteral("Mozilla Corporation")) {
       return Some(ModuleTrustFlags::MozillaSignature);
     } else if (signedBy.EqualsLiteral("BrowserWorks Ltd")) {
