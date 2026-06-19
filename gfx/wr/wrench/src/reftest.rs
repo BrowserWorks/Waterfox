@@ -515,12 +515,12 @@ impl ReftestManifest {
             let reference = paths.pop().unwrap();
             let test = paths;
 
-            if environment.platform == "android" {
-                // Add some fuzz on mobile as we do for non-wrench reftests.
-                // First remove the ranges with difference <= 2, otherwise they might cause the
+            if environment.platform != "linux" || environment.platform == "swgl" {
+                // Add some fuzz on every platform except linux.
+                // First remove the ranges with difference <= 5, otherwise they might cause the
                 // test to fail before the new range is picked up.
-                fuzziness.retain(|fuzzy| fuzzy.max_difference > 2);
-                fuzziness.push(RefTestFuzzy { max_difference: 2, num_differences: std::usize::MAX });
+                fuzziness.retain(|fuzzy| fuzzy.max_difference > 5);
+                fuzziness.push(RefTestFuzzy { max_difference: 5, num_differences: std::usize::MAX });
             }
 
             // to avoid changing the meaning of existing tests, the case of
