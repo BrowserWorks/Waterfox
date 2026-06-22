@@ -1123,7 +1123,14 @@ async function do_single_test_run() {
       if (shouldRunTest && !shouldRunTest(flags)) {
         continue;
       }
-      Services.fog.testResetFOG();
+
+      let makeAlternativeURI =
+        flags & Services.uriFixup.FIXUP_FLAGS_MAKE_ALTERNATE_URI;
+      // Only this flag path records a Glean metric (urlfixup.suffix), so we
+      // only reset here rather than every iteration of this hot loop.
+      if (makeAlternativeURI) {
+        Services.fog.testResetFOG();
+      }
 
       let URIInfo;
       try {
@@ -1136,8 +1143,6 @@ async function do_single_test_run() {
       }
 
       // Check the fixedURI:
-      let makeAlternativeURI =
-        flags & Services.uriFixup.FIXUP_FLAGS_MAKE_ALTERNATE_URI;
 
       if (makeAlternativeURI && alternativeURI != null) {
         Assert.equal(
