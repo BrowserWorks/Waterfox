@@ -807,19 +807,6 @@ class DevTools extends EventEmitter {
   }
 
   /**
-   * TabDescriptorFront requires a synchronous method and don't have a reference to its
-   * related commands object. So expose something handcrafted just for this.
-   */
-  getToolboxForDescriptorFront(descriptorFront) {
-    for (const [commands, toolbox] of this.#toolboxesPerCommands) {
-      if (commands.descriptorFront == descriptorFront) {
-        return toolbox;
-      }
-    }
-    return null;
-  }
-
-  /**
    * Retrieve an existing toolbox for the provided tab if it was created before.
    * Returns null otherwise.
    *

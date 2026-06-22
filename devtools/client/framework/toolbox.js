@@ -403,6 +403,8 @@ class Toolbox extends EventEmitter {
       }.bind(this)
     );
 
+    this._descriptorFront.on("descriptor-destroyed", this.destroy);
+
     this.on("host-changed", this._refreshHostTitle);
     this.on("select", this._onToolSelected);
 
@@ -4364,6 +4366,8 @@ class Toolbox extends EventEmitter {
     // This flag will be checked by Fronts in order to decide if they should
     // skip their destroy.
     this.commands.client.isToolboxDestroy = true;
+
+    this._descriptorFront.off("descriptor-destroyed", this.destroy);
 
     this.off("select", this._onToolSelected);
     this.off("host-changed", this._refreshHostTitle);

@@ -10,12 +10,6 @@ const DESCRIPTOR_TYPES = require("resource://devtools/client/fronts/descriptors/
 
 loader.lazyRequireGetter(
   this,
-  "gDevTools",
-  "resource://devtools/client/framework/devtools.js",
-  true
-);
-loader.lazyRequireGetter(
-  this,
   "WindowGlobalTargetFront",
   "resource://devtools/client/fronts/targets/window-global.js",
   true
@@ -128,12 +122,10 @@ class TabDescriptorFront extends DescriptorMixin(
   }
 
   _setupLocalTabListeners() {
-    this.localTab.addEventListener("TabClose", this._handleTabEvent);
     this.localTab.addEventListener("TabRemotenessChange", this._handleTabEvent);
   }
 
   _teardownLocalTabListeners() {
-    this.localTab.removeEventListener("TabClose", this._handleTabEvent);
     this.localTab.removeEventListener(
       "TabRemotenessChange",
       this._handleTabEvent
@@ -298,17 +290,6 @@ class TabDescriptorFront extends DescriptorMixin(
    */
   async _handleTabEvent(event) {
     switch (event.type) {
-      case "TabClose": {
-        // Always destroy the toolbox opened for this local tab descriptor.
-        // When the toolbox is in a Window Host, it won't be removed from the
-        // DOM when the tab is closed.
-        const toolbox = gDevTools.getToolboxForDescriptorFront(this);
-        if (toolbox) {
-          // Toolbox.destroy will call target.destroy eventually.
-          await toolbox.destroy();
-        }
-        break;
-      }
       case "TabRemotenessChange":
         this._onRemotenessChange();
         break;
