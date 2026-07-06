@@ -56,6 +56,9 @@ tags = "usercontextid"
 ["browser_storage_basic_with_fragment.js"]
 
 ["browser_storage_cache_delete.js"]
+skip-if = [
+  "os == 'mac' && os_version == '15.30' && arch == 'aarch64'", # Bug 1767737
+]
 
 ["browser_storage_cache_error.js"]
 
@@ -66,6 +69,9 @@ tags = "usercontextid"
 ["browser_storage_cookies_add.js"]
 
 ["browser_storage_cookies_delete_all.js"]
+skip-if = [
+  "os == 'mac' && os_version == '15.30' && arch == 'aarch64'", # Bug 1779172
+]
 
 ["browser_storage_cookies_domain.js"]
 
@@ -134,6 +140,9 @@ fail-if = [
 ["browser_storage_indexeddb_add_button_hidden.js"]
 
 ["browser_storage_indexeddb_delete.js"]
+skip-if = [
+  "os == 'mac' && os_version == '15.30' && arch == 'aarch64'", # Bug 1997720
+]
 
 ["browser_storage_indexeddb_delete_blocked.js"]
 

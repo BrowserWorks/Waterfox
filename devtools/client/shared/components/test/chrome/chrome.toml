@@ -34,6 +34,9 @@ skip-if = [
 ["test_notification_box_05.html"]
 
 ["test_searchbox-with-autocomplete.html"]
+skip-if = [
+  "os == 'mac' && os_version == '15.30' && arch == 'aarch64'", # Bug 1974702
+]
 
 ["test_searchbox.html"]
 
