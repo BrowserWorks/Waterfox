@@ -1,7 +1,7 @@
 == tile-size.yaml tile-size-ref.yaml
-== very-big.yaml very-big-ref.yaml
-== very-big-tile-size.yaml very-big-tile-size-ref.yaml
-== tile-with-spacing.yaml tile-with-spacing-ref.yaml
+scale(*) == very-big.yaml very-big-ref.yaml
+scale(*) == very-big-tile-size.yaml very-big-tile-size-ref.yaml
+scale(*) == tile-with-spacing.yaml tile-with-spacing-ref.yaml
 skip_on(android,device) fuzzy(1,331264) fuzzy-if(platform(win),1,686187) == tile-repeat-prim-or-decompose.yaml tile-repeat-prim-or-decompose-ref.yaml
 platform(linux,mac) options(allow-mipmaps) == downscale.yaml downscale.png
 skip_on(android,device) fuzzy-if(platform(swgl),1,20) == segments.yaml segments.png
@@ -19,19 +19,19 @@ fuzzy(1,160000) == image-filter-stretch.yaml green-alpha-ref.yaml
 fuzzy(1,160000) == image-filter-stretch-tile.yaml green-alpha-ref.yaml
 fuzzy-if(platform(win),1,180) == snapshot-area-01.yaml snapshot-area-01-ref.yaml
 fuzzy-if(platform(win),1,180) == snapshot-offscreen.yaml snapshot-offscreen-ref.yaml
-== snapshot-offscreen-02.yaml snapshot-offscreen-02-ref.yaml
+scale(*) == snapshot-offscreen-02.yaml snapshot-offscreen-02-ref.yaml
 == snapshot-huge.yaml snapshot-huge-ref.yaml
-== snapshot-dependency.yaml snapshot-dependency-ref.yaml
-== snapshot-detached.yaml snapshot-detached-ref.yaml
+scale(*) == snapshot-dependency.yaml snapshot-dependency-ref.yaml
+scale(*) == snapshot-detached.yaml snapshot-detached-ref.yaml
 fuzzy(1,95) == snapshot-filters-01.yaml snapshot-filters-01-ref.yaml
 == snapshot-filters-02.yaml snapshot-filters-02-ref.yaml
 fuzzy(3,3000) == snapshot-shadow.yaml snapshot-shadow-ref.yaml
-== snapshot-multiframe.yaml snapshot-multiframe-ref.yaml
-== snapshot-empty.yaml empty.yaml
+scale(*) == snapshot-multiframe.yaml snapshot-multiframe-ref.yaml
+scale(*) == snapshot-empty.yaml empty.yaml
 # TODO: At the moment snapshot-perspective-01.yaml renders incorrectly, so the
 # reftest acts more as a crash test. When bug 1941577 is fixed the reftest
 # reference should be updated to reflect that something needs to be rendered
 # instead of leaving the snapshot empty.
-== snapshot-perspective-01.yaml empty.yaml
-== snapshot-complex-clip.yaml snapshot-complex-clip-ref.yaml
-== stretch-size-01.yaml stretch-size-01-ref.yaml
+scale(*) == snapshot-perspective-01.yaml empty.yaml
+scale(*) == snapshot-complex-clip.yaml snapshot-complex-clip-ref.yaml
+scale(*) == stretch-size-01.yaml stretch-size-01-ref.yaml

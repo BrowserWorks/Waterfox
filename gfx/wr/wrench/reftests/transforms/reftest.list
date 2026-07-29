@@ -5,10 +5,10 @@ platform(linux,mac) == image-rotated-clip.yaml image-rotated-clip.png
 # Something leaks the state: the test passes if only run `reftest reftests/transform`
 # but fails when all the tests are run
 platform(linux,mac) fuzzy(64,400) == rotated-image.yaml rotated-image.png
-== singular.yaml singular-ref.yaml
+scale(*) == singular.yaml singular-ref.yaml
 platform(linux) fuzzy(1,630) == perspective.yaml perspective.png
 platform(linux,mac) fuzzy(3,8100) fuzzy-if(platform(mac),63,180) == prim-suite.yaml prim-suite.png
-fuzzy(2,26) == segments-bug.yaml segments-bug-ref.yaml
+scale(*) fuzzy(2,26) == segments-bug.yaml segments-bug-ref.yaml
 platform(linux,mac) == content-offset.yaml content-offset.png
 platform(linux,mac) == coord-system.yaml coord-system.png
 platform(linux,mac) fuzzy(1,15) == border-zoom.yaml border-zoom.png
@@ -17,45 +17,48 @@ platform(linux,mac) color_targets(3) alpha_targets(0) fuzzy(1,180) == screen-spa
 platform(linux,mac) fuzzy(1,346) color_targets(2) alpha_targets(0) == screen-space-blit-trivial.yaml screen-space-blit-trivial.png
 platform(linux) fuzzy(11,4592) == screen-space-blur.yaml screen-space-blur.png
 platform(linux,mac) fuzzy(1,25) == nested-rotate-x.yaml nested-rotate-x.png
-platform(linux,mac) != nested-rotate-x.yaml nested-rotate-x-flat.yaml
+scale(*) platform(linux,mac) != nested-rotate-x.yaml nested-rotate-x-flat.yaml
 platform(linux,mac) fuzzy(1,25) == nested-rotate-x-flat.yaml nested-rotate-x-flat.png
 platform(linux,mac) fuzzy(1,25) == nested-preserve-3d.yaml nested-preserve-3d.png
-== preserve-3d-origin.yaml preserve-3d-origin-ref.yaml
+scale(*) == preserve-3d-origin.yaml preserve-3d-origin-ref.yaml
 platform(linux,mac) fuzzy(1,283) == near-plane-clip.yaml near-plane-clip.png
 platform(linux,mac) == perspective-mask.yaml perspective-mask.png
 == rotate-clip.yaml rotate-clip-ref.yaml
-== clip-translate.yaml clip-translate-ref.yaml
+scale(*) == clip-translate.yaml clip-translate-ref.yaml
 platform(linux,mac) fuzzy(1,1) == perspective-clip.yaml perspective-clip.png
 platform(linux,mac) fuzzy(1,2) == perspective-clip-1.yaml perspective-clip-1.png
 platform(linux,mac) fuzzy(1,2) == perspective-shadow.yaml perspective-shadow.png
 # The ref YAML here produces significantly worse quality
-fuzzy(200,4200) == perspective-box-shadow.yaml perspective-box-shadow-ref.yaml
-== complex-preserve-3d.yaml blank.yaml
+scale(*) fuzzy(200,4200) fuzzy-if(scale(1.51),185,9500) fuzzy-if(scale(2),185,16500) == perspective-box-shadow.yaml perspective-box-shadow-ref.yaml
+scale(*) == complex-preserve-3d.yaml blank.yaml
 platform(linux,mac) fuzzy(38,348) == perspective-border-radius.yaml perspective-border-radius.png
-fuzzy(1,38) == snapped-preserve-3d.yaml snapped-preserve-3d-ref.yaml
+scale(*) fuzzy(1,38) == snapped-preserve-3d.yaml snapped-preserve-3d-ref.yaml
 platform(linux,mac) fuzzy(1,122) == border-scale.yaml border-scale.png
 platform(linux,mac) fuzzy(1,16) == border-scale-2.yaml border-scale-2.png
 platform(linux,mac) fuzzy(1,69) == border-scale-3.yaml border-scale-3.png
 platform(linux,mac) fuzzy(1,74) == border-scale-4.yaml border-scale-4.png
 # Just make sure we aren't crashing here
-!= large-raster-root.yaml blank.yaml
+scale(*) != large-raster-root.yaml blank.yaml
 == flatten-preserve-3d-root.yaml flatten-preserve-3d-root-ref.yaml
-== flatten-twice.yaml flatten-twice-ref.yaml
-fuzzy(1,10) == flatten-all-flat.yaml flatten-all-flat-ref.yaml
-== strange-w.yaml strange-w-ref.yaml
-== big-axis-aligned-scale.yaml big-axis-aligned-scale-ref.yaml
+scale(*) == flatten-twice.yaml flatten-twice-ref.yaml
+scale(*) fuzzy(1,10) == flatten-all-flat.yaml flatten-all-flat-ref.yaml
+scale(*) == strange-w.yaml strange-w-ref.yaml
+scale(*) == big-axis-aligned-scale.yaml big-axis-aligned-scale-ref.yaml
 # Compare ~8K raster root (>MAX_SURFACE_SIZE) with ~2K raster root. fuzzy due to lerping on edges.
 skip_on(android) fuzzy(59,804) == raster_root_A_8192.yaml raster_root_A_ref.yaml
 # Same as large-raster-root.yaml but resulting in a 10302×100 raster root (= >4096) vs 4000x100 in ref:
-skip_on(android) fuzzy(60,917) == raster_root_B_8192.yaml raster_root_B_ref.yaml
+scale(*) skip_on(android) fuzzy(60,917) == raster_root_B_8192.yaml raster_root_B_ref.yaml
 # Make sure we don't panic
-!= raster-root-large-mask.yaml blank.yaml
+scale(*) != raster-root-large-mask.yaml blank.yaml
 skip_on(android) == raster-root-scaling.yaml raster-root-scaling-ref.yaml
 skip_on(android) == raster-root-scaling-2.yaml raster-root-scaling-2-ref.yaml
 # Make sure we don't panic
 != raster-root-huge-scale.yaml blank.yaml
 != non-inversible-world-rect.yaml blank.yaml
-== nested-local-scale.yaml nested-local-scale-ref.yaml
+scale(*) == nested-local-scale.yaml nested-local-scale-ref.yaml
 platform(linux,mac) fuzzy(1,25) == perspective-surface-scale.yaml perspective-surface-scale.png
 fuzzy(1,8762) == computed-rotation-yflip.yaml computed-rotation-yflip.png
 fuzzy(5,100) fuzzy-if(platform(win),1,201) == corner-scale.yaml corner-scale-2.yaml
+# Run the scaled version only on linux to avoid complicated fuzzy annotations.
+scale(1,2) platform(linux) fuzzy(5,100) == corner-scale.yaml corner-scale-2.yaml
+scale(0.51,1.51) platform(linux) fuzzy(72,700) == corner-scale.yaml corner-scale-2.yaml

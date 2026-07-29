@@ -4,5 +4,5 @@ color_targets(3) == rounded-corners-1.yaml rounded-corners-1-ref.yaml
 # fuzzy(2,106) == rounded-corners-4.yaml rounded-corners-4-ref.yaml
 # fuzzy(1,6) == rounded-yuv-surface.yaml rounded-yuv-surface-ref.yaml
 color_targets(1) == rounded-corners-5.yaml rounded-corners-5-ref.yaml
-== rounded-rgb-surface.yaml rounded-rgb-surface-ref.yaml
+scale(*) == rounded-rgb-surface.yaml rounded-rgb-surface-ref.yaml
 == tile-occlusion.yaml tile-occlusion-ref.yaml

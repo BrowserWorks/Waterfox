@@ -1,47 +1,47 @@
-fuzzy(2,10000) == svgfe-blenddarken-linear.yaml svgfe-blenddarken-linear-ref.yaml
-fuzzy(2,10000) == svgfe-blendmultiply-linear.yaml svgfe-blendmultiply-linear-ref.yaml
-fuzzy(2,10000) == svgfe-blendnormal-linear.yaml svgfe-blendnormal-linear-ref.yaml
-fuzzy(2,10000) == svgfe-colormatrix.yaml svgfe-colormatrix-ref.yaml
+scale(*) fuzzy(2,10000) == svgfe-blenddarken-linear.yaml svgfe-blenddarken-linear-ref.yaml
+scale(*) fuzzy(2,10000) == svgfe-blendmultiply-linear.yaml svgfe-blendmultiply-linear-ref.yaml
+scale(*) fuzzy(2,10000) == svgfe-blendnormal-linear.yaml svgfe-blendnormal-linear-ref.yaml
+scale(*) fuzzy(2,10000) == svgfe-colormatrix.yaml svgfe-colormatrix-ref.yaml
 fuzzy(4,10000) == svgfe-dropshadow.yaml svgfe-dropshadow-ref.yaml
 fuzzy(12,10000) == svgfe-dropshadow-offscreen-source.yaml svgfe-dropshadow-offscreen-source-ref.yaml
-fuzzy(2,10000) == svgfe-opacity-linear.yaml svgfe-opacity-linear-ref.yaml
-fuzzy(2,10000) == svgfe-opacity.yaml svgfe-opacity-ref.yaml
+scale(*) fuzzy(2,10000) == svgfe-opacity-linear.yaml svgfe-opacity-linear-ref.yaml
+scale(*) fuzzy(2,10000) == svgfe-opacity.yaml svgfe-opacity-ref.yaml
 fuzzy(12,10000) == svgfe-subregion-bigger.yaml svgfe-subregion-bigger-ref.yaml
-fuzzy(12,10000) == svgfe-subregion-offset-stacking-context.yaml svgfe-subregion-offset-stacking-context-ref.yaml
-== filter-grayscale.yaml filter-grayscale-ref.yaml
+scale(*) fuzzy(12,10000) == svgfe-subregion-offset-stacking-context.yaml svgfe-subregion-offset-stacking-context-ref.yaml
+scale(*) == filter-grayscale.yaml filter-grayscale-ref.yaml
 platform(linux,mac) == draw_calls(7) color_targets(7) alpha_targets(0) filter-blur.yaml filter-blur.png
 platform(linux,mac) == filter-blur-downscale-fractional.yaml filter-blur-downscale-fractional.png
 max_surface_size(1024) fuzzy(9,43152) == filter-blur-downscaled-task.yaml filter-blur-downscaled-task-ref.yaml
-== isolated.yaml isolated-ref.yaml
-== invisible.yaml invisible-ref.yaml
-fuzzy-if(platform(swgl),1,10000) == opacity.yaml opacity-ref.yaml
-fuzzy-range(<=1,*10000) == opacity-combined.yaml opacity-combined-ref.yaml
-fuzzy-if(platform(swgl),1,10000) == opacity-overlap.yaml opacity-overlap-ref.yaml
-== filter-brightness.yaml filter-brightness-ref.yaml
-== filter-brightness-2.yaml filter-brightness-2-ref.yaml
-== filter-brightness-3.yaml filter-brightness-3-ref.yaml
-fuzzy-if(platform(swgl),1,10000) == filter-brightness-4.yaml filter-brightness-4-ref.yaml
-== filter-component-transfer.yaml filter-component-transfer-ref.yaml
-skip_on(android,device) == filter-color-matrix.yaml filter-color-matrix-ref.yaml  # fails on Pixel2
-== filter-contrast-gray-alpha-1.yaml filter-contrast-gray-alpha-1-ref.yaml
-== filter-invert.yaml filter-invert-ref.yaml
-== filter-invert-2.yaml filter-invert-2-ref.yaml
+scale(*) == isolated.yaml isolated-ref.yaml
+scale(*) == invisible.yaml invisible-ref.yaml
+scale(*) fuzzy-if(platform(swgl),1,10000) == opacity.yaml opacity-ref.yaml
+scale(*) fuzzy-range(<=1,*10000) == opacity-combined.yaml opacity-combined-ref.yaml
+scale(*) fuzzy-if(platform(swgl),1,10000) == opacity-overlap.yaml opacity-overlap-ref.yaml
+scale(*) == filter-brightness.yaml filter-brightness-ref.yaml
+scale(*) == filter-brightness-2.yaml filter-brightness-2-ref.yaml
+scale(*) == filter-brightness-3.yaml filter-brightness-3-ref.yaml
+scale(*) fuzzy-if(platform(swgl),1,10000) == filter-brightness-4.yaml filter-brightness-4-ref.yaml
+scale(*) == filter-component-transfer.yaml filter-component-transfer-ref.yaml
+scale(*) skip_on(android,device) == filter-color-matrix.yaml filter-color-matrix-ref.yaml  # fails on Pixel2
+scale(*) == filter-contrast-gray-alpha-1.yaml filter-contrast-gray-alpha-1-ref.yaml
+scale(*) == filter-invert.yaml filter-invert-ref.yaml
+scale(*) == filter-invert-2.yaml filter-invert-2-ref.yaml
 platform(linux,mac) fuzzy(1,133) == filter-large-blur-radius.yaml filter-large-blur-radius.png
 skip_on(android,device) fuzzy(1,16) fuzzy-if(platform(swgl),2,12276) == draw_calls(7) color_targets(6) alpha_targets(0) filter-small-blur-radius.yaml filter-small-blur-radius.png  # fails on Pixel2
-== filter-saturate-red-1.yaml filter-saturate-red-1-ref.yaml
-== filter-saturate-red-2.yaml filter-saturate-red-2-ref.yaml
-== filter-saturate-red-3.yaml filter-saturate-red-3-ref.yaml
-== filter-saturate-green-1.yaml filter-saturate-green-1-ref.yaml
-== filter-saturate-green-2.yaml filter-saturate-green-2-ref.yaml
-== filter-saturate-green-3.yaml filter-saturate-green-3-ref.yaml
-== filter-saturate-blue-1.yaml filter-saturate-blue-1-ref.yaml
-== filter-saturate-blue-2.yaml filter-saturate-blue-2-ref.yaml
-== filter-saturate-blue-3.yaml filter-saturate-blue-3-ref.yaml
-== filter-saturate-red-alpha-1.yaml filter-saturate-red-alpha-1-ref.yaml
-== filter-saturate-green-alpha-1.yaml filter-saturate-green-alpha-1-ref.yaml
-== filter-saturate-blue-alpha-1.yaml filter-saturate-blue-alpha-1-ref.yaml
-fuzzy(1,14) == filter-hue-rotate-1.yaml filter-hue-rotate-1-ref.yaml
-skip_on(android,device) == filter-hue-rotate-alpha-1.yaml filter-hue-rotate-alpha-1-ref.yaml  # Fails on Pixel2
+scale(*) == filter-saturate-red-1.yaml filter-saturate-red-1-ref.yaml
+scale(*) == filter-saturate-red-2.yaml filter-saturate-red-2-ref.yaml
+scale(*) == filter-saturate-red-3.yaml filter-saturate-red-3-ref.yaml
+scale(*) == filter-saturate-green-1.yaml filter-saturate-green-1-ref.yaml
+scale(*) == filter-saturate-green-2.yaml filter-saturate-green-2-ref.yaml
+scale(*) == filter-saturate-green-3.yaml filter-saturate-green-3-ref.yaml
+scale(*) == filter-saturate-blue-1.yaml filter-saturate-blue-1-ref.yaml
+scale(*) == filter-saturate-blue-2.yaml filter-saturate-blue-2-ref.yaml
+scale(*) == filter-saturate-blue-3.yaml filter-saturate-blue-3-ref.yaml
+scale(*) == filter-saturate-red-alpha-1.yaml filter-saturate-red-alpha-1-ref.yaml
+scale(*) == filter-saturate-green-alpha-1.yaml filter-saturate-green-alpha-1-ref.yaml
+scale(*) == filter-saturate-blue-alpha-1.yaml filter-saturate-blue-alpha-1-ref.yaml
+scale(*) fuzzy(1,14) == filter-hue-rotate-1.yaml filter-hue-rotate-1-ref.yaml
+scale(*) skip_on(android,device) == filter-hue-rotate-alpha-1.yaml filter-hue-rotate-alpha-1-ref.yaml  # Fails on Pixel2
 skip_on(android,device) fuzzy(2,10169) fuzzy-if(platform(swgl),9,109897) == filter-long-chain.yaml filter-long-chain.png  # fails on Pixel2
 platform(linux,mac) == filter-drop-shadow.yaml filter-drop-shadow.png
 platform(linux,mac) == filter-drop-shadow-on-viewport-edge.yaml filter-drop-shadow-on-viewport-edge.png
@@ -49,36 +49,36 @@ fuzzy(2,50000) platform(linux,mac) == blend-clipped.yaml blend-clipped.png
 platform(linux,mac) == filter-drop-shadow-clip.yaml filter-drop-shadow-clip.png
 fuzzy(2,10) platform(linux,mac) == filter-drop-shadow-clip-2.yaml filter-drop-shadow-clip-2.png
 fuzzy(1,58) platform(linux) == filter-drop-shadow-clip-3.yaml filter-drop-shadow-clip-3.png
-fuzzy(5,100000) == filter-drop-shadow-scaled.yaml filter-drop-shadow-scaled-ref.yaml
-== filter-segments.yaml filter-segments-ref.yaml
+scale(*) fuzzy(5,100000) == filter-drop-shadow-scaled.yaml filter-drop-shadow-scaled-ref.yaml
+scale(*) == filter-segments.yaml filter-segments-ref.yaml
 == iframe-dropshadow.yaml iframe-dropshadow-ref.yaml
-skip_on(android,device) == filter-mix-blend-mode.yaml filter-mix-blend-mode-ref.yaml  # fails on Pixel2
+scale(*) skip_on(android,device) == filter-mix-blend-mode.yaml filter-mix-blend-mode-ref.yaml  # fails on Pixel2
 == fuzzy(3,20000) srgb-to-linear.yaml srgb-to-linear-ref.yaml
-!= srgb-to-linear-2.yaml srgb-to-linear-ref.yaml
-!= filter-blur-huge.yaml blank.yaml
-!= filter-drop-shadow-huge.yaml blank.yaml
-!= filter-drop-shadow-transform-huge.yaml blank.yaml
+scale(*) != srgb-to-linear-2.yaml srgb-to-linear-ref.yaml
+scale(*) != filter-blur-huge.yaml blank.yaml
+scale(*) != filter-drop-shadow-huge.yaml blank.yaml
+scale(*) != filter-drop-shadow-transform-huge.yaml blank.yaml
 fuzzy(4,62000) == filter-drop-shadow-blur-clamping.yaml filter-drop-shadow-blur-clamping-ref.yaml
-== filter-blur-scaled.yaml filter-blur-scaled-ref.yaml
+scale(*) == filter-blur-scaled.yaml filter-blur-scaled-ref.yaml
 fuzzy(5,72000) == filter-blur-clamping.yaml filter-blur-clamping-ref.yaml
 skip_on(android,device) skip_on(win) fuzzy(1,104) fuzzy-if(platform(swgl),4,18484) == filter-blur-scaled-xonly.yaml filter-blur-scaled-xonly.png  # fails on  Pixel2
-== svg-filter-flood.yaml svg-filter-flood-ref.yaml
-== backdrop-filter-basic.yaml backdrop-filter-basic-ref.yaml
+scale(*) == svg-filter-flood.yaml svg-filter-flood-ref.yaml
+scale(*) == backdrop-filter-basic.yaml backdrop-filter-basic-ref.yaml
 platform(linux,mac) == backdrop-filter-perspective.yaml backdrop-filter-perspective.png
-== backdrop-filter-on-child-surface.yaml backdrop-filter-on-child-surface-ref.yaml
-== backdrop-filter-clip-mask.yaml backdrop-filter-clip-mask-ref.yaml
+scale(*) == backdrop-filter-on-child-surface.yaml backdrop-filter-on-child-surface-ref.yaml
+scale(*) == backdrop-filter-clip-mask.yaml backdrop-filter-clip-mask-ref.yaml
 platform(linux,mac) == backdrop-filter-across-tiles.yaml backdrop-filter-across-tiles.png
 platform(linux,mac) == backdrop-filter-chain.yaml backdrop-filter-chain.png
 platform(linux,mac) == backdrop-filter-overlap.yaml backdrop-filter-overlap.png
 fuzzy(1,100) platform(linux,mac) == backdrop-filter-blur-across-tiles.yaml backdrop-filter-blur-across-tiles.png
 == fuzzy(1,4900) backdrop-filter-isolation.yaml backdrop-filter-isolation-ref.yaml
 #platform(linux,mac) == backdrop-filter-drop-shadow.yaml backdrop-filter-drop-shadow.png
-== backdrop-filter-blur-edge-mode.yaml backdrop-filter-blur-edge-mode-ref.yaml
-== backdrop-filter-half-opacity.yaml backdrop-filter-half-opacity-ref.yaml
-== backdrop-filter-culled-filter.yaml backdrop-filter-culled-filter-ref.yaml
-== backdrop-filter-nested.yaml blank.yaml		# just don't crash
+scale(*) == backdrop-filter-blur-edge-mode.yaml backdrop-filter-blur-edge-mode-ref.yaml
+scale(*) == backdrop-filter-half-opacity.yaml backdrop-filter-half-opacity-ref.yaml
+scale(*) fuzzy(1,150) == backdrop-filter-culled-filter.yaml backdrop-filter-culled-filter-ref.yaml
+scale(*) == backdrop-filter-nested.yaml blank.yaml		# just don't crash
 platform(linux,mac) == backdrop-filter-transformed-filter.yaml backdrop-filter-transformed-filter.png
 skip_on(android,device) == filter-mix-blend-scaling.yaml filter-mix-blend-scaling-ref.yaml
 platform(linux) == blend-clipped-raster-root.yaml blend-clipped-raster-root.png
-== drop-shadow-inverse-scale.yaml blank.yaml
+scale(*) == drop-shadow-inverse-scale.yaml blank.yaml
 platform(linux,mac) == filter-drop-shadow-fractional.yaml filter-drop-shadow-fractional.png

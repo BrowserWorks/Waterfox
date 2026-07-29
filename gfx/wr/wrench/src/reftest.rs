@@ -28,6 +28,33 @@ const OPTION_DISABLE_SUBPX: &str = "disable-subpixel";
 const OPTION_DISABLE_AA: &str = "disable-aa";
 const OPTION_ALLOW_MIPMAPS: &str = "allow-mipmaps";
 
+/// Split a manifest line into whitespace-separated tokens, but treat any
+/// parenthesized or bracketed argument list as part of a single token so that
+/// options such as `scale(1.0, 1.5, 2.0)` may contain spaces between arguments.
+fn split_manifest_tokens(s: &str) -> Vec<&str> {
+    let mut tokens = Vec::new();
+    let mut depth = 0i32;
+    let mut start = None;
+    for (i, c) in s.char_indices() {
+        match c {
+            '(' | '[' => depth += 1,
+            ')' | ']' => depth = (depth - 1).max(0),
+            _ => {}
+        }
+        if c.is_whitespace() && depth == 0 {
+            if let Some(begin) = start.take() {
+                tokens.push(&s[begin .. i]);
+            }
+        } else if start.is_none() {
+            start = Some(i);
+        }
+    }
+    if let Some(begin) = start {
+        tokens.push(&s[begin ..]);
+    }
+    tokens
+}
+
 pub struct ReftestOptions {
     // These override values that are lower.
     pub allow_max_difference: usize,
@@ -90,6 +117,7 @@ impl ExtraCheck {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct RefTestFuzzy {
     max_difference: usize,
     num_differences: usize,
@@ -101,19 +129,40 @@ pub struct Reftest {
     reference: PathBuf,
     font_render_mode: Option<FontRenderMode>,
     fuzziness: Vec<RefTestFuzzy>,
+    /// Fuzziness overrides that only apply when running at a specific device
+    /// pixel scale (via `fuzzy-if(scale(X), ...)` / `fuzzy-range-if(scale(X),
+    /// ...)`). Each entry is already finalized for its scale. Looked up in
+    /// `fuzziness_for_scale`; falls back to `fuzziness` when no scale matches.
+    scale_fuzziness: Vec<(f32, Vec<RefTestFuzzy>)>,
     extra_checks: Vec<ExtraCheck>,
     allow_mipmaps: bool,
     force_subpixel_aa_where_possible: Option<bool>,
     max_surface_override: Option<usize>,
+    /// Device pixel scales at which to run this test. Defaults to a single
+    /// `1.0` entry. When more than one is specified (via the `scale(...)`
+    /// reftest option) the test is run once per scale.
+    scales: Vec<f32>,
 }
 
 impl Reftest {
+    /// The fuzziness to use when running at the given device pixel scale. Uses a
+    /// scale-specific override if one was provided, otherwise the default.
+    fn fuzziness_for_scale(&self, device_pixel_scale: f32) -> &[RefTestFuzzy] {
+        self.scale_fuzziness
+            .iter()
+            .find(|(scale, _)| *scale == device_pixel_scale)
+            .map(|(_, fuzziness)| fuzziness.as_slice())
+            .unwrap_or(&self.fuzziness)
+    }
+
     /// Check the positive case (expecting equality) and report details if different
     fn check_and_report_equality_failure(
         &self,
         comparison: ReftestImageComparison,
         test: &ReftestImage,
         reference: &ReftestImage,
+        fuzziness: &[RefTestFuzzy],
+        test_name: &str,
     ) -> bool {
         match comparison {
             ReftestImageComparison::Equal => {
@@ -177,7 +226,7 @@ impl Reftest {
                 let mut is_failing = false;
                 let mut fail_text = String::new();
 
-                for fuzzy in &self.fuzziness {
+                for fuzzy in fuzziness {
                     let fuzzy_max_difference = cmp::min(255, fuzzy.max_difference);
                     let num_differences = prefix_sum[fuzzy_max_difference] - previous_sum_fail;
                     if num_differences > fuzzy.num_differences {
@@ -207,7 +256,7 @@ impl Reftest {
                     println!(
                         "REFTEST TEST-UNEXPECTED-FAIL | {} | \
                          image comparison, max difference: {}, number of differing pixels: {} | {}",
-                        self,
+                        test_name,
                         max_difference,
                         count_different,
                         fail_text,
@@ -217,7 +266,7 @@ impl Reftest {
                         "REFTEST   IMAGE 2 (REFERENCE): {}",
                         reference.clone().create_data_uri()
                     );
-                    println!("REFTEST TEST-END | {}", self);
+                    println!("REFTEST TEST-END | {}", test_name);
 
                     false
                 } else {
@@ -228,9 +277,9 @@ impl Reftest {
     }
 
     /// Report details of the negative case
-    fn report_unexpected_equality(&self) {
-        println!("REFTEST TEST-UNEXPECTED-FAIL | {} | image comparison", self);
-        println!("REFTEST TEST-END | {}", self);
+    fn report_unexpected_equality(&self, test_name: &str) {
+        println!("REFTEST TEST-UNEXPECTED-FAIL | {} | image comparison", test_name);
+        println!("REFTEST TEST-END | {}", test_name);
     }
 }
 
@@ -370,7 +419,10 @@ impl ReftestManifest {
                 continue;
             }
 
-            let tokens: Vec<&str> = s.split_whitespace().collect();
+            // Split on whitespace, but keep parenthesized/bracketed argument
+            // lists together so options like `scale(1.0, 1.5, 2.0)` may contain
+            // spaces between their arguments.
+            let tokens: Vec<&str> = split_manifest_tokens(s);
 
             let mut fuzziness = Vec::new();
             let mut op = None;
@@ -379,6 +431,21 @@ impl ReftestManifest {
             let mut allow_mipmaps = false;
             let mut force_subpixel_aa_where_possible = None;
             let mut max_surface_override = None;
+            let mut scales = Vec::new();
+            // Fuzziness overrides gated on a specific device pixel scale, e.g.
+            // `fuzzy-if(scale(0.5), 10, 20)`. Deferred to run time (the scale is
+            // only known then) rather than evaluated as an environment condition.
+            let mut scale_fuzziness_raw: Vec<(f32, RefTestFuzzy)> = Vec::new();
+
+            // Returns Some(scale) if `cond` is a `scale(X)` condition.
+            let scale_condition = |cond: &str| -> Option<f32> {
+                if cond.starts_with("scale(") {
+                    let (_, args, _) = parse_function(cond);
+                    Some(args[0].parse().expect("invalid scale condition"))
+                } else {
+                    None
+                }
+            };
 
             let mut parse_command = |token: &str| -> bool {
                 match token {
@@ -389,11 +456,18 @@ impl ReftestManifest {
                     function if function.starts_with("fuzzy-range(") ||
                                 function.starts_with("fuzzy-range-if(") => {
                         let (_, mut args, _) = parse_function(function);
+                        let mut scale = None;
                         if function.starts_with("fuzzy-range-if(") {
-                            if !expect_bool(environment.parse_condition(args.remove(0)), "unknown condition") {
-                                return true;
+                            let cond = args.remove(0);
+                            match scale_condition(cond) {
+                                Some(s) => scale = Some(s),
+                                None => {
+                                    if !expect_bool(environment.parse_condition(cond), "unknown condition") {
+                                        return true;
+                                    }
+                                    fuzziness.clear();
+                                }
                             }
-                            fuzziness.clear();
                         }
                         let num_range = args.len() / 2;
                         for range in 0..num_range {
@@ -407,22 +481,39 @@ impl ReftestManifest {
                             }
                             let max_difference  = max.parse().unwrap();
                             let num_differences = num.parse().unwrap();
-                            fuzziness.push(RefTestFuzzy { max_difference, num_differences });
+                            let fuzzy = RefTestFuzzy { max_difference, num_differences };
+                            match scale {
+                                Some(s) => scale_fuzziness_raw.push((s, fuzzy)),
+                                None => fuzziness.push(fuzzy),
+                            }
                         }
                     }
                     function if function.starts_with("fuzzy(") ||
                                 function.starts_with("fuzzy-if(") => {
                         let (_, mut args, _) = parse_function(function);
+                        let mut scale = None;
                         if function.starts_with("fuzzy-if(") {
-                            if !expect_bool(environment.parse_condition(args.remove(0)), "unknown condition") {
-                                return true;
+                            let cond = args.remove(0);
+                            match scale_condition(cond) {
+                                Some(s) => scale = Some(s),
+                                None => {
+                                    if !expect_bool(environment.parse_condition(cond), "unknown condition") {
+                                        return true;
+                                    }
+                                    fuzziness.clear();
+                                }
                             }
-                            fuzziness.clear();
                         }
                         let max_difference = expect_usize(args[0].parse().ok(), "max difference");
                         let num_differences = expect_usize(args[1].parse().ok(), "num differing pixels");
-                        assert!(fuzziness.is_empty()); // if this fires, consider fuzzy-range instead
-                        fuzziness.push(RefTestFuzzy { max_difference, num_differences });
+                        let fuzzy = RefTestFuzzy { max_difference, num_differences };
+                        match scale {
+                            Some(s) => scale_fuzziness_raw.push((s, fuzzy)),
+                            None => {
+                                assert!(fuzziness.is_empty()); // if this fires, consider fuzzy-range instead
+                                fuzziness.push(fuzzy);
+                            }
+                        }
                     }
                     function if function.starts_with("draw_calls(") => {
                         let (_, args, _) = parse_function(function);
@@ -439,6 +530,16 @@ impl ReftestManifest {
                     function if function.starts_with("max_surface_size(") => {
                         let (_, args, _) = parse_function(function);
                         max_surface_override = Some(args[0].parse().unwrap());
+                    }
+                    function if function.starts_with("scale(") => {
+                        let (_, args, _) = parse_function(function);
+                        // `scale(*)` is shorthand for a standard set of scales,
+                        // including fractional ones that stress snapping.
+                        if args == ["*"] {
+                            scales = vec![1.0, 2.0, 1.51, 0.51];
+                        } else {
+                            scales = args.iter().map(|arg| arg.parse().unwrap()).collect();
+                        }
                     }
                     options if options.starts_with("options(") => {
                         let (_, args, _) = parse_function(options);
@@ -515,37 +616,67 @@ impl ReftestManifest {
             let reference = paths.pop().unwrap();
             let test = paths;
 
-            if environment.platform != "linux" || environment.platform == "swgl" {
-                // Add some fuzz on every platform except linux.
-                // First remove the ranges with difference <= 5, otherwise they might cause the
-                // test to fail before the new range is picked up.
-                fuzziness.retain(|fuzzy| fuzzy.max_difference > 5);
-                fuzziness.push(RefTestFuzzy { max_difference: 5, num_differences: std::usize::MAX });
-            }
+            // Finalize a raw fuzziness list: add the small default fuzz used on
+            // non-linux/swgl platforms, merge with the harness-wide allowances,
+            // and sort so the comparison can count violations cheaply.
+            let finalize_fuzziness = |mut fuzziness: Vec<RefTestFuzzy>| -> Vec<RefTestFuzzy> {
+                if environment.platform != "linux" || environment.platform == "swgl" {
+                    // Add some fuzz on every platform except linux.
+                    // First remove the ranges with difference <= 5, otherwise they might cause the
+                    // test to fail before the new range is picked up.
+                    fuzziness.retain(|fuzzy| fuzzy.max_difference > 5);
+                    fuzziness.push(RefTestFuzzy { max_difference: 5, num_differences: std::usize::MAX });
+                }
 
-            // to avoid changing the meaning of existing tests, the case of
-            // only a single (or no) 'fuzzy' keyword means we use the max
-            // of that fuzzy and options.allow_.. (we don't want that to
-            // turn into a test that allows fuzzy.allow_ *plus* options.allow_):
-            match fuzziness.len() {
-                0 => fuzziness.push(RefTestFuzzy {
-                        max_difference: options.allow_max_difference,
-                        num_differences: options.allow_num_differences }),
-                1 => {
-                    let fuzzy = &mut fuzziness[0];
-                    fuzzy.max_difference = cmp::max(fuzzy.max_difference, options.allow_max_difference);
-                    fuzzy.num_differences = cmp::max(fuzzy.num_differences, options.allow_num_differences);
-                },
-                _ => {
-                    // ignore options, use multiple fuzzy keywords instead. make sure
-                    // the list is sorted to speed up counting violations.
-                    fuzziness.sort_by(|a, b| a.max_difference.cmp(&b.max_difference));
-                    for pair in fuzziness.windows(2) {
-                        if pair[0].max_difference == pair[1].max_difference {
-                            println!("Warning: repeated fuzzy of max_difference {} ignored.",
-                                     pair[1].max_difference);
+                // to avoid changing the meaning of existing tests, the case of
+                // only a single (or no) 'fuzzy' keyword means we use the max
+                // of that fuzzy and options.allow_.. (we don't want that to
+                // turn into a test that allows fuzzy.allow_ *plus* options.allow_):
+                match fuzziness.len() {
+                    0 => fuzziness.push(RefTestFuzzy {
+                            max_difference: options.allow_max_difference,
+                            num_differences: options.allow_num_differences }),
+                    1 => {
+                        let fuzzy = &mut fuzziness[0];
+                        fuzzy.max_difference = cmp::max(fuzzy.max_difference, options.allow_max_difference);
+                        fuzzy.num_differences = cmp::max(fuzzy.num_differences, options.allow_num_differences);
+                    },
+                    _ => {
+                        // ignore options, use multiple fuzzy keywords instead. make sure
+                        // the list is sorted to speed up counting violations.
+                        fuzziness.sort_by(|a, b| a.max_difference.cmp(&b.max_difference));
+                        for pair in fuzziness.windows(2) {
+                            if pair[0].max_difference == pair[1].max_difference {
+                                println!("Warning: repeated fuzzy of max_difference {} ignored.",
+                                         pair[1].max_difference);
+                            }
                         }
                     }
+                }
+                fuzziness
+            };
+
+            if scales.is_empty() {
+                scales.push(1.0);
+            }
+
+            // The default fuzziness, used at any scale without an override.
+            let default_fuzziness = finalize_fuzziness(fuzziness.clone());
+
+            // For each scale that has a `fuzzy-if(scale(X), ...)` override,
+            // combine the base fuzziness with that scale's extra entries and
+            // finalize the result for that scale.
+            let mut scale_fuzziness = Vec::new();
+            for &scale in &scales {
+                let extra: Vec<RefTestFuzzy> = scale_fuzziness_raw
+                    .iter()
+                    .filter(|(s, _)| *s == scale)
+                    .map(|(_, fuzzy)| *fuzzy)
+                    .collect();
+                if !extra.is_empty() {
+                    let mut combined = fuzziness.clone();
+                    combined.extend(extra);
+                    scale_fuzziness.push((scale, finalize_fuzziness(combined)));
                 }
             }
 
@@ -554,11 +685,13 @@ impl ReftestManifest {
                 test,
                 reference,
                 font_render_mode,
-                fuzziness,
+                fuzziness: default_fuzziness,
+                scale_fuzziness,
                 extra_checks,
                 allow_mipmaps,
                 force_subpixel_aa_where_possible,
                 max_surface_override,
+                scales,
             });
         }
 
@@ -755,7 +888,27 @@ impl<'a> ReftestHarness<'a> {
     }
 
     fn run_reftest(&mut self, t: &Reftest) -> bool {
-        let test_name = t.to_string();
+        // Run the test once per requested device pixel scale (defaults to a
+        // single 1.0 entry). The test only passes if it passes at every scale.
+        let mut all_passed = true;
+        for scale in &t.scales {
+            all_passed &= self.run_reftest_with_scale(t, *scale);
+        }
+        all_passed
+    }
+
+    fn run_reftest_with_scale(&mut self, t: &Reftest, device_pixel_scale: f32) -> bool {
+        // Only yaml paths are rendered at the requested scale; png references
+        // are fixed images, so don't tag them with a scale.
+        let with_scale = |path: &Path| {
+            if path.extension().and_then(|e| e.to_str()) == Some("yaml") && device_pixel_scale != 1.0 {
+                format!("{}(scale: {})", path.display(), device_pixel_scale)
+            } else {
+                path.display().to_string()
+            }
+        };
+        let test_paths: Vec<String> = t.test.iter().map(|p| with_scale(p)).collect();
+        let test_name = format!("{} {} {}", test_paths.join(", "), t.op, with_scale(&t.reference));
         println!("REFTEST {}", test_name);
         profile_scope!("wrench reftest", text: &test_name);
 
@@ -806,6 +959,7 @@ impl<'a> ReftestHarness<'a> {
                         test_size,
                         t.font_render_mode,
                         t.allow_mipmaps,
+                        device_pixel_scale,
                     );
                     images.push(output.image);
                     results.push(output.results);
@@ -832,6 +986,7 @@ impl<'a> ReftestHarness<'a> {
                         test_size,
                         t.font_render_mode,
                         t.allow_mipmaps,
+                        device_pixel_scale,
                     );
                     images.push(output.image);
                     results.push(output.results);
@@ -858,6 +1013,7 @@ impl<'a> ReftestHarness<'a> {
                 test_size,
                 t.font_render_mode,
                 t.allow_mipmaps,
+                device_pixel_scale,
             );
             output.image
         };
@@ -892,6 +1048,8 @@ impl<'a> ReftestHarness<'a> {
                     comparison,
                     &test,
                     &reference,
+                    t.fuzziness_for_scale(device_pixel_scale),
+                    &test_name,
                 )
             }
             ReftestOp::NotEqual => {
@@ -900,7 +1058,7 @@ impl<'a> ReftestHarness<'a> {
                 let comparison = test.compare(&reference);
                 match comparison {
                     ReftestImageComparison::Equal => {
-                        t.report_unexpected_equality();
+                        t.report_unexpected_equality(&test_name);
                         false
                     }
                     ReftestImageComparison::NotEqual { .. } => {
@@ -917,6 +1075,8 @@ impl<'a> ReftestHarness<'a> {
                         comparison,
                         &test,
                         &reference,
+                        t.fuzziness_for_scale(device_pixel_scale),
+                        &test_name,
                     ) {
                         return false;
                     }
@@ -934,7 +1094,7 @@ impl<'a> ReftestHarness<'a> {
                 });
 
                 if all_same {
-                    t.report_unexpected_equality();
+                    t.report_unexpected_equality(&test_name);
                 }
 
                 !all_same
@@ -959,10 +1119,12 @@ impl<'a> ReftestHarness<'a> {
         size: DeviceIntSize,
         font_render_mode: Option<FontRenderMode>,
         allow_mipmaps: bool,
+        device_pixel_scale: f32,
     ) -> YamlRenderOutput {
         let mut reader = YamlFrameReader::new(filename);
         reader.set_font_render_mode(font_render_mode);
         reader.allow_mipmaps(allow_mipmaps);
+        reader.set_device_pixel_scale(device_pixel_scale);
         reader.do_frame(self.wrench);
 
         self.wrench.api.flush_scene_builder();

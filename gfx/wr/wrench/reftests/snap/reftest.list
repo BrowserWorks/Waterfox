@@ -1,8 +1,8 @@
 platform(linux,mac) == snap.yaml snap.png
 == transform.yaml transform.png
 platform(linux,mac) == preserve-3d.yaml preserve-3d.png
-fuzzy(128,200) == subpixel-raster-root.yaml subpixel-raster-root-ref.yaml
+scale(*) fuzzy(128,200) == subpixel-raster-root.yaml subpixel-raster-root-ref.yaml
 platform(linux,mac) == fractional-filter.yaml fractional-filter-ref.yaml
-max_surface_size(256) == 1761299.yaml 1761299.yaml
+scale(*) max_surface_size(256) == 1761299.yaml 1761299.yaml
 == content-offset.yaml content-offset-ref.yaml
 == fractional-root-frame.yaml fractional-root-frame-ref.yaml
