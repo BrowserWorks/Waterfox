@@ -83,7 +83,7 @@ scale(*) == radial-zero-size-3.yaml radial-zero-size-ref.yaml
 scale(*) == linear-adjust-tile-size.yaml linear-adjust-tile-size-ref.yaml
 scale(*) == linear-repeat-clip.yaml linear-repeat-clip-ref.yaml
 
-fuzzy(2,50) platform(linux,mac) == linear-aligned-border-radius.yaml linear-aligned-border-radius.png
+scale(*) fuzzy(2,50) platform(linux,mac) == linear-aligned-border-radius.yaml linear-aligned-border-radius.png
 # interpolation fuzz from sampling texture-baked gradient ramps
 platform(linux,mac) fuzzy-range(<=1,*1404) == repeat-border-radius.yaml repeat-border-radius.png
 fuzzy(3,6000) == radial-border-radius-large.yaml radial-border-radius-large-ref.png
