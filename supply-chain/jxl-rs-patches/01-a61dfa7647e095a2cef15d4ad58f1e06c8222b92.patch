@@ -1,0 +1,48 @@
+From a61dfa7647e095a2cef15d4ad58f1e06c8222b92 Mon Sep 17 00:00:00 2001
+From: Mrmaxmeier <3913977+Mrmaxmeier@users.noreply.github.com>
+Date: Fri, 28 Aug 2026 15:08:47 +0200
+Subject: [PATCH] Fix panic on grayscale non-XYB VarDCT frames (#908)
+
+For a grayscale, non-XYB VarDCT frame the pipeline has no stage that consumes
+colour channels 1 and 2: there is no XybStage, no YcbcrToRgbStage, and the save
+stage only reads channel 0. The builder therefore prunes those channels and
+leaves their `ChannelInfo::ty` as `None`. VarDCT nevertheless decodes all three
+colour channels and asks the pipeline for a scratch buffer for each, so
+`group_size_for_channel` panicked on `ty.unwrap()`.
+
+The buffer size does not depend on the channel type; `ty` was only used to
+assert that the caller and the pipeline agree. Run that check only when the
+channel actually has a type, so unused channels get a correctly sized throwaway
+buffer that `set_buffer_for_group` (already guarded by `channel_is_used`) drops.
+This matches libjxl, which likewise decodes three channels and discards the two
+it does not output.
+
+Assisted-By: Claude Opus 5 <noreply@anthropic.com>
+
+Local backport scope: production changes only. Upstream regression tests,
+fixtures, and test-only harness changes are intentionally omitted. The
+original commit message above describes the full upstream change.
+
+diff --git a/jxl/src/render/internal.rs b/jxl/src/render/internal.rs
+index 57f0885ed..f6e2c4dc4 100644
+--- a/jxl/src/render/internal.rs
++++ b/jxl/src/render/internal.rs
+@@ -147,10 +147,15 @@ impl<Buffer> RenderPipelineShared<Buffer> {
+         requested_data_type: DataTypeTag,
+     ) -> (usize, usize) {
+         let ChannelInfo { downsample, ty } = self.channel_info[0][channel];
+-        if ty.unwrap() != requested_data_type {
++        // Channels that no stage consumes have no type at all. Callers may still ask for a
++        // scratch buffer for them (e.g. VarDCT always decodes three colour channels, but a
++        // grayscale pipeline only ever reads the first one); the data written there is
++        // discarded, so any type is acceptable.
++        if let Some(ty) = ty
++            && ty != requested_data_type
++        {
+             panic!(
+-                "Invalid pipeline usage: incorrect channel type, requested {:?}, but pipeline wants {ty:?}",
+-                requested_data_type
++                "Invalid pipeline usage: incorrect channel type, requested {requested_data_type:?}, but pipeline wants {ty:?}"
+             );
+         }
+         // 420 JPEGs are padded to 16 pixels, not to 8.

@@ -1,0 +1,35 @@
+From 744d81865ebe251804c63b3dbf0ec9ced0e9719a Mon Sep 17 00:00:00 2001
+From: Timothy Nikkel <tnikkel@mozilla.com>
+Date: Wed, 9 Sep 2026 21:03:24 -0500
+Subject: [PATCH] Fix undersized input row buffer.
+
+5dfeb9e5fddb1ffebb709745f9c4739ec0cc2e82 grew the per stage row buffers to
+chunk_size + 2*border_size, but the input row buffers allocated just above them
+were left at chunk_size. BufferFiller::fill writes xsize + 2*input_border
+pixels into those, so a rect from ready_image_area that is wider than
+chunk_size runs off the end of one.
+
+The padding inside RowBuffer hides this until 2*border_size + input_border goes
+past 32 elements. The test image has an extra channel with 8x upsampling, which
+puts border_size at 16 while the colour channels are still allocated for a 256
+wide group. It panics with a slice index out of range, and the incremental
+decode reaches it without several threads.
+
+Local backport scope: production changes only. Upstream regression tests,
+fixtures, and test-only harness changes are intentionally omitted. The
+original commit message above describes the full upstream change.
+
+diff --git a/jxl/src/render/low_memory_pipeline/mod.rs b/jxl/src/render/low_memory_pipeline/mod.rs
+index 32b885bd0..208c2e06b 100644
+--- a/jxl/src/render/low_memory_pipeline/mod.rs
++++ b/jxl/src/render/low_memory_pipeline/mod.rs
+@@ -55,7 +55,8 @@ impl LowMemoryRenderPipelinePerThread {
+                 p.next_border_and_cur_downsample[0][chan].0 as usize,
+                 0,
+                 0,
+-                p.shared.chunk_size >> p.shared.channel_info[0][chan].downsample.0,
++                (p.shared.chunk_size + 2 * p.border_size.0)
++                    >> p.shared.channel_info[0][chan].downsample.0,
+             )?);
+         }
+         self.row_buffers = vec![initial_buffers];

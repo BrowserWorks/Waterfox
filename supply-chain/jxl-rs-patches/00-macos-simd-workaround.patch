@@ -1,0 +1,223 @@
+From 33829f650c7729d7157f0aa4611a6aa7b6f7be21 Mon Sep 17 00:00:00 2001
+From: Timothy Nikkel <tnikkel@gmail.com>
+Date: Thu, 20 Aug 2026 05:44:46 +0000
+Subject: [PATCH] Bug 2064595. Re-apply the vendored jxl_simd Mac/x86_64
+ workaround on top of jxl-rs 0.6.0. r=saschanaz,supply-chain-reviewers
+
+Re-lands the local patch backed out in the first patch of this series, now on top
+of the unmodified 0.6.0 import. Upstream did not touch src/x86_64/avx.rs or
+src/x86_64/avx512.rs between 0.5.1 and 0.6.0, so this is the same patch.
+
+Differential Revision: https://phabricator.services.mozilla.com/D319666
+
+diff --git a/jxl_simd/Cargo.toml b/jxl_simd/Cargo.toml
+index 77079b3e0ad57..d968509a37e36 100644
+--- a/jxl_simd/Cargo.toml
++++ b/jxl_simd/Cargo.toml
+@@ -49,7 +49,8 @@ sse42 = []
+ name = "jxl_simd"
+ path = "src/lib.rs"
+ 
+-[dependencies]
++[dependencies.rustversion]
++version = "1"
+ 
+ [dev-dependencies.arbtest]
+ version = "0.3.2"
+diff --git a/jxl_simd/src/x86_64/avx.rs b/jxl_simd/src/x86_64/avx.rs
+index 144776f5e20aa..92730290a6ab9 100644
+--- a/jxl_simd/src/x86_64/avx.rs
++++ b/jxl_simd/src/x86_64/avx.rs
+@@ -527,6 +527,47 @@ impl F32SimdVec for F32VecAvx {
+         F32VecAvx(_mm256_fnmadd_ps(this.0, mul.0, add.0), this.1)
+     });
+ 
++    // splat / abs / neg / copysign below have a Mac-only variant that
++    // works around a rust/LLVM issue making jxl-rs decode ~3x slower on
++    // macOS x86_64 PGO builds (bug 2043090).
++    //
++    // What goes wrong: jxl-rs uses _mm256_set1_ps a lot — for example
++    // F32Vec::abs() masks the sign bit with _mm256_set1_ps(-0.0). In
++    // rust < 1.95 the way _mm256_set1_ps is implemented makes LLVM see
++    // a "fill a buffer with this constant value" pattern in the IR
++    // after a few optimization passes. On macOS, an LLVM pass
++    // (LoopIdiomRecognize) converts that pattern into a call to libc's
++    // memset_pattern16. The call is correct but much slower than the
++    // single AVX broadcast instruction the source was really asking
++    // for, because the macOS ABI marks all AVX registers as caller-
++    // saved — so the surrounding code (with ~10-12 AVX values live in
++    // the EPF inner loop) has to spill them all to the stack around
++    // each call. In a PGO build with aggressive inlining this fires
++    // thousands of times.
++    //
++    // Rust 1.95 changed _mm256_set1_ps to use a different LLVM
++    // intrinsic that doesn't produce the buffer-fill pattern, so the
++    // workaround is gated to (target_os = "macos") AND (rust < 1.95).
++    // Other targets and newer rust use the original upstream code.
++    // The whole block (and the rustversion dependency) can be removed
++    // once Firefox's MSRV reaches 1.95 (tracking bug 2039416).
++    //
++    // Each Mac-only variant below takes a different path that avoids
++    // producing the buffer-fill pattern in the first place — see the
++    // per-function comments.
++
++    #[rustversion::before(1.95)]
++    #[cfg(target_os = "macos")]
++    #[inline(always)]
++    fn splat(d: Self::Descriptor, v: f32) -> Self {
++        // _mm_set_ss(v) builds [v, 0, 0, 0] — values aren't all the same, so
++        // LLVM doesn't recognize this as a buffer-fill. _mm256_broadcastss_ps
++        // then broadcasts lane 0 to all 8 lanes via a single `vbroadcastss
++        // %xmm, %ymm`. SAFETY: avx2 from `d`.
++        unsafe { Self(_mm256_broadcastss_ps(_mm_set_ss(v)), d) }
++    }
++
++    #[rustversion::attr(before(1.95), cfg(not(target_os = "macos")))]
+     #[inline(always)]
+     fn splat(d: Self::Descriptor, v: f32) -> Self {
+         // SAFETY: We know avx is available from the safety invariant on `d`.
+@@ -539,6 +580,23 @@ impl F32SimdVec for F32VecAvx {
+         unsafe { Self(_mm256_setzero_ps(), d) }
+     }
+ 
++    #[rustversion::before(1.95)]
++    #[cfg(target_os = "macos")]
++    fn_avx!(this: F32VecAvx, fn abs() -> F32VecAvx {
++        // Load the sign-mask directly from .rodata instead of constructing it
++        // with _mm256_set1_ps(-0.0). The static array becomes a 32-byte
++        // constant the linker puts in .rodata, so this is just a single load.
++        static SIGN_MASK: [u32; 8] = [0x80000000; 8];
++        // SAFETY: avx2 is available from the safety invariant on `this.1`.
++        let mask = unsafe {
++            _mm256_castsi256_ps(_mm256_loadu_si256(
++                SIGN_MASK.as_ptr() as *const __m256i,
++            ))
++        };
++        F32VecAvx(_mm256_andnot_ps(mask, this.0), this.1)
++    });
++
++    #[rustversion::attr(before(1.95), cfg(not(target_os = "macos")))]
+     fn_avx!(this: F32VecAvx, fn abs() -> F32VecAvx {
+         F32VecAvx(_mm256_andnot_ps(_mm256_set1_ps(-0.0), this.0), this.1)
+     });
+@@ -551,10 +609,47 @@ impl F32SimdVec for F32VecAvx {
+         F32VecAvx(_mm256_sqrt_ps(this.0), this.1)
+     });
+ 
++    #[rustversion::before(1.95)]
++    #[cfg(target_os = "macos")]
++    fn_avx!(this: F32VecAvx, fn neg() -> F32VecAvx {
++        // Same technique as abs(): load the sign-mask from .rodata.
++        static SIGN_MASK: [u32; 8] = [0x80000000; 8];
++        // SAFETY: avx2 is available from the safety invariant on `this.1`.
++        let mask = unsafe {
++            _mm256_castsi256_ps(_mm256_loadu_si256(
++                SIGN_MASK.as_ptr() as *const __m256i,
++            ))
++        };
++        F32VecAvx(_mm256_xor_ps(mask, this.0), this.1)
++    });
++
++    #[rustversion::attr(before(1.95), cfg(not(target_os = "macos")))]
+     fn_avx!(this: F32VecAvx, fn neg() -> F32VecAvx {
+         F32VecAvx(_mm256_xor_ps(_mm256_set1_ps(-0.0), this.0), this.1)
+     });
+ 
++    #[rustversion::before(1.95)]
++    #[cfg(target_os = "macos")]
++    fn_avx!(this: F32VecAvx, fn copysign(sign: F32VecAvx) -> F32VecAvx {
++        // Same technique as abs(): load the sign-mask from .rodata (originally
++        // _mm256_set1_epi32(i32::MIN), which has the same bit pattern).
++        static SIGN_MASK: [u32; 8] = [0x80000000; 8];
++        // SAFETY: avx2 is available from the safety invariant on `this.1`.
++        let sign_mask = unsafe {
++            _mm256_castsi256_ps(_mm256_loadu_si256(
++                SIGN_MASK.as_ptr() as *const __m256i,
++            ))
++        };
++        F32VecAvx(
++            _mm256_or_ps(
++                _mm256_andnot_ps(sign_mask, this.0),
++                _mm256_and_ps(sign_mask, sign.0),
++            ),
++            this.1,
++        )
++    });
++
++    #[rustversion::attr(before(1.95), cfg(not(target_os = "macos")))]
+     fn_avx!(this: F32VecAvx, fn copysign(sign: F32VecAvx) -> F32VecAvx {
+         let sign_mask = _mm256_castsi256_ps(_mm256_set1_epi32(i32::MIN));
+         F32VecAvx(
+diff --git a/jxl_simd/src/x86_64/avx512.rs b/jxl_simd/src/x86_64/avx512.rs
+index d01fcb8803c8a..1a559b3a76ec1 100644
+--- a/jxl_simd/src/x86_64/avx512.rs
++++ b/jxl_simd/src/x86_64/avx512.rs
+@@ -579,6 +579,21 @@ impl F32SimdVec for F32VecAvx512 {
+         F32VecAvx512(_mm512_fnmadd_ps(this.0, mul.0, add.0), this.1)
+     });
+ 
++    // The Mac-only splat/neg/copysign variants below are the AVX-512
++    // equivalent of the workaround in avx.rs — see that file for the
++    // full explanation. F32VecAvx512::abs doesn't need the workaround
++    // because it uses _mm512_abs_ps (a dedicated abs intrinsic that
++    // doesn't go through _mm512_set1_ps).
++
++    #[rustversion::before(1.95)]
++    #[cfg(target_os = "macos")]
++    #[inline(always)]
++    fn splat(d: Self::Descriptor, v: f32) -> Self {
++        // SAFETY: avx512f is available from the safety invariant on `d`.
++        unsafe { Self(_mm512_broadcastss_ps(_mm_set_ss(v)), d) }
++    }
++
++    #[rustversion::attr(before(1.95), cfg(not(target_os = "macos")))]
+     #[inline(always)]
+     fn splat(d: Self::Descriptor, v: f32) -> Self {
+         // SAFETY: We know avx512f is available from the safety invariant on `d`.
+@@ -603,6 +618,21 @@ impl F32SimdVec for F32VecAvx512 {
+         F32VecAvx512(_mm512_sqrt_ps(this.0), this.1)
+     });
+ 
++    #[rustversion::before(1.95)]
++    #[cfg(target_os = "macos")]
++    fn_avx!(this: F32VecAvx512, fn neg() -> F32VecAvx512 {
++        static SIGN_MASK: [u32; 16] = [0x80000000; 16];
++        // SAFETY: avx512f is available from the safety invariant on `this.1`.
++        let mask = unsafe {
++            _mm512_loadu_si512(SIGN_MASK.as_ptr() as *const _)
++        };
++        F32VecAvx512(
++            _mm512_castsi512_ps(_mm512_xor_si512(mask, _mm512_castps_si512(this.0))),
++            this.1,
++        )
++    });
++
++    #[rustversion::attr(before(1.95), cfg(not(target_os = "macos")))]
+     fn_avx!(this: F32VecAvx512, fn neg() -> F32VecAvx512 {
+         F32VecAvx512(
+             _mm512_castsi512_ps(_mm512_xor_si512(
+@@ -613,6 +643,24 @@ impl F32SimdVec for F32VecAvx512 {
+         )
+     });
+ 
++    #[rustversion::before(1.95)]
++    #[cfg(target_os = "macos")]
++    fn_avx!(this: F32VecAvx512, fn copysign(sign: F32VecAvx512) -> F32VecAvx512 {
++        static SIGN_MASK: [u32; 16] = [0x80000000; 16];
++        // SAFETY: avx512f is available from the safety invariant on `this.1`.
++        let sign_mask = unsafe {
++            _mm512_loadu_si512(SIGN_MASK.as_ptr() as *const _)
++        };
++        F32VecAvx512(
++            _mm512_castsi512_ps(_mm512_or_si512(
++                _mm512_andnot_si512(sign_mask, _mm512_castps_si512(this.0)),
++                _mm512_and_si512(sign_mask, _mm512_castps_si512(sign.0)),
++            )),
++            this.1,
++        )
++    });
++
++    #[rustversion::attr(before(1.95), cfg(not(target_os = "macos")))]
+     fn_avx!(this: F32VecAvx512, fn copysign(sign: F32VecAvx512) -> F32VecAvx512 {
+         let sign_mask = _mm512_set1_epi32(i32::MIN);
+         F32VecAvx512(

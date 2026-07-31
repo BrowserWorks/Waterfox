@@ -1,0 +1,45 @@
+From dcc3e816e89f985352d3d3fa752cd1ba32fc9e3c Mon Sep 17 00:00:00 2001
+From: Mrmaxmeier <3913977+Mrmaxmeier@users.noreply.github.com>
+Date: Fri, 28 Aug 2026 15:35:50 +0200
+Subject: [PATCH] Fix u8 overflow when a context map uses cluster index 255
+ (#909)
+
+`num_histograms` was computed as `*context_map.iter().max().unwrap() + 1` on the
+`u8` cluster index, so a context map that actually uses cluster 255 overflowed
+instead of yielding 256 histograms. Compute the count in `usize`, which also
+drops the `as usize` casts at the two use sites.
+
+Assisted-By: Claude Opus 5 <noreply@anthropic.com>
+
+Local backport scope: production changes only. Upstream regression tests,
+fixtures, and test-only harness changes are intentionally omitted. The
+original commit message above describes the full upstream change.
+
+diff --git a/jxl/src/entropy_coding/decode.rs b/jxl/src/entropy_coding/decode.rs
+index 9318f4ea4..eb2b68f0f 100644
+--- a/jxl/src/entropy_coding/decode.rs
++++ b/jxl/src/entropy_coding/decode.rs
+@@ -519,18 +519,16 @@ impl Histograms {
+         } else {
+             br.read(2)? as usize + 5
+         };
+-        let num_histograms = *context_map.iter().max().unwrap() + 1;
++        // Note: cluster indices are u8, so a context map that uses cluster 255
++        // yields 256 histograms; compute the count in usize to avoid overflow.
++        let num_histograms = *context_map.iter().max().unwrap() as usize + 1;
+         let uint_configs = ((0..num_histograms).map(|_| HybridUint::decode(log_alpha_size, br)))
+             .collect::<Result<_>>()?;
+ 
+         let codes = if use_prefix_code {
+-            Codes::Huffman(HuffmanCodes::decode(num_histograms as usize, br)?)
++            Codes::Huffman(HuffmanCodes::decode(num_histograms, br)?)
+         } else {
+-            Codes::Ans(AnsCodes::decode(
+-                num_histograms as usize,
+-                log_alpha_size,
+-                br,
+-            )?)
++            Codes::Ans(AnsCodes::decode(num_histograms, log_alpha_size, br)?)
+         };
+ 
+         Ok(Histograms {

@@ -122,19 +122,11 @@ notes = "Patched version of upstream"
 
 [policy.jxl]
 audit-as-crates-io = true
-notes = "Vendored from libjxl/jxl-rs git, a few commits past the 0.4.3 tag."
-
-[policy.jxl_macros]
-audit-as-crates-io = true
-notes = "Vendored from libjxl/jxl-rs git, a few commits past the 0.4.3 tag."
+notes = "Published 0.6.0 baseline plus local crash-fix backports, path-sourced via the root Cargo.toml. Imported audits cover the published baseline only, not the local delta. Patch provenance, adaptations and pending local review are recorded in supply-chain/jxl-rs-patches/README.md."
 
 [policy.jxl_simd]
 audit-as-crates-io = true
-notes = "Vendored from libjxl/jxl-rs git, a few commits past the 0.4.3 tag."
-
-[policy.jxl_transforms]
-audit-as-crates-io = true
-notes = "Vendored from libjxl/jxl-rs git, a few commits past the 0.4.3 tag."
+notes = "Published 0.6.0 baseline plus the local Mac/x86_64 workaround (bug 2043090), path-sourced via the root Cargo.toml. Imported audits cover the published baseline only. The workaround and checksum handling are recorded in supply-chain/jxl-rs-patches/README.md."
 
 [policy.l10nregistry]
 dependency-criteria = { fluent-testing = "safe-to-run", tokio = "safe-to-run" }

@@ -1,0 +1,31 @@
+From 00c67ce711fe074d1783fd5e8bd6d6de1797b91d Mon Sep 17 00:00:00 2001
+From: Luca Versari <veluca@google.com>
+Date: Thu, 10 Sep 2026 01:20:14 +0200
+Subject: [PATCH] Fix OutOfBounds overestimate in
+ IncrementalTocReader::parse_toc
+
+In IncrementalTocReader::parse_toc, Error::OutOfBounds(c) was artificially
+inflated by estimating 2 bytes per remaining entry. When decoding small
+chunks incrementally, refill_and_parse would wait until the inflated estimate
+was satisfied before attempting to parse, causing unexpected EOF panics
+on valid files whose TOC entries take fewer bytes than estimated.
+
+Return the exact missing byte count c for the current step so incremental
+parsing can proceed as data arrives.
+
+diff --git a/jxl/src/api/inner/codestream_parser/frame_info.rs b/jxl/src/api/inner/codestream_parser/frame_info.rs
+index 8e9a39a14..03dece358 100644
+--- a/jxl/src/api/inner/codestream_parser/frame_info.rs
++++ b/jxl/src/api/inner/codestream_parser/frame_info.rs
+@@ -174,10 +174,7 @@ impl FrameInfo {
+             match toc_parser.read_step(br) {
+                 Ok(()) => *bits = br.total_bits_read(),
+                 Err(Error::OutOfBounds(c)) => {
+-                    // Estimate >= 16 bits per remaining entry to read.
+-                    return Err(Error::OutOfBounds(
+-                        c + toc_parser.remaining_entries() as usize * 2,
+-                    ));
++                    return Err(Error::OutOfBounds(c));
+                 }
+                 Err(e) => return Err(e),
+             }

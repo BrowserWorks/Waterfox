@@ -1,0 +1,74 @@
+From 0f41860125174b6d08cf2826dd2836135664cc69 Mon Sep 17 00:00:00 2001
+From: Luca Versari <veluca93@gmail.com>
+Date: Mon, 31 Aug 2026 00:03:11 +0200
+Subject: [PATCH] Check ColorEncodings that give invalid ICCs, more invalid ICC
+ streams.
+
+
+diff --git a/jxl/src/headers/color_encoding.rs b/jxl/src/headers/color_encoding.rs
+index 608e80f1d..13787e6ab 100644
+--- a/jxl/src/headers/color_encoding.rs
++++ b/jxl/src/headers/color_encoding.rs
+@@ -3,6 +3,7 @@
+ // Use of this source code is governed by a BSD-style
+ // license that can be found in the LICENSE file.
+ 
++use crate::api::primaries_to_xyz;
+ use crate::{bit_reader::BitReader, error::Error, headers::encodings::*};
+ use jxl_macros::UnconditionalCoder;
+ use num_derive::FromPrimitive;
+@@ -200,9 +201,20 @@ impl ColorEncoding {
+             || self.tf.transfer_function == TransferFunction::Unknown
+             || self.color_space == ColorSpace::XYB
+         {
+-            Err(Error::InvalidColorEncoding)
+-        } else {
+-            Ok(())
++            return Err(Error::InvalidColorEncoding);
++        }
++        if self.primaries == Primaries::Custom {
++            primaries_to_xyz(
++                self.custom_primaries[0].as_f32_coords().0,
++                self.custom_primaries[0].as_f32_coords().1,
++                self.custom_primaries[1].as_f32_coords().0,
++                self.custom_primaries[1].as_f32_coords().1,
++                self.custom_primaries[2].as_f32_coords().0,
++                self.custom_primaries[2].as_f32_coords().1,
++                self.white.as_f32_coords().0,
++                self.white.as_f32_coords().1,
++            )?;
+         }
++        Ok(())
+     }
+ }
+diff --git a/jxl/src/icc/tag.rs b/jxl/src/icc/tag.rs
+index e060856d4..a3c241057 100644
+--- a/jxl/src/icc/tag.rs
++++ b/jxl/src/icc/tag.rs
+@@ -28,7 +28,10 @@ pub(super) fn read_tag_list(
+     num_tags: u32,
+     output_size: u64,
+ ) -> Result<()> {
+-    let mut prev_tagstart = num_tags * 12 + ICC_HEADER_SIZE as u32;
++    let mut prev_tagstart = num_tags
++        .checked_mul(12)
++        .and_then(|v| v.checked_add(ICC_HEADER_SIZE as u32))
++        .ok_or(Error::InvalidIccStream)?;
+     let mut prev_tagsize = 0u32;
+ 
+     loop {
+@@ -54,10 +57,12 @@ pub(super) fn read_tag_list(
+                 .checked_add(prev_tagsize)
+                 .ok_or(Error::InvalidIccStream)?
+         } else {
+-            read_varint_from_reader(commands_stream)? as u32
++            u32::try_from(read_varint_from_reader(commands_stream)?)
++                .map_err(|_| Error::InvalidIccStream)?
+         };
+         let tagsize = match &tag {
+-            _ if command & 128 != 0 => read_varint_from_reader(commands_stream)? as u32,
++            _ if command & 128 != 0 => u32::try_from(read_varint_from_reader(commands_stream)?)
++                .map_err(|_| Error::InvalidIccStream)?,
+             b"rXYZ" | b"gXYZ" | b"bXYZ" | b"kXYZ" | b"wtpt" | b"bkpt" | b"lumi" => 20,
+             _ => prev_tagsize,
+         };

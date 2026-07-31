@@ -9,6 +9,8 @@ use jxl::api::{
 };
 use jxl::headers::extra_channels::ExtraChannel;
 
+use crate::runner::{as_dyn, PoolRunner};
+
 pub struct JxlApiDecoder {
     pub inner: JxlDecoderInner,
     metadata_only: bool,
@@ -156,25 +158,24 @@ impl JxlApiDecoder {
             .checked_mul(self.bytes_per_pixel())
             .ok_or(Error::Overflow)?;
 
+        let mut runner = PoolRunner::new();
         match k_buffer {
             Some(k) if self.has_black_channel => {
                 let mut bufs = [
                     JxlOutputBuffer::new(output_buffer, height, bytes_per_row),
                     JxlOutputBuffer::new(k, height, width),
                 ];
-                self.inner.flush_pixels(&mut bufs).map_err(Error::from)
+                self.inner
+                    .flush_pixels(&mut bufs, as_dyn(&mut runner))
+                    .map_err(Error::from)
             }
             _ => {
                 let mut buf = JxlOutputBuffer::new(output_buffer, height, bytes_per_row);
                 self.inner
-                    .flush_pixels(std::slice::from_mut(&mut buf))
+                    .flush_pixels(std::slice::from_mut(&mut buf), as_dyn(&mut runner))
                     .map_err(Error::from)
             }
         }
-    }
-
-    pub fn num_completed_passes(&self) -> usize {
-        self.inner.num_completed_passes().unwrap_or(0)
     }
 
     pub fn get_basic_info(&self) -> Option<BasicInfo> {
@@ -295,13 +296,15 @@ impl JxlApiDecoder {
             _ => BufMode::None,
         };
 
+        let mut runner = PoolRunner::new();
+
         loop {
             let bufs: Option<&mut [JxlOutputBuffer]> = match &mut buf_mode {
                 BufMode::Two(arr) => Some(arr.as_mut_slice()),
                 BufMode::Single(buf) => Some(std::slice::from_mut(buf)),
                 BufMode::None => None,
             };
-            let result = self.inner.process(data, bufs);
+            let result = self.inner.process(data, bufs, as_dyn(&mut runner));
 
             let need_more = match result {
                 Err(e) => return Err(e.into()),

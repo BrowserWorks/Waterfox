@@ -3,7 +3,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-use crate::render::RenderPipelineInPlaceStage;
+use crate::render::{ErasedLocalState, RenderPipelineInPlaceStage};
 use jxl_simd::{F32SimdVec, simd_function};
 
 /// Convert YCbCr to RGB
@@ -91,7 +91,7 @@ impl RenderPipelineInPlaceStage for YcbcrToRgbStage {
         _position: (usize, usize),
         xsize: usize,
         row: &mut [&mut [f32]],
-        _state: Option<&mut dyn std::any::Any>,
+        _state: Option<&mut ErasedLocalState>,
     ) {
         // pixels are stored in `Cb Y Cr` order to mimic XYB colorspace
         let [row_cb, row_y, row_cr] = row else {
@@ -118,7 +118,7 @@ mod test {
     use crate::error::Result;
     use crate::image::Image;
     use crate::render::test::make_and_run_simple_pipeline;
-    use crate::util::test::assert_all_almost_abs_eq;
+    use crate::tests::assert_close;
 
     #[test]
     fn consistency() -> Result<()> {
@@ -144,9 +144,9 @@ mod test {
         let output =
             make_and_run_simple_pipeline(stage, &[input_cb, input_y, input_cr], (3, 1), 0, 256)?;
 
-        assert_all_almost_abs_eq(output[0].row(0), &[1.0, 0.0, 0.0], 1e-6);
-        assert_all_almost_abs_eq(output[1].row(0), &[0.0, 1.0, 0.0], 1e-6);
-        assert_all_almost_abs_eq(output[2].row(0), &[0.0, 0.0, 1.0], 1e-6);
+        assert_close!(all, output[0].row(0), &[1.0, 0.0, 0.0], 1e-6);
+        assert_close!(all, output[1].row(0), &[0.0, 1.0, 0.0], 1e-6);
+        assert_close!(all, output[2].row(0), &[0.0, 0.0, 1.0], 1e-6);
 
         Ok(())
     }

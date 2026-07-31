@@ -1,0 +1,63 @@
+From ba5cac0ed4ab6fdc7467ce256801a3bafa761ef5 Mon Sep 17 00:00:00 2001
+From: sl91994 <112153975+sl91994@users.noreply.github.com>
+Date: Sat, 29 Aug 2026 19:14:03 +0900
+Subject: [PATCH] Fix panic in the Modular RLE fast path when LZ77 is disabled
+ (#912)
+
+`Histograms::is_rle()` asks whether every LZ77 copy has distance 1 by inspecting
+the histogram of the LZ77 distance cluster, but never checked whether LZ77 is
+enabled. With LZ77 disabled there is no distance cluster and `lz_dist_cluster`
+stays 0, so `is_rle()` inspected cluster 0 instead -- a real pixel-data
+histogram. Any stream whose cluster 0 codes the constant symbol 1 with a
+split-exponent-zero uint config was therefore reported as RLE.
+
+Together with a single Gradient leaf and prefix codes -- the rest of what
+`can_decode_fast_lossless()` requires, and an entirely ordinary minimal Modular
+stream -- this made `decode_modular_subbitstream()` take the RLE fast path,
+where `decode_fast_lossless()` unwraps `min_symbol`, `min_length` and
+`lz77_length_uint`. All three are `None` without LZ77, so decoding such a file
+panicked. The very same stream decodes without any error on the normal path, so
+this is a valid input that only the fast path mishandles.
+
+Check `lz77_params.enabled` in `is_rle()` and report such histograms as not RLE.
+This matches the other fast paths in the crate -- `can_use_config_420_fast_path()`
+and `run_on_specialized_tree()` already gate on the same flag -- and leaves
+streams that legitimately use the RLE fast path, which have LZ77 enabled,
+unaffected.
+
+Add two test files. Both are complete codestreams for the same 8x8 image, a
+single Modular frame whose three colour channels are coded in the LfGlobal
+section with one Gradient leaf and a constant residual, and they differ only in
+whether LZ77 is enabled in the pixel histograms.
+`modular_rle_fast_path_without_lz77.jxl` is the stream described above: it used
+to panic, and must now decode on the normal path.
+`modular_rle_fast_path.jxl` codes the same image as a genuine RLE stream, so it
+still takes the fast path and must decode to the very same pixels.
+
+Assisted-By: Claude Opus 5 <noreply@anthropic.com>
+
+Co-authored-by: Luca Versari <veluca93@gmail.com>
+
+Local backport scope: production changes only. Upstream regression tests,
+fixtures, and test-only harness changes are intentionally omitted. The
+original commit message above describes the full upstream change.
+
+diff --git a/jxl/src/entropy_coding/decode.rs b/jxl/src/entropy_coding/decode.rs
+index eb2b68f0f..cd2819448 100644
+--- a/jxl/src/entropy_coding/decode.rs
++++ b/jxl/src/entropy_coding/decode.rs
+@@ -569,7 +569,14 @@ impl Histograms {
+         &self.codes
+     }
+ 
++    /// Whether every LZ77 copy has distance 1, i.e. the stream is a plain run-length
++    /// encoding. False without LZ77: there is no distance cluster then (`lz_dist_cluster`
++    /// falls back to cluster 0, which holds real data), and the parameters an RLE decoder
++    /// needs (`min_symbol`, `min_length`, `lz77_length_uint`) are `None`.
+     pub fn is_rle(&self) -> bool {
++        if !self.lz77_params.enabled {
++            return false;
++        }
+         let lz_dist_cluster = self.lz_dist_cluster as usize;
+         let lz_conf = &self.uint_configs[lz_dist_cluster];
+         self.codes.single_symbol(lz_dist_cluster) == Some(1) && lz_conf.is_split_exponent_zero()

@@ -3,6 +3,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+use crate::util::sync::atomic::{AtomicBool, Ordering};
+
 use crate::api::{JxlColorType, JxlDataFormat};
 use crate::error::{Error, Result};
 use crate::headers::Orientation;
@@ -28,6 +30,7 @@ impl<Pipeline: RenderPipeline> RenderPipelineBuilder<Pipeline> {
         downsampling_shift: usize,
         mut log_group_size: usize,
         chunk_size: usize,
+        group_scratch_buffers_limit: Option<usize>,
     ) -> Self {
         info!("creating render pipeline");
         assert!(chunk_size <= u16::MAX as usize);
@@ -48,13 +51,14 @@ impl<Pipeline: RenderPipeline> RenderPipelineBuilder<Pipeline> {
                 log_group_size,
                 group_count: (size.0.shrc(log_group_size), size.1.shrc(log_group_size)),
                 stages: vec![],
-                group_chan_complete: vec![
-                    vec![false; num_channels];
-                    size.0.shrc(log_group_size) * size.1.shrc(log_group_size)
-                ],
+                group_chan_complete: (0..(size.0.shrc(log_group_size)
+                    * size.1.shrc(log_group_size)))
+                    .map(|_| (0..num_channels).map(|_| AtomicBool::new(false)).collect())
+                    .collect(),
                 chunk_size,
                 extend_stage_index: None,
                 channel_is_used: vec![false; num_channels],
+                group_scratch_buffers_limit,
             },
         }
     }
@@ -69,6 +73,7 @@ impl<Pipeline: RenderPipeline> RenderPipelineBuilder<Pipeline> {
         size: (usize, usize),
         downsampling_shift: usize,
         log_group_size: usize,
+        group_scratch_buffers_limit: Option<usize>,
     ) -> Self {
         Self::new_with_chunk_size(
             num_channels,
@@ -76,6 +81,7 @@ impl<Pipeline: RenderPipeline> RenderPipelineBuilder<Pipeline> {
             downsampling_shift,
             log_group_size,
             1 << (log_group_size + downsampling_shift),
+            group_scratch_buffers_limit,
         )
     }
 
@@ -298,7 +304,7 @@ impl<Pipeline: RenderPipeline> RenderPipelineBuilder<Pipeline> {
             if chinfo.ty.is_none() {
                 assert!(!self.shared.channel_is_used[c]);
                 for g in self.shared.group_chan_complete.iter_mut() {
-                    g[c] = true;
+                    g[c].store(true, Ordering::Relaxed);
                 }
             }
         }

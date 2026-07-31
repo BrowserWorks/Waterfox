@@ -1,0 +1,71 @@
+From 17d0b7205cf6eba2325fde8786a7d72c290259e8 Mon Sep 17 00:00:00 2001
+From: Lilith River <lilith@imazen.io>
+Date: Thu, 10 Sep 2026 00:27:54 -0600
+Subject: [PATCH] Don't treat an empty out-of-order jxlp box as end of input
+ (#956)
+
+* fix: don't treat an empty out-of-order jxlp box as end of input
+
+`injected_jxlp` returned a buffered out-of-order `jxlp` box without
+checking whether it still had bytes left. `CodestreamInput::read` then read
+an empty slice and returned `Ok(0)`, and `available_bytes` returned `0`.
+Callers take a 0-byte read as end of input (`SmallBuffer::refill` and
+`fill_sections` both break on `num == 0`), so decoding stopped mid-frame
+with codestream still buffered, surfacing as "Source file truncated".
+
+`cjxl --output_mode=2` writes the DC group `jxlp` slots of a modular frame
+with zero payload, one per DC group. With three DC groups the run of empty
+boxes is short enough that the caller's retry path survives it; with four
+or more it is not, so lossless files with 4+ DC groups (6145x256, but not
+6144x256) failed to decode. Lossy frames put real data in those slots and
+were unaffected.
+
+Skip exhausted and empty buffered boxes in `injected_jxlp`, which covers
+`read`, `available_bytes` and `skip` together since all three go through
+it. `check_ooo_jxlp_done` removes the box it advances past, so the loop
+terminates.
+
+Adds a regression test that builds the container in memory and so needs no
+fixture; without the fix it reads back a truncated codestream.
+
+* test: move the regression to a test file and the standard harness
+
+Replaces the hand-built container test with
+`resources/test/ooo_jxlp_empty_dc_group_boxes.jxl` (878 bytes) and a
+`declare_test_file!` entry, per review.
+
+The file is 6145x1 lossless, written by `cjxl 0.12.0 -q 100 -e 7
+--output_mode=2`. 6145 px is four 2048 px DC group columns, which is the
+smallest shape that reproduces: a modular frame has no DC data, so the
+container carries one empty `jxlp` box per DC group, and four consecutive
+empty boxes are enough to exhaust the caller's retry path. At 6144 px the
+frame has three DC groups and decodes even without the fix.
+
+All nine generated tests fail without the fix and pass with it, including
+`test_decode_test_file_chunks_*`, which feeds the file one byte at a time.
+
+Local backport scope: production changes only. Upstream regression tests,
+fixtures, and test-only harness changes are intentionally omitted. The
+original commit message above describes the full upstream change.
+
+diff --git a/jxl/src/api/inner/box_parser.rs b/jxl/src/api/inner/box_parser.rs
+index 0f2485c9a..98e1882bc 100644
+--- a/jxl/src/api/inner/box_parser.rs
++++ b/jxl/src/api/inner/box_parser.rs
+@@ -289,6 +289,16 @@ impl BoxParser {
+     }
+ 
+     fn injected_jxlp(&mut self) -> Option<&mut OOOJxlpBox> {
++        // Skip 0-sized jxlp boxes.
++        while matches!(self.state, ParseState::BoxNeeded(_) | ParseState::Complete)
++            && let CodestreamBoxType::Jxlp(j, _) = self.latest_codestream_box
++            && self
++                .ooo_jxlp_buffer
++                .get(&j)
++                .is_some_and(|b| b.consumed == b.data.len())
++        {
++            self.check_ooo_jxlp_done();
++        }
+         if matches!(self.state, ParseState::BoxNeeded(_) | ParseState::Complete)
+             && let CodestreamBoxType::Jxlp(j, _) = self.latest_codestream_box
+             && let Some(b) = self.ooo_jxlp_buffer.get_mut(&j)

@@ -1,0 +1,66 @@
+From 2742954e351fb1926c1ee5da17147e010bad0eb2 Mon Sep 17 00:00:00 2001
+From: Mrmaxmeier <3913977+Mrmaxmeier@users.noreply.github.com>
+Date: Fri, 28 Aug 2026 16:57:09 +0200
+Subject: [PATCH] Fix panic when a transform is applied to an empty palette
+ channel (#910)
+
+`Image` does not allocate anything for a channel with a zero-sized dimension and
+reports such a channel as 0x0. A palette transform with no colors and no deltas
+declares its palette channel as `(num_colors + num_deltas, num_channels)`, i.e.
+0x1, so a placeholder buffer for it changed size once allocated.
+
+A second palette transform applied on top of that palette channel then compared
+the declared 0x1 size of its output against the allocated 0x0 size of its input
+and hit the `assert_eq!` in `TransformStep::local_apply`.
+
+Normalize the size of local transform buffers to the size they will actually
+have once allocated. The channel list itself keeps the declared sizes, so the
+`check_equal_channels` bookkeeping of later transforms is unaffected.
+
+Assisted-By: Claude Opus 5 <noreply@anthropic.com>
+
+Local backport scope: production changes only. Upstream regression tests,
+fixtures, and test-only harness changes are intentionally omitted. The
+original commit message above describes the full upstream change.
+
+diff --git a/jxl/src/frame/modular/mod.rs b/jxl/src/frame/modular/mod.rs
+index 291537820..683a8cc14 100644
+--- a/jxl/src/frame/modular/mod.rs
++++ b/jxl/src/frame/modular/mod.rs
+@@ -87,6 +87,20 @@ impl ChannelInfo {
+     fn is_equivalent(&self, other: &ChannelInfo) -> bool {
+         self.size == other.size && self.shift == other.shift && self.bit_depth == other.bit_depth
+     }
++
++    /// Returns this channel info with the size it'll have once a `ModularChannel` is allocated for
++    /// it.
++    ///
++    /// `Image` does not allocate anything for a channel with a zero-sized dimension and reports
++    /// such a channel as `0x0`, so a channel that is declared as e.g. `0x1` (which happens for
++    /// the palette channel of a palette transform with no colors and no deltas) would otherwise
++    /// change size when it gets allocated.
++    fn as_allocated(mut self) -> ChannelInfo {
++        if self.size.0 == 0 || self.size.1 == 0 {
++            self.size = (0, 0);
++        }
++        self
++    }
+ }
+ 
+ #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+diff --git a/jxl/src/frame/modular/transforms/apply_local.rs b/jxl/src/frame/modular/transforms/apply_local.rs
+index 563d5f8ca..14052734c 100644
+--- a/jxl/src/frame/modular/transforms/apply_local.rs
++++ b/jxl/src/frame/modular/transforms/apply_local.rs
+@@ -86,9 +86,9 @@ pub fn meta_apply_local_transforms<'a, 'b>(
+     buffer_storage.extend(channels_in.into_iter().map(LocalTransformBuffer::Borrowed));
+ 
+     #[allow(unused_variables)]
+-    let mut add_transform_buffer = |info, description| {
++    let mut add_transform_buffer = |info: ChannelInfo, description| {
+         trace!(description, ?info, "adding channel buffer");
+-        buffer_storage.push(LocalTransformBuffer::Placeholder(info));
++        buffer_storage.push(LocalTransformBuffer::Placeholder(info.as_allocated()));
+         buffer_storage.len() - 1
+     };
+ 

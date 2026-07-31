@@ -1,0 +1,32 @@
+From 5dfeb9e5fddb1ffebb709745f9c4739ec0cc2e82 Mon Sep 17 00:00:00 2001
+From: Luca Versari <veluca93@gmail.com>
+Date: Wed, 9 Sep 2026 22:13:59 +0200
+Subject: [PATCH] Fix undersized row buffer. (#960)
+
+* Fix undersized row buffer.
+
+A single call to process_row_chunk() might have an xsize of up to
+chunk_size + 2*border_size_x. This mostly comes up in progressive
+decoding (which might have unusual group orderings).
+
+* Update jxl/src/render/low_memory_pipeline/mod.rs
+
+Co-authored-by: Sami Boukortt <sami.boukortt@gmail.com>
+
+---------
+
+Co-authored-by: Sami Boukortt <sami.boukortt@gmail.com>
+
+diff --git a/jxl/src/render/low_memory_pipeline/mod.rs b/jxl/src/render/low_memory_pipeline/mod.rs
+index 81420797e..32b885bd0 100644
+--- a/jxl/src/render/low_memory_pipeline/mod.rs
++++ b/jxl/src/render/low_memory_pipeline/mod.rs
+@@ -69,7 +69,7 @@ impl LowMemoryRenderPipelinePerThread {
+                     *next_y_border as usize,
+                     stage.shift().1 as usize,
+                     stage.shift().0 as usize,
+-                    p.shared.chunk_size >> *dsx,
++                    (p.shared.chunk_size + 2 * p.border_size.0) >> *dsx,
+                 )?);
+             }
+             self.row_buffers.push(stage_buffers);
