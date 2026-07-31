@@ -8,6 +8,6 @@ with the local integration and test adaptations below.
 ## Local differences
 
 - The old macOS x86_64 SIMD workaround is omitted.
-- Decoder integration uses the upstream sequential runner fallback.
+- Parallel decoding stays disabled by default (`image.jxl.decode_participants = 1`).
 - Web-platform test tolerances and references are updated, and vendor regression fixtures are included.
 - Vendored tests are adapted to auxiliary-box construction, buffer recycling, and runner thread-count APIs.
