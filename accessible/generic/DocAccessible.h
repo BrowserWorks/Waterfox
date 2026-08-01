@@ -710,8 +710,11 @@ class DocAccessible : public HyperTextAccessible,
    *    insertion.
    *
    * Returns true if the root node should be reinserted.
+   *
+   * aIsInsertRoot is true when aRoot was reported as inserted, and false when
+   * we reached it by descending into an insert root's subtree.
    */
-  bool PruneOrInsertSubtree(nsIContent* aRoot);
+  bool PruneOrInsertSubtree(nsIContent* aRoot, bool aIsInsertRoot = true);
 
  protected:
   /**
