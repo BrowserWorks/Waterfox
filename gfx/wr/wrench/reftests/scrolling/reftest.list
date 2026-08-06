@@ -1,9 +1,14 @@
 scale(*) == empty-mask.yaml empty-mask-ref.yaml
-== fixed-position-scrolling-clip.yaml fixed-position-scrolling-clip-ref.yaml
-== fixed-position.yaml fixed-position-ref.yaml
+# At fractional scales the snapped scroll offset of the clip's scroll frame ends
+# up half a device pixel above the unscrolled reference, so the clipped edge
+# lands one device pixel short.
+scale(1,2) == fixed-position-scrolling-clip.yaml fixed-position-scrolling-clip-ref.yaml
+# At fractional scales the perspective reference frame's content is not snapped
+# like the reference's, so its right edge covers one extra device pixel column.
+scale(1,2) == fixed-position.yaml fixed-position-ref.yaml
 scale(*) == nested-scroll-offset.yaml nested-scroll-offset-ref.yaml
 == out-of-bounds-scroll.yaml out-of-bounds-scroll-ref.yaml
-== root-scroll.yaml root-scroll-ref.yaml
+scale(*) == root-scroll.yaml root-scroll-ref.yaml
 == scroll-layer.yaml scroll-layer-ref.yaml
 scale(*) == simple.yaml simple-ref.yaml
 scale(*) == clip-and-scroll-property.yaml clip-and-scroll-property-ref.yaml

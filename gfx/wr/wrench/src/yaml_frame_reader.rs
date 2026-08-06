@@ -346,6 +346,13 @@ pub struct YamlFrameReader {
     /// ratios (see the `scale(...)` reftest option).
     device_pixel_scale: f32,
 
+    /// When a device pixel scale is emulated, the pipeline's implicit root
+    /// reference frame and root scroll node are above the scale reference frame,
+    /// so yaml references to them are redirected to scaled equivalents and the
+    /// root scroll offset (applied above the scale) is scaled by hand.
+    dppx_root_reference_frame: Option<SpatialId>,
+    dppx_root_scroll_node: Option<SpatialId>,
+
     /// A HashMap that allows specifying a numeric id for clip and clip chains in YAML
     /// and having each of those ids correspond to a unique ClipId.
     user_clip_id_map: HashMap<u64, ClipId>,
@@ -379,6 +386,8 @@ impl YamlFrameReader {
             snapshots: HashMap::new(),
             allow_mipmaps: false,
             device_pixel_scale: 1.0,
+            dppx_root_reference_frame: None,
+            dppx_root_scroll_node: None,
             image_map: HashMap::new(),
             user_clip_id_map: HashMap::new(),
             user_clipchain_id_map: HashMap::new(),
@@ -506,19 +515,41 @@ impl YamlFrameReader {
         // the device pixel ratio is expressed through the transform tree, so a
         // uniform root scale renders the scene as if at that device pixel ratio
         // (exercising snapping, raster scale selection, etc.).
+        //
+        // The pipeline's implicit root reference frame and root scroll node are
+        // ancestors of that scale, so a second scale reference frame is created
+        // as a sibling for content that the yaml explicitly attaches to the root
+        // reference frame (fixed position content), which must be scaled but must
+        // not scroll.
+        self.dppx_root_reference_frame = None;
+        self.dppx_root_scroll_node = None;
         let dppx_reference_frame = if send_transaction && self.device_pixel_scale != 1.0 {
             let scale = self.device_pixel_scale;
+            let transform = PropertyBinding::Value(LayoutTransform::scale(scale, scale, 1.0));
+            let kind = ReferenceFrameKind::Transform {
+                is_2d_scale_translation: true,
+                should_snap: false,
+                paired_with_perspective: false,
+            };
+
+            let fixed_id = builder.push_reference_frame(
+                LayoutPoint::zero(),
+                SpatialId::root_reference_frame(pipeline_id),
+                TransformStyle::Flat,
+                transform,
+                kind,
+            );
+            builder.pop_reference_frame();
+            self.dppx_root_reference_frame = Some(fixed_id);
+
             let ref_frame_id = builder.push_reference_frame(
                 LayoutPoint::zero(),
                 *self.spatial_id_stack.last().unwrap(),
                 TransformStyle::Flat,
-                PropertyBinding::Value(LayoutTransform::scale(scale, scale, 1.0)),
-                ReferenceFrameKind::Transform {
-                    is_2d_scale_translation: true,
-                    should_snap: false,
-                    paired_with_perspective: false,
-                },
+                transform,
+                kind,
             );
+            self.dppx_root_scroll_node = Some(ref_frame_id);
             self.spatial_id_stack.push(ref_frame_id);
             true
         } else {
@@ -578,9 +609,11 @@ impl YamlFrameReader {
         match *item {
             Yaml::Integer(value) => Some(self.user_spatial_id_map[&(value as u64)]),
             Yaml::String(ref id_string) if id_string == "root-reference-frame" =>
-                Some(SpatialId::root_reference_frame(pipeline_id)),
+                Some(self.dppx_root_reference_frame
+                    .unwrap_or_else(|| SpatialId::root_reference_frame(pipeline_id))),
             Yaml::String(ref id_string) if id_string == "root-scroll-node" =>
-                Some(SpatialId::root_scroll_node(pipeline_id)),
+                Some(self.dppx_root_scroll_node
+                    .unwrap_or_else(|| SpatialId::root_scroll_node(pipeline_id))),
             Yaml::BadValue => None,
             _ => {
                 println!("Unable to parse SpatialId {:?}", item);
@@ -2116,6 +2149,14 @@ impl YamlFrameReader {
         if is_root {
             if let Some(vector) = yaml["scroll-offset"].as_vector() {
                 let external_id = ExternalScrollId(0, dl.pipeline_id);
+                // The root scroll node is an ancestor of the emulated device
+                // pixel scale, so unlike scroll frames declared in the yaml its
+                // offset is not scaled by the transform tree.
+                let vector = if self.dppx_root_scroll_node.is_some() {
+                    vector * self.device_pixel_scale
+                } else {
+                    vector
+                };
                 self.scroll_offsets.insert(
                     external_id,
                     vec![SampledScrollOffset {
