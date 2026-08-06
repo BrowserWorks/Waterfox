@@ -58,9 +58,12 @@ scale(*) != srgb-to-linear-2.yaml srgb-to-linear-ref.yaml
 scale(*) != filter-blur-huge.yaml blank.yaml
 scale(*) != filter-drop-shadow-huge.yaml blank.yaml
 scale(*) != filter-drop-shadow-transform-huge.yaml blank.yaml
-fuzzy(4,62000) == filter-drop-shadow-blur-clamping.yaml filter-drop-shadow-blur-clamping-ref.yaml
+# These two pairs cannot agree below a device pixel scale of 1: the test's
+# blur(20) under scale(10) is clamped to a 100 device pixel std deviation at any
+# scale above 0.5, while the reference's blur(100) is only clamped above scale 1.
+scale(1.0, 1.51, 2.0) fuzzy(4,62000) == filter-drop-shadow-blur-clamping.yaml filter-drop-shadow-blur-clamping-ref.yaml
+scale(1.0, 1.51, 2.0) fuzzy(5,120000) == filter-blur-clamping.yaml filter-blur-clamping-ref.yaml
 scale(*) == filter-blur-scaled.yaml filter-blur-scaled-ref.yaml
-fuzzy(5,72000) == filter-blur-clamping.yaml filter-blur-clamping-ref.yaml
 skip_on(android,device) skip_on(win) fuzzy(1,104) fuzzy-if(platform(swgl),4,18484) == filter-blur-scaled-xonly.yaml filter-blur-scaled-xonly.png  # fails on  Pixel2
 scale(*) == svg-filter-flood.yaml svg-filter-flood-ref.yaml
 scale(*) == backdrop-filter-basic.yaml backdrop-filter-basic-ref.yaml
