@@ -13,7 +13,7 @@ scale(*) != shadow-many.yaml shadow.yaml
 scale(*) != shadow-complex.yaml shadow-many.yaml
 scale(*) != shadow-clipped-text.yaml blank.yaml
 scale(*) != non-opaque.yaml non-opaque-notref.yaml
-== decorations.yaml decorations-ref.yaml
+scale(1.0, 2.0) == decorations.yaml decorations-ref.yaml
 skip_on(android,device) fuzzy(1,3692) fuzzy-if(platform(win),2,5585) fuzzy-if(platform(swgl),3,13540) == decorations-suite.yaml decorations-suite.png  # Fails on Pixel2
 scale(*) == 1658.yaml 1658-ref.yaml
 scale(*) fuzzy(2,405) fuzzy-if(platform(swgl),2,1510) == split-batch.yaml split-batch-ref.yaml
