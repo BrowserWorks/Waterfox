@@ -1,6 +1,21 @@
 "use strict";
 
 add_setup(async () => {
+  // The scale multiplies the browser window's minimum width (500 CSS pixels,
+  // --window-min-width), which forces the window to grow, and popping the pref
+  // does not shrink it back. Restore the size, otherwise the rest of the
+  // manifest runs with a window that can be wider than the screen.
+  const { outerWidth, outerHeight } = window;
+  registerCleanupFunction(async () => {
+    await SpecialPowers.popPrefEnv();
+    // The minimum size only goes back down once layout has caught up with the
+    // scale change; resizing before that would be clamped to the larger minimum.
+    await window.promiseDocumentFlushed(() => {});
+    if (window.outerWidth != outerWidth || window.outerHeight != outerHeight) {
+      window.resizeTo(outerWidth, outerHeight);
+    }
+  });
+
   // Simulate hidpi monitor, where CSS and desktop pixels diverge. We use 3
   // because it differs from 1, and also differs from 2 (which would be
   // canceled out by contentsScaleFactor of 2 on macOS).
