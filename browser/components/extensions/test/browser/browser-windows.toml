@@ -60,7 +60,5 @@ skip-if = [
 tags = "fullscreen"
 skip-if = [
   "os == 'linux' && os_version == '24.04' && arch == 'x86_64' && display == 'x11'", # Bug 1533982
-  "os == 'mac' && os_version == '10.15' && arch == 'x86_64' && debug", # Bug 1780998
-  "os == 'mac' && os_version == '14.70' && arch == 'x86_64'", # Bug 1869793
   "os == 'win' && opt && standalone", # Bug 2028652
 ]

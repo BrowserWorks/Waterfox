@@ -1093,7 +1093,12 @@ class Window extends WindowBase {
     })();
 
     const initialState = window.windowState;
-    if (expectedState == initialState) {
+    // window.fullScreen is checked too, so that we still have work to do below
+    // when DOM and widget disagree on the fullscreen state (bug 2066805).
+    if (
+      expectedState == initialState &&
+      window.fullScreen == (expectedState == window.STATE_FULLSCREEN)
+    ) {
       return;
     }
 
