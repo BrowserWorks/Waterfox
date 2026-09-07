@@ -197,8 +197,10 @@ bool RemoteAccessible::ApplyCache(CacheUpdateType aUpdateType,
     // Updating the viewport cache means the offscreen state of this
     // document's accessibles has changed. Update the HashSet we use for
     // checking offscreen state here.
-    MOZ_ASSERT(IsDoc(),
-               "Fetched the viewport cache from a non-doc accessible?");
+    if (!IsDoc()) {
+      MOZ_ASSERT_UNREACHABLE("Received viewport cache for non-doc accessible");
+      return false;
+    }
     AsDoc()->mOnScreenAccessibles.Clear();
     for (auto id : *maybeViewportCache) {
       AsDoc()->mOnScreenAccessibles.Insert(id);
