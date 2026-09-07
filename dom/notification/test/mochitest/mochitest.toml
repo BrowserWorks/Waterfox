@@ -34,6 +34,17 @@ support-files = ["blank.html"]
 ["test_notification_crossorigin_iframe_nested_glean.html"]
 support-files = ["blank.html"]
 
+["test_notification_icon_csp.html"]
+skip-if = [
+  "xorigin", # Bug 1792790
+]
+support-files = [
+  "blank.html",
+  "file_notification_icon_csp.html",
+  "file_notification_icon_csp_self.html",
+  "file_pink.gif",
+]
+
 ["test_notification_image.html"]
 skip-if = [
   "xorigin", # Bug 1792790

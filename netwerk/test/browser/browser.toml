@@ -285,6 +285,12 @@ support-files = [
   "page_with_non_trackers.html^headers^",
 ]
 
+["browser_test_local_network_access_notification.js"]
+support-files = [
+  "head_local_network_access.js",
+  "page_notification_icon.html",
+]
+
 ["browser_test_local_network_access_permissions.js"]
 support-files = [
   "head_local_network_access.js",

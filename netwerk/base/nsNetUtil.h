@@ -1189,6 +1189,10 @@ void ParseSimpleURISchemes(const nsACString& schemeList);
 nsresult AddExtraHeaders(nsIHttpChannel* aHttpChannel,
                          const nsACString& aExtraHeaders, bool aMerge = true);
 
+// Returns the IP address space the load is initiated from, which is what a
+// Local Network Access check compares the target address space against.
+nsILoadInfo::IPAddressSpace GetParentIPAddressSpace(nsILoadInfo* aLoadInfo);
+
 bool IsLocalOrPrivateNetworkAccess(
     nsILoadInfo::IPAddressSpace aParentIPAddressSpace,
     nsILoadInfo::IPAddressSpace aTargetIPAddressSpace);

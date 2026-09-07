@@ -12,6 +12,7 @@
 #include "mozilla/glean/NetwerkMetrics.h"
 
 #include "mozilla/dom/WindowGlobalParent.h"
+#include "nsIContentPolicy.h"
 #include "nsIIOService.h"
 #include "nsIOService.h"
 #include "mozilla/dom/CanonicalBrowsingContext.h"
@@ -215,15 +216,22 @@ nsresult LNAPermissionRequest::RequestPermission() {
 
   // For shared and service workers, do not show a permission prompt.
   // Only grant access if the origin already has a persistent LNA permission.
+  //
+  // Notification icons are fetched without a requesting node, and possibly
+  // long after the page that created the notification is gone, so there is no
+  // context to prompt in either.
+  bool isNotificationIcon = mLoadInfo->InternalContentPolicyType() ==
+                            nsIContentPolicy::TYPE_INTERNAL_IMAGE_NOTIFICATION;
   Maybe<dom::ClientInfo> clientInfo = mLoadInfo->GetClientInfo();
-  if (clientInfo.isSome() &&
-      (clientInfo->Type() == dom::ClientType::Sharedworker ||
-       clientInfo->Type() == dom::ClientType::Serviceworker)) {
+  if (isNotificationIcon ||
+      (clientInfo.isSome() &&
+       (clientInfo->Type() == dom::ClientType::Sharedworker ||
+        clientInfo->Type() == dom::ClientType::Serviceworker))) {
     nsCOMPtr<nsIPermissionManager> permMgr =
         mozilla::components::PermissionManager::Service();
     if (!permMgr || !mPrincipal) {
       NS_WARNING(
-          "LNA worker permission check failed: no permission manager or "
+          "LNA non-prompting permission check failed: no permission manager or "
           "principal");
       return Cancel();
     }
@@ -234,14 +242,20 @@ nsresult LNAPermissionRequest::RequestPermission() {
       return Allow(JS::UndefinedHandleValue);
     }
     // Log the denial to the browser console so developers can diagnose why
-    // worker fetch requests are being blocked.
+    // these requests are being blocked.
     nsCOMPtr<nsIConsoleService> console =
         do_GetService(NS_CONSOLESERVICE_CONTRACTID);
     if (console && mPrincipal) {
       nsAutoCString origin;
       mPrincipal->GetOrigin(origin);
       nsAutoString msg;
-      msg.AppendLiteral("Local Network Access blocked: worker from origin ");
+      msg.AppendLiteral("Local Network Access blocked: ");
+      if (isNotificationIcon) {
+        msg.AppendLiteral("notification icon load");
+      } else {
+        msg.AppendLiteral("worker");
+      }
+      msg.AppendLiteral(" from origin ");
       msg.Append(NS_ConvertUTF8toUTF16(origin));
       msg.AppendLiteral(" attempted ");
       msg.Append(NS_ConvertUTF8toUTF16(mType));

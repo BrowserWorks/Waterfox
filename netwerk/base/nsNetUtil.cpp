@@ -78,6 +78,8 @@
 #include "mozilla/dom/nsHTTPSOnlyUtils.h"
 #include "mozilla/dom/nsMixedContentBlocker.h"
 #include "mozilla/dom/BlobURLProtocolHandler.h"
+#include "mozilla/dom/BrowsingContext.h"
+#include "mozilla/dom/PolicyContainer.h"
 #include "mozilla/net/HttpBaseChannel.h"
 #include "nsHttpChannel.h"
 #include "nsIScriptError.h"
@@ -4220,6 +4222,31 @@ nsresult AddExtraHeaders(nsIHttpChannel* aHttpChannel,
     NS_ENSURE_SUCCESS(rv, rv);
   }
   return NS_OK;
+}
+
+nsILoadInfo::IPAddressSpace GetParentIPAddressSpace(nsILoadInfo* aLoadInfo) {
+  MOZ_ASSERT(aLoadInfo);
+
+  RefPtr<mozilla::dom::BrowsingContext> bc;
+  aLoadInfo->GetBrowsingContext(getter_AddRefs(bc));
+  if (bc) {
+    return bc->GetCurrentIPAddressSpace();
+  }
+
+  // Loads that are not tied to a browsing context (worker requests, and
+  // notification icon loads which have no requesting node) read the address
+  // space from the policy container propagated from the parent document.
+  nsCOMPtr<nsIPolicyContainer> policyContainer =
+      aLoadInfo->GetPolicyContainer();
+  if (policyContainer) {
+    nsILoadInfo::IPAddressSpace addressSpace =
+        PolicyContainer::Cast(policyContainer)->GetIPAddressSpace();
+    if (addressSpace != nsILoadInfo::Unknown) {
+      return addressSpace;
+    }
+  }
+
+  return aLoadInfo->GetParentIpAddressSpace();
 }
 
 bool IsLocalHostAccess(

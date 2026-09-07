@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<script src="/tests/SimpleTest/SimpleTest.js"></script>
+<script src="MockAlertsService.js"></script>
+<script src="NotificationTest.js"></script>
+<link rel="stylesheet" href="/tests/SimpleTest/test.css">
+<script>
+
+const SAME_ORIGIN_ICON = new URL("./file_pink.gif", location.href).href;
+const CROSS_ORIGIN_ICON =
+  "https://example.org/tests/dom/notification/test/mochitest/file_pink.gif";
+
+add_setup(async () => {
+  await NotificationTest.allowNotifications();
+  await MockAlertsService.register();
+});
+
+async function getIconImage(win, icon) {
+  let notification = new win.Notification("test", { icon });
+
+  info("Waiting for notification show");
+  await new Promise(resolve => notification.addEventListener("show", resolve, {once: true}));
+
+  let ids = await MockAlertsService.getNotificationIds();
+  is(ids.length, 1, "Got one notification");
+
+  let image = await MockAlertsService.getIconImage(ids[0]);
+  await MockAlertsService.closeNotifications();
+  return image;
+}
+
+async function createIframe(src) {
+  let iframe = document.createElement("iframe");
+  iframe.src = src;
+  document.body.appendChild(iframe);
+  await new Promise(resolve => iframe.addEventListener("load", resolve, {once: true}));
+  SimpleTest.registerCleanupFunction(() => iframe.remove());
+  return iframe.contentWindow;
+}
+
+// The icon load must be subject to the content security policy of the document
+// that created the notification, even though the image is never loaded into
+// that document.
+add_task(async function test_icon_blocked_by_document_csp() {
+  let win = await createIframe("file_notification_icon_csp.html");
+
+  is(await getIconImage(win, SAME_ORIGIN_ICON), null,
+     "img-src 'none' blocks the icon load");
+  is(await getIconImage(win, "data:image/gif;base64,R0lGODlhAQABAPAAAPIu7////yH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=="), null,
+     "img-src 'none' blocks a data: icon load");
+});
+
+// The policy is enforced per directive value, not as a blanket block.
+add_task(async function test_icon_self_csp() {
+  let win = await createIframe("file_notification_icon_csp_self.html");
+
+  ok(await getIconImage(win, SAME_ORIGIN_ICON),
+     "img-src 'self' allows a same-origin icon");
+  is(await getIconImage(win, CROSS_ORIGIN_ICON), null,
+     "img-src 'self' blocks a cross-origin icon");
+});
+
+// Sanity check that the same loads succeed without a policy, so that the
+// assertions above can't pass for an unrelated reason.
+add_task(async function test_icon_allowed_without_csp() {
+  let win = await createIframe("blank.html");
+
+  ok(await getIconImage(win, SAME_ORIGIN_ICON),
+     "Same-origin icon loads when the document has no policy");
+  ok(await getIconImage(win, CROSS_ORIGIN_ICON),
+     "Cross-origin icon loads when the document has no policy");
+});
+</script>
