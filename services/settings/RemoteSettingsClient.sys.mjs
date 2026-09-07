@@ -1191,7 +1191,15 @@ export class RemoteSettingsClient extends EventEmitter {
     if (remoteTimestamp < localTimestamp) {
       // This should never happen. Unless the CDN serves stale data.
       // If the local data is valid, then we can safely ignore this stage remote changeset.
-      const localTrustworthy = await new Promise(verifySignatureLocalData);
+      let localTrustworthy = false;
+      try {
+        localTrustworthy = await new Promise(verifySignatureLocalData);
+      } catch (exc) {
+        // Verifying the local data failed for another reason than an invalid
+        // signature (eg. its cert chain could not be fetched). Consider it
+        // untrustworthy and carry on with reset/import.
+        lazy.console.error(exc);
+      }
       if (localTrustworthy) {
         lazy.console.info(`${this.identifier} CDN served staled data, ignore.`);
         return {
