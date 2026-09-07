@@ -1117,9 +1117,9 @@ export class RemoteSettingsClient extends EventEmitter {
       );
     }
 
-    // We now that the list of signature is not empty, so if we are here
-    // it means that none was valid.
-    throw thrownErrors[0];
+    // We know that the list of signatures is not empty, so if we are here
+    // it means that none was valid, or that none was usable at all.
+    throw thrownErrors[0] ?? new MissingSignatureError(this.identifier);
   }
 
   /**
@@ -1239,14 +1239,26 @@ export class RemoteSettingsClient extends EventEmitter {
           try {
             localTrustworthy = await new Promise(verifySignatureLocalData);
           } catch (_) {
-            // We either throw a CorruptedDataError below which will lead to a
-            // telemetry event, or we have retried already and this is the second
-            // failure. We will reset to dump, clear everything, and throw the error
-            // so that the caller can report the sync status.
+            // Verifying the data we had before syncing failed for another
+            // reason than an invalid signature (eg. its cert chain could not
+            // be fetched). Consider it untrustworthy, and fall back to the
+            // dump or an empty database below.
           }
         }
 
-        if (!localTrustworthy && !retry) {
+        if (localTrustworthy) {
+          // The data we had before syncing is valid: restore it, dropping the
+          // unverified records imported above.
+          lazy.console.debug(`${this.identifier} restore previous local data`);
+          await this.db.importChanges(
+            localMetadata,
+            localTimestamp,
+            localRecords,
+            {
+              clear: true, // clear before importing.
+            }
+          );
+        } else if (!retry) {
           // Signature failed, clear local DB because it contains
           // bad data (local + remote changes).
           lazy.console.debug(`${this.identifier} clear local data`);
@@ -1254,26 +1266,14 @@ export class RemoteSettingsClient extends EventEmitter {
           // Local data was tampered, throw and it will retry from empty DB.
           lazy.console.error(`${this.identifier} local data was corrupted`);
           throw new CorruptedDataError(this.identifier);
-        } else if (retry) {
-          // We retried already, we will restore the previous local data
-          // before throwing eventually.
-          if (localTrustworthy) {
-            await this.db.importChanges(
-              localMetadata,
-              localTimestamp,
-              localRecords,
-              {
-                clear: true, // clear before importing.
-              }
-            );
-          } else {
-            // Restore the dump if available (no-op if no dump)
-            const imported = await this._importJSONDump();
-            // _importJSONDump() only clears DB if dump is available,
-            // therefore do it here!
-            if (imported < 0) {
-              await this.db.clear();
-            }
+        } else {
+          // We retried already and have nothing trustworthy to restore.
+          // Restore the dump if available (no-op if no dump)
+          const imported = await this._importJSONDump();
+          // _importJSONDump() only clears DB if dump is available,
+          // therefore do it here!
+          if (imported < 0) {
+            await this.db.clear();
           }
         }
         throw e;
