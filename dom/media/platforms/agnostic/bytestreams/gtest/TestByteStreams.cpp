@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+#include <cstring>
+
 #include "AnnexB.h"
 #include "BufferReader.h"
 #include "ByteWriter.h"
@@ -138,7 +140,12 @@ static already_AddRefed<MediaByteBuffer> GetHvccExtraDataWithPrefixSEI(
     payloadSize -= 0xff;
   }
   seiNalu.AppendElement(static_cast<uint8_t>(payloadSize));
-  seiNalu.AppendElements(aPayloadSize);
+  // AppendElements does not zero POD bytes; a zeroed payload would make
+  // EncodeH265NALUnit insert emulation-prevention bytes and change the
+  // round-trip length. Fill with a fixed non-zero pattern (no 0x00 0x00 runs)
+  // so the result size is deterministic regardless of allocator state.
+  uint8_t* payload = seiNalu.AppendElements(aPayloadSize);
+  memset(payload, 0xAA, aPayloadSize);
   seiNalu.AppendElement(0x80);
 
   nalus.AppendElement(H265NALU(seiNalu.Elements(), seiNalu.Length()));
