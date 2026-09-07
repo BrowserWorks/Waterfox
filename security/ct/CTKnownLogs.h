@@ -14,7 +14,7 @@
 
 #include <stddef.h>
 
-static const PRTime kCTExpirationTime = INT64_C(1794200855000000);
+static const PRTime kCTExpirationTime = INT64_C(1794806359000000);
 
 namespace mozilla::ct {
 
@@ -88,7 +88,7 @@ const CTLogInfo kCTLogList[] = {
      "\x0e",
      91},
     {"Google 'ParcelYard2026h2' log", CTLogState::Admissible, CTLogFormat::Tiled,
-     1781895600000,  // 2026-06-19T19:00:00Z
+     1788184200000,  // 2026-08-31T13:50:00Z
      0,              // operated by Google
      "\x30\x59\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01\x06\x08\x2a\x86\x48"
      "\xce\x3d\x03\x01\x07\x03\x42\x00\x04\x3f\x61\xf9\xe9\xb1\xf1\xea\x93\xe6"
@@ -98,7 +98,7 @@ const CTLogInfo kCTLogList[] = {
      "\xbc",
      91},
     {"Google 'ParcelYard2027h1' log", CTLogState::Admissible, CTLogFormat::Tiled,
-     1781895600000,  // 2026-06-19T19:00:00Z
+     1788184200000,  // 2026-08-31T13:50:00Z
      0,              // operated by Google
      "\x30\x59\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01\x06\x08\x2a\x86\x48"
      "\xce\x3d\x03\x01\x07\x03\x42\x00\x04\x5f\xb8\xbb\x81\x8c\x26\x07\x1a\x62"
@@ -108,7 +108,7 @@ const CTLogInfo kCTLogList[] = {
      "\xd3",
      91},
     {"Google 'ParcelYard2027h2' log", CTLogState::Admissible, CTLogFormat::Tiled,
-     1781895600000,  // 2026-06-19T19:00:00Z
+     1788184200000,  // 2026-08-31T13:50:00Z
      0,              // operated by Google
      "\x30\x59\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01\x06\x08\x2a\x86\x48"
      "\xce\x3d\x03\x01\x07\x03\x42\x00\x04\xf8\x24\xc5\xb2\x8a\xe8\xc5\x78\xb9"
@@ -118,7 +118,7 @@ const CTLogInfo kCTLogList[] = {
      "\x04",
      91},
     {"Google 'PlumbersArms2026h2' log", CTLogState::Admissible, CTLogFormat::Tiled,
-     1781895600000,  // 2026-06-19T19:00:00Z
+     1788184200000,  // 2026-08-31T13:50:00Z
      0,              // operated by Google
      "\x30\x59\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01\x06\x08\x2a\x86\x48"
      "\xce\x3d\x03\x01\x07\x03\x42\x00\x04\x45\xc2\x86\xea\x61\xb2\xac\x24\xed"
@@ -128,7 +128,7 @@ const CTLogInfo kCTLogList[] = {
      "\xba",
      91},
     {"Google 'PlumbersArms2027h1' log", CTLogState::Admissible, CTLogFormat::Tiled,
-     1781895600000,  // 2026-06-19T19:00:00Z
+     1788184200000,  // 2026-08-31T13:50:00Z
      0,              // operated by Google
      "\x30\x59\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01\x06\x08\x2a\x86\x48"
      "\xce\x3d\x03\x01\x07\x03\x42\x00\x04\x00\xa6\x18\x76\x32\x1e\x43\x00\xcf"
@@ -138,7 +138,7 @@ const CTLogInfo kCTLogList[] = {
      "\x9b",
      91},
     {"Google 'PlumbersArms2027h2' log", CTLogState::Admissible, CTLogFormat::Tiled,
-     1781895600000,  // 2026-06-19T19:00:00Z
+     1788184200000,  // 2026-08-31T13:50:00Z
      0,              // operated by Google
      "\x30\x59\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01\x06\x08\x2a\x86\x48"
      "\xce\x3d\x03\x01\x07\x03\x42\x00\x04\x1c\x2b\xb9\x86\x8a\x12\x5e\x59\x3c"

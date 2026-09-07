@@ -3882,15 +3882,12 @@
       },
       "id": "5fb2256b-fdb0-42e8-8d8a-0d633b14e8d5",
       "identifier": "startpage",
-      "last_modified": 1786997421079,
+      "last_modified": 1788287341804,
       "recordType": "engine",
-      "schema": 1786924807791,
+      "schema": 1787616009143,
       "variants": [
         {
           "environment": {
-            "applications": [
-              "firefox"
-            ],
             "regions": [
               "at",
               "ch",
@@ -3898,7 +3895,27 @@
               "fr",
               "nl"
             ]
-          }
+          },
+          "subVariants": [
+            {
+              "environment": {
+                "applications": [
+                  "firefox-android",
+                  "focus-android"
+                ]
+              },
+              "partnerCode": "startpage.apex.android"
+            },
+            {
+              "environment": {
+                "applications": [
+                  "firefox-ios",
+                  "focus-ios"
+                ]
+              },
+              "partnerCode": "startpage.apex.ios"
+            }
+          ]
         },
         {
           "environment": {
@@ -8443,5 +8460,5 @@
       "schema": 1707824831520
     }
   ],
-  "timestamp": 1786997421079
+  "timestamp": 1788287341804
 }
