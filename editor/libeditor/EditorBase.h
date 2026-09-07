@@ -1848,12 +1848,12 @@ class EditorBase : public nsIEditor,
     SpecifiedPoint,
     ExistingTextNodeIfAvailable,
     ExistingTextNodeIfAvailableAndNotStart,
-    AlwaysCreateNewTextNode
+    AlwaysCreateNewTextNode,
   };
   [[nodiscard]] MOZ_CAN_RUN_SCRIPT virtual Result<InsertTextResult, nsresult>
   InsertTextWithTransaction(const nsAString& aStringToInsert,
                             const EditorDOMPoint& aPointToInsert,
-                            InsertTextTo aInsertTextTo);
+                            InsertTextTo aInsertTextTo, InsertTextFor aPurpose);
 
   /**
    * Compute insertion point from aPoint and aInsertTextTo.
@@ -1867,7 +1867,7 @@ class EditorBase : public nsIEditor,
   [[nodiscard]] MOZ_CAN_RUN_SCRIPT Result<InsertTextResult, nsresult>
   InsertTextIntoTextNodeWithTransaction(
       const nsAString& aStringToInsert,
-      const EditorDOMPointInText& aPointToInsert);
+      const EditorDOMPointInText& aPointToInsert, InsertTextFor aPurpose);
 
   /**
    * SetTextNodeWithoutTransaction() is optimized path to set new value to

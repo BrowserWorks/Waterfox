@@ -3349,7 +3349,7 @@ EditorDOMPoint EditorBase::ComputePointToInsertText(
 
 Result<InsertTextResult, nsresult> EditorBase::InsertTextWithTransaction(
     const nsAString& aStringToInsert, const EditorDOMPoint& aPointToInsert,
-    InsertTextTo aInsertTextTo) {
+    InsertTextTo aInsertTextTo, InsertTextFor aPurpose) {
   MOZ_ASSERT_IF(IsTextEditor(),
                 aInsertTextTo == InsertTextTo::ExistingTextNodeIfAvailable);
 
@@ -3365,7 +3365,7 @@ Result<InsertTextResult, nsresult> EditorBase::InsertTextWithTransaction(
 
   EditorDOMPoint pointToInsert =
       ComputePointToInsertText(aPointToInsert, aInsertTextTo);
-  if (ShouldHandleIMEComposition()) {
+  if (ShouldHandleIMEComposition() && InsertingTextForComposition(aPurpose)) {
     if (!pointToInsert.IsInTextNode()) {
       // create a text node
       RefPtr<nsTextNode> newTextNode = CreateTextNode(u""_ns);
@@ -3383,8 +3383,8 @@ Result<InsertTextResult, nsresult> EditorBase::InsertTextWithTransaction(
       pointToInsert.Set(newTextNode, 0u);
     }
     Result<InsertTextResult, nsresult> insertTextResult =
-        InsertTextIntoTextNodeWithTransaction(aStringToInsert,
-                                              pointToInsert.AsInText());
+        InsertTextIntoTextNodeWithTransaction(
+            aStringToInsert, pointToInsert.AsInText(), aPurpose);
     NS_WARNING_ASSERTION(
         insertTextResult.isOk(),
         "EditorBase::InsertTextIntoTextNodeWithTransaction() failed");
@@ -3394,8 +3394,8 @@ Result<InsertTextResult, nsresult> EditorBase::InsertTextWithTransaction(
   if (pointToInsert.IsInTextNode()) {
     // we are inserting text into an existing text node.
     Result<InsertTextResult, nsresult> insertTextResult =
-        InsertTextIntoTextNodeWithTransaction(aStringToInsert,
-                                              pointToInsert.AsInText());
+        InsertTextIntoTextNodeWithTransaction(
+            aStringToInsert, pointToInsert.AsInText(), aPurpose);
     NS_WARNING_ASSERTION(
         insertTextResult.isOk(),
         "EditorBase::InsertTextIntoTextNodeWithTransaction() failed");
@@ -3430,23 +3430,24 @@ EditorBase::ComputeInsertedRange(const EditorDOMPointInText& aInsertedPoint,
 
   EditorDOMPointInText endOfInsertion(
       aInsertedPoint.ContainerAs<Text>(),
-      aInsertedPoint.Offset() + aInsertedString.Length());
+      std::min<uint32_t>(aInsertedPoint.Offset() + aInsertedString.Length(),
+                         aInsertedPoint.ContainerAs<Text>()->TextDataLength()));
   return {aInsertedPoint, endOfInsertion};
 }
 
 Result<InsertTextResult, nsresult>
 EditorBase::InsertTextIntoTextNodeWithTransaction(
     const nsAString& aStringToInsert,
-    const EditorDOMPointInText& aPointToInsert) {
+    const EditorDOMPointInText& aPointToInsert, InsertTextFor aPurpose) {
   MOZ_ASSERT(IsEditActionDataAvailable());
   MOZ_ASSERT(aPointToInsert.IsSetAndValid());
 
   RefPtr<EditTransactionBase> transaction;
-  bool isIMETransaction = false;
-  if (ShouldHandleIMEComposition()) {
+  const bool isIMETransaction =
+      ShouldHandleIMEComposition() && InsertingTextForComposition(aPurpose);
+  if (isIMETransaction) {
     transaction =
         CompositionTransaction::Create(*this, aStringToInsert, aPointToInsert);
-    isIMETransaction = true;
   } else {
     transaction =
         InsertTextTransaction::Create(*this, aStringToInsert, aPointToInsert);
@@ -4239,12 +4240,14 @@ void EditorBase::OnCompositionEnd(
   if (editAction == EditAction::eCancelComposition && placeholderTransaction) {
     const nsTArray<OwningNonNull<EditTransactionBase>>& childTransactions =
         placeholderTransaction->ChildTransactions();
-    MOZ_ASSERT(!childTransactions.IsEmpty());
     // If the first transaction is inserting composition string, we didn't
     // replace selection with the composition string.  Then, all of the
-    // operations during the composition is canceled by the user.  So, we should
-    // not record it as an undo transaction.
-    if (childTransactions[0]->GetAsCompositionTransaction()) {
+    // operations during the composition is canceled by the user.  So, we
+    // should not record it as an undo transaction.
+    // FYI: If non-related action of the composition, we already closed the
+    // previous transaction.
+    if (!childTransactions.IsEmpty() &&
+        childTransactions[0]->GetAsCompositionTransaction()) {
       nsCOMPtr<nsITransaction> transaction =
           mTransactionManager->PopUndoStack();
       MOZ_DIAGNOSTIC_ASSERT(transaction == placeholderTransaction);

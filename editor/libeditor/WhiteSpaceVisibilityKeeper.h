@@ -301,19 +301,6 @@ class WhiteSpaceVisibilityKeeper final {
 
  private:
   /**
-   * ReplaceTextAndRemoveEmptyTextNodes() replaces the range between
-   * aRangeToReplace with aReplaceString simply.  Additionally, removes
-   * empty text nodes in the range.
-   *
-   * @param aRangeToReplace     Range to replace text.
-   * @param aReplaceString      The new string.  Empty string is allowed.
-   */
-  [[nodiscard]] MOZ_CAN_RUN_SCRIPT static nsresult
-  ReplaceTextAndRemoveEmptyTextNodes(
-      HTMLEditor& aHTMLEditor, const EditorDOMRangeInTexts& aRangeToReplace,
-      const nsAString& aReplaceString);
-
-  /**
    * Normalize surrounding white-spaces of aPointToSplit.
    *
    * @return The split point which you specified before.  Note that the result
