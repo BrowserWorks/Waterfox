@@ -2633,6 +2633,8 @@ void EventStateManager::BeginTrackingDragGesture(
     if (!mGestureDownFrameOwner) {
       mGestureDownFrameOwner = mGestureDownContent;
     }
+    mGestureDownTopLevelRemoteTarget =
+        BrowserParent::GetFrom(mGestureDownContent);
   }
   mGestureModifiers = aMouseDownOrTouchDragEvent.mModifiers;
   mGestureDownButtons = aMouseDownOrTouchDragEvent.mButtons;
@@ -2683,6 +2685,8 @@ void EventStateManager::StopTrackingDragGesture(bool aClearInChildProcesses) {
   if (!aClearInChildProcesses || !XRE_IsParentProcess()) {
     return;
   }
+
+  mGestureDownTopLevelRemoteTarget = nullptr;
 
   // Only notify if there is NOT a drag session active in the parent.
   RefPtr<nsIDragSession> dragSession =
@@ -7874,6 +7878,7 @@ bool EventStateManager::WheelPrefs::IsOverOnePageScrollAllowedY(
 void EventStateManager::UpdateGestureContent(nsIContent* aContent) {
   mGestureDownContent = aContent;
   mGestureDownFrameOwner = aContent;
+  mGestureDownTopLevelRemoteTarget = BrowserParent::GetFrom(aContent);
 }
 
 void EventStateManager::NotifyContentWillBeRemovedForGesture(

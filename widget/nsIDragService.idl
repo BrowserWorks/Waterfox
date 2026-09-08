@@ -172,6 +172,11 @@ interface nsIDragService : nsISupports
   void suppress();
   void unsuppress();
 
+  /**
+   * True if the dragging is disabled.
+   */
+  [notxpcom, nostdcall] readonly attribute boolean isSuppressed;
+
   [notxpcom, nostdcall] boolean maybeAddBrowser(in BrowserParentPtr aBP);
   [notxpcom, nostdcall] boolean removeAllBrowsers();
 

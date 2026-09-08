@@ -542,6 +542,10 @@ class EventStateManager : public nsSupportsWeakReference, public nsIObserver {
     return mGestureDownContent;
   }
 
+  dom::BrowserParent* GetTrackingDragGestureTopLevelRemoteTarget() const {
+    return mGestureDownTopLevelRemoteTarget;
+  }
+
   // Update the tracked gesture content to the parent of its frame when it's
   // removed, so that the gesture can be continued.
   void NotifyContentWillBeRemovedForGesture(nsIContent& aContent);
@@ -1405,6 +1409,7 @@ class EventStateManager : public nsSupportsWeakReference, public nsIObserver {
   // as the target in most cases but not always - for example when dragging
   // an <area> of an image map this is the image. (bug 289667)
   nsCOMPtr<nsIContent> mGestureDownFrameOwner;
+  RefPtr<dom::BrowserParent> mGestureDownTopLevelRemoteTarget;
   // Data associated with a drag started in a content process.
   RefPtr<dom::RemoteDragStartData> mGestureDownDragStartData;
   // State of keys when the original gesture-down happened
