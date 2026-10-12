@@ -356,9 +356,6 @@ support-files = ["window_preferences_onsyncfrompreference.xhtml"]
 skip-if = [
   "os == 'mac' && os_version == '14.70' && arch == 'x86_64'", # Bug 1929437
   "os == 'mac' && os_version == '15.30' && arch == 'aarch64'", # Bug 2030058
-  "os == 'win' && os_version == '10.2009' && arch == 'x86_64' && opt", # Bug 2001695
-  "os == 'win' && os_version == '11.26100' && arch == 'x86_64' && opt", # Bug 2001695
-  "os == 'win' && os_version == '11.26100' && arch == 'x86' && opt", # Bug 2001695
 ]
 
 ["test_tooltip_noautohide.xhtml"]

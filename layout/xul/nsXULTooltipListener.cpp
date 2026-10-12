@@ -57,6 +57,16 @@ nsXULTooltipListener::~nsXULTooltipListener() {
 NS_IMPL_ISUPPORTS(nsXULTooltipListener, nsIDOMEventListener)
 
 void nsXULTooltipListener::MouseOut(Event* aEvent) {
+  // This listener is a process-wide singleton, so mouseouts of nodes we are not
+  // tracking reach it too. They say nothing about the node the mouse is
+  // hovering, and acting on them cancels a tooltip about to show in another
+  // window.
+  nsCOMPtr<nsIContent> previousTarget =
+      do_QueryReferent(mPreviousMouseMoveTarget);
+  if (previousTarget != aEvent->GetOriginalTarget()) {
+    return;
+  }
+
   // reset flag so that tooltip will display on the next MouseMove
   mTooltipShownOnce = false;
   mPreviousMouseMoveTarget = nullptr;
