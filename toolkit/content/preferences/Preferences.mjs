@@ -40,6 +40,8 @@ export const Preferences = {
    */
   _settings: new Map(),
 
+  _unloaded: false,
+
   /**
    * @param {PreferenceConfig} prefInfo
    */
@@ -96,6 +98,12 @@ export const Preferences = {
    * @param {SettingConfig} settingConfig
    */
   addSetting(settingConfig) {
+    if (this._unloaded) {
+      // A synchronous importESModule spins the event loop, so pane modules can
+      // finish loading after the window is gone; the observers a new Setting
+      // registers would never be removed.
+      return;
+    }
     this._settings.set(
       settingConfig.id,
       new Setting(settingConfig.id, settingConfig)
@@ -185,6 +193,7 @@ export const Preferences = {
    * @param {Event} _
    */
   onUnload(_) {
+    this._unloaded = true;
     this._settings.forEach(setting => setting?.destroy?.());
     Services.prefs.removeObserver("", /** @type {nsIObserver} */ (this));
   },

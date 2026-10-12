@@ -61,6 +61,11 @@ export const SettingPaneManager = {
    */
   importPane(id) {
     for (let config of this.getWithParents(id)) {
+      // Each import spins the event loop, so the window can be closed part way
+      // through this loop; the remaining panes have nothing left to set up.
+      if (window.closed) {
+        return;
+      }
       if (config.module) {
         ChromeUtils.importESModule(config.module, { global: "current" });
       }

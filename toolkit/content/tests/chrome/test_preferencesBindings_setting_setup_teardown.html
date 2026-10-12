@@ -65,6 +65,19 @@
 
         Preferences.onUnload();
         ok(destroyCalled, "destroy() method was called");
+
+        let lateSetupCalled = false;
+        Preferences.addSetting({
+          id: "testSettingAfterUnload",
+          setup() {
+            lateSetupCalled = true;
+          },
+        });
+        ok(
+          !Preferences.getSetting("testSettingAfterUnload"),
+          "No Setting was created after unload"
+        );
+        ok(!lateSetupCalled, "setup() was not called after unload");
       });
 
       // NOTE: Preferences have been unloaded, tests added here will likely fail

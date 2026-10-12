@@ -19,9 +19,26 @@
  * @import { Setting } from "chrome://global/content/preferences/Setting.mjs"
  */
 
-const { Multilingual } = ChromeUtils.importESModule(
-  "chrome://browser/content/preferences/config/languages.mjs",
-  { global: "current" }
+/**
+ * Imports a module into this window's global.
+ *
+ * These imports spin the event loop until the module graph has been fetched, so
+ * the tab can be closed while one of them is in flight. Once that has happened
+ * there is nothing left to set up, and evaluating the top level code of another
+ * module against the torn down window only produces errors, so stop importing.
+ *
+ * @param {string} uri
+ * @returns {object}
+ */
+function importIntoWindow(uri) {
+  if (window.closed) {
+    return {};
+  }
+  return ChromeUtils.importESModule(uri, { global: "current" });
+}
+
+const { Multilingual } = importIntoWindow(
+  "chrome://browser/content/preferences/config/languages.mjs"
 );
 
 ChromeUtils.defineESModuleGetters(this, {
@@ -38,23 +55,15 @@ ChromeUtils.defineESModuleGetters(this, {
     "resource://autofill/FormAutofillPreferences.sys.mjs",
 });
 
-ChromeUtils.importESModule(
-  "chrome://browser/content/preferences/config/accessibility.mjs",
-  { global: "current" }
+importIntoWindow(
+  "chrome://browser/content/preferences/config/accessibility.mjs"
 );
-ChromeUtils.importESModule(
-  "chrome://browser/content/preferences/config/about-firefox.mjs",
-  { global: "current" }
+importIntoWindow(
+  "chrome://browser/content/preferences/config/about-firefox.mjs"
 );
-
-ChromeUtils.importESModule(
-  "chrome://browser/content/preferences/config/appearance.mjs",
-  { global: "current" }
-);
-
-ChromeUtils.importESModule(
-  "chrome://browser/content/preferences/config/tabs-browsing.mjs",
-  { global: "current" }
+importIntoWindow("chrome://browser/content/preferences/config/appearance.mjs");
+importIntoWindow(
+  "chrome://browser/content/preferences/config/tabs-browsing.mjs"
 );
 
 // Constants & Enumeration Values
