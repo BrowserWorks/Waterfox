@@ -666,6 +666,9 @@ ModuleLoaderBase::SetModuleFetchFinishedAndGetWaitingRequests(
 
   ModuleMapKey moduleMapKey(aRequest->URI(), aRequest->mModuleType);
 
+  // The entry may be absent for an inline module, because we already finished
+  // fetching it, or because it was canceled and dropped by
+  // CancelFetchingModules. There is nothing to complete in those cases.
   auto entry = mFetchingModules.Lookup(moduleMapKey);
   if (!entry) {
     LOG(
@@ -1545,8 +1548,10 @@ void ModuleLoaderBase::CancelFetchingModules() {
     }
   }
 
-  // We don't clear mFetchingModules here, as the fetching requests might arrive
-  // after the global is still shutting down.
+  // Drop the canceled requests rather than leaving HasFetchingModules() true
+  // forever. A request's fetch may still complete (unsuccessfully) afterwards;
+  // OnFetchComplete tolerates the entry no longer being in mFetchingModules.
+  mFetchingModules.Clear();
 }
 
 void ModuleLoaderBase::Shutdown() {
