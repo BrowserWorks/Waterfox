@@ -520,9 +520,9 @@ def get_lando_api_config(vcs_path: str, section_name: str | None = None) -> Land
     if not lando_ini_path.exists():
         # In comm-central, `tools/` is under the `mozilla/`
         # subdirectory, while the VCS root is under `comm/`
-        lando_ini_path = Path(vcs.path) / ".." / ".lando.ini"
+        lando_ini_path = Path(vcs_path) / ".." / ".lando.ini"
 
-    section_name = section_name or get_lando_config_section_name(vcs)
+    section_name = section_name or get_lando_config_section_name()
 
     return LandoAPI.from_lando_config_file(lando_ini_path, section_name)
 
