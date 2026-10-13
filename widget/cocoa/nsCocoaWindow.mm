@@ -54,7 +54,9 @@
 #include "nsThreadUtils.h"
 #include "nsMenuBarX.h"
 #include "nsMenuGroupOwnerX.h"
+#include "nsMenuItemX.h"
 #include "nsMenuUtilsX.h"
+#include "nsMenuX.h"
 #include "nsStyleConsts.h"
 #include "nsLayoutUtils.h"
 #include "nsDragService.h"
@@ -701,6 +703,90 @@ nsresult nsCocoaWindow::ActivateNativeMenuItemAt(const nsAString& indexString) {
     }
   }
   return NS_ERROR_FAILURE;
+
+  NS_OBJC_END_TRY_BLOCK_RETURN(NS_ERROR_FAILURE);
+}
+
+static nsMenuItemX* FindMenuItemByElementId(nsMenuX* aMenu,
+                                            const nsAString& aElementId) {
+  for (uint32_t i = 0; i < aMenu->GetItemCount(); i++) {
+    Maybe<nsMenuParentX::MenuChild> child = aMenu->GetItemAt(i);
+    if (!child) {
+      continue;
+    }
+    if (child->is<RefPtr<nsMenuItemX>>()) {
+      nsMenuItemX* item = child->as<RefPtr<nsMenuItemX>>();
+      nsIContent* content = item->Content();
+      if (content && content->IsElement() &&
+          content->AsElement()->AttrValueIs(kNameSpaceID_None, nsGkAtoms::id,
+                                            aElementId, eCaseMatters)) {
+        return item;
+      }
+    } else if (nsMenuItemX* found = FindMenuItemByElementId(
+                   child->as<RefPtr<nsMenuX>>(), aElementId)) {
+      return found;
+    }
+  }
+  return nullptr;
+}
+
+// Used for testing native menu system structure and event handling.
+nsresult nsCocoaWindow::GetNativeMenuItemKeyEquivalent(
+    const nsAString& aElementId, nsAString& aResult) {
+  NS_OBJC_BEGIN_TRY_BLOCK_RETURN;
+
+  aResult.Truncate();
+
+  // Not [NSApp mainMenu]: that may belong to a different window, for example
+  // the hidden window's menu bar.
+  nsMenuBarX* menuBar = GetMenuBar();
+  if (!menuBar) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsMenuItemX* item = nullptr;
+  for (uint32_t i = 0; i < menuBar->GetMenuCount() && !item; i++) {
+    if (nsMenuX* menu = menuBar->GetMenuAt(i)) {
+      item = FindMenuItemByElementId(menu, aElementId);
+    }
+  }
+  if (!item) {
+    return NS_ERROR_FAILURE;
+  }
+
+  NSMenuItem* nativeItem = item->NativeNSMenuItem();
+  NSString* keyEquivalent = nativeItem.keyEquivalent;
+  if (keyEquivalent.length == 0) {
+    return NS_OK;
+  }
+
+  NSEventModifierFlags mask = nativeItem.keyEquivalentModifierMask;
+  nsAutoString result;
+  auto appendModifier = [&result](const char* aName) {
+    if (!result.IsEmpty()) {
+      result.AppendLiteral(",");
+    }
+    result.AppendASCII(aName);
+  };
+  if (mask & NSEventModifierFlagControl) {
+    appendModifier("control");
+  }
+  if (mask & NSEventModifierFlagOption) {
+    appendModifier("option");
+  }
+  if (mask & NSEventModifierFlagShift) {
+    appendModifier("shift");
+  }
+  if (mask & NSEventModifierFlagCommand) {
+    appendModifier("command");
+  }
+
+  result.AppendLiteral("|");
+  nsAutoString key;
+  nsCocoaUtils::GetStringForNSString(keyEquivalent, key);
+  result.Append(key);
+  aResult = result;
+  return NS_OK;
 
   NS_OBJC_END_TRY_BLOCK_RETURN(NS_ERROR_FAILURE);
 }

@@ -99,6 +99,11 @@ support-files = [
   "../file_test_ime_state_on_readonly_change.js",
 ]
 
+["browser_test_menu_key_equivalent_update.js"]
+run-if = [
+  "os == 'mac'",
+]
+
 ["browser_test_scrollbar_colors.js"]
 support-files = ["helper_scrollbar_colors.html"]
 

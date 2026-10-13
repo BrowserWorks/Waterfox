@@ -104,6 +104,9 @@ class nsMenuItemX final : public nsChangeObserver,
   nsMenuX* mMenuParent = nullptr;                // [weak]
   nsMenuGroupOwnerX* mMenuGroupOwner = nullptr;  // [weak]
   RefPtr<mozilla::dom::Element> mCommandElement;
+  // The <key> element mContent's key attribute resolves to, observed so that
+  // edits to it reach the native menu item.
+  RefPtr<mozilla::dom::Element> mKeyElement;
   RefPtr<mozilla::dom::Element> mImageElement;
   mozilla::UniquePtr<nsMenuItemIconX> mIcon;  // always non-null
   bool mIsChecked = false;

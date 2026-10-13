@@ -700,6 +700,25 @@ interface nsIDOMWindowUtils : nsISupports {
   void forceUpdateNativeMenuAt(in AString indexString);
 
   /**
+   * Returns the key equivalent currently carried by the native menu item that
+   * was built from the element with id elementId, as "<modifiers>|<key>" --
+   * for example "command|-" or "shift,command|n". Modifiers is a comma
+   * separated list in the macOS canonical order control, option, shift,
+   * command. Returns the empty string if the item has no key equivalent, and
+   * throws if no native menu item was built from that element.
+   *
+   * This exists solely so that tests can check that edits to a <key> element
+   * reach the native menu: an NSMenuItem's key equivalent is otherwise not
+   * observable from script, and it is what the menu bar matches against when
+   * nsCocoaWindow::PostHandleKeyEvent offers it a key Gecko left unhandled.
+   * It has no non-test callers. macOS only; throws elsewhere.
+   *
+   * Cannot be accessed from unprivileged context (not content-accessible)
+   * Will throw a DOM security error if called without chrome privileges.
+   */
+  AString getNativeMenuItemKeyEquivalent(in AString elementId);
+
+  /**
    * Returns the current selection as plaintext. Note that the result may be
    * different from the result of sendQueryContentEvent(QUERY_SELECTED_TEXT).
    * This result is computed by native API with transferable data. In other

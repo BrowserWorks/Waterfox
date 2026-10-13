@@ -1997,6 +1997,18 @@ class nsIWidget : public nsSupportsWeakReference {
   /**
    * This is used for native menu system testing.
    *
+   * Returns the key equivalent carried by the native menu item built from the
+   * element with id aElementId, as "<modifiers>|<key>", or the empty string if
+   * it has none. Fails if no menu item was built from that element.
+   */
+  virtual nsresult GetNativeMenuItemKeyEquivalent(const nsAString& aElementId,
+                                                  nsAString& aResult) {
+    return NS_ERROR_NOT_IMPLEMENTED;
+  }
+
+  /**
+   * This is used for native menu system testing.
+   *
    * Updates a native menu at the position specified by the index string.
    * The index string is a string of positive integers separated by the "|"
    * (pipe) character.

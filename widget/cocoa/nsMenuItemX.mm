@@ -210,6 +210,9 @@ void nsMenuItemX::DetachFromGroupOwner() {
     if (mCommandElement) {
       mMenuGroupOwner->UnregisterForContentChanges(mCommandElement);
     }
+    if (mKeyElement) {
+      mMenuGroupOwner->UnregisterForContentChanges(mKeyElement);
+    }
     if (mImageElement) {
       mMenuGroupOwner->UnregisterForContentChanges(mImageElement);
     }
@@ -317,48 +320,63 @@ void nsMenuItemX::SetKeyEquiv() {
   nsAutoString keyValue;
   mContent->AsElement()->GetAttr(nsGkAtoms::key, keyValue);
 
+  RefPtr<dom::Element> keyContent;
   if (!keyValue.IsEmpty() && mContent->GetUncomposedDoc()) {
-    dom::Element* keyContent =
-        mContent->GetUncomposedDoc()->GetElementById(keyValue);
-    if (keyContent) {
-      nsAutoString keyChar;
-      bool hasKey = keyContent->GetAttr(nsGkAtoms::key, keyChar);
+    keyContent = mContent->GetUncomposedDoc()->GetElementById(keyValue);
+  }
 
-      if (!hasKey || keyChar.IsEmpty()) {
-        nsAutoString keyCodeName;
-        keyContent->GetAttr(nsGkAtoms::keycode, keyCodeName);
-        uint32_t charCode =
-            nsCocoaUtils::ConvertGeckoNameToMacCharCode(keyCodeName);
-        if (charCode) {
-          keyChar.Assign(charCode);
-        } else {
-          keyChar.AssignLiteral(u" ");
-        }
+  // The element we resolve to changes when our key attribute does.
+  if (keyContent != mKeyElement) {
+    if (mMenuGroupOwner) {
+      if (mKeyElement) {
+        mMenuGroupOwner->UnregisterForContentChanges(mKeyElement);
       }
-
-      nsAutoString modifiersStr;
-      keyContent->GetAttr(nsGkAtoms::modifiers, modifiersStr);
-      uint8_t modifiers =
-          nsMenuUtilsX::GeckoModifiersForNodeAttribute(modifiersStr);
-
-      unsigned int macModifiers =
-          nsMenuUtilsX::MacModifiersForGeckoModifiers(modifiers);
-      mNativeMenuItem.keyEquivalentModifierMask = macModifiers;
-
-      NSString* keyEquivalent =
-          [[NSString stringWithCharacters:(unichar*)keyChar.get()
-                                   length:keyChar.Length()] lowercaseString];
-      if ([keyEquivalent isEqualToString:@" "]) {
-        mNativeMenuItem.keyEquivalent = @"";
-      } else {
-        mNativeMenuItem.keyEquivalent = keyEquivalent;
+      if (keyContent) {
+        mMenuGroupOwner->RegisterForContentChanges(keyContent, this);
       }
-
-      return;
     }
+    mKeyElement = keyContent;
+  }
+
+  if (keyContent) {
+    nsAutoString keyChar;
+    bool hasKey = keyContent->GetAttr(nsGkAtoms::key, keyChar);
+
+    if (!hasKey || keyChar.IsEmpty()) {
+      nsAutoString keyCodeName;
+      keyContent->GetAttr(nsGkAtoms::keycode, keyCodeName);
+      uint32_t charCode =
+          nsCocoaUtils::ConvertGeckoNameToMacCharCode(keyCodeName);
+      if (charCode) {
+        keyChar.Assign(charCode);
+      } else {
+        keyChar.AssignLiteral(u" ");
+      }
+    }
+
+    nsAutoString modifiersStr;
+    keyContent->GetAttr(nsGkAtoms::modifiers, modifiersStr);
+    uint8_t modifiers =
+        nsMenuUtilsX::GeckoModifiersForNodeAttribute(modifiersStr);
+
+    unsigned int macModifiers =
+        nsMenuUtilsX::MacModifiersForGeckoModifiers(modifiers);
+    mNativeMenuItem.keyEquivalentModifierMask = macModifiers;
+
+    NSString* keyEquivalent =
+        [[NSString stringWithCharacters:(unichar*)keyChar.get()
+                                 length:keyChar.Length()] lowercaseString];
+    if ([keyEquivalent isEqualToString:@" "]) {
+      mNativeMenuItem.keyEquivalent = @"";
+    } else {
+      mNativeMenuItem.keyEquivalent = keyEquivalent;
+    }
+
+    return;
   }
 
   // if the key was removed, clear the key
+  mNativeMenuItem.keyEquivalentModifierMask = 0;
   mNativeMenuItem.keyEquivalent = @"";
 
   NS_OBJC_END_TRY_ABORT_BLOCK;
@@ -551,6 +569,11 @@ void nsMenuItemX::ObserveAttributeChanged(dom::Document* aDocument,
       }
       // now we sync our native menu item with the command DOM node
       SetEnabled();
+    }
+  } else if (aContent == mKeyElement) {
+    if (aAttribute == nsGkAtoms::key || aAttribute == nsGkAtoms::keycode ||
+        aAttribute == nsGkAtoms::modifiers) {
+      SetKeyEquiv();
     }
   } else if (aContent == mImageElement && aAttribute == nsGkAtoms::srcset) {
     SetupIcon();
