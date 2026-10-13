@@ -643,6 +643,9 @@ struct InitContextDesc final {
 
 constexpr uint32_t kMaxTransformFeedbackSeparateAttribs = 4;
 
+// This matches ANGLE's IMPLEMENTATION_MAX_UNIFORM_BLOCK_SIZE.
+constexpr uint32_t kMaxUniformBlockSize = 64 * 1024;
+
 struct Limits final {
   ExtensionBits supportedExtensions;
 

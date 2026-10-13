@@ -34,6 +34,11 @@ void main() {
 <canvas id="c" width="32" height="32"></canvas>
 <script>
   WebGLUtil.withWebGL2('c', function(gl) {
+    // See bug 2076013.
+    const maxBlockSize = gl.getParameter(gl.MAX_UNIFORM_BLOCK_SIZE);
+    ok(maxBlockSize >= 16384 && maxBlockSize <= 65536,
+       `MAX_UNIFORM_BLOCK_SIZE (${maxBlockSize}) should be clamped to 64 KiB.`);
+
     const vs = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vs, vertSource.innerHTML.trim());
     gl.compileShader(vs);
