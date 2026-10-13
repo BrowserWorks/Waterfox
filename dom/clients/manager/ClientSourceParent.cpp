@@ -6,6 +6,7 @@
 
 #include "ClientHandleParent.h"
 #include "ClientManagerService.h"
+#include "ClientPrincipalUtils.h"
 #include "ClientSourceOpParent.h"
 #include "ClientValidation.h"
 #include "mozilla/SchedulerGroup.h"
@@ -82,6 +83,16 @@ IPCResult ClientSourceParent::RecvThaw() {
 
 IPCResult ClientSourceParent::RecvInheritController(
     const ClientControlledArgs& aArgs) {
+  // A Client may only inherit a controller from a same-origin service worker.
+  // A cross-origin controller would be a same-origin policy violation, so
+  // since the child side enforces this with a release assertion we treat a
+  // failure here as fatal.
+  if (NS_WARN_IF(
+          !ClientMatchPrincipalInfo(mClientInfo.PrincipalInfo(),
+                                    aArgs.serviceWorker().principalInfo()))) {
+    return IPC_FAIL(this, "Invalid controller principal!");
+  }
+
   mController.reset();
   mController.emplace(aArgs.serviceWorker());
 
