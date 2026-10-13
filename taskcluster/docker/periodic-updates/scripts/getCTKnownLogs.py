@@ -191,7 +191,7 @@ def get_initializer_for_log(log, operator, json_data, log_format):
     toappend = tmpl.substitute(
         # Use json.dumps for C-escaping strings.
         # Not perfect but close enough.
-        description=json.dumps(log["description"]),
+        description=json.dumps(log.get("description", "unnamed log")),
         operator_index=operator_index,
         operator_comment=f"operated by {operator_name}".replace("/", "|"),
         state=state,
@@ -274,9 +274,9 @@ def generate_log_name_table_file(json_data, out_file):
     entries = {}
     for operator in json_data["operators"]:
         for log in operator.get("logs", []):
-            entries[log["log_id"]] = log.get("description", "")
+            entries[log["log_id"]] = log.get("description", "unnamed log")
         for log in operator.get("tiled_logs", []):
-            entries[log["log_id"]] = log.get("description", "")
+            entries[log["log_id"]] = log.get("description", "unnamed log")
     logNameTable = json.dumps(entries, indent=2, sort_keys=True)
     out_file.write(
         Template(LOG_NAME_TABLE_TEMPLATE).substitute(
