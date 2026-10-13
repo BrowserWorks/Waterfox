@@ -16,8 +16,8 @@
       privacy first.
     </p>
   </description>
-  <url type="homepage">https://www.waterfox.net/</url>
-  <url type="bugtracker">https://github.com/BrowserWorks/Waterfox/issues</url>
+  <url type="homepage">https://www.waterfox.com/</url>
+  <url type="bugtracker">https://github.com/BrowserWorks/waterfox/issues</url>
   <categories>
     <category>Network</category>
     <category>WebBrowser</category>

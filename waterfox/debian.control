@@ -30,7 +30,7 @@ Build-Depends: debhelper (>= 9),
  libxfixes3,
  libxi6,
  libxrender1
-Homepage: https://www.waterfox.net/
+Homepage: https://www.waterfox.com/
 
 Package: waterfox
 Architecture: any
