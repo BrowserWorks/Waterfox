@@ -404,6 +404,7 @@ class LandoAPI:
         patch_format: str,
         base_commit: str,
         base_commit_vcs: str,
+        repo_name: str = "try",
     ) -> dict:
         """Send try push contents to Lando.
 
@@ -411,6 +412,7 @@ class LandoAPI:
         the Mercurial `base_commit`, using the Auth0 `access_token` for authorization.
         """
         request_json_body = {
+            "repo_name": repo_name,
             "base_commit": base_commit,
             "base_commit_vcs": base_commit_vcs,
             "patch_format": patch_format,
@@ -429,6 +431,7 @@ def push_to_lando_try(
     metrics,
     *,
     force_old_lando: bool = False,
+    repo_name: str = "try",
 ):
     """Push a set of patches to Lando's try endpoint."""
 
@@ -473,7 +476,11 @@ def push_to_lando_try(
         metrics.mach_try.vcs_push.start()
         # Make the try request to Lando.
         response_json = lando_api.post_try_push_patches(
-            patches, patch_format, base_commit, base_commit_vcs
+            patches,
+            patch_format,
+            base_commit,
+            base_commit_vcs,
+            repo_name=repo_name,
         )
     except LandoAPIException as exc:
         metrics.mach_try.vcs_push.stop()
@@ -510,7 +517,12 @@ def get_lando_instance_id(vcs_path: str, section_name: str | None = None) -> str
 def get_lando_api_config(vcs_path: str, section_name: str | None = None) -> LandoAPI:
     """Initialise a LandoAPI object from the .lando.ini for the given section_name"""
     lando_ini_path = Path(vcs_path) / ".lando.ini"
-    section_name = section_name or get_lando_config_section_name()
+    if not lando_ini_path.exists():
+        # In comm-central, `tools/` is under the `mozilla/`
+        # subdirectory, while the VCS root is under `comm/`
+        lando_ini_path = Path(vcs.path) / ".." / ".lando.ini"
+
+    section_name = section_name or get_lando_config_section_name(vcs)
 
     return LandoAPI.from_lando_config_file(lando_ini_path, section_name)
 

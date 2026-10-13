@@ -9,7 +9,7 @@ from functools import cache
 from typing import Optional
 
 from mach.util import get_state_dir
-from mozbuild.base import MozbuildObject
+from mozbuild.base import BuildEnvironmentNotFoundException, MozbuildObject
 from mozversioncontrol import MissingVCSExtension, get_repository_object
 
 from .lando import push_to_lando_try
@@ -59,11 +59,57 @@ MACH_TRY_PUSH_TO_VCS = os.getenv("MACH_TRY_PUSH_TO_VCS") == "1"
 HG_TRY_URL = "ssh://hg.mozilla.org/try"
 MACH_TRY_REMOTE: Optional[str] = None
 
-TREEHERDER_LANDO_TRY_RUN_URL = "https://treeherder.mozilla.org/jobs?repo=try&landoInstance={lando_instance}&landoCommitID={job_id}"
+TREEHERDER_LANDO_TRY_RUN_URL = "https://treeherder.mozilla.org/jobs?repo={repo_name}&landoInstance={lando_instance}&landoCommitID={job_id}"
 
 here = os.path.abspath(os.path.dirname(__file__))
 build = MozbuildObject.from_environment(cwd=here)
-vcs = get_repository_object(build.topsrcdir)
+
+
+def get_project_topsrcdir():
+    """
+    Return the current project source directory for try pushes.
+    """
+
+    project_path = build.base_mozconfig_info["project"][0]
+    project_topsrcdir = os.path.join(build.topsrcdir, project_path.split(os.sep)[0])
+
+    if os.getcwd().startswith(project_topsrcdir):
+        return project_topsrcdir
+
+    return build.topsrcdir
+
+
+def is_thunderbird_push():
+    """
+    Return if this is a Firefox or Thunderbird try push.
+    """
+
+    try:
+        if not build.substs.get("MOZ_APP_NAME") == "thunderbird":
+            return False
+    except BuildEnvironmentNotFoundException:
+        return False
+
+    project_topsrcdir = get_project_topsrcdir()
+
+    if build.topsrcdir != project_topsrcdir:
+        return True
+
+    return False
+
+
+def get_try_repo(topsrcdir):
+    """Return the Treeherder repo name to use for a try push."""
+
+    # Thunderbird uses try-comm-central.
+    if is_thunderbird_push():
+        return "try-comm-central"
+
+    return "try"
+
+
+topsrcdir = get_project_topsrcdir()
+vcs = get_repository_object(topsrcdir)
 
 history_path = os.path.join(
     get_state_dir(specific_to_topsrcdir=True), "history", "try_task_configs.json"
@@ -198,9 +244,14 @@ def push_to_try(
     push_to_vcs=False,
     force_old_lando=False,
 ):
-    remote = os.environ.get("MACH_TRY_REMOTE") or MACH_TRY_REMOTE
-    metrics.mach_try.commit_prep.start()
     push = not stage_changes and not dry_run
+
+    if push and is_thunderbird_push():
+        remote = HG_TRY_URL + "-comm-central"
+    else:
+        remote = os.environ.get("MACH_TRY_REMOTE") or MACH_TRY_REMOTE
+
+    metrics.mach_try.commit_prep.start()
 
     if push and not remote:
         print(NO_REMOTE_CONFIGURED)
@@ -253,12 +304,14 @@ def push_to_try(
                 remote=remote,
             )
         else:
+            try_repo = get_try_repo(vcs.path)
             push_data = push_to_lando_try(
                 vcs,
                 commit_message,
                 changed_files,
                 metrics,
                 force_old_lando=force_old_lando,
+                repo_name=try_repo,
             )
             if not push_data:
                 sys.exit(1)
@@ -266,7 +319,9 @@ def push_to_try(
             job_id = push_data["lando_job_id"]
             if lando_instance and job_id:
                 treeherder_url = TREEHERDER_LANDO_TRY_RUN_URL.format(
-                    lando_instance=lando_instance, job_id=job_id
+                    repo_name=try_repo,
+                    lando_instance=lando_instance,
+                    job_id=job_id,
                 )
                 print(
                     f"try submission success in {push_data['duration']:.1f}s:\n"
