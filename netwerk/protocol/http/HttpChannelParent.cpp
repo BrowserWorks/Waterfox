@@ -512,9 +512,9 @@ bool HttpChannelParent::DoAsyncOpen(
       (extType == ExtContentPolicy::TYPE_DOCUMENT ||
        extType == ExtContentPolicy::TYPE_SUBDOCUMENT ||
        extType == ExtContentPolicy::TYPE_OBJECT ||
-       (aLoadFlags &
-        (nsIChannel::LOAD_DOCUMENT_URI | nsIRequest::LOAD_DOCUMENT_NEEDS_COOKIE |
-         nsIRequest::LOAD_HTML_OBJECT_DATA)))) {
+       (aLoadFlags & (nsIChannel::LOAD_DOCUMENT_URI |
+                      nsIRequest::LOAD_DOCUMENT_NEEDS_COOKIE |
+                      nsIRequest::LOAD_HTML_OBJECT_DATA)))) {
     return SendFailedAsyncOpen(NS_ERROR_CONTENT_BLOCKED);
   }
 
