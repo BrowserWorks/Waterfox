@@ -47,6 +47,13 @@ static void ReportTelemetry(GleanLabel aLabel,
       // This will always be followed by a NotificationShow permissions check
       // anyway.
       return;
+    case PermissionCheckPurpose::PushSubscribe:
+      glean::web_notification::push_subscribe_origin
+          .EnumGet(
+              static_cast<glean::web_notification::PushSubscribeOriginLabel>(
+                  aLabel))
+          .Add();
+      return;
     default:
       MOZ_CRASH("Unknown permission checker");
       return;

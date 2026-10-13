@@ -67,6 +67,21 @@ web_notification:
     notification_emails:
       - krosylight@mozilla.com
     expires: never
+  push_subscribe_origin:
+    type: labeled_counter
+    description: >
+      The category of the origin that calls PushManager.subscribe().
+    labels:
+      - first_party
+      - third_party
+      - nested_first_party
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1914203
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1914203
+    notification_emails:
+      - krosylight@mozilla.com
+    expires: never
   show_safe_browsing_block:
     type: rate
     description: >
