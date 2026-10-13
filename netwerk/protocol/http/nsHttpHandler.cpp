@@ -206,8 +206,14 @@ already_AddRefed<nsHttpHandler> nsHttpHandler::GetInstance() {
     DebugOnly<nsresult> rv = gHttpHandler->Init();
     MOZ_ASSERT(NS_SUCCEEDED(rv));
     // There is code that may be executed during the final cycle collection
-    // shutdown and still referencing gHttpHandler.
-    ClearOnShutdown(&gHttpHandler, ShutdownPhase::CCPostLastCycleCollection);
+    // shutdown and still referencing gHttpHandler. Not earlier than that:
+    // resolving an atom once the table is gone asserts.
+    RunOnShutdown(
+        [] {
+          gHttpHandler->Shutdown();
+          gHttpHandler = nullptr;
+        },
+        ShutdownPhase::CCPostLastCycleCollection);
   }
   RefPtr<nsHttpHandler> httpHandler = gHttpHandler;
   return httpHandler.forget();
@@ -300,20 +306,22 @@ nsHttpHandler::nsHttpHandler()
 nsHttpHandler::~nsHttpHandler() {
   LOG(("Deleting nsHttpHandler [this=%p]\n", this));
 
-  // make sure the connection manager is shutdown
-  if (mConnMgr) {
-    nsresult rv = mConnMgr->Shutdown();
-    if (NS_FAILED(rv)) {
-      LOG(
-          ("nsHttpHandler [this=%p] "
-           "failed to shutdown connection manager (%08x)\n",
-           this, static_cast<uint32_t>(rv)));
-    }
-    mConnMgr = nullptr;
-  }
-
   // Note: don't call NeckoChild::DestroyNeckoChild() here, as it's too late
   // and it'll segfault.  NeckoChild will get cleaned up by process exit.
+
+  Shutdown();
+
+  mConnMgr = nullptr;
+}
+
+void nsHttpHandler::Shutdown() {
+  if (mShutdownCalled.exchange(true)) {
+    return;
+  }
+
+  LOG(("nsHttpHandler::Shutdown [this=%p]\n", this));
+
+  ShutdownConnectionManager();
 
   nsHttp::DestroyAtomTable();
 }
