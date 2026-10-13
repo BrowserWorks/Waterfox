@@ -35,6 +35,15 @@ class AuthForwardingOwner extends NetworkEventOwner {
   }
 }
 
+// NetworkEventOwner which never answers auth prompts.
+class AuthIgnoringOwner extends NetworkEventOwner {
+  hasAuthPrompt = false;
+
+  onAuthPrompt() {
+    this.hasAuthPrompt = true;
+  }
+}
+
 // NetworkEventOwner which will answer provided credentials to auth prompts.
 class AuthCredentialsProvidingOwner extends NetworkEventOwner {
   hasAuthPrompt = false;
@@ -333,6 +342,46 @@ add_task(async function testAuthRequestWithCredentialsListener() {
 
   is(events[1].responseContent, "success", "Auth prompt was successful");
 
+  networkObserver.destroy();
+  gBrowser.removeTab(tab);
+});
+
+add_task(async function testUnansweredAuthPromptDoesNotLeak() {
+  cleanupAuthManager();
+  const tab = await addTab(TEST_URL);
+
+  const events = [];
+  const authURL = getUniqueAuthURL();
+  const networkObserver = new NetworkObserver({
+    decodeResponseBodies: true,
+    ignoreChannelFunction: channel => channel.URI.spec !== authURL,
+    onNetworkEvent: () => {
+      const owner = new AuthIgnoringOwner();
+      events.push(owner);
+      return owner;
+    },
+  });
+  registerCleanupFunction(() => networkObserver.destroy());
+
+  info("Enable the auth prompt listener for this network observer");
+  networkObserver.setAuthPromptListenerEnabled(true);
+
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [authURL], _url => {
+    content.wrappedJSObject.fetch(_url);
+  });
+
+  info("Wait for the auth prompt to reach the network event owner");
+  await TestUtils.waitForCondition(() => events[0]?.hasAuthPrompt);
+
+  ok(
+    !getTabAuthPrompts(tab).length,
+    "The auth prompt is held by the network observer"
+  );
+
+  // Removing the tab will cancel the channel while the prompt is held by the
+  // network observer. The main purpose of this test is to check that cancelling
+  // a channel with an unanswered prompt doesn't leak the window which owned the
+  // channel (Bug 2020133).
   networkObserver.destroy();
   gBrowser.removeTab(tab);
 });

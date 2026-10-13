@@ -47,11 +47,19 @@ export class NetworkAuthListener {
   // See https://searchfox.org/firefox-main/source/netwerk/base/nsIAuthPrompt2.idl
   asyncPromptAuth(channel, callback, context, level, authInfo) {
     const isProxy = !!(authInfo.flags & authInfo.AUTH_PROXY);
+
+    // Flag to check that the prompt is only resolved once at most.
+    let isPromptResolved = false;
+    // If the prompt was forwarded, the cancellation request should also be
+    // forwarded.
+    let forwardedCancelable = null;
+
     const cancelAuthPrompt = () => {
-      if (channel.canceled) {
+      if (isPromptResolved) {
         return;
       }
 
+      isPromptResolved = true;
       try {
         callback.onAuthCancelled(context, false);
       } catch (e) {
@@ -60,21 +68,44 @@ export class NetworkAuthListener {
     };
 
     const forwardAuthPrompt = () => {
-      if (channel.canceled) {
+      if (isPromptResolved) {
         return;
       }
 
-      const prompt = this.#getForwardPrompt(isProxy);
-      prompt.asyncPromptAuth(channel, callback, context, level, authInfo);
+      if (channel.canceled) {
+        cancelAuthPrompt();
+        return;
+      }
+
+      try {
+        const prompt = this.#getForwardPrompt(isProxy);
+        forwardedCancelable = prompt.asyncPromptAuth(
+          channel,
+          callback,
+          context,
+          level,
+          authInfo
+        );
+        isPromptResolved = true;
+      } catch (e) {
+        console.error(`NetworkAuthListener failed to forward auth prompt ${e}`);
+        cancelAuthPrompt();
+      }
     };
 
     const provideAuthCredentials = (username, password) => {
+      if (isPromptResolved) {
+        return;
+      }
+
       if (channel.canceled) {
+        cancelAuthPrompt();
         return;
       }
 
       authInfo.username = username;
       authInfo.password = password;
+      isPromptResolved = true;
       try {
         callback.onAuthAvailable(context, authInfo);
       } catch (e) {
@@ -101,7 +132,15 @@ export class NetworkAuthListener {
 
     return {
       QueryInterface: ChromeUtils.generateQI(["nsICancelable"]),
-      cancel: cancelAuthPrompt,
+      cancel: status => {
+        if (forwardedCancelable) {
+          forwardedCancelable.cancel(status);
+          forwardedCancelable = null;
+          return;
+        }
+
+        cancelAuthPrompt();
+      },
     };
   }
 

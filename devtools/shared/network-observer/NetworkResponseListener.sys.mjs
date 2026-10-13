@@ -651,7 +651,8 @@ export class NetworkResponseListener {
     });
 
     // Make sure all the security and response content info are sent
-    this.#onSecurityInfo.then(() => this.#destroy());
+    // unconditionally.
+    this.#onSecurityInfo.finally(() => this.#destroy());
   }
 
   /**
