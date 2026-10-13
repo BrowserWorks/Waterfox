@@ -770,7 +770,9 @@ void MarkingTracerT<opts>::markEphemeronEdges(EphemeronEdgeVector& edges,
 
     MarkColor targetColor = std::min(srcColor, MarkColor(edge.color()));
     MOZ_ASSERT(markColor() >= targetColor);
-    if (targetColor == markColor()) {
+
+    Zone* zone = edge.target()->zone();
+    if (targetColor == markColor() && zone->shouldMarkInZone(targetColor)) {
       ApplyGCThingTyped(edge.target(), edge.target()->getTraceKind(),
                         [this](auto t) { this->markAndTraverse(t); });
     }
