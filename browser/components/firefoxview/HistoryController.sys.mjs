@@ -185,8 +185,19 @@ export class HistoryController {
    */
   #normalizeVisit(visit) {
     visit.time = visit.date.getTime();
-    visit.pageGuid = visit.guid;
-    visit.guid = `${visit.guid}|${visit.time}`;
+    // Visits are cached and can be normalized more than once, so derive `guid`
+    // from the page guid captured on the first pass rather than from the
+    // (already time-suffixed) `guid`, which would otherwise keep growing.
+    visit.pageGuid ??= visit.guid;
+    // A row identifies a page, and for the date sorts a page per day, since
+    // that is how the query groups visits. Keying on the visit time instead
+    // would change a row's identity every time the page is visited again.
+    visit.guid =
+      this.sortOption === "date" || this.sortOption === "datesite"
+        ? `${visit.pageGuid}|${this.placesQuery.getStartOfDayTimestamp(
+            visit.date
+          )}`
+        : visit.pageGuid;
     visit.title = visit.title || visit.url;
     visit.icon = `page-icon:${visit.url}`;
     visit.primaryL10nId = "fxviewtabrow-tabs-list-tab";

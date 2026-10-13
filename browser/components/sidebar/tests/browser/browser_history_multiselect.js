@@ -497,3 +497,150 @@ add_task(async function test_select_nonconsecutive_with_mouse() {
 
   component.treeView.resetSelection();
 });
+
+async function waitForHistoryRows() {
+  await TestUtils.waitForCondition(
+    () => component.lists[0]?.rowEls.length,
+    "The history list has rendered its rows."
+  );
+}
+
+async function clearSelection() {
+  component.treeView.resetSelection();
+  await TestUtils.waitForCondition(
+    () =>
+      [...component.lists].every(
+        list => ![...list.rowEls].some(row => row.selected)
+      ),
+    "Selection is cleared in the DOM."
+  );
+}
+
+// Cached visits are normalized again on every refresh, which used to append the
+// visit time to a row's guid over and over (`guid` -> `guid|time|time`) and left
+// the page guid holding the previous, already suffixed value.
+add_task(async function test_row_guids_survive_repeated_refreshes() {
+  info("Refresh the history cache twice, re-normalizing the cached visits.");
+  await component.controller.updateCache();
+  await component.updateComplete;
+  await component.controller.updateCache();
+  await component.updateComplete;
+  await waitForHistoryRows();
+
+  for (const list of component.lists) {
+    for (const { url, guid, pageGuid } of list.tabItems) {
+      Assert.ok(
+        PlacesUtils.isValidGuid(pageGuid),
+        `${url} still has a valid page guid: ${pageGuid}`
+      );
+      Assert.ok(
+        guid.startsWith(`${pageGuid}|`),
+        `${url} has a guid derived from its page guid: ${guid}`
+      );
+    }
+  }
+});
+
+// Visiting a page again keeps its row in the same day's card, so the row keeps
+// its identity and its selection. Keying the row on the visit time dropped the
+// selection on every background refresh.
+add_task(async function test_selection_survives_history_refresh() {
+  await waitForHistoryRows();
+  const [firstList] = component.lists;
+  const rowCount = firstList.rowEls.length;
+
+  info("Select all of today's visits.");
+  firstList.selectAll();
+  await TestUtils.waitForCondition(
+    () => component.treeView.getSelectedTabItems().length == rowCount,
+    "All of today's visits are selected."
+  );
+  const guidsBefore = firstList.tabItems.map(item => item.guid).sort();
+
+  info("Visit those pages again, then refresh the history cache.");
+  await PlacesUtils.history.insertMany(
+    Array.from(firstList.tabItems, ({ url }, i) => ({
+      url,
+      title: `Example Domain ${i}`,
+      visits: [{ date: new Date() }],
+    }))
+  );
+  await component.controller.updateCache();
+  await component.updateComplete;
+  await waitForHistoryRows();
+
+  Assert.deepEqual(
+    component.lists[0].tabItems.map(item => item.guid).sort(),
+    guidsBefore,
+    "The rows kept their guids."
+  );
+  Assert.equal(
+    component.treeView.getSelectedTabItems().length,
+    rowCount,
+    "Selection is preserved after a background history refresh."
+  );
+  Assert.equal(
+    [...component.lists[0].rowEls].filter(row => row.selected).length,
+    rowCount,
+    "Every row of the rebuilt list is still marked selected."
+  );
+
+  await clearSelection();
+});
+
+// A card covering a whole month has one row per day, so the same page can appear
+// more than once in a single list, and each of those rows needs its own guid.
+add_task(async function test_rows_of_a_repeated_page_are_distinct() {
+  const url = "https://example.com/repeated-page";
+  const today = new Date();
+
+  info("Visit a page on two different days of the previous month.");
+  await PlacesUtils.history.insertMany(
+    [-4, -3].map(day => ({
+      url,
+      title: "Repeated page",
+      visits: [{ date: new Date(today.getFullYear(), today.getMonth(), day) }],
+    }))
+  );
+  await component.controller.updateCache();
+  await component.updateComplete;
+
+  const rowsForUrl = list => list.tabItems.filter(item => item.url == url);
+  await TestUtils.waitForCondition(
+    () => [...component.lists].some(list => rowsForUrl(list).length == 2),
+    "Both visits show up in the same card."
+  );
+  const monthList = [...component.lists].find(
+    list => rowsForUrl(list).length == 2
+  );
+  const repeated = rowsForUrl(monthList);
+  Assert.equal(
+    repeated[0].pageGuid,
+    repeated[1].pageGuid,
+    "Both rows are the same page."
+  );
+  Assert.notEqual(
+    repeated[0].guid,
+    repeated[1].guid,
+    "Each row has its own guid."
+  );
+
+  info("Select every row in that card, then refresh.");
+  const selectedBefore = monthList.tabItems.length;
+  monthList.selectAll();
+  await TestUtils.waitForCondition(
+    () => component.treeView.getSelectedTabItems().length == selectedBefore,
+    "Every row in the card is selected."
+  );
+
+  await component.controller.updateCache();
+  await component.updateComplete;
+
+  Assert.equal(
+    component.treeView.getSelectedTabItems().length,
+    selectedBefore,
+    "Both rows for the repeated page kept their selection."
+  );
+
+  await clearSelection();
+});
