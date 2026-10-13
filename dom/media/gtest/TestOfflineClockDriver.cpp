@@ -40,7 +40,7 @@ MOZ_CAN_RUN_SCRIPT_BOUNDARY {
         .WillOnce([&](GraphTime aTime) {
           // Tell the driver to exit its event loop.
           graph->StopIterating();
-          doneHolder.Resolve(true, __func__);
+          RefPtr(doneHolder.Steal())->Resolve(true, __func__);
         });
   }
 
