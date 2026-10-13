@@ -63,8 +63,7 @@ task-defaults:
                     by-platform:
                         linux64-aarch64.*: "136.0"
                         default: "72.0.2"
-                esr153: "153.0esr"
-                esr140:
+                esr153:
                     by-platform:
                         linux64-aarch64.*: "140.0esr"
                         win64-aarch64.*: "140.0esr"
