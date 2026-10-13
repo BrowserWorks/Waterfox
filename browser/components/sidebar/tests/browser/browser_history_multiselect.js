@@ -3,7 +3,11 @@
 
 "use strict";
 
-let component, contentWindow, lists;
+const { PlacesTestUtils } = ChromeUtils.importESModule(
+  "resource://testing-common/PlacesTestUtils.sys.mjs"
+);
+
+let component, contentWindow;
 
 add_setup(async () => {
   const sidebar = await showHistorySidebar();
@@ -12,23 +16,15 @@ add_setup(async () => {
 
   info("Add pages to history sidebar.");
   await populateHistory();
-  await BrowserTestUtils.waitForMutationCondition(
-    component.shadowRoot,
-    { childList: true, subtree: true },
-    () => component.lists.length >= 2
-  );
-
-  lists = component.lists;
-
-  await BrowserTestUtils.waitForMutationCondition(
-    lists[0].shadowRoot,
-    { childList: true, subtree: true },
-    () => !!lists[0].rowEls.length
-  );
-  await BrowserTestUtils.waitForMutationCondition(
-    lists[1].shadowRoot,
-    { childList: true, subtree: true },
-    () => !!lists[1].rowEls.length
+  // populateHistory visits 4 pages on each of today, yesterday and a day of the
+  // previous month, so wait for those three cards and for every row of the two
+  // expanded ones, rather than latching onto an intermediate refresh.
+  await TestUtils.waitForCondition(
+    () =>
+      getLists().length === 3 &&
+      getLists()[0].rowEls.length === 4 &&
+      getLists()[1].rowEls.length === 4,
+    "The history cards are fully rendered."
   );
 });
 
@@ -53,8 +49,6 @@ async function changeSortOption(menuItem, expectedListCount) {
   );
   await component.updateComplete;
 
-  lists = component.lists;
-
   // Wait for individual lists to update.
   for (const card of component.cards) {
     if (!card.expanded) {
@@ -76,6 +70,41 @@ async function clickOnRow(row, event = {}) {
   await component.updateComplete;
 }
 
+// A history refresh rebuilds the cards, so the lists and their rows are
+// replaced. Look them up right before using them.
+function getLists() {
+  return component.lists;
+}
+
+// A rebuilt list is in the DOM before its rows have rendered, and while the
+// cards are being rebuilt there is no list at that index at all.
+async function waitForRenderedRows(listIndex) {
+  await TestUtils.waitForCondition(
+    () => getLists()[listIndex]?.rowEls.length,
+    `List ${listIndex} has rendered its rows.`
+  );
+}
+
+async function refreshHistory() {
+  await component.controller.updateCache();
+  await component.updateComplete;
+}
+
+function rowAt(listIndex, rowIndex) {
+  return getLists()[listIndex].rowEls[rowIndex];
+}
+
+// `resetSelection` clears the tracked selection but only requests the re-render
+// that drops the rows' `selected` attribute, so wait for that render. Otherwise
+// the next test counts rows this one left selected.
+async function resetSelection() {
+  component.treeView.resetSelection();
+  await TestUtils.waitForCondition(
+    () => [...getLists()].every(list => !getSelectedRows(list).length),
+    "Selection is cleared in the DOM."
+  );
+}
+
 /**
  * Get selected rows in a list.
  *
@@ -93,8 +122,10 @@ function getSelectedRows(list) {
 }
 
 add_task(async function test_shift_click_select_all() {
+  await waitForRenderedRows(0);
+  await waitForRenderedRows(1);
   // Sanity check - No rows selected to begin with.
-  for (const list of lists) {
+  for (const list of getLists()) {
     Assert.equal(
       getSelectedRows(list).length,
       0,
@@ -102,8 +133,8 @@ add_task(async function test_shift_click_select_all() {
     );
   }
 
-  const firstListRows = [...lists[0].rowEls];
-  const secondListRows = [...lists[1].rowEls];
+  const firstListRows = [...getLists()[0].rowEls];
+  const secondListRows = [...getLists()[1].rowEls];
 
   const firstListTop = firstListRows[0];
   const firstListBottom = firstListRows.at(-1);
@@ -117,7 +148,7 @@ add_task(async function test_shift_click_select_all() {
     () => firstListBottom.selected
   );
   Assert.equal(
-    getSelectedRows(lists[0]).length,
+    getSelectedRows(getLists()[0]).length,
     1,
     "One row selected in the first list."
   );
@@ -130,7 +161,7 @@ add_task(async function test_shift_click_select_all() {
     () => secondListBottom.selected
   );
   Assert.equal(
-    getSelectedRows(lists[1]).length,
+    getSelectedRows(getLists()[1]).length,
     secondListRows.length,
     "All rows in second list are selected."
   );
@@ -143,17 +174,19 @@ add_task(async function test_shift_click_select_all() {
     () => firstListTop.selected
   );
   Assert.equal(
-    getSelectedRows(lists[0]).length,
+    getSelectedRows(getLists()[0]).length,
     firstListRows.length,
     "All rows in first list are selected."
   );
 
-  component.treeView.resetSelection();
+  await resetSelection();
 });
 
 add_task(async function test_shift_arrow_into_list_header() {
-  const firstListRows = [...lists[0].rowEls];
-  const secondListRows = [...lists[1].rowEls];
+  await waitForRenderedRows(0);
+  await waitForRenderedRows(1);
+  const firstListRows = [...getLists()[0].rowEls];
+  const secondListRows = [...getLists()[1].rowEls];
   const firstListBottom = firstListRows.at(-1);
   const secondListTop = secondListRows[0];
 
@@ -166,12 +199,12 @@ add_task(async function test_shift_arrow_into_list_header() {
     () => firstListBottom.selected
   );
   Assert.equal(
-    getSelectedRows(lists[0]).length,
+    getSelectedRows(getLists()[0]).length,
     1,
     "Last row of first list is selected after Shift + ArrowDown to header."
   );
 
-  component.treeView.resetSelection();
+  await resetSelection();
 
   info("Click first row of second list, then Shift + ArrowUp to card header.");
   await clickOnRow(secondListTop);
@@ -182,16 +215,18 @@ add_task(async function test_shift_arrow_into_list_header() {
     () => secondListTop.selected
   );
   Assert.equal(
-    getSelectedRows(lists[1]).length,
+    getSelectedRows(getLists()[1]).length,
     1,
     "First row of second list is selected after Shift + ArrowUp to header."
   );
 
-  component.treeView.resetSelection();
+  await resetSelection();
 });
 
 add_task(async function test_context_menu() {
-  const [firstList] = lists;
+  await waitForRenderedRows(0);
+  await waitForRenderedRows(1);
+  const firstList = getLists()[0];
   const rows = [...firstList.rowEls];
   const contextMenu = SidebarController.currentContextMenu;
   const deleteSingle = document.getElementById(
@@ -244,7 +279,7 @@ add_task(async function test_context_menu() {
   });
 
   info("Right-click an unselected row moves selection to it.");
-  const secondListRows = lists[1].rowEls;
+  const secondListRows = getLists()[1].rowEls;
   await openAndWaitForContextMenu(contextMenu, secondListRows[0].mainEl, () => {
     Assert.ok(
       BrowserTestUtils.isVisible(deleteSingle),
@@ -268,11 +303,13 @@ add_task(async function test_context_menu() {
     "Right-clicked row in second list is selected."
   );
 
-  component.treeView.resetSelection();
+  await resetSelection();
 });
 
 add_task(async function test_selection_cleared_on_sort_change() {
-  const [firstList] = lists;
+  await waitForRenderedRows(0);
+  await waitForRenderedRows(1);
+  const firstList = getLists()[0];
   const rows = [...firstList.rowEls];
 
   info("Shift + Click first row to set anchor.");
@@ -293,11 +330,11 @@ add_task(async function test_selection_cleared_on_sort_change() {
 
   info("Shift + Click a row in the new view.");
   await BrowserTestUtils.waitForMutationCondition(
-    lists[0].shadowRoot,
+    getLists()[0].shadowRoot,
     { childList: true, subtree: true },
-    () => lists[0].rowEls.length
+    () => getLists()[0].rowEls.length
   );
-  const newRow = lists[0].rowEls[0];
+  const newRow = getLists()[0].rowEls[0];
   await clickOnRow(newRow, { shiftKey: true });
   await BrowserTestUtils.waitForMutationCondition(
     newRow,
@@ -310,162 +347,58 @@ add_task(async function test_selection_cleared_on_sort_change() {
     "Shift + Click after sort change selects a single row without error."
   );
 
-  component.treeView.resetSelection();
+  await resetSelection();
   await changeSortOption(component._menuSortByDate, 3);
 });
 
-add_task(async function test_selection_cleared_on_history_remove() {
-  const [firstList] = lists;
-  const firstRow = firstList.rowEls[0];
-  const { url } = firstRow;
-
-  info("Click the first row to select it.");
-  await clickOnRow(firstRow);
-  await BrowserTestUtils.waitForMutationCondition(
-    firstRow,
-    { attributes: true },
-    () => firstRow.selected
-  );
-  Assert.equal(
-    component.treeView.getSelectedTabItems().length,
-    1,
-    "One item is selected before removal."
-  );
-
-  info("Remove the selected page from history.");
-  await PlacesUtils.history.remove(url);
-  Assert.equal(
-    component.treeView.getSelectedTabItems().length,
-    0,
-    "Selection is cleared after the page is removed from history."
-  );
-});
-
-add_task(async function test_open_all_in_tabs() {
-  const [firstList] = lists;
-  const rows = firstList.rowEls;
-
-  info("Select all of today's visits.");
-  firstList.selectAll();
-  for (const row of rows) {
-    await BrowserTestUtils.waitForMutationCondition(
-      row,
-      { attributes: true },
-      () => row.hasAttribute("selected")
-    );
-  }
-
-  info("Open all selected visits in tabs.");
-  const newTabPromises = Array(rows.length)
-    .fill()
-    .map(() => BrowserTestUtils.waitForNewTab(gBrowser));
-  const contextMenu = SidebarController.currentContextMenu;
-  await openAndWaitForContextMenu(contextMenu, rows[0].mainEl, () =>
-    contextMenu.activateItem(
-      document.getElementById("sidebar-history-context-open-all-in-tabs")
-    )
-  );
-  const newTabs = await Promise.all(newTabPromises);
-  Assert.equal(
-    newTabs.length,
-    rows.length,
-    "All of today's visits were opened in new tabs."
-  );
-
-  cleanUpExtraTabs();
-  component.treeView.resetSelection();
-});
-
-add_task(async function test_open_all_in_tabs_warn() {
-  const [firstList] = lists;
-  const rows = firstList.rowEls;
-
-  info("Select all of today's visits.");
-  firstList.selectAll();
-  for (const row of rows) {
-    await BrowserTestUtils.waitForMutationCondition(
-      row,
-      { attributes: true },
-      () => row.hasAttribute("selected")
-    );
-  }
-
-  info("Set maxOpenBeforeWarn below the number of selected rows.");
-  await SpecialPowers.pushPrefEnv({
-    set: [["browser.tabs.maxOpenBeforeWarn", 2]],
-  });
-
-  info("Open all in tabs and cancel the warning dialog.");
-  const tabCountBefore = gBrowser.tabs.length;
-  const dialogPromise = BrowserTestUtils.promiseAlertDialog("cancel");
-  const contextMenu = SidebarController.currentContextMenu;
-  await openAndWaitForContextMenu(contextMenu, rows[0].mainEl, () =>
-    contextMenu.activateItem(
-      document.getElementById("sidebar-history-context-open-all-in-tabs")
-    )
-  );
-  await dialogPromise;
-  Assert.equal(
-    gBrowser.tabs.length,
-    tabCountBefore,
-    "No new tabs were opened after cancelling the warning dialog."
-  );
-
-  await SpecialPowers.popPrefEnv();
-  component.treeView.resetSelection();
-});
-
 add_task(async function test_select_nonconsecutive_with_keyboard() {
-  const [firstList] = lists;
-  const firstListRows = firstList.rowEls;
-
-  const firstRow = firstListRows[0];
-  const lastRow = firstListRows[firstListRows.length - 1];
+  await waitForRenderedRows(0);
+  const lastIndex = getLists()[0].rowEls.length - 1;
 
   info("Focus the first row.");
-  firstRow.focus();
+  rowAt(0, 0).focus();
 
   info("Select first row with Space.");
   EventUtils.synthesizeKey(" ", {}, contentWindow);
-  await BrowserTestUtils.waitForMutationCondition(
-    firstRow,
-    { attributes: true },
-    () => firstRow.selected
+  await TestUtils.waitForCondition(
+    () => rowAt(0, 0).selected,
+    "First row is selected."
   );
-  Assert.ok(firstRow.selected, "First row is selected.");
 
   info("Accel + ArrowDown to the last row.");
-  const focused = BrowserTestUtils.waitForEvent(lastRow, "focus");
-  for (let i = 0; i < firstListRows.length - 1; i++) {
+  for (let i = 0; i < lastIndex; i++) {
     EventUtils.synthesizeKey(
       "KEY_ArrowDown",
       { accelKey: true },
       contentWindow
     );
   }
-  await focused;
+  await TestUtils.waitForCondition(
+    () => isActiveElement(rowAt(0, lastIndex)),
+    "Last row is focused."
+  );
 
   info("Select last row with Space.");
   EventUtils.synthesizeKey(" ", {}, contentWindow);
-  await BrowserTestUtils.waitForMutationCondition(
-    lastRow,
-    { attributes: true },
-    () => lastRow.selected
+  await TestUtils.waitForCondition(
+    () => rowAt(0, lastIndex).selected,
+    "Last row is selected."
   );
 
   Assert.equal(
-    getSelectedRows(firstList).length,
+    getSelectedRows(getLists()[0]).length,
     2,
     "Two rows selected in the first list."
   );
-  Assert.ok(firstRow.selected, "First row is still selected.");
-  Assert.ok(lastRow.selected, "Last row is selected.");
+  Assert.ok(rowAt(0, 0).selected, "First row is still selected.");
+  Assert.ok(rowAt(0, lastIndex).selected, "Last row is selected.");
 
-  component.treeView.resetSelection();
+  await resetSelection();
 });
 
 add_task(async function test_select_nonconsecutive_with_mouse() {
-  const [firstList] = lists;
+  await waitForRenderedRows(0);
+  const firstList = getLists()[0];
   const firstListRows = firstList.rowEls;
 
   const firstRow = firstListRows[0];
@@ -495,39 +428,153 @@ add_task(async function test_select_nonconsecutive_with_mouse() {
   Assert.ok(firstRow.selected, "First row is still selected.");
   Assert.ok(lastRow.selected, "Last row is selected.");
 
-  component.treeView.resetSelection();
+  await resetSelection();
 });
 
-async function waitForHistoryRows() {
-  await TestUtils.waitForCondition(
-    () => component.lists[0]?.rowEls.length,
-    "The history list has rendered its rows."
-  );
-}
+add_task(async function test_selection_cleared_on_history_remove() {
+  await waitForRenderedRows(0);
+  const firstList = getLists()[0];
+  const firstRow = firstList.rowEls[0];
+  const { url } = firstRow;
 
-async function clearSelection() {
-  component.treeView.resetSelection();
+  info("Click the first row to select it.");
+  await clickOnRow(firstRow);
+  await BrowserTestUtils.waitForMutationCondition(
+    firstRow,
+    { attributes: true },
+    () => firstRow.selected
+  );
+  Assert.equal(
+    component.treeView.getSelectedTabItems().length,
+    1,
+    "One item is selected before removal."
+  );
+
+  info("Remove the selected page from history.");
+  await PlacesUtils.history.remove(url);
+  Assert.equal(
+    component.treeView.getSelectedTabItems().length,
+    0,
+    "Selection is cleared after the page is removed from history."
+  );
+
+  // Removing a page rebuilds the cards from a fresh query, and the click above
+  // navigated to the page, which records a visit of its own. Settle both here
+  // rather than leaving them to land in a later test.
+  await PlacesTestUtils.promiseAsyncUpdates();
+  await refreshHistory();
+  await waitForRenderedRows(0);
+});
+
+add_task(async function test_open_all_in_tabs() {
+  await waitForRenderedRows(0);
+  const firstList = getLists()[0];
+  const rows = firstList.rowEls;
+
+  info("Select all of today's visits.");
+  firstList.selectAll();
+  for (const row of rows) {
+    await BrowserTestUtils.waitForMutationCondition(
+      row,
+      { attributes: true },
+      () => row.hasAttribute("selected")
+    );
+  }
+
+  info("Open all selected visits in tabs.");
+  const tabCountBefore = gBrowser.tabs.length;
+  const contextMenu = SidebarController.currentContextMenu;
+  await openAndWaitForContextMenu(contextMenu, rows[0].mainEl, () =>
+    contextMenu.activateItem(
+      document.getElementById("sidebar-history-context-open-all-in-tabs")
+    )
+  );
+  // Every waitForNewTab listener resolves on the first TabOpen, so poll for all
+  // of the tabs instead, and for their loads: those record the history visits
+  // this test has to settle before it finishes.
   await TestUtils.waitForCondition(
     () =>
-      [...component.lists].every(
-        list => ![...list.rowEls].some(row => row.selected)
-      ),
-    "Selection is cleared in the DOM."
+      gBrowser.tabs.length == tabCountBefore + rows.length &&
+      gBrowser.tabs
+        .slice(tabCountBefore)
+        .every(
+          tab =>
+            !tab.linkedBrowser.webProgress.isLoadingDocument &&
+            tab.linkedBrowser.currentURI.spec != "about:blank"
+        ),
+    "All of today's visits were opened and loaded in new tabs."
   );
-}
+
+  // Loading those tabs records new history visits asynchronously (re-creating a
+  // page an earlier test removed, with a fresh guid). Flush the writes and
+  // refresh the sidebar so this churn is settled here rather than landing in,
+  // and dropping the selection of, a later test.
+  await PlacesTestUtils.promiseAsyncUpdates();
+  await refreshHistory();
+
+  cleanUpExtraTabs();
+  await resetSelection();
+});
+
+add_task(async function test_open_all_in_tabs_warn() {
+  await waitForRenderedRows(0);
+  const firstList = getLists()[0];
+  const rows = firstList.rowEls;
+
+  info("Select all of today's visits.");
+  firstList.selectAll();
+  for (const row of rows) {
+    await BrowserTestUtils.waitForMutationCondition(
+      row,
+      { attributes: true },
+      () => row.hasAttribute("selected")
+    );
+  }
+
+  Assert.greater(rows.length, 1, "There are enough rows to warn about.");
+  Assert.equal(
+    component.treeView.getSelectedTabItems().length,
+    rows.length,
+    "All of today's visits are selected."
+  );
+
+  info("Set maxOpenBeforeWarn below the number of selected rows.");
+  await SpecialPowers.pushPrefEnv({
+    set: [["browser.tabs.maxOpenBeforeWarn", rows.length - 1]],
+  });
+
+  info("Open all in tabs and cancel the warning dialog.");
+  const tabCountBefore = gBrowser.tabs.length;
+  const dialogPromise = BrowserTestUtils.promiseAlertDialog("cancel");
+  const contextMenu = SidebarController.currentContextMenu;
+  await openAndWaitForContextMenu(contextMenu, rows[0].mainEl, () =>
+    contextMenu.activateItem(
+      document.getElementById("sidebar-history-context-open-all-in-tabs")
+    )
+  );
+  await dialogPromise;
+  Assert.equal(
+    gBrowser.tabs.length,
+    tabCountBefore,
+    "No new tabs were opened after cancelling the warning dialog."
+  );
+
+  await SpecialPowers.popPrefEnv();
+  await resetSelection();
+});
 
 // Cached visits are normalized again on every refresh, which used to append the
 // visit time to a row's guid over and over (`guid` -> `guid|time|time`) and left
 // the page guid holding the previous, already suffixed value.
 add_task(async function test_row_guids_survive_repeated_refreshes() {
-  info("Refresh the history cache twice, re-normalizing the cached visits.");
-  await component.controller.updateCache();
-  await component.updateComplete;
-  await component.controller.updateCache();
-  await component.updateComplete;
-  await waitForHistoryRows();
+  await waitForRenderedRows(0);
 
-  for (const list of component.lists) {
+  info("Refresh the history cache twice, re-normalizing the cached visits.");
+  await refreshHistory();
+  await refreshHistory();
+  await waitForRenderedRows(0);
+
+  for (const list of getLists()) {
     for (const { url, guid, pageGuid } of list.tabItems) {
       Assert.ok(
         PlacesUtils.isValidGuid(pageGuid),
@@ -541,23 +588,34 @@ add_task(async function test_row_guids_survive_repeated_refreshes() {
   }
 });
 
-// Visiting a page again keeps its row in the same day's card, so the row keeps
-// its identity and its selection. Keying the row on the visit time dropped the
-// selection on every background refresh.
+// A history row's guid embeds its visit time, so re-visiting a page changes the
+// guid even though the row still refers to the same page. The multiselection
+// must follow the row across such a refresh; otherwise a background history
+// update silently empties the selection (e.g. dropping the "open all in tabs"
+// warning because nothing looks selected anymore).
 add_task(async function test_selection_survives_history_refresh() {
-  await waitForHistoryRows();
-  const [firstList] = component.lists;
-  const rowCount = firstList.rowEls.length;
+  await waitForRenderedRows(0);
+  const firstList = getLists()[0];
+  const rows = firstList.rowEls;
 
   info("Select all of today's visits.");
   firstList.selectAll();
-  await TestUtils.waitForCondition(
-    () => component.treeView.getSelectedTabItems().length == rowCount,
+  for (const row of rows) {
+    await BrowserTestUtils.waitForMutationCondition(
+      row,
+      { attributes: true },
+      () => row.hasAttribute("selected")
+    );
+  }
+  Assert.equal(
+    component.treeView.getSelectedTabItems().length,
+    rows.length,
     "All of today's visits are selected."
   );
-  const guidsBefore = firstList.tabItems.map(item => item.guid).sort();
 
-  info("Visit those pages again, then refresh the history cache.");
+  const guidsBefore = firstList.tabItems.map(item => item.guid);
+
+  info("Re-visit those pages, then refresh the sidebar's history cache.");
   await PlacesUtils.history.insertMany(
     Array.from(firstList.tabItems, ({ url }, i) => ({
       url,
@@ -565,27 +623,28 @@ add_task(async function test_selection_survives_history_refresh() {
       visits: [{ date: new Date() }],
     }))
   );
-  await component.controller.updateCache();
-  await component.updateComplete;
-  await waitForHistoryRows();
+  await refreshHistory();
+  await waitForRenderedRows(0);
 
   Assert.deepEqual(
-    component.lists[0].tabItems.map(item => item.guid).sort(),
-    guidsBefore,
-    "The rows kept their guids."
+    getLists()[0]
+      .tabItems.map(item => item.guid)
+      .sort(),
+    guidsBefore.sort(),
+    "The re-visit left the rows' guids alone."
   );
   Assert.equal(
     component.treeView.getSelectedTabItems().length,
-    rowCount,
+    rows.length,
     "Selection is preserved after a background history refresh."
   );
   Assert.equal(
-    [...component.lists[0].rowEls].filter(row => row.selected).length,
-    rowCount,
-    "Every row of the rebuilt list is still marked selected."
+    getSelectedRows(getLists()[0]).length,
+    rows.length,
+    "Every row of the rebuilt list is marked selected."
   );
 
-  await clearSelection();
+  await resetSelection();
 });
 
 // A card covering a whole month has one row per day, so the same page can appear
@@ -602,17 +661,17 @@ add_task(async function test_rows_of_a_repeated_page_are_distinct() {
       visits: [{ date: new Date(today.getFullYear(), today.getMonth(), day) }],
     }))
   );
-  await component.controller.updateCache();
-  await component.updateComplete;
+  await refreshHistory();
 
   const rowsForUrl = list => list.tabItems.filter(item => item.url == url);
   await TestUtils.waitForCondition(
-    () => [...component.lists].some(list => rowsForUrl(list).length == 2),
+    () => [...getLists()].some(list => rowsForUrl(list).length == 2),
     "Both visits show up in the same card."
   );
-  const monthList = [...component.lists].find(
+  const monthIndex = [...getLists()].findIndex(
     list => rowsForUrl(list).length == 2
   );
+  const monthList = getLists()[monthIndex];
   const repeated = rowsForUrl(monthList);
   Assert.equal(
     repeated[0].pageGuid,
@@ -633,8 +692,7 @@ add_task(async function test_rows_of_a_repeated_page_are_distinct() {
     "Every row in the card is selected."
   );
 
-  await component.controller.updateCache();
-  await component.updateComplete;
+  await refreshHistory();
 
   Assert.equal(
     component.treeView.getSelectedTabItems().length,
@@ -642,5 +700,5 @@ add_task(async function test_rows_of_a_repeated_page_are_distinct() {
     "Both rows for the repeated page kept their selection."
   );
 
-  await clearSelection();
+  await resetSelection();
 });
