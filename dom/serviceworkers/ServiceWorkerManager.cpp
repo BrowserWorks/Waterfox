@@ -39,6 +39,7 @@
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/ClientHandle.h"
 #include "mozilla/dom/ClientManager.h"
+#include "mozilla/dom/ClientPrincipalUtils.h"
 #include "mozilla/dom/ClientSource.h"
 #include "mozilla/dom/ConsoleUtils.h"
 #include "mozilla/dom/ContentParent.h"
@@ -2510,6 +2511,18 @@ nsresult ServiceWorkerManager::GetClientRegistration(
 
   // If the document is controlled, the current worker MUST be non-null.
   if (!data->mRegistrationInfo->GetActive()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  // Defense in depth: mControlledClients is keyed on the client id alone, so
+  // verify the client and the registration controlling it are same-origin
+  // before handing the registration back to a fetch event dispatch.  Every
+  // legitimately controlled client already satisfies this, since
+  // ClientSource::SetController() and ClientHandle::Control() both assert it.
+  if (NS_WARN_IF(!ClientMatchPrincipalInfo(aClientInfo.PrincipalInfo(),
+                                           data->mRegistrationInfo->GetActive()
+                                               ->Descriptor()
+                                               .PrincipalInfo()))) {
     return NS_ERROR_NOT_AVAILABLE;
   }
 
