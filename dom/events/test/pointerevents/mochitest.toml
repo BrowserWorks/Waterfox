@@ -93,11 +93,6 @@ skip-if = [
 
 ["test_getCoalescedEvents_touch.html"]
 scheme = "https"
-skip-if = [
-  "os == 'android'", # Bug 1312791
-  "os == 'win' && os_version == '11.26100' && arch == 'x86_64' && opt", # Bug 1781388
-  "os == 'win' && os_version == '11.26200' && arch == 'x86_64' && opt", # Bug 1781388
-]
 support-files = ["!/gfx/layers/apz/test/mochitest/apz_test_native_event_utils.js"]
 
 ["test_multiple_touches.html"]

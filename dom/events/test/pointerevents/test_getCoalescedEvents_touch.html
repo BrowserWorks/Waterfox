@@ -34,18 +34,19 @@ if (!window.opener) {
       // Flush all pending touch events before synthesizing events.
 
       let eventCount = 0;
-      target0.addEventListener("pointermove", function handler(ev) {
-        eventCount++;
-        if (eventCount == 1) {
-          // Ignore the first pointermove event since the first touch event won't
-          // be coalesced.
-          is(ev.getCoalescedEvents().length, 1,
-             "Coalesced events should be 1 for the first touchmove event");
+      function onPointerMove(ev) {
+        if (ev.pointerType != "touch") {
           return;
         }
-
+        eventCount++;
         let length = ev.getCoalescedEvents().length;
-        ok(length >= 1, "Coalesced events should >= 1, got " + length);
+        if (eventCount == 1) {
+          // The first touch event won't be coalesced.
+          opener.is(length, 1,
+                    "Coalesced events should be 1 for the first touchmove event");
+        } else {
+          opener.ok(length >= 1, "Coalesced events should >= 1, got " + length);
+        }
 
         let rect = target0.getBoundingClientRect();
         let prevOffsetX = 0;
@@ -79,11 +80,11 @@ if (!window.opener) {
           opener.ok((coalescedEvent.clientX <= x+2) && (coalescedEvent.clientX >= x-2), "getCoalescedEvents()[" + i + "].clientX");
           opener.ok((coalescedEvent.clientY <= y+2) && (coalescedEvent.clientY >= y-2), "getCoalescedEvents()[" + i + "].clientY");
         }
-
-        target0.removeEventListener("pointermove", handler);
-      });
+      }
+      target0.addEventListener("pointermove", onPointerMove);
 
       target0.addEventListener("pointerup", (ev) => {
+        target0.removeEventListener("pointermove", onPointerMove);
         utils.restoreNormalRefresh();
         opener.SimpleTest.finish();
         window.close();
