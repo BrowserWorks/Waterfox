@@ -633,6 +633,11 @@ class NativeExitFrameLayout {
   ExitFrameLayout exit_;
   uintptr_t argc_;
 
+  // The callee. Unlike the Value below, this isn't overwritten by the return
+  // value. This ensures the callee's realm is kept alive on GC.
+  // See bug 2078837.
+  JSObject* savedCallee_;
+
   // We need to split the Value into 2 fields of 32 bits, otherwise the C++
   // compiler may add some padding between the fields.
   uint32_t loCalleeResult_;
@@ -648,6 +653,7 @@ class NativeExitFrameLayout {
     return reinterpret_cast<JS::Value*>(&loCalleeResult_);
   }
   inline uintptr_t argc() const { return argc_; }
+  inline JSObject** savedCallee() { return &savedCallee_; }
 };
 
 class CallNativeExitFrameLayout : public NativeExitFrameLayout {
@@ -675,6 +681,9 @@ class IonOOLNativeExitFrameLayout {
   JitCode* stubCode_;
 
   uintptr_t argc_;
+
+  // See NativeExitFrameLayout::savedCallee_.
+  JSObject* savedCallee_;
 
   // We need to split the Value into 2 fields of 32 bits, otherwise the C++
   // compiler may add some padding between the fields.
@@ -704,6 +713,7 @@ class IonOOLNativeExitFrameLayout {
   }
   inline JS::Value* thisp() { return reinterpret_cast<JS::Value*>(&loThis_); }
   inline uintptr_t argc() const { return argc_; }
+  inline JSObject** savedCallee() { return &savedCallee_; }
 };
 
 // ProxyGetProperty(JSContext* cx, HandleObject proxy, HandleId id,
