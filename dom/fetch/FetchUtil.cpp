@@ -21,6 +21,7 @@
 #include "nsNetUtil.h"
 #include "nsStreamUtils.h"
 #include "nsString.h"
+#include "nsThreadUtils.h"
 #include "zlib.h"
 
 namespace mozilla::dom {
@@ -246,20 +247,35 @@ class StoreOptimizedEncodingRunnable final : public Runnable {
   };
 };
 
+// The stream is read by JSStreamConsumer on aStreamTarget, so it must also be
+// closed there to avoid racing with an in-progress read.
+static void CloseStreamOnTarget(already_AddRefed<nsIAsyncInputStream> aStream,
+                                nsISerialEventTarget* aStreamTarget) {
+  nsresult rv = aStreamTarget->Dispatch(NS_NewRunnableFunction(
+      "JSStreamConsumer::CloseStream",
+      [stream = nsCOMPtr{aStream}]() { stream->Close(); }));
+  MOZ_ALWAYS_SUCCEEDS(rv);
+}
+
 class WindowStreamOwner final : public GlobalTeardownObserver {
  private:
-  // Read from any thread but only set/cleared on the main thread. The lifecycle
-  // of WindowStreamOwner prevents concurrent read/clear.
+  // Only set/cleared on the main thread.
   nsCOMPtr<nsIAsyncInputStream> mStream;
+  const nsCOMPtr<nsISerialEventTarget> mStreamTarget;
 
   ~WindowStreamOwner() { MOZ_ASSERT(NS_IsMainThread()); }
 
  public:
   NS_DECL_ISUPPORTS
 
-  WindowStreamOwner(nsIAsyncInputStream* aStream, nsIGlobalObject* aGlobal)
-      : GlobalTeardownObserver(aGlobal), mStream(aStream) {
+  WindowStreamOwner(nsIAsyncInputStream* aStream,
+                    nsISerialEventTarget* aStreamTarget,
+                    nsIGlobalObject* aGlobal)
+      : GlobalTeardownObserver(aGlobal),
+        mStream(aStream),
+        mStreamTarget(aStreamTarget) {
     MOZ_DIAGNOSTIC_ASSERT(aGlobal);
+    MOZ_ASSERT(aStream);
     MOZ_ASSERT(NS_IsMainThread());
   }
 
@@ -268,16 +284,9 @@ class WindowStreamOwner final : public GlobalTeardownObserver {
   void DisconnectFromOwner() override {
     MOZ_ASSERT(NS_IsMainThread());
 
-    if (!mStream) {
-      return;
+    if (mStream) {
+      CloseStreamOnTarget(mStream.forget(), mStreamTarget);
     }
-
-    // mStream->Close() will call JSStreamConsumer::OnInputStreamReady which may
-    // then destory itself, but GTO should be strongly grabbing us right as it's
-    // calling DisconnectFromOwner.
-
-    mStream->Close();
-    mStream = nullptr;
 
     GlobalTeardownObserver::DisconnectFromOwner();
   }
@@ -293,25 +302,23 @@ class WorkerStreamOwner final {
  public:
   NS_INLINE_DECL_REFCOUNTING(WorkerStreamOwner)
 
-  explicit WorkerStreamOwner(nsIAsyncInputStream* aStream,
-                             nsCOMPtr<nsIEventTarget>&& target)
-      : mStream(aStream), mOwningEventTarget(std::move(target)) {}
+  WorkerStreamOwner(nsIAsyncInputStream* aStream,
+                    nsISerialEventTarget* aStreamTarget,
+                    nsCOMPtr<nsIEventTarget>&& target)
+      : mStream(aStream),
+        mStreamTarget(aStreamTarget),
+        mOwningEventTarget(std::move(target)) {}
 
   static already_AddRefed<WorkerStreamOwner> Create(
-      nsIAsyncInputStream* aStream, WorkerPrivate* aWorker,
-      nsCOMPtr<nsIEventTarget>&& target) {
+      nsIAsyncInputStream* aStream, nsISerialEventTarget* aStreamTarget,
+      WorkerPrivate* aWorker, nsCOMPtr<nsIEventTarget>&& target) {
     RefPtr<WorkerStreamOwner> self =
-        new WorkerStreamOwner(aStream, std::move(target));
+        new WorkerStreamOwner(aStream, aStreamTarget, std::move(target));
 
     self->mWorkerRef =
         StrongWorkerRef::Create(aWorker, "JSStreamConsumer", [self]() {
           if (self->mStream) {
-            // If this Close() calls JSStreamConsumer::OnInputStreamReady and
-            // drops the last reference to the JSStreamConsumer, 'this' will not
-            // be destroyed since ~JSStreamConsumer() only enqueues a release
-            // proxy.
-            self->mStream->Close();
-            self->mStream = nullptr;
+            CloseStreamOnTarget(self->mStream.forget(), self->mStreamTarget);
           }
         });
 
@@ -325,16 +332,17 @@ class WorkerStreamOwner final {
   static void ProxyRelease(already_AddRefed<WorkerStreamOwner> aDoomed) {
     RefPtr<WorkerStreamOwner> doomed = aDoomed;
     nsIEventTarget* target = doomed->mOwningEventTarget;
-    NS_ProxyRelease("WorkerStreamOwner", target, doomed.forget(),
+    NS_ProxyRelease("JSStreamConsumer::mWorkerStreamOwner", target,
+                    doomed.forget(),
                     /* aAlwaysProxy = */ true);
   }
 
  private:
   ~WorkerStreamOwner() = default;
 
-  // Read from any thread but only set/cleared on the worker thread. The
-  // lifecycle of WorkerStreamOwner prevents concurrent read/clear.
+  // Only set/cleared on the worker thread.
   nsCOMPtr<nsIAsyncInputStream> mStream;
+  const nsCOMPtr<nsISerialEventTarget> mStreamTarget;
   RefPtr<StrongWorkerRef> mWorkerRef;
   nsCOMPtr<nsIEventTarget> mOwningEventTarget;
 };
@@ -349,6 +357,8 @@ class JSStreamConsumer final : public nsIInputStreamCallback,
 
   RefPtr<WindowStreamOwner> mWindowStreamOwner;
   RefPtr<WorkerStreamOwner> mWorkerStreamOwner;
+  // All stream reads and the Close() happen on this serial target.
+  const nsCOMPtr<nsISerialEventTarget> mStreamTarget;
   nsMainThreadPtrHandle<nsICacheInfoChannel> mCache;
   const bool mOptimizedEncoding;
   z_stream mZStream;
@@ -358,10 +368,12 @@ class JSStreamConsumer final : public nsIInputStreamCallback,
   bool mConsumerAborted;
 
   JSStreamConsumer(already_AddRefed<WindowStreamOwner> aWindowStreamOwner,
+                   nsISerialEventTarget* aStreamTarget,
                    nsIGlobalObject* aGlobal, JS::StreamConsumer* aConsumer,
                    nsMainThreadPtrHandle<nsICacheInfoChannel>&& aCache,
                    bool aOptimizedEncoding)
       : mWindowStreamOwner(aWindowStreamOwner),
+        mStreamTarget(aStreamTarget),
         mCache(std::move(aCache)),
         mOptimizedEncoding(aOptimizedEncoding),
         mZStreamInitialized(false),
@@ -372,10 +384,12 @@ class JSStreamConsumer final : public nsIInputStreamCallback,
   }
 
   JSStreamConsumer(RefPtr<WorkerStreamOwner> aWorkerStreamOwner,
+                   nsISerialEventTarget* aStreamTarget,
                    nsIGlobalObject* aGlobal, JS::StreamConsumer* aConsumer,
                    nsMainThreadPtrHandle<nsICacheInfoChannel>&& aCache,
                    bool aOptimizedEncoding)
       : mWorkerStreamOwner(std::move(aWorkerStreamOwner)),
+        mStreamTarget(aStreamTarget),
         mCache(std::move(aCache)),
         mOptimizedEncoding(aOptimizedEncoding),
         mZStreamInitialized(false),
@@ -501,25 +515,32 @@ class JSStreamConsumer final : public nsIInputStreamCallback,
       return false;
     }
 
+    nsCOMPtr<nsISerialEventTarget> streamTarget;
+    rv = NS_CreateBackgroundTaskQueue("JSStreamConsumer",
+                                      getter_AddRefs(streamTarget));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return false;
+    }
+
     RefPtr<JSStreamConsumer> consumer;
     if (aMaybeWorker) {
-      RefPtr<WorkerStreamOwner> owner = WorkerStreamOwner::Create(
-          asyncStream, aMaybeWorker, aGlobal->SerialEventTarget());
+      RefPtr<WorkerStreamOwner> owner =
+          WorkerStreamOwner::Create(asyncStream, streamTarget, aMaybeWorker,
+                                    aGlobal->SerialEventTarget());
       if (!owner) {
         return false;
       }
 
-      consumer = new JSStreamConsumer(std::move(owner), aGlobal, aConsumer,
-                                      std::move(aCache), aOptimizedEncoding);
+      consumer = new JSStreamConsumer(std::move(owner), streamTarget, aGlobal,
+                                      aConsumer, std::move(aCache),
+                                      aOptimizedEncoding);
     } else {
       RefPtr<WindowStreamOwner> owner =
-          new WindowStreamOwner(asyncStream, aGlobal);
-      if (!owner) {
-        return false;
-      }
+          new WindowStreamOwner(asyncStream, streamTarget, aGlobal);
 
-      consumer = new JSStreamConsumer(owner.forget(), aGlobal, aConsumer,
-                                      std::move(aCache), aOptimizedEncoding);
+      consumer =
+          new JSStreamConsumer(owner.forget(), streamTarget, aGlobal, aConsumer,
+                               std::move(aCache), aOptimizedEncoding);
     }
 
     // This AsyncWait() creates a ref-cycle between asyncStream and consumer:
@@ -528,15 +549,16 @@ class JSStreamConsumer final : public nsIInputStreamCallback,
     //
     // The cycle is broken when the stream completes or errors out and
     // asyncStream drops its reference to consumer.
-    return NS_SUCCEEDED(asyncStream->AsyncWait(consumer, 0, 0, nullptr));
+    return NS_SUCCEEDED(asyncStream->AsyncWait(consumer, 0, 0, streamTarget));
   }
 
   // nsIInputStreamCallback:
 
   NS_IMETHOD
   OnInputStreamReady(nsIAsyncInputStream* aStream) override {
-    // Can be called on any stream. The JS API calls made below explicitly
-    // support being called from any thread.
+    // The JS API calls made below explicitly support being called from any
+    // thread.
+    MOZ_ASSERT(mStreamTarget->IsOnCurrentThread());
     MOZ_DIAGNOSTIC_ASSERT(!mConsumerAborted);
 
     nsresult rv;
@@ -588,7 +610,7 @@ class JSStreamConsumer final : public nsIInputStreamCallback,
       return NS_OK;
     }
 
-    rv = aStream->AsyncWait(this, 0, 0, nullptr);
+    rv = aStream->AsyncWait(this, 0, 0, mStreamTarget);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       mConsumer->streamError(size_t(rv));
       return NS_OK;
