@@ -147,6 +147,25 @@ class Transaction {
   mozilla::ipc::IPCResult CommitFromIPC(const MaybeDiscarded<Context>& aOwner,
                                         ContentParent* aSource);
 
+  // Reconcile the initial field values `aSource` sent for a context it created
+  // against the values `aOwner` was constructed with, which this process
+  // derived for itself. Each differing value is a write request from `aSource`
+  // and is judged by `CanSet` like any later write from that process. Accepted
+  // values are stored on `aOwner` without running `DidSet`. Refused ones are
+  // recorded in `aCorrection` as a transaction holding our values, which the
+  // caller sends with `SendCorrection` once `aOwner` can be referenced over
+  // IPC. A refusal never fails the message: `aSource` may legitimately hold
+  // stale copies of the contexts it derived its values from.
+  //
+  // `aOwner` must not be attached yet.
+  static void ReconcileInitialFields(Context* aOwner,
+                                     typename Context::FieldValues&& aRequested,
+                                     ContentParent* aSource,
+                                     Transaction<Context>& aCorrection);
+
+  // Send this transaction to a single process without applying it locally.
+  void SendCorrection(Context* aOwner, ContentParent* aTarget);
+
   // Called from `ContentChild` in response to a transaction from the parent.
   mozilla::ipc::IPCResult CommitFromIPC(const MaybeDiscarded<Context>& aOwner,
                                         uint64_t aEpoch, ContentChild* aSource);
@@ -342,12 +361,12 @@ using FieldSetterType = typename GetFieldSetterType<T>::SetterArg;
     return Field<Context, IDX_##name, type>::mField;               \
   }
 
-#define MOZ_DECL_SYNCED_CONTEXT_FIELDINFO_GET(name, type, ...)           \
-  static constexpr ::mozilla::dom::syncedcontext::FieldInfo<type>        \
-  FieldIndexToInfo(FieldIndex<IDX_##name>) {                             \
-    using CanSet [[maybe_unused]] = mozilla::dom::syncedcontext::CanSet; \
-    return ::mozilla::dom::syncedcontext::FieldInfoOrDefault<type>(      \
-        __VA_ARGS__);                                                    \
+#define MOZ_DECL_SYNCED_CONTEXT_FIELDINFO_GET(name, type, ...)             \
+  static constexpr ::mozilla::dom::syncedcontext::FieldInfo<type>          \
+  FieldIndexToInfo(FieldIndex<IDX_##name>) {                               \
+    using CanSet [[maybe_unused]] = ::mozilla::dom::syncedcontext::CanSet; \
+    return ::mozilla::dom::syncedcontext::FieldInfoOrDefault<type>(        \
+        __VA_ARGS__);                                                      \
   }
 
 // Declare a type as a synced context type.

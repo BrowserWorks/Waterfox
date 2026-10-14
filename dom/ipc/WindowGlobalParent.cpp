@@ -195,6 +195,19 @@ already_AddRefed<WindowGlobalParent> WindowGlobalParent::CreateDisconnected(
   return wgp.forget();
 }
 
+void WindowGlobalParent::InitFromContentProcess(const FieldValues& aRequested,
+                                                ContentParent* aSource) {
+  MOZ_ASSERT(GetContentParent() == aSource);
+  MOZ_DIAGNOSTIC_ASSERT(!BrowsingContext()->GetWindowContexts().Contains(this),
+                        "must reconcile before Init registers this context");
+
+  Transaction correction;
+  Transaction::ReconcileInitialFields(this, FieldValues(aRequested), aSource,
+                                      correction);
+  Init();
+  correction.SendCorrection(this, aSource);
+}
+
 void WindowGlobalParent::Init() {
   MOZ_ASSERT(Manager(), "Should have a manager!");
 

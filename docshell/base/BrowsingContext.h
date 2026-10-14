@@ -115,6 +115,8 @@ struct EmbedderColorSchemes {
 //
 //  * If custom behaviour is needed, `CanSet::Custom` can be specified, which
 //    will invoke a `CanSet` overload on `BrowsingContext`.
+//
+// Initial values are configured with `.mDefault` and `ComputeInitialFields`.
 #define MOZ_EACH_BC_FIELD(FIELD)                                               \
   FIELD(Name, nsString, {.mCanSet = CanSet::Unrestricted})                     \
   FIELD(Closed, bool, {.mCanSet = CanSet::Unrestricted})                       \
@@ -194,8 +196,10 @@ struct EmbedderColorSchemes {
    * We use it exclusively to block navigation for both of these cases. */     \
   FIELD(IsPrinting, bool, {.mCanSet = CanSet::Unrestricted})                   \
   FIELD(AncestorLoading, bool, {.mCanSet = CanSet::Unrestricted})              \
-  FIELD(AllowContentRetargeting, bool, {.mCanSet = CanSet::Custom})            \
-  FIELD(AllowContentRetargetingOnChildren, bool, {.mCanSet = CanSet::Custom})  \
+  FIELD(AllowContentRetargeting, bool,                                         \
+        {.mCanSet = CanSet::Custom, .mDefault = [] { return true; }})          \
+  FIELD(AllowContentRetargetingOnChildren, bool,                               \
+        {.mCanSet = CanSet::Custom, .mDefault = [] { return true; }})          \
   FIELD(ForceEnableTrackingProtection, bool,                                   \
         {.mCanSet = CanSet::Unrestricted})                                     \
   FIELD(UseGlobalHistory, bool, {.mCanSet = CanSet::Unrestricted})             \
@@ -241,10 +245,12 @@ struct EmbedderColorSchemes {
   FIELD(MessageManagerGroup, nsString,                                         \
         {.mTopOnly = true, .mCanSet = CanSet::ParentOnly})                     \
   FIELD(MaxTouchPointsOverride, uint8_t, {.mCanSet = CanSet::Unrestricted})    \
-  FIELD(FullZoom, float, {.mCanSet = CanSet::Unrestricted})                    \
+  FIELD(FullZoom, float,                                                       \
+        {.mCanSet = CanSet::Unrestricted, .mDefault = [] { return 1.0f; }})    \
   FIELD(WatchedByDevToolsInternal, bool,                                       \
         {.mTopOnly = true, .mCanSet = CanSet::Custom})                         \
-  FIELD(TextZoom, float, {.mCanSet = CanSet::Unrestricted})                    \
+  FIELD(TextZoom, float,                                                       \
+        {.mCanSet = CanSet::Unrestricted, .mDefault = [] { return 1.0f; }})    \
   FIELD(OverrideDPPX, float,                                                   \
         {.mTopOnly = true, .mCanSet = CanSet::ParentOnly})                     \
   /* The current in-progress load. */                                          \
@@ -309,7 +315,8 @@ struct EmbedderColorSchemes {
         {.mTopOnly = true, .mCanSet = CanSet::ParentOnly})                     \
   /* Whether we can execute scripts in this BrowsingContext. Has no effect     \
    * unless scripts are also allowed in the parent WindowContext. */           \
-  FIELD(AllowJavascript, bool, {.mCanSet = CanSet::ParentOnly})                \
+  FIELD(AllowJavascript, bool,                                                 \
+        {.mCanSet = CanSet::ParentOnly, .mDefault = [] { return true; }})      \
   /* The count of request that are used to prevent the browsing context tree   \
    * from being suspended, which would ONLY be modified on the top level       \
    * context in the chrome process because that's a non-atomic counter */      \
@@ -968,8 +975,6 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
     // have been initialized.
     uint64_t mParentId = 0;
     already_AddRefed<WindowContext> GetParent();
-    already_AddRefed<BrowsingContext> GetOpener();
-
     uint64_t GetOpenerId() const { return mFields.Get<IDX_OpenerId>(); }
 
     bool mWindowless = false;
@@ -1252,6 +1257,16 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
       ContentParent* aOriginProcess);
 
   void Attach(bool aFromIPC, ContentParent* aOriginProcess);
+
+  // Compute the initial synced field values for a new context from what every
+  // process can know: field defaults, the related contexts and the shape of
+  // the tree. Runs in the creating process, and again in the parent process for
+  // a context created by a content process, whose sent values are then
+  // reconciled against the result by `Transaction::ReconcileInitialFields`.
+  static FieldValues ComputeInitialFields(WindowContext* aParentWindow,
+                                          BrowsingContext* aOpener,
+                                          BrowsingContextGroup* aGroup,
+                                          Type aType);
 
   // Recomputes whether we can execute scripts in this BrowsingContext based on
   // the value of AllowJavascript() and whether scripts are allowed in the

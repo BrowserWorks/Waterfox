@@ -184,6 +184,14 @@ class WindowGlobalParent final : public WindowContext,
   // be called after setting the Manager actor.
   void Init() final;
 
+  // `Init` for a WindowGlobalParent whose initializer `aSource` authored. The
+  // object must have been constructed with the fields this process derived
+  // (see `ComputeInitialFields`); `aRequested` are the fields `aSource` sent.
+  // Reconciles the two and corrects `aSource` where its values were refused.
+  // Must be called after binding to `aSource`.
+  void InitFromContentProcess(const FieldValues& aRequested,
+                              ContentParent* aSource);
+
   nsIGlobalObject* GetParentObject();
   JSObject* WrapObject(JSContext* aCx,
                        JS::Handle<JSObject*> aGivenProto) override;

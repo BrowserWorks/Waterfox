@@ -4359,8 +4359,13 @@ mozilla::ipc::IPCResult ContentParent::RecvConstructPopupBrowser(
   MaybeInvalidTabContext tc(aContext);
   MOZ_ASSERT(tc.IsValid());
 
+  // Construct from the fields derived here; the fields the content process
+  // sent are reconciled in InitFromContentProcess.
+  WindowGlobalInit derivedWindowInit(aInitialWindowInit);
+  derivedWindowInit.context().mFields =
+      WindowGlobalActor::ComputeInitialFields(browsingContext);
   RefPtr<WindowGlobalParent> initialWindow =
-      WindowGlobalParent::CreateDisconnected(aInitialWindowInit, this);
+      WindowGlobalParent::CreateDisconnected(derivedWindowInit, this);
   if (!initialWindow) {
     return IPC_FAIL(this, "Failed to create WindowGlobalParent");
   }
@@ -4389,7 +4394,8 @@ mozilla::ipc::IPCResult ContentParent::RecvConstructPopupBrowser(
 
   browsingContext->SetCurrentBrowserParent(parent);
 
-  initialWindow->Init();
+  initialWindow->InitFromContentProcess(aInitialWindowInit.context().mFields,
+                                        this);
 
   // When enabling input event prioritization, input events may preempt other
   // normal priority IPC messages. To prevent the input events preempt
