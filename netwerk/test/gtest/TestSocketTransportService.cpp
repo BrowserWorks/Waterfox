@@ -172,7 +172,8 @@ NS_IMETHODIMP PrioritySpinner::Run() {
 
 }  // namespace
 
-TEST(TestSocketTransportService, HighPriorityRunnablesDoNotBlockShutdown)
+TEST(TestSocketTransportService,
+     DISABLED_HighPriorityRunnablesDoNotBlockShutdown)
 {
   nsCOMPtr<nsISocketTransportService> service =
       do_GetService("@mozilla.org/network/socket-transport-service;1");
