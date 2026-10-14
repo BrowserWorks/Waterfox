@@ -12,6 +12,7 @@
 #define BLOBIMPL_IID \
   {0xbccb3275, 0x6778, 0x4ac5, {0xaf, 0x03, 0x90, 0xed, 0x37, 0xad, 0xdf, 0x5d}}
 
+class nsIHandleReportCallback;
 class nsIInputStream;
 
 namespace mozilla {
@@ -102,6 +103,11 @@ class BlobImpl : public SupportsThreadSafeWeakPtr<BlobImpl>,
   // Returns true if the BlobImpl is backed by an nsIFile and the underlying
   // file is a directory.
   virtual bool IsDirectory() const { return false; }
+
+  virtual nsresult CollectReports(nsIHandleReportCallback* aHandleReport,
+                                  nsISupports* aData, bool aAnonymize) {
+    return NS_OK;
+  }
 
  protected:
   friend SupportsThreadSafeWeakPtr<BlobImpl>;

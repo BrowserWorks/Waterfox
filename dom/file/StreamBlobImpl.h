@@ -8,16 +8,12 @@
 #include "BaseBlobImpl.h"
 #include "nsCOMPtr.h"
 #include "nsICloneableInputStream.h"
-#include "nsIMemoryReporter.h"
 
 namespace mozilla::dom {
 
-class StreamBlobImpl final : public BaseBlobImpl, public nsIMemoryReporter {
-  MOZ_DEFINE_MALLOC_SIZE_OF(MallocSizeOf)
-
+class StreamBlobImpl final : public BaseBlobImpl {
  public:
-  NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_NSIMEMORYREPORTER
+  NS_INLINE_DECL_REFCOUNTING_INHERITED(StreamBlobImpl, BaseBlobImpl)
 
   // Blob constructor.
   static already_AddRefed<StreamBlobImpl> Create(
@@ -76,6 +72,9 @@ class StreamBlobImpl final : public BaseBlobImpl, public nsIMemoryReporter {
                  const nsAString& aBlobImplType);
 
   ~StreamBlobImpl() override;
+
+  nsresult CollectReports(nsIHandleReportCallback* aHandleReport,
+                          nsISupports* aData, bool aAnonymize) override;
 
   void MaybeRegisterMemoryReporter();
 

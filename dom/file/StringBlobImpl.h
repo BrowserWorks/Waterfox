@@ -6,16 +6,12 @@
 #define mozilla_dom_StringBlobImpl_h
 
 #include "BaseBlobImpl.h"
-#include "nsIMemoryReporter.h"
 
 namespace mozilla::dom {
 
-class StringBlobImpl final : public BaseBlobImpl, public nsIMemoryReporter {
-  MOZ_DEFINE_MALLOC_SIZE_OF(MallocSizeOf)
-
+class StringBlobImpl final : public BaseBlobImpl {
  public:
-  NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_NSIMEMORYREPORTER
+  NS_INLINE_DECL_REFCOUNTING_INHERITED(StringBlobImpl, BaseBlobImpl)
 
   static already_AddRefed<StringBlobImpl> Create(const nsACString& aData,
                                                  const nsAString& aContentType);
@@ -42,6 +38,9 @@ class StringBlobImpl final : public BaseBlobImpl, public nsIMemoryReporter {
   StringBlobImpl(const nsACString& aData, const nsAString& aContentType);
 
   ~StringBlobImpl() override;
+
+  nsresult CollectReports(nsIHandleReportCallback* aHandleReport,
+                          nsISupports* aData, bool aAnonymize) override;
 
   nsCString mData;
 };
