@@ -31,6 +31,7 @@ DecryptingInputStream<CipherStrategy>::DecryptingInputStream(
     typename CipherStrategy::KeyType aKey)
     : DecryptingInputStreamBase(std::move(aBaseStream), aBlockSize),
       mKey(aKey) {
+  MutexAutoLock lock(mMutex);
   // XXX Move this to a fallible init function.
   MOZ_ALWAYS_SUCCEEDS(mCipherStrategy.Init(CipherMode::Decrypt,
                                            CipherStrategy::SerializeKey(aKey)));
@@ -53,6 +54,7 @@ DecryptingInputStream<CipherStrategy>::DecryptingInputStream()
 
 template <typename CipherStrategy>
 NS_IMETHODIMP DecryptingInputStream<CipherStrategy>::Close() {
+  MutexAutoLock lock(mMutex);
   if (!mBaseStream) {
     return NS_OK;
   }
@@ -69,12 +71,13 @@ NS_IMETHODIMP DecryptingInputStream<CipherStrategy>::Close() {
 template <typename CipherStrategy>
 NS_IMETHODIMP DecryptingInputStream<CipherStrategy>::Available(
     uint64_t* aLengthOut) {
+  MutexAutoLock lock(mMutex);
   if (!mBaseStream) {
     return NS_BASE_STREAM_CLOSED;
   }
 
   int64_t current;
-  nsresult rv = Tell(&current);
+  nsresult rv = TellInternal(&current, mNextByte);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -94,11 +97,13 @@ NS_IMETHODIMP DecryptingInputStream<CipherStrategy>::Available(
 
 template <typename CipherStrategy>
 NS_IMETHODIMP DecryptingInputStream<CipherStrategy>::StreamStatus() {
+  MutexAutoLock lock(mMutex);
   return mBaseStream ? NS_OK : NS_BASE_STREAM_CLOSED;
 }
 
 template <typename CipherStrategy>
 nsresult DecryptingInputStream<CipherStrategy>::BaseStreamStatus() {
+  MutexAutoLock lock(mMutex);
   return mBaseStream ? (*mBaseStream)->StreamStatus() : NS_BASE_STREAM_CLOSED;
 }
 
@@ -108,6 +113,7 @@ NS_IMETHODIMP DecryptingInputStream<CipherStrategy>::ReadSegments(
     uint32_t* aBytesReadOut) {
   *aBytesReadOut = 0;
 
+  MutexAutoLock lock(mMutex);
   if (!mBaseStream) {
     return NS_BASE_STREAM_CLOSED;
   }
@@ -312,15 +318,16 @@ nsresult DecryptingInputStream<CipherStrategy>::EnsureDecryptedStreamSize() {
   }
   auto savedPlainBuffer = mPlainBuffer.Clone();
   auto autoRestorePreviousState =
-      MakeScopeExit([baseSeekableStream = *mBaseSeekableStream,
-                     savedBaseCurrent = baseCurrent, &savedPlainBuffer,
-                     &plainBuffer = mPlainBuffer] {
-        nsresult rv = baseSeekableStream->Seek(NS_SEEK_SET, savedBaseCurrent);
+      MakeScopeExit([this, savedBaseCurrent = baseCurrent,
+                     &savedPlainBuffer]() MOZ_REQUIRES(mMutex) {
+        nsresult rv =
+            (*mBaseSeekableStream)->Seek(NS_SEEK_SET, savedBaseCurrent);
         (void)NS_WARN_IF(NS_FAILED(rv));
-        plainBuffer = std::move(savedPlainBuffer);
+        mPlainBuffer = std::move(savedPlainBuffer);
       });
 
-  auto decryptedStreamSizeOrErr = [this]() -> Result<int64_t, nsresult> {
+  auto decryptedStreamSizeOrErr =
+      [this]() MOZ_REQUIRES(mMutex) -> Result<int64_t, nsresult> {
     nsresult rv = (*mBaseSeekableStream)->Seek(NS_SEEK_SET, 0);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return Err(rv);
@@ -370,11 +377,12 @@ nsresult DecryptingInputStream<CipherStrategy>::EnsureDecryptedStreamSize() {
 template <typename CipherStrategy>
 NS_IMETHODIMP DecryptingInputStream<CipherStrategy>::Tell(
     int64_t* const aRetval) {
+  MutexAutoLock lock(mMutex);
   return TellInternal(aRetval, mNextByte);
 }
 
 template <typename CipherStrategy>
-NS_IMETHODIMP DecryptingInputStream<CipherStrategy>::TellInternal(
+nsresult DecryptingInputStream<CipherStrategy>::TellInternal(
     int64_t* const aRetval, uint64_t const aBlockOffset) {
   MOZ_ASSERT(aRetval);
 
@@ -410,6 +418,7 @@ NS_IMETHODIMP DecryptingInputStream<CipherStrategy>::TellInternal(
 template <typename CipherStrategy>
 NS_IMETHODIMP DecryptingInputStream<CipherStrategy>::Seek(const int32_t aWhence,
                                                           int64_t aOffset) {
+  MutexAutoLock lock(mMutex);
   if (!mBaseStream) {
     return NS_BASE_STREAM_CLOSED;
   }
@@ -549,6 +558,7 @@ NS_IMETHODIMP DecryptingInputStream<CipherStrategy>::Seek(const int32_t aWhence,
 template <typename CipherStrategy>
 NS_IMETHODIMP DecryptingInputStream<CipherStrategy>::Clone(
     nsIInputStream** _retval) {
+  MutexAutoLock lock(mMutex);
   if (!mBaseStream) {
     return NS_BASE_STREAM_CLOSED;
   }
@@ -575,6 +585,7 @@ template <typename CipherStrategy>
 void DecryptingInputStream<CipherStrategy>::Serialize(
     mozilla::ipc::InputStreamParams& aParams, uint32_t aMaxSize,
     uint32_t* aSizeUsed) {
+  MutexAutoLock lock(mMutex);
   MOZ_ASSERT(mBaseStream);
   MOZ_ASSERT(mBaseIPCSerializableInputStream);
 
@@ -602,6 +613,7 @@ bool DecryptingInputStream<CipherStrategy>::Deserialize(
     return false;
   }
 
+  MutexAutoLock lock(mMutex);
   Init(WrapNotNull<nsCOMPtr<nsIInputStream>>(std::move(stream)),
        params.blockSize());
 

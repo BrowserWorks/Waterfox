@@ -15,6 +15,7 @@
 #include "ErrorList.h"
 #include "mozilla/InitializedOnce.h"
 #include "mozilla/Maybe.h"
+#include "mozilla/Mutex.h"
 #include "mozilla/NotNull.h"
 #include "mozilla/ipc/InputStreamParams.h"
 #include "nsCOMPtr.h"
@@ -61,16 +62,22 @@ class DecryptingInputStreamBase : public nsIInputStream,
   virtual ~DecryptingInputStreamBase() = default;
 
   void Init(MovingNotNull<nsCOMPtr<nsIInputStream>> aBaseStream,
-            size_t aBlockSize);
+            size_t aBlockSize) MOZ_REQUIRES(mMutex);
 
   // Convenience routine to determine how many bytes of plain data
   // we currently have in our plain buffer.
-  size_t PlainLength() const;
+  size_t PlainLength() const MOZ_REQUIRES(mMutex);
 
   size_t EncryptedBufferLength() const;
 
+  // The stream is refcounted thread-safely and may be read on one thread while
+  // being seeked from another (e.g. an HTTP upload stream that is read on the
+  // socket thread and rewound on the main thread on redirect). All mutable
+  // state below is therefore only accessed with this lock held.
+  Mutex mMutex{"DecryptingInputStreamBase::mMutex"};
+
   LazyInitializedOnceEarlyDestructible<const NotNull<nsCOMPtr<nsIInputStream>>>
-      mBaseStream;
+      mBaseStream MOZ_GUARDED_BY(mMutex);
   LazyInitializedOnce<const NotNull<nsISeekableStream*>> mBaseSeekableStream;
   LazyInitializedOnce<const NotNull<nsICloneableInputStream*>>
       mBaseCloneableInputStream;
@@ -78,10 +85,10 @@ class DecryptingInputStreamBase : public nsIInputStream,
       mBaseIPCSerializableInputStream;
 
   // Number of bytes of plain data in mPlainBuffer.
-  size_t mPlainBytes = 0;
+  size_t mPlainBytes MOZ_GUARDED_BY(mMutex) = 0;
 
   // Next byte of mPlainBuffer to return in ReadSegments().
-  size_t mNextByte = 0;
+  size_t mNextByte MOZ_GUARDED_BY(mMutex) = 0;
 
   LazyInitializedOnceNotNull<const size_t> mBlockSize;
 };
@@ -111,7 +118,6 @@ class DecryptingInputStream final : public DecryptingInputStreamBase {
                           uint32_t aCount, uint32_t* _retval) override;
 
   NS_DECL_NSITELLABLESTREAM
-  NS_IMETHOD TellInternal(int64_t* const aRetval, uint64_t const aBlockOffset);
 
   NS_IMETHOD Seek(int32_t aWhence, int64_t aOffset) override;
 
@@ -125,9 +131,13 @@ class DecryptingInputStream final : public DecryptingInputStreamBase {
  private:
   ~DecryptingInputStream();
 
+  nsresult TellInternal(int64_t* aRetval, uint64_t aBlockOffset)
+      MOZ_REQUIRES(mMutex);
+
   // Parse the next chunk of data.  This populates mPlainBuffer (until the
   // stream position is at EOF).
-  nsresult ParseNextChunk(bool aCheckAvailableBytes, uint32_t* aBytesReadOut);
+  nsresult ParseNextChunk(bool aCheckAvailableBytes, uint32_t* aBytesReadOut)
+      MOZ_REQUIRES(mMutex);
 
   // Convenience routine to Read() from the base stream until we get
   // the given number of bytes or reach EOF.
@@ -146,25 +156,27 @@ class DecryptingInputStream final : public DecryptingInputStreamBase {
   // aBytesReadOut          - An out parameter indicating how many bytes were
   // 			      read.
   nsresult ReadAll(char* aBuf, uint32_t aCount, uint32_t aMinValidCount,
-                   bool aCheckAvailableBytes, uint32_t* aBytesReadOut);
+                   bool aCheckAvailableBytes, uint32_t* aBytesReadOut)
+      MOZ_REQUIRES(mMutex);
 
-  bool EnsureBuffers();
+  bool EnsureBuffers() MOZ_REQUIRES(mMutex);
 
-  nsresult EnsureDecryptedStreamSize();
+  nsresult EnsureDecryptedStreamSize() MOZ_REQUIRES(mMutex);
 
-  CipherStrategy mCipherStrategy;
+  CipherStrategy mCipherStrategy MOZ_GUARDED_BY(mMutex);
   LazyInitializedOnce<const typename CipherStrategy::KeyType> mKey;
 
   // Buffer to hold encrypted data.  Must copy here since we need a
   // flat buffer to run the decryption process on.
   using EncryptedBlockType = EncryptedBlock<CipherStrategy::BlockPrefixLength,
                                             CipherStrategy::BasicBlockSize>;
-  Maybe<EncryptedBlockType> mEncryptedBlock;
+  Maybe<EncryptedBlockType> mEncryptedBlock MOZ_GUARDED_BY(mMutex);
 
   // Buffer storing the resulting plain data.
-  nsTArray<uint8_t> mPlainBuffer;
+  nsTArray<uint8_t> mPlainBuffer MOZ_GUARDED_BY(mMutex);
 
-  LazyInitializedOnce<const int64_t> mDecryptedStreamSize;
+  LazyInitializedOnce<const int64_t> mDecryptedStreamSize
+      MOZ_GUARDED_BY(mMutex);
 };
 
 }  // namespace mozilla::dom::quota

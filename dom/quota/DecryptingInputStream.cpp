@@ -16,15 +16,16 @@ NS_INTERFACE_MAP_BEGIN(DecryptingInputStreamBase)
   NS_INTERFACE_MAP_ENTRY(nsIInputStream)
   NS_INTERFACE_MAP_ENTRY(nsISeekableStream)
   NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsICloneableInputStream,
-                                     mBaseCloneableInputStream || !mBaseStream)
+                                     mBaseCloneableInputStream || !mBlockSize)
   NS_INTERFACE_MAP_ENTRY_CONDITIONAL(
       nsIIPCSerializableInputStream,
-      mBaseIPCSerializableInputStream || !mBaseStream)
+      mBaseIPCSerializableInputStream || !mBlockSize)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIInputStream)
 NS_INTERFACE_MAP_END
 
 DecryptingInputStreamBase::DecryptingInputStreamBase(
     MovingNotNull<nsCOMPtr<nsIInputStream>> aBaseStream, size_t aBlockSize) {
+  MutexAutoLock lock(mMutex);
   Init(std::move(aBaseStream), aBlockSize);
 }
 
