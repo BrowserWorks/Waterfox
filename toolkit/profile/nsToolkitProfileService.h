@@ -194,6 +194,7 @@ class nsToolkitProfileService final : public nsIToolkitProfileService,
   // Keep track of some attributes of the databases so we can tell if another
   // process has changed them.
   bool mProfileDBExists;
+  bool mProfileDBReadFailed;
   int64_t mProfileDBFileSize;
   PRTime mProfileDBModifiedTime;
   nsCString mIniStatus;

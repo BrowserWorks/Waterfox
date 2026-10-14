@@ -138,6 +138,16 @@ skip-if = [
 
 ["test_storeid.js"]
 
+["test_unreadable_ini.js"]
+
+["test_unreadable_ini_createprofile.js"]
+
+["test_unreadable_ini_no_profile.js"]
+
+["test_unreadable_ini_p.js"]
+
+["test_unreadable_ini_profilemanager.js"]
+
 ["test_update_paths.js"]
 
 ["test_update_selected_dedicated.js"]
