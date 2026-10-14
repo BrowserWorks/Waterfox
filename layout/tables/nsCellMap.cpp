@@ -1698,7 +1698,7 @@ void nsCellMap::ExpandWithCells(nsTableCellMap& aMap,
     cellFrame->SetColIndex(startColIndex);
   }
   int32_t damageHeight =
-      std::min(GetRowGroup()->GetRowCount() - aRowIndex, aRowSpan);
+      std::max(0, std::min(GetRowGroup()->GetRowCount() - aRowIndex, aRowSpan));
   SetDamageArea(aColIndex, aRgFirstRowIndex + aRowIndex,
                 1 + endColIndex - aColIndex, damageHeight, aDamageArea);
 

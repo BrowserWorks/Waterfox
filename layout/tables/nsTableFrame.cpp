@@ -168,10 +168,12 @@ void nsTableFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
   // Let the base class do its processing
   nsContainerFrame::Init(aContent, aParent, aPrevInFlow);
 
-  // see if border collapse is on, if so set it
-  const nsStyleTableBorder* tableStyle = StyleTableBorder();
-  bool borderCollapse =
-      (StyleBorderCollapse::Collapse == tableStyle->mBorderCollapse);
+  // Continuations share the first-in-flow's cell map and cell frame types.
+  // Keep their border model consistent even if their computed styles differ.
+  const bool borderCollapse =
+      aPrevInFlow ? static_cast<nsTableFrame*>(aPrevInFlow)->IsBorderCollapse()
+                  : StyleTableBorder()->mBorderCollapse ==
+                        StyleBorderCollapse::Collapse;
   SetBorderCollapse(borderCollapse);
   if (borderCollapse) {
     SetNeedToCalcHasBCBorders(true);
