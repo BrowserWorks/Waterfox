@@ -51,7 +51,7 @@ class txXPathNodeUtils {
   static bool getAttr(const txXPathNode& aNode, nsAtom* aLocalName,
                       int32_t aNSID, nsAString& aValue);
   static already_AddRefed<nsAtom> getLocalName(const txXPathNode& aNode);
-  static nsAtom* getPrefix(const txXPathNode& aNode);
+  static already_AddRefed<nsAtom> getPrefix(const txXPathNode& aNode);
   static void getLocalName(const txXPathNode& aNode, nsAString& aLocalName);
   static void getNodeName(const txXPathNode& aNode, nsAString& aName);
   static int32_t getNamespaceID(const txXPathNode& aNode);

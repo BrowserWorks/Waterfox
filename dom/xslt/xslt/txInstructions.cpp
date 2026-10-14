@@ -207,10 +207,11 @@ nsresult txCopyBase::copyNode(const txXPathNode& aNode, txExecutionState& aEs) {
       nsAutoString nodeValue;
       txXPathNodeUtils::appendNodeValue(aNode, nodeValue);
 
+      RefPtr<nsAtom> prefix = txXPathNodeUtils::getPrefix(aNode);
       RefPtr<nsAtom> localName = txXPathNodeUtils::getLocalName(aNode);
       return aEs.mResultHandler->attribute(
-          txXPathNodeUtils::getPrefix(aNode), localName, nullptr,
-          txXPathNodeUtils::getNamespaceID(aNode), nodeValue);
+          prefix, localName, nullptr, txXPathNodeUtils::getNamespaceID(aNode),
+          nodeValue);
     }
     case txXPathNodeType::COMMENT_NODE: {
       nsAutoString nodeValue;
@@ -229,10 +230,10 @@ nsresult txCopyBase::copyNode(const txXPathNode& aNode, txExecutionState& aEs) {
       break;
     }
     case txXPathNodeType::ELEMENT_NODE: {
+      RefPtr<nsAtom> prefix = txXPathNodeUtils::getPrefix(aNode);
       RefPtr<nsAtom> localName = txXPathNodeUtils::getLocalName(aNode);
       nsresult rv = aEs.mResultHandler->startElement(
-          txXPathNodeUtils::getPrefix(aNode), localName, nullptr,
-          txXPathNodeUtils::getNamespaceID(aNode));
+          prefix, localName, nullptr, txXPathNodeUtils::getNamespaceID(aNode));
       NS_ENSURE_SUCCESS(rv, rv);
 
       // Copy attributes
@@ -243,9 +244,10 @@ nsresult txCopyBase::copyNode(const txXPathNode& aNode, txExecutionState& aEs) {
           walker.appendNodeValue(nodeValue);
 
           const txXPathNode& attr = walker.getCurrentPosition();
+          prefix = txXPathNodeUtils::getPrefix(attr);
           localName = txXPathNodeUtils::getLocalName(attr);
           rv = aEs.mResultHandler->attribute(
-              txXPathNodeUtils::getPrefix(attr), localName, nullptr,
+              prefix, localName, nullptr,
               txXPathNodeUtils::getNamespaceID(attr), nodeValue);
           NS_ENSURE_SUCCESS(rv, rv);
         } while (walker.moveToNextAttribute());
@@ -296,10 +298,10 @@ nsresult txCopy::execute(txExecutionState& aEs) {
       break;
     }
     case txXPathNodeType::ELEMENT_NODE: {
+      RefPtr<nsAtom> prefix = txXPathNodeUtils::getPrefix(node);
       RefPtr<nsAtom> localName = txXPathNodeUtils::getLocalName(node);
       rv = aEs.mResultHandler->startElement(
-          txXPathNodeUtils::getPrefix(node), localName, nullptr,
-          txXPathNodeUtils::getNamespaceID(node));
+          prefix, localName, nullptr, txXPathNodeUtils::getNamespaceID(node));
       NS_ENSURE_SUCCESS(rv, rv);
 
       // XXX copy namespace nodes once we have them
