@@ -1605,8 +1605,8 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
               ContentParent*) {
     return true;
   }
-  bool CanSet(FieldIndex<IDX_HistoryID>, const nsID&, ContentParent*) {
-    return true;
+  bool CanSet(FieldIndex<IDX_HistoryID>, const nsID&, ContentParent* aSource) {
+    return XRE_IsParentProcess() && !aSource;
   }
   bool CanSet(FieldIndex<IDX_IsPrinting>, const bool&, ContentParent*) {
     return true;
