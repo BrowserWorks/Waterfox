@@ -15,6 +15,11 @@ const FRAME_TEST_URL =
   encodeURI(BODY_URL) +
   '"></iframe></body>';
 
+const CROSS_ORIGIN_FRAME_TEST_URL =
+  'https://example.com/document-builder.sjs?html=<body><iframe src="https://example.org/document-builder.sjs?html=' +
+  encodeURI(BODY_URL) +
+  '"></iframe></body>';
+
 function checkWarningState(aWarningElement, aExpectedState, aMsg) {
   ["hidden", "ontop", "onscreen"].forEach(state => {
     is(
@@ -57,10 +62,8 @@ add_task(async function show_pointerlock_warning_escape() {
     if (bc.children.length) {
       // use the subframe if it exists
       bc = bc.children[0];
-      expectedWarningText = "example.org";
-    } else {
-      expectedWarningText = "This document";
     }
+    expectedWarningText = "This document";
     expectedWarningText +=
       " has control of your pointer. Press Esc to take back control.";
 
@@ -89,6 +92,46 @@ add_task(async function show_pointerlock_warning_escape() {
 
     await BrowserTestUtils.removeTab(tab);
   }
+});
+
+// Make sure the pointerlock warning shows the top-level origin when the
+// top-level page is a real HTTP origin hosting a cross-origin iframe.
+add_task(async function show_pointerlock_warning_cross_origin() {
+  let tab = await BrowserTestUtils.openNewForegroundTab(
+    gBrowser,
+    CROSS_ORIGIN_FRAME_TEST_URL
+  );
+
+  let warning = document.getElementById("pointerlock-warning");
+  let warningShownPromise = waitForWarningState(warning, "onscreen");
+
+  let bc = tab.linkedBrowser.browsingContext.children[0];
+
+  await BrowserTestUtils.synthesizeMouse("body", 4, 4, {}, bc);
+
+  await warningShownPromise;
+
+  ok(true, "Pointerlock warning shown");
+
+  let warningHiddenPromise = waitForWarningState(warning, "hidden");
+
+  let expectedWarningText =
+    "example.com has control of your pointer. Press Esc to take back control.";
+  await TestUtils.waitForCondition(
+    () => warning.innerText == expectedWarningText,
+    "Warning text should show the top-level origin"
+  );
+
+  EventUtils.synthesizeKey("KEY_Escape");
+  await warningHiddenPromise;
+
+  ok(true, "Pointerlock warning hidden");
+
+  await SpecialPowers.spawn(tab.linkedBrowser, [], async function () {
+    Assert.equal(content.document.pointerLockElement, null);
+  });
+
+  await BrowserTestUtils.removeTab(tab);
 });
 
 /*
