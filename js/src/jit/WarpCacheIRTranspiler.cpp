@@ -2014,6 +2014,7 @@ bool WarpCacheIRTranspiler::emitLoadFixedSlotTypedResult(ObjOperandId objId,
 
   auto* load = MLoadFixedSlot::New(alloc(), obj, slotIndex);
   load->setResultType(MIRTypeFromValueType(JSValueType(type)));
+  load->setNotMovable();
   add(load);
 
   pushResult(load);
