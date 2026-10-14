@@ -16,6 +16,7 @@
 #include "gfxFont.h"
 #include "gfxFontConstants.h"
 #include "gfxPlatform.h"
+#include "gfxUserFontSet.h"
 #include "SharedFontList.h"
 
 #include "base/process.h"
