@@ -9,8 +9,6 @@
 #include "mozilla/dom/FontFace.h"
 #include "mozilla/dom/FontFaceSetBinding.h"
 #include "mozilla/dom/FontFaceSetImpl.h"
-#include "nsICSSLoaderObserver.h"
-#include "nsIDOMEventListener.h"
 
 class nsFontFaceLoader;
 class nsIPrincipal;
@@ -93,14 +91,10 @@ class FontFaceSet final : public DOMEventTargetHelper {
    */
   uint32_t SizeIncludingNonAuthorOrigins();
 
-  void MaybeResolve();
+  MOZ_CAN_RUN_SCRIPT void MaybeResolve();
 
   void DispatchLoadingEventAndReplaceReadyPromise();
   void DispatchCheckLoadingFinishedAfterDelay();
-
-  // Whether mReady is pending, or would be when created.
-  bool ReadyPromiseIsPending() const;
-
   void InsertRuleFontFace(FontFace* aFontFace, StyleOrigin aOrigin);
 
  private:

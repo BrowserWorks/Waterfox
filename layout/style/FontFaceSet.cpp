@@ -182,11 +182,6 @@ bool FontFaceSet::Check(const nsACString& aFont, const nsAString& aText,
   return true;
 }
 
-bool FontFaceSet::ReadyPromiseIsPending() const {
-  return mReady ? mReady->State() == Promise::PromiseState::Pending
-                : !mResolveLazilyCreatedReadyPromise;
-}
-
 Promise* FontFaceSet::GetReady(ErrorResult& aRv) {
   mImpl->EnsureReady();
 
@@ -456,22 +451,19 @@ void FontFaceSet::MaybeResolve() {
   checkStatus(mRuleFaces);
   checkStatus(mNonRuleFaces);
 
-  NS_DispatchToCurrentThread(NS_NewRunnableFunction(
-      "FontFaceSet::DoResolveAndDispatchLoadEvents",
-      [self = RefPtr{this},
-       loadingdone = MakeLoadEvent(this, u"loadingdone"_ns, std::move(loaded)),
-       loadingerror =
-           MaybeMakeLoadEvent(this, u"loadingerror"_ns, std::move(failed))] {
-        if (self->mReady) {
-          self->mReady->MaybeResolve(self);
-        } else {
-          self->mResolveLazilyCreatedReadyPromise = true;
-        }
-        self->DispatchEvent(*loadingdone);
-        if (loadingerror) {
-          self->DispatchEvent(*loadingerror);
-        }
-      }));
+  RefPtr loadingdone =
+      MakeLoadEvent(this, u"loadingdone"_ns, std::move(loaded));
+  RefPtr loadingerror =
+      MaybeMakeLoadEvent(this, u"loadingerror"_ns, std::move(failed));
+  if (RefPtr ready = mReady) {
+    ready->MaybeResolve(this);
+  } else {
+    mResolveLazilyCreatedReadyPromise = true;
+  }
+  DispatchEvent(*loadingdone);
+  if (loadingerror) {
+    DispatchEvent(*loadingerror);
+  }
 }
 
 void FontFaceSet::FlushUserFontSet() { mImpl->FlushUserFontSet(); }
