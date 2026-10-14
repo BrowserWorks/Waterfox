@@ -1,4 +1,4 @@
-// |jit-test| --enable-async-iterator-helpers
+// |jit-test| --enable-async-iterator-helpers; skip-if: !('AsyncIterator' in this)
 
 var getterCalled = false;
 
