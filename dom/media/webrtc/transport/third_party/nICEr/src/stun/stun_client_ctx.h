@@ -60,9 +60,6 @@ typedef union nr_stun_client_params_ {
 
     nr_stun_client_stun_binding_request_params               stun_binding_request;
     nr_stun_client_stun_keepalive_params                     stun_keepalive;
-#ifdef USE_STUND_0_96
-    nr_stun_client_stun_binding_request_stund_0_96_params    stun_binding_request_stund_0_96;
-#endif /* USE_STUND_0_96 */
 
 #ifdef USE_ICE
     nr_stun_client_ice_binding_request_params                ice_binding_request;
@@ -80,10 +77,6 @@ typedef union nr_stun_client_params_ {
 typedef struct nr_stun_client_stun_binding_response_results_ {
     nr_transport_addr mapped_addr;
 } nr_stun_client_stun_binding_response_results;
-
-typedef struct nr_stun_client_stun_binding_response_stund_0_96_results_ {
-    nr_transport_addr mapped_addr;
-} nr_stun_client_stun_binding_response_stund_0_96_results;
 
 #ifdef USE_ICE
 typedef struct nr_stun_client_ice_use_candidate_results_ {
@@ -116,7 +109,6 @@ typedef struct nr_stun_client_permission_response_results_ {
 
 typedef union nr_stun_client_results_ {
     nr_stun_client_stun_binding_response_results              stun_binding_response;
-    nr_stun_client_stun_binding_response_stund_0_96_results   stun_binding_response_stund_0_96;
 
 #ifdef USE_ICE
     nr_stun_client_ice_use_candidate_results                  ice_use_candidate;
@@ -144,7 +136,6 @@ struct nr_stun_client_ctx_ {
 #define NR_STUN_CLIENT_MODE_BINDING_REQUEST_LONG_TERM_AUTH    2
 #define NR_STUN_CLIENT_MODE_BINDING_REQUEST_NO_AUTH           3
 #define NR_STUN_CLIENT_MODE_KEEPALIVE                         4
-#define NR_STUN_CLIENT_MODE_BINDING_REQUEST_STUND_0_96        5
 #ifdef USE_ICE
 #define NR_ICE_CLIENT_MODE_USE_CANDIDATE                  10
 #define NR_ICE_CLIENT_MODE_BINDING_REQUEST                11

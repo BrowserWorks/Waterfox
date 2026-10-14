@@ -53,7 +53,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NR_STUN_MAX_MESSAGE_SIZE                   2048
 
 #define NR_STUN_MAGIC_COOKIE            0x2112A442
-#define NR_STUN_MAGIC_COOKIE2           0xc5cb4e1d  /* used recognize old stun messages */
 
 typedef struct { UCHAR octet[12]; }  UINT12;
 
@@ -128,10 +127,6 @@ typedef struct nr_stun_message_attribute_ {
         nr_stun_attr_data               data;
 #endif /* USE_TURN */
 
-#ifdef USE_STUND_0_96
-        UINT4                           change_request;
-#endif /* USE_STUND_0_96 */
-
         /* make sure there's enough room here to place any possible
          * attribute */
         UCHAR                           largest_possible_attribute[NR_STUN_MAX_MESSAGE_SIZE];
@@ -199,10 +194,6 @@ int nr_stun_message_add_requested_transport_attribute(nr_stun_message *msg, UCHA
 int
 nr_stun_message_add_xor_peer_address_attribute(nr_stun_message *msg, nr_transport_addr *peer_address);
 #endif /* USE_TURN */
-
-#ifdef USE_STUND_0_96
-int nr_stun_message_add_change_request_attribute(nr_stun_message *msg, UINT4 change_request);
-#endif /* USE_STUND_0_96 */
 
 #endif
 

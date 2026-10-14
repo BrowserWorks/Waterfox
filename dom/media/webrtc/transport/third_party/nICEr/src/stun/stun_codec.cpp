@@ -1189,9 +1189,6 @@ nr_stun_attr_codec nr_stun_attr_codec_xor_peer_address = {
 
 static nr_stun_attr_info attrs[] = {
    NR_ADD_STUN_ATTRIBUTE(NR_STUN_ATTR_ALTERNATE_SERVER, "ALTERNATE-SERVER", nr_stun_attr_codec_addr, 0)
-#ifdef USE_STUND_0_96
-   NR_ADD_STUN_ATTRIBUTE(NR_STUN_ATTR_OLD_CHANGE_REQUEST, "CHANGE-REQUEST", nr_stun_attr_codec_UINT4, 0)
-#endif
    NR_ADD_STUN_ATTRIBUTE(NR_STUN_ATTR_ERROR_CODE, "ERROR-CODE", nr_stun_attr_codec_error_code, nr_stun_attr_error_code_illegal)
    NR_ADD_STUN_ATTRIBUTE(NR_STUN_ATTR_FINGERPRINT, "FINGERPRINT", nr_stun_attr_codec_fingerprint, 0)
    NR_ADD_STUN_ATTRIBUTE(NR_STUN_ATTR_MAPPED_ADDRESS, "MAPPED-ADDRESS", nr_stun_attr_codec_addr, 0)

@@ -78,17 +78,6 @@ nr_stun_form_request_or_indication(int mode, int msg_type, nr_stun_message **msg
    case NR_STUN_MODE_STUN_NO_AUTH:
        req->header.magic_cookie = NR_STUN_MAGIC_COOKIE;
        break;
-
-#ifdef USE_STUND_0_96
-   case NR_STUN_MODE_STUND_0_96:
-       req->header.magic_cookie = NR_STUN_MAGIC_COOKIE2;
-
-       /* actually, stund 0.96 just ignores the fingerprint
-        * attribute, but don't bother to send it */
-
-       break;
-#endif /* USE_STUND_0_96 */
-
    }
 
    *msg = req;
@@ -188,31 +177,6 @@ nr_stun_build_keepalive(nr_stun_client_stun_keepalive_params *params, nr_stun_me
    if (_status) nr_stun_message_destroy(&ind);
    return _status;
 }
-
-#ifdef USE_STUND_0_96
-int
-nr_stun_build_req_stund_0_96(nr_stun_client_stun_binding_request_stund_0_96_params *params, nr_stun_message **msg)
-{
-    int r,_status;
-    nr_stun_message *req = 0;
-
-    if ((r=nr_stun_form_request_or_indication(NR_STUN_MODE_STUND_0_96, NR_STUN_MSG_BINDING_REQUEST, &req)))
-        ABORT(r);
-
-    if ((r=nr_stun_message_add_change_request_attribute(req, 0)))
-        ABORT(r);
-
-    assert(! nr_stun_message_has_attribute(req, NR_STUN_ATTR_USERNAME, 0));
-    assert(! nr_stun_message_has_attribute(req, NR_STUN_ATTR_MESSAGE_INTEGRITY, 0));
-
-    *msg = req;
-
-   _status=0;
- abort:
-   if (_status) nr_stun_message_destroy(&req);
-   return _status;
-}
-#endif /* USE_STUND_0_96 */
 
 #ifdef USE_ICE
 int

@@ -54,7 +54,6 @@ int
 nr_is_stun_message(UCHAR *buf, size_t len)
 {
    const UINT4 cookie = htonl(NR_STUN_MAGIC_COOKIE);
-   const UINT4 cookie2 = htonl(NR_STUN_MAGIC_COOKIE2);
    UINT2 type;
    nr_stun_encoded_attribute* attr;
    unsigned int attrLen;
@@ -109,12 +108,6 @@ nr_is_stun_message(UCHAR *buf, size_t len)
    default:
         return 0;
         break;
-   }
-
-   if (!memcmp(&cookie2, &buf[4], sizeof(UINT4))) {
-       /* return here because if it's an old-style message then there will
-        * not be a fingerprint in the message */
-       return 1;
    }
 
    if (memcmp(&cookie, &buf[4], sizeof(UINT4)))

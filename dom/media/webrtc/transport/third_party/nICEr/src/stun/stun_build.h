@@ -37,9 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "stun.h"
 
 #define NR_STUN_MODE_STUN               1
-#ifdef USE_STUND_0_96
-#define NR_STUN_MODE_STUND_0_96         2    /* backwards compatibility mode */
-#endif /* USE_STUND_0_96 */
 #define NR_STUN_MODE_STUN_NO_AUTH       3
 int nr_stun_form_request_or_indication(int mode, int msg_type, nr_stun_message **msg);
 
@@ -63,17 +60,6 @@ typedef struct nr_stun_client_stun_keepalive_params_ {
 } nr_stun_client_stun_keepalive_params;
 
 int nr_stun_build_keepalive(nr_stun_client_stun_keepalive_params *params, nr_stun_message **msg);
-
-
-#ifdef USE_STUND_0_96
-typedef struct nr_stun_client_stun_binding_request_stund_0_96_params_ {
-#ifdef WIN32  // silly VC++ gives error if no members
-    int dummy;
-#endif
-} nr_stun_client_stun_binding_request_stund_0_96_params;
-
-int nr_stun_build_req_stund_0_96(nr_stun_client_stun_binding_request_stund_0_96_params *params, nr_stun_message **msg);
-#endif /* USE_STUND_0_96 */
 
 
 #ifdef USE_ICE

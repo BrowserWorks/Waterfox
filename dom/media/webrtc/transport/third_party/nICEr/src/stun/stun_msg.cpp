@@ -353,12 +353,3 @@ NR_STUN_MESSAGE_ADD_ATTRIBUTE(
 
 #endif /* USE_TURN */
 
-#ifdef USE_STUND_0_96
-int
-nr_stun_message_add_change_request_attribute(nr_stun_message *msg, UINT4 change_request)
-NR_STUN_MESSAGE_ADD_ATTRIBUTE(
-    NR_STUN_ATTR_OLD_CHANGE_REQUEST,
-    { attr->u.change_request = change_request; }
-)
-#endif /* USE_STUND_0_96 */
-

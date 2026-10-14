@@ -89,10 +89,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* for backwards compatibility with obsolete versions of the STUN spec */
 #define NR_STUN_ATTR_OLD_XOR_MAPPED_ADDRESS  0x8020
 
-#ifdef USE_STUND_0_96
-#define NR_STUN_ATTR_OLD_CHANGE_REQUEST      0x0003
-#endif /* USE_STUND_0_96 */
-
 #ifdef USE_RFC_3489_BACKWARDS_COMPATIBLE
 /* for backwards compatibility with obsolete versions of the STUN spec */
 #define NR_STUN_ATTR_OLD_PASSWORD            0x0007
