@@ -102,84 +102,14 @@ DRAFT PATCH 0/0exe0.exe
 LoadSourceFile: destination file size 776 does not match expected size 79872
 LoadSourceFile failed
 ### draft failed
-FINISH ADD searchplugins/searchpluginstext0
-backup_restore: backup file doesn't exist: searchplugins/searchpluginstext0.moz-backup
-FINISH PATCH searchplugins/searchpluginspng1.png
-backup_restore: backup file doesn't exist: searchplugins/searchpluginspng1.png.moz-backup
-FINISH PATCH searchplugins/searchpluginspng0.png
-backup_restore: backup file doesn't exist: searchplugins/searchpluginspng0.png.moz-backup
-FINISH ADD precomplete
-backup_restore: backup file doesn't exist: precomplete.moz-backup
-FINISH PATCH exe0.exe
-backup_restore: backup file doesn't exist: exe0.exe.moz-backup
-FINISH ADD distribution/extensions/extensions1/extensions1text0
-backup_restore: backup file doesn't exist: distribution/extensions/extensions1/extensions1text0.moz-backup
-FINISH PATCH distribution/extensions/extensions1/extensions1png1.png
-backup_restore: backup file doesn't exist: distribution/extensions/extensions1/extensions1png1.png.moz-backup
-FINISH PATCH distribution/extensions/extensions1/extensions1png0.png
-backup_restore: backup file doesn't exist: distribution/extensions/extensions1/extensions1png0.png.moz-backup
-FINISH ADD distribution/extensions/extensions0/extensions0text0
-backup_restore: backup file doesn't exist: distribution/extensions/extensions0/extensions0text0.moz-backup
-FINISH PATCH distribution/extensions/extensions0/extensions0png1.png
-backup_restore: backup file doesn't exist: distribution/extensions/extensions0/extensions0png1.png.moz-backup
-FINISH PATCH distribution/extensions/extensions0/extensions0png0.png
-backup_restore: backup file doesn't exist: distribution/extensions/extensions0/extensions0png0.png.moz-backup
-FINISH PATCH 0/0exe0.exe
-backup_restore: backup file doesn't exist: 0/0exe0.exe.moz-backup
-FINISH ADD 0/00/00text0
-backup_restore: backup file doesn't exist: 0/00/00text0.moz-backup
-FINISH PATCH 0/00/00png0.png
-backup_restore: backup file doesn't exist: 0/00/00png0.png.moz-backup
-FINISH ADD 2/20/20text0
-backup_restore: backup file doesn't exist: 2/20/20text0.moz-backup
-FINISH ADD 2/20/20png0.png
-backup_restore: backup file doesn't exist: 2/20/20png0.png.moz-backup
-FINISH ADD 0/00/00text2
-backup_restore: backup file doesn't exist: 0/00/00text2.moz-backup
-FINISH REMOVEFILE 1/10/10text0
-backup_restore: backup file doesn't exist: 1/10/10text0.moz-backup
-FINISH REMOVEFILE 0/00/00text1
-backup_restore: backup file doesn't exist: 0/00/00text1.moz-backup
-FINISH REMOVEFILE 9/97/970/97xtext0
-backup_restore: backup file doesn't exist: 9/97/970/97xtext0.moz-backup
-FINISH REMOVEFILE 9/97/970/97xtext1
-backup_restore: backup file doesn't exist: 9/97/970/97xtext1.moz-backup
-FINISH REMOVEFILE 9/97/971/97xtext0
-backup_restore: backup file doesn't exist: 9/97/971/97xtext0.moz-backup
-FINISH REMOVEFILE 9/97/971/97xtext1
-backup_restore: backup file doesn't exist: 9/97/971/97xtext1.moz-backup
-FINISH REMOVEFILE 9/96/96text0
-backup_restore: backup file doesn't exist: 9/96/96text0.moz-backup
-FINISH REMOVEFILE 9/96/96text1
-backup_restore: backup file doesn't exist: 9/96/96text1.moz-backup
-FINISH REMOVEFILE 8/87/870/87xtext0
-backup_restore: backup file doesn't exist: 8/87/870/87xtext0.moz-backup
-FINISH REMOVEFILE 8/87/870/87xtext1
-backup_restore: backup file doesn't exist: 8/87/870/87xtext1.moz-backup
-FINISH REMOVEFILE 8/87/871/87xtext0
-backup_restore: backup file doesn't exist: 8/87/871/87xtext0.moz-backup
-FINISH REMOVEFILE 8/87/871/87xtext1
-backup_restore: backup file doesn't exist: 8/87/871/87xtext1.moz-backup
-FINISH REMOVEFILE 8/86/86text0
-backup_restore: backup file doesn't exist: 8/86/86text0.moz-backup
-FINISH REMOVEFILE 8/86/86text1
-backup_restore: backup file doesn't exist: 8/86/86text1.moz-backup
-FINISH REMOVEFILE 7/70/7xtest.exe
-backup_restore: backup file doesn't exist: 7/70/7xtest.exe.moz-backup
-FINISH REMOVEFILE 7/70/7xtext0
-backup_restore: backup file doesn't exist: 7/70/7xtext0.moz-backup
-FINISH REMOVEFILE 7/70/7xtext1
-backup_restore: backup file doesn't exist: 7/70/7xtext1.moz-backup
-FINISH REMOVEFILE 7/71/7xtest.exe
-backup_restore: backup file doesn't exist: 7/71/7xtest.exe.moz-backup
-FINISH REMOVEFILE 7/71/7xtext0
-backup_restore: backup file doesn't exist: 7/71/7xtext0.moz-backup
-FINISH REMOVEFILE 7/71/7xtext1
-backup_restore: backup file doesn't exist: 7/71/7xtext1.moz-backup
-FINISH REMOVEFILE 7/7text0
-backup_restore: backup file doesn't exist: 7/7text0.moz-backup
-FINISH REMOVEFILE 7/7text1
-backup_restore: backup file doesn't exist: 7/7text1.moz-backup
+FINISH REMOVEFILE 3/3text0
+backup_restore: backup file doesn't exist: 3/3text0.moz-backup
+FINISH REMOVEFILE 3/3text1
+backup_restore: backup file doesn't exist: 3/3text1.moz-backup
+FINISH REMOVEFILE 4/4text0
+backup_restore: backup file doesn't exist: 4/4text0.moz-backup
+FINISH REMOVEFILE 4/4text1
+backup_restore: backup file doesn't exist: 4/4text1.moz-backup
 FINISH REMOVEFILE 5/5text1
 backup_restore: backup file doesn't exist: 5/5text1.moz-backup
 FINISH REMOVEFILE 5/5text0
@@ -190,13 +120,83 @@ FINISH REMOVEFILE 5/5text0
 backup_restore: backup file doesn't exist: 5/5text0.moz-backup
 FINISH REMOVEFILE 5/5text1
 backup_restore: backup file doesn't exist: 5/5text1.moz-backup
-FINISH REMOVEFILE 4/4text1
-backup_restore: backup file doesn't exist: 4/4text1.moz-backup
-FINISH REMOVEFILE 4/4text0
-backup_restore: backup file doesn't exist: 4/4text0.moz-backup
-FINISH REMOVEFILE 3/3text1
-backup_restore: backup file doesn't exist: 3/3text1.moz-backup
-FINISH REMOVEFILE 3/3text0
-backup_restore: backup file doesn't exist: 3/3text0.moz-backup
+FINISH REMOVEFILE 7/7text1
+FINISH REMOVEFILE 7/7text0
+backup_restore: backup file doesn't exist: 7/7text1.moz-backup
+backup_restore: backup file doesn't exist: 7/7text0.moz-backup
+FINISH REMOVEFILE 7/71/7xtext1
+backup_restore: backup file doesn't exist: 7/71/7xtext1.moz-backup
+FINISH REMOVEFILE 7/71/7xtext0
+backup_restore: backup file doesn't exist: 7/71/7xtext0.moz-backup
+FINISH REMOVEFILE 7/71/7xtest.exe
+backup_restore: backup file doesn't exist: 7/71/7xtest.exe.moz-backup
+FINISH REMOVEFILE 7/70/7xtext1
+backup_restore: backup file doesn't exist: 7/70/7xtext1.moz-backup
+FINISH REMOVEFILE 7/70/7xtext0
+backup_restore: backup file doesn't exist: 7/70/7xtext0.moz-backup
+FINISH REMOVEFILE 7/70/7xtest.exe
+backup_restore: backup file doesn't exist: 7/70/7xtest.exe.moz-backup
+FINISH REMOVEFILE 8/86/86text1
+backup_restore: backup file doesn't exist: 8/86/86text1.moz-backup
+FINISH REMOVEFILE 8/86/86text0
+backup_restore: backup file doesn't exist: 8/86/86text0.moz-backup
+FINISH REMOVEFILE 8/87/871/87xtext1
+backup_restore: backup file doesn't exist: 8/87/871/87xtext1.moz-backup
+FINISH REMOVEFILE 8/87/871/87xtext0
+backup_restore: backup file doesn't exist: 8/87/871/87xtext0.moz-backup
+FINISH REMOVEFILE 8/87/870/87xtext1
+backup_restore: backup file doesn't exist: 8/87/870/87xtext1.moz-backup
+FINISH REMOVEFILE 8/87/870/87xtext0
+backup_restore: backup file doesn't exist: 8/87/870/87xtext0.moz-backup
+FINISH REMOVEFILE 9/96/96text1
+backup_restore: backup file doesn't exist: 9/96/96text1.moz-backup
+FINISH REMOVEFILE 9/96/96text0
+backup_restore: backup file doesn't exist: 9/96/96text0.moz-backup
+FINISH REMOVEFILE 9/97/971/97xtext1
+backup_restore: backup file doesn't exist: 9/97/971/97xtext1.moz-backup
+FINISH REMOVEFILE 9/97/971/97xtext0
+backup_restore: backup file doesn't exist: 9/97/971/97xtext0.moz-backup
+FINISH REMOVEFILE 9/97/970/97xtext1
+backup_restore: backup file doesn't exist: 9/97/970/97xtext1.moz-backup
+FINISH REMOVEFILE 9/97/970/97xtext0
+backup_restore: backup file doesn't exist: 9/97/970/97xtext0.moz-backup
+FINISH REMOVEFILE 0/00/00text1
+backup_restore: backup file doesn't exist: 0/00/00text1.moz-backup
+FINISH REMOVEFILE 1/10/10text0
+backup_restore: backup file doesn't exist: 1/10/10text0.moz-backup
+FINISH ADD 0/00/00text2
+backup_restore: backup file doesn't exist: 0/00/00text2.moz-backup
+FINISH ADD 2/20/20png0.png
+backup_restore: backup file doesn't exist: 2/20/20png0.png.moz-backup
+FINISH ADD 2/20/20text0
+backup_restore: backup file doesn't exist: 2/20/20text0.moz-backup
+FINISH PATCH 0/00/00png0.png
+backup_restore: backup file doesn't exist: 0/00/00png0.png.moz-backup
+FINISH ADD 0/00/00text0
+backup_restore: backup file doesn't exist: 0/00/00text0.moz-backup
+FINISH PATCH 0/0exe0.exe
+backup_restore: backup file doesn't exist: 0/0exe0.exe.moz-backup
+FINISH PATCH distribution/extensions/extensions0/extensions0png0.png
+backup_restore: backup file doesn't exist: distribution/extensions/extensions0/extensions0png0.png.moz-backup
+FINISH PATCH distribution/extensions/extensions0/extensions0png1.png
+backup_restore: backup file doesn't exist: distribution/extensions/extensions0/extensions0png1.png.moz-backup
+FINISH ADD distribution/extensions/extensions0/extensions0text0
+backup_restore: backup file doesn't exist: distribution/extensions/extensions0/extensions0text0.moz-backup
+FINISH PATCH distribution/extensions/extensions1/extensions1png0.png
+backup_restore: backup file doesn't exist: distribution/extensions/extensions1/extensions1png0.png.moz-backup
+FINISH PATCH distribution/extensions/extensions1/extensions1png1.png
+backup_restore: backup file doesn't exist: distribution/extensions/extensions1/extensions1png1.png.moz-backup
+FINISH ADD distribution/extensions/extensions1/extensions1text0
+backup_restore: backup file doesn't exist: distribution/extensions/extensions1/extensions1text0.moz-backup
+FINISH PATCH exe0.exe
+backup_restore: backup file doesn't exist: exe0.exe.moz-backup
+FINISH ADD precomplete
+backup_restore: backup file doesn't exist: precomplete.moz-backup
+FINISH PATCH searchplugins/searchpluginspng0.png
+backup_restore: backup file doesn't exist: searchplugins/searchpluginspng0.png.moz-backup
+FINISH PATCH searchplugins/searchpluginspng1.png
+backup_restore: backup file doesn't exist: searchplugins/searchpluginspng1.png.moz-backup
+FINISH ADD searchplugins/searchpluginstext0
+backup_restore: backup file doesn't exist: searchplugins/searchpluginstext0.moz-backup
 failed: 2
 calling QuitProgressUI
