@@ -94,6 +94,9 @@ run-sequentially = ["true"] # Uses the Mozilla Maintenance Service.
 ["marFailurePartial.js"]
 run-sequentially = ["true"] # Uses the Mozilla Maintenance Service.
 
+["marFailurePartialStaleBackup.js"]
+run-sequentially = ["true"] # Uses the Mozilla Maintenance Service.
+
 ["marFailurePartialZucchini.js"]
 run-sequentially = ["true"] # Uses the Mozilla Maintenance Service.
 

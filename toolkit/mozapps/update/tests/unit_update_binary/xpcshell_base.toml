@@ -131,6 +131,8 @@ reason = "Unix only test"
 
 ["marFailurePartial.js"]
 
+["marFailurePartialStaleBackup.js"]
+
 ["marFailurePartialZucchini.js"]
 
 ["marFailurePartialZucchiniBadAlloc_win.js"]
