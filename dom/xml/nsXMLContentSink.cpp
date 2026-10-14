@@ -585,7 +585,7 @@ nsresult nsXMLContentSink::CreateElement(
 nsresult nsXMLContentSink::CloseElement(nsIContent* aContent) {
   NS_ASSERTION(aContent, "missing element to close");
 
-  mozilla::dom::NodeInfo* nodeInfo = aContent->NodeInfo();
+  RefPtr<mozilla::dom::NodeInfo> nodeInfo = aContent->NodeInfo();
 
   // Some HTML nodes need DoneAddingChildren() called to initialize
   // properly (eg form state restoration).
