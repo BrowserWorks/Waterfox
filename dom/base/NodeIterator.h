@@ -64,7 +64,7 @@ class NodeIterator final : public nsStubMutationObserver, public nsTraversal {
 
     void Clear() { mNode = nullptr; }
 
-    nsINode* mNode;
+    nsCOMPtr<nsINode> mNode;
     bool mBeforeNode;
   };
 
