@@ -7,6 +7,7 @@ platform(linux,mac) == border-radial-gradient-nine-patch.yaml border-radial-grad
 == border-none.yaml border-none-ref.yaml
 fuzzy(128,69) fuzzy-if(platform(swgl),2,118) == border-overlapping-corner.yaml border-overlapping-corner-ref.yaml
 == border-overlapping-edge.yaml border-overlapping-edge-ref.yaml
+fuzzy(20,100) == border-fractional-overlap.yaml border-fractional-overlap-ref.yaml
 == border-invisible.yaml border-invisible-ref.yaml
 platform(linux,mac) fuzzy(3,80) == border-suite.yaml border-suite.png
 platform(linux,mac) fuzzy(8,105) == border-suite-2.yaml border-suite-2.png

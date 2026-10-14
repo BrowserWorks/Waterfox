@@ -738,8 +738,17 @@ fn prepare_quad_impl(
 
     if let Some(t) = transform.as_2d_scale_offset() {
         let clipped_local_rect = local_rect.intersection_unchecked(local_clip_rect);
+        let prim_surface_rect = t.map_rect(&clipped_local_rect);
+        // Snap the rectangle to the pixel grid...
+        let prim_surface_rect = round_edges.select(
+            // ... to the nearest pixel for non-antialiased edges.
+            prim_surface_rect.round(),
+            // ... conservatively for antialiased edges so that the AA
+            // is included.
+            prim_surface_rect.round_out()
+        );
         clipped_surface_rect = clipped_surface_rect.intersection_unchecked(
-            &t.map_rect(&clipped_local_rect).round_out(),
+            &prim_surface_rect,
         );
     }
 

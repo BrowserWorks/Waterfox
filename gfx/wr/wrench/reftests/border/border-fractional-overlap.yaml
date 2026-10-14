@@ -1,0 +1,33 @@
+--- 
+# A semi-transparent border under a mask-forcing clip and a scaling
+# transform. Border segments should not overlap.
+root:
+  items:
+    - type: rect
+      bounds: [0, 0, 400, 400]
+      color: [241, 245, 249, 1.0]
+    - type: reference-frame
+      transform: scale(1.5, 1.5)
+      bounds: [0, 0, 400, 400]
+      items:
+        - type: clip
+          id: 2
+          bounds: [20, 20, 150, 150]
+        - type: clip
+          id: 3
+          complex:
+            - rect: [20, 20, 150, 150]
+              radius: 5
+        - type: border
+          bounds: [20, 20, 150, 150]
+          clip-rect: [20, 20, 150, 150]
+          clip-chain: [2, 3]
+          width: 5
+          border-type: normal
+          style: solid
+          radius:
+            top-left: 5
+            top-right: 5
+            bottom-left: 5
+            bottom-right: 5
+          color: [ [0, 0, 0, 0.22], [0, 0, 0, 0.22], [0, 0, 0, 0.22], [0, 0, 0, 0.22] ]
