@@ -110,11 +110,24 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(nsHtml5StreamParser)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsHtml5StreamParser)
   tmp->DropTimer();
+  tmp->Terminate();
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mRequest)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mOwner)
-  tmp->mExecutorFlusher = nullptr;
-  tmp->mLoadFlusher = nullptr;
-  tmp->mExecutor = nullptr;
+
+  // At this point, tasks on the parser thread can still
+  // execute. We have a mechanism for making sure that the
+  // stream parser stays alive for long enough. However, the
+  // way tree ops make their way into the executor happens
+  // through non-owning references, so we must not allow
+  // `mExecutor` to be deleted too early.
+  // `mExecutor` itself is a plain pointer, because
+  // `mLoadFlusher`, and `mExecutorFlusher` hold strong
+  // refs. Even though cycle collection traversal goes
+  // through them to discover a cycle, we deliberately
+  // don't set them to `nullptr` here to make sure that
+  // the executor stays around for as long as the stream
+  // parser stays around. We trust the cycle to be broken
+  // at some other edge of the cycle.
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsHtml5StreamParser)

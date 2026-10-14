@@ -390,6 +390,16 @@ void XMLHttpRequestMainThread::SetAssociatedBrowsingContextID(uint64_t aId) {
 }
 
 void XMLHttpRequestMainThread::ResetResponse() {
+  if (RefPtr<nsXHRParseEndListener> listener = mParseEndListener.forget()) {
+    if (mResponseXML) {
+      if (EventListenerManager* manager =
+              mResponseXML->GetExistingListenerManager()) {
+        manager->RemoveEventListenerByType(listener,
+                                           kLiteralString_DOMContentLoaded,
+                                           TrustedEventsAtSystemGroupBubble());
+      }
+    }
+  }
   mResponseXML = nullptr;
   mResponseBody.Truncate();
   TruncateResponseText();
@@ -1051,6 +1061,9 @@ void XMLHttpRequestMainThread::CloseRequest(nsresult detail) {
                                "XMLHttpRequestMainThread::CloseRequest"_ns);
   }
   CancelTimeoutTimer();
+  if (mResponseXML) {
+    mResponseXML->StopDocumentLoad();
+  }
 }
 
 void XMLHttpRequestMainThread::CloseRequestWithError(
@@ -2006,6 +2019,30 @@ XMLHttpRequestMainThread::OnStartRequest(nsIRequest* request) {
   mFlagParseBody = true;
   if (mErrorLoad == ErrorType::eOK) {
     ChangeState(XMLHttpRequest_Binding::HEADERS_RECEIVED);
+  }
+
+  // Re-run earlier check after scripts may have changed the state.
+
+  if (request != mChannel) {
+    // Can this still happen?
+    return NS_OK;
+  }
+
+  // Don't do anything if we have been aborted
+  if (mState == XMLHttpRequest_Binding::UNSENT) {
+    return NS_OK;
+  }
+
+  // Don't do anything if we're in mid-abort, but let the request
+  // know (this can happen due to race conditions in valid XHRs,
+  // see bz1070763 for info).
+  if (mFlagAborted) {
+    return NS_BINDING_ABORTED;
+  }
+
+  // Don't do anything if we have timed out.
+  if (mFlagTimedOut) {
+    return NS_OK;
   }
 
   ResetResponse();
