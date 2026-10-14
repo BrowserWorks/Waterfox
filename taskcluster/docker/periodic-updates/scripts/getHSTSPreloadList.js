@@ -323,8 +323,9 @@ function probeResult(status) {
     case ERROR_NONE:
       return "ok";
     case ERROR_NO_HSTS_HEADER:
-    case ERROR_MAX_AGE_TOO_LOW:
       return "no-header";
+    case ERROR_MAX_AGE_TOO_LOW:
+      return "max-age-too-low";
     case ERROR_CONNECTING_TO_HOST:
       return "connect-failed";
     default:
@@ -336,7 +337,7 @@ function isFailedRun(status) {
   let result = probeResult(status);
   return (
     result != "ok" &&
-    status.error != ERROR_MAX_AGE_TOO_LOW &&
+    result != "max-age-too-low" &&
     !(result == "no-header" && status.httpStatus < 400)
   );
 }
