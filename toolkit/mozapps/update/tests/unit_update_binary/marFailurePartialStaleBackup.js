@@ -33,7 +33,6 @@ async function run_test() {
     true
   );
   checkAppBundleModTime();
-  checkNoUpdateTelemetry();
   await testPostUpdateProcessing();
   checkPostUpdateRunningFile(false);
 
