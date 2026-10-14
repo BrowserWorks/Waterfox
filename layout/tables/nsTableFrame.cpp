@@ -578,7 +578,7 @@ void nsTableFrame::RemoveCol(int32_t aColIndex, bool aRemoveFromCache,
  * Only the first-in-flow has a legit cell map.
  */
 nsTableCellMap* nsTableFrame::GetCellMap() const {
-  return static_cast<nsTableFrame*>(FirstInFlow())->mCellMap.get();
+  return FirstInFlowAsTable()->mCellMap.get();
 }
 
 nsTableColGroupFrame* nsTableFrame::CreateSyntheticColGroupFrame() {
@@ -683,6 +683,9 @@ void nsTableFrame::AppendAnonymousColFrames(
 }
 
 void nsTableFrame::MatchCellMapToColCache(nsTableCellMap* aCellMap) {
+  if (GetPrevInFlow()) {
+    return FirstInFlowAsTable()->MatchCellMapToColCache(aCellMap);
+  }
   int32_t numColsInMap = GetColCount();
   int32_t numColsInCache = mColFrames.Length();
   int32_t numColsToAdd = numColsInMap - numColsInCache;
@@ -851,6 +854,9 @@ int32_t nsTableFrame::InsertRows(nsTableRowGroupFrame* aRowGroupFrame,
 }
 
 void nsTableFrame::AddDeletedRowIndex(int32_t aDeletedRowStoredIndex) {
+  if (GetPrevInFlow()) {
+    return FirstInFlowAsTable()->AddDeletedRowIndex(aDeletedRowStoredIndex);
+  }
   if (mDeletedRowIndexRanges.empty()) {
     mDeletedRowIndexRanges.insert(std::pair<int32_t, int32_t>(
         aDeletedRowStoredIndex, aDeletedRowStoredIndex));
@@ -919,6 +925,9 @@ void nsTableFrame::AddDeletedRowIndex(int32_t aDeletedRowStoredIndex) {
 }
 
 int32_t nsTableFrame::GetAdjustmentForStoredIndex(int32_t aStoredIndex) {
+  if (GetPrevInFlow()) {
+    return FirstInFlowAsTable()->GetAdjustmentForStoredIndex(aStoredIndex);
+  }
   if (mDeletedRowIndexRanges.empty()) {
     return 0;
   }
@@ -1145,8 +1154,7 @@ void nsTableFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
   // won't use its passed-in BorderBackground list anyway. It does affect cell
   // borders though; this lets us get cell borders into the nsTableFrame's
   // BorderBackground list.
-  for (nsTableColFrame* col :
-       static_cast<nsTableFrame*>(FirstInFlow())->mColFrames) {
+  for (nsTableColFrame* col : FirstInFlowAsTable()->mColFrames) {
     tableBGs.AddColumn(col);
   }
 
@@ -1204,7 +1212,7 @@ void nsTableFrame::SetColumnDimensions(nscoord aBSize, WritingMode aWM,
   LogicalPoint colGroupOrigin(aWM,
                               aBorderPadding.IStart(aWM) + GetColSpacing(-1),
                               aBorderPadding.BStart(aWM) + GetRowSpacing(-1));
-  nsTableFrame* fif = static_cast<nsTableFrame*>(FirstInFlow());
+  nsTableFrame* fif = FirstInFlowAsTable();
   for (nsIFrame* colGroupFrame : OrderedGroups().mColGroups) {
     MOZ_ASSERT(colGroupFrame->IsTableColGroupFrame());
     // first we need to figure out the size of the colgroup
@@ -1898,7 +1906,7 @@ void nsTableFrame::AdjustForCollapsingRowsCols(
   SetNeedToCollapse(false);
 
   // collapse the rows and/or row groups as necessary
-  nsTableFrame* firstInFlow = static_cast<nsTableFrame*>(FirstInFlow());
+  nsTableFrame* firstInFlow = FirstInFlowAsTable();
   nscoord iSize = firstInFlow->GetCollapsedISize(aWM, aBorderPadding);
   nscoord rgISize = iSize - GetColSpacing(-1) - GetColSpacing(GetColCount());
   // Walk the list of children
@@ -2070,7 +2078,7 @@ void nsTableFrame::DoRemoveFrame(DestroyContext& aContext, ChildListID aListID,
     TableArea damageArea;
     cellMap->RebuildConsideringCells(nullptr, nullptr, 0, 0, false, damageArea);
 
-    static_cast<nsTableFrame*>(FirstInFlow())->MatchCellMapToColCache(cellMap);
+    MatchCellMapToColCache(cellMap);
   }
 }
 
@@ -3289,7 +3297,7 @@ void nsTableFrame::Dump(bool aDumpRows, bool aDumpCols, bool aDumpCellMap) {
   printf("mColWidths=");
   int32_t numCols = GetColCount();
   int32_t colIdx;
-  nsTableFrame* fif = static_cast<nsTableFrame*>(FirstInFlow());
+  nsTableFrame* fif = FirstInFlowAsTable();
   for (colIdx = 0; colIdx < numCols; colIdx++) {
     printf("%d ", fif->GetColumnISizeFromFirstInFlow(colIdx));
   }
@@ -3356,7 +3364,7 @@ bool nsTableFrame::ColumnHasCellSpacingBefore(int32_t aColIndex) const {
   }
   // Since fixed-layout tables should not have their column sizes change
   // as they load, we assume that all columns are significant.
-  auto* fif = static_cast<nsTableFrame*>(FirstInFlow());
+  auto* fif = FirstInFlowAsTable();
   if (fif->LayoutStrategy()->GetType() == nsITableLayoutStrategy::Fixed) {
     return true;
   }
@@ -3419,6 +3427,10 @@ bool nsTableFrame::ColumnHasCellSpacingBefore(int32_t aColIndex) const {
 void nsTableFrame::AddBCDamageArea(const TableArea& aValue) {
   MOZ_ASSERT(IsBorderCollapse(),
              "Why call this if we are not border-collapsed?");
+  if (auto* prev = GetPrevInFlow()) {
+    static_cast<nsTableFrame*>(prev)->AddBCDamageArea(aValue);
+  }
+
 #ifdef DEBUG
   VerifyDamageRect(aValue);
 #endif
@@ -3604,7 +3616,7 @@ struct BCMapCellInfo final {
 
 BCMapCellInfo::BCMapCellInfo(nsTableFrame* aTableFrame)
     : mTableFrame(aTableFrame),
-      mTableFirstInFlow(static_cast<nsTableFrame*>(aTableFrame->FirstInFlow())),
+      mTableFirstInFlow(aTableFrame->FirstInFlowAsTable()),
       mNumTableRows(aTableFrame->GetRowCount()),
       mNumTableCols(aTableFrame->GetColCount()),
       mTableWM(aTableFrame->Style()),
@@ -3636,7 +3648,7 @@ inline int32_t BCMapCellInfo::GetCellEndColIndex() const {
 }
 
 static TableBCData* GetTableBCData(nsTableFrame* aTableFrame) {
-  auto* firstInFlow = static_cast<nsTableFrame*>(aTableFrame->FirstInFlow());
+  auto* firstInFlow = aTableFrame->FirstInFlowAsTable();
   return firstInFlow->GetTableBCData();
 }
 
@@ -4301,8 +4313,8 @@ struct BCCornerInfo {
   StyleBorderStyle ownerStyle;  // border style of ownerElem
   uint16_t ownerSide : 2;  // LogicalSide (e.g LogicalSide::BStart, etc) of the
                            // border owning the corner relative to the corner
-  uint16_t
-      ownerElem : 4;  // elem type (e.g. eTable, eGroup, etc) owning the corner
+  uint16_t ownerElem
+      : 4;  // elem type (e.g. eTable, eGroup, etc) owning the corner
   uint16_t subSide : 2;  // side of border with subWidth relative to the corner
   uint16_t subElem : 4;  // elem type (e.g. eTable, eGroup, etc) of sub owner
   uint16_t hasDashDot : 1;  // does a dashed, dotted segment enter the corner,
@@ -5711,7 +5723,7 @@ class BCPaintBorderIterator {
 
 BCPaintBorderIterator::BCPaintBorderIterator(nsTableFrame* aTable)
     : mTable(aTable),
-      mTableFirstInFlow(static_cast<nsTableFrame*>(aTable->FirstInFlow())),
+      mTableFirstInFlow(aTable->FirstInFlowAsTable()),
       mTableCellMap(aTable->GetCellMap()),
       mCellMap(nullptr),
       mTableWM(aTable->Style()),

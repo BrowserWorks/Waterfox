@@ -585,8 +585,7 @@ class nsTableFrame : public nsContainerFrame {
                                  const ReflowInput& aReflowInput);
 
   nsITableLayoutStrategy* LayoutStrategy() const {
-    return static_cast<nsTableFrame*>(FirstInFlow())
-        ->mTableLayoutStrategy.get();
+    return FirstInFlowAsTable()->mTableLayoutStrategy.get();
   }
 
   // Helper for InsertFrames.
@@ -750,6 +749,10 @@ class nsTableFrame : public nsContainerFrame {
    */
   void AddDeletedRowIndex(int32_t aDeletedRowStoredIndex);
 
+  nsTableFrame* FirstInFlowAsTable() const {
+    return static_cast<nsTableFrame*>(FirstInFlow());
+  }
+
   /** Calculate the change that aStoredIndex must be increased/decreased by
    *  to get new index.
    *  Note that aStoredIndex is always the index of an undeleted row (since
@@ -764,7 +767,7 @@ class nsTableFrame : public nsContainerFrame {
   /** Returns whether mDeletedRowIndexRanges is empty
    */
   bool IsDeletedRowIndexRangesEmpty() const {
-    return mDeletedRowIndexRanges.empty();
+    return FirstInFlowAsTable()->mDeletedRowIndexRanges.empty();
   }
 
   bool IsDestroying() const { return mBits.mIsDestroying; }
@@ -840,12 +843,11 @@ inline void nsTableFrame::SetRowInserted(bool aValue) {
 }
 
 inline void nsTableFrame::SetNeedToCollapse(bool aValue) {
-  static_cast<nsTableFrame*>(FirstInFlow())->mBits.mNeedToCollapse =
-      (unsigned)aValue;
+  FirstInFlowAsTable()->mBits.mNeedToCollapse = (unsigned)aValue;
 }
 
 inline bool nsTableFrame::NeedToCollapse() const {
-  return (bool)static_cast<nsTableFrame*>(FirstInFlow())->mBits.mNeedToCollapse;
+  return (bool)FirstInFlowAsTable()->mBits.mNeedToCollapse;
 }
 
 inline nsTArray<nsTableColFrame*>& nsTableFrame::GetColCache() {
