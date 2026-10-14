@@ -227,12 +227,15 @@ struct EmbedderColorSchemes {
   FIELD(CurrentOrientationType, mozilla::dom::OrientationType,                 \
         {.mCanSet = CanSet::Unrestricted})                                     \
   FIELD(OrientationLock, mozilla::hal::ScreenOrientation,                      \
-        {.mTopOnly = true, .mCanSet = CanSet::Unrestricted})                   \
+        {.mTopOnly = true, .mCanSet = CanSet::Unrestricted, .mDefault = [] {   \
+           return mozilla::hal::ScreenOrientation::None;                       \
+         }})                                                                   \
   FIELD(HasOrientationOverride, bool, {.mCanSet = CanSet::Unrestricted})       \
   FIELD(UserAgentOverride, nsString,                                           \
         {.mTopOnly = true, .mCanSet = CanSet::Custom})                         \
   FIELD(TouchEventsOverrideInternal, mozilla::dom::TouchEventsOverride,        \
-        {.mCanSet = CanSet::ParentOnly})                                       \
+        {.mCanSet = CanSet::ParentOnly,                                        \
+         .mDefault = [] { return TouchEventsOverride::None; }})                \
   FIELD(EmbedderElementType, Maybe<nsString>,                                  \
         {.mCanSet = CanSet::EmbedderOnly})                                     \
   FIELD(MessageManagerGroup, nsString,                                         \
@@ -256,7 +259,8 @@ struct EmbedderColorSchemes {
    * This is only ever set to true on the top BC, so consumers need to get     \
    * the value from the top BC! */                                             \
   FIELD(HasSessionHistory, bool, {.mCanSet = CanSet::Unrestricted})            \
-  FIELD(UseErrorPages, bool, {.mCanSet = CanSet::EmbedderOnly})                \
+  FIELD(UseErrorPages, bool,                                                   \
+        {.mCanSet = CanSet::EmbedderOnly, .mDefault = [] { return true; }})    \
   FIELD(PlatformOverride, nsString,                                            \
         {.mTopOnly = true, .mCanSet = CanSet::Custom})                         \
   /* Specifies if this BC has loaded documents besides the initial             \
@@ -287,7 +291,9 @@ struct EmbedderColorSchemes {
         {.mTopOnly = true, .mCanSet = CanSet::Unrestricted})                   \
   /* DevTools multiplier for animations playback rate */                       \
   FIELD(AnimationsPlayBackRateMultiplier, double,                              \
-        {.mTopOnly = true, .mCanSet = CanSet::Unrestricted})                   \
+        {.mTopOnly = true, .mCanSet = CanSet::Unrestricted, .mDefault = [] {   \
+           return 1.0;                                                         \
+         }})                                                                   \
   /* prefers-color-scheme override based on the color-scheme style of our      \
    * <browser> embedder element. */                                            \
   FIELD(EmbedderColorSchemes, EmbedderColorSchemes,                            \

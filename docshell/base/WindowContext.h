@@ -31,88 +31,90 @@ class WindowGlobalInit;
 class BrowsingContext;
 class BrowsingContextGroup;
 
-#define MOZ_EACH_WC_FIELD(FIELD)                                            \
-  /* Whether the SHEntry associated with the current top-level              \
-   * window has already seen user interaction.                              \
-   * As such, this will be reset to false when a new SHEntry is             \
-   * created without changing the WC (e.g. when using pushState or          \
-   * sub-frame navigation)                                                  \
-   * This flag is set for optimization purposes, to avoid                   \
-   * having to get the top SHEntry and update it on every                   \
-   * user interaction.                                                      \
-   * This is only meaningful on the top-level WC. */                        \
-  FIELD(SHEntryHasUserInteraction, bool, {.mCanSet = CanSet::Unrestricted}) \
-  FIELD(CookieBehavior, Maybe<uint32_t>, {.mCanSet = CanSet::OwnerOnly})    \
-  FIELD(IsOnContentBlockingAllowList, bool, {.mCanSet = CanSet::OwnerOnly}) \
-  /* Whether the given window hierarchy is third party. See                 \
-   * ThirdPartyUtil::IsThirdPartyWindow for details */                      \
-  FIELD(IsThirdPartyWindow, bool, {.mCanSet = CanSet::OwnerOnly})           \
-  /* Whether this window's channel has been marked as a third-party         \
-   * tracking resource */                                                   \
-  FIELD(IsThirdPartyTrackingResourceWindow, bool,                           \
-        {.mCanSet = CanSet::OwnerOnly})                                     \
-  /* Whether this window is using its unpartitioned cookies due to          \
-   * the Storage Access API */                                              \
-  FIELD(UsingStorageAccess, bool, {.mCanSet = CanSet::OwnerOnly})           \
-  FIELD(ShouldResistFingerprinting, bool, {.mCanSet = CanSet::OwnerOnly})   \
-  FIELD(OverriddenFingerprintingSettings, Maybe<RFPTargetSet>,              \
-        {.mCanSet = CanSet::OwnerOnly})                                     \
-  FIELD(IsSecureContext, bool, {.mCanSet = CanSet::OwnerOnly})              \
-  FIELD(IsOriginalFrameSource, bool, {.mCanSet = CanSet::OwnerOnly})        \
-  /* Mixed-Content: If the corresponding documentURI is https,              \
-   * then this flag is true. */                                             \
-  FIELD(IsSecure, bool, {.mCanSet = CanSet::OwnerOnly})                     \
-  /* Whether this window has registered a "beforeunload" event              \
-   * handler */                                                             \
-  FIELD(NeedsBeforeUnload, bool, {.mCanSet = CanSet::OwnerOnly})            \
-  /* Whether this window's navigation object has registered any             \
-   * event handlers or has ongoing or upcoming method trackers. Only        \
-   * valid for the top-level context. */                                    \
-  FIELD(NeedsTraverse, bool, {.mCanSet = CanSet::OwnerOnly})                \
-  /* Controls whether the WindowContext is currently considered to be       \
-   * activated by a gesture */                                              \
-  FIELD(UserActivationStateAndModifiers,                                    \
-        UserActivation::StateAndModifiers::DataT,                           \
-        {.mCanSet = CanSet::Unrestricted})                                  \
-  FIELD(EmbedderPolicy, nsILoadInfo::CrossOriginEmbedderPolicy,             \
-        {.mCanSet = CanSet::Unrestricted})                                  \
-  /* True if this document tree contained at least a HTMLMediaElement.      \
-   * This should only be set on top level context. */                       \
-  FIELD(DocTreeHadMedia, bool,                                              \
-        {.mTopOnly = true, .mCanSet = CanSet::Unrestricted})                \
-  FIELD(AutoplayPermission, uint32_t, {.mCanSet = CanSet::OwnerOnly})       \
-  FIELD(ShortcutsPermission, uint32_t,                                      \
-        {.mTopOnly = true, .mCanSet = CanSet::OwnerOnly})                   \
-  /* Store the Id of the browsing context where active media session        \
-   * exists on the top level window context */                              \
-  FIELD(ActiveMediaSessionContextId, Maybe<uint64_t>,                       \
-        {.mTopOnly = true, .mCanSet = CanSet::Unrestricted})                \
-  /* ALLOW_ACTION if it is allowed to open popups for the sub-tree          \
-   * starting and including the current WindowContext */                    \
-  FIELD(PopupPermission, uint32_t, {.mCanSet = CanSet::OwnerOnly})          \
-  FIELD(DelegatedPermissions,                                               \
-        PermissionDelegateHandler::DelegatedPermissionList,                 \
-        {.mCanSet = CanSet::OwnerOnly})                                     \
-  FIELD(DelegatedExactHostMatchPermissions,                                 \
-        PermissionDelegateHandler::DelegatedPermissionList,                 \
-        {.mCanSet = CanSet::OwnerOnly})                                     \
-  FIELD(HasReportedShadowDOMUsage, bool, {.mCanSet = CanSet::Unrestricted}) \
-  /* Whether the principal of this window is for a local                    \
-   * IP address */                                                          \
-  FIELD(IsLocalIP, bool, {.mCanSet = CanSet::OwnerOnly})                    \
-  /* Whether any of the windows in the subtree rooted at this window has    \
-   * active peer connections or not (only set on the top window). */        \
-  FIELD(HasActivePeerConnections, bool,                                     \
-        {.mTopOnly = true, .mCanSet = CanSet::ParentOnly})                  \
-  /* Whether we can execute scripts in this WindowContext. Has no effect    \
-   * unless scripts are also allowed in the BrowsingContext. */             \
-  FIELD(AllowJavascript, bool, {.mCanSet = CanSet::OwnerOrParentOnly})      \
-  /* If this field is `true`, it means that this WindowContext's            \
-   * CloseWatcherManager has active CloseWatchers, which some UIs may       \
-   * want to dismiss (for example the Android "back button"). */            \
-  FIELD(HasActiveCloseWatcher, bool, {.mCanSet = CanSet::Unrestricted})     \
-  /* Whether this window is allowed to navigate the top-level               \
-   * without user interaction. */                                           \
+#define MOZ_EACH_WC_FIELD(FIELD)                                               \
+  /* Whether the SHEntry associated with the current top-level                 \
+   * window has already seen user interaction.                                 \
+   * As such, this will be reset to false when a new SHEntry is                \
+   * created without changing the WC (e.g. when using pushState or             \
+   * sub-frame navigation)                                                     \
+   * This flag is set for optimization purposes, to avoid                      \
+   * having to get the top SHEntry and update it on every                      \
+   * user interaction.                                                         \
+   * This is only meaningful on the top-level WC. */                           \
+  FIELD(SHEntryHasUserInteraction, bool, {.mCanSet = CanSet::Unrestricted})    \
+  FIELD(CookieBehavior, Maybe<uint32_t>, {.mCanSet = CanSet::OwnerOnly})       \
+  FIELD(IsOnContentBlockingAllowList, bool, {.mCanSet = CanSet::OwnerOnly})    \
+  /* Whether the given window hierarchy is third party. See                    \
+   * ThirdPartyUtil::IsThirdPartyWindow for details */                         \
+  FIELD(IsThirdPartyWindow, bool, {.mCanSet = CanSet::OwnerOnly})              \
+  /* Whether this window's channel has been marked as a third-party            \
+   * tracking resource */                                                      \
+  FIELD(IsThirdPartyTrackingResourceWindow, bool,                              \
+        {.mCanSet = CanSet::OwnerOnly})                                        \
+  /* Whether this window is using its unpartitioned cookies due to             \
+   * the Storage Access API */                                                 \
+  FIELD(UsingStorageAccess, bool, {.mCanSet = CanSet::OwnerOnly})              \
+  FIELD(ShouldResistFingerprinting, bool, {.mCanSet = CanSet::OwnerOnly})      \
+  FIELD(OverriddenFingerprintingSettings, Maybe<RFPTargetSet>,                 \
+        {.mCanSet = CanSet::OwnerOnly})                                        \
+  FIELD(IsSecureContext, bool, {.mCanSet = CanSet::OwnerOnly})                 \
+  FIELD(IsOriginalFrameSource, bool, {.mCanSet = CanSet::OwnerOnly})           \
+  /* Mixed-Content: If the corresponding documentURI is https,                 \
+   * then this flag is true. */                                                \
+  FIELD(IsSecure, bool, {.mCanSet = CanSet::OwnerOnly})                        \
+  /* Whether this window has registered a "beforeunload" event                 \
+   * handler */                                                                \
+  FIELD(NeedsBeforeUnload, bool, {.mCanSet = CanSet::OwnerOnly})               \
+  /* Whether this window's navigation object has registered any                \
+   * event handlers or has ongoing or upcoming method trackers. Only           \
+   * valid for the top-level context. */                                       \
+  FIELD(NeedsTraverse, bool, {.mCanSet = CanSet::OwnerOnly})                   \
+  /* Controls whether the WindowContext is currently considered to be          \
+   * activated by a gesture */                                                 \
+  FIELD(UserActivationStateAndModifiers,                                       \
+        UserActivation::StateAndModifiers::DataT,                              \
+        {.mCanSet = CanSet::Unrestricted})                                     \
+  FIELD(EmbedderPolicy, nsILoadInfo::CrossOriginEmbedderPolicy,                \
+        {.mCanSet = CanSet::Unrestricted})                                     \
+  /* True if this document tree contained at least a HTMLMediaElement.         \
+   * This should only be set on top level context. */                          \
+  FIELD(DocTreeHadMedia, bool,                                                 \
+        {.mTopOnly = true, .mCanSet = CanSet::Unrestricted})                   \
+  FIELD(AutoplayPermission, uint32_t, {.mCanSet = CanSet::OwnerOnly})          \
+  FIELD(ShortcutsPermission, uint32_t,                                         \
+        {.mTopOnly = true, .mCanSet = CanSet::OwnerOnly})                      \
+  /* Store the Id of the browsing context where active media session           \
+   * exists on the top level window context */                                 \
+  FIELD(ActiveMediaSessionContextId, Maybe<uint64_t>,                          \
+        {.mTopOnly = true, .mCanSet = CanSet::Unrestricted})                   \
+  /* ALLOW_ACTION if it is allowed to open popups for the sub-tree             \
+   * starting and including the current WindowContext */                       \
+  FIELD(PopupPermission, uint32_t, {.mCanSet = CanSet::OwnerOnly})             \
+  FIELD(DelegatedPermissions,                                                  \
+        PermissionDelegateHandler::DelegatedPermissionList,                    \
+        {.mCanSet = CanSet::OwnerOnly})                                        \
+  FIELD(DelegatedExactHostMatchPermissions,                                    \
+        PermissionDelegateHandler::DelegatedPermissionList,                    \
+        {.mCanSet = CanSet::OwnerOnly})                                        \
+  FIELD(HasReportedShadowDOMUsage, bool, {.mCanSet = CanSet::Unrestricted})    \
+  /* Whether the principal of this window is for a local                       \
+   * IP address */                                                             \
+  FIELD(IsLocalIP, bool, {.mCanSet = CanSet::OwnerOnly})                       \
+  /* Whether any of the windows in the subtree rooted at this window has       \
+   * active peer connections or not (only set on the top window). */           \
+  FIELD(HasActivePeerConnections, bool,                                        \
+        {.mTopOnly = true, .mCanSet = CanSet::ParentOnly})                     \
+  /* Whether we can execute scripts in this WindowContext. Has no effect       \
+   * unless scripts are also allowed in the BrowsingContext. */                \
+  FIELD(                                                                       \
+      AllowJavascript, bool,                                                   \
+      {.mCanSet = CanSet::OwnerOrParentOnly, .mDefault = [] { return true; }}) \
+  /* If this field is `true`, it means that this WindowContext's               \
+   * CloseWatcherManager has active CloseWatchers, which some UIs may          \
+   * want to dismiss (for example the Android "back button"). */               \
+  FIELD(HasActiveCloseWatcher, bool, {.mCanSet = CanSet::Unrestricted})        \
+  /* Whether this window is allowed to navigate the top-level                  \
+   * without user interaction. */                                              \
   FIELD(IsFramebustingAllowed, bool, {.mCanSet = CanSet::OwnerOnly})
 
 class WindowContext : public nsISupports, public nsWrapperCache {

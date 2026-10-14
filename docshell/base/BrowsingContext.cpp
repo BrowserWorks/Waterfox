@@ -483,14 +483,8 @@ already_AddRefed<BrowsingContext> BrowsingContext::CreateDetached(
   fields.Get<IDX_DefaultLoadFlags>() =
       inherit ? inherit->GetDefaultLoadFlags() : nsIRequest::LOAD_NORMAL;
 
-  fields.Get<IDX_OrientationLock>() = mozilla::hal::ScreenOrientation::None;
-
   fields.Get<IDX_UseGlobalHistory>() =
       inherit ? inherit->GetUseGlobalHistory() : false;
-
-  fields.Get<IDX_UseErrorPages>() = true;
-
-  fields.Get<IDX_TouchEventsOverrideInternal>() = TouchEventsOverride::None;
 
   fields.Get<IDX_AllowJavascript>() =
       inherit ? inherit->GetAllowJavascript() : true;
@@ -524,8 +518,6 @@ already_AddRefed<BrowsingContext> BrowsingContext::CreateDetached(
     fields.Get<IDX_ShouldDelayMediaFromStart>() =
         StaticPrefs::media_block_autoplay_until_in_foreground();
   }
-
-  fields.Get<IDX_AnimationsPlayBackRateMultiplier>() = 1.0;
 
   RefPtr<BrowsingContext> context;
   if (XRE_IsParentProcess()) {
