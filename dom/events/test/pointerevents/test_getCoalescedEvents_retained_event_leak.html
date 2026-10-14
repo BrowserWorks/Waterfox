@@ -1,0 +1,71 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=2076389
+-->
+<head>
+  <meta charset="utf-8">
+  <title>Test that a retained pointermove event with coalesced events does not keep its document alive</title>
+  <script src="/tests/SimpleTest/EventUtils.js"></script>
+  <script src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<script type="text/javascript">
+/** Test for Bug 2076389 */
+SimpleTest.waitForExplicitFinish();
+
+// Loads a same-origin iframe whose "pointermove" listener calls
+// getCoalescedEvents() and retains the event object.
+async function loadFrame() {
+  const frame = document.createElement("iframe");
+  frame.style = "width: 200px; height: 100px; border: 0";
+  frame.src = "file_getCoalescedEvents_retained_event_leak.html";
+  document.body.appendChild(frame);
+  await new Promise(resolve => (frame.onload = resolve));
+  return frame;
+}
+
+SimpleTest.waitForFocus(async () => {
+  let frame = await loadFrame();
+
+  // The first synthesized mouse move into the iframe only generates the
+  // boundary events, so keep moving until the iframe has seen a pointermove.
+  let x = 50;
+  await SimpleTest.promiseWaitForCondition(() => {
+    synthesizeMouse(frame, x++, 30, { type: "mousemove" });
+    return frame.contentWindow.events.length >= 1;
+  }, "Waiting for a pointermove event to be dispatched into the iframe");
+  ok(frame.contentWindow.events.length >= 1,
+     "The pointermove event should have been dispatched and retained");
+  ok(frame.contentWindow.coalescedEventCount >= 1,
+     "getCoalescedEvents() should have returned at least one event");
+
+  const weakWindow = SpecialPowers.Cu.getWeakReference(frame.contentWindow);
+  const weakDocument = SpecialPowers.Cu.getWeakReference(frame.contentDocument);
+  ok(weakWindow.get(), "Should be able to create a weak reference to the window");
+  ok(weakDocument.get(), "Should be able to create a weak reference to the document");
+
+  frame.remove();
+  frame = null;
+  // Move the mouse away so that the removed frame is not the last hovered
+  // content anymore.
+  synthesizeMouseAtCenter(document.body, { type: "mousemove" });
+
+  // Perform many GCs to avoid intermittent delayed collection, spinning the
+  // event loop between attempts.
+  for (let i = 0; i < 10 && (weakWindow.get() || weakDocument.get()); i++) {
+    await new Promise(resolve => SimpleTest.executeSoon(resolve));
+    await new Promise(resolve => SpecialPowers.exactGC(resolve));
+  }
+
+  ok(!weakWindow.get(),
+     "The iframe's window should be collected after the frame is removed");
+  ok(!weakDocument.get(),
+     "The iframe's document should be collected after the frame is removed");
+
+  SimpleTest.finish();
+});
+</script>
+</body>
+</html>

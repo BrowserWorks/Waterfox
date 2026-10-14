@@ -454,12 +454,19 @@ void PointerEvent::GetCoalescedEvents(
 
       // The coalesced widget mouse events shouldn't have been dispatched.
       MOZ_ASSERT(!domEvent->mEvent->mTarget);
-      // The event target should be the same as the dispatched event's target.
-      domEvent->mEvent->mTarget = mEvent->mTarget;
 
       // JS could hold reference to dom events. We have to ask dom event to
       // duplicate its private data to avoid the widget event is destroyed.
       domEvent->DuplicatePrivateData();
+
+      // The event target should be the same as the dispatched event's target.
+      // This must be set after DuplicatePrivateData(): before it, mEvent still
+      // aliases the WidgetPointerEvent stored in the shared, ref-counted
+      // WidgetPointerEventHolder, which the cycle collector does not traverse.
+      // A strong reference to the target stored there would keep the target,
+      // and its whole document, alive as long as any event referencing the
+      // holder is retained by script.
+      domEvent->mEvent->mTarget = mEvent->mTarget;
 
       mCoalescedEvents.AppendElement(domEvent);
     }

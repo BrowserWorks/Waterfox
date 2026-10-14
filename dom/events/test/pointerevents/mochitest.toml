@@ -91,6 +91,13 @@ skip-if = [
   "xorigin", # Bug 1953695, Bug 1958029
 ]
 
+["test_getCoalescedEvents_retained_event_leak.html"]
+scheme = "https"
+skip-if = [
+  "xorigin", # Bug 1953695, Bug 1958029
+]
+support-files = ["file_getCoalescedEvents_retained_event_leak.html"]
+
 ["test_getCoalescedEvents_touch.html"]
 scheme = "https"
 support-files = ["!/gfx/layers/apz/test/mochitest/apz_test_native_event_utils.js"]
