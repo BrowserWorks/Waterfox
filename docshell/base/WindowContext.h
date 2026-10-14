@@ -283,6 +283,10 @@ class WindowContext : public nsISupports, public nsWrapperCache {
 
   bool CheckOnlyOwningProcessCanSet(ContentParent* aSource);
 
+  bool CheckOnlyParentProcessCanSet(ContentParent* aSource) {
+    return XRE_IsParentProcess() && !aSource;
+  }
+
   // Overload `CanSet` to get notifications for a particular field being set.
   bool CanSet(FieldIndex<IDX_IsSecure>, const bool& aIsSecure,
               ContentParent* aSource);

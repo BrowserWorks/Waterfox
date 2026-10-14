@@ -257,7 +257,7 @@ typename Transaction<Context>::IndexSet Transaction<Context>::Validate(
       return;
     }
 
-    switch (AsCanSetResult(aOwner->CanSet(idx, mValues.Get(idx), aSource))) {
+    switch (ValidateOne(idx, aOwner, aSource)) {
       case CanSetResult::Allow:
         break;
       case CanSetResult::Deny:
@@ -292,6 +292,43 @@ typename Transaction<Context>::IndexSet Transaction<Context>::Validate(
     }
   }
   return failedFields;
+}
+
+template <typename Context>
+template <size_t I>
+CanSetResult Transaction<Context>::ValidateOne(Index<I>, Context* aOwner,
+                                               ContentParent* aSource) {
+  constexpr FieldInfo info = Context::FieldIndexToInfo(Index<I>{});
+  if constexpr (info.mTopOnly) {
+    if (!aOwner->IsTop()) {
+      return CanSetResult::Deny;
+    }
+  }
+
+  if constexpr (info.mCanSet == CanSet::ParentOnly) {
+    return AsCanSetResult(aOwner->CheckOnlyParentProcessCanSet(aSource));
+  } else if constexpr (info.mCanSet == CanSet::EmbedderOnly) {
+    // NOTE: This member is only on BrowsingContext.
+    return AsCanSetResult(aOwner->CheckOnlyEmbedderCanSet(aSource));
+  } else if constexpr (info.mCanSet == CanSet::EmbedderOrParentOnly) {
+    // NOTE: This member is only on BrowsingContext.
+    return AsCanSetResult(aOwner->CheckOnlyParentProcessCanSet(aSource) ||
+                          aOwner->CheckOnlyEmbedderCanSet(aSource));
+  } else if constexpr (info.mCanSet == CanSet::OwnerOnly) {
+    // NOTE: This member is only on WindowContext.
+    return AsCanSetResult(aOwner->CheckOnlyOwningProcessCanSet(aSource));
+  } else if constexpr (info.mCanSet == CanSet::OwnerOrParentOnly) {
+    // NOTE: This member is only on WindowContext.
+    return AsCanSetResult(aOwner->CheckOnlyParentProcessCanSet(aSource) ||
+                          aOwner->CheckOnlyOwningProcessCanSet(aSource));
+  } else if constexpr (info.mCanSet == CanSet::Unrestricted) {
+    return CanSetResult::Allow;
+  } else {
+    static_assert(info.mCanSet == CanSet::Custom,
+                  "Field has unknown mCanSetValue for ValidateOne");
+    return AsCanSetResult(
+        aOwner->CanSet(Index<I>{}, mValues.Get(Index<I>{}), aSource));
+  }
 }
 
 template <typename Context>

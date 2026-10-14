@@ -1700,6 +1700,10 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
   // process.
   bool CheckOnlyEmbedderCanSet(ContentParent* aSource);
 
+  bool CheckOnlyParentProcessCanSet(ContentParent* aSource) {
+    return XRE_IsParentProcess() && !aSource;
+  }
+
   void CreateChildSHistory();
 
   using PrincipalWithLoadIdentifierTuple =

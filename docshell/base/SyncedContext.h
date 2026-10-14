@@ -43,6 +43,46 @@ namespace syncedcontext {
 template <size_t I>
 using Index = typename std::integral_constant<size_t, I>;
 
+// Flags customizing synced field validation behavior.
+enum class CanSet {
+  // This field is exclusively mutated by the parent process.
+  ParentOnly,
+
+  // This field is exclusively mutated by the embedder process.
+  // NOTE: Valid on BrowsingContext only.
+  EmbedderOnly,
+
+  // This field is exclusively mutated by the parent or embedder process.
+  // NOTE: Valid on BrowsingContext only.
+  EmbedderOrParentOnly,
+
+  // This field is exclusively mutated by the owner process.
+  // NOTE: Valid on WindowContext only.
+  OwnerOnly,
+
+  // This field is exclusively mutated by the owner or parent process.
+  // NOTE: Valid on WindowContext only.
+  OwnerOrParentOnly,
+
+  // This field is fully unrestricted, and can be mutated by any process with no
+  // runtime validation checks.
+  Unrestricted,
+
+  // Call `CanSet` on the context to determine if the field can be set.
+  Custom,
+};
+
+struct FieldInfo {
+  // If set, the field is only settable on toplevel contexts.
+  bool mTopOnly = false;
+
+  // Customize the CanSet calling behaviour of this synced field.
+  CanSet mCanSet = CanSet::ParentOnly;
+};
+
+// Helper for making the FieldInfo parameter optional for the macro.
+constexpr FieldInfo FieldInfoOrDefault(FieldInfo aInfo = {}) { return aInfo; }
+
 // We're going to use the empty base optimization for synced fields of different
 // sizes, so we define an empty class for that purpose.
 template <size_t I, size_t S>
@@ -59,6 +99,17 @@ struct Field {
 template <size_t I, typename T, size_t S>
 using SizedField = std::conditional_t<((sizeof(T) > 8) ? 8 : sizeof(T)) == S,
                                       Field<I, T>, Empty<I, S>>;
+
+// Alternative return type enum for `CanSet` validators which allows specifying
+// more behaviour.
+enum class CanSetResult : uint8_t {
+  // The set attempt is denied. This is equivalent to returning `false`.
+  Deny,
+  // The set attempt is allowed. This is equivalent to returning `true`.
+  Allow,
+  // The set attempt is reverted non-fatally.
+  Revert,
+};
 
 template <typename Context>
 class Transaction {
@@ -118,6 +169,9 @@ class Transaction {
   //
   // NOTE: This method mutates `this` if any changes were reverted.
   IndexSet Validate(Context* aOwner, ContentParent* aSource);
+
+  template <size_t I>
+  CanSetResult ValidateOne(Index<I>, Context* aOwner, ContentParent* aSource);
 
   template <typename F>
   static void EachIndex(F&& aCallback) {
@@ -217,17 +271,6 @@ class FieldStorage {
   Values mValues;
 };
 
-// Alternative return type enum for `CanSet` validators which allows specifying
-// more behaviour.
-enum class CanSetResult : uint8_t {
-  // The set attempt is denied. This is equivalent to returning `false`.
-  Deny,
-  // The set attempt is allowed. This is equivalent to returning `true`.
-  Allow,
-  // The set attempt is reverted non-fatally.
-  Revert,
-};
-
 // Helper type traits to use concrete types rather than generic forwarding
 // references for the `SetXXX` methods defined on the synced context type.
 //
@@ -249,9 +292,9 @@ struct GetFieldSetterType<nsCString> {
 template <typename T>
 using FieldSetterType = typename GetFieldSetterType<T>::SetterArg;
 
-#define MOZ_DECL_SYNCED_CONTEXT_FIELD_INDEX(name, type) IDX_##name,
+#define MOZ_DECL_SYNCED_CONTEXT_FIELD_INDEX(name, type, ...) IDX_##name,
 
-#define MOZ_DECL_SYNCED_CONTEXT_FIELD_GETSET(name, type)                       \
+#define MOZ_DECL_SYNCED_CONTEXT_FIELD_GETSET(name, type, ...)                  \
   const type& Get##name() const { return mFields.template Get<IDX_##name>(); } \
                                                                                \
   [[nodiscard]] nsresult Set##name(                                            \
@@ -269,25 +312,32 @@ using FieldSetterType = typename GetFieldSetterType<T>::SetterArg;
     }                                                                          \
   }
 
-#define MOZ_DECL_SYNCED_CONTEXT_TRANSACTION_SET(name, type)  \
-  template <typename U>                                      \
-  void Set##name(U&& aValue) {                               \
-    this->template Set<IDX_##name>(std::forward<U>(aValue)); \
+#define MOZ_DECL_SYNCED_CONTEXT_TRANSACTION_SET(name, type, ...) \
+  template <typename U>                                          \
+  void Set##name(U&& aValue) {                                   \
+    this->template Set<IDX_##name>(std::forward<U>(aValue));     \
   }
-#define MOZ_DECL_SYNCED_CONTEXT_INDEX_TO_NAME(name, type) \
-  case IDX_##name:                                        \
+#define MOZ_DECL_SYNCED_CONTEXT_INDEX_TO_NAME(name, type, ...) \
+  case IDX_##name:                                             \
     return #name;
 
-#define MOZ_DECL_SYNCED_FIELD_INHERIT(name, type) \
- public                                           \
+#define MOZ_DECL_SYNCED_FIELD_INHERIT(name, type, ...) \
+ public                                                \
   syncedcontext::SizedField<IDX_##name, type, Size>,
 
-#define MOZ_DECL_SYNCED_CONTEXT_BASE_FIELD_GETTER(name, type) \
-  type& Get(FieldIndex<IDX_##name>) {                         \
-    return Field<IDX_##name, type>::mField;                   \
-  }                                                           \
-  const type& Get(FieldIndex<IDX_##name>) const {             \
-    return Field<IDX_##name, type>::mField;                   \
+#define MOZ_DECL_SYNCED_CONTEXT_BASE_FIELD_GETTER(name, type, ...) \
+  type& Get(FieldIndex<IDX_##name>) {                              \
+    return Field<IDX_##name, type>::mField;                        \
+  }                                                                \
+  const type& Get(FieldIndex<IDX_##name>) const {                  \
+    return Field<IDX_##name, type>::mField;                        \
+  }
+
+#define MOZ_DECL_SYNCED_CONTEXT_FIELDINFO_GET(name, type, ...)                \
+  static constexpr ::mozilla::dom::syncedcontext::FieldInfo FieldIndexToInfo( \
+      FieldIndex<IDX_##name>) {                                               \
+    using CanSet [[maybe_unused]] = mozilla::dom::syncedcontext::CanSet;      \
+    return ::mozilla::dom::syncedcontext::FieldInfoOrDefault(__VA_ARGS__);    \
   }
 
 // Declare a type as a synced context type.
@@ -305,6 +355,8 @@ using FieldSetterType = typename GetFieldSetterType<T>::SetterArg;
   /* Helper for overloading methods like `CanSet` and `DidSet` */              \
   template <size_t I>                                                          \
   using FieldIndex = typename ::mozilla::dom::syncedcontext::Index<I>;         \
+                                                                               \
+  eachfield(MOZ_DECL_SYNCED_CONTEXT_FIELDINFO_GET);                            \
                                                                                \
   /* Fields contain all synced fields defined by                               \
    * `eachfield(MOZ_DECL_SYNCED_FIELD_INHERIT)`, but only those where the size \
