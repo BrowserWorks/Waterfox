@@ -971,10 +971,17 @@ already_AddRefed<nsHostResolver> nsDNSService::GetResolverLocked() {
 nsresult nsDNSService::PreprocessHostname(bool aLocalDomain,
                                           const nsACString& aInput,
                                           nsACString& aACE) {
-  // Enforce RFC 7686
-  if (StaticPrefs::network_dns_blockDotOnion() &&
-      StringEndsWith(aInput, ".onion"_ns)) {
-    return NS_ERROR_UNKNOWN_HOST;
+  // Enforce RFC 7686, whatever the case of the name, and with or without the
+  // trailing dot of its fully qualified form.
+  if (StaticPrefs::network_dns_blockDotOnion()) {
+    uint32_t length = aInput.Length();
+    while (length && aInput[length - 1] == '.') {
+      --length;
+    }
+    if (StringEndsWith(Substring(aInput, 0, length), ".onion"_ns,
+                       nsCaseInsensitiveCStringComparator)) {
+      return NS_ERROR_UNKNOWN_HOST;
+    }
   }
 
   if (aLocalDomain) {
