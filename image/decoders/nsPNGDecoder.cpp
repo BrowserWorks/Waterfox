@@ -1085,8 +1085,11 @@ void nsPNGDecoder::error_callback(png_structp png_ptr,
   nsPNGDecoder* decoder =
       static_cast<nsPNGDecoder*>(png_get_progressive_ptr(png_ptr));
 
+  // A bad CRC on a critical chunk is recoverable: other browsers keep the rows
+  // they decoded before the bad chunk instead of failing the whole image.
   if (strstr(error_msg, "invalid chunk type") ||
-      strstr(error_msg, "bad header (invalid type)")) {
+      strstr(error_msg, "bad header (invalid type)") ||
+      strstr(error_msg, "CRC error")) {
     decoder->mErrorIsRecoverable = true;
   } else {
     decoder->mErrorIsRecoverable = false;
