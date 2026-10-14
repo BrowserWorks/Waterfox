@@ -1220,13 +1220,24 @@ void MediaTrackGraphImpl::ProduceDataForTracksBlockByBlock(
   MOZ_ASSERT(aTrackIndex <= mFirstCycleBreaker,
              "Cycle breaker is not AudioNodeTrack?");
 
+  // Only graph threads with a JS context, such as AudioWorklet threads, can run
+  // script. Avoid toggling denormals per block otherwise, as it is expensive
+  // on some platforms.
+  const bool canRunScript = !!CycleCollectedJSContext::Get();
+
   while (mProcessedTime < mStateComputedTime) {
     // Microtask checkpoints run script which must run with denormals enabled.
     // Re-enable denormals around the checkpoint and disable them again for
     // rendering.
-    WebCore::DenormalEnabler enableForMicroTasks;
+    Maybe<WebCore::DenormalEnabler> enableForMicroTasks;
+    if (canRunScript) {
+      enableForMicroTasks.emplace();
+    }
     nsAutoMicroTask mt;
-    WebCore::DenormalDisabler disableForRendering;
+    Maybe<WebCore::DenormalDisabler> disableForRendering;
+    if (canRunScript) {
+      disableForRendering.emplace();
+    }
 
     GraphTime next = RoundUpToNextAudioBlock(mProcessedTime);
     for (uint32_t i = mFirstCycleBreaker; i < mTracks.Length(); ++i) {
