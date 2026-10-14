@@ -162,6 +162,7 @@ void ScrollbarActivity::StartFadeTimer() {
 }
 
 void ScrollbarActivity::BeginFade() {
+  nsAutoScriptBlocker scriptBlocker;
   MOZ_ASSERT(!IsActive());
   mScrollbarEffectivelyVisible = false;
   SetScrollbarActive(GetHorizontalScrollbar(), false);
