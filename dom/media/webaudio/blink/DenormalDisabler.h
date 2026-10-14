@@ -27,11 +27,13 @@
 
 #include <float.h>
 
-#if defined(__GNUC__) && defined(__SSE__) && !defined(__x86_64__)
-#  include <cstdint>
-#endif
 #include <cmath>
+#include <cstdint>
 #include <cstring>
+
+#if defined(__SSE__)
+#  include <immintrin.h>
+#endif
 
 namespace WebCore {
 
@@ -39,84 +41,44 @@ namespace WebCore {
 
 // Define HAVE_DENORMAL if we support flushing denormals to zero.
 
-#if defined(XP_WIN) && defined(_MSC_VER)
-// Windows compiled using MSVC with SSE2
-#  define HAVE_DENORMAL 1
-#endif
-
-#if defined(__GNUC__) && defined(__SSE__)
-#  define HAVE_DENORMAL 1
-#endif
-
-#if defined(__arm__) || defined(__aarch64__)
+#if defined(__SSE__) || defined(__arm__) || defined(__aarch64__)
 #  define HAVE_DENORMAL 1
 #endif
 
 #ifdef HAVE_DENORMAL
 namespace detail {
 
-#  if defined(__GNUC__) && defined(__SSE__)
+#  if defined(__SSE__)
+#    if !defined(__x86_64__) && !defined(_M_X64)
+#      if defined(__GNUC__) || defined(__clang__)
+__attribute__((target("fxsr")))
+#      endif
+inline bool queryDAZSupported() {
+  alignas(16) uint8_t fxsaveArea[512] = {};
+  _fxsave(fxsaveArea);
+  uint32_t mxcsrMask;
+  memcpy(&mxcsrMask, fxsaveArea + 28, sizeof(mxcsrMask));
+  return mxcsrMask & 0x0040;
+}
+#    endif
+
 inline bool isDAZSupported() {
-#    if defined(__x86_64__)
+#    if defined(__x86_64__) || defined(_M_X64)
   return true;
 #    else
-  static bool s_isInited = false;
-  static bool s_isSupported = false;
-  if (s_isInited) {
-    return s_isSupported;
-  }
-
-  struct fxsaveResult {
-    uint8_t before[28];
-    uint32_t CSRMask;
-    uint8_t after[480];
-  } __attribute__((aligned(16)));
-
-  fxsaveResult registerData;
-  memset(&registerData, 0, sizeof(fxsaveResult));
-  asm volatile("fxsave %0" : "=m"(registerData));
-  s_isSupported = registerData.CSRMask & 0x0040;
-  s_isInited = true;
+  static const bool s_isSupported = queryDAZSupported();
   return s_isSupported;
 #    endif
 }
 
-inline int getCSR() {
-  int result;
-  asm volatile("stmxcsr %0" : "=m"(result));
-  return result;
-}
-
-inline void setCSR(int a) {
-  int temp = a;
-  asm volatile("ldmxcsr %0" : : "m"(temp));
-}
-
 inline unsigned setDenormalMode(bool aDisabled) {
-  unsigned saved = getCSR();
+  unsigned saved = _mm_getcsr();
   unsigned mask = isDAZSupported() ? 0x8040 : 0x8000;
-  setCSR(aDisabled ? (saved | mask) : (saved & ~mask));
+  _mm_setcsr(aDisabled ? (saved | mask) : (saved & ~mask));
   return saved;
 }
 
-inline void restoreDenormalMode(unsigned aSaved) { setCSR(aSaved); }
-
-#  elif defined(XP_WIN) && defined(_MSC_VER)
-inline unsigned setDenormalMode(bool aDisabled) {
-  // Save the current state before changing the mode.
-  //
-  // http://stackoverflow.com/questions/637175/possible-bug-in-controlfp-s-may-not-restore-control-word-correctly
-  unsigned saved;
-  _controlfp_s(&saved, 0, 0);
-  unsigned unused;
-  _controlfp_s(&unused, aDisabled ? _DN_FLUSH : _DN_SAVE, _MCW_DN);
-  return saved;
-}
-
-inline void restoreDenormalMode(unsigned aSaved) {
-  unsigned unused;
-  _controlfp_s(&unused, aSaved, _MCW_DN);
-}
+inline void restoreDenormalMode(unsigned aSaved) { _mm_setcsr(aSaved); }
 
 #  elif defined(__arm__) || defined(__aarch64__)
 inline int getStatusWord() {
