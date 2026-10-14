@@ -37,6 +37,7 @@ task-defaults:
 tasks:
     pinning-update:
         description: HSTS and HPKP pinning update
+        worker-type: b-linux
         task-context:
             from-parameters:
                 project: project
