@@ -62,7 +62,7 @@ HTMLTableElement* HTMLTableCellElement::GetTable() const {
 }
 
 int32_t HTMLTableCellElement::CellIndex() const {
-  HTMLTableRowElement* row = GetRow();
+  RefPtr<HTMLTableRowElement> row = GetRow();
   if (!row) {
     return -1;
   }
