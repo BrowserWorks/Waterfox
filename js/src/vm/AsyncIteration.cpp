@@ -44,7 +44,7 @@ const JSClassOps AsyncGeneratorObject::classOps_ = {
 // https://tc39.es/ecma262/#sec-ordinarycreatefromconstructor
 //
 // specialized for AsyncGeneratorObjects.
-static AsyncGeneratorObject* OrdinaryCreateFromConstructorAsynGen(
+static AsyncGeneratorObject* OrdinaryCreateFromConstructorAsyncGen(
     JSContext* cx, HandleFunction constructor) {
   // Step 1. Assert: intrinsicDefaultProto is this specification's name of an
   //         intrinsic object. The corresponding object must be an intrinsic
@@ -54,8 +54,13 @@ static AsyncGeneratorObject* OrdinaryCreateFromConstructorAsynGen(
 
   // Step 2. Let proto be
   //         ? GetPrototypeFromConstructor(constructor, intrinsicDefaultProto).
+  // Note: this step is skipped for async iterator helpers, which are specified
+  // as abstract closures, not JS functions, so they always use the default
+  // prototype instead of reading it from the constructor:
+  // https://arai-a.github.io/ecma262-compare/?rev=5f4be6e41ce9f6e1997f5e1e42af253145c6c885&id=sec-createasynciteratorfromclosure
   RootedValue protoVal(cx);
-  if (!GetProperty(cx, constructor, constructor, cx->names().prototype,
+  if (!constructor->isSelfHostedBuiltin() &&
+      !GetProperty(cx, constructor, constructor, cx->names().prototype,
                    &protoVal)) {
     return nullptr;
   }
@@ -92,7 +97,7 @@ AsyncGeneratorObject* AsyncGeneratorObject::create(JSContext* cx,
   MOZ_ASSERT(asyncGen->isAsync() && asyncGen->isGenerator());
 
   AsyncGeneratorObject* generator =
-      OrdinaryCreateFromConstructorAsynGen(cx, asyncGen);
+      OrdinaryCreateFromConstructorAsyncGen(cx, asyncGen);
   if (!generator) {
     return nullptr;
   }

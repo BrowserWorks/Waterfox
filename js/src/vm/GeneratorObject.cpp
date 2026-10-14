@@ -325,11 +325,16 @@ bool AbstractGeneratorObject::resume(JSContext* cx,
 GeneratorObject* GeneratorObject::create(JSContext* cx, HandleFunction fun) {
   MOZ_ASSERT(fun->isGenerator() && !fun->isAsync());
 
-  // FIXME: This would be faster if we could avoid doing a lookup to get
-  // the prototype for the instance.  Bug 906600.
+  // In general, we have to look up the prototype for the instance here
+  // (although it would be nice if we could avoid it somehow; see bug 906600.)
+  // Self-hosted generators are only used to implement iterator helpers, which
+  // are specified as abstract closures. They always use the default prototype
+  // instead of reading it from the constructor.
+  // See https://tc39.es/ecma262/#sec-createiteratorfromclosure.
   RootedTuple<Value, JSObject*> roots(cx);
   RootedField<Value, 0> pval(roots);
-  if (!GetProperty(cx, fun, fun, cx->names().prototype, &pval)) {
+  if (!fun->isSelfHostedBuiltin() &&
+      !GetProperty(cx, fun, fun, cx->names().prototype, &pval)) {
     return nullptr;
   }
   RootedField<JSObject*, 1> proto(roots,
