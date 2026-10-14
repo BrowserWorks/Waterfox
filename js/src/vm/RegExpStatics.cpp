@@ -48,7 +48,7 @@ bool RegExpStatics::executeLazy(JSContext* cx) {
    * RegExpStatics are only updated on successful (matching) execution.
    * Re-running the same expression must therefore produce a matching result.
    */
-  MOZ_ASSERT(status == RegExpRunStatus::Success);
+  MOZ_RELEASE_ASSERT(status == RegExpRunStatus::Success);
 
   /* Unset lazy state and remove rooted values that now have no use. */
   pendingLazyEvaluation = false;
