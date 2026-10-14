@@ -68,10 +68,7 @@ RTCEncodedFrameState::RTCEncodedFrameState(
     uint64_t aCounter, unsigned long aTimestamp)
     : mFrame(std::move(aFrame)), mCounter(aCounter), mTimestamp(aTimestamp) {}
 
-RTCEncodedFrameBase::~RTCEncodedFrameBase() {
-  DetachData();
-  mozilla::DropJSObjects(this);
-}
+RTCEncodedFrameBase::~RTCEncodedFrameBase() { mozilla::DropJSObjects(this); }
 
 void RTCEncodedFrameBase::DetachData() {
   // We might have handled this in unlink already
