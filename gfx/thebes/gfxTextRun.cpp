@@ -12,6 +12,7 @@
 #include "gfxHarfBuzzShaper.h"
 #include "gfxPlatformFontList.h"
 #include "gfxUserFontSet.h"
+#include "mozilla/CheckedInt.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/dom/WorkerCommon.h"
 #include "mozilla/gfx/2D.h"
@@ -127,7 +128,9 @@ bool gfxTextRun::NeedsGlyphExtents() const {
 void* gfxTextRun::AllocateStorageForTextRun(size_t aSize, uint32_t aLength) {
   // Allocate the storage we need, returning nullptr on failure rather than
   // throwing an exception (because web content can create huge runs).
-  void* storage = malloc(aSize + aLength * sizeof(CompressedGlyph));
+  CheckedInt<size_t> storageSize =
+      CheckedInt<size_t>(aLength) * sizeof(CompressedGlyph) + aSize;
+  void* storage = storageSize.isValid() ? malloc(storageSize.value()) : nullptr;
   if (!storage) {
     NS_WARNING("failed to allocate storage for text run!");
     return nullptr;
@@ -135,7 +138,7 @@ void* gfxTextRun::AllocateStorageForTextRun(size_t aSize, uint32_t aLength) {
 
   // Initialize the glyph storage (beyond aSize) to zero
   memset(reinterpret_cast<char*>(storage) + aSize, 0,
-         aLength * sizeof(CompressedGlyph));
+         storageSize.value() - aSize);
 
   return storage;
 }
