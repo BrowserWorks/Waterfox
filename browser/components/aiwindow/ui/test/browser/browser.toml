@@ -209,6 +209,7 @@ skip-if = [
 ["browser_smartwindow_request_response_telemetry.js"]
 skip-if = [
   "os == 'win' && debug && standalone", # Bug 2028654
+  "os == 'win' && opt", # Bug 2030788
 ]
 
 ["browser_smartwindow_retry_context.js"]
