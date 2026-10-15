@@ -13,6 +13,14 @@
 const CRASH_DRAFT_REL_PATH =
   DIR_RESOURCES + "searchplugins/searchpluginstext0.moz-draft";
 
+/**
+ * The draft file of the patch that the updater is applying when it crashes.
+ * Finding it after the update proves that the updater crashed in the middle of
+ * patch application, with the new image still open and mapped.
+ */
+const CRASH_PATCH_DRAFT_REL_PATH =
+  DIR_RESOURCES + "searchplugins/searchpluginspng1.png.moz-draft";
+
 async function run_test() {
   if (!setupTestCommon()) {
     return;
@@ -38,7 +46,7 @@ async function run_test() {
   // get a chance to write the failure to update.status or to run the callback
   // application. The crash happens while the updater is drafting the update,
   // so the installation directory still holds the previous version of the
-  // application, with the draft file that the updater had produced so far left
+  // application, with the draft files that the updater had produced so far left
   // behind.
   runUpdate(STATE_APPLYING, false, EXIT_VALUE_CRASHED, true);
 
@@ -48,10 +56,17 @@ async function run_test() {
   let draftFile = getApplyDirFile(CRASH_DRAFT_REL_PATH);
   Assert.ok(draftFile.exists(), MSG_SHOULD_EXIST + getMsgPath(draftFile.path));
 
+  let patchDraftFile = getApplyDirFile(CRASH_PATCH_DRAFT_REL_PATH);
+  Assert.ok(
+    patchDraftFile.exists(),
+    MSG_SHOULD_EXIST + getMsgPath(patchDraftFile.path)
+  );
+
   // Remove the temporary files and directories that the crashed updater didn't
   // get a chance to clean up, so that the checks below can then verify that it
   // left nothing else behind and didn't touch the installed files.
   draftFile.remove(false);
+  patchDraftFile.remove(false);
   getApplyDirFile("updating").remove(true);
 
   checkFilesAfterUpdateFailure(

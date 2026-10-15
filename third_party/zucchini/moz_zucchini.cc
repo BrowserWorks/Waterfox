@@ -214,12 +214,6 @@ status::Code MappedPatch::LoadImpl(FILE* aPatchFile, uint32_t* aSourceSize,
       {fileReader.data(), fileReader.length()});
 #endif
   BEGIN_PAGE_ERROR_TRY_EXCEPT()
-#ifdef ENABLE_TESTS
-  ScopedDestructorMarker destructorTester;
-  MaybeTriggerTestBadAlloc();
-  MaybeTriggerTestCheckFailure();
-#endif  // ENABLE_TESTS
-
   BufferSource source(fileReader.region());
   auto& patchReader = mImpl->mPatchReader;
   if (!patchReader.Initialize(&source)) {
@@ -250,6 +244,16 @@ status::Code MappedPatch::Load(FILE* aPatchFile, uint32_t* aSourceSize,
 static status::Code ApplyBufferUnsafe(ConstBufferView aCheckedOldImage,
                                       const EnsemblePatchReader& aPatchReader,
                                       MutableBufferView aNewImage) {
+#ifdef ENABLE_TESTS
+  // We want updater tests to simulate zucchini failures occurring in the worst
+  // possible location from the updater recovery's point of view. Failing here
+  // simulates a failure in the middle of patch application, with the new image
+  // still open and mapped, which makes recovery quite subtle.
+  ScopedDestructorMarker destructorTester;
+  MaybeTriggerTestBadAlloc();
+  MaybeTriggerTestCheckFailure();
+#endif  // ENABLE_TESTS
+
   for (const auto& elementPatch : aPatchReader.elements()) {
     ElementMatch match = elementPatch.element_match();
     if (!ApplyElement(match.exe_type(),
