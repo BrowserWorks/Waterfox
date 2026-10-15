@@ -4,7 +4,6 @@
 
 #include "StreamBlobImpl.h"
 
-#include "BlobMemoryReporter.h"
 #include "EmptyBlobImpl.h"
 #include "js/GCAPI.h"
 #include "mozilla/InputStreamLengthWrapper.h"
@@ -20,7 +19,7 @@
 
 namespace mozilla::dom {
 
-MOZ_DEFINE_MALLOC_SIZE_OF(StreamBlobImplMallocSizeOf)
+NS_IMPL_ISUPPORTS_INHERITED(StreamBlobImpl, BlobImpl, nsIMemoryReporter)
 
 static already_AddRefed<nsICloneableInputStream> EnsureCloneableStream(
     nsIInputStream* aInputStream, uint64_t aLength) {
@@ -121,7 +120,7 @@ StreamBlobImpl::~StreamBlobImpl() {
     nsCOMPtr<nsIInputStream> stream = do_QueryInterface(mInputStream);
     stream->Close();
   }
-  BlobMemoryReporter::Unregister(this);
+  UnregisterWeakMemoryReporter(this);
 }
 
 void StreamBlobImpl::CreateInputStream(nsIInputStream** aStream,
@@ -186,11 +185,12 @@ void StreamBlobImpl::MaybeRegisterMemoryReporter() {
     return;
   }
 
-  BlobMemoryReporter::Register(this);
+  RegisterWeakMemoryReporter(this);
 }
 
-nsresult StreamBlobImpl::CollectReports(nsIHandleReportCallback* aHandleReport,
-                                        nsISupports* aData, bool aAnonymize) {
+NS_IMETHODIMP
+StreamBlobImpl::CollectReports(nsIHandleReportCallback* aHandleReport,
+                               nsISupports* aData, bool aAnonymize) {
   nsCOMPtr<nsIStringInputStream> stringInputStream =
       do_QueryInterface(mInputStream);
   if (!stringInputStream) {
@@ -198,11 +198,10 @@ nsresult StreamBlobImpl::CollectReports(nsIHandleReportCallback* aHandleReport,
   }
 
   MOZ_COLLECT_REPORT(
-      "explicit/dom/memory-file-data/stream", nsIMemoryReporter::KIND_HEAP,
-      nsIMemoryReporter::UNITS_BYTES,
-      stringInputStream->SizeOfIncludingThisIfUnshared(
-          StreamBlobImplMallocSizeOf),
+      "explicit/dom/memory-file-data/stream", KIND_HEAP, UNITS_BYTES,
+      stringInputStream->SizeOfIncludingThisIfUnshared(MallocSizeOf),
       "Memory used to back a File/Blob based on an input stream.");
+
   return NS_OK;
 }
 
@@ -218,8 +217,7 @@ size_t StreamBlobImpl::GetAllocationSize() const {
     return 0;
   }
 
-  return stringInputStream->SizeOfIncludingThisEvenIfShared(
-      StreamBlobImplMallocSizeOf);
+  return stringInputStream->SizeOfIncludingThisEvenIfShared(MallocSizeOf);
 }
 
 void StreamBlobImpl::GetBlobImplType(nsAString& aBlobImplType) const {
