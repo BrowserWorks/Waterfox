@@ -7,6 +7,7 @@ tags = "local os_integration"
 ["test_new_tab_on_restore.py"]
 skip-if = [
   "os == 'linux' && os_version == '24.04' && arch == 'x86_64' && display == 'x11'", # Bug 2054369
+  "os == 'win'", # Bug 2054836
 ]
 
 ["test_persist_closed_tabs_restore_manually.py"]
