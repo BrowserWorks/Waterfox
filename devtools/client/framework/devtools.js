@@ -618,10 +618,6 @@ class DevTools extends EventEmitter {
    * @param {object} options
    *        Various options that will be forwarded to `showToolbox`. See the
    *        JSDoc on this method.
-   * @return {Promise<Toolbox|null>}
-   *        Resolves to null if the tab can't get its own toolbox: a popup
-   *        debugged from its opener, or a system principal document while
-   *        devtools.chrome.enabled is locked to false.
    */
   async showToolboxForTab(
     tab,
@@ -653,15 +649,7 @@ class DevTools extends EventEmitter {
         return null;
       }
     }
-    let commands;
-    try {
-      commands = await LocalTabCommandsFactory.createCommandsForTab(tab);
-    } catch (e) {
-      if (e.serverPacket?.error == "chromeDebuggingDisabled") {
-        return null;
-      }
-      throw e;
-    }
+    const commands = await LocalTabCommandsFactory.createCommandsForTab(tab);
     return this.showToolbox(commands, {
       toolId,
       toolOptions,
@@ -807,6 +795,19 @@ class DevTools extends EventEmitter {
   }
 
   /**
+   * TabDescriptorFront requires a synchronous method and don't have a reference to its
+   * related commands object. So expose something handcrafted just for this.
+   */
+  getToolboxForDescriptorFront(descriptorFront) {
+    for (const [commands, toolbox] of this.#toolboxesPerCommands) {
+      if (commands.descriptorFront == descriptorFront) {
+        return toolbox;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Retrieve an existing toolbox for the provided tab if it was created before.
    * Returns null otherwise.
    *
@@ -890,10 +891,6 @@ class DevTools extends EventEmitter {
       startTime,
       reason: "inspect_dom",
     });
-    // See showToolboxForTab for when the tab can't be debugged.
-    if (!toolbox) {
-      return;
-    }
 
     // If the toolbox wasn't opened yet, the selection of the node will be handled by
     // the defaultStartupNodeDomReference option, so we can stop here.
@@ -945,10 +942,6 @@ class DevTools extends EventEmitter {
       toolId: "accessibility",
       startTime,
     });
-    // See showToolboxForTab for when the tab can't be debugged.
-    if (!toolbox) {
-      return;
-    }
     const inspectorFront = await toolbox.target.getFront("inspector");
     const nodeFront =
       await inspectorFront.getNodeActorFromContentDomReference(domReference);

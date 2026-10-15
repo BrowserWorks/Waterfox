@@ -146,8 +146,6 @@ skip-if = [
 
 ["browser_toolbox_browsertoolbox_host.js"]
 
-["browser_toolbox_chrome_debugging_disabled.js"]
-
 ["browser_toolbox_connecting_with_frozen_process.js"]
 skip-if = [
   "os == 'linux' && os_version == '24.04' && arch == 'x86_64' && display == 'x11' && tsan",
@@ -231,8 +229,6 @@ skip-if = [
 ["browser_toolbox_options_local_mode.js"]
 
 ["browser_toolbox_options_local_mode_notice.js"]
-
-["browser_toolbox_options_locked_pref.js"]
 
 ["browser_toolbox_options_multiple_tabs.js"]
 

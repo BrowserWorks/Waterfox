@@ -841,12 +841,7 @@ export class nsContextMenu {
       this.inTabBrowser &&
       !this.inAboutDevtoolsToolbox &&
       Services.prefs.getBoolPref("devtools.inspector.enabled", true) &&
-      !Services.prefs.getBoolPref("devtools.policy.disabled", false) &&
-      !(
-        this.browser.contentPrincipal?.isSystemPrincipal &&
-        Services.prefs.prefIsLocked("devtools.chrome.enabled") &&
-        !Services.prefs.getBoolPref("devtools.chrome.enabled", false)
-      );
+      !Services.prefs.getBoolPref("devtools.policy.disabled", false);
 
     var showInspectA11Y =
       showInspect &&

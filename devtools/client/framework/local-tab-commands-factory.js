@@ -46,12 +46,7 @@ exports.LocalTabCommandsFactory = {
     const promise = CommandsFactory.forTab(tab);
     // Immediately set the commands's promise in cache to prevent race
     commandsMap.set(tab, promise);
-    try {
-      commands = await promise;
-    } catch (e) {
-      commandsMap.delete(tab);
-      throw e;
-    }
+    commands = await promise;
     // Then replace the promise with the commands object
     commandsMap.set(tab, commands);
 
