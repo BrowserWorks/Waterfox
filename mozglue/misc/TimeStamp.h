@@ -33,6 +33,9 @@ class BaseTimeDurationPlatformUtils {
  public:
   static MFBT_API double ToSeconds(int64_t aTicks);
   static MFBT_API int64_t TicksFromMilliseconds(double aMilliseconds);
+  // Convert a platform tick count to an integer count of aRate ticks, rounded
+  // to the nearest tick, using integer/rational arithmetic (no floating point).
+  static MFBT_API int64_t ToTicksAtRate(int64_t aTicks, uint32_t aRate);
 };
 
 /**
@@ -85,6 +88,22 @@ class BaseTimeDuration {
   // ToMicroseconds returns the (fractional) number of microseconds of the
   // duration with the maximum representable precision.
   double ToMicroseconds() const { return ToMilliseconds() * 1000.0; }
+
+  // ToTicksAtRate returns the duration as an integer count of aRate ticks,
+  // rounded to the nearest tick. The conversion is done with integer/rational
+  // arithmetic directly from the platform tick count to avoid floating-point
+  // representation error. Saturated to INT64_MAX/INT64_MIN if result does not
+  // fit in int64_t.
+  int64_t ToTicksAtRate(uint32_t aRate) const {
+    MOZ_ASSERT(aRate > 0, "aRate must be a positive tick rate");
+    if (mValue == INT64_MAX) {
+      return INT64_MAX;
+    }
+    if (mValue == INT64_MIN) {
+      return INT64_MIN;
+    }
+    return BaseTimeDurationPlatformUtils::ToTicksAtRate(mValue, aRate);
+  }
 
   // Using a double here is safe enough; with 53 bits we can represent
   // durations up to over 280,000 years exactly.  If the units of

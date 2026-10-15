@@ -18,6 +18,7 @@ EXPORTS.mozilla += [
     "PlatformMutex.h",
     "PlatformRWLock.h",
     "Printf.h",
+    "RoundedMulDiv.h",
     "SIMD.h",
     "Sprintf.h",
     "SSE.h",

@@ -45,6 +45,7 @@
 #  define KP_START_USEC p_ustart_usec
 #endif
 
+#include "mozilla/RoundedMulDiv.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/TimeStamp.h"
 
@@ -111,6 +112,13 @@ int64_t BaseTimeDurationPlatformUtils::TicksFromMilliseconds(
   }
 
   return result;
+}
+
+int64_t BaseTimeDurationPlatformUtils::ToTicksAtRate(int64_t aTicks,
+                                                     uint32_t aRate) {
+  // The tick unit is a nanosecond, so this is an exact integer/rational
+  // conversion rounded to the nearest aRate tick.
+  return RoundedMulDiv(aTicks, aRate, kNsPerSec);
 }
 
 static bool gInitialized = false;

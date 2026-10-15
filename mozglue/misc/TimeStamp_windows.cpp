@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/DynamicallyLinkedFunctionPtr.h"
+#include "mozilla/RoundedMulDiv.h"
 #include "mozilla/TimeStamp.h"
 #include <intrin.h>
 #include <windows.h>
@@ -25,6 +26,10 @@
 // Result of QueryPerformanceFrequency, set only once on startup.
 static double sTicksPerSecd;
 static double sTicksPerMsd;
+// Exact integer QueryPerformanceFrequency (ticks per second), used by
+// ToTicksAtRate. This is the integer companion to the lossy double
+// sTicksPerSecd.
+static uint64_t sQpcFrequency = 0;
 
 // ----------------------------------------------------------------------------
 // Useful constants
@@ -52,6 +57,7 @@ static void InitConstants() {
   MOZ_RELEASE_ASSERT(hasQPC);
   sTicksPerSecd = double(freq.QuadPart);
   sTicksPerMsd = sTicksPerSecd / kMsPerSecd;
+  sQpcFrequency = static_cast<uint64_t>(freq.QuadPart);
 }
 
 // ----------------------------------------------------------------------------
@@ -75,6 +81,14 @@ BaseTimeDurationPlatformUtils::TicksFromMilliseconds(double aMilliseconds) {
   }
 
   return (int64_t)result;
+}
+
+MFBT_API int64_t BaseTimeDurationPlatformUtils::ToTicksAtRate(int64_t aTicks,
+                                                              uint32_t aRate) {
+  // The tick unit is a QueryPerformanceCounter tick; sQpcFrequency is the
+  // integer QPC frequency, so this is an exact integer/rational conversion
+  // rounded to the nearest aRate tick.
+  return RoundedMulDiv(aTicks, aRate, sQpcFrequency);
 }
 
 // Note that we init early enough during startup such that we are supposed to
