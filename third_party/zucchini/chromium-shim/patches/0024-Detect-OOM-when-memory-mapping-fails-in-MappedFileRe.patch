@@ -17,10 +17,10 @@ out-of-memory status code instead of a generic read/write error.
  components/zucchini/mapped_file.h      | 12 +++++++++++
  5 files changed, 49 insertions(+), 1 deletion(-)
 
-diff --git a/third_party/zucchini/chromium/base/files/memory_mapped_file.h b/third_party/zucchini/chromium/base/files/memory_mapped_file.h
+diff --git a/base/files/memory_mapped_file.h b/base/files/memory_mapped_file.h
 index 44ee14dec8f5..767f9db2a269 100644
---- a/third_party/zucchini/chromium/base/files/memory_mapped_file.h
-+++ b/third_party/zucchini/chromium/base/files/memory_mapped_file.h
+--- a/base/files/memory_mapped_file.h
++++ b/base/files/memory_mapped_file.h
 @@ -115,10 +115,12 @@ class BASE_EXPORT MemoryMappedFile {
    bool IsValid() const;
  
@@ -46,10 +46,10 @@ index 44ee14dec8f5..767f9db2a269 100644
  };
  
  }  // namespace base
-diff --git a/third_party/zucchini/chromium/base/files/memory_mapped_file_posix.cc b/third_party/zucchini/chromium/base/files/memory_mapped_file_posix.cc
+diff --git a/base/files/memory_mapped_file_posix.cc b/base/files/memory_mapped_file_posix.cc
 index e6f624cc9eaa..0c2cc1ac3e1c 100644
---- a/third_party/zucchini/chromium/base/files/memory_mapped_file_posix.cc
-+++ b/third_party/zucchini/chromium/base/files/memory_mapped_file_posix.cc
+--- a/base/files/memory_mapped_file_posix.cc
++++ b/base/files/memory_mapped_file_posix.cc
 @@ -4,6 +4,9 @@
  
  #include "base/files/memory_mapped_file.h"
@@ -68,10 +68,10 @@ index e6f624cc9eaa..0c2cc1ac3e1c 100644
  #else
    data_ = static_cast<uint8_t*>(mmap(nullptr, map_size, flags, MAP_SHARED,
                                       file_.GetPlatformFile(), map_start));
-diff --git a/third_party/zucchini/chromium/base/files/memory_mapped_file_win.cc b/third_party/zucchini/chromium/base/files/memory_mapped_file_win.cc
+diff --git a/base/files/memory_mapped_file_win.cc b/base/files/memory_mapped_file_win.cc
 index 777b32358f86..ad887e2d216b 100644
---- a/third_party/zucchini/chromium/base/files/memory_mapped_file_win.cc
-+++ b/third_party/zucchini/chromium/base/files/memory_mapped_file_win.cc
+--- a/base/files/memory_mapped_file_win.cc
++++ b/base/files/memory_mapped_file_win.cc
 @@ -89,8 +89,18 @@ bool MemoryMappedFile::MapFileRegionToMemory(
  
    file_mapping_.Set(::CreateFileMapping(file_.GetPlatformFile(), NULL, flags,
@@ -110,10 +110,10 @@ index 777b32358f86..ad887e2d216b 100644
    data_ += data_offset;
    return true;
  }
-diff --git a/third_party/zucchini/chromium/components/zucchini/mapped_file.cc b/third_party/zucchini/chromium/components/zucchini/mapped_file.cc
+diff --git a/components/zucchini/mapped_file.cc b/components/zucchini/mapped_file.cc
 index 0e786aabf15f..0563877873ad 100644
---- a/third_party/zucchini/chromium/components/zucchini/mapped_file.cc
-+++ b/third_party/zucchini/chromium/components/zucchini/mapped_file.cc
+--- a/components/zucchini/mapped_file.cc
++++ b/components/zucchini/mapped_file.cc
 @@ -18,6 +18,9 @@ MappedFileReader::MappedFileReader(base::File file) {
    }
    if (!buffer_.Initialize(std::move(file))) {
@@ -134,10 +134,10 @@ index 0e786aabf15f..0563877873ad 100644
    }
  }
  
-diff --git a/third_party/zucchini/chromium/components/zucchini/mapped_file.h b/third_party/zucchini/chromium/components/zucchini/mapped_file.h
+diff --git a/components/zucchini/mapped_file.h b/components/zucchini/mapped_file.h
 index ed7d0f97217b..f6927dc15b0e 100644
---- a/third_party/zucchini/chromium/components/zucchini/mapped_file.h
-+++ b/third_party/zucchini/chromium/components/zucchini/mapped_file.h
+--- a/components/zucchini/mapped_file.h
++++ b/components/zucchini/mapped_file.h
 @@ -32,10 +32,16 @@ class MappedFileReader {
  
    bool HasError() { return !error_.empty() || !buffer_.IsValid(); }
