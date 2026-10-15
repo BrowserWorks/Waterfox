@@ -69,21 +69,33 @@ class MappedPatchImpl;
 
 class MappedPatch {
  public:
-  MappedPatch();
-  ~MappedPatch();
+  MappedPatch() : mImpl(nullptr), mInitStatus(Initialize()) { }
+  ~MappedPatch() { (void)Finalize(); }
 
-  status::Code Load(FILE* aPatchFile, uint32_t* aSourceSize,
-                    uint32_t* aDestinationSize, uint32_t* aSourceCrc32);
+  [[nodiscard]] status::Code Load(FILE* aPatchFile, uint32_t* aSourceSize,
+                                  uint32_t* aDestinationSize,
+                                  uint32_t* aSourceCrc32);
 
-  // Applies the loaded patch to aOldImage, and writes the result to
+  // Applies the loaded patch to aCheckedOldImage, and writes the result to
   // aNewFile. aNewFile is never deleted, cleanup is up to the caller.
-  // Assumes that the crc32 and size of aCheckOldImage have already been
+  // Assumes that the crc32 and size of aCheckedOldImage have already been
   // checked by the caller, hence the name.
-  status::Code ApplyUnsafe(const uint8_t* aCheckedOldImage,
-                           size_t aCheckedOldImageSize, FILE* aNewFile);
+  [[nodiscard]] status::Code ApplyUnsafe(const uint8_t* aCheckedOldImage,
+                                         size_t aCheckedOldImageSize,
+                                         FILE* aNewFile);
+
+  // Releases resources. Call this method manually to get a status code.
+  [[nodiscard]] status::Code Finalize();
 
  private:
+  status::Code Initialize();
+  status::Code LoadImpl(FILE* aPatchFile, uint32_t* aSourceSize,
+                        uint32_t* aDestinationSize, uint32_t* aSourceCrc32);
+  status::Code ApplyUnsafeImpl(const uint8_t* aCheckedOldImage,
+                               size_t aCheckedOldImageSize, FILE* aNewFile);
+
   MappedPatchImpl* mImpl;
+  status::Code mInitStatus;
 };
 
 }  // namespace mozilla

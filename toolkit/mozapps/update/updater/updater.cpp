@@ -1775,6 +1775,9 @@ class PatchFileDecoder {
   virtual int Apply(const uint8_t* aCheckedSrcBuf, size_t aCheckedSrcBufSize,
                     FILE* aDstFile) = 0;
 
+  // Release resources early, returning a status code.
+  virtual int Finalize() { return OK; }
+
  protected:
   virtual int Load(FILE* aPatchFile) = 0;
 };
@@ -1898,6 +1901,8 @@ class ZucchiniPatchFileDecoder : public PatchFileDecoder {
   int Apply(const uint8_t* aCheckedSrcBuf, size_t aCheckedSrcBufSize,
             FILE* aDstFile) override;
 
+  int Finalize() override;
+
  protected:  // Comply with PatchFileDecoder::TryLoadAs requirements
   ZucchiniPatchFileDecoder() = default;
   int Load(FILE* aPatchFile) override;
@@ -1939,6 +1944,10 @@ int ZucchiniPatchFileDecoder::Apply(const uint8_t* aCheckedSrcBuf,
   // of PatchFileDecoder::Apply.
   return FromZucchiniStatus(
       mMappedPatch.ApplyUnsafe(aCheckedSrcBuf, aCheckedSrcBufSize, aDstFile));
+}
+
+int ZucchiniPatchFileDecoder::Finalize() {
+  return FromZucchiniStatus(mMappedPatch.Finalize());
 }
 #endif  // defined(MOZ_ZUCCHINI)
 
@@ -2293,6 +2302,12 @@ int PatchFile::ApplyPatchTo(PatchDest aDest) {
   // SAFETY: We have manually checked that the size and crc32 of mBuf match with
   // the patch in PatchFile::LoadSourceFile.
   rv = mPatchFileDecoder->Apply(mBuf.get(), mBufSize, ofile);
+
+  if (rv == OK) {
+    // Manually release resources, and propagate any failure that could reflect
+    // process instability (e.g. OOM).
+    rv = mPatchFileDecoder->Finalize();
+  }
 
   // Go ahead and do a bit of cleanup now to minimize runtime overhead.
   // Release the patch decoder and any resources it holds (such as
