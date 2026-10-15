@@ -1234,6 +1234,10 @@ PBackgroundChild* ChildImpl::GetForCurrentThread() {
 
 /* static */
 PBackgroundChild* ChildImpl::GetOrCreateForCurrentThread() {
+  MOZ_ASSERT(!ParentImpl::IsOnBackgroundThread(),
+             "Creating a PBackgroundChild on the PBackground thread makes a "
+             "same-thread connection that "
+             "ParentImpl::ShutdownBackgroundThread waits on forever");
   return sParentAndContentProcessThreadInfo.GetOrCreateForCurrentThread();
 }
 
