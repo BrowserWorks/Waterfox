@@ -2,7 +2,7 @@ Limit dependencies in file_path.cc
 
 This removes dependencies on safe_base_name.h and pickle.h.
 ---
- third_party/zucchini/chromium/base/files/file_path.cc | 8 ++++++++
+ base/files/file_path.cc | 8 ++++++++
  1 file changed, 8 insertions(+)
 
 diff --git a/base/files/file_path.cc b/base/files/file_path.cc

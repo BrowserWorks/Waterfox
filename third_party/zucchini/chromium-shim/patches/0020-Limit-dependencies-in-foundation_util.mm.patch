@@ -10,7 +10,7 @@ diff --git a/base/mac/foundation_util.mm b/base/mac/foundation_util.mm
 index 95d587724e69..f44c601a25f9 100644
 --- a/base/mac/foundation_util.mm
 +++ b/base/mac/foundation_util.mm
-@@ -38,6 +38,7 @@
+@@ -38,6 +38,7 @@ CFTypeID SecKeyGetTypeID();
  
  namespace base::mac {
  
@@ -34,7 +34,7 @@ index 95d587724e69..f44c601a25f9 100644
  FilePath GetUserLibraryPath() {
    FilePath user_library_path;
    if (!GetUserDirectory(NSLibraryDirectory, &user_library_path)) {
-@@ -281,6 +284,7 @@ FilePath GetInnermostAppBundlePath(const FilePath& exec_name) {
+@@ -281,6 +284,7 @@ TYPE_NAME_FOR_CF_TYPE_DEFN(SecPolicy)
  #endif
  
  #undef TYPE_NAME_FOR_CF_TYPE_DEFN
@@ -50,7 +50,7 @@ index 95d587724e69..f44c601a25f9 100644
  #define CF_CAST_DEFN(TypeCF) \
  template<> TypeCF##Ref \
  CFCast<TypeCF##Ref>(const CFTypeRef& cf_val) { \
-@@ -371,6 +376,7 @@ void SetBaseBundleID(const char* new_base_bundle_id) {
+@@ -371,6 +376,7 @@ NSString* FilePathToNSString(const FilePath& path) {
      return nil;
    return @(path.value().c_str());  // @() does UTF8 conversion.
  }
@@ -78,7 +78,7 @@ index 95d587724e69..f44c601a25f9 100644
  std::ostream& operator<<(std::ostream& o, const CFStringRef string) {
    return o << base::SysCFStringRefToUTF8(string);
  }
-@@ -470,3 +479,4 @@ bool CFRangeToNSRange(CFRange range, NSRange* range_out) {
+@@ -470,3 +479,4 @@ std::ostream& operator<<(std::ostream& o, NSSize size) {
    return o << NSStringFromSize(size);
  }
  #endif

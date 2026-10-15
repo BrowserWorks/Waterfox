@@ -2,9 +2,9 @@ Define only the required functions from file_util.h
 
 This limits dependencies.
 ---
- files/file_util.cc       | 16 ++++++++++
- files/file_util_posix.cc | 29 ++++++++++++++++-
- files/file_util_win.cc   | 31 +++++++++++++++++++
+ base/files/file_util.cc       | 16 ++++++++++++++++
+ base/files/file_util_posix.cc | 29 ++++++++++++++++++++++++++++-
+ base/files/file_util_win.cc   | 31 +++++++++++++++++++++++++++++++
  3 files changed, 75 insertions(+), 1 deletion(-)
 
 diff --git a/base/files/file_util.cc b/base/files/file_util.cc
