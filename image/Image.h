@@ -117,9 +117,11 @@ struct SurfaceMemoryCounter {
 };
 
 struct ImageMemoryCounter {
-  ImageMemoryCounter(imgRequest* aRequest, SizeOfState& aState, bool aIsUsed);
+  // If aAnonymize is true, URI() is left empty.
+  ImageMemoryCounter(imgRequest* aRequest, SizeOfState& aState, bool aIsUsed,
+                     bool aAnonymize);
   ImageMemoryCounter(imgRequest* aRequest, Image* aImage, SizeOfState& aState,
-                     bool aIsUsed);
+                     bool aIsUsed, bool aAnonymize);
 
   nsCString& URI() { return mURI; }
   const nsCString& URI() const { return mURI; }
