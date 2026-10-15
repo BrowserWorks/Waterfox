@@ -591,6 +591,7 @@ void TextTrackManager::DispatchTimeMarchesOn() {
 // https://html.spec.whatwg.org/multipage/embedded-content.html#time-marches-on
 void TextTrackManager::TimeMarchesOn() {
   NS_ASSERTION(NS_IsMainThread(), "Wrong thread!");
+  RefPtr<TextTrackManager> kungFuDeathGrip(this);
   mTimeMarchesOnDispatched = false;
 
   CycleCollectedJSContext* context = CycleCollectedJSContext::Get();
