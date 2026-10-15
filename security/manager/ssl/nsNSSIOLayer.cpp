@@ -827,7 +827,9 @@ static int32_t PSMRecv(PRFileDesc* fd, void* buf, int32_t amount, int flags,
 static int32_t PSMSend(PRFileDesc* fd, const void* buf, int32_t amount,
                        int flags, PRIntervalTime timeout) {
   NSSSocketControl* socketInfo = getSocketInfoIfRunning(fd, writing);
-  if (!socketInfo) return -1;
+  if (!socketInfo) {
+    return -1;
+  }
 
   if (flags != 0) {
     PR_SetError(PR_INVALID_ARGUMENT_ERROR, 0);
@@ -839,15 +841,13 @@ static int32_t PSMSend(PRFileDesc* fd, const void* buf, int32_t amount,
 #endif
 
   if (socketInfo->IsShortWritePending() && amount > 0) {
-    // We got "SSL short write" last time, try to flush the pending byte.
-#ifdef DEBUG
-    socketInfo->CheckShortWrittenBuffer(static_cast<const unsigned char*>(buf),
-                                        amount);
-#endif
-
-    buf = socketInfo->GetShortWritePendingByteRef();
+    // We got a "short write" last time, try to flush the pending byte.
+    buf = socketInfo->CheckShortWriteBuffer(buf, amount);
+    if (!buf) {
+      PR_SetError(PR_INVALID_ARGUMENT_ERROR, 0);
+      return -1;
+    }
     amount = 1;
-
     MOZ_LOG(gPIPNSSLog, LogLevel::Verbose,
             ("[%p] pushing 1 byte after SSL short write", fd));
   }
@@ -868,6 +868,10 @@ static int32_t PSMSend(PRFileDesc* fd, const void* buf, int32_t amount,
   // in the previous call. We then return the total number of bytes written,
   // which is the number that caused the short write plus the additional byte
   // we just wrote out.
+  // Note that the layer above *must* retry sending the exact same data. To do
+  // otherwise is a violation of NSS's expectations and is an error.
+  // Because early data can be truncated by libssl, only perform this
+  // optimization after the handshake has completed.
 
   // The 16384 value is based on libssl's maximum buffer size:
   //    MAX_FRAGMENT_LENGTH - 1
@@ -875,12 +879,11 @@ static int32_t PSMSend(PRFileDesc* fd, const void* buf, int32_t amount,
   // It's in a private header, though, filed bug 1394822 to expose it.
   static const int32_t kShortWrite16k = 16383;
 
-  if ((amount > 1 && bytesWritten == (amount - 1)) ||
-      (amount > kShortWrite16k && bytesWritten == kShortWrite16k)) {
-    // This is indication of an "SSL short write", block to force retry.
-    socketInfo->SetShortWritePending(
-        bytesWritten + 1,  // The amount to return after the flush
-        *(static_cast<const unsigned char*>(buf) + bytesWritten));
+  if (socketInfo->IsHandshakeCompleted() &&
+      ((amount > 1 && bytesWritten == (amount - 1)) ||
+       (amount > kShortWrite16k && bytesWritten == kShortWrite16k))) {
+    // This indicates a "short write", so block to force a retry.
+    socketInfo->SetShortWritePending(buf, bytesWritten + 1);
 
     MOZ_LOG(
         gPIPNSSLog, LogLevel::Verbose,
@@ -889,24 +892,17 @@ static int32_t PSMSend(PRFileDesc* fd, const void* buf, int32_t amount,
 
     bytesWritten = -1;
     PR_SetError(PR_WOULD_BLOCK_ERROR, 0);
-
-#ifdef DEBUG
-    socketInfo->RememberShortWrittenBuffer(
-        static_cast<const unsigned char*>(buf));
-#endif
-
   } else if (socketInfo->IsShortWritePending() && bytesWritten == 1) {
-    // We have now flushed all pending data in the SSL socket
-    // after the indicated short write.  Tell the upper layer
-    // it has sent all its data now.
+    // We have now flushed all pending data in the SSL socket after the
+    // indicated short write. Tell the upper layer it has sent all the data
+    // from that write now.
     MOZ_LOG(gPIPNSSLog, LogLevel::Verbose,
             ("[%p] finished SSL short write", fd));
-
     bytesWritten = socketInfo->ResetShortWritePending();
   }
 
   MOZ_LOG(gPIPNSSLog, LogLevel::Verbose,
-          ("[%p] wrote %d bytes\n", fd, bytesWritten));
+          ("[%p] wrote %d bytes", fd, bytesWritten));
 
   return checkHandshake(bytesWritten, false, fd, socketInfo);
 }
