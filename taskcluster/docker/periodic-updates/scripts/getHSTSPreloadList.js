@@ -206,13 +206,13 @@ RedirectAndAuthStopper.prototype = {
   ]),
 };
 
-function fetchstatus(host) {
+function fetchstatus(host, method) {
   return new Promise(resolve => {
     let xhr = new XMLHttpRequest();
     let uri = "https://" + host.name + "/";
     host.startTime = Date.now();
 
-    xhr.open("head", uri, true);
+    xhr.open(method, uri, true);
     xhr.setRequestHeader("X-Automated-Tool", TOOL_SOURCE);
     xhr.timeout = REQUEST_TIMEOUT;
 
@@ -233,11 +233,20 @@ function fetchstatus(host) {
     xhr.ontimeout = errorHandler;
     xhr.onabort = errorHandler;
 
-    xhr.onload = () => {
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState != XMLHttpRequest.HEADERS_RECEIVED) {
+        return;
+      }
       let header = xhr.getResponseHeader("strict-transport-security");
-      resolve(
-        processStsHeader(host, header, xhr.status, xhr.channel.securityInfo)
+      let status = processStsHeader(
+        host,
+        header,
+        xhr.status,
+        xhr.channel.securityInfo
       );
+      xhr.onerror = xhr.ontimeout = xhr.onabort = null;
+      xhr.abort();
+      resolve(status);
     };
 
     xhr.channel.notificationCallbacks = new RedirectAndAuthStopper();
@@ -303,13 +312,13 @@ function spinResolve(promise) {
   }
 }
 
-async function probePool(hosts) {
+async function probePool(hosts, method = "HEAD") {
   let total = hosts.length;
   let results = [];
   let lastProgress = 0;
   let worker = async () => {
     while (hosts.length) {
-      results.push(await fetchstatus(hosts.pop()));
+      results.push(await fetchstatus(hosts.pop(), method));
       let progress = Math.floor((100 * results.length) / total);
       if (progress > lastProgress) {
         lastProgress = progress;
@@ -348,6 +357,26 @@ async function probeHSTSStatuses(hosts) {
   dump(
     rescued.length + " of " + failed.length + " retried hosts were rescued.\n"
   );
+
+  let headerless = results.filter(
+    status => status.error == ERROR_NO_HSTS_HEADER && status.httpStatus != 429
+  );
+  dump("Probing " + headerless.length + " hosts without a header with GET.\n");
+  let viaGet = (
+    await probePool(
+      headerless.map(status => ({ name: status.name })),
+      "GET"
+    )
+  ).filter(
+    status =>
+      status.error != ERROR_NO_HSTS_HEADER &&
+      status.error != ERROR_CONNECTING_TO_HOST
+  );
+  let byName = new Map(headerless.map(status => [status.name, status]));
+  for (let status of viaGet) {
+    Object.assign(byName.get(status.name), status, { get: true });
+  }
+  dump(viaGet.length + " of them sent a header on GET.\n");
 
   dump("HSTS Probe received " + results.length + " statuses.\n");
   return results;
@@ -394,6 +423,9 @@ async function writeProbeResults(probedStatuses, previousPath) {
     let record = { result: probeResult(status), latencyMs: status.latencyMs };
     if (status.rescued) {
       record.rescued = true;
+    }
+    if (status.get) {
+      record.get = true;
     }
     if (status.httpStatus) {
       record.httpStatus = status.httpStatus;
