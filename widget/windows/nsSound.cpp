@@ -3,34 +3,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "nscore.h"
-#include <stdio.h>
-#include "nsString.h"
 #include <windows.h>
-
 // mmsystem.h is needed to build with WIN32_LEAN_AND_MEAN
 #include <mmsystem.h>
 
 #include "HeadlessSound.h"
-#include "nsSound.h"
-#include "nsCRT.h"
-#include "nsIObserverService.h"
-
-#include "mozilla/Logging.h"
-#include "mozilla/Services.h"
-#include "prtime.h"
-
-#include "nsNativeCharsetUtils.h"
-#include "nsIThread.h"
-#include "nsThreadUtils.h"
-#include "mozilla/ClearOnShutdown.h"
 #include "gfxPlatform.h"
-
-using mozilla::LogLevel;
-
-#ifdef DEBUG
-static mozilla::LazyLogModule gWin32SoundLog("nsSound");
-#endif
+#include "mozilla/Atomics.h"
+#include "mozilla/ClearOnShutdown.h"
+#include "nsSound.h"
 
 // Hackaround for bug 1644240
 // When we call PlaySound for the first time in the process, winmm.dll creates
@@ -53,53 +34,43 @@ static bool ShouldSuppressPlaySound() {
   return false;
 }
 
-class nsSoundPlayer : public mozilla::Runnable {
- public:
-  explicit nsSoundPlayer(const nsAString& aSoundName)
-      : mozilla::Runnable("nsSoundPlayer"),
-        mSoundName(aSoundName),
-        mSoundData(nullptr) {}
+// PlaySoundW can block indefinitely (bug 1869124), so allow only one call at a
+// time. Otherwise a hung audio stack would tie up another thread pool thread
+// for every sound.
+static mozilla::Atomic<bool> sPlaying(false);
 
-  nsSoundPlayer(const uint8_t* aData, size_t aSize)
-      : mozilla::Runnable("nsSoundPlayer"), mSoundName(u""_ns) {
-    MOZ_ASSERT(aSize > 0, "Size should not be zero");
-    MOZ_ASSERT(aData, "Data shoud not be null");
-
-    // We will disptach nsSoundPlayer to playerthread, so keep a data copy
-    mSoundData = new uint8_t[aSize];
-    memcpy(mSoundData, aData, aSize);
+static const wchar_t* GetEventSoundAlias(uint32_t aEventId) {
+  switch (aEventId) {
+    case nsISound::EVENT_NEW_MAIL_RECEIVED:
+      return L"MailBeep";
+    case nsISound::EVENT_ALERT_DIALOG_OPEN:
+      return L"SystemExclamation";
+    case nsISound::EVENT_CONFIRM_DIALOG_OPEN:
+      return L"SystemQuestion";
+    case nsISound::EVENT_MENU_EXECUTE:
+      return L"MenuCommand";
+    case nsISound::EVENT_MENU_POPUP:
+      return L"MenuPopup";
+    case nsISound::EVENT_EDITOR_MAX_LEN:
+      return L".Default";
+    default:
+      // Win32 plays no sounds at NS_SYSSOUND_PROMPT_DIALOG and
+      // NS_SYSSOUND_SELECT_DIALOG.
+      return nullptr;
   }
-
-  NS_DECL_NSIRUNNABLE
-
- protected:
-  ~nsSoundPlayer();
-
-  nsString mSoundName;
-  uint8_t* mSoundData;
-};
-
-NS_IMETHODIMP
-nsSoundPlayer::Run() {
-  if (ShouldSuppressPlaySound()) {
-    return NS_OK;
-  }
-
-  MOZ_ASSERT(!mSoundName.IsEmpty() || mSoundData,
-             "Sound name or sound data should be specified");
-  DWORD flags = SND_NODEFAULT | SND_ASYNC;
-
-  if (mSoundData) {
-    flags |= SND_MEMORY;
-    ::PlaySoundW(reinterpret_cast<LPCWSTR>(mSoundData), nullptr, flags);
-  } else {
-    flags |= SND_ALIAS;
-    ::PlaySoundW(mSoundName.get(), nullptr, flags);
-  }
-  return NS_OK;
 }
 
-nsSoundPlayer::~nsSoundPlayer() { delete[] mSoundData; }
+static void CALLBACK PlayEventSoundCallback(PTP_CALLBACK_INSTANCE,
+                                            void* aEventId) {
+  if (!ShouldSuppressPlaySound()) {
+    // PlaySoundW stops any sound this process is still playing, as we do not
+    // pass SND_NOSTOP.
+    auto eventId = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(aEventId));
+    ::PlaySoundW(GetEventSoundAlias(eventId), nullptr,
+                 SND_ALIAS | SND_ASYNC | SND_NODEFAULT);
+  }
+  sPlaying = false;
+}
 
 mozilla::StaticRefPtr<nsISound> nsSound::sInstance;
 
@@ -109,12 +80,7 @@ already_AddRefed<nsISound> nsSound::GetInstance() {
     if (gfxPlatform::IsHeadless()) {
       sInstance = mozilla::MakeRefPtr<mozilla::widget::HeadlessSound>();
     } else {
-      auto sound = mozilla::MakeRefPtr<nsSound>();
-      nsresult rv = sound->CreatePlayerThread();
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return nullptr;
-      }
-      sInstance = sound.forget();
+      sInstance = mozilla::MakeRefPtr<nsSound>();
     }
     ClearOnShutdown(&sInstance);
   }
@@ -123,38 +89,7 @@ already_AddRefed<nsISound> nsSound::GetInstance() {
   return service.forget();
 }
 
-#ifndef SND_PURGE
-// Not available on Windows CE, and according to MSDN
-// doesn't do anything on recent windows either.
-#  define SND_PURGE 0
-#endif
-
-NS_IMPL_ISUPPORTS(nsSound, nsISound, nsIObserver)
-
-nsSound::nsSound() : mInited(false) {}
-
-nsSound::~nsSound() {}
-
-void nsSound::PurgeLastSound() {
-  // Halt any currently playing sound.
-  if (mSoundPlayer) {
-    if (mPlayerThread) {
-      mPlayerThread->Dispatch(
-          NS_NewRunnableFunction("nsSound::PurgeLastSound",
-                                 [player = std::move(mSoundPlayer)]() {
-                                   // Capture move mSoundPlayer to lambda then
-                                   // PlaySoundW(nullptr, nullptr, SND_PURGE)
-                                   // will be called before freeing the
-                                   // nsSoundPlayer.
-                                   if (ShouldSuppressPlaySound()) {
-                                     return;
-                                   }
-                                   ::PlaySoundW(nullptr, nullptr, SND_PURGE);
-                                 }),
-          NS_DISPATCH_NORMAL);
-    }
-  }
-}
+NS_IMPL_ISUPPORTS(nsSound, nsISound)
 
 NS_IMETHODIMP nsSound::Beep() {
   ::MessageBeep(0);
@@ -162,105 +97,25 @@ NS_IMETHODIMP nsSound::Beep() {
   return NS_OK;
 }
 
-nsresult nsSound::CreatePlayerThread() {
-  if (mPlayerThread) {
-    return NS_OK;
-  }
-  if (NS_WARN_IF(NS_FAILED(NS_NewNamedThread("PlayEventSound",
-                                             getter_AddRefs(mPlayerThread))))) {
-    return NS_ERROR_FAILURE;
-  }
-
-  // Add an observer for shutdown event to release the thread at that time
-  nsCOMPtr<nsIObserverService> observerService =
-      mozilla::services::GetObserverService();
-  if (!observerService) {
-    return NS_ERROR_FAILURE;
-  }
-
-  observerService->AddObserver(this, "xpcom-shutdown-threads", false);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsSound::Observe(nsISupports* aSubject, const char* aTopic,
-                 const char16_t* aData) {
-  if (!strcmp(aTopic, "xpcom-shutdown-threads")) {
-    PurgeLastSound();
-
-    if (mPlayerThread) {
-      mPlayerThread->Shutdown();
-      mPlayerThread = nullptr;
-    }
-  }
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP nsSound::Init() {
-  if (mInited) {
-    return NS_OK;
-  }
-
-  MOZ_ASSERT(mPlayerThread, "player thread should not be null ");
-  // This call halts a sound if it was still playing.
-  // We have to use the sound library for something to make sure
-  // it is initialized.
-  // If we wait until the first sound is played, there will
-  // be a time lag as the library gets loaded.
-  // This should be done in player thread otherwise it will block main thread
-  // at the first time loading sound library.
-  mPlayerThread->Dispatch(
-      NS_NewRunnableFunction("nsSound::Init",
-                             []() {
-                               if (ShouldSuppressPlaySound()) {
-                                 return;
-                               }
-                               ::PlaySoundW(nullptr, nullptr, SND_PURGE);
-                             }),
-      NS_DISPATCH_NORMAL);
-
-  mInited = true;
-
-  return NS_OK;
-}
+NS_IMETHODIMP nsSound::Init() { return NS_OK; }
 
 NS_IMETHODIMP nsSound::PlayEventSound(uint32_t aEventId) {
-  MOZ_ASSERT(mPlayerThread, "player thread should not be null ");
-  PurgeLastSound();
-
-  const wchar_t* sound = nullptr;
-  switch (aEventId) {
-    case EVENT_NEW_MAIL_RECEIVED:
-      sound = L"MailBeep";
-      break;
-    case EVENT_ALERT_DIALOG_OPEN:
-      sound = L"SystemExclamation";
-      break;
-    case EVENT_CONFIRM_DIALOG_OPEN:
-      sound = L"SystemQuestion";
-      break;
-    case EVENT_MENU_EXECUTE:
-      sound = L"MenuCommand";
-      break;
-    case EVENT_MENU_POPUP:
-      sound = L"MenuPopup";
-      break;
-    case EVENT_EDITOR_MAX_LEN:
-      sound = L".Default";
-      break;
-    default:
-      // Win32 plays no sounds at NS_SYSSOUND_PROMPT_DIALOG and
-      // NS_SYSSOUND_SELECT_DIALOG.
-      return NS_OK;
+  if (!GetEventSoundAlias(aEventId)) {
+    return NS_OK;
   }
-  NS_ASSERTION(sound, "sound is null");
-  MOZ_ASSERT(!mSoundPlayer, "mSoundPlayer should be null");
-  mSoundPlayer = mozilla::MakeRefPtr<nsSoundPlayer>(nsDependentString(sound));
-  MOZ_ASSERT(mSoundPlayer, "Could not create player");
-  nsresult rv = mPlayerThread->Dispatch(mSoundPlayer, NS_DISPATCH_NORMAL);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
+
+  // PlaySoundW can block for a long time, e.g. while loading the audio stack or
+  // when it hangs (bug 1869124). Call it on the Windows thread pool, which
+  // shutdown never waits for, unlike Gecko threads. The callback only gets the
+  // event ID by value, so it is safe to outlive XPCOM.
+  if (sPlaying.exchange(true)) {
+    return NS_OK;
+  }
+  if (!::TrySubmitThreadpoolCallback(
+          PlayEventSoundCallback,
+          reinterpret_cast<void*>(static_cast<uintptr_t>(aEventId)), nullptr)) {
+    sPlaying = false;
+    return NS_ERROR_FAILURE;
   }
   return NS_OK;
 }
