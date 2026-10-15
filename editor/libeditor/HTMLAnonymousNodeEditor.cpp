@@ -164,8 +164,12 @@ ManualNACPtr HTMLEditor::CreateAnonymousElement(nsAtom* aTag,
     return nullptr;
   }
 
-  if (NS_WARN_IF(!GetDocument())) {
-    return nullptr;
+  {
+    Document* const doc = GetDocument();
+    if (NS_WARN_IF(!doc) ||
+        NS_WARN_IF(aParentContent.GetComposedDoc() != doc)) {
+      return nullptr;
+    }
   }
 
   RefPtr<PresShell> presShell = GetPresShell();
@@ -546,8 +550,11 @@ nsresult HTMLEditor::GetPositionAndDimensions(Element& aElement, int32_t& aX,
     nsAutoString positionValue;
     DebugOnly<nsresult> rvIgnored = CSSEditUtils::GetComputedProperty(
         aElement, *nsGkAtoms::position, positionValue);
-    if (NS_WARN_IF(Destroyed())) {
+    if (NS_WARN_IF(Destroyed())) [[unlikely]] {
       return NS_ERROR_EDITOR_DESTROYED;
+    }
+    if (NS_WARN_IF(aElement.OwnerDoc() != GetDocument())) [[unlikely]] {
+      return NS_ERROR_EDITOR_UNEXPECTED_DOM_TREE;
     }
     NS_WARNING_ASSERTION(NS_SUCCEEDED(rvIgnored),
                          "CSSEditUtils::GetComputedProperty(nsGkAtoms::"
@@ -562,7 +569,13 @@ nsresult HTMLEditor::GetPositionAndDimensions(Element& aElement, int32_t& aX,
     // Get the all the computed css styles attached to the element node
     RefPtr<nsComputedDOMStyle> computedDOMStyle =
         CSSEditUtils::GetComputedStyle(&aElement);
-    if (NS_WARN_IF(!computedDOMStyle)) {
+    if (NS_WARN_IF(Destroyed())) [[unlikely]] {
+      return NS_ERROR_EDITOR_DESTROYED;
+    }
+    if (NS_WARN_IF(aElement.OwnerDoc() != GetDocument())) [[unlikely]] {
+      return NS_ERROR_EDITOR_UNEXPECTED_DOM_TREE;
+    }
+    if (NS_WARN_IF(!computedDOMStyle)) [[unlikely]] {
       return NS_ERROR_FAILURE;
     }
 
@@ -580,7 +593,7 @@ nsresult HTMLEditor::GetPositionAndDimensions(Element& aElement, int32_t& aX,
     mResizedObjectIsAbsolutelyPositioned = false;
     RefPtr<nsGenericHTMLElement> htmlElement =
         nsGenericHTMLElement::FromNode(aElement);
-    if (!htmlElement) {
+    if (NS_WARN_IF(!htmlElement)) [[unlikely]] {
       return NS_ERROR_NULL_POINTER;
     }
     DebugOnly<nsresult> rvIgnored = GetElementOrigin(aElement, aX, aY);
