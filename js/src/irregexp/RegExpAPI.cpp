@@ -303,14 +303,20 @@ static void ReportSyntaxError(TokenStreamAnyChars& ts,
 template <typename CharT>
 static bool CheckPatternSyntaxImpl(js::LifoAlloc& alloc,
                                    JS::NativeStackLimit stackLimit,
-                                   const CharT* input, uint32_t inputLength,
+                                   const CharT* input, size_t inputLength,
                                    JS::RegExpFlags flags,
                                    RegExpCompileData* result,
                                    JS::AutoAssertNoGC& nogc) {
   Zone zone(&alloc);
-
-  return RegExpParser::VerifyRegExpSyntax(&zone, stackLimit, input, inputLength,
-                                          flags, result, nogc);
+  static_assert(JSString::MAX_LENGTH < INT_MAX);
+  if (inputLength > JSString::MAX_LENGTH) {
+    result->error = RegExpError::kTooLarge;
+    result->error_pos = 0;
+    return false;
+  }
+  return RegExpParser::VerifyRegExpSyntax(&zone, stackLimit, input,
+                                          AssertedCast<int>(inputLength), flags,
+                                          result, nogc);
 }
 
 bool CheckPatternSyntax(js::LifoAlloc& alloc, JS::NativeStackLimit stackLimit,
