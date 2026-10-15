@@ -106,4 +106,4 @@ fi
 export HGPLAIN=1
 
 # shellcheck disable=SC2086
-/home/worker/scripts/periodic_file_updates.sh -b "${BRANCH}" -a ${PARAMS} -t "${GECKO_PATH}"
+/home/worker/scripts/periodic_file_updates.sh -b "${BRANCH}" ${PARAMS} -t "${GECKO_PATH}"
