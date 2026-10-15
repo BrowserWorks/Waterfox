@@ -99,10 +99,6 @@ void SetLogFunction(LogFunctionPtr aLogFunction) {
   logging::SetLogMessageHandler(LogMessageHandler);
 }
 
-uint32_t ComputeCrc32(const uint8_t* aBuf, size_t aBufSize) {
-  return CalculateCrc32(aBuf, aBuf + aBufSize);
-}
-
 #if BUILDFLAG(IS_WIN)
 #  if !defined(HAVE_SEH_EXCEPTIONS) || !HAVE_SEH_EXCEPTIONS
 #    error Compiler support for SEH is required to build zucchini on Windows.
@@ -188,6 +184,14 @@ static int FilterRecoverableException(EXCEPTION_RECORD* aExceptionRecord,
 #  define BEGIN_PAGE_ERROR_TRY_EXCEPT()
 #  define END_PAGE_ERROR_TRY_EXCEPT()
 #endif  // BUILDFLAG(IS_WIN)
+
+status::Code ComputeCrc32(const uint8_t* aBuf, size_t aBufSize,
+                          uint32_t& aOutCrc32) {
+  BEGIN_ENTRY_POINT()
+  aOutCrc32 = CalculateCrc32(aBuf, aBuf + aBufSize);
+  return status::kStatusSuccess;
+  END_ENTRY_POINT()
+}
 
 class MappedPatchImpl {
  public:

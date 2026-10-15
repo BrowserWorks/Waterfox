@@ -63,7 +63,8 @@ void SetTestOptions(const TestOptions& aOptions);
 using LogFunctionPtr = void (*)(const char* aMessage);
 void SetLogFunction(LogFunctionPtr aLogFunction);
 
-uint32_t ComputeCrc32(const uint8_t* aBuf, size_t aBufSize);
+[[nodiscard]] status::Code ComputeCrc32(const uint8_t* aBuf, size_t aBufSize,
+                                        uint32_t& aOutCrc32);
 
 class MappedPatchImpl;
 
