@@ -233,6 +233,10 @@ var gDevToolsBrowser = (exports.gDevToolsBrowser = {
           toolId,
         })
         .then(newToolbox => {
+          // See showToolboxForTab for when the tab can't be debugged.
+          if (!newToolbox) {
+            return;
+          }
           newToolbox.fireCustomKey(toolId);
           gDevTools.emit("select-tool-command", toolId);
         });
