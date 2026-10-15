@@ -5543,15 +5543,13 @@ int DoUpdate() {
   NS_tchar* rb = buf;
 
 #if defined(MOZ_ZUCCHINI)
-#  if defined(TEST_UPDATER) && defined(XP_WIN)
-  // Crash scenarios are only tested on Windows for now.
-  // POSIX support is planned, see bug 2043122 for more information.
+#  if defined(TEST_UPDATER)
   zucchini::mozilla::TestOptions options;
   options.logDestructorMarker = EnvHasValue("MOZ_TEST_ZUCCHINI_DTOR_MARKER");
   options.triggerBadAlloc = EnvHasValue("MOZ_TEST_ZUCCHINI_BAD_ALLOC");
   options.triggerCheckFailure = EnvHasValue("MOZ_TEST_ZUCCHINI_CHECK_FAILURE");
   zucchini::mozilla::SetTestOptions(options);
-#  endif  // TEST_UPDATER && XP_WIN
+#  endif  // TEST_UPDATER
 
   zucchini::mozilla::SetLogFunction(LogZucchiniMessage);
 #endif  // defined(MOZ_ZUCCHINI)

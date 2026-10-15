@@ -87,7 +87,19 @@ SOURCES += [
     "/third_party/zucchini/moz_zucchini.cc",
 ]
 
+# zucchini uses standard C++ containers internally that will throw std::bad_alloc in
+# out-of-memory scenarios. The updater needs to behave differently in OOM scenarios,
+# so we enable exceptions and wrap zucchini entry points to convert any std::bad_alloc
+# exception thrown during patch application into a BSPATCH_MEM_ERROR failure status
+# code. Follow isMemoryAllocationErrorCode() from UpdateService.sys.mjs for details.
+if CONFIG["CC_TYPE"] == "clang-cl":
+    CXXFLAGS += ["/EHs", "/GR"]
+else:
+    CXXFLAGS += ["-fexceptions", "-frtti"]
+
 if CONFIG["TARGET_OS"] == "WINNT":
+    CXXFLAGS += ["-U_HAS_EXCEPTIONS", "-D_HAS_EXCEPTIONS=1"]
+
     USE_STATIC_MSVCRT = True
 
     SOURCES += [

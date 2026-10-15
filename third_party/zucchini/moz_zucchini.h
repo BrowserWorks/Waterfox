@@ -49,8 +49,6 @@ namespace mozilla {
 
 #ifdef ENABLE_TESTS
 // Options that help testing crash recovery.
-// Crash recovery is only supported on Windows for now.
-// POSIX support is planned, see bug 2043122 for more information.
 
 struct TestOptions {
   bool logDestructorMarker = false;

@@ -4260,11 +4260,15 @@ function checkFilesAfterUpdateCommon(aStageDirExists, aToBeDeletedDirExists) {
 function checkToBeDeletedFileCount(aExpectedCount) {
   let toBeDeletedDir = getApplyDirFile(DIR_TOBEDELETED);
   let relocatedFiles = [];
-  let dirEntries = toBeDeletedDir.directoryEntries;
-  while (dirEntries.hasMoreElements()) {
-    let entry = dirEntries.nextFile;
-    if (entry.isFile() && entry.leafName.startsWith("moz")) {
-      relocatedFiles.push(entry);
+  // The directory only exists on Windows, and only once the updater had a
+  // reason to create it, so a missing directory means no relocated file.
+  if (toBeDeletedDir.exists()) {
+    let dirEntries = toBeDeletedDir.directoryEntries;
+    while (dirEntries.hasMoreElements()) {
+      let entry = dirEntries.nextFile;
+      if (entry.isFile() && entry.leafName.startsWith("moz")) {
+        relocatedFiles.push(entry);
+      }
     }
   }
   Assert.equal(

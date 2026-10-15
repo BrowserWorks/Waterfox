@@ -19,6 +19,7 @@
 
 #include <cstdio>
 #include <limits>
+#include <memory>
 #include <new>
 #include <string>
 
@@ -99,12 +100,10 @@ void SetLogFunction(LogFunctionPtr aLogFunction) {
   logging::SetLogMessageHandler(LogMessageHandler);
 }
 
-#if BUILDFLAG(IS_WIN)
-#  if !defined(HAVE_SEH_EXCEPTIONS) || !HAVE_SEH_EXCEPTIONS
-#    error Compiler support for SEH is required to build zucchini on Windows.
-#  endif
+#if !defined(__cpp_exceptions)
+#  error The zucchini interface code requires compiler support for C++ exceptions.
+#endif  // !cpp_exceptions
 
-static constexpr DWORD kMsvcCppExceptionCode = 0xE06D7363;
 
 // Catch C++ exceptions raised within zucchini code. This lets the updater
 // recover from standard library allocation failures, so it can write an OOM
@@ -113,16 +112,25 @@ static constexpr DWORD kMsvcCppExceptionCode = 0xE06D7363;
 // zucchini code it uses.
 //
 // Every entry point into zucchini thus returns a status code. Running into a
-// C++ std::bad_alloc exception returns kStatusOutOfMemory.
-#  define BEGIN_ENTRY_POINT()                                              \
-    __try {
-#  define END_ENTRY_POINT()                                                \
-    }                                                                      \
-    __except (GetExceptionInformation()->ExceptionRecord->ExceptionCode == \
-              kMsvcCppExceptionCode) {                                     \
-      LOG(ERROR) << "std::bad_alloc caught in zucchini.";                  \
-      return status::kStatusOutOfMemory;                                   \
-    }
+// C++ std::bad_alloc exception returns kStatusOutOfMemory. Any other C++
+// exception results in kStatusFatal, although that should never happen.
+
+#define BEGIN_ENTRY_POINT() try {
+#define END_ENTRY_POINT()                                                 \
+  }                                                                       \
+  catch (const std::bad_alloc&) {                                         \
+    LOG(ERROR) << "std::bad_alloc caught in zucchini.";                   \
+    return status::kStatusOutOfMemory;                                    \
+  }                                                                       \
+  catch (...) {                                                           \
+    LOG(ERROR) << "unknown exception caught in zucchini; this is a bug."; \
+    return status::kStatusFatal;                                          \
+  }
+
+#if BUILDFLAG(IS_WIN)
+#  if !defined(HAVE_SEH_EXCEPTIONS) || !HAVE_SEH_EXCEPTIONS
+#    error Compiler support for SEH is required to build zucchini on Windows.
+#  endif
 
 // Narrow handler that stays around the code touching the mapped file ranges,
 // where EXCEPTION_IN_PAGE_ERROR can be raised. Usable only within member
@@ -144,8 +152,6 @@ static constexpr DWORD kMsvcCppExceptionCode = 0xE06D7363;
                  : status::kStatusIoError;                                 \
     }
 #else
-#  define BEGIN_ENTRY_POINT()
-#  define END_ENTRY_POINT()
 #  define BEGIN_PAGE_ERROR_TRY_EXCEPT()
 #  define END_PAGE_ERROR_TRY_EXCEPT()
 #endif  // BUILDFLAG(IS_WIN)
