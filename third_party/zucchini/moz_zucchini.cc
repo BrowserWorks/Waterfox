@@ -34,7 +34,7 @@
 namespace zucchini::mozilla {
 
 #ifdef ENABLE_TESTS
-// Helpers for crash recovery tests.
+// Helpers for crash test scenarios.
 
 static TestOptions gTestOptions;
 
@@ -106,57 +106,22 @@ void SetLogFunction(LogFunctionPtr aLogFunction) {
 
 static constexpr DWORD kMsvcCppExceptionCode = 0xE06D7363;
 
-// SEH filter for exceptions raised within zucchini code. Without this,
-// recoverable exceptions would crash the updater before it can write
-// update.status, causing SERVICE_STILL_APPLYING_ON_FAILURE errors.
-// We wrap the entire body of every entry point reachable from updater.cpp,
-// making sure that every possible running zucchini code is covered.
+// Catch C++ exceptions raised within zucchini code. This lets the updater
+// recover from standard library allocation failures, so it can write an OOM
+// update.status and run post-failure cleanup. We wrap the entire body of
+// every entry point reachable from updater.cpp, making sure we cover all the
+// zucchini code it uses.
 //
-// Every entry point into zucchini thus returns a status code. In addition to
-// the various status codes a function may already return, running into a C++
-// std::bad_alloc exception returns kStatusOutOfMemory, while running into an
-// intentional hard-crash such as a CHECK failure returns kStatusFatal.
-//
-// We only catch exceptions where the process state is known to be sound:
-// - EXCEPTION_BREAKPOINT/EXCEPTION_ILLEGAL_INSTRUCTION (deliberate crash from
-//   Chromium CHECK via ImmediateCrash, data validation failure)
-// - 0xE06D7363 (MSVC C++ exception: std::bad_alloc from non-fallible
-//   allocations in zucchini's disassembler. Neither zucchini nor its base shim
-//   contain any explicit throw, so bad_alloc is the only possible C++ exception
-//   observed here. On Windows, operator new allocation failure still surfaces
-//   through SEH with this exception code.)
-//
-// Exceptions indicating corrupt process state (EXCEPTION_ACCESS_VIOLATION,
-// EXCEPTION_STACK_OVERFLOW, etc.) are left unhandled so the process crashes
-// as expected.
-static int FilterRecoverableException(EXCEPTION_RECORD* aExceptionRecord,
-                                      DWORD& aOutExceptionCode) {
-  aOutExceptionCode = aExceptionRecord->ExceptionCode;
-
-  if (aOutExceptionCode == EXCEPTION_BREAKPOINT ||
-      aOutExceptionCode == EXCEPTION_ILLEGAL_INSTRUCTION ||
-      aOutExceptionCode ==
-          kMsvcCppExceptionCode /* MSVC C++ exception (std::bad_alloc) */) {
-    return EXCEPTION_EXECUTE_HANDLER;
-  }
-
-  return EXCEPTION_CONTINUE_SEARCH;
-}
-
-#  define BEGIN_ENTRY_POINT()           \
-    DWORD mozZucchiniExceptionCode = 0; \
+// Every entry point into zucchini thus returns a status code. Running into a
+// C++ std::bad_alloc exception returns kStatusOutOfMemory.
+#  define BEGIN_ENTRY_POINT()                                              \
     __try {
-#  define END_ENTRY_POINT()                                                    \
-    }                                                                          \
-    __except (                                                                 \
-        FilterRecoverableException(GetExceptionInformation()->ExceptionRecord, \
-                                   mozZucchiniExceptionCode)) {                \
-      if (mozZucchiniExceptionCode == kMsvcCppExceptionCode) {                 \
-        LOG(ERROR) << "std::bad_alloc caught in zucchini.";                    \
-        return status::kStatusOutOfMemory;                                     \
-      }                                                                        \
-      LOG(ERROR) << "hard crash caught in zucchini; this is a bug.";           \
-      return status::kStatusFatal;                                             \
+#  define END_ENTRY_POINT()                                                \
+    }                                                                      \
+    __except (GetExceptionInformation()->ExceptionRecord->ExceptionCode == \
+              kMsvcCppExceptionCode) {                                     \
+      LOG(ERROR) << "std::bad_alloc caught in zucchini.";                  \
+      return status::kStatusOutOfMemory;                                   \
     }
 
 // Narrow handler that stays around the code touching the mapped file ranges,

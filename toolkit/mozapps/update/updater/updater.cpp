@@ -5544,7 +5544,7 @@ int DoUpdate() {
 
 #if defined(MOZ_ZUCCHINI)
 #  if defined(TEST_UPDATER) && defined(XP_WIN)
-  // Crash recovery is only supported (and hence tested) on Windows for now.
+  // Crash scenarios are only tested on Windows for now.
   // POSIX support is planned, see bug 2043122 for more information.
   zucchini::mozilla::TestOptions options;
   options.logDestructorMarker = EnvHasValue("MOZ_TEST_ZUCCHINI_DTOR_MARKER");

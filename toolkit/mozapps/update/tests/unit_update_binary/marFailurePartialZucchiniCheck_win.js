@@ -3,7 +3,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-/* Zucchini Partial MAR File Patch Apply CHECK Failure Test */
+/* Zucchini Partial MAR File Patch Apply CHECK Failure Crash Test */
+
+/**
+ * The draft file of the add that the updater completes right before it starts
+ * patching files, and thus crashes. Finding it after the update proves that the
+ * updater crashed during the Draft phase.
+ */
+const CRASH_DRAFT_REL_PATH =
+  DIR_RESOURCES + "searchplugins/searchpluginstext0.moz-draft";
 
 async function run_test() {
   if (!setupTestCommon()) {
@@ -25,18 +33,33 @@ async function run_test() {
   gTestDirs = gTestDirsPartialSuccess;
   setTestFilesAndDirsForFailure();
   await setupUpdaterTest(FILE_PARTIAL_ZUCCHINI_MAR, false);
-  runUpdate(STATE_FAILED_UNEXPECTED_BSPATCH_ERROR, false, 1, true);
+
+  // A zucchini CHECK failure hard-crashes the updater, which therefore doesn't
+  // get a chance to write the failure to update.status or to run the callback
+  // application. The crash happens while the updater is drafting the update,
+  // so the installation directory still holds the previous version of the
+  // application, with the draft file that the updater had produced so far left
+  // behind.
+  runUpdate(STATE_APPLYING, false, EXIT_VALUE_CRASHED, true);
+
   checkAppBundleModTime();
-  await testPostUpdateProcessing();
   checkPostUpdateRunningFile(false);
-  checkFilesAfterUpdateFailure(getApplyDirFile);
-  await waitForUpdateXMLFiles();
-  await checkUpdateManager(
-    STATE_NONE,
-    false,
-    STATE_FAILED,
-    UNEXPECTED_BSPATCH_ERROR,
-    1
+
+  let draftFile = getApplyDirFile(CRASH_DRAFT_REL_PATH);
+  Assert.ok(draftFile.exists(), MSG_SHOULD_EXIST + getMsgPath(draftFile.path));
+
+  // Remove the temporary files and directories that the crashed updater didn't
+  // get a chance to clean up, so that the checks below can then verify that it
+  // left nothing else behind and didn't touch the installed files.
+  draftFile.remove(false);
+  getApplyDirFile("updating").remove(true);
+
+  checkFilesAfterUpdateFailure(
+    getApplyDirFile,
+    /* aStageDirExists */ false,
+    /* aToBeDeletedDirExists */ true
   );
-  checkCallbackLog();
+  checkToBeDeletedFileCount(0);
+
+  await waitForFilesInUse();
 }
