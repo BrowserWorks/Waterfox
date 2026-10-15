@@ -7047,6 +7047,12 @@ void JitRuntime::generateIonGenericCallBoundFunction(MacroAssembler& masm,
   // Load the target in calleeReg.
   masm.unboxObject(targetSlot, calleeReg);
 
+  // Bound targets can be nested arbitrarily deep. Check the stack limit before
+  // recursing.
+  const void* limitAddr = masm.runtime()->addressOfJitStackLimit();
+  masm.branchStackPtrRhs(Assembler::AboveOrEqual, AbsoluteAddress(limitAddr),
+                         vmCall);
+
   // At this point, all preconditions for entering the trampoline are met:
   // - calleeReg contains a pointer to the callee object
   // - argcReg contains the number of actual args (now including bound args)
