@@ -22,6 +22,8 @@ const { RemoteSecuritySettings } = ChromeUtils.importESModule(
   "resource://gre/modules/psm/RemoteSecuritySettings.sys.mjs"
 );
 
+const logger = console.createInstance({ prefix: "HSTSPreloadList" });
+
 const SOURCE =
   "https://raw.githubusercontent.com/chromium/chromium/main/net/http/transport_security_state_static.json";
 const TOOL_SOURCE =
@@ -94,9 +96,11 @@ async function loadPreloadedIntermediates() {
     await IntermediatePreloadsClient.updatePreloadedIntermediates();
     let records = await IntermediatePreloadsClient.client.db.list();
     let imported = records.filter(r => r.cert_import_complete).length;
-    dump(`Loaded ${imported} of ${records.length} preloaded intermediates\n`);
+    logger.log(
+      `Loaded ${imported} of ${records.length} preloaded intermediates`
+    );
   } catch (e) {
-    dump(`WARNING: loading the preloaded intermediates failed: ${e}\n`);
+    logger.warn(`loading the preloaded intermediates failed: ${e}`);
   }
 }
 
@@ -145,14 +149,8 @@ function processStsHeader(host, header, status, securityInfo, nsresult = 0) {
       let uri = Services.io.newURI("https://" + host.name);
       gSSService.processHeader(uri, header, {}, maxAge, includeSubdomains);
     } catch (e) {
-      dump(
-        "ERROR: could not process header '" +
-          header +
-          "' from " +
-          host.name +
-          ": " +
-          e +
-          "\n"
+      logger.error(
+        `could not process header '${header}' from ${host.name}: ${e}`
       );
       error = e;
     }
@@ -217,7 +215,7 @@ function fetchstatus(host, method) {
     xhr.timeout = REQUEST_TIMEOUT;
 
     let errorHandler = () => {
-      dump("ERROR: exception making request to " + host.name + "\n");
+      logger.error(`exception making request to ${host.name}`);
       resolve(
         processStsHeader(
           host,
@@ -322,7 +320,7 @@ async function probePool(hosts, method = "HEAD") {
       let progress = Math.floor((100 * results.length) / total);
       if (progress > lastProgress) {
         lastProgress = progress;
-        dump(progress + "% done\n");
+        logger.log(`${progress}% done`);
       }
     }
   };
@@ -338,7 +336,7 @@ function needsRetry(status) {
 }
 
 async function probeHSTSStatuses(hosts) {
-  dump("Examining " + hosts.length + " hosts.\n");
+  logger.log(`Examining ${hosts.length} hosts.`);
   for (let i = hosts.length - 1; i > 0; i--) {
     let j = Math.floor(Math.random() * (i + 1));
     [hosts[i], hosts[j]] = [hosts[j], hosts[i]];
@@ -347,21 +345,21 @@ async function probeHSTSStatuses(hosts) {
 
   let results = probed.filter(status => !needsRetry(status));
   let failed = probed.filter(needsRetry);
-  dump("Retrying " + failed.length + " hosts that failed or answered 429.\n");
+  logger.log(`Retrying ${failed.length} hosts that failed or answered 429.`);
   let retried = await probePool(failed.map(status => ({ name: status.name })));
   let rescued = retried.filter(status => !needsRetry(status));
   for (let status of rescued) {
     status.rescued = true;
   }
   results = results.concat(retried);
-  dump(
-    rescued.length + " of " + failed.length + " retried hosts were rescued.\n"
+  logger.log(
+    `${rescued.length} of ${failed.length} retried hosts were rescued.`
   );
 
   let headerless = results.filter(
     status => status.error == ERROR_NO_HSTS_HEADER && status.httpStatus != 429
   );
-  dump("Probing " + headerless.length + " hosts without a header with GET.\n");
+  logger.log(`Probing ${headerless.length} hosts without a header with GET.`);
   let viaGet = (
     await probePool(
       headerless.map(status => ({ name: status.name })),
@@ -376,9 +374,9 @@ async function probeHSTSStatuses(hosts) {
   for (let status of viaGet) {
     Object.assign(byName.get(status.name), status, { get: true });
   }
-  dump(viaGet.length + " of them sent a header on GET.\n");
+  logger.log(`${viaGet.length} of them sent a header on GET.`);
 
-  dump("HSTS Probe received " + results.length + " statuses.\n");
+  logger.log(`HSTS Probe received ${results.length} statuses.`);
   return results;
 }
 
@@ -412,7 +410,7 @@ async function writeProbeResults(probedStatuses, previousPath) {
     try {
       previous = await IOUtils.readJSON(previousPath);
     } catch (e) {
-      dump(`WARNING: could not read previous probe results: ${e}\n`);
+      logger.warn(`could not read previous probe results: ${e}`);
     }
   }
   let previousHosts = previous?.hosts ?? {};
@@ -451,7 +449,7 @@ async function writeProbeResults(probedStatuses, previousPath) {
     Services.dirsvc.get("CurWorkD", Ci.nsIFile).path,
     RESULTS_OUTPUT
   );
-  dump("INFO: Writing probe results to " + path + "\n");
+  logger.log(`Writing probe results to ${path}`);
   await IOUtils.writeJSON(path, {
     version: 1,
     run: {
@@ -572,7 +570,7 @@ function filterForcedInclusions(inHosts, outNotForced, outForced) {
 }
 
 function output(statuses) {
-  dump("INFO: Writing output to " + OUTPUT + "\n");
+  logger.log(`Writing output to ${OUTPUT}`);
   try {
     let file = new FileUtils.File(
       PathUtils.join(Services.dirsvc.get("CurWorkD", Ci.nsIFile).path, OUTPUT)
@@ -590,9 +588,9 @@ function output(statuses) {
 
     writeTo(GPERF_DELIM, fos);
     FileUtils.closeSafeFileOutputStream(fos);
-    dump("finished writing output file\n");
+    logger.log("finished writing output file");
   } catch (e) {
-    dump("ERROR: problem writing output to '" + OUTPUT + "': " + e + "\n");
+    logger.error(`problem writing output to '${OUTPUT}': ${e}`);
     throw e;
   }
 }
@@ -635,10 +633,10 @@ async function main(args) {
   // Initialize the final status list
   let hstsStatuses = [];
   // Add the hosts we use in tests
-  dump("Adding test hosts\n");
+  logger.log("Adding test hosts");
   insertHosts(hstsStatuses, getTestHosts());
   // Add in the hosts that are forced
-  dump("Adding forced hosts\n");
+  logger.log("Adding forced hosts");
   insertHosts(hstsStatuses, forcedHosts);
 
   let probedStatuses = await probeHSTSStatuses(hostsToContact);
@@ -653,7 +651,6 @@ async function main(args) {
       isFailedRun(status) &&
       status.name in currentHosts
     ) {
-      // dump("INFO: error connecting to or processing " + status.name + " - using previous status on list\n");
       status.maxAge = MINIMUM_REQUIRED_MAX_AGE;
       status.includeSubdomains = currentHosts[status.name];
     }
@@ -662,17 +659,12 @@ async function main(args) {
   // Filter out entries we aren't including.
   let total = statuses.filter(function (status) {
     if (status.maxAge < MINIMUM_REQUIRED_MAX_AGE && !status.forceInclude) {
-      // dump("INFO: " + status.name + " NOT ON the preload list\n");
       return false;
     }
 
-    // dump("INFO: " + status.name + " ON the preload list (includeSubdomains: " + status.includeSubdomains + ")\n");
     if (status.forceInclude && status.error != ERROR_NONE) {
-      dump(
-        status.name +
-          ": " +
-          errorToString(status) +
-          " (error ignored - included regardless)\n"
+      logger.log(
+        `${status.name}: ${errorToString(status)} (error ignored - included regardless)`
       );
     }
     return true;
@@ -681,7 +673,7 @@ async function main(args) {
   // Write the output file
   output(total);
 
-  dump("HSTS probing all done\n");
+  logger.log("HSTS probing all done");
 }
 
 // arguments is a global within xpcshell
