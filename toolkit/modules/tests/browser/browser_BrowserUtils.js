@@ -76,3 +76,30 @@ add_task(async function test_getSelectionDetails_shadow_selection() {
     });
   });
 });
+
+add_task(async function test_copyLinks_html() {
+  const url = `https://example.com/?a=1&b="2"&c='3'&d=<4>`;
+  const title = `Q&A <"Quotes" and 'apostrophes'>`;
+  BrowserUtils.copyLinks([
+    { url, title },
+    { url: "https://example.org/", title: null },
+  ]);
+
+  let xferable = Cc["@mozilla.org/widget/transferable;1"].createInstance(
+    Ci.nsITransferable
+  );
+  xferable.init(null);
+  xferable.addDataFlavor("text/html");
+  Services.clipboard.getData(xferable, Ci.nsIClipboard.kGlobalClipboard);
+  let data = {};
+  xferable.getTransferData("text/html", data);
+  let html = data.value.QueryInterface(Ci.nsISupportsString).data;
+
+  Assert.stringContains(
+    html,
+    `<A HREF="https://example.com/?a=1&amp;b=&quot;2&quot;&amp;c=&#39;3&#39;&amp;d=&lt;4&gt;">` +
+      `Q&amp;A &lt;&quot;Quotes&quot; and &#39;apostrophes&#39;&gt;</A><BR>\n` +
+      `<A HREF="https://example.org/"></A>`,
+    "Should contain the expected HTML anchors"
+  );
+});

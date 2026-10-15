@@ -62,6 +62,7 @@ import { PlacesUtils } from "resource://gre/modules/PlacesUtils.sys.mjs";
 const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
+  BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
   PlacesBackups: "resource://gre/modules/PlacesBackups.sys.mjs",
 });
 
@@ -921,7 +922,9 @@ BookmarkExporter.prototype = {
   async _writeContainer(aItem, aIndent = "") {
     if (aItem == this._root) {
       this._writeLine(
-        "<H1>" + PlacesUtils.escapeHtmlEntities(this._root.title) + "</H1>"
+        "<H1>" +
+          lazy.BrowserUtils.escapeHtmlEntities(this._root.title) +
+          "</H1>"
       );
       this._writeLine("");
     } else {
@@ -934,7 +937,7 @@ BookmarkExporter.prototype = {
         this._writeAttribute("UNFILED_BOOKMARKS_FOLDER", "true");
       }
       this._writeLine(
-        ">" + PlacesUtils.escapeHtmlEntities(aItem.title) + "</H3>"
+        ">" + lazy.BrowserUtils.escapeHtmlEntities(aItem.title) + "</H3>"
       );
     }
 
@@ -967,7 +970,10 @@ BookmarkExporter.prototype = {
     this._write(aIndent + "<HR");
     // We keep exporting separator titles, but don't support them anymore.
     if (aItem.title) {
-      this._writeAttribute("NAME", PlacesUtils.escapeHtmlEntities(aItem.title));
+      this._writeAttribute(
+        "NAME",
+        lazy.BrowserUtils.escapeHtmlEntities(aItem.title)
+      );
     }
     this._write(">");
   },
@@ -981,19 +987,22 @@ BookmarkExporter.prototype = {
     }
 
     this._write(aIndent + "<DT><A");
-    this._writeAttribute("HREF", PlacesUtils.escapeHtmlEntities(aItem.uri));
+    this._writeAttribute(
+      "HREF",
+      lazy.BrowserUtils.escapeHtmlEntities(aItem.uri)
+    );
     this._writeDateAttributes(aItem);
     await this._writeFaviconAttribute(aItem);
 
     if (aItem.keyword) {
       this._writeAttribute(
         "SHORTCUTURL",
-        PlacesUtils.escapeHtmlEntities(aItem.keyword)
+        lazy.BrowserUtils.escapeHtmlEntities(aItem.keyword)
       );
       if (aItem.postData) {
         this._writeAttribute(
           "POST_DATA",
-          PlacesUtils.escapeHtmlEntities(aItem.postData)
+          lazy.BrowserUtils.escapeHtmlEntities(aItem.postData)
         );
       }
     }
@@ -1001,13 +1010,18 @@ BookmarkExporter.prototype = {
     if (aItem.charset) {
       this._writeAttribute(
         "LAST_CHARSET",
-        PlacesUtils.escapeHtmlEntities(aItem.charset)
+        lazy.BrowserUtils.escapeHtmlEntities(aItem.charset)
       );
     }
     if (aItem.tags) {
-      this._writeAttribute("TAGS", PlacesUtils.escapeHtmlEntities(aItem.tags));
+      this._writeAttribute(
+        "TAGS",
+        lazy.BrowserUtils.escapeHtmlEntities(aItem.tags)
+      );
     }
-    this._writeLine(">" + PlacesUtils.escapeHtmlEntities(aItem.title) + "</A>");
+    this._writeLine(
+      ">" + lazy.BrowserUtils.escapeHtmlEntities(aItem.title) + "</A>"
+    );
   },
 
   _writeDateAttributes(aItem) {
@@ -1037,13 +1051,13 @@ BookmarkExporter.prototype = {
 
       this._writeAttribute(
         "ICON_URI",
-        PlacesUtils.escapeHtmlEntities(favicon.uri.spec)
+        lazy.BrowserUtils.escapeHtmlEntities(favicon.uri.spec)
       );
 
       if (favicon?.rawData.length && !favicon.uri.schemeIs("chrome")) {
         this._writeAttribute(
           "ICON",
-          PlacesUtils.escapeHtmlEntities(favicon.dataURI.spec)
+          lazy.BrowserUtils.escapeHtmlEntities(favicon.dataURI.spec)
         );
       }
     } catch (ex) {

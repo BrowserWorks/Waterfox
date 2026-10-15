@@ -194,6 +194,21 @@ export var BrowserUtils = {
   },
 
   /**
+   * Escapes a string for safe use in HTML text content or attribute values.
+   *
+   * @param {string} text
+   * @returns {string}
+   */
+  escapeHtmlEntities(text) {
+    return (text || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  },
+
+  /**
    * Copy multiple links to the clipboard. Writes three clipboard flavors:
    *   text/x-moz-url  — "url\ntitle" pairs separated by newlines
    *   text/html       — "<A HREF="url">title</A>" anchors separated by <BR>
@@ -202,19 +217,14 @@ export var BrowserUtils = {
    * @param {Array<{url: string, title: string}>} links
    */
   copyLinks(links) {
-    let htmlEscape = s =>
-      s
-        .replace(/&/g, "&amp;")
-        .replace(/>/g, "&gt;")
-        .replace(/</g, "&lt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&apos;");
-
     let mozURLData = links
       .map(({ url, title }) => `${url}\n${title}`)
       .join("\n");
     let htmlData = links
-      .map(({ url, title }) => `<A HREF="${url}">${htmlEscape(title)}</A>`)
+      .map(
+        ({ url, title }) =>
+          `<A HREF="${this.escapeHtmlEntities(url)}">${this.escapeHtmlEntities(title)}</A>`
+      )
       .join("<BR>\n");
     let textData = links.map(({ url }) => url).join("\n");
 
