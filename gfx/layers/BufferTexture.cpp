@@ -14,6 +14,7 @@
 #include "mozilla/layers/ISurfaceAllocator.h"
 #include "mozilla/layers/ImageDataSerializer.h"
 #include "mozilla/layers/TextureForwarder.h"
+#include "nsProxyRelease.h"
 
 #include "gfxPlatform.h"
 
@@ -135,7 +136,6 @@ class ShmemTextureData : public BufferTextureData {
 
  protected:
   const RefPtr<ShmemHolder> mShmemHolder;
-  gfx::UserDataKey mShmemHolderKey = {0};
 };
 
 BufferTextureData* BufferTextureData::Create(
@@ -292,24 +292,24 @@ struct ShmemHolderUserData {
 
 void DeleteShmemHolderUserData(void* aClosure) {
   ShmemHolderUserData* data = reinterpret_cast<ShmemHolderUserData*>(aClosure);
-  auto* eventTarget = data->mShmemHolder->mAllocator->GetThread();
+  nsCOMPtr<nsIEventTarget> eventTarget =
+      data->mShmemHolder->mAllocator->GetThread();
 
-  if (!eventTarget->IsOnCurrentThread()) {
-    RefPtr<Runnable> runnable =
-        NS_NewRunnableFunction("DeleteShmemHolderUserData::Runnable",
-                               [wrapper = std::move(data->mShmemHolder)]() {});
-    eventTarget->Dispatch(runnable.forget());
-  }
+  // Do not release the holder on the wrong thread if dispatch fails.
+  NS_ProxyRelease("DeleteShmemHolderUserData", eventTarget,
+                  data->mShmemHolder.forget());
 
   delete data;
 }
+
+static gfx::UserDataKey sShmemHolderKey = {0};
 
 void ShmemTextureData::OnBorrowDrawTarget(gfx::DrawTarget* aDrawTarget) {
   if (!aDrawTarget) {
     return;
   }
   auto* data = new ShmemHolderUserData(mShmemHolder);
-  aDrawTarget->AddUserData(&mShmemHolderKey, data, DeleteShmemHolderUserData);
+  aDrawTarget->AddUserData(&sShmemHolderKey, data, DeleteShmemHolderUserData);
 }
 
 already_AddRefed<gfx::DrawTarget> BufferTextureData::BorrowDrawTarget() {
@@ -342,6 +342,7 @@ already_AddRefed<gfx::DrawTarget> BufferTextureData::BorrowDrawTarget() {
                     << (int)mMoz2DBackend;
   }
 
+  OnBorrowDrawTarget(dt);
   return dt.forget();
 }
 
