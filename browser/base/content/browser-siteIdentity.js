@@ -1382,7 +1382,8 @@ var gIdentityHandler = {
 
     let value = gBrowser.currentURI.displaySpec;
     let urlString = value + "\n" + gBrowser.contentTitle;
-    let htmlString = '<a href="' + value + '">' + value + "</a>";
+    let escapedValue = BrowserUtils.escapeHtmlEntities(value);
+    let htmlString = `<a href="${escapedValue}">${escapedValue}</a>`;
 
     let scale = window.devicePixelRatio;
     let canvas = document.createElementNS(
