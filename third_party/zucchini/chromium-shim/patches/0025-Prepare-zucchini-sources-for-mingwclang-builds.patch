@@ -1,0 +1,70 @@
+Prepare zucchini sources for mingwclang builds
+
+- base/files/file_util_win.cc: OpenFile() uses _SH_DENYNO, which the MSVC CRT
+  headers happen to expose transitively but mingw-w64 only declares in
+  <share.h>.
+
+- base/base_paths_win.cc: <KnownFolders.h> is not found when cross-compiling,
+  as mingw-w64 spells the header knownfolders.h and the build host can have a
+  case-sensitive filesystem. Its only user, FOLDERID_ApplicationShortcuts in
+  the DIR_APP_SHORTCUTS case is already excluded under MOZ_ZUCCHINI.
+
+- components/zucchini/suffix_array_unittest.cc: libc++ ships no
+  std::char_traits<unsigned char> specialization, so
+  std::basic_string<unsigned char> cannot be instantiated. The test only ever
+  uses the alias as a sized random-access container (construction from an
+  iterator pair, begin/end/size), so under MOZ_ZUCCHINI it becomes
+  std::vector<unsigned char>.
+---
+ base/base_paths_win.cc                       | 2 ++
+ base/files/file_util_win.cc                  | 3 +++
+ components/zucchini/suffix_array_unittest.cc | 4 ++++
+ 3 files changed, 9 insertions(+)
+
+diff --git a/base/base_paths_win.cc b/base/base_paths_win.cc
+index ce7ce4b6899e..467dcb5ee297 100644
+--- a/base/base_paths_win.cc
++++ b/base/base_paths_win.cc
+@@ -4,7 +4,9 @@
+ 
+ #include <windows.h>
+ 
++#if !defined(MOZ_ZUCCHINI)
+ #include <KnownFolders.h>
++#endif  // !defined(MOZ_ZUCCHINI)
+ #include <shlobj.h>
+ 
+ #include "base/base_paths.h"
+diff --git a/base/files/file_util_win.cc b/base/files/file_util_win.cc
+index bd2082584525..251c683da9c0 100644
+--- a/base/files/file_util_win.cc
++++ b/base/files/file_util_win.cc
+@@ -8,6 +8,9 @@
+ 
+ #include <io.h>
+ #include <psapi.h>
++#if defined(MOZ_ZUCCHINI)
++#include <share.h>
++#endif  // defined(MOZ_ZUCCHINI)
+ #include <shellapi.h>
+ #include <shlobj.h>
+ #include <stddef.h>
+diff --git a/components/zucchini/suffix_array_unittest.cc b/components/zucchini/suffix_array_unittest.cc
+index 57775b047ea1..abf2137ad607 100644
+--- a/components/zucchini/suffix_array_unittest.cc
++++ b/components/zucchini/suffix_array_unittest.cc
+@@ -22,7 +22,11 @@ using SLType = InducedSuffixSort::SLType;
+ 
+ }  // namespace
+ 
++#if defined(MOZ_ZUCCHINI)
++using ustring = std::vector<unsigned char>;
++#else
+ using ustring = std::basic_string<unsigned char>;
++#endif  // defined(MOZ_ZUCCHINI)
+ 
+ constexpr uint16_t kNumChar = 256;
+ 
+-- 
+2.53.0
+

@@ -4,7 +4,9 @@
 
 #include <windows.h>
 
+#if !defined(MOZ_ZUCCHINI)
 #include <KnownFolders.h>
+#endif  // !defined(MOZ_ZUCCHINI)
 #include <shlobj.h>
 
 #include "base/base_paths.h"
