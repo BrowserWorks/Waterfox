@@ -386,7 +386,7 @@ void ImageDocument::OnHasTransparency() {
 }
 
 void ImageDocument::SetModeClass(eModeClasses mode) {
-  nsDOMTokenList* classList = mImageContent->ClassList();
+  RefPtr<nsDOMTokenList> classList = mImageContent->ClassList();
 
   if (mode == eShrinkToFit) {
     classList->Add(u"shrinkToFit"_ns, IgnoreErrors());
@@ -723,7 +723,7 @@ float ImageDocument::GetZoomLevel() {
 }
 
 void ImageDocument::CheckFullZoom() {
-  nsDOMTokenList* classList =
+  RefPtr<nsDOMTokenList> classList =
       mImageContent ? mImageContent->ClassList() : nullptr;
 
   if (!classList) {
