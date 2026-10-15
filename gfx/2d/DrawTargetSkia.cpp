@@ -2087,11 +2087,18 @@ void DrawTargetSkia::PushClipRect(const Rect& aRect) {
 }
 
 void DrawTargetSkia::PopClip() {
+  if (!mPushedLayers.empty() &&
+      mCanvas->getSaveCount() <= mPushedLayers.back().mSaveCount) {
+    return;
+  }
   mCanvas->restore();
   SetTransform(GetTransform());
 }
 
 bool DrawTargetSkia::RemoveAllClips() {
+  if (!mPushedLayers.empty()) {
+    return false;
+  }
   mCanvas->restoreToCount(1);
   SetTransform(GetTransform());
   return true;
@@ -2182,6 +2189,7 @@ void DrawTargetSkia::PushLayerWithBlend(bool aOpaque, Float aOpacity,
           (aCopyBackground ? SkCanvas::kInitWithPrevious_SaveLayerFlag : 0));
 
   mCanvas->saveLayer(saveRec);
+  mPushedLayers.back().mSaveCount = mCanvas->getSaveCount();
 
   SetPermitSubpixelAA(aOpaque);
 
@@ -2197,6 +2205,11 @@ void DrawTargetSkia::PopLayer() {
   MarkChanged();
 
   const PushedLayer& layer = mPushedLayers.back();
+
+  // Remove any unbalanced saves before the layer restore.
+  if (mCanvas->getSaveCount() > layer.mSaveCount) {
+    mCanvas->restoreToCount(layer.mSaveCount);
+  }
 
   mCanvas->restore();
 

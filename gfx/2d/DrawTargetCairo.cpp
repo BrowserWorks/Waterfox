@@ -1721,6 +1721,9 @@ void DrawTargetCairo::PopClip() {
 }
 
 bool DrawTargetCairo::RemoveAllClips() {
+  if (!mPushedLayers.empty()) {
+    return false;
+  }
   while (mClipDepth > 0) {
     PopClip();
   }

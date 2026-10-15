@@ -738,6 +738,9 @@ void DrawTargetRecording::PopClip() {
 }
 
 bool DrawTargetRecording::RemoveAllClips() {
+  if (!mPushedLayers.empty()) {
+    return false;
+  }
   RecordEventSelfSkipFlushTransform(RecordedRemoveAllClips());
   return true;
 }

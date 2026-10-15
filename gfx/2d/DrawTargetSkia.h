@@ -191,6 +191,7 @@ class DrawTargetSkia : public DrawTarget {
         : mOldPermitSubpixelAA(aOldPermitSubpixelAA), mMask(aMask) {}
     bool mOldPermitSubpixelAA;
     RefPtr<SourceSurface> mMask;
+    int mSaveCount = 0;
   };
   std::vector<PushedLayer> mPushedLayers;
 
