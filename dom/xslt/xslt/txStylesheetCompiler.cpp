@@ -343,11 +343,9 @@ void txStylesheetCompiler::cancel(nsresult aError, const char16_t* aErrorText,
     mStatus = aError;
   }
 
-  if (mObserver) {
-    mObserver->onDoneCompiling(this, mStatus, aErrorText, aParam);
-    // This will ensure that we don't call onDoneCompiling twice. Also
-    // ensures that we don't keep the observer alive longer then necessary.
-    mObserver = nullptr;
+  // Clear mObserver before notifying in case of re-entry.
+  if (RefPtr<txACompileObserver> observer = std::move(mObserver)) {
+    observer->onDoneCompiling(this, mStatus, aErrorText, aParam);
   }
 }
 
@@ -429,11 +427,9 @@ nsresult txStylesheetCompiler::maybeDoneCompiling() {
     }
   }
 
-  if (mObserver) {
-    mObserver->onDoneCompiling(this, mStatus);
-    // This will ensure that we don't call onDoneCompiling twice. Also
-    // ensures that we don't keep the observer alive longer then necessary.
-    mObserver = nullptr;
+  // Clear mObserver before notifying in case of re-entry.
+  if (RefPtr<txACompileObserver> observer = std::move(mObserver)) {
+    observer->onDoneCompiling(this, mStatus);
   }
 
   return NS_OK;
