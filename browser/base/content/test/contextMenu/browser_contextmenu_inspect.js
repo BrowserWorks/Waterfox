@@ -65,3 +65,55 @@ add_task(async function test_contextmenu_inspect() {
     }
   });
 });
+
+add_task(async function test_contextmenu_inspect_system_principal() {
+  let contextMenu = document.getElementById("contentAreaContextMenu");
+  await BrowserTestUtils.withNewTab("about:preferences", async browser => {
+    await SpecialPowers.spawn(browser, [], () => {
+      const div = content.document.createElement("div");
+      div.id = "target";
+      div.textContent = "target";
+      content.document.body.prepend(div);
+    });
+    await SpecialPowers.pushPrefEnv({
+      set: [["devtools.chrome.enabled", false]],
+    });
+    let defaultBranch = Services.prefs.getDefaultBranch("");
+    let defaultValue = defaultBranch.getBoolPref("devtools.chrome.enabled");
+    defaultBranch.setBoolPref("devtools.chrome.enabled", false);
+    registerCleanupFunction(() => {
+      Services.prefs.unlockPref("devtools.chrome.enabled");
+      defaultBranch.setBoolPref("devtools.chrome.enabled", defaultValue);
+    });
+    for (let locked of [true, false]) {
+      if (locked) {
+        Services.prefs.lockPref("devtools.chrome.enabled");
+      } else {
+        Services.prefs.unlockPref("devtools.chrome.enabled");
+      }
+      let promisePopupShown = BrowserTestUtils.waitForEvent(
+        contextMenu,
+        "popupshown"
+      );
+      let promisePopupHidden = BrowserTestUtils.waitForEvent(
+        contextMenu,
+        "popuphidden"
+      );
+      await BrowserTestUtils.synthesizeMouse(
+        "#target",
+        2,
+        2,
+        { type: "contextmenu", button: 2 },
+        browser
+      );
+      await promisePopupShown;
+      is(
+        document.getElementById("context-inspect").hidden,
+        locked,
+        `Inspect should be ${locked ? "hidden" : "shown"} when devtools.chrome.enabled is ${locked ? "" : "not "}locked to false.`
+      );
+      contextMenu.hidePopup();
+      await promisePopupHidden;
+    }
+  });
+});
