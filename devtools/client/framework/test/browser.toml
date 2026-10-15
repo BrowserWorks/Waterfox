@@ -232,6 +232,8 @@ skip-if = [
 
 ["browser_toolbox_options_local_mode_notice.js"]
 
+["browser_toolbox_options_locked_pref.js"]
+
 ["browser_toolbox_options_multiple_tabs.js"]
 
 ["browser_toolbox_options_panel_toggle.js"]
