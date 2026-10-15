@@ -10,6 +10,7 @@
 #include "mozilla/StaticMutex.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/MessagePort.h"
+#include "mozilla/dom/MessagePortParent.h"
 #include "mozilla/dom/RemoteWorkerManager.h"  // RemoteWorkerManager::GetRemoteType
 #include "mozilla/dom/RemoteWorkerTypes.h"
 #include "mozilla/dom/SharedWorkerManager.h"
@@ -86,6 +87,12 @@ class WorkerManagerCreatedRunnable final : public Runnable {
             !mActor->CanSend() ||
             !mManagerWrapper->Manager()->MaybeCreateRemoteWorker(
                 mData, mWindowID, mPortIdentifier, mActor->OtherPid()))) {
+      // Letting mPortIdentifier force-close the port would create a
+      // PBackgroundChild on this thread, blocking its shutdown.
+      MessagePortIdentifier port = mPortIdentifier.release();
+      (void)NS_WARN_IF(!MessagePortParent::ForceClose(
+          port.uuid(), port.destinationUuid(), port.sequenceId()));
+
       // If we cannot send, the error won't arrive, but we may log something.
       mActor->ErrorPropagation(NS_ERROR_FAILURE);
       return NS_OK;
