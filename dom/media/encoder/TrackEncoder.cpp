@@ -591,8 +591,7 @@ void VideoTrackEncoder::NotifyEndOfStream() {
     currentTime = mDriftCompensator->GetVideoTime(now, currentTime);
     TimeDuration absoluteEndTime = currentTime - mStartTime;
     CheckedInt64 duration =
-        UsecsToFrames(absoluteEndTime.ToMicroseconds(), mTrackRate) -
-        mEncodedTicks;
+        CheckedInt64(absoluteEndTime.ToTicksAtRate(mTrackRate)) - mEncodedTicks;
     if (duration.isValid() && duration.value() > 0) {
       mEncodedTicks += duration.value();
       TRACK_LOG(LogLevel::Debug,
@@ -770,8 +769,7 @@ void VideoTrackEncoder::AdvanceCurrentTime(const TimeStamp& aTime) {
              .ToSeconds(),
          absoluteEndTime.ToSeconds()));
     CheckedInt64 duration =
-        UsecsToFrames(absoluteEndTime.ToMicroseconds(), mTrackRate) -
-        mEncodedTicks;
+        CheckedInt64(absoluteEndTime.ToTicksAtRate(mTrackRate)) - mEncodedTicks;
     if (!duration.isValid()) {
       NS_ERROR("Duration overflow");
       return;
