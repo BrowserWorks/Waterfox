@@ -746,7 +746,8 @@ nsresult nsHttpConnection::AddTransaction(nsAHttpTransaction* httpTransaction,
 
   if (mSpdySession) {
     nsCOMPtr<nsIInterfaceRequestor> callbacks = GetCallbacks();
-    if (!mSpdySession->AddStream(httpTransaction, priority, callbacks)) {
+    RefPtr<ASpdySession> spdySession = mSpdySession;
+    if (!spdySession->AddStream(httpTransaction, priority, callbacks)) {
       MOZ_ASSERT(false);  // this cannot happen!
       httpTransaction->Close(NS_ERROR_ABORT);
       return NS_ERROR_FAILURE;
