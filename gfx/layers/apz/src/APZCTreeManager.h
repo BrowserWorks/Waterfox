@@ -448,7 +448,7 @@ class APZCTreeManager : public IAPZCTreeManager, public APZInputBridge {
    */
   bool ChainHasFastPathApzAwareListener(const ScrollableLayerGuid& aHitGuid);
 
-  APZInputBridge* InputBridge() override { return this; }
+  RefPtr<APZInputBridge> InputBridge() override { return this; }
 
   /**
    * Add a callback to be invoked when |aInputBlockId| is ready for handling.

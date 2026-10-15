@@ -6,6 +6,7 @@ UNIFIED_SOURCES += [
     "APZTestAccess.cpp",
     "APZTestCommon.cpp",
     "MockHitTester.cpp",
+    "TestAPZInputBridge.cpp",
     "TestAxisLock.cpp",
     "TestBasic.cpp",
     "TestDisplayPort.cpp",

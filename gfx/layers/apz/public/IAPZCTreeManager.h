@@ -7,6 +7,8 @@
 
 #include <stdint.h>  // for uint64_t, uint32_t
 
+#include "mozilla/RefPtr.h"  // for RefPtr
+
 #include "mozilla/layers/LayersTypes.h"          // for TouchBehaviorFlags
 #include "mozilla/layers/ScrollableLayerGuid.h"  // for ScrollableLayerGuid, etc
 #include "mozilla/layers/ZoomConstraints.h"      // for ZoomConstraints
@@ -118,12 +120,11 @@ class IAPZCTreeManager {
 
   /**
    * Returns an APZInputBridge interface that can be used to send input
-   * events to APZ in a synchronous manner. This will always be non-null, and
-   * the returned object's lifetime will match the lifetime of this
-   * IAPZCTreeManager implementation.
+   * events to APZ in a synchronous manner. The returned strong reference keeps
+   * the bridge alive if its owner is destroyed during a synchronous call.
    * It is only valid to call this function in the UI process.
    */
-  virtual APZInputBridge* InputBridge() = 0;
+  virtual RefPtr<APZInputBridge> InputBridge() = 0;
 
  protected:
   // Discourage destruction outside of decref
