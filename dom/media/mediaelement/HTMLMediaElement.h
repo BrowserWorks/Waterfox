@@ -1958,7 +1958,7 @@ class HTMLMediaElement : public nsGenericHTMLElement,
   // Runners whose Run() method is called remove themselves from this list.
   // We keep track of these because the load algorithm resolves/rejects all
   // already-dispatched pending play promises.
-  nsTArray<nsResolveOrRejectPendingPlayPromisesRunner*>
+  nsTArray<RefPtr<nsResolveOrRejectPendingPlayPromisesRunner>>
       mPendingPlayPromisesRunners;
 
   // A pending seek promise which is created at Seek() method call and is
