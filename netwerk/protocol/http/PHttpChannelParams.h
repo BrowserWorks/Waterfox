@@ -6,6 +6,8 @@
 #define mozilla_net_PHttpChannelParams_h
 
 #define ALLOW_LATE_NSHTTP_H_INCLUDE 1
+#include <algorithm>
+
 #include "base/basictypes.h"
 
 #include "ipc/EnumSerializer.h"
@@ -202,10 +204,21 @@ template <>
 struct ParamTraits<mozilla::net::nsHttpHeaderArray> {
   typedef mozilla::net::nsHttpHeaderArray paramType;
 
-  static void Write(MessageWriter* aWriter, const paramType& aParam) {
-    paramType& p = const_cast<paramType&>(aParam);
+  static bool IsSetCookie(const paramType::nsEntry& aEntry) {
+    return aEntry.header == mozilla::net::nsHttp::Set_Cookie;
+  }
 
-    WriteParam(aWriter, p.mHeaders);
+  // Writes in the same format as ParamTraits<nsTArray>, skipping Set-Cookie
+  // entries so they never reach another process.
+  static void Write(MessageWriter* aWriter, const paramType& aParam) {
+    const auto& headers = aParam.mHeaders;
+    auto stripped = std::count_if(headers.begin(), headers.end(), IsSetCookie);
+    aWriter->WriteUInt32(headers.Length() - stripped);
+    for (const auto& entry : headers) {
+      if (!IsSetCookie(entry)) {
+        WriteParam(aWriter, entry);
+      }
+    }
   }
 
   static bool Read(MessageReader* aReader, paramType* aResult) {
