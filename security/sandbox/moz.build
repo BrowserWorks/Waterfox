@@ -202,7 +202,7 @@ elif CONFIG["OS_ARCH"] == "WINNT":
         "_UNICODE",
         "NS_NO_XPCOM",
         "_CRT_RAND_S",
-        "CHROMIUM_SANDBOX_BUILD",
+        "MOZ_NEUTER_SEH_FOR_MINGWCLANG",
     ):
         DEFINES[var] = True
     if CONFIG["CC_TYPE"] not in ("gcc", "clang"):

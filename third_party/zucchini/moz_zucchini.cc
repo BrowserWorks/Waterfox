@@ -27,7 +27,9 @@
 // Get EXCEPTION_* constants defined with DWORD type
 #  include <ntstatus.h>
 
-#  include "components/zucchini/exception_filter_helper_win.h"
+#  if defined(HAVE_SEH_EXCEPTIONS)
+#    include "components/zucchini/exception_filter_helper_win.h"
+#  endif  // HAVE_SEH_EXCEPTIONS
 
 #  include <io.h>
 #endif  // BUILDFLAG(IS_WIN)
@@ -127,11 +129,7 @@ void SetLogFunction(LogFunctionPtr aLogFunction) {
     return status::kStatusFatal;                                          \
   }
 
-#if BUILDFLAG(IS_WIN)
-#  if !defined(HAVE_SEH_EXCEPTIONS) || !HAVE_SEH_EXCEPTIONS
-#    error Compiler support for SEH is required to build zucchini on Windows.
-#  endif
-
+#if BUILDFLAG(IS_WIN) && defined(HAVE_SEH_EXCEPTIONS)
 // Narrow handler that stays around the code touching the mapped file ranges,
 // where EXCEPTION_IN_PAGE_ERROR can be raised. Usable only within member
 // functions, as it relies on mImpl. This reflects the exception catching
@@ -154,7 +152,7 @@ void SetLogFunction(LogFunctionPtr aLogFunction) {
 #else
 #  define BEGIN_PAGE_ERROR_TRY_EXCEPT()
 #  define END_PAGE_ERROR_TRY_EXCEPT()
-#endif  // BUILDFLAG(IS_WIN)
+#endif  // BUILDFLAG(IS_WIN) && HAVE_SEH_EXCEPTIONS
 
 status::Code ComputeCrc32(const uint8_t* aBuf, size_t aBufSize,
                           uint32_t& aOutCrc32) {
@@ -170,9 +168,9 @@ class MappedPatchImpl {
   ~MappedPatchImpl() = default;
   std::optional<MappedFileReader> mFileReader;
   EnsemblePatchReader mPatchReader;
-#if BUILDFLAG(IS_WIN)
+#if BUILDFLAG(IS_WIN) && defined(HAVE_SEH_EXCEPTIONS)
   ExceptionFilterHelper mExceptionFilterHelper;
-#endif  // BUILDFLAG(IS_WIN)
+#endif  // BUILDFLAG(IS_WIN) && HAVE_SEH_EXCEPTIONS
 };
 
 status::Code MappedPatch::Initialize() {
@@ -209,10 +207,10 @@ status::Code MappedPatch::LoadImpl(FILE* aPatchFile, uint32_t* aSourceSize,
     }
     return status::kStatusFileReadError;
   }
-#if BUILDFLAG(IS_WIN)
+#if BUILDFLAG(IS_WIN) && defined(HAVE_SEH_EXCEPTIONS)
   mImpl->mExceptionFilterHelper.AddRange(
       {fileReader.data(), fileReader.length()});
-#endif
+#endif  // BUILDFLAG(IS_WIN) && HAVE_SEH_EXCEPTIONS
   BEGIN_PAGE_ERROR_TRY_EXCEPT()
   BufferSource source(fileReader.region());
   auto& patchReader = mImpl->mPatchReader;
@@ -296,10 +294,10 @@ status::Code MappedPatch::ApplyUnsafeImpl(const uint8_t* aCheckedOldImage,
     return status::kStatusFileWriteError;
   }
 
-#if BUILDFLAG(IS_WIN)
+#if BUILDFLAG(IS_WIN) && defined(HAVE_SEH_EXCEPTIONS)
   mImpl->mExceptionFilterHelper.AddRange(
       {mappedNew.data(), mappedNew.length()});
-#endif
+#endif  // BUILDFLAG(IS_WIN) && HAVE_SEH_EXCEPTIONS
 
   status::Code result =
       ApplyBufferUnsafe(oldImageView, mImpl->mPatchReader, mappedNew.region());
