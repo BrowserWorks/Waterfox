@@ -44,20 +44,11 @@ exports.CommandsFactory = {
    * @returns {object} Commands
    */
   async forTab(tab, { client, isWebExtension } = {}) {
-    const ownsClient = !client;
-    if (ownsClient) {
+    if (!client) {
       client = await createLocalClient();
     }
 
-    let descriptor;
-    try {
-      descriptor = await client.mainRoot.getTab({ tab, isWebExtension });
-    } catch (e) {
-      if (ownsClient) {
-        await client.close();
-      }
-      throw e;
-    }
+    const descriptor = await client.mainRoot.getTab({ tab, isWebExtension });
     descriptor.doNotAttachThreadActor = isWebExtension;
     const commands = await createCommandsDictionary(descriptor);
     return commands;
