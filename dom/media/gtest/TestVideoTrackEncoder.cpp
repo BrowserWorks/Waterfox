@@ -7,6 +7,7 @@
 #include "DriftCompensation.h"
 #include "MediaTrackGraph.h"
 #include "MediaTrackListener.h"
+#include "TimeUnits.h"
 #include "VP8TrackEncoder.h"
 #include "WebMWriter.h"  // TODO: it's weird to include muxer header to get the class definition of VP8 METADATA
 #include "YUVBufferGenerator.h"
@@ -68,6 +69,79 @@ class TestVP8TrackEncoder : public VP8TrackEncoder {
 
   MediaQueue<EncodedFrame> mEncodedVideoQueue;
 };
+
+static nsTArray<uint64_t> EncodeFrameDurations(
+    const nsTArray<TimeDuration>& aFrameDurations) {
+  TestVP8TrackEncoder encoder;
+  YUVBufferGenerator generator;
+  generator.Init(mozilla::gfx::IntSize(640, 480));
+  TimeStamp now = TimeStamp::Now();
+
+  VideoSegment segment;
+  TimeDuration endOffset;
+  for (const TimeDuration& duration : aFrameDurations) {
+    segment.AppendFrame(generator.GenerateI420Image(), generator.GetSize(),
+                        PRINCIPAL_HANDLE_NONE, false, now + endOffset);
+    endOffset += duration;
+  }
+
+  encoder.SetStartOffset(now);
+  encoder.AppendVideoSegment(std::move(segment));
+  encoder.AdvanceCurrentTime(now + endOffset);
+  encoder.NotifyEndOfStream();
+
+  EXPECT_TRUE(encoder.IsEncodingComplete());
+  EXPECT_TRUE(encoder.mEncodedVideoQueue.IsFinished());
+
+  nsTArray<uint64_t> durations;
+  while (RefPtr<EncodedFrame> frame = encoder.mEncodedVideoQueue.PopFront()) {
+    durations.AppendElement(frame->mDuration);
+  }
+  return durations;
+}
+
+static uint64_t SumDurations(const nsTArray<uint64_t>& aDurations) {
+  uint64_t total = 0;
+  for (uint64_t duration : aDurations) {
+    total += duration;
+  }
+  return total;
+}
+
+TEST(VP8VideoTrackEncoder, ExactMillisecondDurationsPreserveTimeline)
+{
+  nsTArray<TimeDuration> frameDurations;
+  frameDurations.AppendElement(TimeDuration::FromMilliseconds(33));
+  frameDurations.AppendElement(TimeDuration::FromMilliseconds(34));
+  frameDurations.AppendElement(TimeDuration::FromMilliseconds(33));
+
+  nsTArray<uint64_t> durations = EncodeFrameDurations(frameDurations);
+
+  ASSERT_EQ(3U, durations.Length());
+  EXPECT_EQ(33000U, durations[0]);
+  EXPECT_EQ(34000U, durations[1]);
+  EXPECT_EQ(33000U, durations[2]);
+  EXPECT_EQ(100000U, SumDurations(durations));
+}
+
+TEST(VP8VideoTrackEncoder, SubTickDurationsUseNearestTrackTick)
+{
+  // Calculate the number of microseconds that will round to one track tick:
+  // ceil(1 second in usecs / (2 * track rate))
+  const int64_t usecsThatRoundToOneTrackTick =
+      (PR_USEC_PER_SEC + int64_t(VIDEO_TRACK_RATE) * 2 - 1) /
+      (int64_t(VIDEO_TRACK_RATE) * 2);
+
+  nsTArray<TimeDuration> frameDurations;
+  frameDurations.AppendElement(
+      TimeDuration::FromMicroseconds(usecsThatRoundToOneTrackTick));
+
+  nsTArray<uint64_t> durations = EncodeFrameDurations(frameDurations);
+
+  ASSERT_EQ(1U, durations.Length());
+  EXPECT_EQ(uint64_t(media::TimeUnit(1, VIDEO_TRACK_RATE).ToMicroseconds()),
+            durations[0]);
+}
 
 // Init test
 TEST(VP8VideoTrackEncoder, Initialization)
