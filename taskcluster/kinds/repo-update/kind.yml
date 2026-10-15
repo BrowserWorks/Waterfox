@@ -26,6 +26,16 @@ task-defaults:
         env:
             REVIEWERS: "#release-managers"
         taskcluster-proxy: true
+        artifacts:
+            - name: 'public/build/nsSTSPreloadList.diff'
+              path: '/home/worker/artifacts/nsSTSPreloadList.diff'
+              type: file
+            - name: 'public/build/StaticHPKPins.h.diff'
+              path: '/home/worker/artifacts/StaticHPKPins.h.diff'
+              type: file
+            - name: 'public/build/hsts-probe-results.json'
+              path: '/home/worker/artifacts/hsts-probe-results.json'
+              type: file
     treeherder:
         kind: build
         platform: linux64/opt
@@ -55,33 +65,34 @@ tasks:
             env:
                 DO_HSTS:
                     by-project:
-                        mozilla-(central|beta|esr.*): "1"
+                        mozilla-(central|beta): "1"
                         default: ""
                 DO_HPKP:
                     by-project:
-                        mozilla-(central|beta|esr.*): "1"
+                        mozilla-(central|beta): "1"
                         default: ""
                 USE_MOZILLA_CENTRAL:
                     by-project:
                         mozilla-central|try: "1"
                         default: ""
-            artifacts:
-                - name: 'public/build/nsSTSPreloadList.diff'
-                  path: '/home/worker/artifacts/nsSTSPreloadList.diff'
-                  type: file
-                - name: 'public/build/StaticHPKPins.h.diff'
-                  path: '/home/worker/artifacts/StaticHPKPins.h.diff'
-                  type: file
-                - name: 'public/build/hsts-probe-results.json'
-                  path: '/home/worker/artifacts/hsts-probe-results.json'
-                  type: file
 
     periodic-file-update:
-        description: Remote settings, suffix list, mobile experiments, mobile merino manifest, and CT log update
+        description:
+            by-project:
+                mozilla-esr.*: Remote settings, suffix list, mobile experiments, mobile merino manifest, CT log, HSTS and HPKP pinning update
+                default: Remote settings, suffix list, mobile experiments, mobile merino manifest, and CT log update
+        worker-type:
+            by-project:
+                mozilla-esr.*: b-linux
+                default: b-linux-medium
         task-context:
             from-parameters:
                 project: project
             substitution-fields:
+                - worker-type
+                - worker.max-run-time
+                - worker.env.DO_HSTS
+                - worker.env.DO_HPKP
                 - worker.env.DO_REMOTE_SETTINGS
                 - worker.env.DO_SUFFIX_LIST
                 - worker.env.DO_MOBILE_EXPERIMENTS
@@ -89,9 +100,24 @@ tasks:
                 - worker.env.DO_CT_LOGS
         treeherder:
             symbol: pfu
+        index:
+            product: firefox
+            job-name: periodic-file-update
         worker:
-            max-run-time: 1200
+            max-run-time:
+                by-project:
+                    mozilla-esr.*: 3600
+                    default: 1200
             env:
+                HSTS_RESULTS_JOB: periodic-file-update
+                DO_HSTS:
+                    by-project:
+                        mozilla-esr.*: "1"
+                        default: ""
+                DO_HPKP:
+                    by-project:
+                        mozilla-esr.*: "1"
+                        default: ""
                 DO_REMOTE_SETTINGS:
                     by-project:
                         mozilla-(central|beta|release|esr.*): "1"

@@ -261,7 +261,6 @@ jobs:
       run-on-projects:
           - mozilla-central
           - mozilla-beta
-          - mozilla-esr153
       when:
           - {weekday: 'Friday', hour: 17, minute: 0}
 

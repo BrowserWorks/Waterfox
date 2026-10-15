@@ -280,7 +280,7 @@ function compare_hsts_files {
   cp "${TOPSRCDIR}/security/manager/ssl/$(basename "${HSTS_PRELOAD_INC_OLD}")" "${HSTS_PRELOAD_INC_OLD}" || exit 84
 
   echo "INFO: Downloading previous HSTS probe results..."
-  if ! fetch_file "${HSTS_RESULTS_PREVIOUS}" "${index_base}/task/gecko.v2.${BRANCH}.latest.firefox.pinning-update/artifacts/public/build/${HSTS_RESULTS}"; then
+  if ! fetch_file "${HSTS_RESULTS_PREVIOUS}" "${index_base}/task/gecko.v2.${BRANCH}.latest.firefox.${HSTS_RESULTS_JOB:-pinning-update}/artifacts/public/build/${HSTS_RESULTS}"; then
     echo "WARNING: no previous HSTS probe results, failure streaks start over" >&2
   fi
 
@@ -593,8 +593,8 @@ function push_repo {
     return 1
   fi
   # Clean up older review requests of the same type as this run.
-  # Pinning updates (HSTS/HPKP) and periodic updates are separate tasks and
-  # must not abandon each other's patches.
+  # Where pinning updates (HSTS/HPKP) and periodic updates are separate tasks,
+  # they must not abandon each other's patches.
   if [ "${DO_HSTS}" == "true" ] || [ "${DO_HPKP}" == "true" ]; then
     PINNING=true
   else

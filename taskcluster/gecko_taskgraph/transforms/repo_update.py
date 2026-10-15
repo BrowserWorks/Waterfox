@@ -6,6 +6,7 @@ Transform the repo-update task into an actual task description.
 """
 
 from taskgraph.transforms.base import TransformSequence
+from taskgraph.util.schema import resolve_keyed_by
 
 transforms = TransformSequence()
 
@@ -13,6 +14,12 @@ transforms = TransformSequence()
 @transforms.add
 def resolve_keys(config, tasks):
     for task in tasks:
+        resolve_keyed_by(
+            task,
+            "description",
+            item_name=task["name"],
+            project=config.params["project"],
+        )
         env = task["worker"].setdefault("env", {})
         env["BRANCH"] = config.params["project"]
 
