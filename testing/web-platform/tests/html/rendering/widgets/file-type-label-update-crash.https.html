@@ -23,7 +23,7 @@ frame.onload = () => {
   // Leave this style change pending until the label's text mutation flushes it.
   frame.style.display = "none";
   input.files = dt.files;
-  document.documentElement.classList.remove("reftest-wait");
+  document.documentElement.classList.remove("test-wait");
 };
 frame.src = URL.createObjectURL(new Blob([xml], {type: "application/xml"}));
 document.body.append(frame);
