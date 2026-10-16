@@ -618,6 +618,10 @@ class DevTools extends EventEmitter {
    * @param {object} options
    *        Various options that will be forwarded to `showToolbox`. See the
    *        JSDoc on this method.
+   * @return {Promise<Toolbox|null>}
+   *        Resolves to null if the tab can't get its own toolbox: a popup
+   *        debugged from its opener, or a system principal document while
+   *        devtools.chrome.enabled is locked to false.
    */
   async showToolboxForTab(
     tab,
@@ -649,7 +653,15 @@ class DevTools extends EventEmitter {
         return null;
       }
     }
-    const commands = await LocalTabCommandsFactory.createCommandsForTab(tab);
+    let commands;
+    try {
+      commands = await LocalTabCommandsFactory.createCommandsForTab(tab);
+    } catch (e) {
+      if (e.serverPacket?.error == "chromeDebuggingDisabled") {
+        return null;
+      }
+      throw e;
+    }
     return this.showToolbox(commands, {
       toolId,
       toolOptions,
@@ -891,6 +903,10 @@ class DevTools extends EventEmitter {
       startTime,
       reason: "inspect_dom",
     });
+    // See showToolboxForTab for when the tab can't be debugged.
+    if (!toolbox) {
+      return;
+    }
 
     // If the toolbox wasn't opened yet, the selection of the node will be handled by
     // the defaultStartupNodeDomReference option, so we can stop here.
@@ -942,6 +958,10 @@ class DevTools extends EventEmitter {
       toolId: "accessibility",
       startTime,
     });
+    // See showToolboxForTab for when the tab can't be debugged.
+    if (!toolbox) {
+      return;
+    }
     const inspectorFront = await toolbox.target.getFront("inspector");
     const nodeFront =
       await inspectorFront.getNodeActorFromContentDomReference(domReference);

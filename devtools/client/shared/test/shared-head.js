@@ -202,6 +202,7 @@ const {
 } = require("resource://devtools/client/framework/devtools.js");
 const {
   CommandsFactory,
+  createLocalClientForTests,
 } = require("resource://devtools/shared/commands/commands-factory.js");
 const DevToolsUtils = require("resource://devtools/shared/DevToolsUtils.js");
 
