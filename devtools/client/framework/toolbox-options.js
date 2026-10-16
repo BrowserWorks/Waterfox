@@ -516,6 +516,9 @@ class OptionsPanel extends EventEmitter {
       if (GetPref(prefCheckbox.getAttribute("data-pref"))) {
         prefCheckbox.setAttribute("checked", true);
       }
+      if (Services.prefs.prefIsLocked(prefCheckbox.getAttribute("data-pref"))) {
+        prefCheckbox.disabled = true;
+      }
       prefCheckbox.addEventListener("change", e => {
         const checkbox = e.target;
         SetPref(checkbox.getAttribute("data-pref"), checkbox.checked);
