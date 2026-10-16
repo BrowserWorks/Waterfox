@@ -209,7 +209,10 @@ void nsTableCellFrame::DidSetComputedStyle(ComputedStyle* aOldComputedStyle) {
     uint32_t rowIndex = RowIndex();
     // row span needs to be clamped as we do not create rows in the cellmap
     // which do not have cells originating in them
-    TableArea damageArea(colIndex, rowIndex, GetColSpan(),
+    // col span needs to be clamped as the cellmap may not reflect it yet
+    TableArea damageArea(colIndex, rowIndex,
+                         std::min(static_cast<uint32_t>(GetColSpan()),
+                                  tableFrame->GetColCount() - colIndex),
                          std::min(static_cast<uint32_t>(GetRowSpan()),
                                   tableFrame->GetRowCount() - rowIndex));
     tableFrame->AddBCDamageArea(damageArea);

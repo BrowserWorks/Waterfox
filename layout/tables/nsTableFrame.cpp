@@ -4497,10 +4497,11 @@ void nsTableFrame::ExpandBCDamageArea(TableArea& aArea) const {
   int32_t numRows = GetRowCount();
   int32_t numCols = GetColCount();
 
-  int32_t firstColIdx = aArea.StartCol();
-  int32_t lastColIdx = aArea.EndCol() - 1;
-  int32_t startRowIdx = aArea.StartRow();
-  int32_t endRowIdx = aArea.EndRow() - 1;
+  // Clamp to the table, the damage area can be out of sync with the cell map.
+  int32_t firstColIdx = std::min(aArea.StartCol(), numCols - 1);
+  int32_t lastColIdx = std::min(aArea.EndCol(), numCols) - 1;
+  int32_t startRowIdx = std::min(aArea.StartRow(), numRows - 1);
+  int32_t endRowIdx = std::min(aArea.EndRow(), numRows) - 1;
 
   // expand the damage area in each direction
   if (firstColIdx > 0) {
