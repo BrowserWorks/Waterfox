@@ -18,6 +18,9 @@ support-files = [
 
 ["test_backgroundupdate_exitcodes.js"]
 run-sequentially = ["true"] # perma-fail in parallel
+skip-if = [
+  "os == 'win' && opt", # Bug 1760099
+]
 
 ["test_backgroundupdate_glean.js"]
 
