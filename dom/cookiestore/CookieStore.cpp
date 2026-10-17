@@ -416,6 +416,11 @@ CookieStore::CookieStore(nsIGlobalObject* aGlobal)
 
 CookieStore::~CookieStore() { Shutdown(); }
 
+void CookieStore::DisconnectFromOwner() {
+  Shutdown();
+  DOMEventTargetHelper::DisconnectFromOwner();
+}
+
 JSObject* CookieStore::WrapObject(JSContext* aCx,
                                   JS::Handle<JSObject*> aGivenProto) {
   return CookieStore_Binding::Wrap(aCx, this, aGivenProto);

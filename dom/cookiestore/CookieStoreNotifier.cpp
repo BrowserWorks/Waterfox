@@ -92,6 +92,7 @@ void CookieStoreNotifier::Disentangle() {
   MOZ_ASSERT(NS_IsMainThread());
 
   mCookieStore = nullptr;
+  mDelayedDOMEvents.Clear();
 
   nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
   if (NS_WARN_IF(!os)) {

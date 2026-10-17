@@ -33,6 +33,8 @@ class CookieStore final : public DOMEventTargetHelper {
   JSObject* WrapObject(JSContext* aCx,
                        JS::Handle<JSObject*> aGivenProto) override;
 
+  void DisconnectFromOwner() override;
+
   void FireDelayedDOMEvents();
 
   already_AddRefed<Promise> Get(const nsAString& aName, ErrorResult& aRv);
