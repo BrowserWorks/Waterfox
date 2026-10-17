@@ -4,6 +4,7 @@
 
 #include "DocumentL10n.h"
 
+#include "mozilla/ScopeExit.h"
 #include "mozilla/dom/AutoEntryScript.h"
 #include "mozilla/dom/Document.h"
 #include "mozilla/dom/DocumentL10nBinding.h"
@@ -153,23 +154,26 @@ void DocumentL10n::TriggerInitialTranslation() {
     return;
   }
 
-  AutoAllowLegacyScriptExecution exemption;
-
-  nsTArray<RefPtr<Promise>> promises;
-
-  ErrorResult rv;
-  promises.AppendElement(TranslateDocument(rv));
-  if (NS_WARN_IF(rv.Failed())) {
-    rv.SuppressException();
+  auto errorExit = MakeScopeExit([&] {
     InitialTranslationCompleted(false);
     mReady->MaybeRejectWithUndefined();
+  });
+
+  AutoAllowLegacyScriptExecution exemption;
+
+  AutoTArray<RefPtr<Promise>, 2> promises;
+
+  IgnoredErrorResult rv;
+  promises.AppendElement(TranslateDocument(rv));
+  if (NS_WARN_IF(rv.Failed())) {
     return;
   }
   promises.AppendElement(TranslateRoots(rv));
+  if (NS_WARN_IF(rv.Failed())) {
+    return;
+  }
   Element* documentElement = mDocument->GetDocumentElement();
   if (!documentElement) {
-    InitialTranslationCompleted(false);
-    mReady->MaybeRejectWithUndefined();
     return;
   }
 
@@ -177,6 +181,11 @@ void DocumentL10n::TriggerInitialTranslation() {
 
   AutoEntryScript aes(mGlobal, "DocumentL10n InitialTranslation");
   RefPtr<Promise> promise = Promise::All(aes.cx(), promises, rv);
+  if (NS_WARN_IF(rv.Failed())) {
+    return;
+  }
+
+  errorExit.release();
 
   if (promise->State() == Promise::PromiseState::Resolved) {
     // If the promise is already resolved, we can fast-track
