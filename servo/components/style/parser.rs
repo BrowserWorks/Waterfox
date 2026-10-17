@@ -176,6 +176,7 @@ impl<'a> ParserContext<'a> {
     }
 
     /// Get the rule type, which assumes that one is available.
+    #[inline]
     pub fn rule_types(&self) -> CssRuleTypes {
         self.nesting_context.rule_types
     }

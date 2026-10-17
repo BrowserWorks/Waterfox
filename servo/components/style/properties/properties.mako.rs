@@ -409,37 +409,26 @@ impl NonCustomPropertyId {
 
     /// Returns whether a given rule allows a given property.
     #[inline]
-    pub fn allowed_in_rule(self, rule_types: CssRuleTypes) -> bool {
+    pub(super) fn allowed_in_rule(self, rule_types: CssRuleTypes) -> bool {
+        let allowed_types = rule_types.intersection(CssRuleTypes::DECLARATION_ALLOWED_TYPES);
         debug_assert!(
-            rule_types.contains(CssRuleType::Keyframe) ||
-            rule_types.contains(CssRuleType::Page) ||
-            rule_types.contains(CssRuleType::Style) ||
-            rule_types.contains(CssRuleType::Scope) ||
-            rule_types.contains(CssRuleType::PositionTry),
-            "Given rule type does not allow declarations."
+            !allowed_types.is_empty(),
+            "{rule_types:?} doesn't allow declarations (parsing {self:?})"
         );
 
-        static MAP: [u32; property_counts::NON_CUSTOM] = [
+        static MAP: [CssRuleTypes; property_counts::NON_CUSTOM] = [
             % for property in data.longhands + data.shorthands + data.all_aliases():
+            CssRuleTypes::from_bits(
             % for name in RULE_VALUES:
             % if property.rule_types_allowed & RULE_VALUES[name] != 0:
             CssRuleType::${to_camel_case(name)}.bit() |
             % endif
             % endfor
-            0,
+            0),
             % endfor
         ];
-        MAP[self.0 as usize] & rule_types.bits() != 0
+        MAP[self.0 as usize].contains_all(allowed_types)
     }
-
-    pub(super) fn allowed_in(self, context: &ParserContext) -> bool {
-        if !self.allowed_in_rule(context.rule_types()) {
-            return false;
-        }
-
-        self.allowed_in_ignoring_rule_type(context)
-    }
-
 
     pub(super) fn allowed_in_ignoring_rule_type(self, context: &ParserContext) -> bool {
         // The semantics of these are kinda hard to reason about, what follows

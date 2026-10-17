@@ -337,7 +337,7 @@ spec = "https://drafts.csswg.org/css-align/#propdef-place-content"
 [place-self]
 sub_properties = ["align-self", "justify-self"]
 spec = "https://drafts.csswg.org/css-align/#place-self-property"
-rule_types_allowed = ["style", "position-try"]
+rule_types_allowed = ["style", "scope", "position-try"]
 
 [place-items]
 sub_properties = ["align-items", "justify-items"]
@@ -363,7 +363,7 @@ extra_prefixes = ["moz:layout.css.prefixes.transitions", "webkit"]
 sub_properties = ["animation-name", "animation-duration", "animation-timing-function", "animation-delay", "animation-iteration-count", "animation-direction", "animation-fill-mode", "animation-play-state", "animation-timeline", "animation-range-start", "animation-range-end"]
 spec = "https://drafts.csswg.org/css-animations/#propdef-animation"
 extra_prefixes = ["moz:layout.css.prefixes.animations", "webkit"]
-rule_types_allowed = ["style"]
+rule_types_allowed = ["style", "scope"]
 
 [scroll-timeline]
 engine = "gecko"

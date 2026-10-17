@@ -5060,10 +5060,8 @@ fn parse_property_into(
 ) -> Result<(), ()> {
     let value = unsafe { value.as_str_unchecked() };
 
-    if let Some(non_custom) = property_id.non_custom_id() {
-        if !non_custom.allowed_in_rule(rule_type.into()) {
-            return Err(());
-        }
+    if !property_id.allowed_in_rule(rule_type.into()) {
+        return Err(());
     }
 
     parse_one_declaration_into(

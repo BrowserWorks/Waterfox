@@ -29,8 +29,7 @@ use crate::dom::AttributeTracker;
 use crate::gecko_bindings::structs::{CSSPropertyId, NonCustomCSSPropertyId, RefPtr};
 use crate::logical_geometry::WritingMode;
 use crate::parser::ParserContext;
-use crate::stylesheets::CssRuleType;
-use crate::stylesheets::Origin;
+use crate::stylesheets::{CssRuleType, CssRuleTypes, Origin};
 use crate::stylist::Stylist;
 use crate::typed_om::{ToTyped, TypedValue};
 use crate::values::{computed, serialize_atom_name};
@@ -521,18 +520,17 @@ impl PropertyId {
         }
     }
 
-    fn allowed_in(&self, context: &ParserContext) -> bool {
-        let id = match self.non_custom_id() {
+    /// Returns this property id is allowed in this set of rules.
+    pub fn allowed_in_rule(&self, rule_types: CssRuleTypes) -> bool {
+        match self.non_custom_id() {
             // Custom properties are allowed everywhere, except `position-try`.
-            None => {
-                return !context
-                    .nesting_context
-                    .rule_types
-                    .contains(CssRuleType::PositionTry)
-            },
-            Some(id) => id,
-        };
-        id.allowed_in(context)
+            None => !rule_types.contains(CssRuleType::PositionTry),
+            Some(id) => id.allowed_in_rule(rule_types),
+        }
+    }
+
+    fn allowed_in(&self, context: &ParserContext) -> bool {
+        self.allowed_in_rule(context.rule_types()) && self.allowed_in_ignoring_rule_type(context)
     }
 
     #[inline]
@@ -898,7 +896,11 @@ impl PropertyDeclaration {
         input: &mut Parser<'i, 't>,
     ) -> Result<(), ParseError<'i>> {
         assert!(declarations.is_empty());
-        debug_assert!(id.allowed_in(context), "{:?}", id);
+        debug_assert!(
+            id.allowed_in(context),
+            "{id:?} is not allowed in this context {:?}",
+            context.rule_types()
+        );
         input.skip_whitespace();
 
         let start = input.state();

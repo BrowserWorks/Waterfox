@@ -638,6 +638,15 @@ impl CssRuleTypes {
     pub const IMPORTANT_FORBIDDEN: Self =
         Self(CssRuleType::PositionTry.bit() | CssRuleType::Keyframe.bit());
 
+    /// The rule types that determine which declarations we allow.
+    pub const DECLARATION_ALLOWED_TYPES: Self = Self(
+        CssRuleType::Keyframe.bit()
+            | CssRuleType::Page.bit()
+            | CssRuleType::Style.bit()
+            | CssRuleType::Scope.bit()
+            | CssRuleType::PositionTry.bit(),
+    );
+
     /// Rules without element context.
     pub const WITHOUT_ELEMENT_CONTEXT: Self = Self(
         CssRuleType::CounterStyle.bit()
@@ -652,6 +661,12 @@ impl CssRuleTypes {
         self.0 & ty.bit() != 0
     }
 
+    /// Returns whether all the types in `other` are in `self`.
+    #[inline]
+    pub fn contains_all(self, other: Self) -> bool {
+        (self.0 & other.0) == other.0
+    }
+
     /// Returns all the rules specified in the set.
     #[inline]
     pub fn bits(self) -> u32 {
@@ -660,7 +675,7 @@ impl CssRuleTypes {
 
     /// Creates a raw CssRuleTypes bitfield.
     #[inline]
-    pub fn from_bits(bits: u32) -> Self {
+    pub const fn from_bits(bits: u32) -> Self {
         Self(bits)
     }
 
@@ -679,7 +694,18 @@ impl CssRuleTypes {
     /// Returns whether any of the types intersect.
     #[inline]
     pub fn intersects(self, other: Self) -> bool {
-        self.0 & other.0 != 0
+        !self.intersection(other).is_empty()
+    }
+
+    /// Returns the intersection of any of the types.
+    #[inline]
+    pub fn intersection(self, other: Self) -> Self {
+        Self(self.0 & other.0)
+    }
+
+    /// Returns whether some rule type of the set allow declarations
+    pub fn allows_declarations(self) -> bool {
+        self.intersects(Self::DECLARATION_ALLOWED_TYPES)
     }
 }
 
