@@ -4854,11 +4854,11 @@ class Document : public nsINode,
   // Helper for GetScrollingElement/IsScrollingElement.
   bool IsPotentiallyScrollable(HTMLBodyElement* aBody);
 
-  // Whether GetScrollingElementImpl / IsPotentiallyScrollableImpl should flush
-  // pending style and frame construction before answering.
+  // Whether GetScrollingElementImpl should flush pending style and frame
+  // construction before answering.
   enum class Flush : bool { No, Yes };
   Element* GetScrollingElementImpl(Flush);
-  bool IsPotentiallyScrollableImpl(HTMLBodyElement* aBody, Flush);
+  bool IsPotentiallyScrollableImpl(HTMLBodyElement* aBody);
 
   void MaybeAllowStorageForOpenerAfterUserInteraction();
 

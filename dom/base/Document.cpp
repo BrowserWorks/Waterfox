@@ -14870,12 +14870,7 @@ already_AddRefed<nsRange> Document::CaretRangeFromPoint(int32_t aX,
   return range.forget();
 }
 
-bool Document::IsPotentiallyScrollableImpl(HTMLBodyElement* aBody,
-                                           Flush aFlush) {
-  if (aFlush == Flush::Yes) {
-    FlushPendingNotifications(FlushType::Frames);
-  }
-
+bool Document::IsPotentiallyScrollableImpl(HTMLBodyElement* aBody) {
   // An element that is the HTML body element is potentially scrollable if all
   // of the following conditions are true:
 
@@ -14904,15 +14899,21 @@ Element* Document::GetScrollingElementImpl(Flush aFlush) {
   if (GetCompatibilityMode() != eCompatibility_NavQuirks) {
     return GetRootElement();
   }
+
+  if (aFlush == Flush::Yes) {
+    FlushPendingNotifications(FlushType::Frames);
+  }
+  // Get the body element after we flush to make sure it is up-to-date.
   RefPtr<HTMLBodyElement> body = GetBodyElement();
-  if (body && !IsPotentiallyScrollableImpl(body, aFlush)) {
+  if (body && !IsPotentiallyScrollableImpl(body)) {
     return body;
   }
   return nullptr;
 }
 
 bool Document::IsPotentiallyScrollable(HTMLBodyElement* aBody) {
-  return IsPotentiallyScrollableImpl(aBody, Flush::Yes);
+  FlushPendingNotifications(FlushType::Frames);
+  return IsPotentiallyScrollableImpl(aBody);
 }
 
 Element* Document::GetScrollingElement() {

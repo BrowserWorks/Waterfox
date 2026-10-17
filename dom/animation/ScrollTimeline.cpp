@@ -66,6 +66,8 @@ already_AddRefed<ScrollTimeline> ScrollTimeline::Constructor(
   // <https://drafts.csswg.org/scroll-animations-1/#dom-scrolltimeline-scrolltimeline>
 
   // Step 2 -- get the source for the timeline.
+  // The scrollingElement depends on style/layout-tree in quirks mode, and we
+  // expect to get the up-to-date scrolling element, so it may flush the layout.
   Element* source = aOptions.mSource.WasPassed()
                         ? aOptions.mSource.Value().get()
                         : doc->GetScrollingElement();
