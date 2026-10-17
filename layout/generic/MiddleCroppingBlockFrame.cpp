@@ -31,7 +31,10 @@ MiddleCroppingBlockFrame::~MiddleCroppingBlockFrame() = default;
 void MiddleCroppingBlockFrame::UpdateDisplayedValue(const nsAString& aValue,
                                                     bool aIsCropped,
                                                     bool aNotify) {
-  auto* text = mTextNode.get();
+  // If we notify, we might be dead after SetText().
+  mCropped = aIsCropped;
+
+  RefPtr text = mTextNode;
   uint32_t oldLength = aNotify ? 0 : text->TextLength();
   text->SetText(aValue, aNotify);
   if (!aNotify) {
@@ -45,7 +48,6 @@ void MiddleCroppingBlockFrame::UpdateDisplayedValue(const nsAString& aValue,
       LinesBegin()->MarkDirty();
     }
   }
-  mCropped = aIsCropped;
 }
 
 void MiddleCroppingBlockFrame::UpdateDisplayedValueToUncroppedValue(
