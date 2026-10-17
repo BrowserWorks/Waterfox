@@ -7672,6 +7672,18 @@ static nsIFrame* FindPreviousNonWhitespaceSibling(nsIFrame* aFrame) {
   return f;
 }
 
+// Returns whether aFrame is inside a table that is fragmented across pages.
+// Such tables can't deal with removals (see nsTableCellMap::Synchronize and
+// CreateContinuingTableFrame).
+static bool IsInFragmentedTable(nsIFrame* aFrame) {
+  for (nsIFrame* f = aFrame->GetParent(); f; f = f->GetParent()) {
+    if (f->IsTableFrame() && (f->GetPrevInFlow() || f->GetNextInFlow())) {
+      return true;
+    }
+  }
+  return false;
+}
+
 static nsIFrame* CheckRubyContainers(nsIFrame* aFrame, nsIFrame* aParent) {
   auto* ancestor = aParent;
   auto* ancestorChild = aFrame;
@@ -7760,6 +7772,19 @@ bool nsCSSFrameConstructor::MaybeRecreateContainerForFrameRemoval(
                                InsertionKind::Async);
       return true;
     }
+  }
+
+  if (aFrame->PresContext()->IsPaginated() &&
+      aFrame->GetContent() != mDocument->GetRootElement() &&
+      (IsInFragmentedTable(inFlowFrame) ||
+       aFrame->IsInReplicatedFixedPosTree())) {
+    // Fragmented tables and replicated fixed-pos frames on subsequent pages
+    // can't deal with removals. Rebuild the whole document instead, which also
+    // makes sure that the new frames get reflowed, since paginated documents
+    // don't do incremental reflow (see nsPageSequenceFrame::Reflow).
+    TRACE("Paginated fragmented content");
+    RecreateFramesForContent(mDocument->GetRootElement(), InsertionKind::Async);
+    return true;
   }
 
   if (IsFramePartOfIBSplit(aFrame)) {

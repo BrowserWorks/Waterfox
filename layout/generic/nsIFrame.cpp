@@ -9251,6 +9251,23 @@ void nsIFrame::DumpFrameTreeLimitedInCSSPixels() const {
 
 #endif
 
+// FIXME(emilio, bug 1633685): We should ideally figure out how to properly
+// restyle replicated fixed pos frames... We seem to assume everywhere that they
+// can't get restyled at the moment...
+bool nsIFrame::IsInReplicatedFixedPosTree() const {
+  if (!PresContext()->IsPaginated()) {
+    return false;
+  }
+  for (const nsIFrame* f = this; f; f = f->GetParent()) {
+    if (f->StyleDisplay()->mPosition == StylePositionProperty::Fixed &&
+        nsLayoutUtils::IsReallyFixedPos(f)) {
+      const nsIFrame* pageContent = f->GetParent();
+      return pageContent->GetPrevInFlow() || pageContent->GetNextInFlow();
+    }
+  }
+  return false;
+}
+
 bool nsIFrame::IsVisibleForPainting() const {
   return StyleVisibility()->IsVisible();
 }
