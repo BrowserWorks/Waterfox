@@ -82,6 +82,12 @@ class WebProgressListener final : public nsIWebProgressListener,
       rv.ThrowInvalidStateError("Unable to open window");
       mPromise->Reject(rv, __func__);
       mPromise = nullptr;
+      if (browsingContext) {
+        if (nsCOMPtr<nsIWebProgress> webProgress =
+                browsingContext->GetWebProgress()) {
+          (void)webProgress->RemoveProgressListener(this);
+        }
+      }
       return NS_OK;
     }
 
