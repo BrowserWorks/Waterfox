@@ -228,9 +228,7 @@ def get_flavors(graph_config, param):
         "required": ["release_promotion_flavor", "build_number"],
     },
 )
-def release_promotion_action(
-    push_parameters, graph_config, input, task_group_id, task_id
-):
+def release_promotion_action(parameters, graph_config, input, task_group_id, task_id):
     release_promotion_flavor = input["release_promotion_flavor"]
     promotion_config = graph_config["release-promotion"]["flavors"][
         release_promotion_flavor
@@ -249,7 +247,7 @@ def release_promotion_action(
 
     if promotion_config.get("partial-updates", False):
         partial_updates = input.get("partial_updates", {})
-        if not partial_updates and release_level(push_parameters) == "production":
+        if not partial_updates and release_level(parameters) == "production":
             raise Exception(
                 f"`partial_updates` property needs to be provided for `{release_promotion_flavor}`"
                 "target."
@@ -257,11 +255,11 @@ def release_promotion_action(
         balrog_prefix = product.title()
         os.environ["PARTIAL_UPDATES"] = json.dumps(partial_updates, sort_keys=True)
         release_history = populate_release_history(
-            balrog_prefix, push_parameters["project"], partial_updates=partial_updates
+            balrog_prefix, parameters["project"], partial_updates=partial_updates
         )
 
     target_tasks_method = promotion_config["target-tasks-method"].format(
-        project=push_parameters["project"]
+        project=parameters["project"]
     )
     rebuild_kinds = input.get(
         "rebuild_kinds", promotion_config.get("rebuild-kinds", [])
@@ -287,25 +285,22 @@ def release_promotion_action(
     # Build previous_graph_ids from ``previous_graph_ids``, ``revision``,
     # or the action parameters.
     previous_graph_ids = input.get("previous_graph_ids")
-    head_rev_param = "{}head_rev".format(graph_config["project-repo-param-prefix"])
     if not previous_graph_ids:
         revision = input.get("revision")
         if revision:
-            push_parameters[head_rev_param] = revision
+            head_rev_param = "{}head_rev".format(
+                graph_config["project-repo-param-prefix"]
+            )
+            push_parameters = {
+                head_rev_param: revision,
+                "project": parameters["project"],
+            }
+        else:
+            push_parameters = parameters
         previous_graph_ids = [find_decision_task(push_parameters, graph_config)]
 
     # Download parameters from the first decision task
     parameters = get_artifact(previous_graph_ids[0], "public/parameters.yml")
-    # Override `head_rev` - this should always be the revision that this action
-    # task was fired from. If the first `previous_graph_id` given was from an
-    # earlier revision, it will end up being wrong. This will cause any created
-    # tasks to have the wrong revision set, which causes problems such as showing
-    # up in the wrong place on Treeherder, and associated cached task digests
-    # with unmatched sources.
-    parameters["head_rev"] = push_parameters["head_rev"]
-    # If no `project-repo-param-prefix' is set this will end up doing the same
-    # as the above...but that's no harm.
-    parameters[head_rev_param] = push_parameters[head_rev_param]
 
     # Download and combine full task graphs from each of the previous_graph_ids.
     # Sometimes previous relpro action tasks will add tasks, like partials,
