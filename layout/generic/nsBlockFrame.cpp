@@ -3697,6 +3697,7 @@ bool nsBlockFrame::ReflowDirtyLines(BlockReflowState& aState) {
         RemoveFirstLine(nextInFlow->mLines, nextInFlow->mFrames, &pulledLine,
                         &pulledFrames);
         ClearLineCursors();
+        nextInFlow->ClearLineCursors();
       } else {
         // Grab an overflow line if there are any
         FrameLines* overflowLines = nextInFlow->GetOverflowLines();
@@ -4048,6 +4049,7 @@ nsIFrame* nsBlockFrame::PullFrameFrom(nsLineBox* aLine,
     MOZ_ASSERT(aLine == mLines.back());
     MOZ_ASSERT(aFromLine == aFromContainer->mLines.begin(),
                "should only pull from first line");
+    aFromContainer->ClearLineCursors();
     aFromContainer->mFrames.RemoveFrame(frame);
 
     // When pushing and pulling frames we need to check for whether any
