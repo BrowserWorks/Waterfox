@@ -682,6 +682,7 @@ nsresult nsHttpChannelAuthProvider::GetCredentials(
         // expected asynchronously, save current challenge being
         // processed and all remaining challenges to use later in
         // OnAuthAvailable and now immediately return
+        *currentAuthType = authType;
         mCurrentChallenge = cc[i].challenge;
         // imperfect; does not save server-side preference ordering.
         // instead, continues with remaining string as provided by client
@@ -1415,6 +1416,10 @@ NS_IMETHODIMP nsHttpChannelAuthProvider::OnAuthAvailable(
   nsCString creds;
   rv = GenCredsAndSetEntry(auth, mProxyAuth, scheme, host, port, path, realm,
                            mCurrentChallenge, *ident, sessionStateGrip, creds);
+  if (rv == NS_ERROR_IN_PROGRESS) {
+    // OnCredsGenerated will be called and needs mCurrentChallenge.
+    return NS_OK;
+  }
 
   mCurrentChallenge.Truncate();
   if (NS_FAILED(rv)) {
@@ -1463,8 +1468,10 @@ NS_IMETHODIMP nsHttpChannelAuthProvider::OnAuthCancelled(nsISupports* aContext,
       // next challenges since it is no longer relevant.
       if (mProxyAuth) {
         NS_IF_RELEASE(mProxyAuthContinuationState);
+        mProxyAuthType.Truncate();
       } else {
         NS_IF_RELEASE(mAuthContinuationState);
+        mAuthType.Truncate();
       }
       nsAutoCString creds;
       rv = GetCredentials(mRemainingChallenges, mProxyAuth, creds);

@@ -181,11 +181,10 @@ nsHttpNegotiateAuth::ChallengeReceived(nsIHttpAuthenticableChannel* authChannel,
                                        nsISupports** sessionState,
                                        nsISupports** continuationState,
                                        bool* identityInvalid) {
-  nsIAuthModule* rawModule = (nsIAuthModule*)*continuationState;
-
   *identityInvalid = false;
-  if (rawModule) {
-    return NS_OK;
+  if (*continuationState) {
+    nsCOMPtr<nsIAuthModule> existing = do_QueryInterface(*continuationState);
+    return existing ? NS_OK : NS_ERROR_UNEXPECTED;
   }
 
   nsresult rv;
@@ -490,8 +489,8 @@ nsHttpNegotiateAuth::GenerateCredentialsAsync(
           "nsIHttpAuthenticableChannel", authChannel, false));
   nsMainThreadPtrHandle<GetNextTokenCompleteEvent> cancelEvent(
       new nsMainThreadPtrHolder<GetNextTokenCompleteEvent>(
-          "GetNextTokenCompleteEvent", new GetNextTokenCompleteEvent(aCallback),
-          false));
+          "GetNextTokenRunnable::mCompleteEvent",
+          new GetNextTokenCompleteEvent(aCallback), false));
   nsCOMPtr<nsIRunnable> getNextTokenRunnable = new GetNextTokenRunnable(
       handle, challenge, isProxyAuth, domain, username, password,
       std::move(certDER), sessionState, continuationState, cancelEvent);
@@ -532,7 +531,7 @@ static nsresult GenerateCredentialsInternal(
     nsISupports** continuationState, const nsTArray<uint8_t>& aCertDER,
     uint32_t* flags, nsACString& creds) {
   // ChallengeReceived must have been called previously.
-  nsIAuthModule* module = (nsIAuthModule*)*continuationState;
+  nsCOMPtr<nsIAuthModule> module = do_QueryInterface(*continuationState);
   NS_ENSURE_TRUE(module, NS_ERROR_NOT_INITIALIZED);
 
   *flags = nsIHttpAuthenticator::USING_INTERNAL_IDENTITY;
