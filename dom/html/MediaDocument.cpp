@@ -41,9 +41,10 @@ NS_IMPL_ISUPPORTS(MediaDocumentStreamListener, nsIRequestObserver,
 
 NS_IMETHODIMP
 MediaDocumentStreamListener::OnStartRequest(nsIRequest* request) {
-  NS_ENSURE_TRUE(mDocument, NS_ERROR_FAILURE);
+  RefPtr<MediaDocument> document = mDocument;
+  NS_ENSURE_TRUE(document, NS_ERROR_FAILURE);
 
-  mDocument->StartLayout();
+  document->StartLayout();
 
   if (nsCOMPtr<nsIStreamListener> nextStream = mNextStream) {
     return nextStream->OnStartRequest(request);
