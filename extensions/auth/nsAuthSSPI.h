@@ -28,7 +28,7 @@
 
 class nsAuthSSPI final : public nsIAuthModule {
  public:
-  NS_DECL_ISUPPORTS
+  NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIAUTHMODULE
 
   explicit nsAuthSSPI(pType package = PACKAGE_TYPE_NEGOTIATE);
