@@ -296,7 +296,7 @@ partial interface Window {
   //[Throws, NewObject, NeedsCallerType] MediaQueryList matchMedia(DOMString query);
   [Throws, NewObject, NeedsCallerType] MediaQueryList? matchMedia(UTF8String query);
 
-  [SameObject, Replaceable] readonly attribute Screen screen;
+  [Replaceable] readonly attribute Screen screen;
 
   // browsing context
   //[Throws] undefined moveTo(double x, double y);
