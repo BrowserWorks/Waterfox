@@ -55,6 +55,7 @@ class ArrayObject : public NativeObject {
           .hasSeenArrayExceedsInt32LengthFuse.popFuse(cx);
     }
     getElementsHeader()->length = length;
+    MOZ_ASSERT(getDenseInitializedLength() <= length);
   }
 
   void assertInt32LengthFuse(JSContext* cx) {

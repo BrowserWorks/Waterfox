@@ -908,6 +908,12 @@ bool js::ArraySetLength(JSContext* cx, Handle<ArrayObject*> arr, HandleId id,
     }
   } while (false);
 
+  // Trim the initialized length, if needed, to preserve the <= length
+  // invariant. This must happen before the fallible attribute change below.
+  // (Capacity was already reduced during element deletion, if necessary.)
+  arr->setDenseInitializedLengthMaybeNonExtensible(
+      cx, std::min(arr->getDenseInitializedLength(), newLen));
+
   // Update array length. Technically we should have been doing this
   // throughout the loop, in step 19.d.iii.
   arr->setLength(cx, newLen);
@@ -926,16 +932,6 @@ bool js::ArraySetLength(JSContext* cx, Handle<ArrayObject*> arr, HandleId id,
 
   // All operations past here until the |!succeeded| code must be infallible,
   // so that all element fields remain properly synchronized.
-
-  // Trim the initialized length, if needed, to preserve the <= length
-  // invariant.  (Capacity was already reduced during element deletion, if
-  // necessary.)
-  ObjectElements* header = arr->getElementsHeader();
-  header->initializedLength = std::min(header->initializedLength.get(), newLen);
-
-  if (!arr->isExtensible()) {
-    arr->shrinkCapacityToInitializedLength(cx);
-  }
 
   if (desc.hasWritable() && !desc.writable()) {
     arr->setNonWritableLength(cx);
