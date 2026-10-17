@@ -604,9 +604,17 @@ function messages(
           ...networkMessagesUpdateById,
         },
       };
-      let hasNetworkError = null;
+      let hasNetworkError = false;
+      let hasUpdatesForMessageInState = false;
       for (const message of action.messages) {
         const { id } = message;
+        // Ignore the update if the network message isn't in the map of messages
+        if (!updatedState.mutableMessagesById.has(id)) {
+          continue;
+        }
+
+        hasUpdatesForMessageInState = true;
+
         updatedState.mutableMessagesById.set(id, message);
         updatedState.networkMessagesUpdateById[id] = {
           ...(updatedState.networkMessagesUpdateById[id] || {}),
@@ -616,6 +624,12 @@ function messages(
         if (isMessageNetworkError(message)) {
           hasNetworkError = true;
         }
+      }
+
+      // if there was no actual update, let's return the original state so we don't
+      // trigger a re-rendering.
+      if (!hasUpdatesForMessageInState) {
+        return state;
       }
 
       // If the message updates contained a network error, then we may have to display it.

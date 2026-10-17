@@ -425,7 +425,7 @@ describe("Message reducer:", () => {
         dispatch(actions.messagesAdd([packet]));
       }
 
-      const messages = getMutableMessagesById(getState());
+      let messages = getMutableMessagesById(getState());
       expect(messages.size).toBe(logLimit);
       expect(getFirstMessage(getState()).parameters[0]).toBe(`message num 3`);
       expect(getLastMessage(getState()).parameters[0]).toBe(
@@ -434,6 +434,20 @@ describe("Message reducer:", () => {
 
       const { mutableMessagesOrder } = getState().messages;
       expect(mutableMessagesOrder.length).toBe(logLimit);
+
+      // dispatching a network update matching no existing message shouldn't count in the
+      // total list
+      const updatePacket = clonePacket(stubPackets.get("GET request update"));
+      updatePacket.actor = "messagenetwork";
+      dispatch(actions.networkMessageUpdates([updatePacket]));
+
+      packet.arguments = [`last message`];
+      dispatch(actions.messagesAdd([packet]));
+
+      messages = getMutableMessagesById(getState());
+      expect(messages.size).toBe(logLimit);
+      expect(getFirstMessage(getState()).parameters[0]).toBe(`message num 4`);
+      expect(getLastMessage(getState()).parameters[0]).toBe(`last message`);
     });
 
     it("properly limits number of messages when there are nested groups", () => {
