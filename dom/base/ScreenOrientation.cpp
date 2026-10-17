@@ -789,12 +789,12 @@ Document* ScreenOrientation::GetResponsibleDocument() const {
 }
 
 void ScreenOrientation::MaybeChanged() {
-  Document* doc = GetResponsibleDocument();
+  RefPtr<Document> doc = GetResponsibleDocument();
   if (!doc || doc->ShouldResistFingerprinting(RFPTarget::ScreenOrientation)) {
     return;
   }
 
-  BrowsingContext* bc = doc->GetBrowsingContext();
+  RefPtr<BrowsingContext> bc = doc->GetBrowsingContext();
   if (!bc) {
     return;
   }
@@ -820,6 +820,12 @@ void ScreenOrientation::MaybeChanged() {
     // Use of mozorientationchange is deprecated.
     rv = mScreen->DispatchTrustedEvent(u"mozorientationchange"_ns);
     NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "DispatchTrustedEvent failed");
+
+    doc = GetResponsibleDocument();
+    bc = doc ? doc->GetBrowsingContext() : nullptr;
+    if (!bc) {
+      return;
+    }
   }
 
   if (doc->Hidden() && !mVisibleListener) {
