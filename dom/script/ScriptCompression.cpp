@@ -166,8 +166,11 @@ bool ScriptBytecodeDecompress(Vector<uint8_t>& aCompressedBytecodeBuf,
   }
   auto autoDestroy = MakeScopeExit([&]() { inflateEnd(&zstream); });
 
-  int ret = inflate(&zstream, Z_NO_FLUSH);
-  bool ok = (ret == Z_OK || ret == Z_STREAM_END) && zstream.avail_in == 0;
+  // A truncated stream or a wrong uncompressed length must not leave an
+  // uninitialized tail in the output.
+  int ret = inflate(&zstream, Z_FINISH);
+  bool ok =
+      ret == Z_STREAM_END && zstream.avail_in == 0 && zstream.avail_out == 0;
   if (!ok) {
     LOG(("ScriptLoadReques: inflate FAILED (%s)", zstream.msg));
     return false;
