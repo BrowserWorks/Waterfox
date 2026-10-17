@@ -6,6 +6,8 @@
 #define mozilla_dom_nsRadioGroupStruct_h
 
 #include "nsClassHashtable.h"
+#include "nsCycleCollectionParticipant.h"
+#include "nsISupportsImpl.h"
 
 class nsIContent;
 
@@ -16,11 +18,11 @@ struct nsRadioGroupStruct;
 
 class RadioGroupContainer final {
  public:
-  RadioGroupContainer();
-  ~RadioGroupContainer();
+  NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(RadioGroupContainer)
+  NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS(RadioGroupContainer)
 
-  static void Traverse(RadioGroupContainer* tmp,
-                       nsCycleCollectionTraversalCallback& cb);
+  RadioGroupContainer();
+
   size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const;
 
   template <typename VisitCallback>
@@ -53,6 +55,8 @@ class RadioGroupContainer final {
   nsRadioGroupStruct* GetOrCreateRadioGroup(const nsAString& aName);
 
  private:
+  ~RadioGroupContainer();
+
   Span<const RefPtr<HTMLInputElement>> GetButtonsInGroup(
       nsRadioGroupStruct* aGroup) const;
 

@@ -1655,7 +1655,7 @@ class HTMLInputElement final : public TextControlElement,
    * The radio group container containing the group the element is a part of.
    * This allows the element to only access a container it has been added to.
    */
-  RadioGroupContainer* mRadioGroupContainer;
+  RefPtr<RadioGroupContainer> mRadioGroupContainer;
 
   struct nsFilePickerFilter {
     nsFilePickerFilter() : mFilterMask(0) {}

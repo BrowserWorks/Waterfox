@@ -759,9 +759,8 @@ void FragmentOrElement::nsExtendedDOMSlots::TraverseExtendedSlots(
   if (mAnimations) {
     mAnimations->Traverse(aCb);
   }
-  if (mRadioGroupContainer) {
-    RadioGroupContainer::Traverse(mRadioGroupContainer.get(), aCb);
-  }
+  ImplCycleCollectionTraverse(aCb, mRadioGroupContainer,
+                              "mExtendedSlots->mRadioGroupContainer");
 }
 
 size_t FragmentOrElement::nsExtendedDOMSlots::SizeOfExcludingThis(

@@ -2486,9 +2486,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(Document)
 
   DocumentOrShadowRoot::Traverse(tmp, cb);
 
-  if (tmp->mRadioGroupContainer) {
-    RadioGroupContainer::Traverse(tmp->mRadioGroupContainer.get(), cb);
-  }
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mRadioGroupContainer)
 
   for (auto& sheets : tmp->mAdditionalSheets) {
     tmp->TraverseStyleSheets(sheets, "mAdditionalSheets[<origin>][i]", cb);
@@ -2696,7 +2694,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(Document)
 
   DocumentOrShadowRoot::Unlink(tmp);
 
-  tmp->mRadioGroupContainer = nullptr;
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mRadioGroupContainer)
 
   // Document has a pretty complex destructor, so we're going to
   // assume that *most* cycles you actually want to break somewhere
@@ -21044,7 +21042,7 @@ FragmentDirective* Document::FragmentDirective() {
 
 RadioGroupContainer& Document::OwnedRadioGroupContainer() {
   if (!mRadioGroupContainer) {
-    mRadioGroupContainer = MakeUnique<RadioGroupContainer>();
+    mRadioGroupContainer = MakeRefPtr<RadioGroupContainer>();
   }
   return *mRadioGroupContainer;
 }

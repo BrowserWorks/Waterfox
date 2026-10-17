@@ -116,7 +116,7 @@ class FragmentOrElement : public nsIContent {
   RadioGroupContainer& OwnedRadioGroupContainer() {
     auto* slots = ExtendedDOMSlots();
     if (!slots->mRadioGroupContainer) {
-      slots->mRadioGroupContainer = MakeUnique<RadioGroupContainer>();
+      slots->mRadioGroupContainer = MakeRefPtr<RadioGroupContainer>();
     }
     return *slots->mRadioGroupContainer;
   }
@@ -223,7 +223,7 @@ class FragmentOrElement : public nsIContent {
      * RadioGroupContainer for radio buttons grouped under this disconnected
      * element.
      */
-    UniquePtr<RadioGroupContainer> mRadioGroupContainer;
+    RefPtr<RadioGroupContainer> mRadioGroupContainer;
 
     /**
      * Last remembered size (in CSS pixels) for the element.

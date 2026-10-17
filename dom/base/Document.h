@@ -5899,7 +5899,7 @@ class Document : public nsINode,
   RefPtr<ResizeObserver> mAutoSizeImageObserver;
 
   RefPtr<class FragmentDirective> mFragmentDirective;
-  UniquePtr<RadioGroupContainer> mRadioGroupContainer;
+  RefPtr<RadioGroupContainer> mRadioGroupContainer;
 
   nsCOMPtr<nsIURI> mTLSCertificateBindingURI;
 
