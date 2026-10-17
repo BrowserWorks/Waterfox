@@ -580,3 +580,5 @@ load 1984507.html
 load 2000121.html
 skip-if(debug) load 2000753.html # bug 2005045
 load 2000991.html
+HTTP load repeated-counter-marker.html
+load repeated-generated-content.html

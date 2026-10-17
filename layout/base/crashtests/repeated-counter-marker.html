@@ -1,0 +1,72 @@
+<!doctype html>
+<html class="reftest-paged reftest-wait">
+<meta charset="utf-8">
+<script src="repeated-counter-marker.sjs?reset"></script>
+<style>
+@page { size: 5in 3in; margin: 0.2in; }
+html, body { margin: 0; font: 12px/16px sans-serif; }
+table { border-collapse: collapse; width: 100%; }
+th, td { padding: 0; text-align: left; }
+tbody tr { height: 60px; break-inside: avoid; }
+.item {
+  display: list-item;
+  list-style-type: decimal;
+  list-style-position: inside;
+}
+.item::marker {
+  counter-reset: list-item 2;
+  counter-increment: list-item 1;
+  counter-set: list-item 3;
+}
+.tail { counter-increment: list-item 1; }
+@media print {
+  .item { list-style-image: url("repeated-counter-marker.sjs?image"); }
+}
+</style>
+<table>
+  <thead>
+    <tr><th>
+      <div class="item">Repeated header</div>
+      <div class="tail"></div>
+    </th></tr>
+  </thead>
+  <tbody>
+    <tr><td>row 1</td></tr>
+    <tr><td>row 2</td></tr>
+    <tr><td>row 3</td></tr>
+    <tr><td>row 4</td></tr>
+    <tr><td>row 5</td></tr>
+    <tr><td>row 6</td></tr>
+    <tr><td>row 7</td></tr>
+    <tr><td>row 8</td></tr>
+    <tr><td>row 9</td></tr>
+  </tbody>
+</table>
+<script>
+addEventListener("MozReftestInvalidate", () => {
+  // The harness enters paginated mode after dispatching this event.
+  setTimeout(async () => {
+    // Finish pagination while the marker image is still pending.
+    document.body.getBoundingClientRect();
+
+    const image = new Image();
+    const failed = new Promise(resolve => {
+      image.onerror = resolve;
+    });
+    image.src = "repeated-counter-marker.sjs?image";
+    await fetch("repeated-counter-marker.sjs?release");
+    await failed;
+    await new Promise(resolve => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+    });
+    document.body.getBoundingClientRect();
+
+    // The failed image has created the original marker's counter USE node.
+    // Destroy that marker while the repeated headers are still alive.
+    document.querySelector(".item").style.display = "block";
+    document.body.getBoundingClientRect();
+    document.documentElement.classList.remove("reftest-wait");
+  }, 0);
+});
+</script>
+</html>

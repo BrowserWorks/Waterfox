@@ -1,0 +1,58 @@
+<!doctype html>
+<html class="reftest-paged reftest-wait">
+<meta charset="utf-8">
+<style>
+@page { size: 5in 3in; margin: 0.2in; }
+html, body { margin: 0; font: 12px/16px sans-serif; }
+table { border-collapse: collapse; width: 100%; }
+th, td { padding: 0; text-align: left; }
+tbody tr { height: 60px; break-inside: avoid; }
+.item, .tail { counter-increment: test 1; }
+.item::before {
+  display: list-item;
+  list-style-position: inside;
+  content: open-quote counter(test) " before" close-quote;
+  counter-reset: test 2;
+  counter-increment: test 1;
+  counter-set: test 3;
+}
+.item::before::marker {
+  content: counter(test);
+  counter-reset: test 4;
+  counter-increment: test 1;
+  counter-set: test 5;
+}
+</style>
+<table>
+  <thead>
+    <tr><th>
+      <div class="item">Repeated header</div>
+      <div class="tail"></div>
+    </th></tr>
+  </thead>
+  <tbody>
+    <tr><td>row 1</td></tr>
+    <tr><td>row 2</td></tr>
+    <tr><td>row 3</td></tr>
+    <tr><td>row 4</td></tr>
+    <tr><td>row 5</td></tr>
+    <tr><td>row 6</td></tr>
+    <tr><td>row 7</td></tr>
+    <tr><td>row 8</td></tr>
+    <tr><td>row 9</td></tr>
+  </tbody>
+</table>
+<script>
+addEventListener("MozReftestInvalidate", () => {
+  // The harness enters paginated mode after dispatching this event. Flush the
+  // initial reflow before destroying the original frames, leaving the repeated
+  // header's copies alive.
+  setTimeout(() => {
+    document.body.getBoundingClientRect();
+    document.querySelector(".item").style.display = "none";
+    document.body.getBoundingClientRect();
+    document.documentElement.classList.remove("reftest-wait");
+  }, 0);
+});
+</script>
+</html>
