@@ -1453,36 +1453,12 @@ static MOZ_ALWAYS_INLINE bool AddOrChangeProperty(
 
   MOZ_ASSERT(slot < obj->slotSpan());
 
-  // Clear any existing dense index after adding a sparse indexed property,
-  // and investigate converting the object to dense indexes.
+  // Clear any existing dense index after adding a sparse indexed property.
   if (id.isInt()) {
-    uint32_t index = id.toInt();
     if constexpr (AddOrChange == IsAddOrChange::Add) {
-      MOZ_ASSERT(!obj->containsDenseElement(index));
+      MOZ_ASSERT(!obj->containsDenseElement(id.toInt()));
     } else {
-      obj->removeDenseElementForSparseIndex(index);
-    }
-    // Only try to densify sparse elements if the property we just added/changed
-    // is in the last slot. This avoids a perf cliff in pathological cases: in
-    // maybeDensifySparseElements we densify if the slot span is a power-of-two,
-    // but if we get slots from the free list, the slot span will stay the same
-    // until the free list is empty. This means we'd get quadratic behavior by
-    // trying to densify for each sparse element we add. See bug 1782487.
-    if (slot == obj->slotSpan() - 1) {
-      DenseElementResult edResult =
-          NativeObject::maybeDensifySparseElements(cx, obj);
-      if (edResult == DenseElementResult::Failure) {
-        return false;
-      }
-      if (edResult == DenseElementResult::Success) {
-        MOZ_ASSERT(!desc.isAccessorDescriptor());
-        if constexpr (AddOrChange == IsAddOrChange::Add) {
-          if (!CallAddPropertyHookDense(cx, obj, index, desc.value())) {
-            return false;
-          }
-        }
-        return true;
-      }
+      obj->removeDenseElementForSparseIndex(id.toInt());
     }
   }
 
@@ -1496,6 +1472,25 @@ static MOZ_ALWAYS_INLINE bool AddOrChangeProperty(
         return false;
       }
     }
+  }
+
+  // Investigate converting the object to dense indexes. This is fallible so we
+  // do this after the add-property hook.
+  //
+  // Only try to densify sparse elements if the property we just added/changed
+  // is in the last slot. This avoids a perf cliff in pathological cases: in
+  // maybeDensifySparseElements we densify if the slot span is a power-of-two,
+  // but if we get slots from the free list, the slot span will stay the same
+  // until the free list is empty. This means we'd get quadratic behavior by
+  // trying to densify for each sparse element we add. See bug 1782487.
+  if (id.isInt() && slot == obj->slotSpan() - 1) {
+    DenseElementResult edResult =
+        NativeObject::maybeDensifySparseElements(cx, obj);
+    if (edResult == DenseElementResult::Failure) {
+      return false;
+    }
+    MOZ_ASSERT_IF(edResult == DenseElementResult::Success,
+                  !desc.isAccessorDescriptor());
   }
 
   return true;
