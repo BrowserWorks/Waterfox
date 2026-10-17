@@ -42,6 +42,13 @@
 #undef MIN
 #define MIN(x,y) (((x)<(y)) ? (x) : (y))
 
+/* An exact match at least this long ends the byte-by-byte scan in main().
+ * Otherwise, when the old file holds a long run twice and the copy being
+ * followed is only 1-10 bytes worse than the other, the scan calls search()
+ * once per byte of the run, which is quadratic in the run's length.
+ */
+#define LONG_MATCH_LEN 65536
+
 /*---------------------------------------------------------------------------*/
 
 /* This variable lives in libbz2.  It's declared in bzlib_private.h, so we just
@@ -309,7 +316,7 @@ int main(int argc,char *argv[])
 				oldscore++;
 
 			if(((len==oldscore) && (len!=0)) || 
-				(len>oldscore+10)) break;
+				(len>oldscore+10) || (len>=LONG_MATCH_LEN)) break;
 
 			if((scan+lastoffset<oldsize) &&
 				(old[scan+lastoffset] == newbuf[scan]))
