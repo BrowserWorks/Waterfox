@@ -2147,16 +2147,12 @@ void CacheFile::RemoveOutput(CacheFileOutputStream* aOutput, nsresult aStatus) {
 
   mOutput = nullptr;  // XXX should this be after NotifyCloseListener?
 
-  // Cancel all queued chunk and update listeners that cannot be satisfied
-  NotifyListenersAboutOutputRemoval();
-
-  if (!mMemoryOnly) WriteMetadataIfNeededLocked();
+  bool failed = NS_FAILED(aStatus) && aStatus != NS_BASE_STREAM_CLOSED;
 
   // Make sure the CacheFile status is set to a failure when the output stream
   // is closed with a fatal error.  This way we propagate correctly and w/o any
   // windows the failure state of this entry to end consumers.
-  if (NS_SUCCEEDED(mStatus) && NS_FAILED(aStatus) &&
-      aStatus != NS_BASE_STREAM_CLOSED) {
+  if (NS_SUCCEEDED(mStatus) && failed) {
     if (aOutput->IsAlternativeData()) {
       MOZ_ASSERT(mAltDataOffset != -1);
       // If there is no alt-data input stream truncate only alt-data, otherwise
@@ -2187,6 +2183,25 @@ void CacheFile::RemoveOutput(CacheFileOutputStream* aOutput, nsresult aStatus) {
     } else {
       SetError(aStatus);
     }
+  }
+
+  // Propagate the failure to alt-data readers.
+  if (failed && aOutput->IsAlternativeData() && NS_FAILED(mStatus)) {
+    for (CacheFileInputStream* input : mInputs) {
+      if (input->IsAlternativeData()) {
+        // Closing may drop the last outside reference to an input; keep it
+        // alive until the lock is released so RemoveInput() isn't reentered.
+        ReleaseOutsideLock(RefPtr<nsIInputStream>(input));
+        input->CloseWithStatusLocked(mStatus);
+      }
+    }
+  }
+
+  // Cancel all queued chunk and update listeners that cannot be satisfied
+  NotifyListenersAboutOutputRemoval();
+
+  if (!mMemoryOnly) {
+    WriteMetadataIfNeededLocked();
   }
 
   // Notify close listener as the last action
