@@ -10,6 +10,7 @@
 #include "mozilla/gfx/Helpers.h"
 #include "mozilla/ScopeExit.h"
 #include "mozilla/StaticPrefs_gfx.h"
+#include "nsHashtablesFwd.h"
 #include "TextDrawTarget.h"
 
 #include <limits>
@@ -156,6 +157,7 @@ struct PaintState {
   uint16_t mNumColors;
   uint16_t mCoordCount;
   nsTArray<uint32_t>* mVisited;
+  nsTHashMap<uint32_t, Rect>* mBoundsCache;
 
   const uint8_t* COLRv1BaseAddr() const {
     return reinterpret_cast<const uint8_t*>(mHeader.v1);
@@ -733,7 +735,7 @@ using VarColorLine = ColorLineT<VarColorStop>;
     return retval;                          \
   }                                         \
   aState.mVisited->AppendElement(aOffset);  \
-  ScopeExit e([aState]() { aState.mVisited->RemoveLastElement(); })
+  ScopeExit e([&aState]() { aState.mVisited->RemoveLastElement(); })
 
 struct PaintColrLayers {
   enum { kFormat = 1 };
@@ -2086,16 +2088,25 @@ static Rect DispatchGetBounds(const PaintState& aState, uint32_t aDepth,
     return Rect();
   }
 
+  // If bounds for this offset were already computed, return them.
+  Rect cached;
+  if (aState.mBoundsCache->Get(aOffset, &cached)) {
+    return cached;
+  }
+
   const uint8_t* paint = aState.COLRv1BaseAddr() + aOffset;
   // All paint table formats start with an 8-bit 'format' field.
   uint8_t format = *paint;
 
-#define DO_CASE(T)                                                   \
-  case T::kFormat:                                                   \
-    return aOffset + sizeof(T) <= aState.mCOLRLength                 \
-               ? reinterpret_cast<const T*>(paint)->GetBoundingRect( \
-                     aState, aDepth + 1, aOffset)                    \
-               : Rect();
+  Rect result;
+
+#define DO_CASE(T)                                                     \
+  case T::kFormat:                                                     \
+    result = aOffset + sizeof(T) <= aState.mCOLRLength                 \
+                 ? reinterpret_cast<const T*>(paint)->GetBoundingRect( \
+                       aState, aDepth + 1, aOffset)                    \
+                 : Rect();                                             \
+    break
 
   switch (format) {
     DO_CASE(PaintColrLayers);
@@ -2122,7 +2133,8 @@ static Rect DispatchGetBounds(const PaintState& aState, uint32_t aDepth,
 
 #undef DO_CASE
 
-  return Rect();
+  aState.mBoundsCache->InsertOrUpdate(aOffset, result);
+  return result;
 }
 
 #undef DO_CASE_VAR
@@ -2507,6 +2519,7 @@ bool COLRFonts::PaintGlyphLayers(
                    0.0,  // fontUnitsToPixels not needed
                    uint16_t(aColors->Length()),
                    0,
+                   nullptr,
                    nullptr};
   return glyphRecord->Paint(state, alpha, aPoint);
 }
@@ -2549,6 +2562,7 @@ bool COLRFonts::PaintGlyphGraph(
   const int* coords = hb_font_get_var_coords_normalized(aFont, &coordCount);
 
   AutoTArray<uint32_t, 32> visitedOffsets;
+  nsTHashMap<uint32_t, Rect> boundsCache;
   PaintState state{{nullptr},
                    aColors->Elements(),
                    aDrawTarget,
@@ -2560,7 +2574,8 @@ bool COLRFonts::PaintGlyphGraph(
                    aFontUnitsToPixels,
                    uint16_t(aColors->Length()),
                    uint16_t(coordCount),
-                   &visitedOffsets};
+                   &visitedOffsets,
+                   &boundsCache};
   state.mHeader.v1 =
       reinterpret_cast<const COLRv1Header*>(hb_blob_get_data(aCOLR, nullptr));
   AutoRestoreTransform saveTransform(aDrawTarget);
@@ -2578,6 +2593,7 @@ Rect COLRFonts::GetColorGlyphBounds(hb_blob_t* aCOLR, hb_font_t* aFont,
   const int* coords = hb_font_get_var_coords_normalized(aFont, &coordCount);
 
   AutoTArray<uint32_t, 32> visitedOffsets;
+  nsTHashMap<uint32_t, Rect> boundsCache;
   PaintState state{{nullptr},
                    nullptr,  // palette is not needed
                    aDrawTarget,
@@ -2589,7 +2605,8 @@ Rect COLRFonts::GetColorGlyphBounds(hb_blob_t* aCOLR, hb_font_t* aFont,
                    aFontUnitsToPixels,
                    0,  // numPaletteEntries
                    uint16_t(coordCount),
-                   &visitedOffsets};
+                   &visitedOffsets,
+                   &boundsCache};
   state.mHeader.v1 =
       reinterpret_cast<const COLRv1Header*>(hb_blob_get_data(aCOLR, nullptr));
   MOZ_ASSERT(uint16_t(state.mHeader.v1->base.version) == 1);
