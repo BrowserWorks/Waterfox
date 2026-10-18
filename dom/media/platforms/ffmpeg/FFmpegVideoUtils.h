@@ -8,6 +8,13 @@
 #include "MediaData.h"
 #include "libavcodec/version.h"
 #include "libavutil/pixfmt.h"
+#include "mozilla/CheckedInt.h"
+
+#if LIBAVCODEC_VERSION_MAJOR >= 58
+extern "C" {
+#  include "libavutil/frame.h"
+}
+#endif
 
 #if LIBAVCODEC_VERSION_MAJOR < 54
 #  ifndef AV_PIX_FMT_YUV420P10LE
@@ -35,13 +42,14 @@
 
 namespace mozilla {
 
+// Internal linkage: each FFmpeg version flavor compiles these against its own
+// AVFrame layout.
 // Fills the chroma plane geometry (Cb/Cr dimensions, chroma subsampling and
 // colour depth) of aBuffer from aFormat, an AVPixelFormat value, and the luma
 // dimensions aWidth and aHeight. The luma plane (index 0) must already be
 // populated by the caller.
-inline void SetChromaPlaneGeometryFromAVFormat(VideoData::YCbCrBuffer& aBuffer,
-                                               int aFormat, int aWidth,
-                                               int aHeight) {
+static inline void SetChromaPlaneGeometryFromAVFormat(
+    VideoData::YCbCrBuffer& aBuffer, int aFormat, int aWidth, int aHeight) {
   if (aFormat == AV_PIX_FMT_YUV444P || aFormat == AV_PIX_FMT_YUV444P10LE ||
       aFormat == AV_PIX_FMT_GBRP || aFormat == AV_PIX_FMT_GBRP10LE
 #if LIBAVCODEC_VERSION_MAJOR >= 57
@@ -89,6 +97,51 @@ inline void SetChromaPlaneGeometryFromAVFormat(VideoData::YCbCrBuffer& aBuffer,
 #endif
   }
 }
+
+#if LIBAVCODEC_VERSION_MAJOR >= 58
+// 0 when the frame has no such buffer.
+static inline size_t FrameBufferSize(const AVFrame* aFrame, size_t aIndex) {
+  if (aIndex < AV_NUM_DATA_POINTERS && aFrame->buf[aIndex]) {
+    return static_cast<size_t>(aFrame->buf[aIndex]->size);
+  }
+  return 0;
+}
+
+// A plane occupies mHeight * mStride bytes from mData, all of which must
+// belong to the frame buffer holding mData.
+static inline bool PlaneFitsBackingBuffer(
+    const AVFrame* aFrame, const VideoData::YCbCrBuffer::Plane& aPlane) {
+  const CheckedInt<size_t> needed =
+      CheckedInt<size_t>(aPlane.mHeight) * aPlane.mStride;
+  if (!needed.isValid()) {
+    return false;
+  }
+  const uintptr_t plane = reinterpret_cast<uintptr_t>(aPlane.mData);
+  for (const AVBufferRef* buf : aFrame->buf) {
+    if (!buf || !buf->data) {
+      continue;
+    }
+    const uintptr_t start = reinterpret_cast<uintptr_t>(buf->data);
+    const uintptr_t end = start + static_cast<size_t>(buf->size);
+    if (plane >= start && plane < end) {
+      return needed.value() <= end - plane;
+    }
+  }
+  return false;
+}
+
+// avcodec_receive_frame() only delivers reference-counted frames, so every
+// plane must lie inside one of aFrame->buf[]. A frame without buffers fails.
+static inline bool FramePlanesFitBackingBuffers(
+    const AVFrame* aFrame, const VideoData::YCbCrBuffer& aBuffer) {
+  for (const auto& plane : aBuffer.mPlanes) {
+    if (!PlaneFitsBackingBuffer(aFrame, plane)) {
+      return false;
+    }
+  }
+  return true;
+}
+#endif
 
 }  // namespace mozilla
 

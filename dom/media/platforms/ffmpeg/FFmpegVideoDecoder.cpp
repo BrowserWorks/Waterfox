@@ -1224,14 +1224,6 @@ int FFmpegVideoDecoder<LIBAV_VER>::GetVideoBuffer(
     return rv;
   }
 
-  CheckedInt32 dataSize = mLib->av_image_get_buffer_size(
-      aCodecContext->pix_fmt, aCodecContext->coded_width,
-      aCodecContext->coded_height, 32);
-  if (!dataSize.isValid()) {
-    FFMPEG_LOG("Data size overflow!");
-    return AVERROR(EINVAL);
-  }
-
   if (!mImageContainer) {
     FFMPEG_LOG("No Image container!");
     return AVERROR(EINVAL);
@@ -1290,12 +1282,25 @@ int FFmpegVideoDecoder<LIBAV_VER>::GetVideoBuffer(
   auto imageWrapper = MakeRefPtr<ImageBufferWrapper>(std::move(image));
 #  endif
 
+  // The buffer spans to the end of the last plane, not the packed image size.
+  auto planeEnd = [](const layers::MappedYCbCrChannelData& aPlane) {
+    return aPlane.data + aPlane.stride * aPlane.size.height;
+  };
+  const uint8_t* bufferEnd =
+      std::max({planeEnd(mapped.y), planeEnd(mapped.cb), planeEnd(mapped.cr)});
+  const ptrdiff_t bufferExtent = bufferEnd - aFrame->data[0];
+  const CheckedInt<int> bufferSize(bufferExtent);
+  if (!bufferSize.isValid() || bufferSize.value() <= 0) {
+    FFMPEG_LOG("Invalid mapped buffer extent");
+    return AVERROR(EINVAL);
+  }
+
   // This will hold a strong reference to imageWrapper, and the reference will
   // be dropped when ffmpeg tells us that the buffer is no longer needed. Since
   // the wrapper keeps image alive, it will prevent recycling until ffmpeg is
   // done with the buffer.
   aFrame->buf[0] =
-      mLib->av_buffer_create(aFrame->data[0], dataSize.value(),
+      mLib->av_buffer_create(aFrame->data[0], bufferSize.value(),
                              ReleaseVideoBufferWrapper, imageWrapper.get(), 0);
   if (!aFrame->buf[0]) {
     FFMPEG_LOG("Failed to allocate buffer");
@@ -1307,7 +1312,7 @@ int FFmpegVideoDecoder<LIBAV_VER>::GetVideoBuffer(
 
   FFMPEG_LOG("Created av buffer, buf={}, data={}, image={}, sz={}",
              fmt::ptr(aFrame->buf[0]), fmt::ptr(aFrame->data[0]),
-             fmt::ptr(imageWrapperPtr), dataSize.value());
+             fmt::ptr(imageWrapperPtr), bufferSize.value());
   mIsUsingShmemBufferForDecode = Some(true);
   return 0;
 }
@@ -1997,6 +2002,20 @@ MediaResult FFmpegVideoDecoder<LIBAV_VER>::CreateImage(
   b.mPlanes[0].mHeight = mFrame->height;
   SetChromaPlaneGeometryFromAVFormat(b, static_cast<int>(mFrame->format),
                                      mFrame->width, mFrame->height);
+#if LIBAVCODEC_VERSION_MAJOR >= 58
+  if (!FramePlanesFitBackingBuffers(mFrame, b)) {
+    FFMPEG_LOG(
+        "Decoded frame plane layout does not match its buffers: format {} "
+        "{}x{}, Y {}x{} stride {}, CbCr {}x{} stride {}, buffer sizes {} {} {}",
+        mFrame->format, mFrame->width, mFrame->height, b.mPlanes[0].mWidth,
+        b.mPlanes[0].mHeight, b.mPlanes[0].mStride, b.mPlanes[1].mWidth,
+        b.mPlanes[1].mHeight, b.mPlanes[1].mStride, FrameBufferSize(mFrame, 0),
+        FrameBufferSize(mFrame, 1), FrameBufferSize(mFrame, 2));
+    return MediaResult(
+        NS_ERROR_DOM_MEDIA_DECODE_ERR,
+        RESULT_DETAIL("Decoded frame plane layout does not match its buffers"));
+  }
+#endif
   b.mYUVColorSpace = GetFrameColorSpace();
   b.mColorRange = GetFrameColorRange();
 
