@@ -102,10 +102,8 @@ async function resetState() {
   clearMocks();
   Services.obs.notifyObservers(null, "net:cancel-all-connections");
   Services.obs.notifyObservers(null, "browser:purge-session-history");
-  let tokenCache = Cc["@mozilla.org/network/ssl-tokens-cache;1"].getService(
-    Ci.nsISSLTokensCache
-  );
-  await tokenCache.asyncClearSSLExternalAndInternalSessionCache();
+  let nssComponent = Cc["@mozilla.org/psm;1"].getService(Ci.nsINSSComponent);
+  await nssComponent.asyncClearSSLExternalAndInternalSessionCache();
   Services.dns.clearCache(true);
   override.clearOverrides();
   // eslint-disable-next-line mozilla/no-arbitrary-setTimeout
