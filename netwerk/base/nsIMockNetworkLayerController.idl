@@ -64,4 +64,15 @@ interface nsIMockNetworkLayerController : nsISupports
    * Removes all entries from the UDP fail list.
    */
   void clearFailedUDPAddr();
+
+  /**
+   * This method causes UDP sends to the given network address to fail with a
+   * would-block error, while the socket keeps reporting write-availability.
+   */
+  void wouldBlockUDPAddrIO(in nsINetAddr aAddr);
+
+  /**
+   * Removes all entries from the UDP would-block list.
+   */
+  void clearWouldBlockUDPAddr();
 };

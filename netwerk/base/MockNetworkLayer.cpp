@@ -125,6 +125,14 @@ static PRInt32 MockNetworkSendTo(PRFileDesc* fd, const void* buf,
     PR_SetError(PR_CONNECT_REFUSED_ERROR, 0);
     return -1;
   }
+  if (FindWouldBlockUDPAddr(netAddr)) {
+    nsAutoCString addrPort;
+    netAddr.ToAddrPortString(addrPort);
+    SOCKET_LOG(
+        ("MockNetworkSendTo %p addr [%s] would block", secret, addrPort.get()));
+    PR_SetError(PR_WOULD_BLOCK_ERROR, 0);
+    return -1;
+  }
   if (FindBlockedUDPAddr(netAddr)) {
     nsAutoCString addrPort;
     netAddr.ToAddrPortString(addrPort);

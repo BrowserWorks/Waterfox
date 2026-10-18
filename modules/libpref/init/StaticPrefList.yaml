@@ -16898,6 +16898,7 @@
   type: RelaxedAtomicBool
   value: false
   mirror: always
+  rust: true
 
 # When true, the socket transport service will have an additional queue for
 # runnables with increased priority.

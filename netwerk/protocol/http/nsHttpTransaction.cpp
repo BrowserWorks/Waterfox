@@ -458,6 +458,12 @@ void nsHttpTransaction::OnPendingQueueInserted(
     mHashKeyOfConnectionEntry.Assign(aConnectionHashKey);
   }
 
+  MaybeStartHttp3BackupTimer();
+}
+
+void nsHttpTransaction::MaybeStartHttp3BackupTimer() {
+  MOZ_ASSERT(OnSocketThread(), "not on socket thread");
+
   // Don't create mHttp3BackupTimer if HTTPS RR is used or Happy Eyeballs is
   // enabled. The Happy Eyeballs state machine will handle fallback to h2.
   if ((mConnInfo->IsHttp3() || mConnInfo->IsHttp3ProxyConnection()) &&

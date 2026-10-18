@@ -623,6 +623,9 @@ class nsHttpTransaction final : public nsAHttpTransaction,
   }
   // Called when this transaction is inserted in the pending queue.
   void OnPendingQueueInserted(const nsACString& aConnectionHashKey);
+  // Starts the timer that opens a TCP backup connection if this HTTP/3
+  // transaction is not connected in time. Only the first call has an effect.
+  void MaybeStartHttp3BackupTimer();
 
  private:
   TransactionObserverFunc mTransactionObserver;

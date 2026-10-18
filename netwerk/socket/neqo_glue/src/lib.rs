@@ -151,6 +151,26 @@ extern "C" {
     pub fn moz_netaddr_get_network_order_port(arg: *const NetAddr) -> u16;
 }
 
+extern "C" {
+    fn moz_mock_network_udp_send_would_block(family: u16, addr: *const u8, port: u16) -> bool;
+}
+
+fn mock_udp_send_would_block(dest: SocketAddr) -> bool {
+    if !static_prefs::pref!("network.socket.attach_mock_network_layer") {
+        return false;
+    }
+    unsafe {
+        match dest.ip() {
+            IpAddr::V4(v4) => {
+                moz_mock_network_udp_send_would_block(AF_INET_U16, v4.octets().as_ptr(), dest.port())
+            }
+            IpAddr::V6(v6) => {
+                moz_mock_network_udp_send_would_block(AF_INET6_U16, v6.octets().as_ptr(), dest.port())
+            }
+        }
+    }
+}
+
 fn netaddr_to_socket_addr(arg: *const NetAddr) -> Result<SocketAddr, nsresult> {
     if arg.is_null() {
         return Err(NS_ERROR_INVALID_ARG);
@@ -1307,7 +1327,12 @@ pub extern "C" fn neqo_http3conn_process_output_and_send(
                     };
                 }
 
-                match conn.socket.as_mut().expect("non NSPR IO").send(&dg) {
+                let send_result = if mock_udp_send_would_block(dg.destination()) {
+                    Err(io::Error::from(io::ErrorKind::WouldBlock))
+                } else {
+                    conn.socket.as_mut().expect("non NSPR IO").send(&dg)
+                };
+                match send_result {
                     Ok(()) => {}
                     Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
                         conn.increment_would_block_tx();
