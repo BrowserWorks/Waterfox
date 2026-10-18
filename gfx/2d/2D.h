@@ -30,7 +30,6 @@
 #include "mozilla/StaticMutex.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/ThreadSafeWeakPtr.h"
-#include "mozilla/UniquePtr.h"
 #include "mozilla/Atomics.h"
 
 #include "nsRegionFwd.h"
@@ -1191,8 +1190,7 @@ class FTUserFontData final
 
   FTUserFontData(const uint8_t* aData, uint32_t aLength)
       : mFontData(aData), mLength(aLength) {}
-  explicit FTUserFontData(UniquePtr<char[]>&& aFilename)
-      : mFilename(std::move(aFilename)) {}
+  explicit FTUserFontData(const char* aFilename) : mFilename(aFilename) {}
 
   const uint8_t* FontData() const { return mFontData; }
   uint32_t FontDataLength() const { return mLength; }
@@ -1207,7 +1205,7 @@ class FTUserFontData final
     }
   }
 
-  UniquePtr<char[]> mFilename;
+  std::string mFilename;
   const uint8_t* mFontData = nullptr;
   uint32_t mLength = 0;
 };

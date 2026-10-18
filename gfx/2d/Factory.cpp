@@ -2,8 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <cstring>
-
 #include "2D.h"
 #include "Swizzle.h"
 
@@ -56,7 +54,6 @@
 #include "SourceSurfaceRawData.h"
 
 #include "mozilla/CheckedInt.h"
-#include "mozilla/PodOperations.h"
 
 #ifdef MOZ_ENABLE_FREETYPE
 #  include "ft2build.h"
@@ -134,7 +131,7 @@ already_AddRefed<SharedFTFace> FTUserFontData::CloneFace(int aFaceIndex) {
     }
     return face.forget();
   }
-  FT_Face face = Factory::NewFTFace(nullptr, mFilename.get(), aFaceIndex);
+  FT_Face face = Factory::NewFTFace(nullptr, mFilename.c_str(), aFaceIndex);
   if (face) {
     return MakeAndAddRef<SharedFTFace>(face, this);
   }
@@ -552,15 +549,20 @@ FT_Face Factory::NewFTFace(FT_Library aFTLibrary, const char* aFileName,
 already_AddRefed<SharedFTFace> Factory::NewSharedFTFace(FT_Library aFTLibrary,
                                                         const char* aFilename,
                                                         int aFaceIndex) {
-  size_t length = strlen(aFilename) + 1;
-  UniquePtr<char[]> filename = MakeUniqueFallible<char[]>(length);
-  PodCopy(filename.get(), aFilename, length);
-  FT_Face face = NewFTFace(aFTLibrary, filename.get(), aFaceIndex);
+  FT_Face face = NewFTFace(aFTLibrary, aFilename, aFaceIndex);
   if (!face) {
     return nullptr;
   }
 
-  RefPtr<FTUserFontData> data = new FTUserFontData(std::move(filename));
+  RefPtr<FTUserFontData> data;
+#  ifdef ANDROID
+  // If the font has variations, we may later need to "clone" it in
+  // UnscaledFontFreeType::CreateScaledFont. To support this, we attach an
+  // FTUserFontData that records the filename used to instantiate the face.
+  if (face->face_flags & FT_FACE_FLAG_MULTIPLE_MASTERS) {
+    data = new FTUserFontData(aFilename);
+  }
+#  endif
   return MakeAndAddRef<SharedFTFace>(face, data);
 }
 
