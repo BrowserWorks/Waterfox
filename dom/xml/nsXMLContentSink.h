@@ -38,11 +38,6 @@ class nsXMLContentSink : public nsContentSink,
                          public nsITransformObserver,
                          public nsIExpatSink {
  public:
-  struct StackNode {
-    nsCOMPtr<nsIContent> mContent;
-    uint32_t mNumFlushed;
-  };
-
   nsXMLContentSink();
 
   nsresult Init(mozilla::dom::Document* aDoc, nsIURI* aURL,
@@ -131,20 +126,12 @@ class nsXMLContentSink : public nsContentSink,
   nsresult AddContentAsLeaf(nsIContent* aContent);
 
   nsIContent* GetCurrentContent();
-  StackNode* GetCurrentStackNode();
-  nsresult PushContent(nsIContent* aContent);
+  void PushContent(nsIContent* aContent);
   void PopContent();
-  bool HaveNotifiedForCurrentContent() const;
 
   nsresult FlushTags() override;
 
-  void UpdateChildCounts() override;
-
-  void DidAddContent() {
-    if (!mXSLTProcessor && IsTimeToNotify()) {
-      FlushTags();
-    }
-  }
+  void UpdateChildCounts() override {}
 
   // nsContentSink override
   virtual nsresult ProcessStyleLinkFromHeader(
@@ -171,8 +158,6 @@ class nsXMLContentSink : public nsContentSink,
 
   nsresult MaybePrettyPrint();
 
-  bool IsMonolithicContainer(mozilla::dom::NodeInfo* aNodeInfo);
-
   nsresult HandleStartElement(const char16_t* aName, const char16_t** aAtts,
                               uint32_t aAttsCount, uint32_t aLineNumber,
                               uint32_t aColumnNumber,
@@ -186,8 +171,11 @@ class nsXMLContentSink : public nsContentSink,
 
   XMLContentSinkState mState = eXMLContentSinkState_InProlog;
 
-  int32_t mNotifyLevel = 0;
   RefPtr<nsTextNode> mLastTextNode;
+
+  // True while FlushText runs. A DOM notification in FlushText can run script
+  // that stops the parser, and then DidBuildModel calls FlushText again.
+  bool mFlushingText = false;
 
   bool mPrettyPrintXML : 1 = true;
   bool mPrettyPrintHasSpecialRoot : 1 = false;
@@ -198,7 +186,7 @@ class nsXMLContentSink : public nsContentSink,
   // True to call prevent script execution in the fragment mode.
   bool mPreventScriptExecution : 1 = false;
 
-  nsTArray<StackNode> mContentStack;
+  nsTArray<nsCOMPtr<nsIContent>> mContentStack;
 
   nsCOMPtr<nsIDocumentTransformer> mXSLTProcessor;
 
