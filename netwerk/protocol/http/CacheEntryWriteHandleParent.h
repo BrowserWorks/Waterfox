@@ -9,6 +9,7 @@
 #include "nsCOMPtr.h"
 #include "nsICacheEntry.h"
 #include "nsICacheInfoChannel.h"
+#include "nsString.h"
 
 namespace mozilla {
 namespace net {
@@ -22,12 +23,16 @@ class CacheEntryWriteHandleParent final : public nsICacheEntryWriteHandle,
  public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSICACHEENTRYWRITEHANDLE
-  explicit CacheEntryWriteHandleParent(nsICacheEntry* aCacheEntry);
+  CacheEntryWriteHandleParent(nsICacheEntry* aCacheEntry,
+                              const nsACString& aBindingOrigin);
 
  private:
   virtual ~CacheEntryWriteHandleParent() = default;
 
   nsCOMPtr<nsICacheEntry> mCacheEntry;
+  // Origin of the principal that requested this write handle, used to bind
+  // any alt-data written through it to that principal.
+  nsCString mBindingOrigin;
 };
 
 }  // namespace net

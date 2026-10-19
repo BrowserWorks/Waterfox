@@ -256,6 +256,10 @@ class HttpChannelParent final : public nsIInterfaceRequestor,
 
   bool IsRedirectDueToAuthRetry(uint32_t redirectFlags);
 
+  // Sets mAltDataBindingOrigin from aChannel's principal, or clears it if the
+  // principal is not one the content process could have loaded.
+  void UpdateAltDataBindingOrigin(HttpBaseChannel* aChannel);
+
   int32_t mSendWindowSize;
 
   friend class HttpBackgroundChannelParent;
@@ -264,6 +268,10 @@ class HttpChannelParent final : public nsIInterfaceRequestor,
 
   RefPtr<HttpBaseChannel> mChannel;
   nsCOMPtr<nsICacheEntry> mCacheEntry;
+  // Origin of the load's principal, captured while the channel is still alive
+  // (mChannel is cleared on document channel cleanup, before alt-data is
+  // written). Used to bind child-written alt-data to the producing principal.
+  nsCString mAltDataBindingOrigin;
 
   nsCOMPtr<nsIChannel> mRedirectChannel;
   nsCOMPtr<nsIAsyncVerifyRedirectCallback> mRedirectCallback;

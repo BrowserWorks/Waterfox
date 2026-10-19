@@ -20,6 +20,17 @@ async function testTask(port, path, responseContent, getHandleOnStopRequest) {
   );
 
   function makeChannel(url) {
+    // In the content process, load as the page: child-written alt-data is only
+    // bound to a principal the process has loaded.
+    if (globalThis.content) {
+      return NetUtil.newChannel({
+        uri: url,
+        loadingNode: globalThis.content.document,
+        securityFlags:
+          Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_SEC_CONTEXT_IS_NULL,
+        contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER,
+      });
+    }
     return NetUtil.newChannel({ uri: url, loadUsingSystemPrincipal: true });
   }
 

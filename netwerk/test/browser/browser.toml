@@ -145,6 +145,9 @@ skip-if = [
 
 ["browser_accept_language_override.js"]
 
+["browser_alt_data_cross_origin.js"]
+support-files = ["alt_data_cross_origin.sjs"]
+
 ["browser_backgroundtask_purgeHTTPCache.js"]
 
 ["browser_bug968273.js"]

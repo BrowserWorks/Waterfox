@@ -503,6 +503,11 @@ class HttpBaseChannel : public nsHashPropertyBag,
 
   bool IsDeliveringAltData() const { return LoadDeliveringAltData(); }
 
+  // The principal, and its origin, used to bind alternative (bytecode) cache
+  // data to the principal that produced it.
+  nsIPrincipal* GetAltDataBindingPrincipal();
+  nsresult GetAltDataBindingOrigin(nsACString& aOrigin);
+
   static void PropagateReferenceIfNeeded(nsIURI* aURI,
                                          nsCOMPtr<nsIURI>& aRedirectURI);
 

@@ -1262,6 +1262,11 @@ HttpChannelParent::OnStartRequest(nsIRequest* aRequest) {
     mCacheEntry = do_QueryInterface(cacheEntry);
     args.cacheEntryAvailable() = static_cast<bool>(mCacheEntry);
 
+    // Capture the load's principal origin now, while the channel is alive, to
+    // bind any alt-data written later (after the channel may have been
+    // cleared).
+    UpdateAltDataBindingOrigin(chan);
+
     httpChannelImpl->GetCacheKey(&args.cacheKey());
     httpChannelImpl->GetAlternativeDataType(args.altDataType());
   }
@@ -1993,9 +1998,52 @@ NS_INTERFACE_MAP_BEGIN(CacheEntryWriteHandleParent)
   NS_INTERFACE_MAP_ENTRY(nsICacheEntryWriteHandle)
 NS_INTERFACE_MAP_END
 
+void HttpChannelParent::UpdateAltDataBindingOrigin(HttpBaseChannel* aChannel) {
+  mAltDataBindingOrigin.Truncate();
+
+  nsIPrincipal* principal = aChannel->GetAltDataBindingPrincipal();
+  if (!principal) {
+    return;
+  }
+
+  if (StaticPrefs::network_cache_alt_data_validate_binding_principal()) {
+    ContentParent* cp = nullptr;
+    if (Manager() && Manager()->Manager()) {
+      cp = static_cast<ContentParent*>(Manager()->Manager());
+    }
+    if (!cp || !cp->ValidatePrincipal(
+                   principal, {ValidatePrincipalOptions::AllowSystem})) {
+      LOG(
+          ("HttpChannelParent::UpdateAltDataBindingOrigin [this=%p] principal "
+           "not valid for the content process",
+           this));
+      return;
+    }
+  }
+
+  principal->GetOrigin(mAltDataBindingOrigin);
+}
+
+// Records, atomically with the alt-data write, the origin of the principal
+// that produced the alt-data.
+static void RecordAltDataPrincipal(nsICacheEntry* aCacheEntry,
+                                   const nsACString& aOrigin) {
+  if (!aCacheEntry) {
+    return;
+  }
+  if (aOrigin.IsEmpty()) {
+    // Fail closed: without a known principal, clear any binding so that reads
+    // reject this alt-data.
+    aCacheEntry->SetMetaDataElement("alt-data-principal", nullptr);
+  } else {
+    aCacheEntry->SetMetaDataElement("alt-data-principal",
+                                    PromiseFlatCString(aOrigin).get());
+  }
+}
+
 CacheEntryWriteHandleParent::CacheEntryWriteHandleParent(
-    nsICacheEntry* aCacheEntry)
-    : mCacheEntry(aCacheEntry) {}
+    nsICacheEntry* aCacheEntry, const nsACString& aBindingOrigin)
+    : mCacheEntry(aCacheEntry), mBindingOrigin(aBindingOrigin) {}
 
 NS_IMETHODIMP
 CacheEntryWriteHandleParent::OpenAlternativeOutputStream(
@@ -2009,12 +2057,13 @@ CacheEntryWriteHandleParent::OpenAlternativeOutputStream(
       mCacheEntry->OpenAlternativeOutputStream(type, predictedSize, _retval);
   if (NS_SUCCEEDED(rv)) {
     mCacheEntry->SetMetaDataElement("alt-data-from-child", "1");
+    RecordAltDataPrincipal(mCacheEntry, mBindingOrigin);
   }
   return rv;
 }
 
 CacheEntryWriteHandleParent* HttpChannelParent::AllocCacheEntryWriteHandle() {
-  return new CacheEntryWriteHandleParent(mCacheEntry);
+  return new CacheEntryWriteHandleParent(mCacheEntry, mAltDataBindingOrigin);
 }
 
 nsresult HttpChannelParent::OpenAlternativeOutputStream(
@@ -2029,6 +2078,7 @@ nsresult HttpChannelParent::OpenAlternativeOutputStream(
       mCacheEntry->OpenAlternativeOutputStream(type, predictedSize, _retval);
   if (NS_SUCCEEDED(rv)) {
     mCacheEntry->SetMetaDataElement("alt-data-from-child", "1");
+    RecordAltDataPrincipal(mCacheEntry, mAltDataBindingOrigin);
   }
   return rv;
 }

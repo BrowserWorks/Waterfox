@@ -4458,6 +4458,27 @@ bool HttpBaseChannel::IsNavigation() {
   return LoadForceMainDocumentChannel() || (mLoadFlags & LOAD_DOCUMENT_URI);
 }
 
+nsIPrincipal* HttpBaseChannel::GetAltDataBindingPrincipal() {
+  if (!mLoadInfo) {
+    return nullptr;
+  }
+
+  nsIPrincipal* principal = mLoadInfo->GetLoadingPrincipal();
+  if (!principal) {
+    principal = mLoadInfo->TriggeringPrincipal();
+  }
+  return principal;
+}
+
+nsresult HttpBaseChannel::GetAltDataBindingOrigin(nsACString& aOrigin) {
+  aOrigin.Truncate();
+  nsIPrincipal* principal = GetAltDataBindingPrincipal();
+  if (!principal) {
+    return NS_ERROR_FAILURE;
+  }
+  return principal->GetOrigin(aOrigin);
+}
+
 bool HttpBaseChannel::BypassServiceWorker() const {
   return mLoadFlags & LOAD_BYPASS_SERVICE_WORKER;
 }
