@@ -55,6 +55,21 @@ class AtomicRefCountedWithFinalize {
     }
   }
 
+  already_AddRefed<T> TryAddRef() {
+    // A weak reference must not revive an object after its count reaches zero.
+    int currCount = mRefCount;
+    while (currCount > 0) {
+      if (mRefCount.compareExchange(currCount, currCount + 1)) {
+#ifdef NS_BUILD_REFCNT_LOGGING
+        NS_LOG_ADDREF(this, currCount + 1, mName, sizeof(*this));
+#endif
+        return already_AddRefed<T>(static_cast<T*>(this));
+      }
+      currCount = mRefCount;
+    }
+    return nullptr;
+  }
+
  public:
   // Mark user classes that are considered flawless.
   template <class U>
