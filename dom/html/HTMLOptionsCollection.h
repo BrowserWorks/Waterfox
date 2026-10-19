@@ -23,7 +23,7 @@ class HTMLSelectElement;
  */
 class HTMLOptionsCollection final : public ContentList {
  public:
-  HTMLOptionsCollection(HTMLSelectElement*, bool aFromParser);
+  explicit HTMLOptionsCollection(HTMLSelectElement*);
   HTMLSelectElement* Select() const;
   DocGroup* GetDocGroup() const { return mRootNode->GetDocGroup(); }
   static bool IsValidOption(const HTMLOptionElement&, const HTMLSelectElement&);

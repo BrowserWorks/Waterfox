@@ -840,14 +840,6 @@ void nsHTMLDocument::GetFormsAndFormControls(ContentList** aFormList,
                                              ContentList** aFormControlList) {
   RefPtr<ContentListHolder> holder = mContentListHolder;
   if (!holder) {
-    // Flush our content model so it'll be up to date
-    // If this becomes unnecessary and the following line is removed,
-    // please also remove the corresponding flush operation from
-    // nsHtml5TreeBuilderCppSupplement.h. (Look for "See bug 497861." there.)
-    // XXXsmaug nsHtml5TreeBuilderCppSupplement doesn't seem to have such flush
-    //         anymore.
-    FlushPendingNotifications(FlushType::Content);
-
     RefPtr<ContentList> htmlForms = GetExistingForms();
     if (!htmlForms) {
       // If the document doesn't have an existing forms content list, create a

@@ -328,7 +328,7 @@ static StaticAutoPtr<nsTHashtable<CacheableFuncStringContentList::HashEntry>>
 
 ContentList::ContentList(nsINode* aRootNode, int32_t aMatchNameSpaceId,
                          nsAtom* aHTMLMatchAtom, nsAtom* aXMLMatchAtom,
-                         bool aDeep, bool aLiveList, bool aKnownParserCreated)
+                         bool aDeep, bool aLiveList)
     : mRootNode(aRootNode),
       mMatchNameSpaceId(aMatchNameSpaceId),
       mHTMLMatchAtom(aHTMLMatchAtom),
@@ -353,21 +353,13 @@ ContentList::ContentList(nsINode* aRootNode, int32_t aMatchNameSpaceId,
     SetEnabledCallbacks(nsIMutationObserver::kNodeWillBeDestroyed);
     mRootNode->AddMutationObserver(this);
   }
-
-  // We only need to flush if we're in an non-HTML document, since the HTML5
-  // parser doesn't need flushing.  Further, if we're not in a document at all
-  // right now (in the IsInUncomposedDoc() sense), and aKnownParserCreated is
-  // false, we're not parser-created and don't need to be flushing stuff under
-  // us to get our kids right.
-  mFlushesNeeded = (aKnownParserCreated || aRootNode->IsInUncomposedDoc()) &&
-                   !mIsHTMLDocument;
 }
 
 ContentList::ContentList(nsINode* aRootNode, nsContentListMatchFunc aFunc,
                          nsContentListDestroyFunc aDestroyFunc, void* aData,
                          bool aDeep, nsAtom* aMatchAtom,
                          int32_t aMatchNameSpaceId, bool aFuncMayDependOnAttr,
-                         bool aLiveList, bool aKnownParserCreated)
+                         bool aLiveList)
     : mRootNode(aRootNode),
       mMatchNameSpaceId(aMatchNameSpaceId),
       mHTMLMatchAtom(aMatchAtom),
@@ -389,10 +381,6 @@ ContentList::ContentList(nsINode* aRootNode, nsContentListMatchFunc aFunc,
     SetEnabledCallbacks(nsIMutationObserver::kNodeWillBeDestroyed);
     mRootNode->AddMutationObserver(this);
   }
-
-  // See above
-  mFlushesNeeded = (aKnownParserCreated || aRootNode->IsInUncomposedDoc()) &&
-                   !aRootNode->OwnerDoc()->IsHTMLDocument();
 }
 
 ContentList::~ContentList() {
@@ -421,15 +409,6 @@ uint32_t ContentList::Length(bool aDoFlush) {
 }
 
 Element* ContentList::Item(uint32_t aIndex, bool aDoFlush) {
-  if (mRootNode && aDoFlush && mFlushesNeeded) {
-    // XXX sXBL/XBL2 issue
-    Document* doc = mRootNode->GetUncomposedDoc();
-    if (doc) {
-      // Flush pending content changes Bug 4891.
-      doc->FlushPendingNotifications(FlushType::ContentAndNotify);
-    }
-  }
-
   if (mState != State::UpToDate) {
     PopulateSelf(std::min(aIndex, UINT32_MAX - 1) + 1);
   }
@@ -932,14 +911,6 @@ void ContentList::RemoveFromHashtable() {
 }
 
 void ContentList::BringSelfUpToDate(bool aDoFlush) {
-  if (mFlushesNeeded && mRootNode && aDoFlush) {
-    // XXX sXBL/XBL2 issue
-    if (Document* doc = mRootNode->GetUncomposedDoc()) {
-      // Flush pending content changes Bug 4891.
-      doc->FlushPendingNotifications(FlushType::ContentAndNotify);
-    }
-  }
-
   if (mState != State::UpToDate) {
     PopulateSelf(uint32_t(-1));
   }

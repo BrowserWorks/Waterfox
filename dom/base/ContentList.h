@@ -260,12 +260,10 @@ class ContentList : public HTMLCollection, public nsStubMultiMutationObserver {
    *              our root.
    * @param aLiveList Whether the created list should be a live list observing
    *                  mutations to the DOM tree.
-   * @param aKnownParserCreated Whether the element is known to be parser
-   *                  created, even if not in the document yet.
    */
   ContentList(nsINode* aRootNode, int32_t aMatchNameSpaceId,
               nsAtom* aHTMLMatchAtom, nsAtom* aXMLMatchAtom, bool aDeep = true,
-              bool aLiveList = true, bool aKnownParserCreated = false);
+              bool aLiveList = true);
 
   /**
    * @param aRootNode The node under which to limit our search.
@@ -284,15 +282,12 @@ class ContentList : public HTMLCollection, public nsStubMultiMutationObserver {
    *                             sensitive to attribute changes.
    * @param aLiveList Whether the created list should be a live list observing
    *                  mutations to the DOM tree.
-   * @param aKnownParserCreated Whether the element is known to be parser
-   *                  created, even if not in the document yet.
    */
   ContentList(nsINode* aRootNode, nsContentListMatchFunc aFunc,
               nsContentListDestroyFunc aDestroyFunc, void* aData,
               bool aDeep = true, nsAtom* aMatchAtom = nullptr,
               int32_t aMatchNameSpaceId = kNameSpaceID_None,
-              bool aFuncMayDependOnAttr = true, bool aLiveList = true,
-              bool aKnownParserCreated = false);
+              bool aFuncMayDependOnAttr = true, bool aLiveList = true);
 
   JSObject* WrapObject(JSContext* aCx,
                        JS::Handle<JSObject*> aGivenProto) override;
@@ -502,10 +497,6 @@ class ContentList : public HTMLCollection, public nsStubMultiMutationObserver {
    * attributes.
    */
   bool mFuncMayDependOnAttr : 1;
-  /**
-   * Whether we actually need to flush to get our state correct.
-   */
-  bool mFlushesNeeded : 1;
   /**
    * Whether the ownerDocument of our root node at list creation time was an
    * HTML document.  Only needed when we're doing a namespace/atom match, not

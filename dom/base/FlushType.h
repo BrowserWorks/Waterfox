@@ -20,14 +20,10 @@ namespace mozilla {
  * kFlushTypeNames array below.
  */
 enum class FlushType : uint8_t {
-  None,             /* Actually don't flush anything */
-  Event,            /* Flush pending events before notify other observers */
-  Content,          /* flush the content model construction */
-  ContentAndNotify, /* As above, plus flush the frame model
-                       construction and other nsIMutationObserver
-                       notifications. */
-  Style,            /* As above, plus flush style reresolution */
-  Frames,           /* As above, plus flush frame construction */
+  None,   /* Actually don't flush anything */
+  Event,  /* Flush pending events before notify other observers */
+  Style,  /* Flush style reresolution */
+  Frames, /* As above, plus flush frame construction */
   EnsurePresShellInitAndFrames, /* As above, plus ensure the pres shell is alive
                                  */
   InterruptibleLayout, /* As above, plus flush reflow, but allow it to be
@@ -43,8 +39,6 @@ const EnumeratedArray<FlushType, const char*, size_t(FlushType::Count)>
     kFlushTypeNames = {
   "",
   "Event",
-  "Content",
-  "ContentAndNotify",
   "Style",
   // As far as the profiler is concerned, EnsurePresShellInitAndFrames and
   // Frames are the same

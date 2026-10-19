@@ -639,11 +639,6 @@ nsresult HTMLFormElement::PostHandleEvent(EventChainPostVisitor& aVisitor) {
 }
 
 nsresult HTMLFormElement::DoReset() {
-  // Make sure the presentation is up-to-date
-  if (Document* doc = GetComposedDoc()) {
-    doc->FlushPendingNotifications(FlushType::ContentAndNotify);
-  }
-
   // JBK walk the elements[] array instead of form frame controls - bug 34297
   uint32_t numElements = mControls->Length();
   for (uint32_t elementX = 0; elementX < numElements; ++elementX) {
@@ -670,11 +665,6 @@ nsresult HTMLFormElement::DoReset() {
 nsresult HTMLFormElement::DoSubmit(Event* aEvent) {
   Document* doc = GetComposedDoc();
   NS_ASSERTION(doc, "Should never get here without a current doc");
-
-  // Make sure the presentation is up-to-date
-  if (doc) {
-    doc->FlushPendingNotifications(FlushType::ContentAndNotify);
-  }
 
   // Don't submit if we're not in a document or if we're in
   // a sandboxed frame and form submit is disabled.

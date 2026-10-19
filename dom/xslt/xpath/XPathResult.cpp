@@ -83,10 +83,6 @@ nsINode* XPathResult::IterateNext(ErrorResult& aRv) {
     return nullptr;
   }
 
-  if (mDocument) {
-    mDocument->FlushPendingNotifications(FlushType::Content);
-  }
-
   if (mInvalidIteratorState) {
     aRv.ThrowInvalidStateError(
         "The document has been mutated since the result was returned");

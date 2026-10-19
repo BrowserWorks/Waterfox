@@ -4493,12 +4493,6 @@ void PresShell::DoFlushPendingNotifications(mozilla::ChangesToFlush aFlush) {
   // resources here instead of Document::FlushPendingNotifications.
   mDocument->FlushExternalResources(flushType);
 
-  // Force flushing of any pending content notifications that might have
-  // queued up while our event was pending.  That will ensure that we don't
-  // construct frames for content right now that's still waiting to be
-  // notified on,
-  mDocument->FlushPendingNotifications(FlushType::ContentAndNotify);
-
   mDocument->UpdateSVGUseElementShadowTrees();
 
   // Process pending restyles, since any flush of the presshell wants

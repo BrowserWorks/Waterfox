@@ -100,7 +100,7 @@ HTMLSelectElement::HTMLSelectElement(
     already_AddRefed<mozilla::dom::NodeInfo> aNodeInfo, FromParser aFromParser)
     : nsGenericHTMLFormControlElementWithState(
           std::move(aNodeInfo), aFromParser, FormControlType::Select),
-      mOptions(new HTMLOptionsCollection(this, !!aFromParser)),
+      mOptions(new HTMLOptionsCollection(this)),
       mAutocompleteAttrState(nsContentUtils::eAutocompleteAttrState_Unknown),
       mAutocompleteInfoState(nsContentUtils::eAutocompleteAttrState_Unknown),
       mIsDoneAddingChildren(!aFromParser),

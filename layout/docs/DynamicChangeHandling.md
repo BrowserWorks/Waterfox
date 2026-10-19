@@ -56,11 +56,7 @@ We therefore have ways to flush these different sorts of buffers. There
 are methods called FlushPendingNotifications on nsIDocument and
 nsIPresShell, that take an argument of what things to flush:
 
-- Flush\_Content: create all the content nodes from data buffered in
-  the parser
-- Flush\_ContentAndNotify: the above, plus notify document observers
-  about the creation of all nodes created so far
-- Flush\_Style: the above, plus make sure style data are up-to-date
+- Flush\_Style: make sure style data are up-to-date
 - Flush\_Frames: the above, plus make sure all frame construction has
   happened (currently the same as Flush\_Style)
 - Flush\_InterruptibleLayout: the above, plus perform layout (Reflow),

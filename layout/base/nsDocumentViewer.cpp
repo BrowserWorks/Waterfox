@@ -636,18 +636,6 @@ nsresult nsDocumentViewer::InitPresentationStuff(bool aDoInitialReflow) {
 
   AttachToTopLevelWidget();
 
-  if (aDoInitialReflow) {
-    // Since Initialize() will create frames for *all* items
-    // that are currently in the document tree, we need to flush
-    // any pending notifications to prevent the content sink from
-    // duplicating layout frames for content it has added to the tree
-    // but hasn't notified the document about. (Bug 154018)
-    //
-    // Note that we are flushing before we add mPresShell as an observer
-    // to avoid bogus notifications.
-    mDocument->FlushPendingNotifications(FlushType::ContentAndNotify);
-  }
-
   mPresShell->BeginObservingDocument();
 
   // Initialize our view manager

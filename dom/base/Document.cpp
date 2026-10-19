@@ -11554,15 +11554,15 @@ void Document::FlushPendingNotifications(mozilla::ChangesToFlush aFlush) {
 
   RefPtr<Document> documentOnStack = this;
 
-  // We need to flush the sink for non-HTML documents (because the XML
-  // parser still does insertion with deferred notifications).  We
-  // also need to flush the sink if this is a layout-related flush, to
-  // make sure that layout is started as needed.  But we can skip that
-  // part if we have no presshell or if it's already done an initial
-  // reflow.
-  if ((!IsHTMLDocument() || (flushType > FlushType::ContentAndNotify &&
-                             mPresShell && !mPresShell->DidInitialize())) &&
-      (mParser || mWeakSink)) {
+  if (flushType < FlushType::Style) {
+    // Nothing to do here
+    return;
+  }
+
+  // We need to flush the sink if this is a layout-related flush, to make sure
+  // that layout is started as needed.  But we can skip that part if we have no
+  // presshell or if it's already done an initial reflow.
+  if (mPresShell && !mPresShell->DidInitialize() && (mParser || mWeakSink)) {
     nsCOMPtr<nsIContentSink> sink;
     if (mParser) {
       sink = mParser->GetContentSink();
@@ -11574,17 +11574,12 @@ void Document::FlushPendingNotifications(mozilla::ChangesToFlush aFlush) {
     }
     // Determine if it is safe to flush the sink notifications
     // by determining if it safe to flush all the presshells.
-    if (sink && (flushType == FlushType::Content || IsSafeToFlush())) {
+    if (sink && IsSafeToFlush()) {
       sink->FlushPendingNotifications(flushType);
     }
   }
 
   // Should we be flushing pending binding constructors in here?
-
-  if (flushType <= FlushType::ContentAndNotify) {
-    // Nothing to do here
-    return;
-  }
 
   // If we have a parent we must flush the parent too to ensure that our
   // container is reflowed if its size was changed.

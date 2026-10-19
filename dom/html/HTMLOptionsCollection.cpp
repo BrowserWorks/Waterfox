@@ -43,13 +43,12 @@ static bool MatchOption(Element* aElement, int32_t aNamespaceID, nsAtom* aAtom,
   return HTMLOptionsCollection::IsValidOption(*option, *root);
 }
 
-HTMLOptionsCollection::HTMLOptionsCollection(HTMLSelectElement* aRoot,
-                                             bool aFromParser)
+HTMLOptionsCollection::HTMLOptionsCollection(HTMLSelectElement* aRoot)
     : ContentList(aRoot, MatchOption, nullptr, aRoot,
                   /* aDeep = */ true, /* aMatchAtom = */ nullptr,
                   /* aMatchNameSpaceId = */ kNameSpaceID_None,
                   /* aFuncMayDependOnAttr = */ false,
-                  /* aLiveList = */ true, aFromParser) {}
+                  /* aLiveList = */ true) {}
 
 HTMLSelectElement* HTMLOptionsCollection::Select() const {
   return static_cast<HTMLSelectElement*>(mRootNode);
