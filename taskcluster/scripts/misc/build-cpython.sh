@@ -42,6 +42,7 @@ case `uname -s` in
         export CFLAGS=${sysroot_flags}
         export LDFLAGS="${LDFLAGS} ${sysroot_flags} -L${xz_prefix}/lib"
         configure_flags_extra=--with-openssl=/usr/local/opt/openssl
+        export DYLD_FALLBACK_LIBRARY_PATH=${xz_prefix}/lib:/usr/local/lib:/usr/lib
 
         # see https://bugs.python.org/issue44065
         sed -i -e 's,$CC --print-multiarch,:,' ${python_src}/configure
