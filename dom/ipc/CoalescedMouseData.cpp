@@ -111,8 +111,9 @@ CoalescedMouseMoveFlusher::CoalescedMouseMoveFlusher(
 
 void CoalescedMouseMoveFlusher::WillRefresh(mozilla::TimeStamp aTime) {
   MOZ_ASSERT(mRefreshDriver);
-  mBrowserChild->FlushAllCoalescedMouseData();
-  mBrowserChild->ProcessPendingCoalescedMouseDataAndDispatchEvents();
+  RefPtr<BrowserChild> browserChild(mBrowserChild);
+  browserChild->FlushAllCoalescedMouseData();
+  browserChild->ProcessPendingCoalescedMouseDataAndDispatchEvents();
 }
 
 CoalescedMouseMoveFlusher::~CoalescedMouseMoveFlusher() { RemoveObserver(); }

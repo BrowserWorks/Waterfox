@@ -134,7 +134,8 @@ Touch* CoalescedTouchData::GetTouch(int32_t aIdentifier) {
 
 void CoalescedTouchMoveFlusher::WillRefresh(mozilla::TimeStamp aTime) {
   MOZ_ASSERT(mRefreshDriver);
-  mBrowserChild->ProcessPendingCoalescedTouchData();
+  RefPtr<BrowserChild> browserChild(mBrowserChild);
+  browserChild->ProcessPendingCoalescedTouchData();
 }
 
 CoalescedTouchMoveFlusher::CoalescedTouchMoveFlusher(

@@ -88,6 +88,8 @@ class CoalescedInputFlusher : public nsARefreshObserver {
  protected:
   virtual ~CoalescedInputFlusher();
 
+  // BrowserChild owns us and unregisters us from the refresh driver in
+  // DestroyWindow() before it can go away.
   BrowserChild* mBrowserChild;
   // A refresh driver which this instance waits for the next refresh of.
   RefPtr<nsRefreshDriver> mRefreshDriver;
