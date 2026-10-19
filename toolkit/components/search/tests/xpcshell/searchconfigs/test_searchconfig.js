@@ -202,9 +202,17 @@ const test = new SearchConfigTest([
     },
     details: [
       {
-        included: [{}],
+        included: [{ regions: "cn" }],
+        domain: "baidu.com",
+        telemetryId: "baidu-cn",
+        searchUrlCode: "tn=07175415_dg",
+      },
+      {
+        included: [{ locales: "zh-CN" }],
+        excluded: [{ regions: "cn" }],
         domain: "baidu.com",
         telemetryId: "baidu",
+        searchUrlCode: null,
       },
     ],
   },
