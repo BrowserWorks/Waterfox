@@ -56,6 +56,7 @@ class Image;
 class PTextureChild;
 class TextureChild;
 class TextureData;
+class ShmemHolder;
 class GPUVideoTextureData;
 class TextureClient;
 class ITextureClientRecycleAllocator;
@@ -475,6 +476,11 @@ class TextureClient : public AtomicRefCountedWithFinalize<TextureClient> {
    */
   bool BorrowMappedData(MappedTextureData&);
   bool BorrowMappedYCbCrData(MappedYCbCrTextureData&);
+
+  // Also retain the shmem mapping when keeping plane pointers beyond Unlock().
+  // aShmemHolder is null for textures which do not use shmem.
+  bool BorrowMappedYCbCrData(MappedYCbCrTextureData& aMap,
+                             RefPtr<ShmemHolder>& aShmemHolder);
 
   /**
    * This function can be used to update the contents of the TextureClient

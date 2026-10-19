@@ -140,10 +140,11 @@ nsresult SharedPlanarYCbCrImage::CreateEmptyBuffer(
   // The locking here is sort of a lie. The SharedPlanarYCbCrImage just pulls
   // pointers out of the TextureClient and keeps them around, which works only
   // because the underlyin BufferTextureData is always mapped in memory even
-  // outside of the lock/unlock interval. That's sad and new code should follow
-  // this example.
+  // outside of the lock/unlock interval. For shmem, mShmemHolder also keeps the
+  // mapping alive if ImageBridge shutdown destroys the TextureClient. New code
+  // should not retain borrowed pointers without retaining their storage.
   if (!mTextureClient->Lock(OpenMode::OPEN_READ) ||
-      !mTextureClient->BorrowMappedYCbCrData(mapped)) {
+      !mTextureClient->BorrowMappedYCbCrData(mapped, mShmemHolder)) {
     MOZ_CRASH("GFX: Cannot lock or borrow mapped YCbCr");
   }
 

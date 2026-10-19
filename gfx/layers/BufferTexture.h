@@ -8,9 +8,32 @@
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Types.h"
 #include "mozilla/layers/TextureClient.h"
+#include "nsCOMPtr.h"
+#include "nsISerialEventTarget.h"
 
 namespace mozilla {
 namespace layers {
+
+// Keeps a shmem mapping alive independently of TextureClient and IPC teardown.
+class ShmemHolder final {
+ public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ShmemHolder)
+
+  ShmemHolder(LayersIPCChannel* aAllocator, ipc::Shmem aShmem);
+  ipc::Shmem& GetShmem() { return mShmem; }
+  void SetDeallocShmem() { mDeallocShmem = true; }
+
+  const RefPtr<LayersIPCChannel> mAllocator;
+
+ private:
+  ~ShmemHolder();
+
+  // Capture while the allocator is usable. GetThread() need not be safe to
+  // call from an arbitrary thread during allocator shutdown.
+  const nsCOMPtr<nsISerialEventTarget> mDeallocationTarget;
+  ipc::Shmem mShmem;
+  Atomic<bool> mDeallocShmem{false};
+};
 
 class BufferTextureData : public TextureData {
  public:
@@ -78,6 +101,8 @@ class BufferTextureData : public TextureData {
   gfx::SurfaceFormat GetFormat() const;
 
   virtual size_t GetBufferSize() = 0;
+
+  virtual ShmemHolder* GetShmemHolder() { return nullptr; }
 
   virtual void OnBorrowDrawTarget(gfx::DrawTarget* aDrawTarget) {}
 

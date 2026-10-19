@@ -20,6 +20,7 @@ namespace mozilla {
 namespace layers {
 
 class ImageClient;
+class ShmemHolder;
 class TextureClient;
 class TextureClientRecycleAllocator;
 
@@ -53,6 +54,9 @@ class SharedPlanarYCbCrImage : public PlanarYCbCrImage {
   TextureClientRecycleAllocator* RecycleAllocator();
 
  private:
+  // Outlives mTextureClient so cached plane pointers retain their mapping even
+  // when ImageBridge shutdown destroys the TextureClient explicitly.
+  RefPtr<ShmemHolder> mShmemHolder;
   RefPtr<TextureClient> mTextureClient;
   RefPtr<ImageClient> mCompositable;
   RefPtr<TextureClientRecycleAllocator> mRecycleAllocator;

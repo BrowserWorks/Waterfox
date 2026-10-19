@@ -14,7 +14,7 @@
 #include "mozilla/layers/ISurfaceAllocator.h"
 #include "mozilla/layers/ImageDataSerializer.h"
 #include "mozilla/layers/TextureForwarder.h"
-#include "nsProxyRelease.h"
+#include "nsThreadUtils.h"
 
 #include "gfxPlatform.h"
 
@@ -26,6 +26,41 @@ using mozilla::ipc::IShmemAllocator;
 
 namespace mozilla {
 namespace layers {
+
+ShmemHolder::ShmemHolder(LayersIPCChannel* aAllocator, ipc::Shmem aShmem)
+    : mAllocator(aAllocator),
+      mDeallocationTarget(aAllocator->GetThread()),
+      mShmem(std::move(aShmem)) {}
+
+ShmemHolder::~ShmemHolder() {
+  if (!mDeallocShmem) {
+    return;
+  }
+
+  // The Image may outlive both its TextureClient and the allocator thread.
+  // Only touch the IPC shmem registry on the allocator thread while IPC is
+  // open. Otherwise dropping mShmem releases our local mapping; IPC teardown
+  // releases the registry's reference independently.
+  // Use the target retained at construction rather than querying the
+  // allocator after its thread may have been shut down.
+  if (!mDeallocationTarget) {
+    return;
+  }
+
+  RefPtr<Runnable> task = NS_NewRunnableFunction(
+      "ShmemHolder::DeallocShmem",
+      [allocator = mAllocator, shmem = mShmem]() mutable {
+        if (allocator->IPCOpen()) {
+          allocator->DeallocShmem(shmem);
+        }
+      });
+  if (mDeallocationTarget->IsOnCurrentThread()) {
+    task->Run();
+  } else {
+    // If dispatch fails, destroying the task still releases its local mapping.
+    (void)mDeallocationTarget->Dispatch(task.forget());
+  }
+}
 
 class MemoryTextureData : public BufferTextureData {
  public:
@@ -93,28 +128,6 @@ class ShmemTextureData : public BufferTextureData {
 
   virtual void Deallocate(LayersIPCChannel* aAllocator) override;
 
-  class ShmemHolder final {
-   public:
-    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ShmemHolder)
-
-    ShmemHolder(LayersIPCChannel* aAllocator, mozilla::ipc::Shmem aShmem)
-        : mAllocator(aAllocator), mShmem(std::move(aShmem)) {}
-    mozilla::ipc::Shmem& GetShmem() { return mShmem; }
-    void SetDeallocShmem() { mDeallocShmem = true; }
-
-    const RefPtr<LayersIPCChannel> mAllocator;
-
-   protected:
-    ~ShmemHolder() {
-      if (mDeallocShmem) {
-        mAllocator->DeallocShmem(mShmem);
-      }
-    }
-
-    mozilla::ipc::Shmem mShmem;
-    mozilla::Atomic<bool> mDeallocShmem{false};
-  };
-
   ShmemTextureData(const BufferDescriptor& aDesc,
                    gfx::BackendType aMoz2DBackend,
                    RefPtr<ShmemHolder>& aShmemHolder, bool aIsClear = false)
@@ -133,6 +146,8 @@ class ShmemTextureData : public BufferTextureData {
   }
 
   virtual void OnBorrowDrawTarget(gfx::DrawTarget* aDrawTarget) override;
+
+  ShmemHolder* GetShmemHolder() override { return mShmemHolder; }
 
  protected:
   const RefPtr<ShmemHolder> mShmemHolder;
@@ -176,8 +191,7 @@ BufferTextureData* BufferTextureData::CreateInternal(
 
     bool isClear = aDesc.type() == BufferDescriptor::TRGBDescriptor &&
                    !IsOpaque(aDesc.get_RGBDescriptor().format());
-    RefPtr shmemHolder =
-        MakeRefPtr<ShmemTextureData::ShmemHolder>(aAllocator, shm);
+    RefPtr shmemHolder = MakeRefPtr<ShmemHolder>(aAllocator, shm);
     return new ShmemTextureData(aDesc, aMoz2DBackend, shmemHolder, isClear);
   }
 }
@@ -284,21 +298,14 @@ gfx::SurfaceFormat BufferTextureData::GetFormat() const {
 }
 
 struct ShmemHolderUserData {
-  explicit ShmemHolderUserData(ShmemTextureData::ShmemHolder* aShmemHolder)
+  explicit ShmemHolderUserData(ShmemHolder* aShmemHolder)
       : mShmemHolder(aShmemHolder) {}
   ~ShmemHolderUserData() = default;
-  RefPtr<ShmemTextureData::ShmemHolder> mShmemHolder;
+  RefPtr<ShmemHolder> mShmemHolder;
 };
 
 void DeleteShmemHolderUserData(void* aClosure) {
   ShmemHolderUserData* data = reinterpret_cast<ShmemHolderUserData*>(aClosure);
-  nsCOMPtr<nsIEventTarget> eventTarget =
-      data->mShmemHolder->mAllocator->GetThread();
-
-  // Do not release the holder on the wrong thread if dispatch fails.
-  NS_ProxyRelease("DeleteShmemHolderUserData", eventTarget,
-                  data->mShmemHolder.forget());
-
   delete data;
 }
 
@@ -614,8 +621,7 @@ ShmemTextureData* ShmemTextureData::Create(
   BufferDescriptor descriptor =
       RGBDescriptor(aSize, aFormat, aColorSpace, aTransferFunction);
   bool isClear = (aAllocFlags & ALLOC_CLEAR_BUFFER) || !IsOpaque(aFormat);
-  RefPtr shmemHolder =
-      MakeRefPtr<ShmemTextureData::ShmemHolder>(aAllocator, shm);
+  RefPtr shmemHolder = MakeRefPtr<ShmemHolder>(aAllocator, shm);
   return new ShmemTextureData(descriptor, aMoz2DBackend, shmemHolder, isClear);
 }
 

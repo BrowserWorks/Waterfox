@@ -1008,6 +1008,22 @@ bool TextureClient::BorrowMappedYCbCrData(MappedYCbCrTextureData& aMap) {
   return mData ? mData->BorrowMappedYCbCrData(aMap) : false;
 }
 
+bool TextureClient::BorrowMappedYCbCrData(MappedYCbCrTextureData& aMap,
+                                          RefPtr<ShmemHolder>& aShmemHolder) {
+  MOZ_ASSERT(IsLocked());
+  // Acquire the mapping and its owner together, before Destroy() can detach
+  // mData. Do not return borrowed shmem pointers without their keep-alive.
+  MutexAutoLock lock(mMutex);
+  aShmemHolder = nullptr;
+  if (!mData || !mData->BorrowMappedYCbCrData(aMap)) {
+    return false;
+  }
+  if (auto* bufferData = mData->AsBufferTextureData()) {
+    aShmemHolder = bufferData->GetShmemHolder();
+  }
+  return true;
+}
+
 bool TextureClient::ToSurfaceDescriptor(SurfaceDescriptor& aOutDescriptor) {
   MutexAutoLock lock(mMutex);
   return mData ? mData->Serialize(aOutDescriptor) : false;
