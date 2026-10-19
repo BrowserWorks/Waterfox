@@ -55,7 +55,7 @@ NS_IMPL_ADDREF_INHERITED(SubstitutingURL, nsStandardURL)
 NS_IMPL_RELEASE_INHERITED(SubstitutingURL, nsStandardURL)
 NS_IMPL_QUERY_INTERFACE_CI_INHERITED0(SubstitutingURL, nsStandardURL)
 
-nsresult SubstitutingURL::EnsureFile() {
+nsresult SubstitutingURL::ResolveFile(nsIFile** aResult) {
   nsAutoCString ourScheme;
   nsresult rv = GetScheme(ourScheme);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -87,7 +87,7 @@ nsresult SubstitutingURL::EnsureFile() {
   // when the scheme isn't file.
   if (!scheme.EqualsLiteral("file")) return NS_ERROR_NO_INTERFACE;
 
-  return net_GetFileFromURLSpec(spec, getter_AddRefs(mFile));
+  return net_GetFileFromURLSpec(spec, aResult);
 }
 
 /* virtual */

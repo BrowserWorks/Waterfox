@@ -18,7 +18,7 @@ class SubstitutingURL : public nsStandardURL {
  public:
   NS_DECL_ISUPPORTS_INHERITED
   virtual nsStandardURL* StartClone() override;
-  [[nodiscard]] virtual nsresult EnsureFile() override;
+  [[nodiscard]] virtual nsresult ResolveFile(nsIFile** aResult) override;
 
  private:
   explicit SubstitutingURL() : nsStandardURL(true) {}

@@ -2190,8 +2190,9 @@ nsresult nsStandardURL::EqualsInternal(
     // really failures, more or less, so propagate them to caller.
     *result = false;
 
-    rv = EnsureFile();
-    nsresult rv2 = other->EnsureFile();
+    nsCOMPtr<nsIFile> file, otherFile;
+    rv = ResolveFile(getter_AddRefs(file));
+    nsresult rv2 = other->ResolveFile(getter_AddRefs(otherFile));
 
     // Special case for resource:// urls that don't resolve to files,
     // and for moz-extension://UUID/_generated_background_page.html
@@ -2206,7 +2207,6 @@ nsresult nsStandardURL::EqualsInternal(
            this, mSpec.get()));
       return rv;
     }
-    NS_ASSERTION(mFile, "EnsureFile() lied!");
 
     rv = rv2;
     if (NS_FAILED(rv)) {
@@ -2216,8 +2216,7 @@ nsresult nsStandardURL::EqualsInternal(
            other.get(), other->mSpec.get()));
       return rv;
     }
-    NS_ASSERTION(other->mFile, "EnsureFile() lied!");
-    return mFile->Equals(other->mFile, result);
+    return file->Equals(otherFile, result);
   }
 
   // The URLs are not identical, and they do not correspond to the
@@ -3124,13 +3123,12 @@ nsresult nsStandardURL::SetFileExtensionInternal(const nsACString& input) {
 // nsStandardURL::nsIFileURL
 //----------------------------------------------------------------------------
 
-nsresult nsStandardURL::EnsureFile() {
+nsresult nsStandardURL::ResolveFile(nsIFile** aResult) {
   MOZ_ASSERT(mSupportsFileURL,
-             "EnsureFile() called on a URL that doesn't support files!");
+             "ResolveFile() called on a URL that doesn't support files!");
 
   if (mFile) {
-    // Nothing to do
-    return NS_OK;
+    return mFile->Clone(aResult);
   }
 
   // Parse the spec if we don't have a cached result
@@ -3144,7 +3142,7 @@ nsresult nsStandardURL::EnsureFile() {
     return NS_ERROR_FAILURE;
   }
 
-  return net_GetFileFromURLSpec(mSpec, getter_AddRefs(mFile));
+  return net_GetFileFromURLSpec(mSpec, aResult);
 }
 
 NS_IMETHODIMP
@@ -3152,23 +3150,19 @@ nsStandardURL::GetFile(nsIFile** result) {
   MOZ_ASSERT(mSupportsFileURL,
              "GetFile() called on a URL that doesn't support files!");
 
-  nsresult rv = EnsureFile();
+  nsCOMPtr<nsIFile> file;
+  nsresult rv = ResolveFile(getter_AddRefs(file));
   if (NS_FAILED(rv)) {
     return rv;
   }
 
   if (LOG_ENABLED()) {
     LOG(("nsStandardURL::GetFile [this=%p spec=%s resulting_path=%s]\n", this,
-         mSpec.get(), mFile->HumanReadablePath().get()));
+         mSpec.get(), file->HumanReadablePath().get()));
   }
 
-  // clone the file, so the caller can modify it.
-  // XXX nsIFileURL.idl specifies that the consumer must _not_ modify the
-  // nsIFile returned from this method; but it seems that some folks do
-  // (see bug 161921). until we can be sure that all the consumers are
-  // behaving themselves, we'll stay on the safe side and clone the file.
-  // see bug 212724 about fixing the consumers.
-  return mFile->Clone(result);
+  file.forget(result);
+  return NS_OK;
 }
 
 nsresult nsStandardURL::SetFile(nsIFile* file) {
