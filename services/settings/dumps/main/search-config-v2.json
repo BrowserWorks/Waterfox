@@ -294,11 +294,15 @@
         "name": "百度",
         "urls": {
           "search": {
-            "base": "https://www.baidu.com/baidu",
+            "base": "https://www.baidu.com/s",
             "params": [
               {
                 "name": "ie",
                 "value": "utf-8"
+              },
+              {
+                "name": "tn",
+                "value": "{partnerCode}"
               }
             ],
             "searchTermParamName": "wd"
@@ -321,9 +325,9 @@
       },
       "id": "ad58537f-f397-46ec-a1a8-935e12f0aab6",
       "identifier": "baidu",
-      "last_modified": 1718719100295,
+      "last_modified": 1792431557874,
       "recordType": "engine",
-      "schema": 1718698349444,
+      "schema": 1791936010789,
       "variants": [
         {
           "environment": {
@@ -332,6 +336,18 @@
             ]
           },
           "subVariants": [
+            {
+              "environment": {
+                "applications": [
+                  "firefox"
+                ],
+                "regions": [
+                  "cn"
+                ]
+              },
+              "partnerCode": "07175415_dg",
+              "telemetrySuffix": "cn"
+            },
             {
               "environment": {
                 "applications": [
@@ -8528,5 +8544,5 @@
       "schema": 1707824831520
     }
   ],
-  "timestamp": 1790703242032
+  "timestamp": 1792431557874
 }
