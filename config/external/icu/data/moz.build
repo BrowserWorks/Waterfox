@@ -26,8 +26,17 @@ endianness = CONFIG["TARGET_ENDIANNESS"] or "little"
 DEFINES["ICU_DATA_FILE"] = '"%s/%s"' % (data_dir[endianness], data_file[endianness])
 DEFINES["ICU_DATA_SYMBOL"] = "%sicudt%s_dat" % (prefix, CONFIG["MOZ_ICU_VERSION"])
 SOURCES += [
-    "icu_data.S",
+    "!icu_data_hashed.S",
 ]
+
+GeneratedFile(
+    "icu_data_hashed.S",
+    script="icu_data_hash.py",
+    inputs=[
+        "!" + data_file["big"] if endianness == "big" else data_file["little"],
+        "icu_data.S",
+    ],
+)
 
 if CONFIG["OS_ARCH"] == "WINNT" and CONFIG["CC_TYPE"] == "clang-cl":
     USE_INTEGRATED_CLANGCL_AS = True
