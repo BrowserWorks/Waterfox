@@ -481,7 +481,7 @@ class ProfilesDatastoreServiceClass {
     } catch (e) {
       console.error(e);
 
-      await this.uninit();
+      await this.#uninit();
       return;
     }
 
@@ -499,6 +499,14 @@ class ProfilesDatastoreServiceClass {
   }
 
   async uninit() {
+    if (this.#initPromise) {
+      await this.#initPromise;
+    }
+
+    await this.#uninit();
+  }
+
+  async #uninit() {
     if (this.#asyncShutdownBarrier) {
       await this.#asyncShutdownBarrier.wait();
     }

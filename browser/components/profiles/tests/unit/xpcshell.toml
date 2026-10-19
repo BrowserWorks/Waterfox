@@ -23,6 +23,8 @@ skip-if = [
 
 ["test_create_profile.js"]
 
+["test_datastore_uninit_during_init.js"]
+
 ["test_delete_last_profile.js"]
 
 ["test_fail_recover_storeID.js"]
