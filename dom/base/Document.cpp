@@ -15842,7 +15842,13 @@ void Document::RestorePreviousFullscreenState(UniquePtr<FullscreenExit> aExit) {
   // that the loop order is reversed so that events are dispatched in
   // the tree order as indicated in the spec.
   for (Element* e : Reversed(exitElements)) {
-    DispatchFullscreenChange(*e->OwnerDoc(), e);
+    Document* exitDoc = e->OwnerDoc();
+    DispatchFullscreenChange(*exitDoc, e);
+    if (!exitDoc->Fullscreen()) {
+      // The document may have other fullscreen subdocuments which are not part
+      // of the current fullscreen document chain, reset them as well.
+      exitDoc->EnumerateSubDocuments(ResetFullscreen);
+    }
   }
   aExit->MayResolvePromise();
 
