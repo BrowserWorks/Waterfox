@@ -282,7 +282,7 @@ void HTMLFieldSetElement::NotifyElementsForFirstLegendChange(bool aNotify) {
   }
 
   nsAutoScriptBlocker scriptBlocker;
-  uint32_t length = mElements->Length(true);
+  uint32_t length = mElements->Length();
   for (uint32_t i = 0; i < length; ++i) {
     static_cast<nsGenericHTMLFormElement*>(mElements->Item(i))
         ->FieldSetFirstLegendChanged(aNotify);

@@ -89,12 +89,8 @@ nsIContent* BaseContentList::Item(uint32_t aIndex) {
   return mElements.SafeElementAt(aIndex);
 }
 
-int32_t BaseContentList::IndexOf(nsIContent* aContent, bool aDoFlush) {
-  return mElements.IndexOf(aContent);
-}
-
 int32_t BaseContentList::IndexOf(nsIContent* aContent) {
-  return IndexOf(aContent, true);
+  return mElements.IndexOf(aContent);
 }
 
 size_t BaseContentList::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const {
@@ -402,13 +398,13 @@ JSObject* ContentList::WrapObject(JSContext* cx,
 
 NS_IMPL_ISUPPORTS_INHERITED(ContentList, HTMLCollection, nsIMutationObserver)
 
-uint32_t ContentList::Length(bool aDoFlush) {
-  BringSelfUpToDate(aDoFlush);
+uint32_t ContentList::Length() {
+  BringSelfUpToDate();
 
   return mElements.Length();
 }
 
-Element* ContentList::Item(uint32_t aIndex, bool aDoFlush) {
+Element* ContentList::Item(uint32_t aIndex) {
   if (mState != State::UpToDate) {
     PopulateSelf(std::min(aIndex, UINT32_MAX - 1) + 1);
   }
@@ -482,8 +478,8 @@ inline void ContentList::InvalidateNamedItemsCacheForDeletion(
   }
 }
 
-void ContentList::EnsureNamedItemsCacheValid(bool aDoFlush) {
-  BringSelfUpToDate(aDoFlush);
+void ContentList::EnsureNamedItemsCacheValid() {
+  BringSelfUpToDate();
 
   if (mNamedItemsCacheValid) {
     return;
@@ -501,12 +497,14 @@ void ContentList::EnsureNamedItemsCacheValid(bool aDoFlush) {
   mNamedItemsCacheValid = true;
 }
 
-Element* ContentList::NamedItem(const nsAString& aName, bool aDoFlush) {
+Element* ContentList::GetFirstNamedElement(const nsAString& aName,
+                                           bool& aFound) {
+  aFound = false;
   if (aName.IsEmpty()) {
     return nullptr;
   }
 
-  EnsureNamedItemsCacheValid(aDoFlush);
+  EnsureNamedItemsCacheValid();
 
   if (!mNamedItemsCache) {
     return nullptr;
@@ -516,12 +514,14 @@ Element* ContentList::NamedItem(const nsAString& aName, bool aDoFlush) {
   RefPtr<nsAtom> name = NS_Atomize(aName);
   NS_ENSURE_TRUE(name, nullptr);
 
-  return mNamedItemsCache->Get(name);
+  Element* item = mNamedItemsCache->Get(name);
+  aFound = !!item;
+  return item;
 }
 
 void ContentList::GetSupportedNames(nsTArray<nsString>& aNames,
                                     FilterElementWithName aFilter) {
-  BringSelfUpToDate(true);
+  BringSelfUpToDate();
 
   AutoTArray<nsAtom*, 8> atoms;
   for (uint32_t i = 0; i < mElements.Length(); ++i) {
@@ -558,14 +558,10 @@ void ContentList::GetSupportedNames(nsTArray<nsString>& aNames,
   }
 }
 
-int32_t ContentList::IndexOf(nsIContent* aContent, bool aDoFlush) {
-  BringSelfUpToDate(aDoFlush);
+int32_t ContentList::IndexOf(nsIContent* aContent) {
+  BringSelfUpToDate();
 
   return mElements.IndexOf(aContent);
-}
-
-int32_t ContentList::IndexOf(nsIContent* aContent) {
-  return IndexOf(aContent, true);
 }
 
 void ContentList::NodeWillBeDestroyed(nsINode* aNode) {
@@ -587,8 +583,6 @@ void ContentList::LastRelease() {
   }
   SetDirty();
 }
-
-Element* ContentList::Item(uint32_t aIndex) { return Item(aIndex, true); }
 
 void ContentList::AttributeChanged(Element* aElement, int32_t aNameSpaceID,
                                    nsAtom* aAttribute, AttrModType,
@@ -910,7 +904,7 @@ void ContentList::RemoveFromHashtable() {
   MOZ_RELEASE_ASSERT(!mInHashtable);
 }
 
-void ContentList::BringSelfUpToDate(bool aDoFlush) {
+void ContentList::BringSelfUpToDate() {
   if (mState != State::UpToDate) {
     PopulateSelf(uint32_t(-1));
   }

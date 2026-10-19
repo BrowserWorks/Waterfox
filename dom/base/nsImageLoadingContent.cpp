@@ -1952,10 +1952,9 @@ Element* nsImageLoadingContent::FindImageMap() {
 
   nsAutoString mapName(Substring(start, end));
 
-  const bool kFlush = false;
-  const uint32_t n = imageMapList->Length(kFlush);
+  const uint32_t n = imageMapList->Length();
   for (uint32_t i = 0; i < n; ++i) {
-    nsIContent* map = imageMapList->Item(i, kFlush);
+    nsIContent* map = imageMapList->Item(i);
     if (map->AsElement()->AttrValueIs(kNameSpaceID_None, nsGkAtoms::id, mapName,
                                       eCaseMatters) ||
         map->AsElement()->AttrValueIs(kNameSpaceID_None, nsGkAtoms::name,

@@ -591,7 +591,7 @@ bool HTMLEditor::UpdateMetaCharsetWithTransaction(
     return false;
   }
 
-  for (uint32_t i = 0; i < metaElementList->Length(true); ++i) {
+  for (uint32_t i = 0; i < metaElementList->Length(); ++i) {
     RefPtr<Element> metaElement = metaElementList->Item(i);
     MOZ_ASSERT(metaElement);
 

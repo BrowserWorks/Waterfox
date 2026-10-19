@@ -69,8 +69,6 @@ class BaseContentList : public NodeList {
 
   void Reset() { mElements.Clear(); }
 
-  virtual int32_t IndexOf(nsIContent* aContent, bool aDoFlush);
-
   JSObject* WrapObject(JSContext* cx,
                        JS::Handle<JSObject*> aGivenProto) override = 0;
 
@@ -297,27 +295,15 @@ class ContentList : public HTMLCollection, public nsStubMultiMutationObserver {
 
  public:
   // BaseContentList overrides
-  int32_t IndexOf(nsIContent* aContent, bool aDoFlush) override;
   int32_t IndexOf(nsIContent* aContent) override;
   nsINode* GetParentObject() override { return mRootNode; }
 
-  uint32_t Length() final { return Length(true); }
+  uint32_t Length() final;
   Element* Item(uint32_t aIndex) final;
-  Element* GetFirstNamedElement(const nsAString& aName, bool& aFound) override {
-    Element* item = NamedItem(aName, true);
-    aFound = !!item;
-    return item;
-  }
+  Element* GetFirstNamedElement(const nsAString& aName, bool& aFound) override;
   void GetSupportedNames(nsTArray<nsString>& aNames) override {
     GetSupportedNames(aNames, nullptr);
   }
-
-  using HTMLCollection::NamedItem;
-
-  // ContentList public methods
-  uint32_t Length(bool aDoFlush);
-  Element* Item(uint32_t aIndex, bool aDoFlush);
-  Element* NamedItem(const nsAString& aName, bool aDoFlush);
 
   // Used by HTMLAllCollection to limit the elements whose name attribute is
   // considered. The filter MUST NOT cause any flushes.
@@ -377,7 +363,7 @@ class ContentList : public HTMLCollection, public nsStubMultiMutationObserver {
   inline void InvalidateNamedItemsCacheForInsertion(Element&);
   inline void InvalidateNamedItemsCacheForDeletion(Element&);
 
-  void EnsureNamedItemsCacheValid(bool aDoFlush);
+  void EnsureNamedItemsCacheValid();
 
   /**
    * Returns whether the element matches our criterion
@@ -441,7 +427,7 @@ class ContentList : public HTMLCollection, public nsStubMultiMutationObserver {
    * If state is not LIST_UP_TO_DATE, fully populate ourselves with
    * all the nodes we can find.
    */
-  void BringSelfUpToDate(bool aDoFlush);
+  void BringSelfUpToDate();
 
   /**
    * To be called from non-destructor locations that want to remove from caches.

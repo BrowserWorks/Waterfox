@@ -765,7 +765,7 @@ void SessionStoreUtils::CollectFromTextAreaElement(Document& aDocument,
                                                    ArgsT&&... args) {
   RefPtr<ContentList> textlist =
       NS_GetContentList(&aDocument, kNameSpaceID_XHTML, u"textarea"_ns);
-  uint32_t length = textlist->Length(true);
+  uint32_t length = textlist->Length();
   for (uint32_t i = 0; i < length; ++i) {
     MOZ_ASSERT(textlist->Item(i), "null item in node list!");
 
@@ -803,7 +803,7 @@ void SessionStoreUtils::CollectFromInputElement(Document& aDocument,
                                                 ArgsT&&... args) {
   RefPtr<ContentList> inputlist =
       NS_GetContentList(&aDocument, kNameSpaceID_XHTML, u"input"_ns);
-  uint32_t length = inputlist->Length(true);
+  uint32_t length = inputlist->Length();
   for (uint32_t i = 0; i < length; ++i) {
     MOZ_ASSERT(inputlist->Item(i), "null item in node list!");
     if (const auto* formControl =
@@ -875,7 +875,7 @@ void SessionStoreUtils::CollectFromSelectElement(Document& aDocument,
                                                  ArgsT&&... args) {
   RefPtr<ContentList> selectlist =
       NS_GetContentList(&aDocument, kNameSpaceID_XHTML, u"select"_ns);
-  uint32_t length = selectlist->Length(true);
+  uint32_t length = selectlist->Length();
   for (uint32_t i = 0; i < length; ++i) {
     MOZ_ASSERT(selectlist->Item(i), "null item in node list!");
     RefPtr<HTMLSelectElement> select =
@@ -938,7 +938,7 @@ template <typename... ArgsT>
 void SessionStoreUtils::CollectFromFormAssociatedCustomElement(
     Document& aDocument, uint16_t& aGeneratedCount, ArgsT&&... args) {
   RefPtr<ContentList> faceList = GetFormAssociatedCustomElements(&aDocument);
-  uint32_t length = faceList->Length(true);
+  uint32_t length = faceList->Length();
   for (uint32_t i = 0; i < length; ++i) {
     MOZ_ASSERT(faceList->Item(i), "null item in node list!");
     RefPtr<Element> element = faceList->Item(i);

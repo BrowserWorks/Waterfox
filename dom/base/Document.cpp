@@ -11927,7 +11927,7 @@ void Document::Sanitize() {
 
   nsAutoString value;
 
-  uint32_t length = nodes->Length(true);
+  uint32_t length = nodes->Length();
   for (uint32_t i = 0; i < length; ++i) {
     NS_ASSERTION(nodes->Item(i), "null item in node list!");
 
@@ -11944,7 +11944,7 @@ void Document::Sanitize() {
   // Now locate all _form_ elements that have autocomplete=off and reset them
   nodes = GetElementsByTagName(u"form"_ns);
 
-  length = nodes->Length(true);
+  length = nodes->Length();
   for (uint32_t i = 0; i < length; ++i) {
     // Reset() may change the list dynamically.
     RefPtr<HTMLFormElement> form =
@@ -12546,9 +12546,9 @@ void Document::OnPageShow(bool aPersisted, EventTarget* aDispatchStartTarget,
     RefPtr<ContentList> links =
         NS_GetContentList(root, kNameSpaceID_XHTML, u"link"_ns);
 
-    uint32_t linkCount = links->Length(true);
+    uint32_t linkCount = links->Length();
     for (uint32_t i = 0; i < linkCount; ++i) {
-      static_cast<HTMLLinkElement*>(links->Item(i, false))->LinkAdded();
+      static_cast<HTMLLinkElement*>(links->Item(i))->LinkAdded();
     }
   }
 

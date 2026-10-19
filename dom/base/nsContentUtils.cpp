@@ -4303,7 +4303,7 @@ void nsContentUtils::GenerateStateKey(nsIContent* aContent, Document* aDocument,
           appendedForm = true;
         } else {
           KeyAppendString("fn"_ns, aKey);
-          int32_t index = htmlForms->IndexOf(formElement, false);
+          int32_t index = htmlForms->IndexOf(formElement);
           if (index <= -1) {
             //
             // XXX HACK this uses some state that was dumped into the document
@@ -4345,7 +4345,7 @@ void nsContentUtils::GenerateStateKey(nsIContent* aContent, Document* aDocument,
           generatedUniqueKey = true;
         } else {
           KeyAppendString("dn"_ns, aKey);
-          int32_t index = htmlFormControls->IndexOf(aContent, true);
+          int32_t index = htmlFormControls->IndexOf(aContent);
           if (index > -1) {
             KeyAppendInt(index, aKey);
             generatedUniqueKey = true;
