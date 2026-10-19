@@ -92,11 +92,3 @@ void nsHtml5DocumentBuilder::SetDocumentMode(nsHtml5DocumentMode m) {
         PropertiesFile::HTMLPARSER_PROPERTIES, errMsgId);
   }
 }
-
-// nsContentSink overrides
-
-void nsHtml5DocumentBuilder::UpdateChildCounts() {
-  // No-op
-}
-
-nsresult nsHtml5DocumentBuilder::FlushTags() { return NS_OK; }

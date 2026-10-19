@@ -1034,9 +1034,9 @@ void HTMLSelectElement::RunSelectednessSettingAlgorithm(
 void HTMLSelectElement::DoneAddingChildren(bool aHaveNotified) {
   mIsDoneAddingChildren = true;
 
-  // PrototypeDocumentContentSink and innerHTML (and maybe XMLContentSink?) may
-  // not notify for all children during parsing, so mark the options list dirty
-  // at this point.
+  // PrototypeDocumentContentSink and innerHTML may not notify for all children
+  // during parsing, so mark the options list dirty at this point.
+  // See bug 2075868 about removing this.
   mOptions->SetDirty();
 
   if (nsIContent* firstChild = GetFirstChild()) {

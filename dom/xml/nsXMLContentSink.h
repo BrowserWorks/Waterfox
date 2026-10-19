@@ -23,6 +23,7 @@ class nsIParser;
 class nsTextNode;
 
 namespace mozilla::dom {
+class Element;
 class NodeInfo;
 class ProcessingInstruction;
 }  // namespace mozilla::dom
@@ -128,10 +129,6 @@ class nsXMLContentSink : public nsContentSink,
   nsIContent* GetCurrentContent();
   void PushContent(nsIContent* aContent);
   void PopContent();
-
-  nsresult FlushTags() override;
-
-  void UpdateChildCounts() override {}
 
   // nsContentSink override
   virtual nsresult ProcessStyleLinkFromHeader(

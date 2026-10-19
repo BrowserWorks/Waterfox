@@ -102,10 +102,6 @@ class nsHtml5DocumentBuilder : public nsContentSink {
     mNodeInfoManager = aManager;
   }
 
-  // nsContentSink methods
-  virtual void UpdateChildCounts() override;
-  virtual nsresult FlushTags() override;
-
  protected:
   explicit nsHtml5DocumentBuilder(bool aRunsToCompletion);
   virtual ~nsHtml5DocumentBuilder();
