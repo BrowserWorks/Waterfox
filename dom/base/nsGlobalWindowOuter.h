@@ -1123,6 +1123,11 @@ inline void nsGlobalWindowOuter::MaybeClearInnerWindow(
     nsPIDOMWindowInner* aExpectedInner) {
   if (mInnerWindow == aExpectedInner) {
     mInnerWindow = nullptr;
+
+    if (mBrowsingContext && mBrowsingContext->GetUnbarrieredWindowProxy() ==
+                                GetWrapperMaybeDead()) {
+      mBrowsingContext->ClearWindowProxy();
+    }
   }
 }
 
