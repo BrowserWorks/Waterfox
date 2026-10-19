@@ -598,7 +598,7 @@ nsIContent* nsHtml5TreeOperation::CreateHTMLElement(
   }
 
   const bool isCustomElement = aCreator == NS_NewCustomElement || isAtom;
-  CustomElementDefinition* customElementDefinition = nullptr;
+  RefPtr<CustomElementDefinition> customElementDefinition;
   if (isCustomElement && aFromParser != FROM_PARSER_FRAGMENT) {
     RefPtr<nsAtom> tagAtom = nodeInfo->NameAtom();
     RefPtr<nsAtom> typeAtom =

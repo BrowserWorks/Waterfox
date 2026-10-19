@@ -481,7 +481,7 @@ nsresult nsXMLContentSink::CreateElement(
   //
   // Note that the check that the parser was not created as part of the HTML
   // fragment parsing algorithm is done by the check for a non-null mDocument.
-  CustomElementDefinition* customElementDefinition = nullptr;
+  RefPtr<CustomElementDefinition> customElementDefinition;
   nsAtom* nameAtom = ni->NameAtom();
   if (mDocument && !mDocument->IsLoadedAsData() && isXHTMLOrXUL &&
       (isAtom || nsContentUtils::IsCustomElementName(nameAtom, namespaceID))) {
