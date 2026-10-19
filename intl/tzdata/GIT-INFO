@@ -1,5 +1,7 @@
-commit 1e485258faadaa2fd7b0e85434e18ffb17fd3d28
-Author: Robert Bastian <4706271+robertbastian@users.noreply.github.com>
-Date:   Thu Apr 23 21:13:59 2026 +0200
+commit 6cd66a500b0bc4fe93e1b355ed5133c503fb946b
+Author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+Date:   Wed Sep 30 15:18:17 2026 +0000
 
-    ICU-23384 Manual patch
+    ICU-23249 TZDB 2026e
+    
+    See #57

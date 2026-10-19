@@ -15,13 +15,9 @@ timezoneTypes:table(nofallback){
             cnckg{"cnsha"}
             cnhrb{"cnsha"}
             cnkhg{"cnurc"}
-            cst6cdt{"uschi"}
-            est5edt{"usnyc"}
             gaza{"gazastrp"}
             mncoq{"mnuln"}
-            mst7mdt{"usden"}
             mxstis{"mxtij"}
-            pst8pdt{"uslax"}
             uaozh{"uaiev"}
             uauzh{"uaiev"}
             umjon{"ushnl"}
@@ -163,11 +159,9 @@ timezoneTypes:table(nofallback){
             "US:Pacific-New"{"America/Los_Angeles"}
             "US:Samoa"{"Pacific/Pago_Pago"}
             CET{"Europe/Brussels"}
-            CST6CDT{"America/Chicago"}
             Cuba{"America/Havana"}
             EET{"Europe/Athens"}
             EST{"America/Panama"}
-            EST5EDT{"America/New_York"}
             Egypt{"Africa/Cairo"}
             Eire{"Europe/Dublin"}
             Factory{"Etc/Unknown"}
@@ -189,12 +183,10 @@ timezoneTypes:table(nofallback){
             Libya{"Africa/Tripoli"}
             MET{"Europe/Brussels"}
             MST{"America/Phoenix"}
-            MST7MDT{"America/Denver"}
             NZ{"Pacific/Auckland"}
             NZ-CHAT{"Pacific/Chatham"}
             Navajo{"America/Denver"}
             PRC{"Asia/Shanghai"}
-            PST8PDT{"America/Los_Angeles"}
             Poland{"Europe/Warsaw"}
             Portugal{"Europe/Lisbon"}
             ROC{"Asia/Taipei"}
@@ -658,6 +650,10 @@ timezoneTypes:table(nofallback){
             "Pacific:Truk"{"fmtkk"}
             "Pacific:Wake"{"umawk"}
             "Pacific:Wallis"{"wfmau"}
+            CST6CDT{"cst6cdt"}
+            EST5EDT{"est5edt"}
+            MST7MDT{"mst7mdt"}
+            PST8PDT{"pst8pdt"}
         }
     }
 }
