@@ -635,6 +635,10 @@ impl SceneBuilderThread {
                     scene.remove_pipeline(pipeline_id);
                     self.removed_pipelines.insert(pipeline_id);
                     removed_pipelines.push((pipeline_id, txn.document_id));
+
+                    // A pipeline reported as removed has its external images
+                    // released, so the scene must be rebuilt without it.
+                    rebuild_scene = true;
                 }
             }
         }

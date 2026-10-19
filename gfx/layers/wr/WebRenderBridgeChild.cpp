@@ -141,8 +141,11 @@ bool WebRenderBridgeChild::EndTransaction(
 
   // With multiple render roots, we may not have sent all of our
   // mParentCommands, so go ahead and go through our mParentCommands and ensure
-  // they get sent.
-  ProcessWebRenderParentCommands();
+  // they get sent. Destroy commands must stay queued after an offscreen
+  // transaction, until the main display list stops referencing their resources.
+  if (!aRenderOffscreen) {
+    ProcessWebRenderParentCommands();
+  }
   mDestroyedActors.Clear();
   mIsInTransaction = false;
 
