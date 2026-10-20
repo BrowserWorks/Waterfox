@@ -215,9 +215,9 @@ void nsDisplayTextOverflowMarker::PaintTextToContext(gfxContext* aCtx,
 
   if (mTextRun) {
     gfx::Point gfxPt(pt.x, pt.y);
-    auto& paletteCache = mFrame->PresContext()->FontPaletteCache();
+    auto* paletteValueSet = mFrame->PresContext()->GetFontPaletteValueSet();
     mTextRun->Draw(gfxTextRun::Range(mTextRun), gfxPt,
-                   gfxTextRun::DrawParams(aCtx, paletteCache));
+                   gfxTextRun::DrawParams(aCtx, paletteValueSet));
     return;
   }
 

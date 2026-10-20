@@ -23,6 +23,7 @@
 #include "mozilla/StaticPrefs_layout.h"
 #include "gfxSVGGlyphs.h"
 #include "COLRFonts.h"
+#include "FontPaletteCache.h"
 
 #include "harfbuzz/hb.h"
 #include "harfbuzz/hb-ot.h"
@@ -78,6 +79,8 @@ gfxFontEntry::~gfxFontEntry() {
 
   hb_blob_destroy(mCOLR.exchange(nullptr));
   hb_blob_destroy(mCPAL.exchange(nullptr));
+
+  delete mPaletteCache.exchange(nullptr);
 
   if (TrakTableInitialized()) {
     // Only if it was initialized, so that we don't try to call hb_blob_destroy
@@ -398,6 +401,46 @@ bool gfxFontEntry::TryGetColorGlyphs() {
 
   mCheckedForColorGlyph = true;
   return mCOLR && mCPAL;
+}
+
+already_AddRefed<gfx::FontPalette> gfxFontEntry::GetPalette(
+    nsAtom* aPaletteName, gfx::FontPaletteValueSet* aPaletteValueSet) {
+  // Get the palette cache, creating it if necessary. Note that once the
+  // mPaletteCache has been assigned, it is never modified until font entry
+  // destruction, so there is no risk of the local `cache` pointer here
+  // becoming invalid during this function.
+  gfx::PaletteCache* cache = mPaletteCache;
+  if (!cache) {
+    cache = new gfx::PaletteCache();
+    if (!mPaletteCache.compareExchange(nullptr, cache)) {
+      delete cache;  // Lost a race: use the cache created by the winner.
+      cache = mPaletteCache;
+    }
+  }
+
+  // Reading and modifying the cache is guarded by our RWLock.
+  {
+    // First try to return an existing cached palette.
+    AutoReadLock lock(mLock);
+    RefPtr palette = cache->GetCachedPalette(aPaletteValueSet, aPaletteName);
+    if (palette) {
+      return palette.forget();
+    }
+  }
+
+  // Create a new resolved palette.
+  gfxFontEntry::AutoHBFace face = GetHBFace();
+  RefPtr palette = MakeRefPtr<FontPalette>(gfx::COLRFonts::CreateColorPalette(
+      face, aPaletteValueSet, aPaletteName, FamilyName()));
+
+  // Store it in the cache for future use. This may evict an existing cache
+  // entry, but any caller that retrieved the old entry was given its own
+  // strong reference to the palette it contained, which will remain valid
+  // as long as the caller holds its ref.
+  AutoWriteLock lock(mLock);
+  cache->AddPalette(aPaletteValueSet, aPaletteName, palette);
+
+  return palette.forget();
 }
 
 already_AddRefed<gfxCharacterMap> gfxFontEntry::GetCMAPFromFontInfo(

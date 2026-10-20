@@ -1231,8 +1231,6 @@ class CanvasRenderingContext2D : public nsICanvasRenderingContextInternal,
 
   ColorStyleCacheEntry ParseColorSlow(const nsACString&);
 
-  mozilla::gfx::PaletteCache mPaletteCache;
-
   friend class CanvasGeneralPattern;
   friend class AdjustedTarget;
   friend class AdjustedTargetForShadow;

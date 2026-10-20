@@ -18,6 +18,8 @@
 
 class gfxFontEntry;
 
+class gfxFontEntry;
+
 namespace mozilla::gfx {
 
 class FontPaletteValueSet;
@@ -41,32 +43,39 @@ class FontPalette {
 
 // MRU cache used for resolved color-font palettes, to avoid reconstructing
 // the palette for each glyph rendered with a given font.
-using CacheKey = std::pair<RefPtr<gfxFontEntry>, RefPtr<nsAtom>>;
+using CacheKey = RefPtr<nsAtom>;
 struct CacheData {
   CacheKey mKey;
   RefPtr<FontPalette> mPalette;
 };
 
+// PaletteCache is attached to a specific gfxFontEntry and holds palettes found
+// in that font, with lookup by palette name.
 class PaletteCache
-    : public mozilla::MruCache<CacheKey, CacheData, PaletteCache> {
+    : public mozilla::MruCache<CacheKey, CacheData, PaletteCache, 7> {
  public:
-  explicit PaletteCache(const FontPaletteValueSet* aPaletteValueSet = nullptr)
-      : mPaletteValueSet(aPaletteValueSet) {}
+  PaletteCache() = default;
 
-  void SetPaletteValueSet(const FontPaletteValueSet* aSet);
+  // Get the palette named aPaletteName, if present.
+  already_AddRefed<FontPalette> GetCachedPalette(
+      mozilla::gfx::FontPaletteValueSet* aPaletteValueSet,
+      nsAtom* aPaletteName);
 
-  already_AddRefed<FontPalette> GetPaletteFor(gfxFontEntry* aFontEntry,
-                                              nsAtom* aPaletteName);
+  // Store the given palette in the cache.
+  void AddPalette(mozilla::gfx::FontPaletteValueSet* aPaletteValueSet,
+                  nsAtom* aPaletteName, mozilla::gfx::FontPalette* aPalette);
 
+  static bool IsEmpty(const CacheData& aVal) { return !aVal.mKey; }
   static mozilla::HashNumber Hash(const CacheKey& aKey) {
-    return mozilla::HashGeneric(aKey.first.get(), aKey.second.get());
+    return mozilla::HashGeneric(aKey.get());
   }
   static bool Match(const CacheKey& aKey, const CacheData& aVal) {
     return aVal.mKey == aKey;
   }
 
  protected:
-  const FontPaletteValueSet* mPaletteValueSet = nullptr;
+  // The palette value set for which cached entries were created.
+  RefPtr<FontPaletteValueSet> mPaletteValueSet;
 };
 
 }  // namespace mozilla::gfx
