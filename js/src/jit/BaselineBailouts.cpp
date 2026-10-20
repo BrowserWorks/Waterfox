@@ -1511,11 +1511,6 @@ bool jit::BailoutIonToBaseline(JSContext* cx, JitActivation* activation,
         activation->removeRematerializedFramesFromDebugger(cx, iter.fp());
       });
 
-  // Always remove the RInstructionResults from the JitActivation, even in
-  // case of failures as the stack frame is going away after the bailout.
-  auto removeIonFrameRecovery = mozilla::MakeScopeExit(
-      [&] { activation->removeIonFrameRecovery(iter.jsFrame()); });
-
   // The caller of the top frame must be one of the following:
   //      IonJS - Ion calling into Ion.
   //      BaselineStub - Baseline calling into Ion.
