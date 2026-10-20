@@ -14425,6 +14425,13 @@
   value: 524288 # 512KiB
   mirror: always
 
+# How long changes to the cookie database are buffered in memory before being
+# written out as a single transaction.
+- name: network.cookie.db.flushIntervalMs
+  type: uint32_t
+  value: 500
+  mirror: always
+
 # The string to return to the server as the 'workstation' that the user is
 # using. Bug 1046421 notes that the previous default of the system hostname
 # could be used for user fingerprinting.

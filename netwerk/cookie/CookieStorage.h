@@ -217,7 +217,7 @@ class CookieStorage : public nsIObserver, public nsSupportsWeakReference {
 
   void RemoveCookieFromListInternal(const CookieListIter& aIter);
 
-  virtual void RemoveCookieFromDB(const Cookie& aCookie) = 0;
+  virtual void RemoveCookieFromDB(Cookie* aCookie) = 0;
 
   already_AddRefed<nsIArray> PurgeCookiesWithCallbacks(
       int64_t aCurrentTimeInUsec, uint16_t aMaxNumberOfCookies,

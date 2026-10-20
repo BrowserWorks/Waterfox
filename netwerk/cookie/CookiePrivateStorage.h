@@ -40,7 +40,7 @@ class CookiePrivateStorage final : public CookieStorage {
 
   void RemoveAllInternal() override {}
 
-  void RemoveCookieFromDB(const Cookie& aCookie) override {}
+  void RemoveCookieFromDB(Cookie* aCookie) override {}
 
   already_AddRefed<nsIArray> PurgeCookies(int64_t aCurrentTimeInUsec,
                                           uint16_t aMaxNumberOfCookies,

@@ -149,12 +149,13 @@ interface nsICookieService : nsISupports
                                in nsIChannel aChannel);
 
   /*
-   * Batch SQLite operations into one transaction. By default each call to
-   * CookieService that affects the underlying SQLite database (add, remove,
-   * setCookieString etc.) runs in a separate transaction.  If you do this many
-   * times in a row, it's faster and suggested to wrap them all in a single
-   * transaction by setting all the operations into the callback parameter.
+   * Run a set of operations and write the resulting changes to the underlying
+   * SQLite database as a single transaction, without waiting for the regular
+   * flush interval. Changes are batched anyway, so this only makes the write
+   * happen earlier.
    * Example: test scripts that need to construct a large cookie database.
+   * Note that this is not atomic: if aCallback() fails halfway through, the
+   * changes it already made are kept, both in memory and on disk.
    * @param aCallback
    *        nsICookieTransactionCallback interface to call
    * @throws NS_ERROR_FAILURE if aCallback() fails.
