@@ -240,6 +240,12 @@ PeerConnectionFactory::CreatePeerConnectionOrError(
     return err;
   }
 
+  if (configuration.certificates.size() >
+      PeerConnectionInterface::RTCConfiguration::kMaxCertificates) {
+    return RTCError(RTCErrorType::INVALID_PARAMETER,
+                    "Too many certificates in RTCConfiguration.");
+  }
+
   ServerAddresses stun_servers;
   std::vector<RelayServerConfig> turn_servers;
   err = ParseAndValidateIceServersFromConfiguration(configuration, stun_servers,

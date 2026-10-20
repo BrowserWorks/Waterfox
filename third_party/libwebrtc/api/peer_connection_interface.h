@@ -417,6 +417,10 @@ class RTC_EXPORT PeerConnectionInterface : public RefCountInterface {
     static const int kAudioJitterBufferMaxPackets = 200;
     // ICE connection receiving timeout for aggressive configuration.
     static const int kAggressiveIceConnectionReceivingTimeout = 1000;
+    // Maximum number of certificates allowed in the configuration.
+    // Capped at 1000 which still provides ample headroom for interoperability
+    // of multiple key algorithms.
+    static const int kMaxCertificates = 1000;
 
     ////////////////////////////////////////////////////////////////////////
     // The below few fields mirror the standard RTCConfiguration dictionary:
