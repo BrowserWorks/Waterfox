@@ -1,7 +1,7 @@
 From e82fca69c55367c2fdb3d8f4077b70163033eadc Mon Sep 17 00:00:00 2001
 From: Mark Striemer <mstriemer@mozilla.com>
 Date: Tue, 22 Nov 2022 18:20:46 -0600
-Subject: [PATCH 4/6] Remove the bundled warning
+Subject: [PATCH 4/7] Remove the bundled warning
 
 ---
  packages/lit/src/index.all.ts | 8 --------

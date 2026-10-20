@@ -1,0 +1,56 @@
+From fec5e06709710a50345a7fc659ff2e73cfbce734 Mon Sep 17 00:00:00 2001
+From: Mark Striemer <mstriemer@mozilla.com>
+Date: Tue, 13 Oct 2026 13:43:11 -0500
+Subject: [PATCH 7/7] Freeze template literals to match the spec
+
+---
+ packages/lit-html/src/directives/unsafe-html.ts | 1 +
+ packages/lit-html/src/lit-html.ts               | 7 ++++++-
+ packages/lit-html/src/static.ts                 | 1 +
+ 3 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/packages/lit-html/src/directives/unsafe-html.ts b/packages/lit-html/src/directives/unsafe-html.ts
+index d0c5cfc5..58870414 100644
+--- a/packages/lit-html/src/directives/unsafe-html.ts
++++ b/packages/lit-html/src/directives/unsafe-html.ts
+@@ -49,6 +49,7 @@ export class UnsafeHTMLDirective extends Directive {
+     const strings = [value] as unknown as TemplateStringsArray;
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     (strings as any).raw = strings;
++    Object.freeze(strings);
+     // WARNING: impersonating a TemplateResult like this is extremely
+     // dangerous. Third-party directives should not do this.
+     return (this._templateResult = {
+diff --git a/packages/lit-html/src/lit-html.ts b/packages/lit-html/src/lit-html.ts
+index b74832d7..0ae68c1d 100644
+--- a/packages/lit-html/src/lit-html.ts
++++ b/packages/lit-html/src/lit-html.ts
+@@ -764,7 +764,12 @@ function trustFromTemplateString(
+   // though we might need to make that check inside of the html and svg
+   // functions, because precompiled templates don't come in as
+   // TemplateStringArray objects.
+-  if (!isArray(tsa) || !tsa.hasOwnProperty('raw')) {
++  // TemplateStringArrays are frozen per spec.
++  if (
++    !isArray(tsa) ||
++    !Object.prototype.hasOwnProperty.call(tsa, 'raw') ||
++    !Object.isFrozen(tsa)
++  ) {
+     let message = 'invalid template strings array';
+     if (DEV_MODE) {
+       message = `
+diff --git a/packages/lit-html/src/static.ts b/packages/lit-html/src/static.ts
+index ff3c27ed..3104b27a 100644
+--- a/packages/lit-html/src/static.ts
++++ b/packages/lit-html/src/static.ts
+@@ -158,6 +158,7 @@ export const withStatic =
+         // code and inject arbitrary content.
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         (staticStrings as any).raw = staticStrings;
++        Object.freeze(staticStrings);
+         stringsCache.set(
+           key,
+           (strings = staticStrings as unknown as TemplateStringsArray)
+-- 
+2.53.0
+
