@@ -1075,9 +1075,11 @@ void UntrustedModulesProcessor::CompleteProcessing(
   ModulesMap& modules = aModulesAndLoads.mModMapResult.ref().mModules;
   const uint32_t& trustTestFailures =
       aModulesAndLoads.mModMapResult.ref().mTrustTestFailures;
+  const uint32_t& rejectedFiles =
+      aModulesAndLoads.mModMapResult.ref().mRejectedFiles;
   UnprocessedModuleLoads& loads = aModulesAndLoads.mLoads;
 
-  if (modules.IsEmpty() && !trustTestFailures) {
+  if (modules.IsEmpty() && !trustTestFailures && !rejectedFiles) {
     // No data, nothing to save.
     return;
   }
@@ -1150,7 +1152,7 @@ void UntrustedModulesProcessor::CompleteProcessing(
   }
 
   if (processedStacks.empty() && processedEvents.isEmpty() &&
-      !sanitizationFailures && !trustTestFailures) {
+      !sanitizationFailures && !trustTestFailures && !rejectedFiles) {
     // Nothing to save
     return;
   }
@@ -1168,6 +1170,7 @@ void UntrustedModulesProcessor::CompleteProcessing(
 
   mProcessedModuleLoads.mSanitizationFailures += sanitizationFailures;
   mProcessedModuleLoads.mTrustTestFailures += trustTestFailures;
+  mProcessedModuleLoads.mRejectedFiles += rejectedFiles;
 }
 
 // The thread priority of this job should match the priority that the child
@@ -1202,6 +1205,7 @@ RefPtr<ModulesTrustPromise> UntrustedModulesProcessor::GetModulesTrustInternal(
 
   ModulesMap& modMap = result.mModules;
   uint32_t& trustTestFailures = result.mTrustTestFailures;
+  uint32_t& rejectedFiles = result.mRejectedFiles;
 
   ModuleEvaluator modEval;
   MOZ_ASSERT(!!modEval);
@@ -1219,6 +1223,7 @@ RefPtr<ModulesTrustPromise> UntrustedModulesProcessor::GetModulesTrustInternal(
     nsAutoString resolvedNtPath;
     if (!ValidateAndResolveModuleFile(file, resolvedNtPath) ||
         resolvedNtPath.IsEmpty()) {
+      ++rejectedFiles;
       continue;
     }
 

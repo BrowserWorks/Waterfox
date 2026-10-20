@@ -374,6 +374,13 @@ nsresult UntrustedModulesDataSerializer::GetPerProcObject(
     return NS_ERROR_FAILURE;
   }
 
+  JS::Rooted<JS::Value> jsRejectedFiles(mCx);
+  jsRejectedFiles.setNumber(aData.mRejectedFiles);
+  if (!JS_DefineProperty(mCx, aObj, "rejectedFiles", jsRejectedFiles,
+                         JSPROP_ENUMERATE)) {
+    return NS_ERROR_FAILURE;
+  }
+
   JS::Rooted<JSObject*> eventsArray(mCx);
   if (!ContainerToJSArray(mCx, &eventsArray, aData.mEvents, &SerializeEvent,
                           mIndexMap)) {

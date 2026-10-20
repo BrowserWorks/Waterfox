@@ -445,6 +445,8 @@ void UntrustedModulesData::Swap(UntrustedModulesData& aOther) {
   uint32_t tmpTrustTestFailures = mTrustTestFailures;
   mTrustTestFailures = aOther.mTrustTestFailures;
   aOther.mTrustTestFailures = tmpTrustTestFailures;
+
+  std::swap(mRejectedFiles, aOther.mRejectedFiles);
 }
 
 }  // namespace mozilla

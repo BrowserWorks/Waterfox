@@ -190,7 +190,8 @@ class UntrustedModulesData final {
         mPid(::GetCurrentProcessId()),
         mNumEvents(0),
         mSanitizationFailures(0),
-        mTrustTestFailures(0) {
+        mTrustTestFailures(0),
+        mRejectedFiles(0) {
     MOZ_ASSERT(kMaxEvents == mStacks.GetMaxStacksCount());
   }
 
@@ -202,7 +203,7 @@ class UntrustedModulesData final {
 
   explicit operator bool() const {
     return !mEvents.isEmpty() || mSanitizationFailures || mTrustTestFailures ||
-           mXULLoadDurationMS.isSome();
+           mRejectedFiles || mXULLoadDurationMS.isSome();
   }
 
   void AddNewLoads(const ModulesMap& aModulesMap,
@@ -225,11 +226,13 @@ class UntrustedModulesData final {
   Maybe<double> mXULLoadDurationMS;
   uint32_t mSanitizationFailures;
   uint32_t mTrustTestFailures;
+  // Number of files a child sent that the parent refused as invalid.
+  uint32_t mRejectedFiles;
 };
 
 class ModulesMapResult final {
  public:
-  ModulesMapResult() : mTrustTestFailures(0) {}
+  ModulesMapResult() : mTrustTestFailures(0), mRejectedFiles(0) {}
 
   ModulesMapResult(const ModulesMapResult& aOther) = delete;
   ModulesMapResult(ModulesMapResult&& aOther) = default;
@@ -238,6 +241,7 @@ class ModulesMapResult final {
 
   ModulesMap mModules;
   uint32_t mTrustTestFailures;
+  uint32_t mRejectedFiles;
 };
 
 }  // namespace mozilla
@@ -411,6 +415,7 @@ struct ParamTraits<mozilla::UntrustedModulesData> {
     WriteParam(aWriter, aParam.mXULLoadDurationMS);
     aWriter->WriteUInt32(aParam.mSanitizationFailures);
     aWriter->WriteUInt32(aParam.mTrustTestFailures);
+    aWriter->WriteUInt32(aParam.mRejectedFiles);
   }
 
   static bool Read(MessageReader* aReader, paramType* aResult) {
@@ -461,6 +466,10 @@ struct ParamTraits<mozilla::UntrustedModulesData> {
     }
 
     if (!aReader->ReadUInt32(&aResult->mTrustTestFailures)) {
+      return false;
+    }
+
+    if (!aReader->ReadUInt32(&aResult->mRejectedFiles)) {
       return false;
     }
 
@@ -552,6 +561,7 @@ struct ParamTraits<mozilla::ModulesMapResult> {
   static void Write(MessageWriter* aWriter, const paramType& aParam) {
     WriteParam(aWriter, aParam.mModules);
     aWriter->WriteUInt32(aParam.mTrustTestFailures);
+    aWriter->WriteUInt32(aParam.mRejectedFiles);
   }
 
   static bool Read(MessageReader* aReader, paramType* aResult) {
@@ -560,6 +570,10 @@ struct ParamTraits<mozilla::ModulesMapResult> {
     }
 
     if (!aReader->ReadUInt32(&aResult->mTrustTestFailures)) {
+      return false;
+    }
+
+    if (!aReader->ReadUInt32(&aResult->mRejectedFiles)) {
       return false;
     }
 
