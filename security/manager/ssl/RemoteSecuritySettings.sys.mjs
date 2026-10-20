@@ -259,6 +259,28 @@ export var RemoteSecuritySettings = {
       signerName: SECURITY_STATE_SIGNER,
     });
     this.OneCRLBlocklistClient.on("sync", updateCertBlocklist);
+    // Ensure the bundled list of revocations is loaded.
+    this.OneCRLBlocklistClient.get()
+      .then(records => {
+        return updateCertBlocklist({
+          data: {
+            current: records,
+            created: records,
+            updated: [],
+            deleted: [],
+          },
+        });
+      })
+      .catch(e => {
+        lazy.log.error(e);
+      })
+      .finally(() => {
+        // Only used by tests, to know when the bundled list is in cert_storage.
+        Services.obs.notifyObservers(
+          null,
+          "remote-security-settings:onecrl-bundle-loaded"
+        );
+      });
 
     this.IntermediatePreloadsClient = new IntermediatePreloads();
 

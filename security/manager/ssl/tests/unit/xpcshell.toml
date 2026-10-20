@@ -288,6 +288,8 @@ run-sequentially = ["true"] # hardcoded ports
 ["test_ocsp_url.js"]
 run-sequentially = ["true"] # hardcoded ports
 
+["test_onecrl_loads_bundle.js"]
+
 ["test_oskeystore.js"]
 skip-if = [
   "os == 'mac' && os_version == '15.30' && arch == 'aarch64'", # Bug 1729538
