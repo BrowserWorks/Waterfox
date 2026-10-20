@@ -1330,7 +1330,10 @@ function trustFromTemplateString(tsa, stringFromTSA) {
     // though we might need to make that check inside of the html and svg
     // functions, because precompiled templates don't come in as
     // TemplateStringArray objects.
-    if (!isArray(tsa) || !tsa.hasOwnProperty('raw')) {
+    // TemplateStringArrays are frozen per spec.
+    if (!isArray(tsa) ||
+        !Object.prototype.hasOwnProperty.call(tsa, 'raw') ||
+        !Object.isFrozen(tsa)) {
         let message = 'invalid template strings array';
         throw new Error(message);
     }
@@ -4277,6 +4280,7 @@ class UnsafeHTMLDirective extends Directive {
         const strings = [value];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         strings.raw = strings;
+        Object.freeze(strings);
         // WARNING: impersonating a TemplateResult like this is extremely
         // dangerous. Third-party directives should not do this.
         return (this._templateResult = {
@@ -4574,6 +4578,7 @@ const withStatic = (coreTag) => (strings, ...values) => {
             // code and inject arbitrary content.
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             staticStrings.raw = staticStrings;
+            Object.freeze(staticStrings);
             stringsCache.set(key, (strings = staticStrings));
         }
         values = dynamicValues;
