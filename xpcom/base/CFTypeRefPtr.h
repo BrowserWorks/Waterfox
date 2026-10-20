@@ -5,6 +5,8 @@
 #ifndef CFTypeRefPtr_h
 #define CFTypeRefPtr_h
 
+#include <CoreFoundation/CoreFoundation.h>
+
 #include "mozilla/Attributes.h"
 #include "mozilla/DbgMacro.h"
 #include "mozilla/HashFunctions.h"
