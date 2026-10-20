@@ -128,7 +128,7 @@ void LoaderObserver::Disable() {
 }
 
 void LoaderObserver::OnForward(ModuleLoadInfoVec&& aInfo) {
-  if (!aInfo.empty() || !aInfo.begin()->HasCompatibleLayout()) {
+  if (aInfo.empty() || !aInfo.begin()->HasCompatibleLayout()) {
     return;
   }
 
