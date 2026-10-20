@@ -574,14 +574,6 @@ HRESULT WgcCaptureSession::ProcessFrame() {
     return hr;
   }
 
-  if (!mapped_texture_) {
-    hr = CreateMappedTexture(texture_2D);
-    if (FAILED(hr)) {
-      RecordGetFrameResult(GetFrameResult::kCreateMappedTextureFailed);
-      return hr;
-    }
-  }
-
   // We need to copy `texture_2D` into `mapped_texture_` as the latter has the
   // D3D11_CPU_ACCESS_READ flag set, which lets us access the image data.
   // Otherwise it would only be readable by the GPU.
@@ -598,17 +590,28 @@ HRESULT WgcCaptureSession::ProcessFrame() {
   // If the size changed, we must resize `mapped_texture_` and `frame_pool_` to
   // fit the new size. This must be done before `CopySubresourceRegion` so that
   // the textures are the same size.
-  if (SizeHasChanged(new_size, size_)) {
+  const bool needs_resize = SizeHasChanged(new_size, size_);
+
+  if (!mapped_texture_ || needs_resize) {
     hr = CreateMappedTexture(texture_2D, new_size.Width, new_size.Height);
     if (FAILED(hr)) {
-      RecordGetFrameResult(GetFrameResult::kResizeMappedTextureFailed);
+      RecordGetFrameResult(GetFrameResult::kCreateMappedTextureFailed);
       return hr;
     }
+  }
 
+  if (needs_resize) {
     hr = frame_pool_->Recreate(direct3d_device_.Get(), kPixelFormat,
                                num_buffers(), new_size);
     if (FAILED(hr)) {
       RecordGetFrameResult(GetFrameResult::kRecreateFramePoolFailed);
+      // On failure, `frame_pool_` remains at `size_`. Reset `mapped_texture_`
+      // because `mapped_texture_` and `frame_pool_` are now at inconsistent
+      // sizes. Clearing it forces a consistent recreation on the next frame.
+      // Note that it's not sufficient to simply leave `mapped_texture_` at it's
+      // current size, because if the window were to be resized back to `size_`,
+      // then we would erroneously think we don't need to re-create the texture.
+      mapped_texture_.Reset();
       return hr;
     }
   }
@@ -723,7 +726,7 @@ HRESULT WgcCaptureSession::ProcessFrame() {
   const int width_in_bytes =
       current_frame->size().width() * DesktopFrame::kBytesPerPixel;
   RTC_DCHECK_GE(current_frame->stride(), width_in_bytes);
-  RTC_DCHECK_GE(map_info.RowPitch, width_in_bytes);
+  RTC_CHECK_GE(map_info.RowPitch, width_in_bytes);
   const int middle_pixel_offset =
       (image_width / 2) * DesktopFrame::kBytesPerPixel;
   for (int i = 0; i < image_height; i++) {
