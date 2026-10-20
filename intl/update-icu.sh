@@ -73,6 +73,7 @@ for patch in \
  bug-2028127-remove-historical-eras.diff \
  bug-2028443-CLDR-19362-CLDR-19382-london-tz-abbr.diff \
  bug-2029806-surrogates.diff \
+ bug-2082211-CLDR-19827-windows-zones.diff \
 ; do
   echo "Applying local patch $patch"
   patch -d ${icu_dir}/../../ -p1 --no-backup-if-mismatch < ${icu_dir}/../icu-patches/$patch
