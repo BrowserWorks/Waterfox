@@ -5207,6 +5207,7 @@ pub extern "C" fn Servo_ParseAndComputeViewTimelineInset(
         &data,
         &style,
         parent_style,
+        /* for_smil_animation = */ false,
         &mut conditions,
         container_size_query,
         &element,
