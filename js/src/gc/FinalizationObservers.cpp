@@ -492,6 +492,24 @@ bool FinalizationObservers::shouldQueueFinalizationRegistryForCleanup(
   return !zone->wasGCStarted() || zone->gcState() >= Zone::Sweep;
 }
 
+static void ExposeObjectToActiveJSDuringCollection(GCRuntime* gc, JSObject* object) {
+  // Normally we don't allow any marking during sweeping but gray unmarking does
+  // not cause anything to become marked that was not marked already.
+
+  MOZ_ASSERT(!IsAboutToBeFinalizedUnbarriered(object));
+
+  if (IsInsideNursery(object) || object->isMarkedBlack()) {
+    return;
+  }
+
+  Zone* zone = object->zone();
+  if (zone->needsMarkingBarrier()) {
+    PerformIncrementalReadBarrier(&object->asTenured());
+  } else if (!zone->isGCPreparing() && object->isMarkedGray()) {
+    UnmarkGrayGCThingUnchecked(&gc->marker(), JS::GCCellPtr(object));
+  }
+}
+
 void GCRuntime::queueFinalizationRegistryForCleanup(
     FinalizationQueueObject* queue) {
   // Prod the embedding to call us back later to run the finalization callbacks,
@@ -503,6 +521,7 @@ void GCRuntime::queueFinalizationRegistryForCleanup(
     return;
   }
 
+  JSFunction* doCleanup = queue->doCleanupFunction();
   JSObject* incumbentGlobal = nullptr;
 
   if (JSObject* wrapped = queue->getIncumbentGlobalRepresentative()) {
@@ -518,8 +537,12 @@ void GCRuntime::queueFinalizationRegistryForCleanup(
     incumbentGlobal = &unwrappedIncumbentGlobalRepresentative->nonCCWGlobal();
   }
 
-  callHostCleanupFinalizationRegistryCallback(queue->doCleanupFunction(),
-                                              incumbentGlobal);
+  ExposeObjectToActiveJSDuringCollection(this, doCleanup);
+  if (incumbentGlobal) {
+    ExposeObjectToActiveJSDuringCollection(this, incumbentGlobal);
+  }
+
+  callHostCleanupFinalizationRegistryCallback(doCleanup, incumbentGlobal);
 
   // The queue object may be gray, and that's OK.
   AutoTouchingGrayThings atgt;

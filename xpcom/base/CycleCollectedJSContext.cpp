@@ -1493,9 +1493,8 @@ void FinalizationRegistryCleanup::DoCleanup() {
   std::swap(callbacks.get(), mCallbacks.get());
 
   for (const Callback& callback : callbacks) {
-    JS::ExposeObjectToActiveJS(
-        JS_GetFunctionObject(callback.mCallbackFunction));
-    JS::ExposeObjectToActiveJS(callback.mIncumbentGlobal);
+    JS::AssertObjectIsNotGray(JS_GetFunctionObject(callback.mCallbackFunction));
+    JS::AssertObjectIsNotGray(callback.mIncumbentGlobal);
 
     JS::RootedObject functionObj(
         cx, JS_GetFunctionObject(callback.mCallbackFunction));
