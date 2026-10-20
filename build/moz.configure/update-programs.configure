@@ -94,16 +94,25 @@ def smauthorizedclients_requirements(enabled, bundle_id):
 set_config("MOZ_SMAUTHORIZEDCLIENTS_REQUIREMENTS", smauthorizedclients_requirements)
 
 
-@depends("--enable-mac-elevated-updates-with-generic-certs", when=target_is_osx)
-def smprivilegedexec_requirements(enabled):
-    updater_id = "org.mozilla.updater"
-    if enabled:
-        return mac_relaxed_requirements_string(updater_id)
+def requirements_string(exec_id, relaxed):
+    if relaxed:
+        return mac_relaxed_requirements_string(exec_id)
     else:
-        return mac_prod_requirements_string(updater_id)
+        return mac_prod_requirements_string(exec_id)
 
+@depends("--enable-mac-elevated-updates-with-generic-certs", when=target_is_osx)
+@imports(_from="xml.sax.saxutils", _import="escape")
+def generate_smprivilegedexec_requirements(relaxed):
+    requirements = ""
+    smprivilegedexecutables_list = ["org.mozilla.dmgInstallHelper", "org.mozilla.updater"]
 
-set_config("MOZ_SMPRIVILEGEDEXECUTABLES_REQUIREMENTS", smprivilegedexec_requirements)
+    for executable in smprivilegedexecutables_list:
+        requirements += f"<key>{escape(executable)}</key>"
+        requirements += f"<string>{escape(requirements_string(executable, relaxed))}</string>"
+
+    return requirements
+
+set_config("MOZ_SMPRIVILEGEDEXECUTABLES_REQUIREMENTS", generate_smprivilegedexec_requirements)
 
 # MAR channel ID configuration
 # ==============================================================
