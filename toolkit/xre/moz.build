@@ -282,3 +282,6 @@ FINAL_TARGET_PP_FILES += ["platform.ini"]
 PP_FILES_EXTRA_DEPS += ["!/buildid.h", "!/source-repo.h"]
 
 TEST_DIRS += ["test/gtest"]
+
+if CONFIG["DMG_INSTALL_HELPER_DEBUG"]:
+    DEFINES["DMG_INSTALL_HELPER_DEBUG"] = 1

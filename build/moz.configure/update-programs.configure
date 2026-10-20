@@ -3,6 +3,24 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
+# dmgInstallHelper
+# ==============================================================
+
+option(
+    "--enable-dmg-install-helper-debug",
+    when=target_is_osx,
+    default=False,
+    help="Enable the DMG Install Helper for debugging",
+)
+
+@depends("--enable-dmg-install-helper-debug", when=target_is_osx)
+def debug_dmg_install_helper(enabled):
+    if enabled:
+        return True
+
+
+set_config("DMG_INSTALL_HELPER_DEBUG", debug_dmg_install_helper)
+
 # Updater
 # ==============================================================
 @depends(build_project, target)
