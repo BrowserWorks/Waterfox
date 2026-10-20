@@ -193,6 +193,8 @@ bool InstallPrivilegedHelperWithId(const char* helperId, os_log_t logger) {
     }
   }
 
+  AuthorizationFree(authRef, kAuthorizationFlagDefaults);
+
   return result;
 }
 
