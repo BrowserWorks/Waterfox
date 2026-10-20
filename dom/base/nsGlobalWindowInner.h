@@ -1309,7 +1309,11 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
     return mClientSource.get();
   }
 
+  void HoldOldPrincipal(nsIPrincipal* aPrincipal);
+
  private:
+  void ClearOldPrincipalsIfNotNestedEventLoop();
+
   RefPtr<mozilla::dom::ContentMediaController> mContentMediaController;
 
   RefPtr<mozilla::dom::WebTaskSchedulerMainThread> mWebTaskScheduler;
@@ -1523,6 +1527,12 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
   RefPtr<mozilla::dom::DataTransfer> mCurrentPasteDataTransfer;
 
   nsTArray<nsCString> mMediaSourceURLs;
+
+  // Holder for past principals to keep them alive so that we need to refcount
+  // them only when we actually swap principals and we don't need to refcount
+  // them on hot code paths in bindings that use raw pointers and must not
+  // get the principal deleted from underneath them.
+  nsTArray<nsCOMPtr<nsIPrincipal>> mOldPrincipals;
 
   // These fields are used by the inner and outer windows to prevent
   // programatically moving the window while the mouse is down.
