@@ -200,9 +200,11 @@ class Notification : public DOMEventTargetHelper, public SupportsWeakPtr {
   };
   ContextInfo GetContextInfo();
 
-  bool CreateActor(const ContextInfo& aInfo);
+  WeakPtr<notification::NotificationChild> CreateActor(
+      const ContextInfo& aInfo);
   void LoadImageAndShow(NotNull<Promise*> aPromise, ContextInfo&& aInfo);
-  void SendShow(NotNull<Promise*> aPromise, Maybe<IPCImage>&& aIcon);
+  void SendShow(NotNull<Promise*> aPromise, Maybe<IPCImage>&& aIcon,
+                ContextInfo&& aInfo);
 
   static already_AddRefed<nsIURI> ResolveIconURL(nsIGlobalObject* aGlobal,
                                                  const nsACString& aIconUrl);
