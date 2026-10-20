@@ -125,6 +125,12 @@ class DOMProxyHandler : public BaseDOMProxyHandler {
   static JSObject* EnsureExpandoObject(JSContext* cx,
                                        JS::Handle<JSObject*> obj);
 
+  /*
+   * Clear the ExpandoAndGeneration from a proxy whose initialization failed.
+   * This must be called before releasing the native object.
+   */
+  static void ClearExpandoOnWrapFailure(JSObject* obj);
+
   static const char family;
 };
 

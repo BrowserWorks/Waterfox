@@ -154,6 +154,27 @@ JSObject* DOMProxyHandler::EnsureExpandoObject(JSContext* cx,
   return expando;
 }
 
+// static
+void DOMProxyHandler::ClearExpandoOnWrapFailure(JSObject* obj) {
+  MOZ_ASSERT(IsDOMProxy(obj), "expected a DOM proxy object");
+
+  JS::Value v = js::GetProxyPrivate(obj);
+  if (v.isObject() || v.isUndefined()) {
+    return;
+  }
+
+  MOZ_ASSERT(!js::GetProxyReservedSlot(obj, DOM_OBJECT_SLOT).isUndefined(),
+             "Must not clear the native slot before stopping tracing the "
+             "expando owned by native object");
+
+  auto* expandoAndGeneration =
+      static_cast<JS::ExpandoAndGeneration*>(v.toPrivate());
+  // If wrapper initialization fails, the proxy no longer owns the native
+  // object, so it should not trace the expando owned by the native object.
+  // Reset the expando as well to avoid leaving an untraced reference to it.
+  expandoAndGeneration->expando = JS::UndefinedValue();
+}
+
 bool DOMProxyHandler::preventExtensions(JSContext* cx,
                                         JS::Handle<JSObject*> proxy,
                                         JS::ObjectOpResult& result) const {
@@ -290,9 +311,12 @@ void ShadowingDOMProxyHandler::trace(JSTracer* trc, JSObject* proxy) const {
   JS::Value v = js::GetProxyPrivate(proxy);
   MOZ_ASSERT(!v.isObject(), "Should not have expando object directly!");
 
-  // The proxy's private slot is set when we allocate the proxy,
-  // so it cannot be |undefined|.
-  MOZ_ASSERT(!v.isUndefined());
+  if (v.isUndefined()) {
+    MOZ_ASSERT(js::GetProxyReservedSlot(proxy, DOM_OBJECT_SLOT).isUndefined(),
+               "Only a proxy whose initialization failed should have an "
+               "undefined private slot");
+    return;
+  }
 
   auto* expandoAndGeneration =
       static_cast<JS::ExpandoAndGeneration*>(v.toPrivate());

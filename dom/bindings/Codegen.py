@@ -4708,6 +4708,14 @@ class CGWrapWithCacheMethod(CGAbstractMethod):
         )
 
         if self.descriptor.proxy:
+            if self.descriptor.hasLegacyUnforgeableMembers:
+                failureCode = fill(
+                    """
+                    DOMProxyHandler::ClearExpandoOnWrapFailure(aReflector);
+                    $*{failureCode}
+                    """,
+                    failureCode=failureCode,
+                )
             finalize = "DOMProxyHandler::getInstance()->finalize"
         else:
             finalize = FINALIZE_HOOK_NAME
@@ -4848,8 +4856,6 @@ class CGWrapNonWrapperCacheMethod(CGAbstractMethod):
         )
 
     def definition_body(self):
-        failureCode = "return false;\n"
-
         declareProto = DeclareProto(self.descriptor, noGivenProto=self.noGivenProto)
         if self.noGivenProto:
             assertGivenProto = ""
@@ -4858,6 +4864,15 @@ class CGWrapNonWrapperCacheMethod(CGAbstractMethod):
                 """
                 MOZ_ASSERT_IF(aGivenProto, js::IsObjectInContextCompartment(aGivenProto, aCx));
                 """
+            )
+        failureCode = "return false;\n"
+        if self.descriptor.proxy and self.descriptor.hasLegacyUnforgeableMembers:
+            failureCode = fill(
+                """
+                DOMProxyHandler::ClearExpandoOnWrapFailure(aReflector);
+                $*{failureCode}
+                """,
+                failureCode=failureCode,
             )
         return fill(
             """

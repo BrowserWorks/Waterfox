@@ -2837,6 +2837,9 @@ class MOZ_STACK_CLASS BindingJSObjectCreator {
 
   ~BindingJSObjectCreator() {
     if (mReflector) {
+      if (IsDOMProxy(mReflector)) {
+        js::SetProxyPrivate(mReflector, JS::UndefinedValue());
+      }
       JS::SetReservedSlot(mReflector, DOM_OBJECT_SLOT, JS::UndefinedValue());
     }
   }
