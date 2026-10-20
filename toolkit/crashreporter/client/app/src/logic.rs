@@ -34,6 +34,7 @@ pub struct ReportCrash {
     attempted_to_send: AtomicBool,
     ui: Option<AsyncTask<ReportCrashUIState>>,
     memtest: RefCell<Option<Memtest>>,
+    glean_handle: Option<crashping::GleanHandle>,
 }
 
 fn modify_extra_for_report(extra: &mut serde_json::Value) {
@@ -97,7 +98,15 @@ impl ReportCrash {
             attempted_to_send: Default::default(),
             ui: None,
             memtest: None.into(),
+            glean_handle: None,
         })
+    }
+
+    /// Take ownership of the Glean store, to release it once the crash ping has been sent.
+    #[cfg(not(test))]
+    pub fn with_glean_handle(mut self, handle: crashping::GleanHandle) -> Self {
+        self.glean_handle = Some(handle);
+        self
     }
 
     /// Returns whether an attempt was made to send the report.
@@ -107,6 +116,7 @@ impl ReportCrash {
         self.set_extra_context();
         let hash = self.compute_minidump_hash();
         self.send_crash_ping();
+        self.release_glean_store();
         if let Err(e) = self.update_events_file(hash.as_deref()) {
             log::warn!("failed to update events file: {e:#}");
         }
@@ -175,6 +185,17 @@ impl ReportCrash {
             reason: Some("crash"),
         }
         .send()
+    }
+
+    /// Shut down Glean and release the Glean store, so that other processes sending crash pings
+    /// (like a restarted Firefox) do not wait for the UI to close or the report to be sent.
+    fn release_glean_store(&mut self) {
+        if let Some(handle) = self.glean_handle.take() {
+            ::std::thread::spawn(move || {
+                ::glean::shutdown();
+                drop(handle);
+            });
+        }
     }
 
     /// Update the events file with information about the crash ping, minidump hash, and
