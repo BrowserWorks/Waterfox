@@ -20,7 +20,18 @@ ChromeUtils.defineESModuleGetters(lazy, {
  */
 export class SuggestBackendMerino extends SuggestBackend {
   get enablingPreferences() {
-    return ["quickSuggestOnlineAvailable", "quicksuggest.online.enabled"];
+    return [
+      "quickSuggestOnlineAvailable",
+
+      // This pref corresponds to the online checkbox in the Suggest settings
+      // UI.
+      "quicksuggest.online.enabled",
+
+      // This pref corresponds to the "Suggestions from Firefox" checkbox in the
+      // Suggest settings UI. The online checkbox is nested underneath that
+      // checkbox, so gate the backend on its pref.
+      "suggest.quicksuggest.all",
+    ];
   }
 
   /**

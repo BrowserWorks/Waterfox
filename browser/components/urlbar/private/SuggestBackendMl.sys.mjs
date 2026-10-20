@@ -20,7 +20,11 @@ ChromeUtils.defineESModuleGetters(lazy, {
  */
 export class SuggestBackendMl extends SuggestBackend {
   get enablingPreferences() {
-    return ["quickSuggestMlEnabled", "browser.ml.enable"];
+    return [
+      "browser.ml.enable",
+      "quickSuggestMlEnabled",
+      "suggest.quicksuggest.all",
+    ];
   }
 
   enable(enabled) {

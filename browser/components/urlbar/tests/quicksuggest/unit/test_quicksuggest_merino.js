@@ -81,6 +81,63 @@ add_task(async function merinoDisabled() {
   await resetRemoteSettingsData();
 });
 
+// The Merino backend should be disabled when the `suggest.quicksuggest.all`
+// pref is false.
+add_task(async function suggestAllPref() {
+  // Make sure the `online` prefs are true so we can verify that disabling
+  // `suggest.quicksuggest.all` alone disables the backend.
+  UrlbarPrefs.set("quicksuggest.online.available", true);
+  UrlbarPrefs.set("quicksuggest.online.enabled", true);
+
+  // First, start with `all` set to true so that the backend is enabled.
+  UrlbarPrefs.set("suggest.quicksuggest.all", true);
+  await QuickSuggestTestUtils.forceSync();
+
+  Assert.ok(
+    QuickSuggest.getFeature("SuggestBackendMerino").isEnabled,
+    "SuggestBackendMerino should be enabled"
+  );
+
+  // With the backend enabled, do a search and check the request.
+  await check_results({
+    context: createContext(SEARCH_STRING, {
+      providers: [UrlbarProviderQuickSuggest.name],
+      isPrivate: false,
+    }),
+    matches: [EXPECTED_MERINO_URLBAR_RESULT],
+  });
+  MerinoTestUtils.server.checkAndClearRequests([
+    {
+      params: {
+        [MerinoTestUtils.SEARCH_PARAMS.QUERY]: SEARCH_STRING,
+        [MerinoTestUtils.SEARCH_PARAMS.SEQUENCE_NUMBER]: 0,
+      },
+    },
+  ]);
+
+  // Now set `all` to false, which should disable the backend.
+  UrlbarPrefs.set("suggest.quicksuggest.all", false);
+  await QuickSuggestTestUtils.forceSync();
+
+  Assert.ok(
+    !QuickSuggest.getFeature("SuggestBackendMerino").isEnabled,
+    "SuggestBackendMerino should be disabled after setting `suggest.quicksuggest.all` to false"
+  );
+
+  // With the backend disabled, do a search and make sure no request was sent.
+  await check_results({
+    context: createContext(SEARCH_STRING, {
+      providers: [UrlbarProviderQuickSuggest.name],
+      isPrivate: false,
+    }),
+    matches: [],
+  });
+  MerinoTestUtils.server.checkAndClearRequests([]);
+
+  UrlbarPrefs.set("suggest.quicksuggest.all", true);
+  await QuickSuggestTestUtils.forceSync();
+});
+
 // Results should be fetched from Merino only when online is both available and
 // enabled.
 add_task(async function onlineAvailableAndEnabled() {
@@ -91,19 +148,39 @@ add_task(async function onlineAvailableAndEnabled() {
 
   for (let onlineAvailable of [false, true]) {
     for (let onlineEnabled of [false, true]) {
+      info(
+        "Doing subtest: " + JSON.stringify({ onlineAvailable, onlineEnabled })
+      );
+
       UrlbarPrefs.set("quicksuggest.online.available", onlineAvailable);
       UrlbarPrefs.set("quicksuggest.online.enabled", onlineEnabled);
+
+      let shouldBeEnabled = onlineAvailable && onlineEnabled;
+      Assert.equal(
+        QuickSuggest.getFeature("SuggestBackendMerino").isEnabled,
+        shouldBeEnabled,
+        "SuggestBackendMerino should be enabled as expected"
+      );
 
       await check_results({
         context: createContext(SEARCH_STRING, {
           providers: [UrlbarProviderQuickSuggest.name],
           isPrivate: false,
         }),
-        matches:
-          onlineAvailable && onlineEnabled
-            ? [EXPECTED_MERINO_URLBAR_RESULT]
-            : [],
+        matches: shouldBeEnabled ? [EXPECTED_MERINO_URLBAR_RESULT] : [],
       });
+      MerinoTestUtils.server.checkAndClearRequests(
+        shouldBeEnabled
+          ? [
+              {
+                params: {
+                  [MerinoTestUtils.SEARCH_PARAMS.QUERY]: SEARCH_STRING,
+                  [MerinoTestUtils.SEARCH_PARAMS.SEQUENCE_NUMBER]: 0,
+                },
+              },
+            ]
+          : []
+      );
     }
   }
 

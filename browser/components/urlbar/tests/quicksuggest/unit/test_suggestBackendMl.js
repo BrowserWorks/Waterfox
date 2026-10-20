@@ -46,6 +46,33 @@ function enableMl(enable) {
   }
 }
 
+// The ML backend should be disabled when the `suggest.quicksuggest.all` pref is
+// false.
+add_task(async function suggestAllPref() {
+  enableMl(true);
+
+  UrlbarPrefs.set("suggest.quicksuggest.all", true);
+  await QuickSuggestTestUtils.forceSync();
+
+  Assert.ok(
+    QuickSuggest.getFeature("SuggestBackendMl").isEnabled,
+    "SuggestBackendMl should be enabled"
+  );
+
+  UrlbarPrefs.set("suggest.quicksuggest.all", false);
+  await QuickSuggestTestUtils.forceSync();
+
+  Assert.ok(
+    !QuickSuggest.getFeature("SuggestBackendMl").isEnabled,
+    "SuggestBackendMl should be disabled after setting `suggest.quicksuggest.all` to false"
+  );
+
+  UrlbarPrefs.set("suggest.quicksuggest.all", true);
+  await QuickSuggestTestUtils.forceSync();
+
+  enableMl(false);
+});
+
 // Init shouldn't be delayed by default.
 add_task(async function zeroDelay() {
   // The init timer is always used, its timeout is just set to zero when init

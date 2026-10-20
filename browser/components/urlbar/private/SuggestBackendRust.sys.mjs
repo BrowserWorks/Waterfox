@@ -122,6 +122,10 @@ export class SuggestBackendRust extends SuggestBackend {
   }
 
   get enablingPreferences() {
+    // This backend is *not* gated on `suggest.quicksuggest.all` because we want
+    // features to be able to use the offline Suggest platform (i.e., the Rust
+    // component) even when they aren't considered part of the Firefox Suggest
+    // brand.
     return ["quicksuggest.rustEnabled"];
   }
 
