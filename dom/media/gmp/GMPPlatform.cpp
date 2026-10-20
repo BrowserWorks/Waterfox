@@ -251,7 +251,7 @@ void SendFOGData(ipc::ByteBuf&& buf) {
 
 #ifdef XP_WIN
 RefPtr<PGMPChild::GetModulesTrustPromise> SendGetModulesTrust(
-    ModulePaths&& aModules, bool aRunAtNormalPriority) {
+    ModuleIdentifiers&& aModules, bool aRunAtNormalPriority) {
   if (!sChild) {
     return PGMPChild::GetModulesTrustPromise::CreateAndReject(
         ipc::ResponseRejectReason::SendError, __func__);

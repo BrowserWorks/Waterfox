@@ -175,7 +175,7 @@ class GMPParent final : public PGMPParent,
 
 #if defined(XP_WIN)
   mozilla::ipc::IPCResult RecvGetModulesTrust(
-      ModulePaths&& aModPaths, bool aRunAtNormalPriority,
+      ModuleIdentifiers&& aModIdents, bool aRunAtNormalPriority,
       GetModulesTrustResolver&& aResolver);
 #endif  // defined(XP_WIN)
 

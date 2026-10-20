@@ -18,7 +18,7 @@ class UntrustedModulesProcessor;
 using UntrustedModulesPromise =
     MozPromise<Maybe<UntrustedModulesData>, nsresult, true>;
 
-struct ModulePaths;
+struct ModuleIdentifiers;
 class ModulesMapResult;
 
 using ModulesTrustPromise = MozPromise<ModulesMapResult, nsresult, true>;
@@ -37,7 +37,7 @@ class DllServices final : public glue::DllServices {
 
   RefPtr<UntrustedModulesPromise> GetUntrustedModulesData();
 
-  RefPtr<ModulesTrustPromise> GetModulesTrust(ModulePaths&& aModPaths,
+  RefPtr<ModulesTrustPromise> GetModulesTrust(ModuleIdentifiers&& aModIdents,
                                               bool aRunAtNormalPriority);
 
  private:

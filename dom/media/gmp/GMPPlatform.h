@@ -11,7 +11,7 @@
 
 namespace mozilla {
 #ifdef XP_WIN
-struct ModulePaths;
+struct ModuleIdentifiers;
 #endif
 
 namespace ipc {
@@ -46,7 +46,7 @@ void SendFOGData(ipc::ByteBuf&& buf);
 
 #ifdef XP_WIN
 RefPtr<PGMPChild::GetModulesTrustPromise> SendGetModulesTrust(
-    ModulePaths&& aModules, bool aRunNormal);
+    ModuleIdentifiers&& aModules, bool aRunNormal);
 #endif
 
 }  // namespace gmp

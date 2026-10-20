@@ -73,7 +73,7 @@ class UntrustedModulesProcessor final : public nsIObserver,
 
   // Called by IPC actors in the parent process to evaluate module trust
   // on behalf of child processes
-  RefPtr<ModulesTrustPromise> GetModulesTrust(ModulePaths&& aModPaths,
+  RefPtr<ModulesTrustPromise> GetModulesTrust(ModuleIdentifiers&& aModIdents,
                                               bool aRunAtNormalPriority);
 
   UntrustedModulesProcessor(const UntrustedModulesProcessor&) = delete;
@@ -129,8 +129,9 @@ class UntrustedModulesProcessor final : public nsIObserver,
   RefPtr<UntrustedModulesPromise> GetProcessedDataInternalChildProcess();
 
   RefPtr<ModulesTrustPromise> GetModulesTrustInternal(
-      ModulePaths&& aModPaths, bool aRunAtNormalPriority);
-  RefPtr<ModulesTrustPromise> GetModulesTrustInternal(ModulePaths&& aModPaths);
+      ModuleIdentifiers&& aModIdents, bool aRunAtNormalPriority);
+  RefPtr<ModulesTrustPromise> GetModulesTrustInternal(
+      ModuleIdentifiers&& aModIdents);
 
   // This function is only called by the parent process
   RefPtr<ModuleRecord> GetOrAddModuleRecord(const ModuleEvaluator& aModEval,
@@ -141,8 +142,8 @@ class UntrustedModulesProcessor final : public nsIObserver,
       const ModulesMap& aModules,
       const glue::EnhancedModuleLoadInfo& aModuleLoadInfo);
 
-  RefPtr<GetModulesTrustIpcPromise> SendGetModulesTrust(ModulePaths&& aModules,
-                                                        Priority aPriority);
+  RefPtr<GetModulesTrustIpcPromise> SendGetModulesTrust(
+      ModuleIdentifiers&& aModules, Priority aPriority);
 
   void CompleteProcessing(ModulesMapResultWithLoads&& aModulesAndLoads);
   RefPtr<UntrustedModulesPromise> GetAllProcessedData(StaticString aSource);

@@ -75,10 +75,10 @@ mozilla::ipc::IPCResult UtilityProcessParent::RecvGeckoTraceExport(
 
 #if defined(XP_WIN)
 mozilla::ipc::IPCResult UtilityProcessParent::RecvGetModulesTrust(
-    ModulePaths&& aModPaths, bool aRunAtNormalPriority,
+    ModuleIdentifiers&& aModIdents, bool aRunAtNormalPriority,
     GetModulesTrustResolver&& aResolver) {
   RefPtr<DllServices> dllSvc(DllServices::Get());
-  dllSvc->GetModulesTrust(std::move(aModPaths), aRunAtNormalPriority)
+  dllSvc->GetModulesTrust(std::move(aModIdents), aRunAtNormalPriority)
       ->Then(
           GetMainThreadSerialEventTarget(), __func__,
           [aResolver](ModulesMapResult&& aResult) {

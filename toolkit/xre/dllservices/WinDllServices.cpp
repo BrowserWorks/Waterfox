@@ -79,13 +79,13 @@ void DllServices::DisableFull() {
 }
 
 RefPtr<ModulesTrustPromise> DllServices::GetModulesTrust(
-    ModulePaths&& aModPaths, bool aRunAtNormalPriority) {
+    ModuleIdentifiers&& aModIdents, bool aRunAtNormalPriority) {
   if (!mUntrustedModulesProcessor) {
     return ModulesTrustPromise::CreateAndReject(NS_ERROR_NOT_IMPLEMENTED,
                                                 __func__);
   }
 
-  return mUntrustedModulesProcessor->GetModulesTrust(std::move(aModPaths),
+  return mUntrustedModulesProcessor->GetModulesTrust(std::move(aModIdents),
                                                      aRunAtNormalPriority);
 }
 
