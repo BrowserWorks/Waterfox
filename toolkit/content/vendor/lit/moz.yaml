@@ -10,8 +10,8 @@ origin:
     "Lit is a simple library for building fast, lightweight web components."
   url: "https://github.com/lit/lit"
   license: "BSD-3-Clause"
-  release: lit@2.5.0 (2022-12-14T16:42:02-06:00).
-  revision: lit@2.5.0
+  release: lit@3.3.3 (2026-05-13T20:50:50-07:00).
+  revision: lit@3.3.3
 
 
 # Since this tracks the latest tag, it's possible that lit isn't the latest tag

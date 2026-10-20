@@ -28,7 +28,7 @@
     "globals": "17.6.0",
     "jsdoc": "4.0.5",
     "license-checker-rseidelsohn": "4.4.2",
-    "lit": "2.5.0",
+    "lit": "3.3.3",
     "prettier": "3.8.1",
     "stylelint": "16.14.1",
     "stylelint-config-recommended": "14.0.1",
