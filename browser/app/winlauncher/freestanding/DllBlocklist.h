@@ -22,6 +22,12 @@ MOZ_NO_STACK_PROTECTOR NTSTATUS NTAPI patched_NtMapViewOfSection(
     SECTION_INHERIT aInheritDisposition, ULONG aAllocationType,
     ULONG aProtectionFlags);
 
+MOZ_NO_STACK_PROTECTOR NTSTATUS NTAPI patched_NtCreateSection(
+    PHANDLE aSectionHandle, ACCESS_MASK aDesiredAccess,
+    POBJECT_ATTRIBUTES aObjectAttributes, PLARGE_INTEGER aMaximumSize,
+    ULONG aSectionPageProtection, ULONG aAllocationAttributes,
+    HANDLE aFileHandle);
+
 using LdrLoadDllPtr = decltype(&::LdrLoadDll);
 
 extern CrossProcessDllInterceptor::FuncHookType<LdrLoadDllPtr> stub_LdrLoadDll;
@@ -30,6 +36,11 @@ using NtMapViewOfSectionPtr = decltype(&::NtMapViewOfSection);
 
 extern CrossProcessDllInterceptor::FuncHookType<NtMapViewOfSectionPtr>
     stub_NtMapViewOfSection;
+
+using NtCreateSectionPtr = decltype(&::NtCreateSection);
+
+extern CrossProcessDllInterceptor::FuncHookType<NtCreateSectionPtr>
+    stub_NtCreateSection;
 
 }  // namespace freestanding
 }  // namespace mozilla

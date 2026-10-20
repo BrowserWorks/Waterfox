@@ -23,6 +23,21 @@ namespace mozilla {
 
 class ModuleEvaluator;
 
+/**
+ * Decides whether a file handle a child process sent us is one we should
+ * evaluate and, if so, derives the module's path from it.  We require the
+ * handle to refer to a file, on a local disk, that is not low-integrity.  The
+ * requirements reconstruct, on the parent side, the limits the sandbox
+ * mitigations MITIGATION_IMAGE_LOAD_NO_REMOTE and
+ * MITIGATION_IMAGE_LOAD_NO_LOW_LABEL enforce, since the file handle can be
+ * obtained even if the child process isn't permitted to load it as a module.
+ *
+ * Declared here so that gtest can exercise it directly. Nothing outside of the
+ * UntrustedModules implementation and tests should call it.
+ */
+bool ValidateAndResolveModuleFile(const ipc::FileDescriptor& aFile,
+                                  nsAString& aOutNtPath);
+
 using UntrustedModulesPromise =
     MozPromise<Maybe<UntrustedModulesData>, nsresult, true>;
 

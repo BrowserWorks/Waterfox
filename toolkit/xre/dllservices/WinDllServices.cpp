@@ -79,7 +79,7 @@ void DllServices::DisableFull() {
 }
 
 RefPtr<ModulesTrustPromise> DllServices::GetModulesTrust(
-    ModuleIdentifiers&& aModIdents, bool aRunAtNormalPriority) {
+    nsTArray<ipc::FileDescriptor>&& aModIdents, bool aRunAtNormalPriority) {
   if (!mUntrustedModulesProcessor) {
     return ModulesTrustPromise::CreateAndReject(NS_ERROR_NOT_IMPLEMENTED,
                                                 __func__);

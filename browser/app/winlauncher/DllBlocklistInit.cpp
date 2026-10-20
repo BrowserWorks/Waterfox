@@ -64,6 +64,18 @@ static LauncherVoidResultWithLineInfo InitializeDllBlocklistOOPInternal(
     return LAUNCHER_ERROR_FROM_DETOUR_ERROR(intcpt.GetLastDetourError());
   }
 
+  // Only child processes need this hook, and failing to set it is not fatal.
+  if (gBlocklistInitFlags & eDllBlocklistInitFlagWasBootstrapped) {
+#  if defined(DEBUG) && defined(_M_X64) && !defined(__MINGW64__)
+    MOZ_ASSERT(!HasStackCookieCheck(
+        reinterpret_cast<uintptr_t>(&freestanding::patched_NtCreateSection)));
+#  endif  // #if defined(DEBUG) && defined(_M_X64) && !defined(__MINGW64__)
+
+    (void)freestanding::stub_NtCreateSection.SetDetour(
+        aTransferMgr, intcpt, "NtCreateSection",
+        &freestanding::patched_NtCreateSection);
+  }
+
   // Because aChildProcess has just been created in a suspended state, its
   // dynamic linker has not yet been initialized, thus its executable has
   // not yet been linked with ntdll.dll. If the blocklist hook intercepts a

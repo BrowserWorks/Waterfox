@@ -161,6 +161,11 @@ struct ModuleLoadInfo final {
   nt::AllocatedUnicodeString mSectionName;
   // The base address of the module's mapped section
   const void* mBaseAddr;
+  // A duplicate of the handle the loader opened this module's file with, taken
+  // by the NtCreateSection hook.  It grants no access to the file's contents.
+  //
+  // Null for any load the NtCreateSection hook did not take a handle for.
+  nt::AutoHandle mFileHandle;
   // If the module was successfully loaded, stack trace of the DLL load request
   Vector<PVOID, 0, nt::RtlAllocPolicy> mBacktrace;
   // The status of DLL load

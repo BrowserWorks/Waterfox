@@ -1749,6 +1749,10 @@ parent:
      * obtain enough information about a DLL file to determine its
      * trustworthiness. This API asks the chrome process to perform that
      * evaluation.
+     *
+     * Each entry carries a handle to the file backing the module, captured by
+     * the DLL blocklist from the handle the loader opened. The parent derives
+     * the module's path from the handle and evaluates the module it targets.
      */
     async GetModulesTrust(ModuleIdentifiers aModIdents, bool aRunAtNormalPriority)
         returns (ModulesMapResult? modMapResult);
