@@ -34,6 +34,10 @@ LOCAL_INCLUDES += [
     "/tools/profiler/public"
 ]
 
+UNIFIED_SOURCES += [
+    "/third_party/libwebrtc/rtc_base/ref_counter.cc"
+]
+
 if not CONFIG["MOZ_DEBUG"]:
 
     DEFINES["DYNAMIC_ANNOTATIONS_ENABLED"] = "0"
