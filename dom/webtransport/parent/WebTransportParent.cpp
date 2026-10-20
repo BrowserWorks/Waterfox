@@ -798,7 +798,9 @@ WebTransportParent::OnOutgoingDatagramOutCome(
   }
 
   // This assumes the stack is calling us back synchronously!
-  MOZ_ASSERT(mOutgoingDatagramResolver);
+  if (!mOutgoingDatagramResolver) {
+    return NS_OK;
+  }
   mOutgoingDatagramResolver(result);
   mOutgoingDatagramResolver = nullptr;
 
@@ -808,7 +810,9 @@ WebTransportParent::OnOutgoingDatagramOutCome(
 NS_IMETHODIMP WebTransportParent::OnMaxDatagramSize(uint64_t aSize) {
   LOG(("Max datagram size is %" PRIu64, aSize));
   MOZ_ASSERT(mSocketThread->IsOnCurrentThread());
-  MOZ_ASSERT(mMaxDatagramSizeResolver);
+  if (!mMaxDatagramSizeResolver) {
+    return NS_OK;
+  }
   mMaxDatagramSizeResolver(aSize);
   mMaxDatagramSizeResolver = nullptr;
   return NS_OK;

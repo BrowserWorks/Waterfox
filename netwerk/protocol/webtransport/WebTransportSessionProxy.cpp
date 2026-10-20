@@ -1135,7 +1135,16 @@ void WebTransportSessionProxy::NotifyDatagramReceived(
   nsCOMPtr<WebTransportSessionEventListener> listener;
   {
     MutexAutoLock lock(mMutex);
-    MOZ_ASSERT(mTarget->IsOnCurrentThread());
+    if (!mTarget->IsOnCurrentThread()) {
+      // mTarget changed (RetargetTo) after this runnable was queued; forward to
+      // the current target so the listener is only ever invoked on one thread.
+      mTarget->Dispatch(NS_NewRunnableFunction(
+          "WebTransportSessionProxy::NotifyDatagramReceived",
+          [self = RefPtr{this}, data{std::move(aData)}]() mutable {
+            self->NotifyDatagramReceived(std::move(data));
+          }));
+      return;
+    }
 
     if (mState != WebTransportSessionProxyState::ACTIVE || !mListener) {
       return;
@@ -1183,12 +1192,21 @@ void WebTransportSessionProxy::OnMaxDatagramSizeInternal(uint64_t aSize) {
   nsCOMPtr<WebTransportSessionEventListener> listener;
   {
     MutexAutoLock lock(mMutex);
-    MOZ_ASSERT(mTarget->IsOnCurrentThread());
-
     if (!mStopRequestCalled) {
       mPendingEvents.AppendElement([self = RefPtr{this}, size(aSize)]() {
         self->OnMaxDatagramSizeInternal(size);
       });
+      return;
+    }
+
+    if (!mTarget->IsOnCurrentThread()) {
+      // mTarget changed (RetargetTo) after this runnable was queued; forward to
+      // the current target so the listener is only ever invoked on one thread.
+      mTarget->Dispatch(NS_NewRunnableFunction(
+          "WebTransportSessionProxy::OnMaxDatagramSizeInternal",
+          [self = RefPtr{this}, size(aSize)] {
+            self->OnMaxDatagramSizeInternal(size);
+          }));
       return;
     }
 
@@ -1224,7 +1242,16 @@ void WebTransportSessionProxy::OnOutgoingDatagramOutComeInternal(
   nsCOMPtr<WebTransportSessionEventListener> listener;
   {
     MutexAutoLock lock(mMutex);
-    MOZ_ASSERT(mTarget->IsOnCurrentThread());
+    if (!mTarget->IsOnCurrentThread()) {
+      // mTarget changed (RetargetTo) after this runnable was queued; forward to
+      // the current target so the listener is only ever invoked on one thread.
+      mTarget->Dispatch(NS_NewRunnableFunction(
+          "WebTransportSessionProxy::OnOutgoingDatagramOutComeInternal",
+          [self = RefPtr{this}, id(aId), outcome(aOutCome)] {
+            self->OnOutgoingDatagramOutComeInternal(id, outcome);
+          }));
+      return;
+    }
     if (mState != WebTransportSessionProxyState::ACTIVE || !mListener) {
       return;
     }
