@@ -79,3 +79,22 @@ TEST(TestDllServices, DoNotGetNestedMicrosoftCertificate)
   EXPECT_EQ(info.orgName,
             u"Microsoft Windows Software Compatibility Publisher"_ns);
 }
+
+// An interrupted update can leave firefox.exe, mozglue.dll and xul.dll at
+// different versions, so a ModuleLoadInfo handed to DllServices may have been
+// built with another layout.  DllServices must leave such an object alone.
+TEST(TestDllServices, RejectIncompatibleModuleLoadInfo)
+{
+  RefPtr<DllServices> dllSvc(DllServices::Get());
+
+  ModuleLoadInfo noMagic;
+  noMagic.mMagic = 0;
+  EXPECT_FALSE(noMagic.HasCompatibleLayout());
+  dllSvc->DispatchDllLoadNotification(std::move(noMagic));
+
+  ModuleLoadInfoVec backlog;
+  ASSERT_TRUE(backlog.emplaceBack(ModuleLoadInfo()));
+  EXPECT_FALSE(backlog.begin()->HasCompatibleLayout());
+  dllSvc->DispatchModuleLoadBacklogNotification(std::move(backlog));
+  EXPECT_EQ(backlog.length(), 1u);
+}
