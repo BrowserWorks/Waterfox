@@ -1,17 +1,17 @@
-From 28ad29d3496d10193de7a52bd8e104e183f5df7c Mon Sep 17 00:00:00 2001
+From 299c4b8928f9305faa8d46aa7d1def64f4659761 Mon Sep 17 00:00:00 2001
 From: Mark Striemer <mstriemer@mozilla.com>
 Date: Tue, 22 Nov 2022 18:17:01 -0600
-Subject: [PATCH 3/5] Disable source maps
+Subject: [PATCH 3/6] Disable source maps
 
 ---
  rollup-common.js | 16 ++++++++--------
  1 file changed, 8 insertions(+), 8 deletions(-)
 
 diff --git a/rollup-common.js b/rollup-common.js
-index 88d222d1..3f9e13b2 100644
+index 951888b8..50f2db75 100644
 --- a/rollup-common.js
 +++ b/rollup-common.js
-@@ -8,7 +8,7 @@ import summary from 'rollup-plugin-summary';
+@@ -8,7 +8,7 @@ import {summary} from 'rollup-plugin-summary';
  // import {terser} from 'rollup-plugin-terser';
  import copy from 'rollup-plugin-copy';
  import nodeResolve from '@rollup/plugin-node-resolve';
@@ -19,8 +19,8 @@ index 88d222d1..3f9e13b2 100644
 +// import sourcemaps from 'rollup-plugin-sourcemaps';
  import replace from '@rollup/plugin-replace';
  import virtual from '@rollup/plugin-virtual';
- 
-@@ -358,7 +358,7 @@ export function litProdConfig({
+ import inject from '@rollup/plugin-inject';
+@@ -408,7 +408,7 @@ export function litProdConfig({
          // Preserve existing module structure (e.g. preserve the "directives/"
          // directory).
          preserveModules: true,
@@ -29,7 +29,7 @@ index 88d222d1..3f9e13b2 100644
        },
        external,
        plugins: [
-@@ -394,7 +394,7 @@ export function litProdConfig({
+@@ -444,7 +444,7 @@ export function litProdConfig({
          }),
          // This plugin automatically composes the existing TypeScript -> raw JS
          // sourcemap with the raw JS -> minified JS one that we're generating here.
@@ -38,7 +38,7 @@ index 88d222d1..3f9e13b2 100644
          // terser(terserOptions),
          summary({
            showBrotliSize: true,
-@@ -434,7 +434,7 @@ export function litProdConfig({
+@@ -484,7 +484,7 @@ export function litProdConfig({
                dir: `${outputDir}/node`,
                format: 'esm',
                preserveModules: true,
@@ -47,25 +47,25 @@ index 88d222d1..3f9e13b2 100644
              },
              external,
              plugins: [
-@@ -453,7 +453,7 @@ export function litProdConfig({
-                     'const ENABLE_SHADYDOM_NOPATCH = false',
+@@ -504,7 +504,7 @@ export function litProdConfig({
                  },
                }),
+               ...injectNodeDomShimIntoReactiveElement,
 -              sourcemaps(),
 +              // sourcemaps(),
                // We want the production Node build to be minified because:
                //
                // 1. It should be very slightly faster, even in Node where bytes
-@@ -496,7 +496,7 @@ export function litProdConfig({
-                   'const NODE_MODE = false': 'const NODE_MODE = true',
+@@ -550,7 +550,7 @@ export function litProdConfig({
                  },
                }),
+               ...injectNodeDomShimIntoReactiveElement,
 -              sourcemaps(),
 +              // sourcemaps(),
                summary({
                  showBrotliSize: true,
                  showGzippedSize: true,
-@@ -534,7 +534,7 @@ const litMonoBundleConfig = ({
+@@ -588,7 +588,7 @@ const litMonoBundleConfig = ({
      file: `${output || file}.js`,
      format,
      name,
@@ -74,7 +74,7 @@ index 88d222d1..3f9e13b2 100644
      sourcemapPathTransform,
    },
    plugins: [
-@@ -562,7 +562,7 @@ const litMonoBundleConfig = ({
+@@ -616,7 +616,7 @@ const litMonoBundleConfig = ({
      }),
      // This plugin automatically composes the existing TypeScript -> raw JS
      // sourcemap with the raw JS -> minified JS one that we're generating here.
@@ -84,5 +84,5 @@ index 88d222d1..3f9e13b2 100644
      summary({
        showBrotliSize: true,
 -- 
-2.37.1 (Apple Git-137.1)
+2.53.0
 

@@ -1,26 +1,26 @@
-From d4897981e63b8be81453088cd9ab3a6edaf8fcaf Mon Sep 17 00:00:00 2001
+From 1f4b1280c6328e6429edef0c44b86e988448b3c6 Mon Sep 17 00:00:00 2001
 From: Mark Striemer <mstriemer@mozilla.com>
 Date: Wed, 16 Nov 2022 22:54:20 -0600
-Subject: [PATCH 1/5] disable terser step
+Subject: [PATCH 1/6] disable terser step
 
 ---
  rollup-common.js | 14 +++++++-------
  1 file changed, 7 insertions(+), 7 deletions(-)
 
 diff --git a/rollup-common.js b/rollup-common.js
-index b2187328..88d222d1 100644
+index f6ce2d27..951888b8 100644
 --- a/rollup-common.js
 +++ b/rollup-common.js
 @@ -5,7 +5,7 @@
   */
  
- import summary from 'rollup-plugin-summary';
+ import {summary} from 'rollup-plugin-summary';
 -import {terser} from 'rollup-plugin-terser';
 +// import {terser} from 'rollup-plugin-terser';
  import copy from 'rollup-plugin-copy';
  import nodeResolve from '@rollup/plugin-node-resolve';
  import sourcemaps from 'rollup-plugin-sourcemaps';
-@@ -321,7 +321,7 @@ export function litProdConfig({
+@@ -371,7 +371,7 @@ export function litProdConfig({
        (name) => `console.log(window.${name});`
      ),
    ].join('\n');
@@ -29,7 +29,7 @@ index b2187328..88d222d1 100644
  
    const terserOptions = generateTerserOptions(
      nameCache,
-@@ -345,7 +345,7 @@ export function litProdConfig({
+@@ -395,7 +395,7 @@ export function litProdConfig({
          virtual({
            [nameCacheSeederInfile]: nameCacheSeederContents,
          }),
@@ -38,7 +38,7 @@ index b2187328..88d222d1 100644
          skipBundleOutput,
        ],
      },
-@@ -395,7 +395,7 @@ export function litProdConfig({
+@@ -445,7 +445,7 @@ export function litProdConfig({
          // This plugin automatically composes the existing TypeScript -> raw JS
          // sourcemap with the raw JS -> minified JS one that we're generating here.
          sourcemaps(),
@@ -47,7 +47,7 @@ index b2187328..88d222d1 100644
          summary({
            showBrotliSize: true,
            showGzippedSize: true,
-@@ -466,7 +466,7 @@ export function litProdConfig({
+@@ -517,7 +517,7 @@ export function litProdConfig({
                //    references properties from reactive-element which will
                //    otherwise have different names. The default export that
                //    lit-element will use is minified.
@@ -56,7 +56,7 @@ index b2187328..88d222d1 100644
                summary({
                  showBrotliSize: true,
                  showGzippedSize: true,
-@@ -524,7 +524,7 @@ const litMonoBundleConfig = ({
+@@ -578,7 +578,7 @@ const litMonoBundleConfig = ({
    file,
    output,
    name,
@@ -65,7 +65,7 @@ index b2187328..88d222d1 100644
    format = 'umd',
    sourcemapPathTransform,
    // eslint-disable-next-line no-undef
-@@ -563,7 +563,7 @@ const litMonoBundleConfig = ({
+@@ -617,7 +617,7 @@ const litMonoBundleConfig = ({
      // This plugin automatically composes the existing TypeScript -> raw JS
      // sourcemap with the raw JS -> minified JS one that we're generating here.
      sourcemaps(),
@@ -75,5 +75,5 @@ index b2187328..88d222d1 100644
        showBrotliSize: true,
        showGzippedSize: true,
 -- 
-2.37.1 (Apple Git-137.1)
+2.53.0
 

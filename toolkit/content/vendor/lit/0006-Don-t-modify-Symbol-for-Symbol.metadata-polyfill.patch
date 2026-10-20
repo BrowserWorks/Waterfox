@@ -1,0 +1,44 @@
+From 468bdbb4aad3e8012d0f9ae6b6795a081443287f Mon Sep 17 00:00:00 2001
+From: Mark Striemer <mstriemer@mozilla.com>
+Date: Thu, 20 Aug 2026 13:00:12 -0500
+Subject: [PATCH 6/6] Don't modify Symbol for Symbol.metadata polyfill
+
+---
+ packages/reactive-element/src/reactive-element.ts | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/packages/reactive-element/src/reactive-element.ts b/packages/reactive-element/src/reactive-element.ts
+index 2424b078..deb0a430 100644
+--- a/packages/reactive-element/src/reactive-element.ts
++++ b/packages/reactive-element/src/reactive-element.ts
+@@ -431,7 +431,8 @@ declare global {
+ 
+ // Ensure metadata is enabled. TypeScript does not polyfill
+ // Symbol.metadata, so we must ensure that it exists.
+-(Symbol as {metadata: symbol}).metadata ??= Symbol('metadata');
++const SYMBOL_METADATA =
++  (Symbol as {metadata: symbol}).metadata ?? Symbol('metadata');
+ 
+ declare global {
+   // This is public global API, do not change!
+@@ -812,7 +813,7 @@ export abstract class ReactiveElement
+   }
+ 
+   // Temporary, until google3 is on TypeScript 5.2
+-  declare static [Symbol.metadata]: object & Record<PropertyKey, unknown>;
++  declare static [SYMBOL_METADATA]: object & Record<PropertyKey, unknown>;
+ 
+   /**
+    * Initializes static own properties of the class used in bookkeeping
+@@ -877,7 +878,7 @@ export abstract class ReactiveElement
+     }
+ 
+     // Create properties from standard decorator metadata:
+-    const metadata = this[Symbol.metadata];
++    const metadata = this[SYMBOL_METADATA];
+     if (metadata !== null) {
+       const properties = litPropertyMetadata.get(metadata);
+       if (properties !== undefined) {
+-- 
+2.53.0
+
