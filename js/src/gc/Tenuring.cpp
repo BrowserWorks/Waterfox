@@ -1297,11 +1297,13 @@ JSString* js::gc::TenuringTracer::promoteString(JSString* src) {
     JSLinearString* base = src->asDependent().rootBaseDuringMinorGC();
 
     // Limited recursion: the root base cannot be dependent, so this will not
-    // recurse again.
+    // recurse again. Preserve the value of |promotedToNursery|.
+    bool promotedToNurseryPrev = promotedToNursery;
     JSString* promotedBase =
         InCollectedNurseryRegion(base) ? promoteOrForward(base) : base;
-    MOZ_ASSERT(!promotedBase->isDependent());
+    promotedToNursery = promotedToNurseryPrev;
 
+    MOZ_ASSERT(!promotedBase->isDependent());
     dst->asDependent().setBase(&promotedBase->asLinear());
     if (base != promotedBase) {
       dst->asDependent().updateToPromotedBase(base);
