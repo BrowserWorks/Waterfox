@@ -277,7 +277,17 @@ bool OpenTypeGLYF::ParseCompositeGlyph(
   std::vector<edit_rec> edits;
   unsigned prev_start = 0;
   bool we_have_instructions = false;
+  unsigned num_components = 0;
   do {
+    if (++num_components > 0x7fff) {
+      Warning("Too many components in composite: discarding glyph %u", glyph_id);
+      // Reset the buffer position such that all the glyph data will be dropped,
+      // making it an empty (non-composite) glyph.
+      glyph.set_offset(0);
+      component_point_count->gid_stack.clear();
+      return true;
+    }
+
     unsigned start = glyph.offset();
 
     if (!glyph.ReadU16(&flags) || !glyph.ReadU16(&gid)) {
