@@ -1,0 +1,10 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+include $(topsrcdir)/config/rules.mk
+
+ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
+export::
+	$(call py_action,preprocessor dist/bin/dmgInstallHelper-Info.plist,-Fsubstitution -DMOZ_MACBUNDLE_ID='$(MOZ_MACBUNDLE_ID)' -DMOZ_SMAUTHORIZEDCLIENTS_REQUIREMENTS='$(MOZ_SMAUTHORIZEDCLIENTS_REQUIREMENTS)' $(srcdir)/Info.plist.in -o $(DIST)/bin/dmgInstallHelper-Info.plist)
+endif

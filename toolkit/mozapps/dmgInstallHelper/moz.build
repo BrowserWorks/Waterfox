@@ -1,0 +1,34 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
+    Program("org.mozilla.dmgInstallHelper")
+
+    SOURCES = [
+        "dmgInstallHelper.mm"
+    ]
+
+    OS_LIBS += [
+            "-framework Cocoa",
+            "-framework Security"
+    ]
+
+    CMMFLAGS += [
+            "-fobjc-arc",
+    ]
+
+    LDFLAGS += [
+            "-sectcreate",
+            "__TEXT",
+            "__info_plist",
+            TOPOBJDIR + "/dist/bin/dmgInstallHelper-Info.plist",
+            "-sectcreate",
+            "__TEXT",
+            "__launchd_plist",
+            SRCDIR + "/Launchd.plist",
+        ]
+
+    EXPORTS += [
+        "dmgInstallProtocol.h"
+    ]

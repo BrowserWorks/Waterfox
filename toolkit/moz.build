@@ -56,6 +56,7 @@ if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
     ]
 elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
     DIRS += [
+        "mozapps/dmgInstallHelper",
         "mozapps/macos-frameworks",
         "system/commonproxy",
         "system/osxproxy",
