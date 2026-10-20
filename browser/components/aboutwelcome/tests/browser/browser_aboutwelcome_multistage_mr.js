@@ -1289,6 +1289,19 @@ add_task(
       ["AW_BACKUP_RESTORE_EMBEDDED_NO_BACKUP_FOUND_TEST"]
     );
 
+    // The screens rendered above leave a detached DOM subtree behind in the
+    // content process. Gecko defers unbinding a detached subtree that nothing
+    // outside the DOM tree references, and only unbinds it at the start of the
+    // next cycle collection, so closing the tab immediately afterwards needs
+    // one more GC/CC round than the shutdown leak checker runs and the window
+    // gets reported as leaked. Collect it here instead of relying on the
+    // browser happening to go idle first.
+    await SpecialPowers.spawn(
+      browser,
+      [],
+      () => new Promise(resolve => SpecialPowers.exactGC(resolve))
+    );
+
     await SpecialPowers.popPrefEnv();
     await cleanup();
   }

@@ -573,7 +573,7 @@ add_task(async function test_icon() {
 
   // Edit engine and check favicon.
   let engineRow = [...engineList.children].find(
-    row => row.__config.controlAttrs.label == "Bugzilla"
+    row => row.config.controlAttrs.label == "Bugzilla"
   );
   let editButton = [
     ...engineRow.children[0].getElementsByTagName("moz-button"),

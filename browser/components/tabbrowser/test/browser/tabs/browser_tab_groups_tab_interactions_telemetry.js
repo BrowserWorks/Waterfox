@@ -223,7 +223,7 @@ add_task(async function test_tabInteractionsClose() {
     const openTabs = viewTab.linkedBrowser.contentDocument
       .querySelector("named-deck > view-recentbrowsing view-opentabs")
       .shadowRoot.querySelector("view-opentabs-card").tabList.rowEls;
-    const tabElement = Array.from(openTabs).find(t => t.__tabElement.group);
+    const tabElement = Array.from(openTabs).find(t => t.tabElement.group);
     tabElement.shadowRoot.querySelector("moz-button.dismiss-button").click();
     await assertMetricFoundFor("close_tab_other", 3);
   });

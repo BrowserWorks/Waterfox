@@ -41,7 +41,7 @@ add_task(async function test_change_engine() {
 
   Assert.notEqual(row, undefined, "Should have found the entry");
   Assert.ok(
-    row.__iconSrc.includes("img123.png"),
+    row.iconSrc.includes("img123.png"),
     "Should have the correct image URL"
   );
   Assert.equal(row.description, "foo", "Should show the correct keyword");
@@ -66,7 +66,7 @@ add_task(async function test_change_engine() {
   ).children[0];
   Assert.notEqual(updatedRow, undefined, "Should have found the updated entry");
   Assert.ok(
-    updatedRow.__iconSrc.includes("img456.png"),
+    updatedRow.iconSrc.includes("img456.png"),
     "Should have the correct updated image URL"
   );
   Assert.equal(

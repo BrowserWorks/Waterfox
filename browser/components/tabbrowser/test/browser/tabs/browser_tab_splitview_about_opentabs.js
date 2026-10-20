@@ -152,9 +152,9 @@ add_task(async function test_contextMenuMoveTabsToNewSplitView() {
   );
 
   Assert.ok(
-    openTabsComponent.sidebarTabList.rowEls[1].__url ===
+    openTabsComponent.sidebarTabList.rowEls[1].url ===
       tab2.linkedBrowser.currentURI.spec &&
-      openTabsComponent.sidebarTabList.rowEls[2].__url ===
+      openTabsComponent.sidebarTabList.rowEls[2].url ===
         tab3.linkedBrowser.currentURI.spec,
     "tab2 and tab3 are listed on the about:opentabs page"
   );
@@ -368,9 +368,9 @@ add_task(async function test_containerIndicators() {
   );
 
   Assert.ok(
-    openTabsComponent.sidebarTabList.rowEls[1].__url ===
+    openTabsComponent.sidebarTabList.rowEls[1].url ===
       tab2.linkedBrowser.currentURI.spec &&
-      openTabsComponent.sidebarTabList.rowEls[2].__url ===
+      openTabsComponent.sidebarTabList.rowEls[2].url ===
         containerTab.linkedBrowser.currentURI.spec,
     "tab2 and tab3 are listed on the about:opentabs page"
   );
@@ -485,7 +485,7 @@ add_task(async function test_aboutOpenTabsReplacedWhenLeftViewActive() {
   );
 
   let tabRowForTab2 = Array.from(openTabsComponent.sidebarTabList.rowEls).find(
-    rowEl => rowEl.__url === tab2.linkedBrowser.currentURI.spec
+    rowEl => rowEl.url === tab2.linkedBrowser.currentURI.spec
   );
   Assert.ok(tabRowForTab2, "Found the row element for tab2");
 
@@ -757,7 +757,7 @@ add_task(async function test_opentabs_search() {
     return (
       tabList &&
       tabList.rowEls.length === 1 &&
-      tabList.rowEls[0].__url.includes("example.com")
+      tabList.rowEls[0].url.includes("example.com")
     );
   }, "Only the tab with 'example' in the URL is shown in search results");
 
