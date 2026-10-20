@@ -31,6 +31,7 @@ This is the nascent documentation of the Toolkit code that is shared across Fire
    components/url-classifier/url-classifier/index
    components/extensions/webextensions/index
    /extensions/spellcheck/index
+   mozapps/dmgInstallHelper/docs/index
    mozapps/update/docs/index
    components/antitracking/anti-tracking/index
    components/translations/index
