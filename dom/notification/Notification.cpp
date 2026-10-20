@@ -288,7 +288,8 @@ already_AddRefed<Notification> Notification::Constructor(
     return nullptr;
   }
 
-  notification->LoadImageAndShow(promise, std::move(contextInfo));
+  notification->LoadImageAndShow(WrapNotNull(promise.get()),
+                                 std::move(contextInfo));
 
   notification->KeepAliveIfHasListenersFor(nsGkAtoms::onclick);
   notification->KeepAliveIfHasListenersFor(nsGkAtoms::onshow);
@@ -732,7 +733,7 @@ already_AddRefed<Promise> Notification::ShowPersistentNotification(
     aRv.ThrowUnknownError("Failed to create actor.");
     return nullptr;
   }
-  notification->LoadImageAndShow(p, std::move(contextInfo));
+  notification->LoadImageAndShow(WrapNotNull(p), std::move(contextInfo));
 
   return p.forget();
 }
@@ -786,7 +787,8 @@ bool Notification::CreateActor(const ContextInfo& aInfo) {
   return true;
 }
 
-void Notification::LoadImageAndShow(Promise* aPromise, ContextInfo&& aInfo) {
+void Notification::LoadImageAndShow(NotNull<Promise*> aPromise,
+                                    ContextInfo&& aInfo) {
   nsCOMPtr<nsIURI> uri = mIPCNotification.options().icon();
   Maybe<ClientInfo> clientInfo = GetParentObject()->GetClientInfo();
   if (!uri || clientInfo.isNothing()) {
@@ -866,7 +868,7 @@ void Notification::LoadImageAndShow(Promise* aPromise, ContextInfo&& aInfo) {
           })
       ->Then(
           GetCurrentSerialEventTarget(), __func__,
-          [self = RefPtr{this}, promise = RefPtr{aPromise},
+          [self = RefPtr{this}, promise = WrapNotNull(RefPtr{aPromise.get()}),
            workerRef = std::move(workerRef)](Maybe<IPCImage>&& aImage) {
             // SendShow must happen on the original (potentially Worker) thread.
             self->SendShow(promise, std::move(aImage));
@@ -874,7 +876,8 @@ void Notification::LoadImageAndShow(Promise* aPromise, ContextInfo&& aInfo) {
           [](bool) {});
 }
 
-void Notification::SendShow(Promise* aPromise, Maybe<IPCImage>&& aIcon) {
+void Notification::SendShow(NotNull<Promise*> aPromise,
+                            Maybe<IPCImage>&& aIcon) {
   if (mIsClosed) {
     MOZ_ASSERT(mIPCNotification.options().icon(),
                "Closure before SendShow can only happen with image resources");
@@ -882,30 +885,27 @@ void Notification::SendShow(Promise* aPromise, Maybe<IPCImage>&& aIcon) {
   }
 
   mActor->SendShow(std::move(aIcon))
-      ->Then(GetCurrentSerialEventTarget(), __func__,
-             [self = RefPtr{this}, promise = RefPtr(aPromise)](
-                 notification::PNotificationChild::ShowPromise::
-                     ResolveOrRejectValue&& aResult) {
-               if (aResult.IsReject()) {
-                 promise->MaybeRejectWithUnknownError(
-                     "Failed to open notification");
-                 self->Deactivate();
-                 return;
-               }
+      ->Then(
+          GetCurrentSerialEventTarget(), __func__,
+          [self = RefPtr{this}, promise = WrapNotNull(RefPtr(aPromise.get()))](
+              notification::PNotificationChild::ShowPromise::
+                  ResolveOrRejectValue&& aResult) {
+            if (aResult.IsReject()) {
+              promise->MaybeRejectWithUnknownError(
+                  "Failed to open notification");
+              self->Deactivate();
+              return;
+            }
 
-               CopyableErrorResult rv = aResult.ResolveValue();
-               if (rv.Failed()) {
-                 promise->MaybeReject(std::move(rv));
-                 self->Deactivate();
-                 return;
-               }
+            CopyableErrorResult rv = aResult.ResolveValue();
+            if (rv.Failed()) {
+              promise->MaybeReject(std::move(rv));
+              self->Deactivate();
+              return;
+            }
 
-               if (promise) {
-                 promise->MaybeResolveWithUndefined();
-               } else {
-                 self->DispatchTrustedEvent(u"show"_ns);
-               }
-             });
+            promise->MaybeResolveWithUndefined();
+          });
 }
 
 void Notification::Deactivate() {
