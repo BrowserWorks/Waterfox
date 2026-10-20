@@ -45,7 +45,8 @@ NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_BEGIN(nsDOMCSSAttributeDeclaration)
   return tmp->HasKnownLiveWrapper() ||
-         (tmp->mElement && Element::CanSkipInCC(tmp->mElement));
+         (tmp->mElement && Element::CanSkipInCC(tmp->mElement) &&
+          tmp->HasNothingToTrace(tmp));
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_BEGIN(nsDOMCSSAttributeDeclaration)

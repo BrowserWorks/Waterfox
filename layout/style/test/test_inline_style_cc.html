@@ -1,0 +1,40 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Inline style declarations trace their gray wrappers</title>
+<script src="/tests/SimpleTest/SimpleTest.js"></script>
+<link rel="stylesheet" href="/tests/SimpleTest/test.css">
+<script>
+function makeAnchor() {
+  const doc = new DOMParser().parseFromString(
+    "<!doctype html><body>",
+    "text/html"
+  );
+  const element = doc.createElement("div");
+  element.appendChild(doc.createElement("span"));
+
+  const victim = doc.createRange();
+  victim.selectNodeContents(element);
+  // Preserve the victim's reflector so it is also a gray JS holder.
+  victim.expando = true;
+  element.style.victim = victim;
+
+  // Retain the carrier only through the native edges of a JS-rooted Range.
+  const anchor = doc.createRange();
+  anchor.selectNodeContents(element);
+  return anchor;
+}
+
+add_task(function() {
+  const anchor = makeAnchor();
+  SpecialPowers.forceGC();
+  SpecialPowers.forceCC();
+
+  // Expose the element, but not its style. The first CC has already run the
+  // early forgetSkippable passes, so the style reflector is still gray.
+  const element = anchor.startContainer;
+  SpecialPowers.forceCC();
+
+  // A premature unlink of the still-reachable Range clears its boundaries.
+  is(element.style.victim.collapsed, false, "The style expando must stay alive");
+});
+</script>

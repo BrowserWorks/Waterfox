@@ -515,6 +515,8 @@ skip-if = [
 
 ["test_initial_storage.html"]
 
+["test_inline_style_cc.html"]
+
 ["test_invalidation_basic.html"]
 
 ["test_keyframes_rules.html"]
