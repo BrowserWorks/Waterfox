@@ -7742,8 +7742,22 @@ bool nsCSSFrameConstructor::MaybeRecreateContainerForFrameRemoval(
   MOZ_ASSERT(inFlowFrame, "How did that happen?");
   MOZ_ASSERT(inFlowFrame == inFlowFrame->FirstContinuation(),
              "placeholder for primary frame has previous continuations?");
-  nsIFrame* parent = inFlowFrame->GetParent();
 
+  if (aFrame->PresContext()->IsPaginated() &&
+      aFrame->GetContent() != mDocument->GetRootElement() &&
+      (IsInFragmentedTable(inFlowFrame) ||
+       aFrame->IsInReplicatedFixedPosTree() ||
+       aFrame->ContainsReplicatedFixedPosPlaceholders())) {
+    // Fragmented tables and replicated fixed-pos frames on subsequent pages
+    // can't deal with removals. Rebuild the whole document instead, which also
+    // makes sure that the new frames get reflowed, since paginated documents
+    // don't do incremental reflow (see nsPageSequenceFrame::Reflow).
+    TRACE("Paginated fragmented content");
+    RecreateFramesForContent(mDocument->GetRootElement(), InsertionKind::Async);
+    return true;
+  }
+
+  nsIFrame* parent = inFlowFrame->GetParent();
   if (inFlowFrame->HasAnyStateBits(NS_FRAME_HAS_MULTI_COLUMN_ANCESTOR)) {
     nsIFrame* grandparent = parent->GetParent();
     MOZ_ASSERT(grandparent);
@@ -7795,19 +7809,6 @@ bool nsCSSFrameConstructor::MaybeRecreateContainerForFrameRemoval(
                                InsertionKind::Async);
       return true;
     }
-  }
-
-  if (aFrame->PresContext()->IsPaginated() &&
-      aFrame->GetContent() != mDocument->GetRootElement() &&
-      (IsInFragmentedTable(inFlowFrame) ||
-       aFrame->IsInReplicatedFixedPosTree())) {
-    // Fragmented tables and replicated fixed-pos frames on subsequent pages
-    // can't deal with removals. Rebuild the whole document instead, which also
-    // makes sure that the new frames get reflowed, since paginated documents
-    // don't do incremental reflow (see nsPageSequenceFrame::Reflow).
-    TRACE("Paginated fragmented content");
-    RecreateFramesForContent(mDocument->GetRootElement(), InsertionKind::Async);
-    return true;
   }
 
   if (IsFramePartOfIBSplit(aFrame)) {
