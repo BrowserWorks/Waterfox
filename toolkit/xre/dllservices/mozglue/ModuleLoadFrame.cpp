@@ -52,6 +52,13 @@ void ModuleLoadFrame::StaticInit(nt::LoaderObserver* aNewObserver,
         sLoaderAPI->GetHandleLauncherErrorFn();
     aOutWinLauncher->mSharedSection = sLoaderAPI->GetSharedSection();
   }
+
+  // An executable of another version may lay out ModuleLoadInfo differently,
+  // so it must not build ours.  Its services above are still needed.
+  if (!ModuleLoadInfo::IsLayoutCompatible(::GetModuleHandleW(nullptr))) {
+    gFallbackLoaderAPI.SetObserver(aNewObserver);
+    sLoaderAPI = &gFallbackLoaderAPI;
+  }
 }
 
 ModuleLoadFrame::ModuleLoadFrame(PCUNICODE_STRING aRequestedDllName)

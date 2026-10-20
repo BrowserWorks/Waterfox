@@ -127,3 +127,7 @@ void DllServices::NotifyModuleLoadBacklog(ModuleLoadInfoVec&& aEvents) {
 }
 
 }  // namespace mozilla
+
+extern "C" MOZ_EXPORT uint32_t ModuleLoadInfoLayoutVersion() {
+  return mozilla::ModuleLoadInfo::kVersion;
+}

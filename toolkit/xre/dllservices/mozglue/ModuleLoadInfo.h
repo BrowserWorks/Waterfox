@@ -27,6 +27,25 @@ struct ModuleLoadInfo final {
   static constexpr uint64_t kMagic = 0xF14D6F644C6F6164ull;
   static constexpr uint32_t kVersion = 1;
 
+  // Each of those binaries exports a function of this name that returns its
+  // kVersion, so that a sender can check a receiver before handing one over.
+  static constexpr const char kLayoutVersionExport[] =
+      "ModuleLoadInfoLayoutVersion";
+
+  /**
+   * Returns true if aModule exports kLayoutVersionExport and reports our
+   * layout version.  Not for freestanding code.
+   */
+  static bool IsLayoutCompatible(HMODULE aModule) {
+    if (!aModule) {
+      return false;
+    }
+
+    auto getVersion = reinterpret_cast<uint32_t (*)()>(
+        ::GetProcAddress(aModule, kLayoutVersionExport));
+    return getVersion && getVersion() == kVersion;
+  }
+
   // We do not provide these methods inside Gecko proper.
 #if !defined(MOZILLA_INTERNAL_API)
 

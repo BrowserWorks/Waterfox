@@ -98,3 +98,15 @@ TEST(TestDllServices, RejectIncompatibleModuleLoadInfo)
   dllSvc->DispatchModuleLoadBacklogNotification(std::move(backlog));
   EXPECT_EQ(backlog.length(), 1u);
 }
+
+TEST(TestDllServices, IsLayoutCompatible)
+{
+  EXPECT_TRUE(ModuleLoadInfo::IsLayoutCompatible(::GetModuleHandleW(nullptr)));
+  EXPECT_TRUE(
+      ModuleLoadInfo::IsLayoutCompatible(::GetModuleHandleW(L"xul.dll")));
+  EXPECT_TRUE(
+      ModuleLoadInfo::IsLayoutCompatible(::GetModuleHandleW(L"mozglue.dll")));
+  EXPECT_FALSE(
+      ModuleLoadInfo::IsLayoutCompatible(::GetModuleHandleW(L"ntdll.dll")));
+  EXPECT_FALSE(ModuleLoadInfo::IsLayoutCompatible(nullptr));
+}

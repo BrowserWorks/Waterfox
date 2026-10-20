@@ -725,10 +725,22 @@ MFBT_API void DllBlocklist_SetFullDllServices(
   if (aSvc) {
     aSvc->SetAuthenticodeImpl(GetAuthenticode());
     aSvc->SetWinLauncherServices(gWinLauncher);
+
+    // A xul.dll of another version may lay out ModuleLoadInfo differently, so
+    // don't send it load events.
+    if (!ModuleLoadInfo::IsLayoutCompatible(::GetModuleHandleW(L"xul.dll"))) {
+      gMozglueLoaderObserver.Disable();
+      return;
+    }
+
     gMozglueLoaderObserver.Forward(aSvc);
   }
 
   gDllServices = aSvc;
+}
+
+extern "C" MFBT_API uint32_t ModuleLoadInfoLayoutVersion() {
+  return ModuleLoadInfo::kVersion;
 }
 
 MFBT_API void DllBlocklist_SetBasicDllServices(
