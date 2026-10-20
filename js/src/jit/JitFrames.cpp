@@ -31,6 +31,7 @@
 #include "vm/JSFunction.h"
 #include "vm/JSObject.h"
 #include "vm/JSScript.h"
+#include "vm/SavedFrame.h"
 #include "wasm/WasmBuiltins.h"
 #include "wasm/WasmInstance.h"
 
@@ -1613,8 +1614,14 @@ RInstructionResults::RInstructionResults(JitFrameLayout* fp)
 RInstructionResults::RInstructionResults(RInstructionResults&& src)
     : results_(std::move(src.results_)),
       fp_(src.fp_),
-      initialized_(src.initialized_) {
+      initialized_(src.initialized_),
+      failureStatus_(src.failureStatus_),
+      exception_(src.exception_),
+      exceptionStack_(src.exceptionStack_) {
   src.initialized_ = false;
+  src.failureStatus_.reset();
+  src.exception_ = UndefinedValue();
+  src.exceptionStack_ = nullptr;
 }
 
 RInstructionResults& RInstructionResults::operator=(RInstructionResults&& rhs) {
@@ -1652,6 +1659,21 @@ bool RInstructionResults::isInitialized() const { return initialized_; }
 
 size_t RInstructionResults::length() const { return results_->length(); }
 
+void RInstructionResults::saveFailure(JSContext* cx) {
+  MOZ_ASSERT(!hasFailure());
+  failureStatus_.emplace(cx->exceptionStatus());
+  if (JS::IsCatchableExceptionStatus(*failureStatus_)) {
+    exception_ = cx->getPendingExceptionUnwrapped();
+    exceptionStack_ = cx->getPendingExceptionStack();
+  }
+}
+
+void RInstructionResults::restoreFailure(JSContext* cx) const {
+  MOZ_ASSERT(hasFailure());
+  cx->restorePendingExceptionState(*failureStatus_, exception_,
+                                   exceptionStack_);
+}
+
 JitFrameLayout* RInstructionResults::frame() const {
   MOZ_ASSERT(fp_);
   return fp_;
@@ -1662,9 +1684,12 @@ HeapPtr<Value>& RInstructionResults::operator[](size_t index) {
 }
 
 void RInstructionResults::trace(JSTracer* trc) {
-  // Note: The vector necessary exists, otherwise this object would not have
-  // been stored on the activation from where the trace function is called.
-  TraceRange(trc, results_->length(), results_->begin(), "ion-recover-results");
+  if (results_) {
+    TraceRange(trc, results_->length(), results_->begin(),
+               "ion-recover-results");
+  }
+  TraceEdge(trc, &exception_, "ion-recover-exception");
+  TraceEdge(trc, &exceptionStack_, "ion-recover-exception-stack");
 }
 
 SnapshotIterator::SnapshotIterator(const JSJitFrameIter& iter,
@@ -2224,7 +2249,15 @@ bool SnapshotIterator::initInstructionResults(MaybeReadFallback& fallback) {
 
   JitFrameLayout* fp = fallback.frame->jsFrame();
   RInstructionResults* results = fallback.activation->maybeIonFrameRecovery(fp);
-  if (!results) {
+  if (results) {
+    // If a previous attempt failed, report the same failure. RObjectState and
+    // RArrayState may have already written to objects allocated by Ion, and we
+    // must not run them again.
+    if (results->hasFailure()) {
+      results->restoreFailure(cx);
+      return false;
+    }
+  } else {
     AutoRealm ar(cx, fallback.frame->script());
 
     // We are going to run recover instructions. To avoid problems where recover
@@ -2257,14 +2290,12 @@ bool SnapshotIterator::initInstructionResults(MaybeReadFallback& fallback) {
     MachineState machine = fallback.frame->machineState();
     SnapshotIterator s(*fallback.frame, &machine);
     if (!s.computeInstructionResults(cx, results)) {
-      // If the evaluation failed because of OOMs, then we discard the
-      // current set of result that we collected so far.
-      fallback.activation->removeIonFrameRecovery(fp);
+      results->saveFailure(cx);
       return false;
     }
   }
 
-  MOZ_ASSERT(results->isInitialized());
+  MOZ_RELEASE_ASSERT(results->isInitialized());
   MOZ_RELEASE_ASSERT(results->length() == recover_.numInstructions() - 1);
   instructionResults_ = results;
   return true;

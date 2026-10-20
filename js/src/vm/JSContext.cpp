@@ -1417,12 +1417,10 @@ SavedFrame* JSContext::getPendingExceptionStack() {
   return unwrappedExceptionStack();
 }
 
-#ifdef DEBUG
 const JS::Value& JSContext::getPendingExceptionUnwrapped() {
   MOZ_ASSERT(isExceptionPending());
   return unwrappedException();
 }
-#endif
 
 bool JSContext::isClosingGenerator() {
   return isExceptionPending() &&

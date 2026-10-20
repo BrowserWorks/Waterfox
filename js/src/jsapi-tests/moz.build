@@ -181,6 +181,7 @@ if not CONFIG["JS_CODEGEN_NONE"]:
         "testJitMoveEmitterCycles.cpp",
         "testJitRangeAnalysis.cpp",
         "testJitRegisterSet.cpp",
+        "testJitRInstructionResults.cpp",
         "testJitRValueAlloc.cpp",
         "testsJit.cpp",
     ]
