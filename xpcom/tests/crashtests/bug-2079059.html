@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html class="reftest-wait">
+<head><meta charset="utf-8"></head>
+<body>
+<script>
+function build() {
+  let e = new CustomEvent("x", {});
+  let fr = new FinalizationRegistry(function (held) {
+    globalThis.saved = e;
+  });
+  e.fr = fr;
+  fr.register({}, 1);
+}
+
+function fill(s) {
+  let arr = [];
+  for (let i = 0; i < 120000; i++) {
+    arr.push(new ArrayBuffer(64));
+  }
+  s.initCustomEvent("y", false, false, arr[60000]);
+  FuzzingFunctions.garbageCollect();
+  arr.length = 0;
+}
+
+function later() {
+  try {
+    let s = globalThis.saved;
+    if (!s) {
+      return;
+    }
+    fill(s);
+    FuzzingFunctions.garbageCollect();
+    let d = s.detail;
+    if (d) d.byteLength;
+  } finally {
+    document.documentElement.classList.remove("reftest-wait");
+  }
+}
+
+build();
+try {
+  FuzzingFunctions.garbageCollect();
+  FuzzingFunctions.cycleCollect();
+} catch (e) {}
+setTimeout(later, 100);
+</script>
+</body>
+</html>
