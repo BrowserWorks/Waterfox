@@ -1,6 +1,6 @@
 use std::{
     ffi::{c_int, c_uchar},
-    mem, ptr,
+    ptr,
 };
 
 use windows_sys::Win32::Networking::WinSock;
@@ -18,7 +18,7 @@ impl MsgHdr for WinSock::WSAMSG {
     type ControlMessage = WinSock::CMSGHDR;
 
     fn cmsg_first_hdr(&self) -> *mut Self::ControlMessage {
-        if self.Control.len as usize >= mem::size_of::<WinSock::CMSGHDR>() {
+        if self.Control.len as usize >= size_of::<WinSock::CMSGHDR>() {
             self.Control.buf as *mut WinSock::CMSGHDR
         } else {
             ptr::null_mut::<WinSock::CMSGHDR>()
@@ -50,15 +50,15 @@ impl MsgHdr for WinSock::WSAMSG {
 // https://microsoft.github.io/windows-docs-rs/doc/windows/Win32/Networking/WinSock/struct.CMSGHDR.html
 impl CMsgHdr for WinSock::CMSGHDR {
     fn cmsg_len(length: usize) -> usize {
-        cmsgdata_align(mem::size_of::<Self>()) + length
+        cmsgdata_align(size_of::<Self>()) + length
     }
 
     fn cmsg_space(length: usize) -> usize {
-        cmsgdata_align(mem::size_of::<Self>() + cmsghdr_align(length))
+        cmsgdata_align(size_of::<Self>() + cmsghdr_align(length))
     }
 
     fn cmsg_data(&self) -> *mut c_uchar {
-        (self as *const _ as usize + cmsgdata_align(mem::size_of::<Self>())) as *mut c_uchar
+        (self as *const _ as usize + cmsgdata_align(size_of::<Self>())) as *mut c_uchar
     }
 
     fn set(&mut self, level: c_int, ty: c_int, len: usize) {
@@ -75,9 +75,9 @@ impl CMsgHdr for WinSock::CMSGHDR {
 // Helpers functions for `WinSock::WSAMSG` and `WinSock::CMSGHDR` are based on C macros from
 // https://github.com/microsoft/win32metadata/blob/main/generation/WinSDK/RecompiledIdlHeaders/shared/ws2def.h#L741
 fn cmsghdr_align(length: usize) -> usize {
-    (length + mem::align_of::<WinSock::CMSGHDR>() - 1) & !(mem::align_of::<WinSock::CMSGHDR>() - 1)
+    (length + align_of::<WinSock::CMSGHDR>() - 1) & !(align_of::<WinSock::CMSGHDR>() - 1)
 }
 
 fn cmsgdata_align(length: usize) -> usize {
-    (length + mem::align_of::<usize>() - 1) & !(mem::align_of::<usize>() - 1)
+    (length + align_of::<usize>() - 1) & !(align_of::<usize>() - 1)
 }

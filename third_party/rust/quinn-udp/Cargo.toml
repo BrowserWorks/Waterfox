@@ -11,9 +11,9 @@
 
 [package]
 edition = "2021"
-rust-version = "1.80.0"
+rust-version = "1.88.0"
 name = "quinn-udp"
-version = "0.6.0"
+version = "0.6.2"
 build = "build.rs"
 autolib = false
 autobins = false
@@ -69,12 +69,18 @@ features = ["std"]
 optional = true
 default-features = false
 
-[dev-dependencies.criterion]
+[build-dependencies.cfg_aliases]
+version = "0.2"
+
+[target.'cfg(not(all(target_family = "wasm", target_os = "unknown")))'.dependencies.socket2]
+version = ">=0.5, <0.7"
+
+[target.'cfg(not(target_family = "wasm"))'.dev-dependencies.criterion]
 version = "0.8"
 features = ["async_tokio"]
 default-features = false
 
-[dev-dependencies.tokio]
+[target.'cfg(not(target_family = "wasm"))'.dev-dependencies.tokio]
 version = "1.28.1"
 features = [
     "sync",
@@ -82,12 +88,6 @@ features = [
     "rt-multi-thread",
     "net",
 ]
-
-[build-dependencies.cfg_aliases]
-version = "0.2"
-
-[target.'cfg(not(all(target_family = "wasm", target_os = "unknown")))'.dependencies.socket2]
-version = ">=0.5, <0.7"
 
 [target."cfg(windows)".dependencies.windows-sys]
 version = ">=0.52, <=0.61"
@@ -106,6 +106,7 @@ use_self = "warn"
 elided_lifetimes_in_paths = "warn"
 unnameable_types = "warn"
 unreachable_pub = "warn"
+unused_qualifications = "warn"
 
 [lints.rust.unexpected_cfgs]
 level = "warn"

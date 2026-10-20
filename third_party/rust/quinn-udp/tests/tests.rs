@@ -1,12 +1,27 @@
-#[cfg(not(any(target_os = "openbsd", target_os = "netbsd", solarish)))]
+#[cfg(apple)]
+use std::io::{self, IoSlice};
+#[cfg(not(any(
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "wasi",
+    solarish
+)))]
 use std::net::{SocketAddr, SocketAddrV6};
+#[cfg(apple)]
+use std::os::fd::AsRawFd;
+#[cfg(any(target_os = "linux", target_os = "android"))]
+use std::time::Duration;
 use std::{
     io::IoSliceMut,
     net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddrV4, UdpSocket},
     slice,
 };
 
-use quinn_udp::{EcnCodepoint, RecvMeta, Transmit, UdpSocketState};
+#[cfg(not(target_os = "wasi"))]
+use quinn_udp::EcnCodepoint;
+use quinn_udp::{RecvMeta, Transmit, UdpSockRef, UdpSocketState};
+#[cfg(apple)]
+use socket2::MsgHdr;
 use socket2::Socket;
 
 #[test]
@@ -32,6 +47,16 @@ fn basic() {
 }
 
 #[test]
+fn state_before_bind() {
+    for domain in [socket2::Domain::IPV6, socket2::Domain::IPV4] {
+        let Ok(socket) = Socket::new(domain, socket2::Type::DGRAM, None) else {
+            continue;
+        };
+        UdpSocketState::new((&socket).into()).unwrap();
+    }
+}
+
+#[test]
 fn basic_src_ip() {
     let send = UdpSocket::bind((Ipv6Addr::LOCALHOST, 0))
         .or_else(|_| UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)))
@@ -54,7 +79,9 @@ fn basic_src_ip() {
     );
 }
 
+// The WASI backend sets no ECN codepoint and always reports `None`.
 #[test]
+#[cfg(not(target_os = "wasi"))]
 fn ecn_v6() {
     let send = Socket::from(UdpSocket::bind((Ipv6Addr::LOCALHOST, 0)).unwrap());
     let recv = Socket::from(UdpSocket::bind((Ipv6Addr::LOCALHOST, 0)).unwrap());
@@ -74,7 +101,12 @@ fn ecn_v6() {
 }
 
 #[test]
-#[cfg(not(any(target_os = "openbsd", target_os = "netbsd", solarish)))]
+#[cfg(not(any(
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "wasi",
+    solarish
+)))]
 fn ecn_v4() {
     let send = Socket::from(UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap());
     let recv = Socket::from(UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap());
@@ -94,9 +126,14 @@ fn ecn_v4() {
 }
 
 #[test]
-#[cfg(not(any(target_os = "openbsd", target_os = "netbsd", solarish)))]
+#[cfg(not(any(
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "wasi",
+    solarish
+)))]
 fn ecn_v6_dualstack() {
-    let recv = socket2::Socket::new(
+    let recv = Socket::new(
         socket2::Domain::IPV6,
         socket2::Type::DGRAM,
         Some(socket2::Protocol::UDP),
@@ -140,9 +177,14 @@ fn ecn_v6_dualstack() {
 }
 
 #[test]
-#[cfg(not(any(target_os = "openbsd", target_os = "netbsd", solarish)))]
+#[cfg(not(any(
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "wasi",
+    solarish
+)))]
 fn ecn_v4_mapped_v6() {
-    let send = socket2::Socket::new(
+    let send = Socket::new(
         socket2::Domain::IPV6,
         socket2::Type::DGRAM,
         Some(socket2::Protocol::UDP),
@@ -209,6 +251,28 @@ fn gso() {
     );
 }
 
+/// A single datagram larger than the segment size used to probe for GSO support must be
+/// delivered as one datagram. The probe must not leave segmentation enabled on the socket.
+#[test]
+fn large_single_datagram_is_not_segmented() {
+    let send = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+    let recv = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+    let dst_addr = recv.local_addr().unwrap();
+    // Larger than the 1500 byte segment size of the GSO probe.
+    let msg = vec![0xCD; 2048];
+    test_send_recv(
+        &send.into(),
+        &recv.into(),
+        Transmit {
+            destination: dst_addr,
+            ecn: None,
+            contents: &msg,
+            segment_size: None,
+            src_ip: None,
+        },
+    );
+}
+
 #[test]
 fn socket_buffers() {
     const BUFFER_SIZE: usize = 123456;
@@ -218,13 +282,13 @@ fn socket_buffers() {
         1 // Everyone else is sane.
     };
 
-    let send = socket2::Socket::new(
+    let send = Socket::new(
         socket2::Domain::IPV4,
         socket2::Type::DGRAM,
         Some(socket2::Protocol::UDP),
     )
     .unwrap();
-    let recv = socket2::Socket::new(
+    let recv = Socket::new(
         socket2::Domain::IPV4,
         socket2::Type::DGRAM,
         Some(socket2::Protocol::UDP),
@@ -287,7 +351,8 @@ fn test_send_recv(send: &Socket, recv: &Socket, transmit: Transmit<'_>) {
     let recv_state = UdpSocketState::new(recv.into()).unwrap();
 
     // Reverse non-blocking flag set by `UdpSocketState` to make the test non-racy
-    recv.set_nonblocking(false).unwrap();
+    UdpSockRef::from(send).set_nonblocking(false).unwrap();
+    UdpSockRef::from(recv).set_nonblocking(false).unwrap();
 
     send_state.try_send(send.into(), &transmit).unwrap();
 
@@ -358,6 +423,26 @@ fn test_send_recv(send: &Socket, recv: &Socket, transmit: Transmit<'_>) {
             assert_eq!(meta.ecn, None);
         } else {
             assert_eq!(meta.ecn, transmit.ecn);
+        }
+
+        // On Linux and Android, we expect the kernel to provide a receive timestamp
+        // since we explicitly enabled `SO_TIMESTAMPNS`.
+        #[cfg(any(target_os = "linux", target_os = "android"))]
+        {
+            assert!(
+                meta.timestamp.is_some(),
+                "Kernel timestamp should be present on Linux/Android"
+            );
+            assert!(
+                meta.timestamp.unwrap() > Duration::ZERO,
+                "Kernel timestamp should be non-zero"
+            );
+        }
+
+        // On other platforms, the timestamp should remain `None`.
+        #[cfg(not(any(target_os = "linux", target_os = "android")))]
+        {
+            assert!(meta.timestamp.is_none());
         }
     }
     assert_eq!(datagrams, expected_datagrams);
@@ -460,4 +545,313 @@ fn apple_fast_datapath() {
         total_received += received_segments;
     }
     assert_eq!(total_received, segments, "should receive all segments");
+}
+
+#[test]
+#[cfg(apple)]
+fn sndbuf_cmsg_boundary() {
+    let send = Socket::from(UdpSocket::bind((Ipv6Addr::LOCALHOST, 0)).unwrap());
+    let recv = UdpSocket::bind((Ipv6Addr::LOCALHOST, 0)).unwrap();
+    let dst = recv.local_addr().unwrap();
+    send.set_nonblocking(true).unwrap();
+
+    let _ = send.set_send_buffer_size(9216);
+    let sndbuf = send.send_buffer_size().unwrap();
+    let clen = tclass_cmsg_space();
+
+    let payload = vec![0u8; sndbuf];
+    for attempt in 1..=3 {
+        match raw_send_with_tclass_cmsg(&send, dst, &payload) {
+            Err(e) if e.kind() == io::ErrorKind::WouldBlock => wait_writable(&send),
+            other => panic!(
+                "expected macOS SO_SNDBUF/cmsg kernel bug to reproduce on attempt {attempt}, got {other:?}"
+            ),
+        }
+    }
+
+    let state = UdpSocketState::new((&send).into()).unwrap();
+    assert_min_sndbuf_enforced(&state, &send, dst, clen);
+}
+
+/// Asserts `UdpSocketState`'s `SO_SNDBUF` floor holds on `sendmsg_x`.
+#[test]
+#[cfg(apple_fast)]
+fn sndbuf_cmsg_boundary_fast_path() {
+    let send = Socket::from(UdpSocket::bind((Ipv6Addr::LOCALHOST, 0)).unwrap());
+    let recv = UdpSocket::bind((Ipv6Addr::LOCALHOST, 0)).unwrap();
+    let dst = recv.local_addr().unwrap();
+    send.set_nonblocking(true).unwrap();
+
+    let state = UdpSocketState::new((&send).into()).unwrap();
+    // SAFETY: assumes sendmsg_x is available on the macOS test host.
+    unsafe { state.set_apple_fast_path() };
+    assert_min_sndbuf_enforced(&state, &send, dst, tclass_cmsg_space());
+}
+
+/// Asserts `UdpSocketState`'s `SO_SNDBUF` floor holds on `send`.
+#[cfg(apple)]
+fn assert_min_sndbuf_enforced(state: &UdpSocketState, send: &Socket, dst: SocketAddr, clen: usize) {
+    let _ = state.set_send_buffer_size(send.into(), 1);
+    let sndbuf = state.send_buffer_size(send.into()).unwrap();
+    assert!(sndbuf >= 65535 + clen);
+
+    let transmit = Transmit {
+        destination: dst,
+        ecn: Some(EcnCodepoint::Ect0),
+        contents: &vec![0u8; 60_000],
+        segment_size: None,
+        src_ip: None,
+    };
+    match state.try_send(send.into(), &transmit) {
+        Ok(()) => {}
+        Err(e) if e.raw_os_error() == Some(libc::EMSGSIZE) => {}
+        Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+            panic!("regressed: permanently stuck EWOULDBLOCK sending a large datagram")
+        }
+        Err(e) => panic!("unexpected error: {e}"),
+    }
+}
+
+/// Sends `payload` with an `IPV6_TCLASS` cmsg attached via `Socket::sendmsg`.
+#[cfg(apple)]
+fn raw_send_with_tclass_cmsg(sock: &Socket, dst: SocketAddr, payload: &[u8]) -> io::Result<()> {
+    let addr = socket2::SockAddr::from(dst);
+    let iov = [IoSlice::new(payload)];
+
+    let mut cbuf = AlignedCmsgBuf([0u8; 32]); // room for one aligned c_int cmsg
+    let mut scratch: libc::msghdr = unsafe { std::mem::zeroed() };
+    scratch.msg_control = cbuf.0.as_mut_ptr() as *mut _;
+    scratch.msg_controllen = tclass_cmsg_space() as _;
+    unsafe {
+        let cmsg = libc::CMSG_FIRSTHDR(&scratch);
+        (*cmsg).cmsg_level = libc::IPPROTO_IPV6;
+        (*cmsg).cmsg_type = libc::IPV6_TCLASS;
+        (*cmsg).cmsg_len = libc::CMSG_LEN(size_of::<libc::c_int>() as _) as _;
+        std::ptr::write(
+            libc::CMSG_DATA(cmsg) as *mut libc::c_int,
+            EcnCodepoint::Ect0 as libc::c_int,
+        );
+    }
+
+    let msg = MsgHdr::new()
+        .with_addr(&addr)
+        .with_buffers(&iov)
+        .with_control(&cbuf.0[..tclass_cmsg_space()]);
+    sock.sendmsg(&msg, 0).map(|_| ())
+}
+
+/// Blocks (via `poll()`) until `sock` reports `POLLOUT`, or panics after 2s.
+#[cfg(apple)]
+fn wait_writable(sock: &Socket) {
+    let mut pfd = libc::pollfd {
+        fd: sock.as_raw_fd(),
+        events: libc::POLLOUT,
+        revents: 0,
+    };
+    let n = unsafe { libc::poll(&mut pfd, 1, 2000) };
+    assert!(n != 0, "poll() itself timed out waiting for POLLOUT");
+}
+
+#[cfg(apple)]
+fn tclass_cmsg_space() -> usize {
+    unsafe { libc::CMSG_SPACE(size_of::<libc::c_int>() as _) as usize }
+}
+
+#[cfg(apple)]
+#[repr(align(8))]
+struct AlignedCmsgBuf([u8; 32]);
+
+#[test]
+#[cfg(any(target_os = "linux", target_os = "android"))]
+fn recv_transport_error() {
+    let sock = Socket::from(UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap());
+
+    let state = UdpSocketState::new((&sock).into()).unwrap();
+    state
+        .enable_transport_errors((&sock).into())
+        .expect("failed to enable transport error recv");
+
+    // Pick an unused port by binding then dropping.
+    let unused_port = {
+        let tmp = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+        tmp.local_addr().unwrap().port()
+    };
+
+    let dst = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::LOCALHOST, unused_port));
+
+    state
+        .try_send(
+            (&sock).into(),
+            &Transmit {
+                destination: dst,
+                ecn: None,
+                contents: b"hello",
+                segment_size: None,
+                src_ip: None,
+            },
+        )
+        .unwrap();
+
+    let mut received = None;
+    for _ in 0..100 {
+        match state.recv_transport_error((&sock).into()) {
+            Ok(Some(err)) => {
+                received = Some(err);
+                break;
+            }
+            _ => {
+                std::thread::sleep(Duration::from_millis(10));
+            }
+        }
+    }
+
+    let err = received.expect("ICMP Port Unreachable was not received");
+
+    assert!(
+        matches!(err.payload, quinn_udp::TransportErrorPayload::Unreachable),
+        "expected ICMP destination unreachable transport error"
+    );
+    assert_eq!(
+        err.raw_errno,
+        libc::ECONNREFUSED,
+        "unexpected errno decoded from MSG_ERRQUEUE"
+    );
+    // Linux may report port 0 in SO_EE_OFFENDER for ICMP errors.
+    if let Some(addr) = err.addr {
+        assert_eq!(
+            addr.ip(),
+            dst.ip(),
+            "decoded offender IP does not match destination"
+        );
+    }
+}
+
+#[test]
+#[cfg(any(target_os = "linux", target_os = "android"))]
+fn recv_transport_error_ipv6() {
+    let sock = Socket::from(UdpSocket::bind((Ipv6Addr::LOCALHOST, 0)).unwrap());
+
+    let state = UdpSocketState::new((&sock).into()).unwrap();
+    state
+        .enable_transport_errors((&sock).into())
+        .expect("failed to enable transport error recv");
+
+    let unused_port = {
+        let tmp = UdpSocket::bind((Ipv6Addr::LOCALHOST, 0)).unwrap();
+        tmp.local_addr().unwrap().port()
+    };
+
+    let dst = SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::LOCALHOST, unused_port, 0, 0));
+
+    state
+        .try_send(
+            (&sock).into(),
+            &Transmit {
+                destination: dst,
+                ecn: None,
+                contents: b"hello",
+                segment_size: None,
+                src_ip: None,
+            },
+        )
+        .unwrap();
+
+    let mut received = None;
+
+    for _ in 0..100 {
+        if let Ok(Some(err)) = state.recv_transport_error((&sock).into()) {
+            received = Some(err);
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+
+    let err = received.expect("ICMPv6 Port Unreachable not received");
+
+    assert!(matches!(
+        err.payload,
+        quinn_udp::TransportErrorPayload::Unreachable
+    ));
+
+    assert_eq!(err.raw_errno, libc::ECONNREFUSED);
+
+    if let Some(addr) = err.addr {
+        assert_eq!(addr.ip(), dst.ip());
+    }
+}
+
+/// Draining the error queue prevents queued ICMP errors from absorbing unrelated sends
+///
+/// When `enable_transport_errors` is active, callers are expected to drain pending
+/// errors via `recv_transport_error` before transmitting. This test confirms that
+/// doing so allows a subsequent send to succeed and deliver its payload.
+#[test]
+#[cfg(any(target_os = "linux", target_os = "android"))]
+fn draining_error_queue_before_send_prevents_absorption() {
+    let sock = Socket::from(UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap());
+
+    let state = UdpSocketState::new((&sock).into()).unwrap();
+    state
+        .enable_transport_errors((&sock).into())
+        .expect("failed to enable transport error recv");
+
+    // Pick an unused port by binding then dropping.
+    let unused_port = {
+        let tmp = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+        tmp.local_addr().unwrap().port()
+    };
+
+    // Enqueue an ICMP port-unreachable error
+    let dst = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::LOCALHOST, unused_port));
+    state
+        .try_send(
+            (&sock).into(),
+            &Transmit {
+                destination: dst,
+                ecn: None,
+                contents: b"hello",
+                segment_size: None,
+                src_ip: None,
+            },
+        )
+        .unwrap();
+
+    std::thread::sleep(Duration::from_millis(20));
+
+    // Drain the error queue before sending — this is the intended usage pattern
+    let mut got_error = false;
+    for _ in 0..10 {
+        match state.recv_transport_error((&sock).into()) {
+            Ok(Some(_)) => {
+                got_error = true;
+                break;
+            }
+            _ => std::thread::sleep(Duration::from_millis(10)),
+        }
+    }
+    assert!(got_error, "expected one queued error");
+
+    let receiver = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+    receiver.set_nonblocking(true).unwrap();
+
+    state
+        .try_send(
+            (&sock).into(),
+            &Transmit {
+                destination: receiver.local_addr().unwrap(),
+                ecn: None,
+                contents: b"connection close",
+                segment_size: None,
+                src_ip: None,
+            },
+        )
+        .expect("send failed after draining the error queue");
+
+    std::thread::sleep(Duration::from_millis(20));
+
+    let mut buf = [0u8; 64];
+    let n = receiver
+        .recv(&mut buf)
+        .expect("packet was not delivered after draining the error queue");
+    assert_eq!(&buf[..n], b"connection close");
 }

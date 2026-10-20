@@ -27,16 +27,28 @@
 #![warn(unreachable_pub)]
 #![warn(clippy::use_self)]
 
-use std::net::{IpAddr, Ipv6Addr, SocketAddr};
-#[cfg(unix)]
-use std::os::unix::io::AsFd;
+use core::time::Duration;
+#[cfg(any(unix, target_os = "wasi"))]
+use std::os::fd::AsFd;
 #[cfg(windows)]
 use std::os::windows::io::AsSocket;
-#[cfg(not(wasm_browser))]
 use std::{
-    sync::Mutex,
-    time::{Duration, Instant},
+    io,
+    net::{IpAddr, Ipv6Addr, SocketAddr},
 };
+#[cfg(target_os = "wasi")]
+use std::{
+    mem::ManuallyDrop,
+    net::UdpSocket,
+    os::fd::{AsRawFd, FromRawFd},
+};
+#[cfg(not(wasm_browser))]
+use std::{sync::Mutex, time::Instant};
+#[cfg(windows)]
+use windows_sys::Win32::Networking::WinSock;
+
+#[cfg(apple_fast)]
+mod apple_fast;
 
 #[cfg(any(unix, windows))]
 mod cmsg;
@@ -45,13 +57,15 @@ mod cmsg;
 #[path = "unix.rs"]
 mod imp;
 
+#[cfg(any(target_os = "linux", target_os = "android"))]
+mod linux;
+
 #[cfg(windows)]
 #[path = "windows.rs"]
 mod imp;
 
-// No ECN support
-#[cfg(not(any(wasm_browser, unix, windows)))]
-#[path = "fallback.rs"]
+#[cfg(target_os = "wasi")]
+#[path = "wasi.rs"]
 mod imp;
 
 #[allow(unused_imports, unused_macros)]
@@ -118,6 +132,10 @@ pub struct RecvMeta {
     pub dst_ip: Option<IpAddr>,
     /// The interface index of the interface on which the datagram was received
     pub interface_index: Option<u32>,
+    /// Kernel receive timestamp as Unix epoch
+    ///
+    /// Populated on platforms: Linux, Android.
+    pub timestamp: Option<Duration>,
 }
 
 impl Default for RecvMeta {
@@ -130,6 +148,7 @@ impl Default for RecvMeta {
             ecn: None,
             dst_ip: None,
             interface_index: None,
+            timestamp: None,
         }
     }
 }
@@ -170,9 +189,80 @@ impl Transmit<'_> {
     }
 }
 
+/// Asynchronous transport-layer errors reported by the operating system
+///
+/// On Linux and Android these are delivered via the socket error queue
+/// (`MSG_ERRQUEUE`) and originate from ICMP messages.
+///
+/// These errors are out-of-band and do not correspond to a received packet.
+#[derive(Debug, Copy, Clone)]
+#[non_exhaustive]
+pub struct TransportError {
+    /// Address associated with the error
+    ///
+    /// This is the remote peer or an intermediate network device that triggered the error.
+    /// Returns `None` if the kernel cannot determine the source (e.g. `AF_UNSPEC`).
+    pub addr: Option<SocketAddr>,
+    /// Transport-layer error details
+    pub payload: TransportErrorPayload,
+    /// The raw error code from the underlying operating system
+    pub raw_errno: i32,
+}
+
+impl TransportError {
+    /// Returns the recommended MTU for packet-too-big errors
+    pub fn mtu(&self) -> Option<u32> {
+        match self.payload {
+            TransportErrorPayload::TooBig { mtu } => Some(mtu),
+            _ => None,
+        }
+    }
+}
+
+/// Transport-layer error details reported by the kernel
+#[derive(Debug, Copy, Clone)]
+#[non_exhaustive]
+pub enum TransportErrorPayload {
+    /// Destination host or port is unreachable
+    Unreachable,
+    /// Packet exceeds path MTU
+    TooBig {
+        /// Recommended Maximum Transmission Unit
+        mtu: u32,
+    },
+    /// Other transport-layer or kernel-reported error
+    Other,
+}
+
+/// Returns true if the given I/O error corresponds to a message size error
+///
+/// Useful, for example, after invoking `std::io::Error::last_os_error()`
+/// to check if the last OS error was a message size error
+/// (EMSGSIZE on Unix, WSAEMSGSIZE on Windows).
+///
+/// Note: EMSGSIZE's value is not standardized across OSes (90 on Linux,
+/// 40 on macOS/iOS/BSD; on Windows, `io::Error::raw_os_error()` returns
+/// the Winsock error WSAEMSGSIZE (10040) via `GetLastError()`, which is
+/// distinct from the MSVCRT `errno.h` EMSGSIZE value of 115, which is
+/// never actually populated by socket operations).
+pub fn is_msg_size_err(err: &io::Error) -> bool {
+    #[cfg(unix)]
+    {
+        err.raw_os_error() == Some(libc::EMSGSIZE)
+    }
+    #[cfg(windows)]
+    {
+        err.raw_os_error() == Some(WinSock::WSAEMSGSIZE)
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        false
+    }
+}
+
 /// Log at most 1 IO error per minute
 #[cfg(not(wasm_browser))]
-const IO_ERROR_LOG_INTERVAL: Duration = std::time::Duration::from_secs(60);
+const IO_ERROR_LOG_INTERVAL: Duration = Duration::from_secs(60);
 
 /// Logs a warning message when sendmsg fails
 ///
@@ -212,7 +302,26 @@ fn log_sendmsg_error(_: &Mutex<Instant>, _: impl core::fmt::Debug, _: &Transmit<
 #[cfg(not(wasm_browser))]
 pub struct UdpSockRef<'a>(socket2::SockRef<'a>);
 
-#[cfg(unix)]
+#[cfg(not(wasm_browser))]
+impl UdpSockRef<'_> {
+    /// Configures the socket for non-blocking or blocking operation.
+    pub fn set_nonblocking(&self, nonblocking: bool) -> io::Result<()> {
+        #[cfg(not(target_os = "wasi"))]
+        self.0.set_nonblocking(nonblocking)?;
+
+        #[cfg(target_os = "wasi")]
+        {
+            // socket2 uses `fcntl`, which WASI rejects; `std` uses `ioctl(FIONBIO)`.
+            // Safety: `self` outlives the borrow, and `ManuallyDrop` prevents a second close.
+            let borrowed = ManuallyDrop::new(unsafe { UdpSocket::from_raw_fd(self.0.as_raw_fd()) });
+            borrowed.set_nonblocking(nonblocking)?;
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(any(unix, target_os = "wasi"))]
 impl<'s, S> From<&'s S> for UdpSockRef<'s>
 where
     S: AsFd,

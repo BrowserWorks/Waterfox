@@ -1,6 +1,6 @@
 [package]
 name = "quinn-udp"
-version = "0.6.0"
+version = "0.6.2"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
@@ -31,7 +31,8 @@ socket2 = { workspace = true }
 [target.'cfg(windows)'.dependencies]
 windows-sys = { workspace = true }
 
-[dev-dependencies]
+# Cargo builds dev-dependencies for every test target, and tokio's `net` doesn't build for wasm.
+[target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
 criterion = { version = "0.8", default-features = false, features = ["async_tokio"] }
 tokio = { workspace = true, features = ["rt", "rt-multi-thread", "net"] }
 

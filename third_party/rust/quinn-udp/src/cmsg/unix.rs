@@ -32,29 +32,6 @@ impl MsgHdr for libc::msghdr {
     }
 }
 
-#[cfg(apple_fast)]
-impl MsgHdr for crate::imp::msghdr_x {
-    type ControlMessage = libc::cmsghdr;
-
-    fn cmsg_first_hdr(&self) -> *mut Self::ControlMessage {
-        let selfp = self as *const _ as *mut libc::msghdr;
-        unsafe { libc::CMSG_FIRSTHDR(selfp) }
-    }
-
-    fn cmsg_nxt_hdr(&self, cmsg: &Self::ControlMessage) -> *mut Self::ControlMessage {
-        let selfp = self as *const _ as *mut libc::msghdr;
-        unsafe { libc::CMSG_NXTHDR(selfp, cmsg) }
-    }
-
-    fn set_control_len(&mut self, len: usize) {
-        self.msg_controllen = len as _;
-    }
-
-    fn control_len(&self) -> usize {
-        self.msg_controllen as _
-    }
-}
-
 /// Helpers for [`libc::cmsghdr`]
 impl CMsgHdr for libc::cmsghdr {
     fn cmsg_len(length: usize) -> usize {
