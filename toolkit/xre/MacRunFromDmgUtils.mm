@@ -6,7 +6,9 @@
 #include <ApplicationServices/ApplicationServices.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <CoreServices/CoreServices.h>
+#include <Foundation/Foundation.h>
 #include <IOKit/IOKitLib.h>
+#include <os/log.h>
 #include <string.h>
 #include <sys/mount.h>
 #include <sys/param.h>
@@ -29,6 +31,16 @@
 #ifdef MOZ_UPDATER
 #  include "nsUpdateDriver.h"
 #endif
+
+// Exported from toolkit/mozapps/dmgInstallHelper
+#import "dmgInstallProtocol.h"
+
+#ifndef MOZ_RUNINIT
+#  define MOZ_RUNINIT __attribute__((annotate("moz_global_var")))
+#endif
+
+MOZ_RUNINIT static const os_log_t runFromDMGLogger =
+    os_log_create("org.mozilla.firefox", "runFromDMG");
 
 // For IOKit docs, see:
 // https://developer.apple.com/documentation/iokit
@@ -192,7 +204,9 @@ static bool AskUserIfWeShouldInstall() {
   //          |         |       |               | (User selects button)
   //          |         |       | <---------   done
   //          |         |       |
-  //          |         |       | -----> [NSApp stop:nil]
+  //          |         |       | -----> task
+  //          |         |       |         | ----> [NSApp stop:nil]
+  //          |         |       |         | <----
   //          |         |       | <-----
   //          |         | <-----
   //          | <-------
@@ -200,7 +214,14 @@ static bool AskUserIfWeShouldInstall() {
   __block NSInteger result = -1;
   dispatch_async(dispatch_get_main_queue(), ^{
     result = [alert runModal];
-    [NSApp stop:nil];
+
+    // dispatch this back onto the queue to give the run loop
+    // time to clean up after the alert has ended.
+    // If we don't do this, the alert window stays on screen
+    // until a runloop is running.
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [NSApp stop:nil];
+    });
   });
 
   [NSApp run];
@@ -258,61 +279,130 @@ static void ShowInstallFailedDialog() {
   NS_OBJC_END_TRY_IGNORE_BLOCK;
 }
 
-#ifdef MOZ_UPDATER
-bool LaunchElevatedDmgInstall(NSString* aBundlePath, NSArray* aArguments) {
-  NSTask* task = [[NSTask alloc] init];
-  [task setExecutableURL:[NSURL fileURLWithPath:aBundlePath]];
-  if (aArguments) {
-    [task setArguments:aArguments];
-  }
-  [task launchAndReturnError:nil];
+// Install the DMGInstallHelper as an elevated helper and use it to install
+bool LaunchElevatedDmgInstall(NSString* aBundlePath, NSString* aDestPath) {
+  NS_OBJC_BEGIN_TRY_BLOCK_RETURN;
 
-  bool didSucceed = InstallPrivilegedHelper();
-  [task waitUntilExit];
-  [task release];
+  os_log_info(runFromDMGLogger, "Launch elevated DMG Install");
+  bool didSucceed = InstallPrivilegedHelperWithId(
+      "org.mozilla.dmgInstallHelper", runFromDMGLogger);
+
+  os_log_info(runFromDMGLogger, "Installed helper: %s",
+              didSucceed ? "Yes" : "No");
   if (!didSucceed) {
-    AbortElevatedUpdate();
+    return false;
   }
 
-  return didSucceed;
+  NSXPCConnection* connection = [[[NSXPCConnection alloc]
+      initWithMachServiceName:@"org.mozilla.dmgInstallHelper"
+                      options:NSXPCConnectionPrivileged] autorelease];
+
+  if (connection == nil) {
+    os_log_error(runFromDMGLogger, "Failed connection");
+
+    return false;
+  }
+
+  __block BOOL remoteResult = NO;
+
+  NSXPCInterface* dmgInstaller =
+      [NSXPCInterface interfaceWithProtocol:@protocol(DMGInstallProtocol)];
+  connection.remoteObjectInterface = dmgInstaller;
+  connection.invalidationHandler = ^() {
+    os_log_error(runFromDMGLogger, "Connection invalidated");
+  };
+
+  connection.interruptionHandler = ^() {
+    os_log_error(runFromDMGLogger, "Connection interrupted");
+  };
+
+  [connection resume];
+
+  os_log_info(runFromDMGLogger, "Connection resumed");
+
+  id proxy = [connection synchronousRemoteObjectProxyWithErrorHandler:^(
+                             NSError* error) {
+    if (error != nil) {
+      remoteResult = NO;
+      os_log_error(runFromDMGLogger, "Remote proxy error: %{public}@", error);
+    }
+  }];
+
+  if (proxy == nil) {
+    os_log_error(runFromDMGLogger, "Failed to get proxy");
+
+    return false;
+  }
+
+  os_log_info(runFromDMGLogger, "Installing... %p", proxy);
+
+  [proxy
+      installDMGFromPath:aBundlePath
+               withReply:^(BOOL result) {
+                 os_log_info(runFromDMGLogger, "Got response: %s",
+                             result ? "success" : "failure");
+                 remoteResult = result;
+
+                 os_log_info(runFromDMGLogger, "Requesting helper terminate");
+
+                 [proxy terminateDMGInstallHelper];
+                 [connection invalidate];
+               }];
+
+  os_log_info(runFromDMGLogger, "Exiting: %s",
+              remoteResult ? "success" : "failure");
+  return remoteResult;
+
+  NS_OBJC_END_TRY_BLOCK_RETURN(false);
 }
-#endif
 
 // Note: both arguments are expected to contain the app name (to end with
 // '.app').
 static bool InstallFromPath(NSString* aBundlePath, NSString* aDestPath) {
+  os_log_info(runFromDMGLogger,
+              "Installing from path: %{public}@ to %{public}@", aBundlePath,
+              aDestPath);
   bool installSuccessful = false;
   NSFileManager* fileManager = [NSFileManager defaultManager];
-  if ([fileManager copyItemAtPath:aBundlePath toPath:aDestPath error:nil]) {
+
+  bool alwaysElevate = false;
+#ifdef DMG_INSTALL_HELPER_DEBUG
+  alwaysElevate = (getenv("MOZ_DMG_INSTALL_HELPER_ALWAYS_ELEVATE") != nullptr);
+  os_log_info(runFromDMGLogger, "Always elevate: %{public}s",
+              alwaysElevate ? "yes" : "no");
+#endif
+
+  if (!alwaysElevate && [fileManager copyItemAtPath:aBundlePath
+                                             toPath:aDestPath
+                                              error:nil]) {
     installSuccessful = true;
   }
 
-#ifdef MOZ_UPDATER
+  os_log_info(runFromDMGLogger, "Unelevated installation: %s",
+              installSuccessful ? "success" : "failed");
+
   // The installation may have been unsuccessful if the user did not have the
   // rights to write to the Applications directory. Check for this situation and
-  // launch an elevated installation if necessary. Rather than creating a new,
-  // dedicated executable for this installation and incurring the
-  // added maintenance burden of yet another executable, we are using the
-  // updater binary. Since bug 394984 landed, the updater has the ability to
-  // install and launch itself as a Privileged Helper tool, which is what is
-  // necessary here.
+  // launch an elevated helper application.
   NSString* destDir = [aDestPath stringByDeletingLastPathComponent];
-  if (!installSuccessful && ![fileManager isWritableFileAtPath:destDir]) {
-    NSString* updaterBinPath = [NSString pathWithComponents:@[
-      aBundlePath, @"Contents", @"MacOS",
-      [NSString stringWithUTF8String:UPDATER_APP], @"Contents", @"MacOS",
-      [NSString stringWithUTF8String:UPDATER_BIN]
-    ]];
+  BOOL isWritable =
+      !alwaysElevate && [fileManager isWritableFileAtPath:destDir];
+  if (!installSuccessful && !isWritable) {
+    os_log_info(runFromDMGLogger, "Installing elevated");
 
-    NSArray* arguments = @[ @"-dmgInstall", aBundlePath, aDestPath ];
-    LaunchElevatedDmgInstall(updaterBinPath, arguments);
-    installSuccessful = [fileManager fileExistsAtPath:aDestPath];
+    installSuccessful = LaunchElevatedDmgInstall(aBundlePath, aDestPath);
+    if (!installSuccessful) {
+      os_log_error(runFromDMGLogger, "Elevated DMG install failed.");
+      return false;
+    }
   }
-#endif
 
   if (!installSuccessful) {
+    os_log_error(runFromDMGLogger, "Unknown install failure.");
     return false;
   }
+
+  os_log_info(runFromDMGLogger, "Installed successful");
 
   // Pin to dock:
   nsresult rv;

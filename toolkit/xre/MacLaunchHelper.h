@@ -6,6 +6,7 @@
 #define MacLaunchHelper_h_
 
 #include <unistd.h>
+#include <os/log.h>
 
 #ifdef __OBJC__
 #  include <Foundation/Foundation.h>
@@ -26,8 +27,10 @@ extern "C" {
  */
 void LaunchChildMac(int aArgc, char** aArgv, pid_t* aPid = 0);
 void LaunchMacApp(int aArgc, char** aArgv);
-bool LaunchElevatedUpdate(int aArgc, char** aArgv, pid_t* aPid = 0);
-bool InstallPrivilegedHelper();
+bool LaunchElevatedUpdate(int aArgc, char** aArgv, pid_t* aPid = nullptr);
+bool InstallPrivilegedHelperWithId(const char* helperId,
+                                   os_log_t logger = OS_LOG_DEFAULT);
+bool InstallElevatedUpdater();
 void AbortElevatedUpdate();
 }
 
