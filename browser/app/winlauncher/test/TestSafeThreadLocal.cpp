@@ -27,7 +27,7 @@ static mozilla::freestanding::SafeThreadLocal<int*> gTheStorage;
 // local storage pointer is cached in a register before accessing a thread-local
 // variable. See bug 1803322 for a motivating example.
 MOZ_NEVER_INLINE int* getTheStorage() { return gTheStorage.get(); }
-MOZ_NEVER_INLINE void setTheStorage(int* p) { gTheStorage.set(p); }
+MOZ_NEVER_INLINE bool setTheStorage(int* p) { return gTheStorage.set(p); }
 
 static unsigned int __stdcall TestNonMainThread(void* aArg) {
   for (int i = 0; i < 100; ++i) {
@@ -42,6 +42,57 @@ static unsigned int __stdcall TestNonMainThread(void* aArg) {
   return 0;
 }
 
+// Models a thread the loader doesn't initialize, like ones created with
+// THREAD_CREATE_FLAGS_SKIP_LOADER_INIT.  The thread will not have
+// thread-local storage, so there is nothing to store HANDLEs in and
+// nothing to read back.  The set and get operations should fail (return false)
+// and return the T's default value respectively.
+static unsigned int __stdcall TestThreadWithoutTls(void* aArg) {
+  int local = 0;
+  auto origHead = SwapThreadLocalStoragePointer(nullptr);
+  bool stored = setTheStorage(&local);
+  int* value = getTheStorage();
+  SwapThreadLocalStoragePointer(origHead);
+
+  if (stored || value) {
+    printf(
+        "TEST-FAILED | TestSafeThreadLocal | "
+        "A thread without TLS must not store or read a value.\n");
+    return 1;
+  }
+  return 0;
+}
+
+// A thread that has stored nothing must read nothing, even before any thread
+// has used TLS and the main thread holds a value in the global fallback.
+static unsigned int __stdcall TestThreadReadsNothing(void* aArg) {
+  if (getTheStorage()) {
+    printf(
+        "TEST-FAILED | TestSafeThreadLocal | "
+        "A thread read the main thread's value.\n");
+    return 1;
+  }
+  return 0;
+}
+
+static bool RunThread(unsigned int(__stdcall* aRoutine)(void*)) {
+  nsAutoHandle handle(reinterpret_cast<HANDLE>(
+      ::_beginthreadex(nullptr, 0, aRoutine, nullptr, 0, nullptr)));
+  if (!handle) {
+    return false;
+  }
+  ::WaitForSingleObject(handle, INFINITE);
+
+#if defined(MOZ_ASAN)
+  // ASAN builds under Windows 11 can have unexpected thread exit codes.
+  // See bug 1798796
+  return true;
+#else
+  DWORD exitCode;
+  return ::GetExitCodeThread(handle, &exitCode) && !exitCode;
+#endif  // defined(MOZ_ASAN)
+}
+
 extern "C" int wmain(int argc, wchar_t* argv[]) {
   int dummy = 0x1234;
 
@@ -49,6 +100,13 @@ extern "C" int wmain(int argc, wchar_t* argv[]) {
   // Setting gTheStorage when TLS is null.
   setTheStorage(&dummy);
   SwapThreadLocalStoragePointer(origHead);
+
+  // Before any other thread has used TLS, a thread without TLS must not take
+  // over the main thread's global slot.
+  if (!RunThread(TestThreadWithoutTls) || !RunThread(TestThreadReadsNothing) ||
+      getTheStorage() != &dummy) {
+    return 1;
+  }
 
   nsAutoHandle handles[8];
   for (auto& handle : handles) {
@@ -76,6 +134,12 @@ extern "C" int wmain(int argc, wchar_t* argv[]) {
       return 1;
     }
 #endif  // !defined(MOZ_ASAN)
+  }
+
+  // Now that other threads have used TLS, a thread without TLS must be
+  // tolerated without disturbing the main thread's value.
+  if (!RunThread(TestThreadWithoutTls) || getTheStorage() != &dummy) {
+    return 1;
   }
 
   return 0;

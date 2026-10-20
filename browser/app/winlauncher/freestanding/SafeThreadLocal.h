@@ -44,34 +44,40 @@ class SafeThreadLocal final {
   MOZ_NEVER_INLINE static T GetGlobalValue() { return sGlobal; }
 
  public:
-  static void set(T aValue) {
+  static bool set(T aValue) {
     static_assert(std::is_pointer_v<T>,
                   "SafeThreadLocal must be used with a pointer");
 
     if (sMainThreadId == mozilla::nt::RtlGetCurrentThreadId()) {
       SetGlobalValue(aValue);
     } else if (sIsTlsUsed) {
-      MOZ_ASSERT(mozilla::nt::RtlGetThreadLocalStoragePointer(),
-                 "Once TLS is used, TLS should be available till the end.");
+      if (!mozilla::nt::RtlGetThreadLocalStoragePointer()) {
+        // Some threads may be created without a TLS vector (for example by
+        // using THREAD_CREATE_FLAGS_SKIP_LOADER_INIT), even when others use
+        // one.  Setting a TLS value would fail.
+        return false;
+      }
       sThreadLocal.set(aValue);
     } else if (mozilla::nt::RtlGetThreadLocalStoragePointer()) {
       sIsTlsUsed = true;
       sThreadLocal.set(aValue);
-    } else {
-      MOZ_ASSERT(sMainThreadId == 0,
-                 "A second thread cannot be created before TLS is available.");
+    } else if (sMainThreadId == 0) {
       sMainThreadId = mozilla::nt::RtlGetCurrentThreadId();
       SetGlobalValue(aValue);
+    } else {
+      return false;
     }
+    return true;
   }
 
   static T get() {
     if (sMainThreadId == mozilla::nt::RtlGetCurrentThreadId()) {
       return GetGlobalValue();
-    } else if (sIsTlsUsed) {
-      return sThreadLocal.get();
     }
-    return GetGlobalValue();
+    if (!sIsTlsUsed || !mozilla::nt::RtlGetThreadLocalStoragePointer()) {
+      return T();
+    }
+    return sThreadLocal.get();
   }
 };
 
