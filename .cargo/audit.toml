@@ -10,4 +10,8 @@ ignore = [
   "RUSTSEC-2026-0173",
   # ringbuf <https://bugzilla.mozilla.org/show_bug.cgi?id=2074018>
   "RUSTSEC-2026-0293",
+  # zip <https://bugzilla.mozilla.org/show_bug.cgi?id=2083267>
+  "RUSTSEC-2026-0367",
+  "RUSTSEC-2026-0368",
+  "RUSTSEC-2026-0369",
 ]
