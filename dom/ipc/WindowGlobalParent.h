@@ -273,6 +273,10 @@ class WindowGlobalParent final : public WindowContext,
   // loaded, if known.
   already_AddRefed<nsIChannel> GetFailedChannel();
 
+  // The LoadingSessionHistoryInfo::mLoadId of the parent process load which
+  // produced this document, or 0 if there was none.
+  uint64_t DocumentHistoryLoadId() const { return mDocumentHistoryLoadId; }
+
  protected:
   already_AddRefed<JSActor> InitJSActor(JS::Handle<JSObject*> aMaybeActor,
                                         const nsACString& aName,
@@ -462,6 +466,8 @@ class WindowGlobalParent final : public WindowContext,
   // The failed parent process channel which led to an error page load.
   // May not match the channel in the content process in some cases.
   nsCOMPtr<nsIChannel> mFailedChannel;
+
+  uint64_t mDocumentHistoryLoadId = 0;
 
   uint32_t mSandboxFlags;
 

@@ -2570,8 +2570,9 @@ void DocumentLoadListener::TriggerRedirectToRealChannel(
         .mParentWindowId = GetParentWindowContext()->InnerWindowId()});
   }
 
-  mParentProcessChannelHandle =
-      MakeRefPtr<ParentProcessChannelHandle>(expectedContext, mChannel);
+  mParentProcessChannelHandle = MakeRefPtr<ParentProcessChannelHandle>(
+      expectedContext, mChannel,
+      mLoadingSessionHistoryInfo ? mLoadingSessionHistoryInfo->mLoadId : 0);
 
   // If we didn't have any redirects, then we pass the REDIRECT_INTERNAL flag
   // for this channel switch so that it isn't recorded in session history etc.

@@ -45,8 +45,10 @@ class ParentProcessChannelHandle {
 
   using ExpectedContext = Variant<ExpectLoadedWithin, ExpectChildOf>;
 
+  // aHistoryLoadId is the LoadingSessionHistoryInfo::mLoadId of the load the
+  // channel was created for, or 0 if it has none.
   ParentProcessChannelHandle(const ExpectedContext& aExpectedContext,
-                             nsIChannel* aChannel);
+                             nsIChannel* aChannel, uint64_t aHistoryLoadId);
 
   // The provided BrowsingContext is the context where the load is expected to
   // complete. If provided `aStaticCloneOf` is the WindowGlobal which the
@@ -56,6 +58,9 @@ class ParentProcessChannelHandle {
   Result<nsCOMPtr<nsIChannel>, StaticString> GetChannel(
       CanonicalBrowsingContext* aBrowsingContext,
       WindowGlobalParent* aStaticCloneOf = nullptr) const;
+
+  // NOTE: This method should only be called in the parent process.
+  uint64_t HistoryLoadId() const;
 
  private:
   friend struct IPC::ParamTraits<ParentProcessChannelHandle*>;
@@ -74,6 +79,9 @@ class ParentProcessChannelHandle {
 
     // The actual nsIChannel instance which was loaded into the content process.
     const nsCOMPtr<nsIChannel> mChannel;
+
+    // The session history load which mChannel was created for, or 0.
+    const uint64_t mHistoryLoadId;
   };
 
   const Variant<nsID, Record> mUuidOrRecord;

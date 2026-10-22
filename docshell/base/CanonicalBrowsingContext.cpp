@@ -59,7 +59,9 @@
 #include "nsIContentAnalysis.h"
 #include "nsIWebBrowserChrome.h"
 #include "nsIXULRuntime.h"
+#include "nsAboutProtocolUtils.h"
 #include "nsNetUtil.h"
+#include "nsDocShellLoadState.h"
 #include "nsSHistory.h"
 #include "nsSecureBrowserUI.h"
 #include "nsQueryObject.h"
@@ -1204,6 +1206,16 @@ void CanonicalBrowsingContext::SessionHistoryCommit(
       }
 
       RefPtr<SessionHistoryEntry> newActiveEntry = mLoadingEntries[i].mEntry;
+
+      uint64_t innerWindowId = 0;
+      if (WindowGlobalParent* wgp = GetCurrentWindowGlobal();
+          wgp && (newActiveEntry->SharedInfo()->InnerWindowId() ==
+                      wgp->InnerWindowId() ||
+                  wgp->DocumentHistoryLoadId() == aLoadId)) {
+        innerWindowId = wgp->InnerWindowId();
+      }
+      newActiveEntry->SharedInfo()->SetInnerWindowId(innerWindowId);
+
       if (aCacheKey != 0) {
         newActiveEntry->SetCacheKey(aCacheKey);
       }
@@ -1442,9 +1454,211 @@ void CanonicalBrowsingContext::NotifyOnHistoryReload(
   // the nsDocShell will create a load state based on its document.
 }
 
+// about:blank and about:srcdoc, with or without a query or fragment.
+static bool IsAboutBlankOrSrcdoc(nsIURI* aURI) {
+  nsAutoCString name;
+  return aURI->SchemeIs("about") &&
+         NS_SUCCEEDED(NS_GetAboutModuleName(aURI, name)) &&
+         (name.EqualsLiteral("blank") || name.EqualsLiteral("srcdoc"));
+}
+
+// Returns aPrincipal if it is a content principal, its precursor if it is a
+// null principal, and nullptr otherwise.
+static already_AddRefed<nsIPrincipal> GetPrincipalOrPrecursor(
+    nsIPrincipal* aPrincipal) {
+  if (aPrincipal->GetIsContentPrincipal()) {
+    return do_AddRef(aPrincipal);
+  }
+  if (aPrincipal->GetIsNullPrincipal()) {
+    return aPrincipal->GetPrecursorPrincipal();
+  }
+  return nullptr;
+}
+
+// Whether aPartitioned has the same origin as aDocumentPrincipal, ignoring
+// OriginAttributes.
+static bool IsDocumentPartitionedPrincipal(nsIPrincipal* aDocumentPrincipal,
+                                           nsIPrincipal* aPartitioned) {
+  nsAutoCString noSuffix, partitionedNoSuffix;
+  return aDocumentPrincipal && aPartitioned &&
+         NS_SUCCEEDED(aDocumentPrincipal->GetOriginNoSuffix(noSuffix)) &&
+         NS_SUCCEEDED(aPartitioned->GetOriginNoSuffix(partitionedNoSuffix)) &&
+         noSuffix == partitionedNoSuffix;
+}
+
+// Whether reloading aInfo would reproduce the origin of the document in aWgp.
+// about:blank, about:srcdoc and data: entries get their origin from the entry
+// when reloaded: the first two inherit the stored principal, data: takes it as
+// the precursor of its null principal.
+static bool ReloadWouldInheritDocumentPrincipal(
+    WindowGlobalParent* aWgp, const SessionHistoryInfo* aInfo) {
+  nsIURI* uri = aInfo->GetURI();
+  if (!IsAboutBlankOrSrcdoc(uri) && !uri->SchemeIs("data")) {
+    return true;
+  }
+
+  nsIPrincipal* inherited = aInfo->GetPrincipalToInherit();
+  if (!inherited) {
+    inherited = aInfo->GetTriggeringPrincipal();
+  }
+  if (!inherited) {
+    return false;
+  }
+
+  nsCOMPtr<nsIPrincipal> entryPrincipal = GetPrincipalOrPrecursor(inherited);
+  nsCOMPtr<nsIPrincipal> documentPrincipal =
+      GetPrincipalOrPrecursor(aWgp->DocumentPrincipal());
+  if (!entryPrincipal) {
+    return !documentPrincipal;
+  }
+  return entryPrincipal->Equals(documentPrincipal);
+}
+
+bool CanonicalBrowsingContext::CreateSharedState(
+    SessionHistoryInfo* aInfo, const NewSessionHistorySharedState& aNewState,
+    bool* aWasCreated) {
+  if (aWasCreated) {
+    *aWasCreated = false;
+  }
+  WindowGlobalParent* wgp = GetCurrentWindowGlobal();
+  if (!wgp) {
+    return false;
+  }
+
+  // The request must name the entry's own state.
+  if (SHEntrySharedParentState::Lookup(aNewState.mId)) {
+    return aInfo->SharedId() == aNewState.mId;
+  }
+
+  // The state gets the document's own principals, so it lets content do
+  // nothing the document couldn't. The exception is the partitioned principal
+  // to inherit, which the parent doesn't track here: it is taken from content
+  // if it has the document's origin, which content could already send with any
+  // OriginAttributes to the cookie and storage services directly. The id comes
+  // from content too, and it must be one this process minted.
+  if (!nsContentUtils::IsProcessSpecificIdFrom(
+          aNewState.mId, wgp->GetContentParent()->ChildID())) {
+    return false;
+  }
+
+  nsCOMPtr<nsIPrincipal> partitionedPrincipal =
+      aInfo->GetPartitionedPrincipalToInherit();
+  if (!IsDocumentPartitionedPrincipal(wgp->DocumentPrincipal(),
+                                      partitionedPrincipal)) {
+    partitionedPrincipal = wgp->DocumentStoragePrincipal();
+  }
+
+  RefPtr<SHEntrySharedParentState> sharedState = new SHEntrySharedParentState(
+      wgp->DocumentPrincipal(), wgp->DocumentPrincipal(), partitionedPrincipal,
+      aNewState.mPolicyContainer, aNewState.mContentType);
+  sharedState->ChangeId(aNewState.mId);
+  sharedState->SetInnerWindowId(wgp->InnerWindowId());
+  aInfo->SetSharedState(sharedState);
+  if (aWasCreated) {
+    *aWasCreated = true;
+  }
+  return true;
+}
+
+bool CanonicalBrowsingContext::ValidateSessionHistoryInfo(
+    SessionHistoryInfo* aInfo) const {
+  WindowGlobalParent* wgp = GetCurrentWindowGlobal();
+  if (!wgp || !wgp->DocumentPrincipal()) {
+    return false;
+  }
+
+  // Content can only name shared state bound to its own document. Anything else
+  // belongs to some other document, possibly in another tab, or is the fresh
+  // state the deserializer gave an id the parent didn't know.
+  SHEntrySharedParentState* sharedState =
+      SHEntrySharedParentState::Lookup(aInfo->SharedId());
+  if (!sharedState || sharedState->InnerWindowId() != wgp->InnerWindowId()) {
+    return false;
+  }
+
+  // Content may only store a URI its own process could have loaded, e.g. no
+  // file: URI from a web content process. Entries whose URI inherits a
+  // principal (about:blank, about:srcdoc, data:) are kept from inheriting
+  // another origin's by InheritDocumentPrincipalIfNeeded.
+  ContentParent* contentParent = wgp->GetContentParent();
+  if (!aInfo->GetURI() || !contentParent ||
+      !ContentTriggeredURILoadIsAllowed(aInfo->GetURI(),
+                                        contentParent->GetRemoteType())) {
+    return false;
+  }
+
+  // For a network origin require that this process could load its site.
+  // Use the innermost URI so a nested URI such as view-source: is checked by
+  // the origin it wraps, not the outer scheme.
+  nsCOMPtr<nsIURI> innermostURI = NS_GetInnermostURI(aInfo->GetURI());
+  if (innermostURI && net::SchemeIsHttpOrHttps(innermostURI)) {
+    nsCOMPtr<nsIPrincipal> uriPrincipal = BasePrincipal::CreateContentPrincipal(
+        innermostURI, wgp->DocumentPrincipal()->OriginAttributesRef());
+    if (!uriPrincipal || !contentParent->ValidatePrincipal(uriPrincipal)) {
+      return false;
+    }
+  }
+
+  // srcdoc content is only ever loaded into a subframe, under an about:srcdoc
+  // URI.
+  if (aInfo->GetSrcdocData().isSome() &&
+      (!NS_IsAboutSrcdoc(aInfo->GetURI()) || IsTopContent())) {
+    return false;
+  }
+
+  return true;
+}
+
+void CanonicalBrowsingContext::InheritDocumentPrincipalIfNeeded() {
+  WindowGlobalParent* wgp = GetCurrentWindowGlobal();
+  if (!wgp || !mActiveEntry) {
+    return;
+  }
+
+  SHEntrySharedParentState* sharedState = mActiveEntry->SharedInfo();
+  if (sharedState->InnerWindowId() != wgp->InnerWindowId() ||
+      ReloadWouldInheritDocumentPrincipal(wgp, &mActiveEntry->Info())) {
+    return;
+  }
+  // We only get here when content gave an entry created by a non-inheriting
+  // load a URI that inherits, which document.open() does when called from a
+  // same-origin about:srcdoc or about:blank frame: the document takes the
+  // caller's URI, but its origin is unchanged. Loading the entry again would
+  // inherit what that load stored, its principal to inherit (a link click
+  // stores the linking document's, possibly another site's) or else its
+  // triggering principal (system for the URL bar), rather than the document's
+  // origin, which is what the spec's document state stores for this. The
+  // principals come from the parent's WindowGlobalParent, except that a
+  // partitioned principal the load stored is kept if it is this document's, and
+  // the state is bound to this document, so this only ever gives the document
+  // its own origin. Its other entries share the state, but either don't inherit
+  // or are this document too.
+  sharedState->mPrincipalToInherit = wgp->DocumentPrincipal();
+  if (!IsDocumentPartitionedPrincipal(
+          wgp->DocumentPrincipal(),
+          sharedState->mPartitionedPrincipalToInherit)) {
+    sharedState->mPartitionedPrincipalToInherit =
+        wgp->DocumentStoragePrincipal();
+  }
+}
+
+void CanonicalBrowsingContext::MaybeRebindActiveEntry(
+    WindowGlobalParent* aPrevious, WindowGlobalParent* aCurrent) {
+  const uint64_t loadId = aCurrent->DocumentHistoryLoadId();
+  if (!mActiveEntry || loadId == 0 ||
+      loadId != aPrevious->DocumentHistoryLoadId() ||
+      mActiveEntry->SharedInfo()->InnerWindowId() !=
+          aPrevious->InnerWindowId() ||
+      !aPrevious->DocumentPrincipal()->Equals(aCurrent->DocumentPrincipal())) {
+    return;
+  }
+  mActiveEntry->SharedInfo()->SetInnerWindowId(aCurrent->InnerWindowId());
+}
+
 void CanonicalBrowsingContext::SetActiveSessionHistoryEntry(
     const Maybe<nsPoint>& aPreviousScrollPos, SessionHistoryInfo* aInfo,
-    uint32_t aLoadType, uint32_t aUpdatedCacheKey, const nsID& aChangeID) {
+    uint32_t aLoadType, uint32_t aUpdatedCacheKey, const nsID& aChangeID,
+    bool aKeepSharedState) {
   nsISHistory* shistory = GetSessionHistory();
   if (!shistory) {
     return;
@@ -1458,7 +1672,14 @@ void CanonicalBrowsingContext::SetActiveSessionHistoryEntry(
   }
   mActiveEntry = MakeRefPtr<SessionHistoryEntry>(aInfo);
   mActiveEntry->SetDocshellID(GetHistoryID());
-  mActiveEntry->AdoptBFCacheEntry(oldActiveEntry);
+  // Entries of the same document share its state. The old entry can belong to
+  // another document, e.g. one a javascript: URL replaced, whose state must not
+  // replace the one aInfo was validated with.
+  if (oldActiveEntry && !aKeepSharedState &&
+      oldActiveEntry->SharedInfo()->InnerWindowId() ==
+          mActiveEntry->SharedInfo()->InnerWindowId()) {
+    mActiveEntry->AdoptBFCacheEntry(oldActiveEntry);
+  }
   if (aUpdatedCacheKey != 0) {
     mActiveEntry->SharedInfo()->mCacheKey = aUpdatedCacheKey;
   }

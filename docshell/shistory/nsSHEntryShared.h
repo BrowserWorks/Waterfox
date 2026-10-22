@@ -96,6 +96,13 @@ class SHEntrySharedParentState : public SHEntrySharedState {
   uint64_t GetId() const { return mId; }
   void ChangeId(uint64_t aId);
 
+  // The inner window of the document this state belongs to, or 0 if the parent
+  // can't vouch for any.
+  uint64_t InnerWindowId() const { return mInnerWindowId; }
+  void SetInnerWindowId(uint64_t aInnerWindowId) {
+    mInnerWindowId = aInnerWindowId;
+  }
+
   void SetFrameLoader(nsFrameLoader* aFrameLoader);
 
   nsFrameLoader* GetFrameLoader();
@@ -137,6 +144,8 @@ class SHEntrySharedParentState : public SHEntrySharedState {
   nsWeakPtr mSHistory;
 
   RefPtr<nsFrameLoader> mFrameLoader;
+
+  uint64_t mInnerWindowId = 0;
 
   nsExpirationState mExpirationState;
 

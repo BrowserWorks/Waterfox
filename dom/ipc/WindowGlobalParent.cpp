@@ -131,6 +131,17 @@ WindowGlobalParent::WindowGlobalParent(
   MOZ_DIAGNOSTIC_ASSERT(XRE_IsParentProcess(), "Parent process only");
 }
 
+// An error page's own load has no session history load, so it is attributed to
+// the load which failed, if that got far enough to have a handle.
+static uint64_t HistoryLoadIdFromHandles(
+    ParentProcessChannelHandle* aDocumentHandle,
+    ParentProcessChannelHandle* aFailedHandle) {
+  if (uint64_t id = aDocumentHandle ? aDocumentHandle->HistoryLoadId() : 0) {
+    return id;
+  }
+  return aFailedHandle ? aFailedHandle->HistoryLoadId() : 0;
+}
+
 already_AddRefed<WindowGlobalParent> WindowGlobalParent::CreateDisconnected(
     const WindowGlobalInit& aInit, ContentParent* aForProcess) {
   RefPtr<CanonicalBrowsingContext> browsingContext =
@@ -191,6 +202,9 @@ already_AddRefed<WindowGlobalParent> WindowGlobalParent::CreateDisconnected(
                               result.unwrapErr().get());
     }
   }
+
+  wgp->mDocumentHistoryLoadId = HistoryLoadIdFromHandles(
+      aInit.documentChannelHandle(), aInit.failedChannelHandle());
 
   return wgp.forget();
 }
@@ -845,6 +859,8 @@ mozilla::ipc::IPCResult WindowGlobalParent::RecvUpdateChannels(
 
   mDocumentChannel = documentChannel;
   mFailedChannel = failedChannel;
+  mDocumentHistoryLoadId =
+      HistoryLoadIdFromHandles(aDocumentHandle, aFailedHandle);
 
   return IPC_OK();
 }

@@ -3421,6 +3421,12 @@ class nsContentUtils {
   static std::tuple<uint64_t, uint64_t> SplitProcessSpecificId(uint64_t aId);
 
   /**
+   * Check if the given ID generated with `GenerateProcessSpecificId` is from
+   * the given GeckoChildID.
+   */
+  static bool IsProcessSpecificIdFrom(uint64_t aId, GeckoChildID aChildId);
+
+  /**
    * Generate a window ID which is unique across processes and will never be
    * recycled.
    */

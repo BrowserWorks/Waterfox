@@ -214,6 +214,22 @@ uint64_t SessionHistoryInfo::SharedId() const {
   return mSharedState.Get()->mId;
 }
 
+Maybe<NewSessionHistorySharedState> SessionHistoryInfo::NewSharedStateRequest()
+    const {
+  MOZ_ASSERT(XRE_IsContentProcess());
+  SHEntrySharedState* state = mSharedState.Get();
+  if (!nsContentUtils::IsProcessSpecificIdFrom(state->mId, XRE_GetChildID())) {
+    return Nothing();
+  }
+  return Some(NewSessionHistorySharedState{state->mId, state->mPolicyContainer,
+                                           state->mContentType});
+}
+
+void SessionHistoryInfo::SetSharedState(SHEntrySharedParentState* aState) {
+  MOZ_ASSERT(XRE_IsParentProcess());
+  mSharedState.Set(aState);
+}
+
 nsILayoutHistoryState* SessionHistoryInfo::GetLayoutHistoryState() {
   return mSharedState.Get()->mLayoutHistoryState;
 }
@@ -1691,23 +1707,8 @@ bool ParamTraits<mozilla::dom::SessionHistoryInfo>::Read(
   if (sharedState) {
     aResult->mSharedState.Set(sharedState);
 
-    MOZ_ASSERT(triggeringPrincipal
-                   ? triggeringPrincipal->Equals(
-                         aResult->mSharedState.Get()->mTriggeringPrincipal)
-                   : !aResult->mSharedState.Get()->mTriggeringPrincipal,
-               "We don't expect this to change!");
-    MOZ_ASSERT(principalToInherit
-                   ? principalToInherit->Equals(
-                         aResult->mSharedState.Get()->mPrincipalToInherit)
-                   : !aResult->mSharedState.Get()->mPrincipalToInherit,
-               "We don't expect this to change!");
-    MOZ_ASSERT(
-        partitionedPrincipalToInherit
-            ? partitionedPrincipalToInherit->Equals(
-                  aResult->mSharedState.Get()->mPartitionedPrincipalToInherit)
-            : !aResult->mSharedState.Get()->mPartitionedPrincipalToInherit,
-        "We don't expect this to change!");
-
+    // The principals content sent are ignored. They can differ for state that
+    // content created, as the parent took those from the document instead.
     MOZ_ASSERT(policyContainer
                    ? PolicyContainer::Equals(
                          PolicyContainer::Cast(policyContainer),
@@ -1717,7 +1718,7 @@ bool ParamTraits<mozilla::dom::SessionHistoryInfo>::Read(
                "We don't expect this to change!");
     MOZ_ASSERT(contentType.Equals(aResult->mSharedState.Get()->mContentType),
                "We don't expect this to change!");
-  } else {
+  } else if (!XRE_IsParentProcess()) {
     aResult->mSharedState.ChangeId(sharedId);
     aResult->mSharedState.Get()->mTriggeringPrincipal =
         triggeringPrincipal.forget();
@@ -1727,7 +1728,15 @@ bool ParamTraits<mozilla::dom::SessionHistoryInfo>::Read(
         partitionedPrincipalToInherit.forget();
     aResult->mSharedState.Get()->mPolicyContainer = policyContainer.forget();
     aResult->mSharedState.Get()->mContentType = contentType;
+  } else {
+    // Partitioned principal to inherit kept for CreateSharedState.
+    aResult->mSharedState.Get()->mPartitionedPrincipalToInherit =
+        partitionedPrincipalToInherit.forget();
   }
+  // Otherwise the parent doesn't know sharedId. It never adopts an id from
+  // content: aResult keeps the fresh state it was constructed with, which no
+  // document is bound to. Content asks for new state explicitly, see
+  // CanonicalBrowsingContext::CreateSharedState.
 
   if (!ReadParam(aReader, &aResult->mSharedState.Get()->mLayoutHistoryState) ||
       !ReadParam(aReader, &aResult->mSharedState.Get()->mCacheKey) ||
@@ -1790,6 +1799,9 @@ bool ParamTraits<mozilla::dom::LoadingSessionHistoryInfo>::Read(
 
   return true;
 }
+
+IMPLEMENT_IPC_SERIALIZER_WITH_FIELDS(mozilla::dom::NewSessionHistorySharedState,
+                                     mId, mPolicyContainer, mContentType);
 
 void ParamTraits<nsILayoutHistoryState*>::Write(IPC::MessageWriter* aWriter,
                                                 nsILayoutHistoryState* aParam) {

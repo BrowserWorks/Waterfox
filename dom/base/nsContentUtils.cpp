@@ -12298,6 +12298,12 @@ std::tuple<uint64_t, uint64_t> nsContentUtils::SplitProcessSpecificId(
   return {aId >> kIdBits, aId & ((uint64_t(1) << kIdBits) - 1)};
 }
 
+/* static */
+bool nsContentUtils::IsProcessSpecificIdFrom(uint64_t aId,
+                                             GeckoChildID aChildID) {
+  return (aId >> kIdBits) == static_cast<uint64_t>(aChildID);
+}
+
 // Next process-local Tab ID.
 static uint64_t gNextTabId = 0;
 

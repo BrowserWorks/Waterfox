@@ -12,11 +12,13 @@
 namespace mozilla::dom {
 
 ParentProcessChannelHandle::ParentProcessChannelHandle(
-    const ExpectedContext& aExpectedContext, nsIChannel* aChannel)
+    const ExpectedContext& aExpectedContext, nsIChannel* aChannel,
+    uint64_t aHistoryLoadId)
     : mUuidOrRecord(VariantType<Record>{},
                     Record{
                         .mExpectedContext = aExpectedContext,
                         .mChannel = aChannel,
+                        .mHistoryLoadId = aHistoryLoadId,
                     }) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(XRE_IsParentProcess());
@@ -65,6 +67,14 @@ ParentProcessChannelHandle::GetChannel(
       }));
 
   return record.mChannel;
+}
+
+uint64_t ParentProcessChannelHandle::HistoryLoadId() const {
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess());
+  MOZ_ASSERT(mUuidOrRecord.is<Record>());
+
+  return mUuidOrRecord.as<Record>().mHistoryLoadId;
 }
 
 const nsID& ParentProcessChannelHandle::GetUuid() const {

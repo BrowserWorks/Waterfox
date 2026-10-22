@@ -182,14 +182,50 @@ class CanonicalBrowsingContext final : public BrowsingContext {
       Maybe<NotNull<RefPtr<nsDocShellLoadState>>>& aLoadState,
       Maybe<bool>& aReloadActiveEntry);
 
-  // See BrowsingContext::SetActiveSessionHistoryEntry.
+  // See BrowsingContext::SetActiveSessionHistoryEntry. If
+  // aKeepSharedState is true, aInfo's shared state is used even if the
+  // previous active entry belongs to the same document.
   void SetActiveSessionHistoryEntry(const Maybe<nsPoint>& aPreviousScrollPos,
                                     SessionHistoryInfo* aInfo,
                                     uint32_t aLoadType,
                                     uint32_t aUpdatedCacheKey,
-                                    const nsID& aChangeID);
+                                    const nsID& aChangeID,
+                                    bool aKeepSharedState = false);
 
   void ReplaceActiveSessionHistoryEntry(SessionHistoryInfo* aInfo);
+
+  // Gives `aInfo`, sent over IPC by the current document's process, the new
+  // shared state that process asked for in `aNewState`. The principals come
+  // from the document, and the state is bound to it. Returns false if the
+  // request is refused. `aWasCreated` gets set to true if not null and it was
+  // created.
+  bool CreateSharedState(SessionHistoryInfo* aInfo,
+                         const NewSessionHistorySharedState& aNewState,
+                         bool* aWasCreated = nullptr);
+
+  // Validates `aInfo` that has been sent over IPC: its shared state must be
+  // bound to the current document, and its URI one the current document's
+  // process could itself have loaded.
+  bool ValidateSessionHistoryInfo(SessionHistoryInfo* aInfo) const;
+
+  // The active entry's shared state keeps the principals of the load that
+  // created it, e.g. a system triggering principal for a URL typed into the URL
+  // bar, or the linking document's principal to inherit for a link click. If
+  // content changed the entry's URI to one that inherits its principal, such as
+  // document.open() from an about:srcdoc frame, and the principal the entry
+  // would inherit isn't the current document's, makes it inherit the current
+  // document's, so that loading the entry again still produces that document's
+  // origin. Call once content's update has been validated and applied, as
+  // applying it can replace the validated shared state with the one the
+  // previous active entry of the same document had.
+  void InheritDocumentPrincipalIfNeeded();
+
+  // Moves the active entry's shared state binding from aPrevious to aCurrent if
+  // both documents were produced by the same load and have the same principal,
+  // as with the parts of a multipart response, which don't commit to session
+  // history.
+  void MaybeRebindActiveEntry(WindowGlobalParent* aPrevious,
+                              WindowGlobalParent* aCurrent);
 
   void RemoveDynEntriesFromActiveSessionHistoryEntry();
 

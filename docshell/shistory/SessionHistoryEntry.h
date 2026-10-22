@@ -36,6 +36,16 @@ struct LoadingSessionHistoryInfo;
 class SessionHistoryEntry;
 class SHEntrySharedParentState;
 
+// What a content process says about shared state it created, so that the parent
+// can create its own. The parent takes the principals from the document.
+struct NewSessionHistorySharedState {
+  // The SHEntrySharedState id, a process-specific id minted by the content
+  // process (SHEntrySharedState::GenerateId).
+  uint64_t mId = 0;
+  nsCOMPtr<nsIPolicyContainer> mPolicyContainer;
+  nsCString mContentType;
+};
+
 // SessionHistoryInfo stores session history data for a load. It can be sent
 // over IPC and is used in both the parent and the child processes.
 class SessionHistoryInfo {
@@ -137,6 +147,13 @@ class SessionHistoryInfo {
   bool GetHasUserInteraction() const { return mHasUserInteraction; }
 
   uint64_t SharedId() const;
+
+  // In a content process, what the parent needs to create its own copy of this
+  // info's shared state, if this process created that state.
+  Maybe<NewSessionHistorySharedState> NewSharedStateRequest() const;
+
+  // Parent process only.
+  void SetSharedState(SHEntrySharedParentState* aState);
 
   nsILayoutHistoryState* GetLayoutHistoryState();
   void SetLayoutHistoryState(nsILayoutHistoryState* aState);
@@ -551,6 +568,16 @@ struct ParamTraits<mozilla::dom::PreviousSessionHistoryInfo> {
                     const mozilla::dom::PreviousSessionHistoryInfo& aParam);
   static bool Read(IPC::MessageReader* aReader,
                    mozilla::dom::PreviousSessionHistoryInfo* aResult);
+};
+
+// Allow sending NewSessionHistorySharedState objects over IPC.
+template <>
+struct ParamTraits<mozilla::dom::NewSessionHistorySharedState> {
+  typedef mozilla::dom::NewSessionHistorySharedState paramType;
+  static void Write(IPC::MessageWriter* aWriter,
+                    const mozilla::dom::NewSessionHistorySharedState& aParam);
+  static bool Read(IPC::MessageReader* aReader,
+                   mozilla::dom::NewSessionHistorySharedState* aResult);
 };
 
 // Allow sending LoadingSessionHistoryInfo objects over IPC.
