@@ -5,8 +5,8 @@
 // Please pull this list from, and only from https://publicsuffix.org/list/public_suffix_list.dat,
 // rather than any other VCS sites. Pulling from any other URL is not guaranteed to be supported.
 
-// VERSION: 2026-10-17_18-52-06_UTC
-// COMMIT: 52b71b3c4576ff77450cc7ebcfc7f34a916af3f9
+// VERSION: 2026-10-22_08-36-41_UTC
+// COMMIT: 8437e5262f13305f94087abe699b4fe2be1d1de8
 
 // Instructions on pulling and using this list can be found at https://publicsuffix.org/list/.
 
@@ -11346,9 +11346,10 @@ barsy.ca
 *.compute.estate
 *.alces.network
 
-// Alibaba Cloud API Gateway
+// Alibaba
 // Submitted by Alibaba Cloud Security <cloud_product_security_team@alibaba-inc.com>
 alibabacloudcs.com
+*.ztna-dingtalk.com
 ms.fun
 ms.show
 
@@ -13793,10 +13794,6 @@ futuremailing.at
 gadget.app
 gadget.host
 
-// GCom Internet : https://www.gcom.net.au
-// Submitted by Leo Julius <support@gcom.net.au>
-aliases121.com
-
 // GDS : https://www.gov.uk/service-manual/technology/managing-domain-names
 // Submitted by Stephen Ford <hostmaster@digital.cabinet-office.gov.uk>
 campaign.gov.uk
@@ -14484,10 +14481,6 @@ koobin.events
 // Submitted by Ben Francis <ben@krellian.com>
 webthings.io
 krellian.net
-
-// KUROKU LTD : https://kuroku.ltd/
-// Submitted by DisposaBoy <security@oya.to>
-oya.to
 
 // KV GmbH : https://www.nic.co.de
 // Submitted by KV GmbH <registry@kv-gmbh.de>
