@@ -2397,7 +2397,7 @@ already_AddRefed<gfxFontEntry> gfxFcPlatformFontList::MakePlatformFont(
     const nsACString& aFontName, WeightRange aWeightForEntry,
     StretchRange aStretchForEntry, SlantStyleRange aStyleForEntry,
     const uint8_t* aFontData, uint32_t aLength) {
-  RefPtr<FTUserFontData> ufd = new FTUserFontData(aFontData, aLength);
+  RefPtr<FTUserFontData> ufd = new FTUserFontData(aFontData, aLength, 0);
   RefPtr<SharedFTFace> face = ufd->CloneFace();
   if (!face) {
     return nullptr;

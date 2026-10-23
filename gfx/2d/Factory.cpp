@@ -119,10 +119,10 @@ namespace mozilla::gfx {
 FT_Library Factory::mFTLibrary = nullptr;
 StaticMutex Factory::mFTLock;
 
-already_AddRefed<SharedFTFace> FTUserFontData::CloneFace(int aFaceIndex) {
+already_AddRefed<SharedFTFace> FTUserFontData::CloneFace() {
   if (mFontData) {
     RefPtr<SharedFTFace> face = Factory::NewSharedFTFaceFromData(
-        nullptr, mFontData, mLength, aFaceIndex, this);
+        nullptr, mFontData, mLength, mFaceIndex, this);
     if (!face ||
         (FT_Select_Charmap(face->GetFace(), FT_ENCODING_UNICODE) != FT_Err_Ok &&
          FT_Select_Charmap(face->GetFace(), FT_ENCODING_MS_SYMBOL) !=
@@ -131,7 +131,7 @@ already_AddRefed<SharedFTFace> FTUserFontData::CloneFace(int aFaceIndex) {
     }
     return face.forget();
   }
-  FT_Face face = Factory::NewFTFace(nullptr, mFilename.c_str(), aFaceIndex);
+  FT_Face face = Factory::NewFTFace(nullptr, mFilename.c_str(), mFaceIndex);
   if (face) {
     return MakeAndAddRef<SharedFTFace>(face, this);
   }
@@ -549,21 +549,8 @@ FT_Face Factory::NewFTFace(FT_Library aFTLibrary, const char* aFileName,
 already_AddRefed<SharedFTFace> Factory::NewSharedFTFace(FT_Library aFTLibrary,
                                                         const char* aFilename,
                                                         int aFaceIndex) {
-  FT_Face face = NewFTFace(aFTLibrary, aFilename, aFaceIndex);
-  if (!face) {
-    return nullptr;
-  }
-
-  RefPtr<FTUserFontData> data;
-#  ifdef ANDROID
-  // If the font has variations, we may later need to "clone" it in
-  // UnscaledFontFreeType::CreateScaledFont. To support this, we attach an
-  // FTUserFontData that records the filename used to instantiate the face.
-  if (face->face_flags & FT_FACE_FLAG_MULTIPLE_MASTERS) {
-    data = new FTUserFontData(aFilename);
-  }
-#  endif
-  return MakeAndAddRef<SharedFTFace>(face, data);
+  RefPtr<FTUserFontData> data = new FTUserFontData(aFilename, aFaceIndex);
+  return data->CloneFace();
 }
 
 FT_Face Factory::NewFTFaceFromData(FT_Library aFTLibrary, const uint8_t* aData,

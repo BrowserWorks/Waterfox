@@ -113,16 +113,18 @@ already_AddRefed<SharedFTFace> FT2FontEntry::GetFTFace(bool aCommit) {
       nsZipCursor cursor(item, reader, fontDataBuf, bufSize);
       cursor.Copy(&bufSize);
       NS_ASSERTION(bufSize == item->RealSize(), "error reading bundled font");
-      RefPtr<FTUserFontData> ufd = new FTUserFontData(fontDataBuf, bufSize);
-      face = ufd->CloneFace(mFTFontIndex);
+      RefPtr<FTUserFontData> ufd =
+          new FTUserFontData(fontDataBuf, bufSize, mFTFontIndex);
+      face = ufd->CloneFace();
       if (!face) {
         NS_WARNING("failed to create freetype face");
         return nullptr;
       }
     }
   } else {
-    RefPtr<FTUserFontData> fd = new FTUserFontData(mFilename.get());
-    face = fd->CloneFace(mFTFontIndex);
+    RefPtr<FTUserFontData> fd =
+        new FTUserFontData(mFilename.get(), mFTFontIndex);
+    face = fd->CloneFace();
     if (!face) {
       NS_WARNING("failed to create freetype face");
       return nullptr;
@@ -213,7 +215,7 @@ gfxFont* FT2FontEntry::CreateFontInstance(const gfxFontStyle* aStyle) {
         varFace =
             Factory::NewSharedFTFace(nullptr, mFilename.get(), mFTFontIndex);
       } else {
-        varFace = face->GetData()->CloneFace(mFTFontIndex);
+        varFace = face->GetData()->CloneFace();
       }
       if (varFace) {
         gfxFT2FontBase::SetupVarCoords(GetMMVar(), settings,
@@ -257,7 +259,8 @@ already_AddRefed<FT2FontEntry> FT2FontEntry::CreateFontEntry(
   // Ownership of aFontData is passed in here; the fontEntry must
   // retain it as long as the FT_Face needs it, and ensure it is
   // eventually deleted.
-  RefPtr<FTUserFontData> ufd = MakeRefPtr<FTUserFontData>(aFontData, aLength);
+  RefPtr<FTUserFontData> ufd =
+      MakeRefPtr<FTUserFontData>(aFontData, aLength, 0);
   RefPtr<SharedFTFace> face = ufd->CloneFace();
   if (!face) {
     return nullptr;

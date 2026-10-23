@@ -31,7 +31,7 @@ class NativeFontResourceFreeType
 
   ~NativeFontResourceFreeType();
 
-  already_AddRefed<SharedFTFace> CloneFace(int aFaceIndex = 0) override;
+  already_AddRefed<SharedFTFace> CloneFace() override;
 
  protected:
   NativeFontResourceFreeType(UniquePtr<uint8_t[]>&& aFontData,

@@ -1156,13 +1156,13 @@ class SharedFTFace;
 class SharedFTFaceData {
  public:
   /** Utility for creating a new face from this data. */
-  virtual already_AddRefed<SharedFTFace> CloneFace(int aFaceIndex = 0) {
-    return nullptr;
-  }
+  virtual already_AddRefed<SharedFTFace> CloneFace() { return nullptr; }
   /** Binds the data's lifetime to the face. */
   virtual void BindData() = 0;
   /** Signals that the data is no longer needed by a face. */
   virtual void ReleaseData() = 0;
+  virtual const char* GetFilename() const { return nullptr; }
+  virtual int GetFaceIndex() const { return 0; }
 };
 
 /** Wrapper class for ref-counted SharedFTFaceData that handles calling the
@@ -1171,8 +1171,8 @@ class SharedFTFaceData {
 template <class T>
 class SharedFTFaceRefCountedData : public SharedFTFaceData {
  public:
-  void BindData() { static_cast<T*>(this)->AddRef(); }
-  void ReleaseData() { static_cast<T*>(this)->Release(); }
+  void BindData() override { static_cast<T*>(this)->AddRef(); }
+  void ReleaseData() override { static_cast<T*>(this)->Release(); }
 };
 
 // Helper class used for clearing out user font data when FT font
@@ -1188,15 +1188,17 @@ class FTUserFontData final
  public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(FTUserFontData)
 
-  FTUserFontData(const uint8_t* aData, uint32_t aLength)
-      : mFontData(aData), mLength(aLength) {}
-  explicit FTUserFontData(const char* aFilename) : mFilename(aFilename) {}
+  FTUserFontData(const uint8_t* aData, uint32_t aLength, int aFaceIndex)
+      : mFontData(aData), mLength(aLength), mFaceIndex(aFaceIndex) {}
+  explicit FTUserFontData(const char* aFilename, int aFaceIndex)
+      : mFilename(aFilename), mFaceIndex(aFaceIndex) {}
 
   const uint8_t* FontData() const { return mFontData; }
   uint32_t FontDataLength() const { return mLength; }
+  const char* GetFilename() const override { return mFilename.c_str(); }
+  int GetFaceIndex() const override { return mFaceIndex; }
 
-  already_AddRefed<mozilla::gfx::SharedFTFace> CloneFace(
-      int aFaceIndex = 0) override;
+  already_AddRefed<mozilla::gfx::SharedFTFace> CloneFace() override;
 
  private:
   ~FTUserFontData() {
@@ -1208,6 +1210,7 @@ class FTUserFontData final
   std::string mFilename;
   const uint8_t* mFontData = nullptr;
   uint32_t mLength = 0;
+  int mFaceIndex = 0;
 };
 
 /** SharedFTFace is a shared wrapper around an FT_Face. It is ref-counted,

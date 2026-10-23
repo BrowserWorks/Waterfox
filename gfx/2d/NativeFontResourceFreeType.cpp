@@ -52,10 +52,9 @@ already_AddRefed<UnscaledFont> NativeFontResourceFreeType::CreateUnscaledFont(
 }
 #endif
 
-already_AddRefed<SharedFTFace> NativeFontResourceFreeType::CloneFace(
-    int aFaceIndex) {
+already_AddRefed<SharedFTFace> NativeFontResourceFreeType::CloneFace() {
   RefPtr<SharedFTFace> face = Factory::NewSharedFTFaceFromData(
-      mFTLibrary, mFontData.get(), mDataLength, aFaceIndex, this);
+      mFTLibrary, mFontData.get(), mDataLength, 0, this);
   if (!face ||
       (FT_Select_Charmap(face->GetFace(), FT_ENCODING_UNICODE) != FT_Err_Ok &&
        FT_Select_Charmap(face->GetFace(), FT_ENCODING_MS_SYMBOL) !=
