@@ -879,14 +879,15 @@ fn prepare_indirect_pattern(
         clipped_surface_rect = quad.clip.cast_unit();
     }
 
-    let task_size = clipped_surface_rect.size().to_i32();
+    let task_size = clipped_surface_rect.size().try_cast::<i32>()?;
+    let origin  = clipped_surface_rect.min.try_cast::<i32>()?;
     if task_size.is_empty() {
         return None;
     }
 
     let cache_key = cache_key.as_ref().map(|key| {
         RenderTaskCacheKey {
-            origin: clipped_surface_rect.min.to_i32(),
+            origin,
             size: task_size,
             kind: RenderTaskCacheKeyKind::Quad(key.clone()),
         }
@@ -1052,7 +1053,9 @@ fn prepare_nine_patch(
             };
 
             if should_create_task(mode, x, y) {
-                let task_size = segment_device_rect.size().to_i32();
+                let Some(task_size) = segment_device_rect.size().try_cast::<i32>() else {
+                    continue;
+                };
                 let task_id = add_render_task_with_mask(
                     pattern,
                     &local_rect,
@@ -1285,7 +1288,9 @@ fn prepare_tiles(
         // f32 precision, causing a panic in new_dynamic, so just
         // skip segments that would produce zero size tasks.
         // https://bugzilla.mozilla.org/show_bug.cgi?id=1941838#c13
-        let tile_size = tile.rect.size().to_i32();
+        let Some(tile_size) = tile.rect.size().try_cast::<i32>() else {
+            continue;
+        };
         if tile_size.is_empty() {
             continue;
         }
