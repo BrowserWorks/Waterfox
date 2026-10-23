@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title></title>
+<script src="/tests/SimpleTest/SimpleTest.js"></script>
+<script src="/tests/SimpleTest/EventUtils.js"></script>
+<link rel="stylesheet" href="/tests/SimpleTest/test.css">
+<script>
+"use strict";
+
+SimpleTest.waitForExplicitFinish();
+SimpleTest.waitForFocus(async () => {
+  const iframe = document.querySelector("iframe");
+  await new Promise(resolve => {
+    if (iframe.contentDocument?.readyState == "complete") {
+      resolve();
+      return;
+    }
+    iframe.addEventListener("load", resolve, {once: true});
+  });
+
+  const win = iframe.contentWindow;
+  getEditor(win).flags |=
+    SpecialPowers.Ci.nsIEditor.eEditorMailMask | SpecialPowers.Ci.nsIEditor.eEditorPlaintextMask;
+  const doc = iframe.contentDocument;
+  doc.execCommand("defaultParagraphSeparator", false, "br");
+  const mailEditor = getEditorMailSupport(win);
+  win.focus();
+  doc.body.focus();
+  const mailciteStyle = "white-space: pre-wrap; display: block; width: 98vw;";
+  mailEditor.insertAsCitedQuotation("This is line 1\n\nThis is line 3", "", false);
+  is(
+    doc.body.innerHTML,
+    `<span style="${mailciteStyle}">&gt; This is line 1<br>&gt; <br>&gt; This is line 3<br><br></span><br><br>`,
+    "nsIEditorMailSupport.insertAsCitedQuotation() should insert a mailcite span"
+  );
+
+  const firstLineBreak = doc.querySelector("br");
+  const firstLineText = firstLineBreak.previousSibling;
+  doc.getSelection().collapse(firstLineText, firstLineText.length);
+  synthesizeKey("KEY_Enter");
+  is(
+    doc.body.innerHTML,
+    `<span style="${mailciteStyle}">&gt; This is line 1<br></span>` +
+    `<br>` +
+    `<span style="${mailciteStyle}">&gt; <br>&gt; This is line 3<br><br></span><br><br>`,
+    "Typing Enter at end of the first line should split the quotation"
+  );
+  synthesizeKey("KEY_Enter");
+  is(
+    doc.body.innerHTML,
+    `<span style="${mailciteStyle}">&gt; This is line 1<br></span>` +
+    `<br>` +
+    `<br>` +
+    `<span style="${mailciteStyle}">&gt; <br>&gt; This is line 3<br><br></span><br><br>`,
+    "Typing Enter again should insert another empty line between the quotations"
+  );
+  synthesizeKey("A");
+  is(
+    doc.body.innerHTML,
+    `<span style="${mailciteStyle}">&gt; This is line 1<br></span>` +
+    `<br>` +
+    `A<br>` +
+    `<span style="${mailciteStyle}">&gt; <br>&gt; This is line 3<br><br></span><br><br>`,
+    "Typing A should insert A to the second line without deleting the <br> immediately before the next quotation"
+  );
+  synthesizeKey("B");
+  is(
+    doc.body.innerHTML,
+    `<span style="${mailciteStyle}">&gt; This is line 1<br></span>` +
+    `<br>` +
+    `AB<br>` +
+    `<span style="${mailciteStyle}">&gt; <br>&gt; This is line 3<br><br></span><br><br>`,
+    "Typing B should insert B to the second line without deleting the <br> immediately before the next quotation"
+  );
+  synthesizeKey("C");
+  is(
+    doc.body.innerHTML,
+    `<span style="${mailciteStyle}">&gt; This is line 1<br></span>` +
+    `<br>` +
+    `ABC<br>` +
+    `<span style="${mailciteStyle}">&gt; <br>&gt; This is line 3<br><br></span><br><br>`,
+    "Typing C should insert C to the second line without deleting the <br> immediately before the next quotation"
+  );
+  synthesizeKey("D");
+  is(
+    doc.body.innerHTML,
+    `<span style="${mailciteStyle}">&gt; This is line 1<br></span>` +
+    `<br>` +
+    `ABCD<br>` +
+    `<span style="${mailciteStyle}">&gt; <br>&gt; This is line 3<br><br></span><br><br>`,
+    "Typing D should insert D to the second line without deleting the <br> immediately before the next quotation"
+  );
+  synthesizeKey("KEY_ArrowDown"); // <span>&gt; []<br>
+  synthesizeKey("KEY_Backspace");
+  is(
+    doc.body.innerHTML,
+    `<span style="${mailciteStyle}">&gt; This is line 1<br></span>` +
+    `<br>` +
+    `ABCD<br>` +
+    `<span style="${mailciteStyle}">&gt;<br>&gt; This is line 3<br><br></span><br><br>`,
+    "Typing Backspace after moving caret to end of the next line should delete the space"
+  );
+  synthesizeKey("KEY_Backspace");
+  is(
+    doc.body.innerHTML,
+    `<span style="${mailciteStyle}">&gt; This is line 1<br></span>` +
+    `<br>` +
+    `ABCD<br>` +
+    `<span style="${mailciteStyle}"><br>&gt; This is line 3<br><br></span><br><br>`,
+    "Typing Backspace again should delete the remaining quotation mark"
+  );
+
+  SimpleTest.finish();
+});
+
+function getEditor(aWindow) {
+  const editingSession = SpecialPowers.wrap(aWindow).docShell.editingSession;
+  return editingSession.getEditorForWindow(aWindow);
+}
+
+function getEditorMailSupport(aWindow) {
+  return getEditor(aWindow).QueryInterface(SpecialPowers.Ci.nsIEditorMailSupport);
+}
+</script>
+</head>
+<body>
+  <iframe srcdoc="<body contenteditable style='white-space: pre-wrap'><br><br></body>"></iframe>
+</body>
+</html>

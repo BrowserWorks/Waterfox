@@ -1362,7 +1362,9 @@ Result<EditActionResult, nsresult> HTMLEditor::HandleInsertText(
         const WSScanResult nextThing = HTMLEditUtils::
             ScanInclusiveNextThingWithIgnoringUnnecessaryLineBreak(
                 currentPoint, PaddingForEmptyBlock::Unnecessary, *editingHost);
-        if (nextThing.MaybeIgnoredLineBreak().isSome()) {
+        if (nextThing.MaybeIgnoredLineBreak().isSome() &&
+            !(IsPlaintextMailComposer() &&
+              nextThing.IgnoredLineBreakIsRequiredInPlaintextMailComposer())) {
           const EditorLineBreak& lineBreak =
               nextThing.MaybeIgnoredLineBreak().ref();
           // When user inserting content, the web app may expect that nothing

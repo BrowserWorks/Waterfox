@@ -528,6 +528,11 @@ skip-if = [
   "xorigin", # Testing internal API for comm-central
 ]
 
+["test_mailcite_insert_text_after_split.html"]
+skip-if = [
+  "xorigin", # Testing internal API for comm-central
+]
+
 ["test_mailcite_keep_preceding_br_after_insert.html"]
 skip-if = [
   "xorigin", # Testing internal API for comm-central
