@@ -244,7 +244,7 @@ class WindowGlobalParent final : public WindowContext,
 
   uint32_t HttpsOnlyStatus() { return mHttpsOnlyStatus; }
 
-  void AddSecurityState(uint32_t aStateFlags);
+  void ApplySecurityStateToTop(uint32_t aStateFlags);
   uint32_t GetSecurityFlags() { return mSecurityState; }
 
   const nsACString& GetRemoteType() const override;
@@ -288,6 +288,7 @@ class WindowGlobalParent final : public WindowContext,
       const MaybeDiscarded<dom::BrowsingContext>& aTargetBC,
       nsDocShellLoadState* aLoadState, bool aSetNavigating);
   mozilla::ipc::IPCResult RecvInternalLoad(nsDocShellLoadState* aLoadState);
+  mozilla::ipc::IPCResult RecvAddSecurityState(uint32_t aStateFlags);
   mozilla::ipc::IPCResult RecvUpdateDocumentURI(NotNull<nsIURI*> aURI);
   mozilla::ipc::IPCResult RecvUpdateDocumentPrincipal(
       nsIPrincipal* aNewDocumentPrincipal,

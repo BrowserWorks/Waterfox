@@ -120,6 +120,8 @@ parent:
 
   async InternalLoad(nsDocShellLoadState aLoadState);
 
+  async AddSecurityState(uint32_t aStateFlags);
+
   /// Update the URI of the document in this WindowGlobal.
   [LazySend] async UpdateDocumentURI(nsIURI aUri);
 

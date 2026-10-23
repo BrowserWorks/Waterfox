@@ -1195,8 +1195,6 @@ parent:
     sync SyncMessage(nsString aMessage, StructuredCloneData aData)
       returns (StructuredCloneData[] retval);
 
-    async AddSecurityState(MaybeDiscardedWindowContext aContext, uint32_t aStateFlags);
-
     // Creates a helper for forwarding data from an nsExternalAppHandler
     // running in the content process, to one running in the parent
     // process.

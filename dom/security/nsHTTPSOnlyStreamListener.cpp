@@ -32,7 +32,7 @@ nsHTTPSOnlyStreamListener::nsHTTPSOnlyStreamListener(
   // For Top-level document loads (which don't have a requesting window-context)
   // we compute these flags once we create the Document in nsSecureBrowserUI.
   if (wgp) {
-    wgp->TopWindowContext()->AddSecurityState(
+    wgp->TopWindowContext()->ApplySecurityStateToTop(
         nsIWebProgressListener::STATE_HTTPS_ONLY_MODE_UPGRADED);
   }
 }
@@ -73,7 +73,7 @@ nsHTTPSOnlyStreamListener::OnStopRequest(nsIRequest* request,
               loadInfo->GetInnerWindowID());
 
       if (wgp) {
-        wgp->TopWindowContext()->AddSecurityState(
+        wgp->TopWindowContext()->ApplySecurityStateToTop(
             nsIWebProgressListener::STATE_HTTPS_ONLY_MODE_UPGRADE_FAILED);
       }
     }

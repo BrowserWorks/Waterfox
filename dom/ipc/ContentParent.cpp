@@ -4679,16 +4679,6 @@ mozilla::ipc::IPCResult ContentParent::RecvInitStreamFilter(
   return IPC_OK();
 }
 
-mozilla::ipc::IPCResult ContentParent::RecvAddSecurityState(
-    const MaybeDiscarded<WindowContext>& aContext, uint32_t aStateFlags) {
-  if (aContext.IsNullOrDiscarded()) {
-    return IPC_OK();
-  }
-
-  aContext.get()->AddSecurityState(aStateFlags);
-  return IPC_OK();
-}
-
 already_AddRefed<PExternalHelperAppParent>
 ContentParent::AllocPExternalHelperAppParent(
     nsIURI* uri, const mozilla::net::LoadInfoArgs& aLoadInfoArgs,
