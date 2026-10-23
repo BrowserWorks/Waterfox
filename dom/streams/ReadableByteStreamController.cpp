@@ -370,8 +370,15 @@ void ReadableByteStreamControllerError(
   // Step 5. Perform !ReadableByteStreamControllerClearAlgorithms(controller).
   ReadableByteStreamControllerClearAlgorithms(aController);
 
+  JS::Rooted<JS::Value> value(aCx, aValue);
+  if (!JS_WrapValue(aCx, &value)) {
+    aRv.MightThrowJSException();
+    aRv.StealExceptionFromJSContext(aCx);
+    return;
+  }
+
   // Step 6. Perform !ReadableStreamError(stream, e).
-  ReadableStreamError(aCx, stream, aValue, aRv);
+  ReadableStreamError(aCx, stream, value, aRv);
 }
 
 // https://streams.spec.whatwg.org/#readable-byte-stream-controller-close

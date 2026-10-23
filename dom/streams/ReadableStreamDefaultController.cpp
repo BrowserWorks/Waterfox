@@ -424,8 +424,15 @@ void ReadableStreamDefaultControllerError(
   // Step 4.
   ReadableStreamDefaultControllerClearAlgorithms(aController);
 
+  JS::Rooted<JS::Value> value(aCx, aValue);
+  if (!JS_WrapValue(aCx, &value)) {
+    aRv.MightThrowJSException();
+    aRv.StealExceptionFromJSContext(aCx);
+    return;
+  }
+
   // Step 5.
-  ReadableStreamError(aCx, stream, aValue, aRv);
+  ReadableStreamError(aCx, stream, value, aRv);
 }
 
 // https://streams.spec.whatwg.org/#readable-stream-default-controller-call-pull-if-needed
