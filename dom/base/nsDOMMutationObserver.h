@@ -712,7 +712,7 @@ class nsAutoAnimationMutationBatch {
   };
 
   static nsAutoAnimationMutationBatch* sCurrentBatch;
-  AutoTArray<nsDOMMutationObserver*, 2> mObservers;
+  AutoTArray<RefPtr<nsDOMMutationObserver>, 2> mObservers;
   using EntryArray = nsTArray<Entry>;
   nsClassHashtable<nsPtrHashKey<nsINode>, EntryArray> mEntryTable;
   // List of nodes referred to by mEntryTable so we can sort them
