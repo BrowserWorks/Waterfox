@@ -1258,7 +1258,9 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(HTMLInputElement,
                                                 TextControlElement)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mValidity)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mControllers)
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mRadioGroupContainer)
+  // We don't need to unlink mRadioGroupContainer here, as it will call
+  // DisconnectRadioGroupContainer on us when it is unlinked. Otherwise we may
+  // end up re-added to the radio group before we've been properly removed.
   if (tmp->IsSingleLineTextControl(false) && tmp->mInputData.mState) {
     tmp->mInputData.mState->Unlink();
   }
