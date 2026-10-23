@@ -11,7 +11,7 @@ use wgc::{
     },
     id::{CommandEncoderId, TextureViewId},
 };
-use wgt::{BufferAddress, BufferSize, Color, DynamicOffset, IndexFormat};
+use wgt::{BufferAddress, Color, DynamicOffset, IndexFormat};
 
 use serde::{Deserialize, Serialize};
 
@@ -112,13 +112,13 @@ pub enum RenderCommand {
         buffer_id: id::BufferId,
         index_format: wgt::IndexFormat,
         offset: BufferAddress,
-        size: Option<BufferSize>,
+        size: Option<BufferAddress>,
     },
     SetVertexBuffer {
         slot: u32,
         buffer_id: Option<id::BufferId>,
         offset: BufferAddress,
-        size: Option<BufferSize>,
+        size: Option<BufferAddress>,
     },
     SetBlendConstant(Color),
     SetStencilReference(u32),
@@ -256,7 +256,7 @@ pub extern "C" fn wgpu_recorded_render_pass_set_vertex_buffer(
     slot: u32,
     buffer_id: Option<id::BufferId>,
     offset: BufferAddress,
-    size: Option<&BufferSize>,
+    size: Option<&BufferAddress>,
 ) {
     pass.base.commands.push(RenderCommand::SetVertexBuffer {
         slot,
@@ -272,7 +272,7 @@ pub extern "C" fn wgpu_recorded_render_pass_set_index_buffer(
     buffer_id: id::BufferId,
     index_format: IndexFormat,
     offset: BufferAddress,
-    size: Option<&BufferSize>,
+    size: Option<&BufferAddress>,
 ) {
     pass.base.commands.push(RenderCommand::SetIndexBuffer {
         buffer_id,

@@ -12,7 +12,7 @@ use crate::{BufferMapResult, Message, QueueWriteDataSource, ServerMessage, SwapC
 use wgc::naga::front::wgsl::ImplementedLanguageExtension;
 use wgc::{command::RenderBundleEncoder, id, identity::IdentityManager};
 use wgt::{
-    error::WebGpuError, BufferAddress, BufferSize, DynamicOffset, IndexFormat, TextureFormat,
+    error::WebGpuError, BufferAddress, DynamicOffset, IndexFormat, TextureFormat,
 };
 
 use wgc::id::markers;
@@ -2111,7 +2111,7 @@ pub extern "C" fn wgpu_render_bundle_set_vertex_buffer(
     slot: u32,
     buffer_id: Option<id::BufferId>,
     offset: BufferAddress,
-    size: Option<&BufferSize>,
+    size: Option<&BufferAddress>,
 ) {
     wgc::command::bundle_ffi::wgpu_render_bundle_set_vertex_buffer(
         bundle,
@@ -2128,7 +2128,7 @@ pub extern "C" fn wgpu_render_bundle_set_index_buffer(
     buffer: id::BufferId,
     index_format: IndexFormat,
     offset: BufferAddress,
-    size: Option<&BufferSize>,
+    size: Option<&BufferAddress>,
 ) {
     wgc::command::bundle_ffi::wgpu_render_bundle_set_index_buffer(
         encoder,
