@@ -12,6 +12,12 @@ prefs = [
 ]
 
 ["test_RSEL_updateRecipes_RemoteSettingsClient_get.js"]
+
+["test_RSEL_updateRecipes_recordTargetingContext.js"]
+skip-if = [
+  "artifact"
+]
+
 ["test_RSEL_updateRecipes_before_update.js"]
 ["test_RSEL_updateRecipes_load_unenrolled_slugs.js"]
 ["test_RSEL_updateRecipes_timer.js"]
