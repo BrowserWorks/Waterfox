@@ -916,7 +916,7 @@ function shouldVerifySignedState(aAddonType, aLocation) {
   }
 
   // Otherwise only check signatures if the add-on is one of the signed
-  // types.
+  // types. This is true for all add-ons currently supported by XPIProvider.
   return XPIExports.XPIDatabase.SIGNED_TYPES.has(aAddonType);
 }
 

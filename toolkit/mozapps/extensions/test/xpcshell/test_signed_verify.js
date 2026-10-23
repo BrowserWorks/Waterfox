@@ -705,6 +705,14 @@ add_task(useAMOStageCert(), async function test_broken_file() {
 
 // Verify that verifySignatures() does not change signedState for addons that
 // do not require signatures, even if the underlying file got corrupted.
+// All extensions require signatures (after dictionary type in bug 1753276), so
+// realistically the main way to hit this scenario is if MOZ_UNSIGNED_SCOPES is
+// set (when the build-time --with-unsigned-addon-scopes flag is used):
+// https://searchfox.org/firefox-main/rev/4452e9a17a29f762c5af6326f45c000dcf3117bb/toolkit/mozapps/extensions/internal/XPIInstall.sys.mjs#914
+//
+// The purpose of this test is to verify that when Package.get() throws, that
+// we still return SIGNEDSTATE_NOT_REQUIRED instead of SIGNEDSTATE_BROKEN at
+// https://searchfox.org/firefox-main/rev/4452e9a17a29f762c5af6326f45c000dcf3117bb/toolkit/mozapps/extensions/internal/XPIInstall.sys.mjs#939,951-954
 add_task(
   {
     ...useAMOStageCert(),
@@ -712,8 +720,12 @@ add_task(
     skip_if: () => AppConstants.platform == "android",
   },
   async function test_broken_file_not_requiring_signatures() {
-    // Note: If dictionaries ever require signatures (bug 1753276), change this
-    // test to another test case where shouldVerifySignedState returns false.
+    // This test predates when dictionaries required signatures (bug 1753276).
+    // To keep the test working we temporarily make dictionaries an unsigned
+    // type again, such that shouldVerifySignedState returns false at the end:
+    // https://searchfox.org/firefox-main/rev/4452e9a17a29f762c5af6326f45c000dcf3117bb/toolkit/mozapps/extensions/internal/XPIInstall.sys.mjs#914,920
+    const { SIGNED_TYPES } = AddonTestUtils.getXPIExports().XPIDatabase;
+    Assert.ok(SIGNED_TYPES.delete("dictionary"), "SIGNED_TYPES had dictionary");
     let addon = await promiseInstallWebExtension({
       useAddonManager: true,
       manifest: {
@@ -745,11 +757,22 @@ add_task(
     Assert.equal(addon.isActive, true);
     Assert.equal(addon.signedState, AddonManager.SIGNEDSTATE_NOT_REQUIRED);
 
-    await addon.uninstall();
     AddonManager.removeAddonListener(listener);
 
     AddonTestUtils.checkMessages(messages, {
       expected: [{ message: /verifyBundleSignedState failed for broken@dict/ }],
     });
+
+    // Restore to make implementation more realistic.
+    SIGNED_TYPES.add("dictionary");
+    // ... and confirm that we do indeed flag broken dictionaries.
+    // test_broken_file already covers this, but test just in case.
+    changes = await verifySignatures();
+    Assert.equal(changes.disabled.length, 1);
+    Assert.ok(addon.appDisabled);
+    Assert.ok(!addon.isActive);
+    Assert.equal(addon.signedState, AddonManager.SIGNEDSTATE_BROKEN);
+
+    await addon.uninstall();
   }
 );

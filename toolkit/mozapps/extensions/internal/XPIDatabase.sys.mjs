@@ -154,7 +154,8 @@ const PROP_JSON_FIELDS = [
   "rootURI",
 ];
 
-const SIGNED_TYPES = new Set(["extension", "locale", "theme"]);
+// Keep in sync with ALL_XPI_TYPES in XPIProvider.sys.mjs.
+const SIGNED_TYPES = new Set(["extension", "locale", "theme", "dictionary"]);
 
 // Time to wait before async save of XPI JSON database, in milliseconds
 const ASYNC_SAVE_DELAY_MS = 20;

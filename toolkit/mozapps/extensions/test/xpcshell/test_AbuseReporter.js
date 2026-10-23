@@ -210,12 +210,30 @@ add_task(
     const dataDict = await AbuseReporter.getReportData(dict);
     equal(
       dataDict.addon_signature,
-      "not_required",
+      "signed",
       "Got expected 'addon_signature' for dictionary"
     );
     await dict.uninstall();
   }
 );
+
+// Regression test for bug 1905914.
+add_task(async function test_signed_state_not_required_report_data() {
+  // Built-ins are ordinarily not shown in report abuse flows, but they are the
+  // only convenient way to encounter SIGNEDSTATE_NOT_REQUIRED.
+  const builtinExt = await installBuiltinExtension({
+    manifest: {
+      browser_specific_settings: { gecko: { id: "builtin@test-ext" } },
+    },
+  });
+  const data = await AbuseReporter.getReportData(builtinExt);
+  equal(
+    data.addon_signature,
+    "not_required",
+    "Got expected 'addon_signature' when state is SIGNEDSTATE_NOT_REQUIRED"
+  );
+  await builtinExt.unload();
+});
 
 // This tests verifies how the addon installTelemetryInfo values are being
 // normalized into the addon_install_source and addon_install_method

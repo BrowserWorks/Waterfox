@@ -194,6 +194,7 @@ const BOOTSTRAP_REASONS = {
 // to return only supported add-ons. Without these, it is possible for
 // AddonManager.getAddonsByTypes to return addons from other providers, or even
 // add-on types that are no longer supported by XPIProvider.
+// Keep in sync with SIGNED_TYPES in XPIDatabase.sys.mjs.
 const ALL_XPI_TYPES = new Set(["dictionary", "extension", "locale", "theme"]);
 
 /**

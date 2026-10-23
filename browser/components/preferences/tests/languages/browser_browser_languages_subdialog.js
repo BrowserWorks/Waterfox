@@ -55,6 +55,9 @@ async function createLanguageToolsFile() {
 
 async function createDictionaryBrowseResults() {
   let testDir = gTestPath.substr(0, gTestPath.lastIndexOf("/"));
+  // Although pl-dictionary.xpi is an unsigned dictionary, and dictionaries are
+  // required to be signed, the test can install it anyway because
+  // testing/profiles/common/user.js sets xpinstall.signatures.required=false.
   let dictionaryPath = testDir + "/../addons/pl-dictionary.xpi";
   let filename = "dictionaries.json";
   let response = {
