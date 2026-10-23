@@ -1,0 +1,7 @@
+<!doctype html>
+<style>select { font-family: system-ui; font-size: 13px }</style>
+<select><option>A</option><option>Much longer option text</option></select>
+<script>
+  let select = SpecialPowers.wrap(document.querySelector("select"));
+  select.autofillState = "preview";
+</script>

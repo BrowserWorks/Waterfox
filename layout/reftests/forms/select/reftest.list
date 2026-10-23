@@ -29,3 +29,7 @@ needs-focus != listbox-focus.html listbox-focus-notref.html
 
 == no-padding.html no-padding-ref.html
 != arrow-color.html arrow-color-notref.html
+
+# Autofill tests
+!= autofill-preview.html autofill-preview-blank.html
+== autofill-preview-field-sizing.html autofill-preview.html

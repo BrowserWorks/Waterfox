@@ -888,6 +888,8 @@ textarea:autofill {
   background-color: -moz-autofill-background !important;
   background-image: none !important;
   color: FieldText !important;
+  /* TODO(bug 2081328): Probably need appearance: auto as well or so? */
+  field-sizing: fixed !important;
 }
 
 @media -moz-pref("layout.css.appearance-base.enabled") {

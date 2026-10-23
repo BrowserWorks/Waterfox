@@ -1,0 +1,10 @@
+<!doctype html>
+<style>input { font-family: system-ui; font-size: 13px; field-sizing: content }</style>
+<input type=text>
+<script>
+  let input = SpecialPowers.wrap(document.querySelector("input"));
+  SpecialPowers.Cc["@mozilla.org/satchel/form-fill-controller;1"].getService(SpecialPowers.Ci.nsIFormFillController).markAsAutoCompletableField(input);
+  input.getBoundingClientRect(); // previewValue setter depends on the reframe posted by markAsAutoCompletableField() having being processed...
+  input.previewValue = "Autofill";
+  input.autofillState = "preview";
+</script>

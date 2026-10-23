@@ -25,3 +25,4 @@ fuzzy(0-1,0-1) == rtl.html rtl-dynamic-style.html
 == autofill-prefilled-value.html autofill-preview.html
 == autofill-preview-line-height.html autofill-line-height.html
 == autofill-author-background.html autofill.html
+== autofill-preview-field-sizing.html autofill-preview.html
