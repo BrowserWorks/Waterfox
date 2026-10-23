@@ -77,6 +77,9 @@ NS_IMETHODIMP JSProcessActorProtocol::Observe(nsISupports* aSubject,
   } else {
     manager = ContentChild::GetSingleton();
   }
+  if (!manager) {
+    return NS_OK;
+  }
 
   // Ensure our actor is present.
   AutoJSAPI jsapi;

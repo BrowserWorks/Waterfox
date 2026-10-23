@@ -142,13 +142,15 @@ void JSActorService::UnregisterWindowActor(const nsACString& aName) {
         }
       }
 
-      for (const auto& wgp :
-           InProcessParent::Singleton()->ManagedPWindowGlobalParent()) {
-        managers.AppendElement(static_cast<WindowGlobalParent*>(wgp));
+      if (InProcessParent* ipParent = InProcessParent::Singleton()) {
+        for (const auto& wgp : ipParent->ManagedPWindowGlobalParent()) {
+          managers.AppendElement(static_cast<WindowGlobalParent*>(wgp));
+        }
       }
-      for (const auto& wgc :
-           InProcessChild::Singleton()->ManagedPWindowGlobalChild()) {
-        managers.AppendElement(static_cast<WindowGlobalChild*>(wgc));
+      if (InProcessChild* ipChild = InProcessChild::Singleton()) {
+        for (const auto& wgc : ipChild->ManagedPWindowGlobalChild()) {
+          managers.AppendElement(static_cast<WindowGlobalChild*>(wgc));
+        }
       }
     } else {
       for (const auto& bc :
