@@ -70,6 +70,7 @@ vendoring:
 
   patches:
     - stch-advance-cache.patch
+    - hb-scalar-cache-quantization.patch
 
 updatebot:
   maintainer-phab: jfkthame
