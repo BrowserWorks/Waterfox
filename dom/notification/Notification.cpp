@@ -281,9 +281,13 @@ already_AddRefed<Notification> Notification::Constructor(
       },
       notification);
 
-  ContextInfo contextInfo = notification->GetContextInfo();
+  Maybe<ContextInfo> contextInfo = notification->GetContextInfo();
+  if (!contextInfo) {
+    aRv.ThrowInvalidStateError("Failed by an invalidated global context");
+    return nullptr;
+  }
   notification->LoadImageAndShow(WrapNotNull(promise.get()),
-                                 std::move(contextInfo));
+                                 contextInfo.extract());
 
   notification->KeepAliveIfHasListenersFor(nsGkAtoms::onclick);
   notification->KeepAliveIfHasListenersFor(nsGkAtoms::onshow);
@@ -615,7 +619,9 @@ void Notification::Close() {
     return;
   }
   if (!mActor) {
-    CreateActor(GetContextInfo());
+    if (Maybe<ContextInfo> context = GetContextInfo()) {
+      CreateActor(context.extract());
+    }
   }
   if (mActor) {
     (void)mActor->SendClose();
@@ -722,32 +728,35 @@ already_AddRefed<Promise> Notification::ShowPersistentNotification(
     return nullptr;
   }
 
-  ContextInfo contextInfo = notification->GetContextInfo();
-  if (!notification->CreateActor(contextInfo)) {
+  Maybe<ContextInfo> contextInfo = notification->GetContextInfo();
+  if (!contextInfo || !notification->CreateActor(contextInfo.ref())) {
     aRv.ThrowUnknownError("Failed to create actor.");
     return nullptr;
   }
-  notification->LoadImageAndShow(WrapNotNull(p), std::move(contextInfo));
+  notification->LoadImageAndShow(WrapNotNull(p), contextInfo.extract());
 
   return p.forget();
 }
 
-Notification::ContextInfo Notification::GetContextInfo() {
+Maybe<Notification::ContextInfo> Notification::GetContextInfo() {
   // TODO: Should get nsIGlobalObject methods for each method
   if (WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate()) {
-    return {.mTarget = workerPrivate->HybridEventTarget(),
-            .mPrincipal = workerPrivate->GetPrincipal(),
-            .mEffectiveStoragePrincipal =
-                workerPrivate->GetEffectiveStoragePrincipal(),
-            .mIsSecureContext = workerPrivate->IsSecureContext()};
+    return Some(
+        ContextInfo{.mTarget = workerPrivate->HybridEventTarget(),
+                    .mPrincipal = workerPrivate->GetPrincipal(),
+                    .mEffectiveStoragePrincipal =
+                        workerPrivate->GetEffectiveStoragePrincipal(),
+                    .mIsSecureContext = workerPrivate->IsSecureContext()});
   }
 
-  nsGlobalWindowInner* win = GetOwnerWindow();
-  return {
-      .mPrincipal = win->GetPrincipal(),
-      .mEffectiveStoragePrincipal = win->GetEffectiveStoragePrincipal(),
-      .mIsSecureContext = win->IsSecureContext(),
-  };
+  if (nsGlobalWindowInner* win = GetOwnerWindow()) {
+    return Some(ContextInfo{
+        .mPrincipal = win->GetPrincipal(),
+        .mEffectiveStoragePrincipal = win->GetEffectiveStoragePrincipal(),
+        .mIsSecureContext = win->IsSecureContext(),
+    });
+  }
+  return Nothing();
 }
 
 WeakPtr<notification::NotificationChild> Notification::CreateActor(
