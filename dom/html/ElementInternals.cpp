@@ -14,6 +14,7 @@
 #include "mozilla/dom/HTMLFieldSetElement.h"
 #include "mozilla/dom/LifecycleCallbackArgs.h"
 #include "mozilla/dom/MutationObservers.h"
+#include "mozilla/dom/NodeBinding.h"
 #include "mozilla/dom/ShadowRoot.h"
 #include "mozilla/dom/ValidityState.h"
 #include "nsContentUtils.h"
@@ -562,9 +563,25 @@ void ElementInternals::SetAttrElement(nsAtom* aAttr, Element* aElement) {
 #endif
 }
 
+// ElementInternals can refer to any element that has the same shadow-including
+// root as the target element, as proposed in
+// https://github.com/whatwg/html/pull/8932. The current spec only accepts
+// elements in the tree of the target element or in the trees of its
+// shadow-including ancestors. Thus it rejects elements in the shadow tree of
+// the target element and in other shadow trees:
+// https://html.spec.whatwg.org/#attr-associated-element
+static bool HasSameShadowIncludingRoot(Element& aTarget, Element& aOther) {
+  GetRootNodeOptions options;
+  options.mComposed = true;
+  return aTarget.GetRootNode(options) == aOther.GetRootNode(options);
+}
+
 Element* ElementInternals::GetAttrElement(nsAtom* aAttr) const {
   nsWeakPtr weakAttrEl = mAttrElementMap.Get(aAttr);
   nsCOMPtr<Element> attrEl = do_QueryReferent(weakAttrEl);
+  if (attrEl && !HasSameShadowIncludingRoot(*mTarget, *attrEl)) {
+    return nullptr;
+  }
   return attrEl;
 }
 
@@ -621,12 +638,17 @@ void ElementInternals::GetAttrElements(
   aElements.SetValue(nsTArray<RefPtr<Element>>());
   auto& [attrElements, cachedAttrElements] = attrElementsMaybeEntry.Data();
 
+  // https://html.spec.whatwg.org/#attr-associated-elements, with the
+  // shadow-including root check of https://github.com/whatwg/html/pull/8932.
   auto getAttrAssociatedElements = [&, &attrElements = attrElements]() {
     CopyableTArray<RefPtr<Element>> elements;
 
     for (const nsWeakPtr& weakEl : attrElements) {
       // For each attrElement in reflectedTarget's explicitly set attr-elements:
       if (RefPtr<Element> attrEl = do_QueryReferent(weakEl)) {
+        if (!HasSameShadowIncludingRoot(*mTarget, *attrEl)) {
+          continue;
+        }
         // Append attrElement to elements.
         elements.AppendElement(std::move(attrEl));
       }
@@ -676,7 +698,8 @@ Maybe<nsTArray<RefPtr<Element>>> ElementInternals::GetAttrElements(
   nsTArray<RefPtr<Element>> elements;
   auto& [attrElements, cachedAttrElements] = attrElementsMaybeEntry.Data();
   for (const nsWeakPtr& weakEl : attrElements) {
-    if (RefPtr<Element> attrEl = do_QueryReferent(weakEl)) {
+    RefPtr<Element> attrEl = do_QueryReferent(weakEl);
+    if (attrEl && HasSameShadowIncludingRoot(*mTarget, *attrEl)) {
       elements.AppendElement(std::move(attrEl));
     }
   }
