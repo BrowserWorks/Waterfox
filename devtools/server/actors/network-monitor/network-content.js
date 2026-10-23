@@ -63,29 +63,31 @@ class NetworkContentActor extends Actor {
       // Set the loadingNode and loadGroup to the target document - otherwise the
       // request won't show up in the opened netmonitor.
       const doc = this.targetActor.window.document;
-      const channelURI = lazy.NetUtil.newURI(url);
+      // Content processes may not open document or object loads over
+      // PHttpChannel (those go through DocumentChannel), so resend them as
+      // TYPE_OTHER.
+      let contentPolicyType = Number(
+        lazy.NetworkUtils.stringToCauseType(cause.type) ||
+          Ci.nsIContentPolicy.TYPE_OTHER
+      );
+      if (
+        [
+          Ci.nsIContentPolicy.TYPE_DOCUMENT,
+          Ci.nsIContentPolicy.TYPE_SUBDOCUMENT,
+          Ci.nsIContentPolicy.TYPE_OBJECT,
+        ].includes(contentPolicyType)
+      ) {
+        contentPolicyType = Ci.nsIContentPolicy.TYPE_OTHER;
+      }
 
       const channel = lazy.NetUtil.newChannel({
-        uri: channelURI,
+        uri: lazy.NetUtil.newURI(url),
         loadingNode: doc,
         securityFlags:
           securityFlags ||
           Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_INHERITS_SEC_CONTEXT,
-        contentPolicyType:
-          lazy.NetworkUtils.stringToCauseType(cause.type) ||
-          Ci.nsIContentPolicy.TYPE_OTHER,
+        contentPolicyType,
       });
-
-      // If the load is of TYPE_DOCUMENT, we have to annotate the loadinfo
-      // with the appropriate HTTPS Telemetry information.
-      if (
-        channel.loadInfo.externalContentPolicyType ==
-        Ci.nsIContentPolicy.TYPE_DOCUMENT
-      ) {
-        channel.loadInfo.httpsUpgradeTelemetry = channelURI.schemeIs("https")
-          ? Ci.nsILoadInfo.ALREADY_HTTPS
-          : Ci.nsILoadInfo.NO_UPGRADE;
-      }
 
       channel.QueryInterface(Ci.nsIHttpChannel);
       channel.loadGroup = doc.documentLoadGroup;
