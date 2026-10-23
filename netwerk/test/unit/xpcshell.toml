@@ -1650,6 +1650,11 @@ run-if = [
 
 ["test_simple_unknown_uris.js"]
 
+["test_socket_above_fd_setsize.js"]
+run-if = [
+  "os == 'mac'",
+]
+
 ["test_sockettransportsvc_available.js"]
 
 ["test_socks.js"]

@@ -42,8 +42,11 @@ elif CONFIG["OS_TARGET"] in ("FreeBSD", "OpenBSD", "NetBSD"):
     SOURCES += ["/nsprpub/pr/src/md/unix/%s.c" % CONFIG["OS_TARGET"].lower()]
 elif CONFIG["OS_TARGET"] == "Darwin":
     OS_LIBS += ["-framework CoreServices"]
-    # See also IncreaseDescriptorLimits in toolkit/xre/nsAppRunner.cpp
-    DEFINES["FD_SETSIZE"] = 4096
+    # NSPR emulates poll() with select() here, so this is the highest
+    # descriptor number the socket thread can poll. Keep it in step with kFDs
+    # in nsSocketTransportService::AttachSocket and IncreaseDescriptorLimits
+    # in toolkit/xre/nsAppRunner.cpp.
+    DEFINES["FD_SETSIZE"] = 65536
     DEFINES["_DARWIN_UNLIMITED_SELECT"] = True
     DEFINES["HAS_CONNECTX"] = True
     DEFINES["DARWIN"] = True

@@ -4169,16 +4169,12 @@ static bool CheckForUserMismatch() { return false; }
 
 void mozilla::startup::IncreaseDescriptorLimits() {
 #ifdef XP_UNIX
-  // Increase the fd limit to accomodate IPC resources like shared memory.
-#  ifdef XP_DARWIN
-  // We use Mach IPC for shared memory, so a lower limit suffices.
-  // See also the Darwin case in config/external/nspr/pr/moz.build
-  static constexpr rlim_t kFDs = 4096;
-#  else   // Unix but not Darwin
+  // Increase the fd limit to accommodate IPC resources like shared memory.
   // This can be increased if needed, but also be aware that Linux
-  // distributions may impose hard limits less than this.
+  // distributions may impose hard limits less than this. macOS accepts any
+  // value and caps the effective limit at kern.maxfilesperproc, and it must
+  // not exceed the FD_SETSIZE in config/external/nspr/pr/moz.build.
   static constexpr rlim_t kFDs = 65536;
-#  endif  // Darwin or not
   struct rlimit rlim;
 
   if (getrlimit(RLIMIT_NOFILE, &rlim) != 0) {
