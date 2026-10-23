@@ -86,6 +86,10 @@ is(s.sanitize("<select><optgroup><option>foo</option></optgroup></select></butto
 is(s.sanitize("<form></form>", u.SanitizerDropForms), '<html><head></head><body></body></html>', "Wrong sanitizer result 50");
 is(s.sanitize("<fieldset><legend></legend></fieldset>", u.SanitizerDropForms), '<html><head></head><body><fieldset><legend></legend></fieldset></body></html>', "Wrong sanitizer result 51");
 is(s.sanitize("<input>", u.SanitizerDropForms), '<html><head></head><body></body></html>', "Wrong sanitizer result 52");
+is(s.sanitize("<label for=stripme class=keepme>kept</label>", u.SanitizerDropForms), '<html><head></head><body><label class="keepme">kept</label></body></html>', "Wrong sanitizer result: label for should be stripped");
+is(s.sanitize("<label for=keepme>kept</label>"), '<html><head></head><body><label for="keepme">kept</label></body></html>', "Wrong sanitizer result: label for should be kept");
+is(s.sanitize("<output>kept</output>", u.SanitizerDropForms), '<html><head></head><body>kept</body></html>', "Wrong sanitizer result: output");
+is(s.sanitize("<textarea>x</textarea>", u.SanitizerDropForms), '<html><head></head><body></body></html>', "Wrong sanitizer result: textarea");
 is(s.sanitize("<button>foo</button>", u.SanitizerDropForms), '<html><head></head><body></body></html>', "Wrong sanitizer result 53");
 is(s.sanitize("<select><optgroup><option>foo</option></optgroup></select></button>", u.SanitizerDropForms), '<html><head></head><body></body></html>', "Wrong sanitizer result 54");
 // doctype

@@ -202,7 +202,7 @@ const nsStaticAtom* const kAttributesHTML[] = {
   nsGkAtoms::draggable,
   nsGkAtoms::enctype,
   nsGkAtoms::face,
-  nsGkAtoms::_for,
+  // nsGkAtoms::_for ("for" attribute) is checked in SanitizeAttributes.
   nsGkAtoms::frame,
   nsGkAtoms::headers,
   nsGkAtoms::height,
@@ -1009,8 +1009,8 @@ bool nsTreeSanitizer::MustFlatten(int32_t aNamespace, nsAtom* aLocal) {
       return true;
     }
     if (mDropForms &&
-        (nsGkAtoms::form == aLocal || nsGkAtoms::input == aLocal ||
-         nsGkAtoms::option == aLocal || nsGkAtoms::optgroup == aLocal)) {
+        (nsGkAtoms::form == aLocal || nsGkAtoms::option == aLocal ||
+         nsGkAtoms::optgroup == aLocal || nsGkAtoms::output == aLocal)) {
       return true;
     }
     if (mFullDocument &&
@@ -1064,6 +1064,7 @@ bool nsTreeSanitizer::MustPrune(int32_t aNamespace, nsAtom* aLocal,
     }
     if (mDropForms &&
         (nsGkAtoms::select == aLocal || nsGkAtoms::button == aLocal ||
+         nsGkAtoms::input == aLocal || nsGkAtoms::textarea == aLocal ||
          nsGkAtoms::datalist == aLocal)) {
       return true;
     }
@@ -1232,6 +1233,11 @@ void nsTreeSanitizer::SanitizeAttributes(mozilla::dom::Element* aElement,
         // document-wide metadata or styling overrides with non-conforming
         // <meta name itemprop> or
         // <link rel itemprop>
+        continue;
+      }
+      if (!mDropForms && attrLocal == nsGkAtoms::_for) {
+        // Accept "for" attribute unless SanitizerDropForms is set.
+        // This is primarily meant for <label for>.
         continue;
       }
       const char16_t* localStr = attrLocal->GetUTF16String();

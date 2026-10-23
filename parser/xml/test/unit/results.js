@@ -499,9 +499,8 @@ var vectors = [
       '<html><head></head><body><div draggable="true">\n\t<h1>Drop me</h1>\n</div>\n\n</body></html>',
   },
   {
-    data: '<iframe src="view-source:http://www.example.org/" frameborder="0" style="width:400px;height:180px"></iframe>\n\n<textarea type="text" cols="50" rows="10"></textarea>',
-    sanitized:
-      '<html><head></head><body>\n\n<textarea type="text" cols="50" rows="10"></textarea></body></html>',
+    data: '<iframe src="view-source:http://www.example.org/" frameborder="0" style="width:400px;height:180px"></iframe>\n\n<textarea type="text" cols="50" rows="10">inside</textarea>outside',
+    sanitized: "<html><head></head><body>\n\noutside</body></html>",
   },
   {
     data: "<script>\nfunction makePopups(){\n\tfor (i=1;i<6;i++) {\n\t\twindow.open('popup.html','spam'+i,'width=50,height=50');\n\t}\n}\n</script>\n\n<body>\n<a href=\"#\" onclick=\"makePopups()\">Spam</a>",
