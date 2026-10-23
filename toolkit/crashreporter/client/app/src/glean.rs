@@ -105,9 +105,9 @@ impl InitOptions {
         };
         data_dir.push("glean");
 
+        let app_name = get_app_name(mozbuild::config::MOZ_APP_NAME);
         let app_id = format!(
-            "{}.crashreporter{}",
-            mozbuild::config::MOZ_APP_NAME,
+            "{app_name}.crashreporter{}",
             cfg!(mock).then_some(".mock").unwrap_or_default()
         );
 
@@ -179,6 +179,38 @@ mod uploader {
             #[cfg(not(mock))]
             return do_send();
         }
+    }
+}
+
+/// Get an app name for use in the Glean app id.
+///
+/// This should be passed the MOZ_APP_NAME value.
+///
+/// MOZ_APP_NAME might be changed to unexpected values by distributions (e.g., at the time of this
+/// writing Debian changes it to `firefox-esr` for their ESR builds). We don't want to miss this
+/// telemetry (Glean's probe-scraper uses specific application ids), so we look for a "firefox" or
+/// "thunderbird" prefix and shorten the name if found. See bug 2082537.
+fn get_app_name(mut name: &str) -> &str {
+    let name_lower = name.to_lowercase();
+    for prefix in ["firefox", "thunderbird"] {
+        if name_lower.starts_with(prefix) {
+            name = prefix;
+            break;
+        }
+    }
+    name
+}
+
+#[test]
+fn app_name() {
+    for (from, to) in [
+        ("firefox", "firefox"),
+        ("thunderbird", "thunderbird"),
+        ("firefox-esr", "firefox"),
+        ("something", "something"),
+        ("Firefox", "firefox"),
+    ] {
+        assert_eq!(get_app_name(from), to);
     }
 }
 
