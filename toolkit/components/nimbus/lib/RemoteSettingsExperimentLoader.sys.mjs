@@ -500,11 +500,7 @@ export class RemoteSettingsExperimentLoader {
     // See-also: https://bugzilla.mozilla.org/show_bug.cgi?id=1936317
     // See-also: https://bugzilla.mozilla.org/show_bug.cgi?id=1936319
     if (lazy.TARGETING_CONTEXT_TELEMETRY_ENABLED) {
-      // Some targeting context attributes end up doing IO (e.g., places
-      // queries).
-      //
-      // Prevent waiting for disk IO causing a shutdown crash.
-      await this.#raceShutdown(() => lazy.recordTargetingContext());
+      await lazy.recordTargetingContext();
     }
 
     try {
