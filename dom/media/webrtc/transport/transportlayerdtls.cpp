@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <iomanip>
+#include <optional>
 #include <sstream>
 
 #include "dtlsidentity.h"
@@ -1413,27 +1414,33 @@ SECStatus TransportLayerDtls::HandleSrtpXtn(
     return SECFailure;
   }
 
-  const auto preferred_common_cipher =
-      std::ranges::search(self->enabled_srtp_ciphers_, advertised);
+  std::optional<uint16_t> preferred_common_cipher;
+  for (auto supported : self->enabled_srtp_ciphers_) {
+    auto it = std::find(advertised.begin(), advertised.end(), supported);
+    if (it != advertised.end()) {
+      preferred_common_cipher = supported;
+      break;
+    }
+  }
 
   if (message == ssl_hs_client_hello) {
     MOZ_ASSERT(self->role_ == SERVER);
-    if (preferred_common_cipher.empty()) {
+    if (!preferred_common_cipher.has_value()) {
       *alert = kTlsAlertHandshakeFailure;
       return SECFailure;
     }
-    self->srtp_cipher_ = preferred_common_cipher.front();
+    self->srtp_cipher_ = preferred_common_cipher.value();
     return SECSuccess;
   }
 
   if (message == SrtpXtnServerMessage(fd)) {
     MOZ_ASSERT(self->role_ == CLIENT);
     if (advertised.size() != 1 || mki_len > 0 ||
-        preferred_common_cipher.empty()) {
+        !preferred_common_cipher.has_value()) {
       *alert = kTlsAlertIllegalParameter;
       return SECFailure;
     }
-    self->srtp_cipher_ = preferred_common_cipher.front();
+    self->srtp_cipher_ = preferred_common_cipher.value();
     return SECSuccess;
   }
 
