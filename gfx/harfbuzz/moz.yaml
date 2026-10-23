@@ -68,6 +68,9 @@ vendoring:
     - "src/test*"
     - src/hb-ucdn
 
+  patches:
+    - stch-advance-cache.patch
+
 updatebot:
   maintainer-phab: jfkthame
   maintainer-bz: jfkthame@gmail.com
