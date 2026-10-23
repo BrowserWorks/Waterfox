@@ -23,6 +23,7 @@ import {
 import {
   Collection,
   CryptoWrapper,
+  WBORecord,
 } from "resource://services-sync/record.sys.mjs";
 import { Resource } from "resource://services-sync/resource.sys.mjs";
 import {
@@ -1145,12 +1146,48 @@ SyncEngine.prototype = {
     return tombstone;
   },
 
+  /**
+   * Returns this engine's `{version, syncID}` from `meta/syncids`, if it
+   * matches this account. Per-device clients keep the generations there that
+   * they can't publish in meta/global.
+   */
+  async _getSyncIDsEngineData() {
+    let record = new WBORecord("meta", "syncids");
+    await record.fetch(
+      this.service.resource(this.service.storageURL + "meta/syncids")
+    );
+    let { response } = record;
+    // Don't reset on errors: we'd discard a generation we couldn't read.
+    if (!response.success && response.status != 404) {
+      throw response;
+    }
+    let { version, globalSyncID, engines } =
+      (response.success && record.payload) || {};
+    let data = engines?.[this.name];
+    if (version == 1 && globalSyncID == this.service.syncID && data?.syncID) {
+      return { version: data.version, syncID: data.syncID };
+    }
+    return null;
+  },
+
   // Any setup that needs to happen at the beginning of each sync.
   async _syncStartup() {
     // Determine if we need to wipe on outdated versions
     let metaGlobal = await this.service.recordManager.get(this.metaURL);
     let engines = metaGlobal.payload.engines || {};
     let engineData = engines[this.name] || {};
+    // Adopting a per-device client's generation avoids resetting it. A
+    // meta/global we just created has nothing to adopt.
+    if (!engines[this.name] && !metaGlobal.isNew) {
+      let syncIDsData = await this._getSyncIDsEngineData();
+      if (syncIDsData) {
+        this._log.debug("Adopting the sync ID from meta/syncids", syncIDsData);
+        engineData = syncIDsData;
+        engines[this.name] = engineData;
+        metaGlobal.payload.engines = engines;
+        metaGlobal.changed = true;
+      }
+    }
 
     // Assume missing versions are 0 and wipe the server
     if ((engineData.version || 0) < this.version) {
