@@ -80,3 +80,32 @@ add_task(async function test_first_click_launches_with_permission() {
 
   Services.perms.removeAll();
 });
+
+add_task(function test_permission_not_inherited_by_subdomain() {
+  Services.perms.addFromPrincipal(
+    Services.scriptSecurityManager.createContentPrincipalFromOrigin(
+      TEST_ORIGIN
+    ),
+    "open-protocol-handler^" + TEST_SCHEME,
+    Services.perms.ALLOW_ACTION
+  );
+
+  let chooser = new nsContentDispatchChooser();
+  let subdomainPrincipal =
+    Services.scriptSecurityManager.createContentPrincipalFromOrigin(
+      "https://www.example.com"
+    );
+
+  Assert.ok(
+    !chooser._hasProtocolHandlerPermission(
+      makeMockHandler(),
+      subdomainPrincipal,
+      false,
+      false,
+      false
+    ),
+    "Subdomain should not inherit the permission."
+  );
+
+  Services.perms.removeAll();
+});
