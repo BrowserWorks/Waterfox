@@ -375,7 +375,7 @@ class GitRepository(Repository):
             )
         return self.branch
 
-    def _push_to_hg_try(self, message, changed_files, allow_log_capture):
+    def _push_to_hg_try(self, message, changed_files, remote, allow_log_capture):
         if not self.has_git_cinnabar:
             raise MissingVCSExtension("cinnabar")
 
@@ -388,7 +388,7 @@ class GitRepository(Repository):
                 # is, and figures on its own, but that request takes a long time on try.
                 "cinnabar.data=never",
                 "push",
-                "hg::ssh://hg.mozilla.org/try",
+                f"hg::{remote}",
                 f"+{head}:refs/heads/branches/default/tip",
             )
             if allow_log_capture:

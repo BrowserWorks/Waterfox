@@ -9,10 +9,11 @@ from functools import cache
 from typing import Optional
 
 from mach.util import get_state_dir
-from mozbuild.base import BuildEnvironmentNotFoundException, MozbuildObject
+from mozbuild.base import MozbuildObject
 from mozversioncontrol import MissingVCSExtension, get_repository_object
 
 from .lando import push_to_lando_try
+from .util.project import get_project_topsrcdir, is_thunderbird_try
 
 GIT_CINNABAR_NOT_FOUND = """
 Could not detect `git-cinnabar`.
@@ -65,50 +66,17 @@ here = os.path.abspath(os.path.dirname(__file__))
 build = MozbuildObject.from_environment(cwd=here)
 
 
-def get_project_topsrcdir():
-    """
-    Return the current project source directory for try pushes.
-    """
-
-    project_path = build.base_mozconfig_info["project"][0]
-    project_topsrcdir = os.path.join(build.topsrcdir, project_path.split(os.sep)[0])
-
-    if os.getcwd().startswith(project_topsrcdir):
-        return project_topsrcdir
-
-    return build.topsrcdir
-
-
-def is_thunderbird_push():
-    """
-    Return if this is a Firefox or Thunderbird try push.
-    """
-
-    try:
-        if not build.substs.get("MOZ_APP_NAME") == "thunderbird":
-            return False
-    except BuildEnvironmentNotFoundException:
-        return False
-
-    project_topsrcdir = get_project_topsrcdir()
-
-    if build.topsrcdir != project_topsrcdir:
-        return True
-
-    return False
-
-
 def get_try_repo(topsrcdir):
     """Return the Treeherder repo name to use for a try push."""
 
     # Thunderbird uses try-comm-central.
-    if is_thunderbird_push():
+    if is_thunderbird_try(build):
         return "try-comm-central"
 
     return "try"
 
 
-topsrcdir = get_project_topsrcdir()
+topsrcdir = get_project_topsrcdir(build)
 vcs = get_repository_object(topsrcdir)
 
 history_path = os.path.join(
@@ -246,7 +214,7 @@ def push_to_try(
 ):
     push = not stage_changes and not dry_run
 
-    if push and is_thunderbird_push():
+    if push and is_thunderbird_try(build):
         remote = HG_TRY_URL + "-comm-central"
     else:
         remote = os.environ.get("MACH_TRY_REMOTE") or MACH_TRY_REMOTE

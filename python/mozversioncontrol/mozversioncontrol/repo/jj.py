@@ -415,7 +415,7 @@ class JujutsuRepository(Repository):
 
         return dest_branch
 
-    def _push_to_hg_try(self, message, changed_files, allow_log_capture):
+    def _push_to_hg_try(self, message, changed_files, remote, allow_log_capture):
         if not self.has_git_cinnabar:
             raise MissingVCSExtension("cinnabar")
 
@@ -425,9 +425,7 @@ class JujutsuRepository(Repository):
                     "git", "remote", "remove", "mach_tryserver", return_codes=[0, 1]
                 )
             # `jj git remote add` would barf on the cinnabar syntax here.
-            self._git._run(
-                "remote", "add", "mach_tryserver", "hg::ssh://hg.mozilla.org/try"
-            )
+            self._git._run("remote", "add", "mach_tryserver", f"hg::{remote}")
             self._run("git", "import")
             cmd = (
                 str(self._tool),

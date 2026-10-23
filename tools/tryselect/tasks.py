@@ -14,13 +14,40 @@ from mach.util import get_state_dir
 from mozbuild.base import MozbuildObject
 from mozpack.files import FileFinder
 from moztest.resolve import TestManifestLoader, TestResolver, get_suite_definition
-from taskgraph.generator import TaskGraphGenerator
+from taskgraph.generator import TaskGraphGenerator, load_graph_config
 from taskgraph.parameters import ParameterMismatch, parameters_loader
 from taskgraph.taskgraph import TaskGraph
 from taskgraph.util import json
+from taskgraph.util.vcs import get_repository
+
+from tryselect.util.project import get_project_topsrcdir
 
 here = os.path.abspath(os.path.dirname(__file__))
 build = MozbuildObject.from_environment(cwd=here)
+
+
+def comm_parameter_overrides(comm_topsrcdir):
+    """Parameters required to generate the comm taskgraph locally.
+
+    The comm_* parameters have no defaults (they are normally injected by the
+    decision task), so derive head/base from the comm checkout and hardcode the
+    repositories for try."""
+    repo = get_repository(comm_topsrcdir)
+    rev = repo.head_rev
+    ref = repo.branch or rev
+    src_path = os.path.relpath(comm_topsrcdir, build.topsrcdir).replace(os.sep, "/")
+    return {
+        "project": "try-comm-central",
+        "comm_head_repository": "https://hg.mozilla.org/comm-central",
+        "comm_head_rev": rev,
+        "comm_head_ref": ref,
+        "comm_base_repository": "https://hg.mozilla.org/comm-central",
+        "comm_base_rev": rev,
+        "comm_base_ref": ref,
+        "comm_src_path": f"{src_path}/",
+        "message": "",
+    }
+
 
 PARAMETER_MISMATCH = """
 ERROR - The parameters being used to generate tasks differ from those expected
@@ -114,9 +141,26 @@ def generate_tasks(
         overrides["target_tasks_method"] = target_tasks_method
         overrides["filters"].insert(0, "target_tasks_method")
 
+    project_topsrcdir = get_project_topsrcdir(build)
+    comm = project_topsrcdir != build.topsrcdir
+    if comm:
+        overrides.update(comm_parameter_overrides(project_topsrcdir))
+        root = os.path.join(project_topsrcdir, "taskcluster")
+    else:
+        root = os.path.join(build.topsrcdir, "taskcluster")
+
     params = parameters_loader(param_spec, strict=False, overrides=overrides)
-    root = os.path.join(build.topsrcdir, "taskcluster")
     taskgraph.fast = True
+
+    if comm:
+        # The generator only runs the root graph_config's register hook
+        # (comm_taskgraph:register). Gecko's extensions (try_select_tasks
+        # filter, target task methods, transforms) must be registered first,
+        # mirroring the comm decision task in taskcluster/mach_commands.py.
+        from gecko_taskgraph import register as register_gecko_taskgraph
+
+        register_gecko_taskgraph(load_graph_config(root))
+
     generator = TaskGraphGenerator(root_dir=root, parameters=params)
 
     cache_dir = os.path.join(

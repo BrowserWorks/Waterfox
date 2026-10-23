@@ -335,7 +335,7 @@ class Repository(abc.ABC):
             )
 
     @abc.abstractmethod
-    def _push_to_hg_try(self, message, changed_files, allow_log_capture):
+    def _push_to_hg_try(self, message, changed_files, remote, allow_log_capture):
         pass
 
     def push_to_try(
@@ -359,7 +359,7 @@ class Repository(abc.ABC):
         Popen instead of check_call so that the logs can be captured elsewhere.
         """
         if HG_TRY_URL in remote:
-            self._push_to_hg_try(message, changed_files, allow_log_capture)
+            self._push_to_hg_try(message, changed_files, remote, allow_log_capture)
         else:
             self._push_to_git_try(message, changed_files, remote)
 
