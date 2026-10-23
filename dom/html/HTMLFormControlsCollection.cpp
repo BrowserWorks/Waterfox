@@ -105,14 +105,13 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(HTMLFormControlsCollection)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(HTMLFormControlsCollection,
                                                 HTMLCollection)
-  // Note: We intentionally don't set tmp->mForm to nullptr here, since doing
-  // so may result in crashes because of inconsistent null-checking after the
-  // object gets unlinked.
   tmp->Clear();
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mForm)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(HTMLFormControlsCollection,
                                                   HTMLCollection)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mNameLookupTable)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mForm)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(HTMLFormControlsCollection,
                                                HTMLCollection)
@@ -137,7 +136,7 @@ nsresult HTMLFormControlsCollection::AddElementToTable(
     nsGenericHTMLFormElement* aChild, const nsAString& aName) {
   const auto* formControl = nsIFormControl::FromNode(aChild);
   MOZ_ASSERT(formControl);
-  if (!ShouldBeInElements(formControl)) {
+  if (!mForm || !ShouldBeInElements(formControl)) {
     return NS_OK;
   }
 
@@ -157,7 +156,7 @@ nsresult HTMLFormControlsCollection::RemoveElementFromTable(
     nsGenericHTMLFormElement* aChild, const nsAString& aName) {
   const auto* formControl = nsIFormControl::FromNode(aChild);
   MOZ_ASSERT(formControl);
-  if (!ShouldBeInElements(formControl)) {
+  if (!mForm || !ShouldBeInElements(formControl)) {
     return NS_OK;
   }
 

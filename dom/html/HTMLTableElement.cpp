@@ -24,7 +24,6 @@ namespace mozilla::dom {
 /* ------------------------- TableRowsCollection --------------------------- */
 /**
  * This class provides a late-bound collection of rows in a table.
- * mParent is NOT ref-counted to avoid circular references
  */
 class TableRowsCollection final : public HTMLCollection,
                                   public nsStubMutationObserver {
@@ -36,7 +35,6 @@ class TableRowsCollection final : public HTMLCollection,
   NS_DECL_NSIMUTATIONOBSERVER_CONTENTAPPENDED
   NS_DECL_NSIMUTATIONOBSERVER_CONTENTINSERTED
   NS_DECL_NSIMUTATIONOBSERVER_CONTENTREMOVED
-  NS_DECL_NSIMUTATIONOBSERVER_NODEWILLBEDESTROYED
 
   uint32_t Length() override;
   Element* Item(uint32_t aIndex) override;
@@ -55,13 +53,7 @@ class TableRowsCollection final : public HTMLCollection,
   // Unregister ourselves as a mutation observer, and clear our internal state.
   void CleanUp();
   void LastRelease() override { CleanUp(); }
-  virtual ~TableRowsCollection() {
-    // we do NOT have a ref-counted reference to mParent, so do NOT
-    // release it!  this is to avoid circular references.  The
-    // instantiator who provided mParent is responsible for managing our
-    // reference for us.
-    CleanUp();
-  }
+  virtual ~TableRowsCollection() { CleanUp(); }
 
   // Ensure that HTMLTableElement is in a valid state. This must be called
   // before inspecting the mRows object.
@@ -94,7 +86,7 @@ class TableRowsCollection final : public HTMLCollection,
                        int32_t aIndexGuess = -1);
 
   // The HTMLTableElement which this TableRowsCollection tracks the rows for.
-  HTMLTableElement* mParent;
+  RefPtr<HTMLTableElement> mParent;
 
   // The current state of the TableRowsCollection. mBodyStart and mFootStart are
   // indices into mRows which represent the location of the first row in the
@@ -181,7 +173,18 @@ JSObject* TableRowsCollection::WrapObject(JSContext* aCx,
   return HTMLCollection_Binding::Wrap(aCx, this, aGivenProto);
 }
 
-NS_IMPL_CYCLE_COLLECTION_INHERITED(TableRowsCollection, HTMLCollection, mRows)
+NS_IMPL_CYCLE_COLLECTION_CLASS(TableRowsCollection)
+
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(TableRowsCollection,
+                                                HTMLCollection)
+  tmp->CleanUp();
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(TableRowsCollection,
+                                                  HTMLCollection)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mParent)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mRows)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(TableRowsCollection)
   NS_INTERFACE_MAP_ENTRY(nsIMutationObserver)
@@ -472,14 +475,6 @@ void TableRowsCollection::ContentWillBeRemoved(nsIContent* aChild,
     // NOTE: Need to move tfoot, as we removed from body.
     mFootStart -= removed;
   }
-}
-
-void TableRowsCollection::NodeWillBeDestroyed(nsINode* aNode) {
-  // Set mInitialized to false so CleanUp doesn't try to remove our mutation
-  // observer, as we're going away. CleanUp() will reset mInitialized to true as
-  // it returns.
-  mInitialized = false;
-  CleanUp();
 }
 
 /* --------------------------- HTMLTableElement ---------------------------- */

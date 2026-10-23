@@ -62,6 +62,12 @@ NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(BaseContentList)
       }
       Element::MarkNodeChildren(c);
     }
+    if (nsINode* root = tmp->GetParentObject()) {
+      if (root->IsContent() && root->AsContent()->IsPurple()) {
+        root->AsContent()->RemovePurple();
+      }
+      Element::MarkNodeChildren(root);
+    }
     return true;
   }
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_END
@@ -396,7 +402,23 @@ JSObject* ContentList::WrapObject(JSContext* cx,
   return HTMLCollection_Binding::Wrap(cx, this, aGivenProto);
 }
 
-NS_IMPL_ISUPPORTS_INHERITED(ContentList, HTMLCollection, nsIMutationObserver)
+NS_IMPL_CYCLE_COLLECTION_CLASS(ContentList)
+
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(ContentList, HTMLCollection)
+  tmp->DisconnectFromRoot();
+  tmp->SetDirty();
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(ContentList, HTMLCollection)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mRootNode)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(ContentList)
+  NS_INTERFACE_MAP_ENTRY(nsIMutationObserver)
+NS_INTERFACE_MAP_END_INHERITING(HTMLCollection)
+
+NS_IMPL_ADDREF_INHERITED(ContentList, HTMLCollection)
+NS_IMPL_RELEASE_INHERITED(ContentList, HTMLCollection)
 
 uint32_t ContentList::Length() {
   BringSelfUpToDate();
@@ -564,23 +586,16 @@ int32_t ContentList::IndexOf(nsIContent* aContent) {
   return mElements.IndexOf(aContent);
 }
 
-void ContentList::NodeWillBeDestroyed(nsINode* aNode) {
-  // We shouldn't do anything useful from now on
-
-  RemoveFromCaches();
+void ContentList::DisconnectFromRoot() {
+  if (mIsLiveList && mRootNode) {
+    mRootNode->RemoveMutationObserver(this);
+  }
   mRootNode = nullptr;
-
-  // We will get no more updates, so we can never know we're up to
-  // date
-  SetDirty();
 }
 
 void ContentList::LastRelease() {
   RemoveFromCaches();
-  if (mIsLiveList && mRootNode) {
-    mRootNode->RemoveMutationObserver(this);
-    mRootNode = nullptr;
-  }
+  DisconnectFromRoot();
   SetDirty();
 }
 
@@ -841,7 +856,7 @@ void ContentList::PopulateSelf(uint32_t aNeededLength,
   if (mDeep) {
     // If we already have nodes start searching at the last one, otherwise
     // start searching at the root.
-    nsINode* cur = count ? mElements[count - 1].get() : mRootNode;
+    nsINode* cur = count ? mElements[count - 1].get() : mRootNode.get();
     do {
       cur = GetNextNode(cur);
       if (!cur) {
@@ -1109,10 +1124,10 @@ void LabelsNodeList::ContentWillBeRemoved(nsIContent* aChild,
 }
 
 void LabelsNodeList::NodeWillBeDestroyed(nsINode* aNode) {
-  ContentList::NodeWillBeDestroyed(aNode);
-
+  RemoveFromCaches();
+  DisconnectFromRoot();
+  SetDirty();
   mData = nullptr;
-  mRoots.Clear();
 }
 
 // static
@@ -1290,7 +1305,7 @@ void LabelsNodeList::PopulateSelf(uint32_t aNeededLength,
   ContentList::PopulateSelf(aNeededLength, aExpectedElementsIfDirty);
 }
 
-void LabelsNodeList::LastRelease() {
+void LabelsNodeList::DisconnectFromRoot() {
   for (nsINode* root : mRoots) {
     root->RemoveMutationObserver(this);
     if (ShadowRoot* shadow = ShadowRoot::FromNodeOrNull(root)) {
@@ -1301,7 +1316,7 @@ void LabelsNodeList::LastRelease() {
   }
   mRoots.Clear();
 
-  ContentList::LastRelease();
+  ContentList::DisconnectFromRoot();
 }
 
 }  // namespace mozilla::dom
