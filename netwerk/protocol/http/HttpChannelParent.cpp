@@ -175,10 +175,9 @@ bool HttpChannelParent::Init(const HttpChannelCreationArgs& aArgs) {
           a.launchServiceWorkerStart(), a.launchServiceWorkerEnd(),
           a.dispatchFetchEventStart(), a.dispatchFetchEventEnd(),
           a.handleFetchEventStart(), a.handleFetchEventEnd(),
-          a.forceMainDocumentChannel(), a.navigationStartTimeStamp(),
-          a.earlyHintPreloaderId(), a.classicScriptHintCharset(),
-          a.documentCharacterSet(), a.isUserAgentHeaderModified(),
-          a.initiatorType());
+          a.navigationStartTimeStamp(), a.earlyHintPreloaderId(),
+          a.classicScriptHintCharset(), a.documentCharacterSet(),
+          a.isUserAgentHeaderModified(), a.initiatorType());
     }
     case HttpChannelCreationArgs::THttpChannelConnectArgs: {
       const HttpChannelConnectArgs& cArgs = aArgs.get_HttpChannelConnectArgs();
@@ -447,7 +446,6 @@ bool HttpChannelParent::DoAsyncOpen(
     const TimeStamp& aDispatchFetchEventEnd,
     const TimeStamp& aHandleFetchEventStart,
     const TimeStamp& aHandleFetchEventEnd,
-    const bool& aForceMainDocumentChannel,
     const TimeStamp& aNavigationStartTimeStamp,
     const uint64_t& aEarlyHintPreloaderId,
     const nsAString& aClassicScriptHintCharset,
@@ -500,6 +498,24 @@ bool HttpChannelParent::DoAsyncOpen(
                                             getter_AddRefs(loadInfo));
   if (NS_FAILED(rv)) {
     return SendFailedAsyncOpen(rv);
+  }
+
+  // Document, subdocument and object/embed loads go through DocumentChannel,
+  // never PHttpChannel. Reject content-process attempts to open such a channel,
+  // including any carrying navigation- or object-load flags, to prevent forged
+  // navigation attacks. System-principal loads are exempt.
+  nsIPrincipal* loadingPrincipal = loadInfo->GetLoadingPrincipal();
+  bool isSystemPrincipal =
+      loadingPrincipal && loadingPrincipal->IsSystemPrincipal();
+  ExtContentPolicy extType = loadInfo->GetExternalContentPolicyType();
+  if (!isSystemPrincipal &&
+      (extType == ExtContentPolicy::TYPE_DOCUMENT ||
+       extType == ExtContentPolicy::TYPE_SUBDOCUMENT ||
+       extType == ExtContentPolicy::TYPE_OBJECT ||
+       (aLoadFlags &
+        (nsIChannel::LOAD_DOCUMENT_URI | nsIRequest::LOAD_DOCUMENT_NEEDS_COOKIE |
+         nsIRequest::LOAD_HTML_OBJECT_DATA)))) {
+    return SendFailedAsyncOpen(NS_ERROR_CONTENT_BLOCKED);
   }
 
   nsCOMPtr<nsIChannel> channel;
@@ -557,10 +573,6 @@ bool HttpChannelParent::DoAsyncOpen(
 
   if (aLoadFlags != nsIRequest::LOAD_NORMAL) {
     httpChannel->SetLoadFlags(aLoadFlags);
-  }
-
-  if (aForceMainDocumentChannel) {
-    httpChannel->SetIsMainDocumentChannel(true);
   }
 
   for (uint32_t i = 0; i < requestHeaders.Length(); i++) {
