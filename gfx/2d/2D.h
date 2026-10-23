@@ -2246,7 +2246,8 @@ class GFX2D_API Factory {
   /**
    * This creates a NativeFontResource from TrueType data.
    *
-   * @param aData Pointer to the data
+   * @param aData Pointer to the data. The data is copied, so the buffer only
+   *              needs to remain valid for the duration of this call.
    * @param aSize Size of the TrueType data
    * @param aFontType Type of NativeFontResource that should be created.
    * @param aFontContext Optional native font context to be used to create the
