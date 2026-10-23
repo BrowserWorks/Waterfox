@@ -125,19 +125,11 @@ already_AddRefed<gfx::SourceSurface> SharedRGBImage::GetAsSourceSurface() {
 
   RefPtr<gfx::SourceSurface> surface;
   {
-    // We are 'borrowing' the DrawTarget and retaining a permanent reference to
-    // the underlying data (via the surface). It is in this instance since we
-    // know that the TextureClient is always wrapping a BufferTextureData and
-    // therefore it won't go away underneath us.
-    BufferTextureData* decoded_buffer =
-        mTextureClient->GetInternalData()->AsBufferTextureData();
-    RefPtr<gfx::DrawTarget> drawTarget = decoded_buffer->BorrowDrawTarget();
-
-    if (!drawTarget) {
+    if (!mTextureClient) {
       return nullptr;
     }
 
-    surface = drawTarget->Snapshot();
+    surface = mTextureClient->GetBufferSnapshot();
     if (!surface) {
       return nullptr;
     }
