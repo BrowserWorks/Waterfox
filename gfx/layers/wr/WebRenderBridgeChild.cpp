@@ -332,7 +332,7 @@ void WebRenderBridgeChild::RemoveExpiredFontKeys(
   if (mFontInstanceKeysDeleted != counter) {
     mFontInstanceKeysDeleted = counter;
     for (auto iter = mFontInstanceKeys.Iter(); !iter.Done(); iter.Next()) {
-      if (!iter.Key()) {
+      if (iter.Key().IsDead()) {
         aResourceUpdates.DeleteFontInstance(iter.Data());
         iter.Remove();
       }
@@ -342,7 +342,7 @@ void WebRenderBridgeChild::RemoveExpiredFontKeys(
   if (mFontKeysDeleted != counter) {
     mFontKeysDeleted = counter;
     for (auto iter = mFontKeys.Iter(); !iter.Done(); iter.Next()) {
-      if (!iter.Key()) {
+      if (iter.Key().IsDead()) {
         aResourceUpdates.DeleteFont(iter.Data());
         iter.Remove();
       }

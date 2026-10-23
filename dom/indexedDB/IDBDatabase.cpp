@@ -770,7 +770,7 @@ void IDBDatabase::NoteFinishedFileActor(
   MOZ_ASSERT(aFileActor);
 
   mFileActors.RemoveIf([aFileActor](const auto& iter) {
-    MOZ_ASSERT(iter.Key());
+    MOZ_ASSERT(!iter.Key().IsDead());
     PBackgroundIDBDatabaseFileChild* actor = iter.Data();
     MOZ_ASSERT(actor);
 
