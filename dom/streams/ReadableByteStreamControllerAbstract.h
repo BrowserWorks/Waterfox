@@ -27,8 +27,8 @@ MOZ_CAN_RUN_SCRIPT void ReadableByteStreamControllerPullInto(
     ReadIntoRequest* aReadIntoRequest, ErrorResult& aRv);
 
 void ReadableByteStreamControllerError(
-    ReadableByteStreamController* aController, JS::Handle<JS::Value> aValue,
-    ErrorResult& aRv);
+    JSContext* aCx, ReadableByteStreamController* aController,
+    JS::Handle<JS::Value> aValue, ErrorResult& aRv);
 
 MOZ_CAN_RUN_SCRIPT void ReadableByteStreamControllerEnqueue(
     JSContext* aCx, ReadableByteStreamController* aController,

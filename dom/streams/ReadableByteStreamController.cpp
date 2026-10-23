@@ -350,8 +350,8 @@ void ReadableByteStreamControllerClearAlgorithms(
 
 // https://streams.spec.whatwg.org/#readable-byte-stream-controller-error
 void ReadableByteStreamControllerError(
-    ReadableByteStreamController* aController, JS::Handle<JS::Value> aValue,
-    ErrorResult& aRv) {
+    JSContext* aCx, ReadableByteStreamController* aController,
+    JS::Handle<JS::Value> aValue, ErrorResult& aRv) {
   // Step 1. Let stream be controller.[[stream]].
   ReadableStream* stream = aController->Stream();
 
@@ -371,11 +371,7 @@ void ReadableByteStreamControllerError(
   ReadableByteStreamControllerClearAlgorithms(aController);
 
   // Step 6. Perform !ReadableStreamError(stream, e).
-  AutoJSAPI jsapi;
-  if (!jsapi.Init(aController->GetParentObject())) {
-    return;
-  }
-  ReadableStreamError(jsapi.cx(), stream, aValue, aRv);
+  ReadableStreamError(aCx, stream, aValue, aRv);
 }
 
 // https://streams.spec.whatwg.org/#readable-byte-stream-controller-close
@@ -417,7 +413,7 @@ void ReadableByteStreamControllerClose(
       MOZ_ALWAYS_TRUE(ToJSValue(aCx, std::move(rv), &exception));
 
       // Step 4.2.2
-      ReadableByteStreamControllerError(aController, exception, aRv);
+      ReadableByteStreamControllerError(aCx, aController, exception, aRv);
       if (aRv.Failed()) {
         return;
       }
@@ -495,7 +491,7 @@ void ReadableByteStreamControllerEnqueueClonedChunkToQueue(
 
     // Step 2.1. Perform ! ReadableByteStreamControllerError(controller,
     // cloneResult.[[Value]]).
-    ReadableByteStreamControllerError(aController, exception, aRv);
+    ReadableByteStreamControllerError(aCx, aController, exception, aRv);
     if (aRv.Failed()) {
       return;
     }
@@ -654,7 +650,7 @@ void ReadableByteStreamControllerCallPullIfNeeded(
       [](JSContext* aCx, JS::Handle<JS::Value> aValue, ErrorResult& aRv,
          ReadableByteStreamController* aController) {
         // Step 8.1
-        ReadableByteStreamControllerError(aController, aValue, aRv);
+        ReadableByteStreamControllerError(aCx, aController, aValue, aRv);
       },
       RefPtr(aController));
 }
@@ -1116,7 +1112,7 @@ void ReadableByteStreamController::Error(JSContext* aCx,
                                          JS::Handle<JS::Value> aErrorValue,
                                          ErrorResult& aRv) {
   // Step 1.
-  ReadableByteStreamControllerError(this, aErrorValue, aRv);
+  ReadableByteStreamControllerError(aCx, this, aErrorValue, aRv);
 }
 
 // https://streams.spec.whatwg.org/#rbs-controller-private-cancel
@@ -2100,7 +2096,7 @@ void ReadableByteStreamControllerPullInto(
       MOZ_RELEASE_ASSERT(ToJSValue(aCx, std::move(typeError), &e));
 
       // Step 16.2.2. Perform !ReadableByteStreamControllerError(controller, e).
-      ReadableByteStreamControllerError(aController, e, aRv);
+      ReadableByteStreamControllerError(aCx, aController, e, aRv);
       if (aRv.Failed()) {
         return;
       }
@@ -2208,7 +2204,7 @@ void SetUpReadableByteStreamController(
       [](JSContext* aCx, JS::Handle<JS::Value> aValue, ErrorResult& aRv,
          ReadableByteStreamController* aController) {
         // Step 17.1
-        ReadableByteStreamControllerError(aController, aValue, aRv);
+        ReadableByteStreamControllerError(aCx, aController, aValue, aRv);
       },
       RefPtr(aController));
 }
